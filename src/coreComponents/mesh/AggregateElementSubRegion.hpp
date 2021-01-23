@@ -49,7 +49,7 @@ public:
   { return "AggregateCell"; }
 
   /**
-   * @brief Provide a virtual access to CatalogName().
+   * @brief Provide a virtual access to catalogName().
    * @return string that contains the AggregateElementSubRegion catalog name
    */
   virtual const string getCatalogName() const override

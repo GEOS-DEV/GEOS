@@ -311,7 +311,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   ConstitutiveManager * const constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+  constitutiveRelations = elemManager->constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
 
 
   // begin region loop

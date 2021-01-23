@@ -128,7 +128,7 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
     // in the implementation of the transmissibility multiplier (see below)
     // TODO: see what it would take to bring the (harmonically averaged) two-point trans here
     real64 diagEntry = 0.0;
-    MimeticInnerProductHelpers::computeInvTpfaTransWithMultiplier< NF >( elemPerm,
+    MimeticInnerProductHelpers::computeInvTPFATransWithMultiplier< NF >( elemPerm,
                                                                          faceNormal,
                                                                          faceArea[ifaceLoc],
                                                                          transMultiplier[elemToFaces[ifaceLoc]],

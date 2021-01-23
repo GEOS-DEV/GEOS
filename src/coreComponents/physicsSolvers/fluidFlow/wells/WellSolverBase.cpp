@@ -167,7 +167,7 @@ void WellSolverBase::initializePreSubGroups( Group * const rootGroup )
   for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    ValidateModelMapping( *meshLevel.getElemManager(), m_fluidModelNames );
+    validateModelMapping( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 
   FlowSolverBase const * const flowSolver = getParent()->getGroup< FlowSolverBase >( getFlowSolverName() );
@@ -255,7 +255,7 @@ void WellSolverBase::resetViews( DomainPartition & domain )
   ElementRegionManager const & elemManager = *mesh->getElemManager();
 
   m_resGravCoef.clear();
-  m_resGravCoef = elemManager.ConstructArrayViewAccessor< real64, 1 >( FlowSolverBase::viewKeyStruct::gravityCoefString );
+  m_resGravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( FlowSolverBase::viewKeyStruct::gravityCoefString );
   m_resGravCoef.setName( getName() + "/accessors/" + FlowSolverBase::viewKeyStruct::gravityCoefString );
 
 }

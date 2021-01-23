@@ -112,7 +112,7 @@ EventBase::~EventBase()
 {}
 
 
-EventBase::CatalogInterface::CatalogType & EventBase::GetCatalog()
+EventBase::CatalogInterface::CatalogType & EventBase::getCatalog()
 {
   static EventBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -122,7 +122,7 @@ Group * EventBase::createChild( string const & childKey, string const & childNam
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
-  return this->RegisterGroup< EventBase >( childName, std::move( event ) );
+  return this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
 
@@ -132,7 +132,7 @@ void EventBase::expandObjectCatalogs()
   // otherwise, this would fall into a loop
   if( strcmp( this->getParent()->getName().c_str(), "Events" ) == 0 )
   {
-    for( auto & catalogIter: EventBase::GetCatalog())
+    for( auto & catalogIter: EventBase::getCatalog())
     {
       createChild( catalogIter.first, catalogIter.first );
     }

@@ -55,11 +55,11 @@ public:
    * @brief Get the name used to register this object in an XML file.
    * @return The string "Blueprint".
    */
-  static string CatalogName() { return "Blueprint"; }
+  static string catalogName() { return "Blueprint"; }
 
   /**
    * @brief Writes out a Blueprint plot file.
-   * @copydetails EventBase::Execute()
+   * @copydetails EventBase::execute()
    */
   virtual void execute( real64 const time_n,
                         real64 const dt,

@@ -54,7 +54,7 @@ void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartiti
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
-  // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
+  // TODO: remove this and just call SolverBase::setupSystem when DofManager can handle the coupling
 
   // Populate off-diagonal sparsity between well and reservoir
 

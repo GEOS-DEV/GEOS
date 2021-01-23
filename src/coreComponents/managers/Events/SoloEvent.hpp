@@ -44,7 +44,7 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "SoloEvent"; }
+  static string catalogName() { return "SoloEvent"; }
 
   /**
    * @copydoc EventBase::EstimateEventTiming()

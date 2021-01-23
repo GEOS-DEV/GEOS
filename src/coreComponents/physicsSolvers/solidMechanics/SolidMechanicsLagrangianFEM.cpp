@@ -251,7 +251,7 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups( Group * const rootGrou
   for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    ValidateModelMapping< SolidBase >( *meshLevel.getElemManager(), m_solidMaterialNames );
+    validateModelMapping< SolidBase >( *meshLevel.getElemManager(), m_solidMaterialNames );
   }
 
   NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
@@ -318,7 +318,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   std::set< localIndex > tmpNonSendOrReceiveNodes;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
+  rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
                                                                                                               targetRegionNames(),
                                                                                                               solidMaterialNames() );
 
@@ -403,7 +403,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups( G
   std::set< localIndex > tmpNonSendOrReceiveNodes;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
+  rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
                                                                                                               targetRegionNames(),
                                                                                                               solidMaterialNames() );
 
@@ -605,7 +605,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
-  fsManager.ApplyFieldValue( time_n + dt,
+  fsManager.applyFieldValue( time_n + dt,
                              &domain, "nodeManager",
                              NodeManager::viewKeyStruct::totalDisplacementString,
                              [&]( FieldSpecificationBase const * const bc,
@@ -667,11 +667,11 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
 
 
-void SolidMechanicsLagrangianFEM::applyDisplacementBcImplicit( real64 const time,
-                                                                DofManager const & dofManager,
-                                                                DomainPartition & domain,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                arrayView1d< real64 > const & localRhs )
+void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time,
+                                                               DofManager const & dofManager,
+                                                               DomainPartition & domain,
+                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                               arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -700,7 +700,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBcImplicit( real64 const time
   } );
 }
 
-void SolidMechanicsLagrangianFEM::crsApplyTractionBc( real64 const time,
+void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
                                                       DofManager const & dofManager,
                                                       DomainPartition & domain,
                                                       arrayView1d< real64 > const & localRhs )
@@ -883,7 +883,7 @@ SolidMechanicsLagrangianFEM::
   ElementRegionManager * const elementRegionManager = mesh.getElemManager();
   ConstitutiveManager * const constitutiveManager = domain.getConstitutiveManager();
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-  constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+  constitutiveRelations = elementRegionManager->constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
 
   forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                           CellElementSubRegion & subRegion )
@@ -1122,7 +1122,7 @@ SolidMechanicsLagrangianFEM::
                                                                       localRhs );
   } );
 
-  crsApplyTractionBc( time_n + dt, dofManager, domain, localRhs );
+  crsApplyTractionBC( time_n + dt, dofManager, domain, localRhs );
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
@@ -1130,7 +1130,7 @@ SolidMechanicsLagrangianFEM::
     applyChomboPressure( dofManager, domain, m_localRhs );
   }
 
-  applyDisplacementBcImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+  applyDisplacementBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 }
 
 real64

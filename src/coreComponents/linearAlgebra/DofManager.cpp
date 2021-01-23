@@ -264,7 +264,7 @@ void DofManager::createIndexArray( FieldDescription & field )
     field.numLocalDof = field.numComponents * numLocalNodes;
 
     // step 2. gather row counts across ranks
-    field.rankOffset = MpiWrapper::PrefixSum< globalIndex >( field.numLocalDof );
+    field.rankOffset = MpiWrapper::prefixSum< globalIndex >( field.numLocalDof );
 
     field.numGlobalDof = field.rankOffset + field.numLocalDof;
     MpiWrapper::broadcast( field.numGlobalDof, MpiWrapper::commSize() - 1 );
@@ -472,7 +472,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
     ElementRegionManager const * const elemManager = mesh->getElemManager();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofIndex =
-      elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
+      elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
 
     array1d< localIndex > edgeConnectorIndex( edgeManager->size() );
     edgeConnectorIndex.setValues< serialPolicy >( -1 );
@@ -1305,7 +1305,7 @@ void vectorToFieldImpl( LOCAL_VECTOR const localVector,
   WrapperBase * const wrapper = manager.getWrapperBase( fieldName );
   GEOSX_ASSERT( wrapper != nullptr );
 
-  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->getTypeid() ) ),
+  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->getTypeId() ) ),
                                   false,
                                   [&]( auto arrayInstance,
                                        auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
@@ -1343,7 +1343,7 @@ void fieldToVectorKernel( LOCAL_VECTOR localVector,
       GEOSX_ASSERT( lid >= 0 );
       for( localIndex c = loComp; c < hiComp; ++c )
       {
-        FIELD_OP::template ReadFieldValue( field,
+        FIELD_OP::template readFieldValue( field,
                                            i,
                                            LvArray::integerConversion< integer >( c - loComp ),
                                            localVector[lid + c] );
@@ -1368,7 +1368,7 @@ void fieldToVectorImpl( LOCAL_VECTOR localVector,
   WrapperBase const * const wrapper = manager.getWrapperBase( fieldName );
   GEOSX_ASSERT( wrapper != nullptr );
 
-  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->getTypeid() ) ),
+  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->getTypeId() ) ),
                                   false,
                                   [&]( auto arrayInstance,
                                        auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )

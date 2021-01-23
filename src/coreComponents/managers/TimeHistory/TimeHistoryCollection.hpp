@@ -84,7 +84,7 @@ public:
 
   /**
    * @brief Collects history data.
-   * @copydoc EventBase::Execute()
+   * @copydoc EventBase::execute()
    */
   virtual void execute( real64 const time_n,
                         real64 const dt,
@@ -183,7 +183,7 @@ public:
 protected:
 
   /**
-   * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::Execute .
+   * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::execute .
    * @param domain The DomainPartition to collect time history on.
    * @param time_n The current simulation time.
    * @param dt The current simulation time delta.

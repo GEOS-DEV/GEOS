@@ -74,7 +74,7 @@ public:
   template< typename T = ConstitutiveBase >
   T const * getConstitutiveRelation( localIndex const index ) const
   {
-    return this->GetGroup< T >( index );
+    return this->getGroup< T >( index );
   }
 
   template< typename T = ConstitutiveBase >

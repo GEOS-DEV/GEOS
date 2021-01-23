@@ -76,13 +76,13 @@ private:
   LinearSolverResult m_result;
 
   void solveDirect( HypreMatrix & mat,
-                     HypreVector & sol,
-                     HypreVector & rhs );
+                    HypreVector & sol,
+                    HypreVector & rhs );
 
   void solveKrylov( HypreMatrix & mat,
-                     HypreVector & sol,
-                     HypreVector & rhs,
-                     DofManager const * const dofManager );
+                    HypreVector & sol,
+                    HypreVector & rhs,
+                    DofManager const * const dofManager );
 
 };
 

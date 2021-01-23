@@ -87,11 +87,11 @@ public:
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
 
   /**
-   * @brief Call ObjectManagerBase::FixUpDownMaps for the connectivity maps needed by
+   * @brief Call ObjectManagerBase::fixUpDownMaps for the connectivity maps needed by
    *        the derived class (i.e., element-to-node map, element-to-face map, etc)
    * @param[in] clearIfUnmapped clearIfUnmapped
    */
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
 
   ///@}
 
@@ -197,7 +197,7 @@ public:
   { return &m_constitutiveModels; }
 
   /**
-   * @copydoc GetConstitutiveModels() const
+   * @copydoc getConstitutiveModels() const
    */
   dataRepository::Group * getConstitutiveModels()
   { return &m_constitutiveModels; }
@@ -211,7 +211,7 @@ public:
   template< typename T = constitutive::ConstitutiveBase >
   T const * getConstitutiveModel( string const & name ) const
   {
-    return m_constitutiveModels.GetGroup< T >( name );
+    return m_constitutiveModels.getGroup< T >( name );
   }
 
   /**

@@ -375,7 +375,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
     for( localIndex k=0; k<embeddedSurfaceSubRegion.size(); ++k )
     {
       CellBlock const * const elemSubRegion = Group::groupCast< CellBlock const * const >( elemManager.getRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-                                                                                              getSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+                                                                                             getSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];

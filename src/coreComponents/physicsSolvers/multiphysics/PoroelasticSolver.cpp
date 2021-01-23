@@ -251,7 +251,7 @@ void PoroelasticSolver::updateDeformationForCoupling( DomainPartition & domain )
                                                                   CellElementSubRegion & elementSubRegion )
   {
     string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( elemRegion.getName() )];
-    SolidBase const & solid = GetConstitutiveModel< SolidBase >( elementSubRegion, solidName );
+    SolidBase const & solid = getConstitutiveModel< SolidBase >( elementSubRegion, solidName );
 
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
@@ -333,7 +333,7 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
 //                                 localMatrix,
 //                                 localRhs );
 
-  m_solidSolver->AssemblyLaunch< constitutive::PoroElasticBase,
+  m_solidSolver->assemblyLaunch< constitutive::PoroElasticBase,
                                  SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
                                                                                                dofManager,
                                                                                                localMatrix,

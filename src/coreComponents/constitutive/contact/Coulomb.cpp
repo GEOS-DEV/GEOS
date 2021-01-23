@@ -57,7 +57,7 @@ real64 Coulomb::limitTangentialTractionNorm( real64 const normalTraction ) const
   return ( m_cohesion - normalTraction * m_frictionCoefficient );
 }
 
-real64 Coulomb::dLimitTangentialTractionNormDNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
+real64 Coulomb::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
 {
   return ( m_frictionCoefficient );
 }

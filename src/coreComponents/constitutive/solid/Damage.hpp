@@ -71,7 +71,7 @@ public:
 
 
   using UPDATE_BASE::setDiscretizationOps;
-  using UPDATE_BASE::GetStiffness;
+  using UPDATE_BASE::getStiffness;
   using UPDATE_BASE::smallStrainNoState;
   using UPDATE_BASE::smallStrain;
   using UPDATE_BASE::hypoElastic;

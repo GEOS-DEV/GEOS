@@ -80,7 +80,7 @@ public:
   static const string catalogName() { return "wellElementSubRegion"; }
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
   virtual const string getCatalogName() const override { return WellElementSubRegion::catalogName(); }
 
@@ -286,7 +286,7 @@ public:
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   ///@}
 

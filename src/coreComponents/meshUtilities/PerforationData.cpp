@@ -117,7 +117,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
 
   // get the permeability in the domain
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
-    mesh.getElemManager()->ConstructArrayViewAccessor< real64, 2 >( permeabilityKey );
+    mesh.getElemManager()->constructArrayViewAccessor< real64, 2 >( permeabilityKey );
 
   arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion->getElementCenter();
 

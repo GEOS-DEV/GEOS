@@ -43,12 +43,12 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName()
+  static string catalogName()
   { return "ChomboIO"; }
 
   /**
    * @brief Writes out a Chombo plot file.
-   * @copydetails EventBase::Execute()
+   * @copydetails EventBase::execute()
    */
   virtual void execute( real64 const time_n,
                         real64 const dt,

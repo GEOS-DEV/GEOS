@@ -31,7 +31,7 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( SlurryFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ProppantSlurryFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ProppantSlurryFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >

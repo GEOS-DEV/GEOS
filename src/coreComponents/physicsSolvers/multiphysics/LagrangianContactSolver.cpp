@@ -1589,7 +1589,7 @@ void LagrangianContactSolver::
                   }
                   for( localIndex i = 1; i < 3; ++i )
                   {
-                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNormDNormalTraction( traction[kfe][0] ) * sliding[ i-1 ] / slidingNorm;
+                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding[ i-1 ] / slidingNorm;
                     dRdT( i, i ) = Ja;
                   }
                 }

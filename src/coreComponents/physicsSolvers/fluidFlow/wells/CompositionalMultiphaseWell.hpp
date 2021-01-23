@@ -93,7 +93,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "CompositionalMultiphaseWell"; }
+  static string catalogName() { return "CompositionalMultiphaseWell"; }
 
   virtual void registerDataOnMesh( Group * const meshBodies ) override;
 

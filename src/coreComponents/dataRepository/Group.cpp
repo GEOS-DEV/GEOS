@@ -208,7 +208,7 @@ Group * Group::createChild( string const & childKey, string const & childName )
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in Group::Catalog" );
   GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
-  return RegisterGroup( childName,
+  return registerGroup( childName,
                         CatalogInterface::factory( childKey, childName, this ) );
 }
 
@@ -217,7 +217,7 @@ void Group::printDataHierarchy( integer indent )
 {
   for( auto & view : this->wrappers() )
   {
-    GEOSX_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->getTypeid().name());
+    GEOSX_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->getTypeId().name());
   }
 
   for( auto & group : this->m_subGroups )

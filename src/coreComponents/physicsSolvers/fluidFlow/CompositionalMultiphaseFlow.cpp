@@ -351,12 +351,12 @@ void CompositionalMultiphaseFlow::updatePhaseVolumeFraction( Group & dataGroup,
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
   arrayView3d< real64 const > const & phaseFrac = fluid.phaseFraction();
-  arrayView3d< real64 const > const & dPhaseFrac_dPres = fluid.dPhaseFractionDPressure();
-  arrayView4d< real64 const > const & dPhaseFrac_dComp = fluid.dPhaseFractionDGlobalCompFraction();
+  arrayView3d< real64 const > const & dPhaseFrac_dPres = fluid.dPhaseFraction_dPressure();
+  arrayView4d< real64 const > const & dPhaseFrac_dComp = fluid.dPhaseFraction_dGlobalCompFraction();
 
   arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
-  arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensityDPressure();
-  arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensityDGlobalCompFraction();
+  arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
+  arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
 
   KernelLaunchSelector2< PhaseVolumeFractionKernel >( m_numComponents, m_numPhases,
                                                       dataGroup.size(),
@@ -403,17 +403,17 @@ void CompositionalMultiphaseFlow::updatePhaseMobility( Group & dataGroup, localI
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
   arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
-  arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensityDPressure();
-  arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensityDGlobalCompFraction();
+  arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
+  arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
 
   arrayView3d< real64 const > const & phaseVisc = fluid.phaseViscosity();
-  arrayView3d< real64 const > const & dPhaseVisc_dPres = fluid.dPhaseViscosityDPressure();
-  arrayView4d< real64 const > const & dPhaseVisc_dComp = fluid.dPhaseViscosityDGlobalCompFraction();
+  arrayView3d< real64 const > const & dPhaseVisc_dPres = fluid.dPhaseViscosity_dPressure();
+  arrayView4d< real64 const > const & dPhaseVisc_dComp = fluid.dPhaseViscosity_dGlobalCompFraction();
 
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
   arrayView3d< real64 const > const & phaseRelPerm = relperm.phaseRelPerm();
-  arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPermDPhaseVolFraction();
+  arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
   KernelLaunchSelector2< PhaseMobilityKernel >( m_numComponents, m_numPhases,
                                                 dataGroup.size(),
@@ -765,11 +765,11 @@ void CompositionalMultiphaseFlow::assembleAccumulationTerms( DomainPartition con
 
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
     arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
-    arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensityDPressure();
-    arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensityDGlobalCompFraction();
+    arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
+    arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
     arrayView4d< real64 const > const & phaseCompFrac = fluid.phaseCompFraction();
-    arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFractionDPressure();
-    arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFractionDGlobalCompFraction();
+    arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
+    arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
 
     KernelLaunchSelector1< AccumulationKernel >( m_numComponents,
                                                  m_numPhases,
@@ -831,12 +831,12 @@ void CompositionalMultiphaseFlow::assembleFluxTerms( real64 const dt,
   {
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
     arrayView4d< real64 const > const & phaseCompFrac = fluid.phaseCompFraction();
-    arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFractionDPressure();
-    arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFractionDGlobalCompFraction();
+    arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
+    arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
 
     arrayView3d< real64 const > const & phaseMassDens = fluid.phaseMassDensity();
-    arrayView3d< real64 const > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensityDPressure();
-    arrayView4d< real64 const > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensityDGlobalCompFraction();
+    arrayView3d< real64 const > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
+    arrayView4d< real64 const > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
@@ -952,13 +952,13 @@ void CompositionalMultiphaseFlow::applyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   // apply pressure boundary conditions.
-  applyDirichletBc( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 
   // apply flux boundary conditions
-  applySourceFluxBc( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+  applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
-void CompositionalMultiphaseFlow::applySourceFluxBc( real64 const time,
+void CompositionalMultiphaseFlow::applySourceFluxBC( real64 const time,
                                                      real64 const dt,
                                                      DofManager const & dofManager,
                                                      DomainPartition & domain,
@@ -994,7 +994,7 @@ void CompositionalMultiphaseFlow::applySourceFluxBc( real64 const time,
       }
     }
 
-    fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd,
+    fs->applyBoundaryConditionToSystem< FieldSpecificationAdd,
                                         parallelDevicePolicy<> >( localSet.toViewConst(),
                                                                   time + dt,
                                                                   dt,
@@ -1012,7 +1012,7 @@ void CompositionalMultiphaseFlow::applySourceFluxBc( real64 const time,
 }
 
 
-void CompositionalMultiphaseFlow::applyDirichletBc( real64 const time,
+void CompositionalMultiphaseFlow::applyDirichletBC( real64 const time,
                                                     real64 const dt,
                                                     DofManager const & dofManager,
                                                     DomainPartition & domain,
@@ -1215,7 +1215,7 @@ real64 CompositionalMultiphaseFlow::calculateResidualNorm( DomainPartition const
   } );
 
   // compute global residual norm
-  real64 const residual = std::sqrt( MpiWrapper::Sum( localResidualNorm ) );
+  real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
@@ -1357,7 +1357,7 @@ bool CompositionalMultiphaseFlow::checkSystemSolution( DomainPartition const & d
 
         // if component density chopping is not allowed, the time step fails if a component density is negative
         // otherwise, we just check that the total density is positive, and negative component densities
-        // will be chopped (i.e., set to zero) in ApplySystemSolution)
+        // will be chopped (i.e., set to zero) in applySystemSolution)
         if( !allowCompDensChopping )
         {
           for( localIndex ic = 0; ic < NC; ++ic )

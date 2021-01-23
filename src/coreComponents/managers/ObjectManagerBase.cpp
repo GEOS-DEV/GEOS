@@ -63,7 +63,7 @@ ObjectManagerBase::~ObjectManagerBase()
 
 
 
-ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::GetCatalog()
+ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::getCatalog()
 {
   static ObjectManagerBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -414,10 +414,10 @@ localIndex ObjectManagerBase::packParentChildMapsPrivate( buffer_unit_type * & b
 }
 
 template
-localIndex ObjectManagerBase::PackParentChildMapsPrivate< true >( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::packParentChildMapsPrivate< true >( buffer_unit_type * & buffer,
                                                                   arrayView1d< localIndex const > const & packList ) const;
 template
-localIndex ObjectManagerBase::PackParentChildMapsPrivate< false >( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::packParentChildMapsPrivate< false >( buffer_unit_type * & buffer,
                                                                    arrayView1d< localIndex const > const & packList ) const;
 
 
@@ -460,7 +460,7 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
 
 
 template< bool DOPACK >
-localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::packSets( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
@@ -482,10 +482,10 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
   return packedSize;
 }
 //template<>
-//localIndex ObjectManagerBase::PackSets<true>( buffer_unit_type * &,
+//localIndex ObjectManagerBase::packSets<true>( buffer_unit_type * &,
 //                                              arrayView1d<localIndex const> const & );
 //template<>
-//localIndex ObjectManagerBase::PackSets<false>( buffer_unit_type * &,
+//localIndex ObjectManagerBase::packSets<false>( buffer_unit_type * &,
 //                                               arrayView1d<localIndex const> const & );
 
 
@@ -587,7 +587,7 @@ localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer
     }
   }
 
-  packedSize += PackSets< DOPACK >( buffer, packList );
+  packedSize += packSets< DOPACK >( buffer, packList );
 
   return packedSize;
 }

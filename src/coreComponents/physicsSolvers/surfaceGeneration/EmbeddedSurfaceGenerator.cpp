@@ -156,7 +156,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
   } );// end loop over thick planes
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
-    elemManager->ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager->constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
 

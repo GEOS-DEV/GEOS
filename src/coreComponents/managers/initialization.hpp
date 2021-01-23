@@ -155,7 +155,7 @@ void pushStatsIntoAdiak( std::string const & name, T const value )
   adiak::value( name + " sum", total );
   adiak::value( name + " mean", double( total ) / MpiWrapper::commSize() );
   adiak::value( name + " min", MpiWrapper::min( value ) );
-  adiak::value( name + " max", MpiWrapper::Max( value ) );
+  adiak::value( name + " max", MpiWrapper::max( value ) );
 #else
   GEOSX_UNUSED_VAR( name );
   GEOSX_UNUSED_VAR( value );

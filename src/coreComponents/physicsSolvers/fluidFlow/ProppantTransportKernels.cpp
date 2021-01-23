@@ -779,7 +779,7 @@ FluxKernel::
 
 template<>
 void FluxKernel::
-  Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  launch< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                     localIndex const GEOSX_UNUSED_PARAM( numDofPerCell ),
                                     real64 const GEOSX_UNUSED_PARAM( dt ),
                                     globalIndex const GEOSX_UNUSED_PARAM( rankOffset ),
@@ -824,7 +824,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  Launch< FaceElementStencil >( FaceElementStencil const & stencil,
+  launch< FaceElementStencil >( FaceElementStencil const & stencil,
                                 localIndex const numDofPerCell,
                                 real64 const dt,
                                 globalIndex const rankOffset,
@@ -1076,7 +1076,7 @@ FluxKernel::
 
 template<>
 void FluxKernel::
-  LaunchCellBasedFluxCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  launchCellBasedFluxCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                                             ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
                                                             R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                             ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
@@ -1090,7 +1090,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  LaunchCellBasedFluxCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchCellBasedFluxCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
                                                         FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
                                                         R1Tensor const & unitGravityVector,
                                                         FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
@@ -1135,7 +1135,7 @@ void FluxKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  LaunchProppantPackVolumeCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  launchProppantPackVolumeCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                                                  real64 const GEOSX_UNUSED_PARAM( proppantDensity ),
                                                                  real64 const GEOSX_UNUSED_PARAM( proppantDiameter ),
@@ -1300,7 +1300,7 @@ ProppantPackVolumeKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  LaunchProppantPackVolumeCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchProppantPackVolumeCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
                                                              real64 const dt,
                                                              real64 const proppantDensity,
                                                              real64 const proppantDiameter,
@@ -1441,7 +1441,7 @@ ProppantPackVolumeKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  LaunchProppantPackVolumeUpdate< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  launchProppantPackVolumeUpdate< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                                             R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                             real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
                                                             ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
@@ -1452,7 +1452,7 @@ void ProppantPackVolumeKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  LaunchProppantPackVolumeUpdate< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchProppantPackVolumeUpdate< FaceElementStencil >( FaceElementStencil const & stencil,
                                                         R1Tensor const & unitGravityVector,
                                                         real64 const maxProppantConcentration,
                                                         ElementView< arrayView1d< integer const > > const & isProppantMobile,

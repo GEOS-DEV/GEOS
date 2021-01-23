@@ -43,7 +43,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   relPermCopy.allocateConstitutiveData( relPerm.getParent(), 1 );
 
   arrayView3d< real64 const > const phaseRelPerm = relPerm.phaseRelPerm();
-  arrayView4d< real64 const > const dPhaseRelPerm_dSat = relPerm.dPhaseRelPermDPhaseVolFraction();
+  arrayView4d< real64 const > const dPhaseRelPerm_dSat = relPerm.dPhaseRelPerm_dPhaseVolFraction();
   arrayView3d< real64 const > const phaseRelPermCopy = relPermCopy.phaseRelPerm();
 
   // set the fluid state to current

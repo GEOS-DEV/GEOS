@@ -273,7 +273,7 @@ void InitializeLocalSearch( MeshLevel const & mesh,
                             localIndex & eiInit )
 {
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  resElemCenter = mesh.getElemManager()->ConstructViewAccessor< array2d< real64 >,
+  resElemCenter = mesh.getElemManager()->constructViewAccessor< array2d< real64 >,
                                                                 arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
   // to initialize the local search for the reservoir element that contains "location",
   // we find the reservoir element that minimizes the distance from "location" to the reservoir element center
@@ -904,9 +904,9 @@ localIndex WellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
                             nodeList().relatedObjectGlobalToLocal() );
 }
 
-void WellElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
+void WellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 {
-  ObjectManagerBase::FixUpDownMaps( nodeList(),
+  ObjectManagerBase::fixUpDownMaps( nodeList(),
                                     m_unmappedGlobalIndicesInNodelist,
                                     clearIfUnmapped );
 }

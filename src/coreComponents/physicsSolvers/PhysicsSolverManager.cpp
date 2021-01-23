@@ -49,7 +49,7 @@ Group * PhysicsSolverManager::createChild( string const & childKey, string const
   if( SolverBase::CatalogInterface::hasKeyName( childKey ) )
   {
     GEOSX_LOG_RANK_0( "Adding Solver of type " << childKey << ", named " << childName );
-    rval = RegisterGroup( childName,
+    rval = registerGroup( childName,
                           SolverBase::CatalogInterface::factory( childKey, childName, this ) );
   }
   return rval;
@@ -59,7 +59,7 @@ Group * PhysicsSolverManager::createChild( string const & childKey, string const
 void PhysicsSolverManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from SolverBase here
-  for( auto & catalogIter: SolverBase::GetCatalog())
+  for( auto & catalogIter: SolverBase::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }

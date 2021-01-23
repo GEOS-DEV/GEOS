@@ -78,12 +78,12 @@ private:
   LinearSolverResult m_result;
 
   void solveDirect( EpetraMatrix & mat,
-                     EpetraVector & sol,
-                     EpetraVector & rhs );
+                    EpetraVector & sol,
+                    EpetraVector & rhs );
 
   void solveKrylov( EpetraMatrix & mat,
-                     EpetraVector & sol,
-                     EpetraVector & rhs );
+                    EpetraVector & sol,
+                    EpetraVector & rhs );
 
 };
 

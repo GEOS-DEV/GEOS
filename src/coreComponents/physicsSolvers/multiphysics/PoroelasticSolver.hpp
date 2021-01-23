@@ -41,7 +41,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "Poroelastic"; }
+  static string catalogName() { return "Poroelastic"; }
 
   virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 

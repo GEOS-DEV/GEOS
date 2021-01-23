@@ -93,7 +93,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   int const commRank = MpiWrapper::commRank();
 
   localIndex const numberOfObjectsHere = object.size();
-  globalIndex const offset = MpiWrapper::PrefixSum< globalIndex >( numberOfObjectsHere );
+  globalIndex const offset = MpiWrapper::prefixSum< globalIndex >( numberOfObjectsHere );
 
   arrayView1d< globalIndex > const & localToGlobal = object.localToGlobalMap();
 
@@ -171,13 +171,13 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
     neighbor.mpiISendReceive( &sendSize,
-                               1,
-                               commData.mpiSizeSendBufferRequest[neighborIndex],
-                               &(receiveBufferSizes[neighborIndex]),
-                               1,
-                               commData.mpiSizeRecvBufferRequest[neighborIndex],
-                               commData.sizeCommID,
-                               MPI_COMM_GEOSX );
+                              1,
+                              commData.mpiSizeSendBufferRequest[neighborIndex],
+                              &(receiveBufferSizes[neighborIndex]),
+                              1,
+                              commData.mpiSizeRecvBufferRequest[neighborIndex],
+                              commData.sizeCommID,
+                              MPI_COMM_GEOSX );
   }
 
 
@@ -193,13 +193,13 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
 
     receiveBuffers[neighborIndex].resize( receiveBufferSizes[neighborIndex] );
     neighbor.mpiISendReceive( objectToCompositionObjectSendBuffer.data(),
-                               sendSize,
-                               commData.mpiSendBufferRequest[neighborIndex],
-                               receiveBuffers[neighborIndex].data(),
-                               receiveBufferSizes[neighborIndex],
-                               commData.mpiRecvBufferRequest[neighborIndex],
-                               commData.commID,
-                               MPI_COMM_GEOSX );
+                              sendSize,
+                              commData.mpiSendBufferRequest[neighborIndex],
+                              receiveBuffers[neighborIndex].data(),
+                              receiveBufferSizes[neighborIndex],
+                              commData.mpiRecvBufferRequest[neighborIndex],
+                              commData.commID,
+                              MPI_COMM_GEOSX );
 
   }
 
@@ -433,8 +433,8 @@ CommunicationTools::
     for( std::size_t i=0; i<allNeighbors.size(); ++i )
     {
       allNeighbors[i].mpiISendReceive( globalPartitionBoundaryObjectsIndices,
-                                        neighborPartitionBoundaryObjects[i],
-                                        commID, MPI_COMM_GEOSX );
+                                       neighborPartitionBoundaryObjects[i],
+                                       commID, MPI_COMM_GEOSX );
     }
 
     for( std::size_t i=0; i<allNeighbors.size(); ++i )
@@ -743,15 +743,15 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
 
   waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
 
-  nodeManager.FixUpDownMaps( false );
+  nodeManager.fixUpDownMaps( false );
   verifyGhostingConsistency( nodeManager, neighbors );
-  edgeManager.FixUpDownMaps( false );
+  edgeManager.fixUpDownMaps( false );
   verifyGhostingConsistency( edgeManager, neighbors );
-  faceManager.FixUpDownMaps( false );
+  faceManager.fixUpDownMaps( false );
   verifyGhostingConsistency( faceManager, neighbors );
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
-    subRegion.FixUpDownMaps( false );
+    subRegion.fixUpDownMaps( false );
     verifyGhostingConsistency( subRegion, neighbors );
   } );
 
@@ -780,9 +780,9 @@ void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, s
     int const bufferSize = neighbor.packCommSizeForSync( fieldNames, *mesh, icomm.commID, on_device );
 
     neighbor.mpiISendReceiveBufferSizes( icomm.commID,
-                                          icomm.mpiSizeSendBufferRequest[neighborIndex],
-                                          icomm.mpiSizeRecvBufferRequest[neighborIndex],
-                                          MPI_COMM_GEOSX );
+                                         icomm.mpiSizeSendBufferRequest[neighborIndex],
+                                         icomm.mpiSizeRecvBufferRequest[neighborIndex],
+                                         MPI_COMM_GEOSX );
 
     neighbor.resizeSendBuffer( icomm.commID, bufferSize );
   }
@@ -814,9 +814,9 @@ void CommunicationTools::synchronizePackSendRecv( const std::map< string, string
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
     neighbor.mpiISendReceiveBuffers( icomm.commID,
-                                      icomm.mpiSendBufferRequest[neighborIndex],
-                                      icomm.mpiRecvBufferRequest[neighborIndex],
-                                      MPI_COMM_GEOSX );
+                                     icomm.mpiSendBufferRequest[neighborIndex],
+                                     icomm.mpiRecvBufferRequest[neighborIndex],
+                                     MPI_COMM_GEOSX );
   }
 
 

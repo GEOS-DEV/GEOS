@@ -207,7 +207,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual const std::type_info & getTypeid() const noexcept override
+  virtual const std::type_info & getTypeId() const noexcept override
   {
     return typeid(T);
   }
@@ -714,7 +714,7 @@ public:
   virtual std::string getDefaultValueString() const override
   {
     // Find the dimensionality of the wrapper value
-    std::string wrapper_type = rtTypes::typeNames( std::type_index( getTypeid()));
+    std::string wrapper_type = rtTypes::typeNames( std::type_index( getTypeId()));
     integer value_dim = 0;
     if( wrapper_type.find( "array3d" ) != std::string::npos )
     {

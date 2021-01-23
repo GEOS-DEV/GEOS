@@ -75,7 +75,7 @@ public:
   { return "CellElementRegion"; }
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
   virtual const string getCatalogName() const override final
   { return CellElementRegion::catalogName(); }

@@ -233,7 +233,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   // get the element dof numbers for the assembly
   string const & elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-    mesh.getElemManager()->ConstructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+    mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
   elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
   // get the face-centered pressures
@@ -485,7 +485,7 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
     localCheck = 0;
   }
 
-  return MpiWrapper::Min( localCheck );
+  return MpiWrapper::min( localCheck );
 }
 
 

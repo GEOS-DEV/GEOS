@@ -104,8 +104,8 @@ public:
   /// Alias to access the object catalog for EventBase derived types.
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
 
-  /// @copydoc dataRepository::Group::GetCatalog()
-  static CatalogInterface::CatalogType & GetCatalog();
+  /// @copydoc dataRepository::Group::getCatalog()
+  static CatalogInterface::CatalogType & getCatalog();
 
 private:
   /// Max time for a simulation

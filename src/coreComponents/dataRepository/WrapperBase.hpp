@@ -500,7 +500,7 @@ public:
    * @brief Get the typeid of T.
    * @return type_info of the wrapped type "typeid(T)"
    */
-  virtual std::type_info const & getTypeid() const = 0;
+  virtual std::type_info const & getTypeId() const = 0;
 
   ///@}
 

@@ -82,7 +82,7 @@ public:
    * @brief Singleton accessor for catalog
    * @return
    */
-  static typename CatalogInterface::CatalogType & GetCatalog();
+  static typename CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief function to return the catalog name of the derived class

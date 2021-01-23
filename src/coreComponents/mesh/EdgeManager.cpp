@@ -734,9 +734,9 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
+void EdgeManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
-  ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
+  ObjectManagerBase::fixUpDownMaps( m_toNodesRelation,
                                     m_unmappedGlobalIndicesInToNodes,
                                     clearIfUnmapped );
 

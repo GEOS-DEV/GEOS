@@ -42,14 +42,14 @@ FieldSpecificationManager::~FieldSpecificationManager()
 Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
 {
   std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::factory( childKey, childName, this );
-  return this->RegisterGroup( childName, std::move( bc ) );
+  return this->registerGroup( childName, std::move( bc ) );
 }
 
 
 void FieldSpecificationManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from BoundaryConditionBase here
-  for( auto & catalogIter: FieldSpecificationBase::GetCatalog())
+  for( auto & catalogIter: FieldSpecificationBase::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }
@@ -66,7 +66,7 @@ void FieldSpecificationManager::applyInitialConditions( Group * domain ) const
               Group * const targetGroup,
               string const fieldName )
   {
-    bc->ApplyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+    bc->applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
   } );
 }
 

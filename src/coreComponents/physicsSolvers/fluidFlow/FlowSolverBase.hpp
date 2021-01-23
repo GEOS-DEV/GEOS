@@ -116,22 +116,22 @@ public:
    */
   virtual void resetViews( MeshLevel & mesh );
 
-  virtual void setUpDfluxDApertureMatrix( DomainPartition & domain,
+  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
                                            DofManager const & dofManager,
                                            CRSMatrix< real64, globalIndex > & localMatrix );
 
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidualDAperture()
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidualDAperture()
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
   {
     return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidualDAperture() const
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }

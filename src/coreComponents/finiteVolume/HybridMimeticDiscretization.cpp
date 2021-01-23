@@ -79,7 +79,7 @@ void HybridMimeticDiscretization::registerDataOnMesh( Group * const meshBodies )
 }
 
 HybridMimeticDiscretization::CatalogInterface::CatalogType &
-HybridMimeticDiscretization::GetCatalog()
+HybridMimeticDiscretization::getCatalog()
 {
   static HybridMimeticDiscretization::CatalogInterface::CatalogType catalog;
   return catalog;

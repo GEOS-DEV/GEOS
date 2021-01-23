@@ -203,7 +203,7 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
   return unPackedSize;
 }
 
-void FaceElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
+void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( m_toNodesRelation,
                                     m_unmappedGlobalIndicesInToNodes,

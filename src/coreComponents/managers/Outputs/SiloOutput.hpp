@@ -44,11 +44,11 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "Silo"; }
+  static string catalogName() { return "Silo"; }
 
   /**
    * @brief Writes out a Silo plot file.
-   * @copydoc EventBase::Execute()
+   * @copydoc EventBase::execute()
    */
   virtual void execute( real64 const time_n,
                         real64 const dt,

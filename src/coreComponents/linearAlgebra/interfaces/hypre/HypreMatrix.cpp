@@ -1173,7 +1173,7 @@ localIndex HypreMatrix::numLocalNonzeros() const
 
 globalIndex HypreMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::Sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), getComm() );
+  return MpiWrapper::sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), getComm() );
 }
 
 void HypreMatrix::print( std::ostream & os ) const
@@ -1274,7 +1274,7 @@ void HypreMatrix::write( string const & filename,
         {
           myID = MpiWrapper::commSize( getComm() );
         }
-        int printID = MpiWrapper::Min( myID, getComm() );
+        int printID = MpiWrapper::min( myID, getComm() );
 
         // Write to file CSRmatrix
         if( MpiWrapper::commRank( getComm() ) == printID )

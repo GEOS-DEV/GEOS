@@ -47,7 +47,7 @@ public:
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "CompositeFunction"; }
+  static string catalogName() { return "CompositeFunction"; }
 
   /**
    * @brief Function initialization

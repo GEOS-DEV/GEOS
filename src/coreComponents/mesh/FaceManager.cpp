@@ -937,7 +937,7 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
+void FaceManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( m_nodeList,
                                     m_unmappedGlobalIndicesInToNodes,

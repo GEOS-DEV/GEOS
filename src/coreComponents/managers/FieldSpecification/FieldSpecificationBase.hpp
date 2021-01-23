@@ -59,7 +59,7 @@ public:
    * @brief static function to return static catalog.
    * @return the static catalog to create derived types through the static factory methods.
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Static Factory Catalog Functions
@@ -118,7 +118,7 @@ public:
    * @param[in] fieldname the name of the field to apply the value to.
    *
    * This function applies the value to a field variable. This function is typically
-   * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
+   * called from within the lambda to a call to FieldSpecificationManager::applyFieldValue().
    */
   template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
   void applyFieldValue( SortedArrayView< localIndex const > const & targetSet,
@@ -671,7 +671,7 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
                                               string const & fieldName ) const
 {
   dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapper->getTypeid());
+  std::type_index typeIndex = std::type_index( wrapper->getTypeId());
 
   rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   true,
@@ -681,7 +681,7 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
     dataRepository::Wrapper< ArrayType > & view = dataRepository::Wrapper< ArrayType >::cast( *wrapper );
 
     auto const & field = view.reference().toView();
-    ApplyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dataGroup );
+    applyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dataGroup );
   } );
 }
 
@@ -696,21 +696,21 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
                                                              typename LAI::ParallelVector & rhs ) const
 {
   dataRepository::WrapperBase const & wrapperBase = *dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapperBase.getTypeid());
+  std::type_index typeIndex = std::type_index( wrapperBase.getTypeId());
   arrayView1d< globalIndex const > const & dofMap = dataGroup->getReference< array1d< globalIndex > >( dofMapName );
   integer const component = getComponent();
 
-  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type )
+  rtTypes::applyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type )
   {
     using FieldType = decltype( type );
     dataRepository::Wrapper< FieldType > const & wrapper = dataRepository::Wrapper< FieldType >::cast( wrapperBase );
     traits::ViewTypeConst< FieldType > fieldView = wrapper.reference();
 
-    this->ApplyBoundaryConditionToSystem< FIELD_OP, LAI >( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
+    this->applyBoundaryConditionToSystem< FIELD_OP, LAI >( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
                                                            [&]( localIndex const a )
     {
       real64 value = 0.0;
-      FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
+      FieldSpecificationEqual::readFieldValue( fieldView, a, component, value );
       return value;
     } );
   } );
@@ -945,7 +945,7 @@ void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayVi
                                                             [fieldView, component] GEOSX_HOST_DEVICE ( localIndex const a )
   {
     real64 value = 0.0;
-    FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
+    FieldSpecificationEqual::readFieldValue( fieldView, a, component, value );
     return value;
   } );
 }
@@ -961,14 +961,14 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
                                                              arrayView1d< real64 > const & rhs ) const
 {
   dataRepository::WrapperBase const & wrapperBase = *dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapperBase.getTypeid());
+  std::type_index typeIndex = std::type_index( wrapperBase.getTypeId());
   arrayView1d< globalIndex const > const & dofMap = dataGroup->getReference< array1d< globalIndex > >( dofMapName );
 
   rtTypes::applyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type )
   {
     using FieldType = decltype( type );
     dataRepository::Wrapper< FieldType > const & wrapper = dataRepository::Wrapper< FieldType >::cast( wrapperBase );
-    ApplyBoundaryConditionToSystemKernel< FIELD_OP, POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs, wrapper.reference() );
+    applyBoundaryConditionToSystemKernel< FIELD_OP, POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs, wrapper.reference() );
   } );
 }
 

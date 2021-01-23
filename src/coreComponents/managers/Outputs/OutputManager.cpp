@@ -40,14 +40,14 @@ Group * OutputManager::createChild( string const & childKey, string const & chil
 {
   GEOSX_LOG_RANK_0( "Adding Output: " << childKey << ", " << childName );
   std::unique_ptr< OutputBase > output = OutputBase::CatalogInterface::factory( childKey, childName, this );
-  return this->RegisterGroup< OutputBase >( childName, std::move( output ) );
+  return this->registerGroup< OutputBase >( childName, std::move( output ) );
 }
 
 
 void OutputManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from OutputBase here
-  for( auto & catalogIter: OutputBase::GetCatalog() )
+  for( auto & catalogIter: OutputBase::getCatalog() )
   {
     createChild( catalogIter.first, catalogIter.first );
   }

@@ -180,10 +180,10 @@ public:
                                        bool const overwriteDownMaps ) override;
 
   /**
-   * @brief Call FixUpDownMaps of the class ObjectManagerBase for nodes-to-edges and nodes-to-faces relation maps.
+   * @brief Call fixUpDownMaps of the class ObjectManagerBase for nodes-to-edges and nodes-to-faces relation maps.
    * @param[in] clearIfUnmapped boolean to indicate if the unmaped indices should be removed or not
    */
-  void FixUpDownMaps( bool const clearIfUnmapped );
+  void fixUpDownMaps( bool const clearIfUnmapped );
 
   /**
    * @brief Compress all nodes-to-faces relation maps

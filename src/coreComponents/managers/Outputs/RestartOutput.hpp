@@ -45,11 +45,11 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "Restart"; }
+  static string catalogName() { return "Restart"; }
 
   /**
    * @brief Writes out a restart file.
-   * @copydoc EventBase::Execute()
+   * @copydoc EventBase::execute()
    */
   virtual void execute( real64 const time_n,
                         real64 const dt,

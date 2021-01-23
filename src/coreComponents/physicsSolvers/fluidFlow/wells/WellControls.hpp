@@ -162,7 +162,7 @@ public:
    * @brief Get the target Bottom Hole Pressure value.
    * @return a value for the target Bottom Hole Pressure
    */
-  const real64 & getTargetBhp() const { return m_targetBHP; }
+  const real64 & getTargetBHP() const { return m_targetBHP; }
 
 
   /**

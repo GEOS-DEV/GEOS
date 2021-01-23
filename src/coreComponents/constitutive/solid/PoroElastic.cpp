@@ -70,7 +70,7 @@ PoroElastic< BASE >::~PoroElastic()
 {}
 
 template< typename BASE >
-void PoroElastic< BASE >::PostProcessInput()
+void PoroElastic< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
 
@@ -106,7 +106,7 @@ void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group * cons
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+void PoroElastic< BASE >::stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                                     arrayView1d< real64 const > const & dPres )
 {
   localIndex const numElems = m_poreVolumeMultiplier.size( 0 );

@@ -61,7 +61,7 @@ public:
   { return "CellBlock"; }
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
   virtual const string getCatalogName() const override final
   { return CellBlock::catalogName(); }

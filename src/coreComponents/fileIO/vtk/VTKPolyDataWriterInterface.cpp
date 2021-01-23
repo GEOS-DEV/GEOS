@@ -263,7 +263,7 @@ void VTKPolyDataWriterInterface::writeField( WrapperBase const & wrapperBase,
                                              vtkSmartPointer< VTKGEOSXData > data,
                                              localIndex size, localIndex & count ) const
 {
-  std::type_info const & typeID = wrapperBase.getTypeid();
+  std::type_info const & typeID = wrapperBase.getTypeId();
   if( typeID==typeid(r1_array) )
   {
     // We need a special case for the R1 array

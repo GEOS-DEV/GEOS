@@ -51,9 +51,9 @@ public:
    * @brief Get the catalog interface for the TaskBase
    * @return the Catalog for TaskBase.
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
-  /// @copydoc geosx::ExecutableGroup::Execute
+  /// @copydoc geosx::ExecutableGroup::execute
   virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
@@ -70,7 +70,7 @@ public:
     GEOSX_ERROR( "NOT IMPLEMENTED" );
   }
 
-  /// @copydoc geosx::dataRepository::Group::PostProcessInput( )
+  /// @copydoc geosx::dataRepository::Group::postProcessInput( )
   void postProcessInput() override;
 };
 

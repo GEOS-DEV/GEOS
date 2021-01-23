@@ -61,7 +61,7 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "BoundedPlane"; }
+  static string catalogName() { return "BoundedPlane"; }
 
   ///@}
 

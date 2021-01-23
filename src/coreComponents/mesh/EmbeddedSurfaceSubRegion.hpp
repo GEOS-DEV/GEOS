@@ -51,7 +51,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EmbeddedSurfaceSubRegion"; }
 
   /**
@@ -60,7 +60,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return EmbeddedSurfaceSubRegion::CatalogName();
+    return EmbeddedSurfaceSubRegion::catalogName();
   }
 
   ///@}

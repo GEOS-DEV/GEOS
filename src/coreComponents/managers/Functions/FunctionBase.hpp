@@ -100,7 +100,7 @@ public:
    * @brief return the catalog entry for the function
    * @return the catalog entry
    */
-  static CatalogInterface::CatalogType & GetCatalog()
+  static CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;

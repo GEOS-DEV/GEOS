@@ -575,7 +575,7 @@ public:
    * @param optlist the option list assocaited with the multiXXXX
    */
   template< typename CBF >
-  void writeMultiXxxx( const DBObjectType type, CBF DBPutMultiCB,
+  void writeMultiXXXX( const DBObjectType type, CBF DBPutMultiCB,
                        int const centering, string const name, int const cycleNumber,
                        string const & multiRoot, const DBoptlist * optlist = nullptr );
 

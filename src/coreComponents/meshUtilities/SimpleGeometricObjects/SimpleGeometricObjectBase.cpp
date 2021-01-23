@@ -33,7 +33,7 @@ SimpleGeometricObjectBase::~SimpleGeometricObjectBase()
 {}
 
 
-SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::GetCatalog()
+SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::getCatalog()
 {
   static SimpleGeometricObjectBase::CatalogInterface::CatalogType catalog;
   return catalog;

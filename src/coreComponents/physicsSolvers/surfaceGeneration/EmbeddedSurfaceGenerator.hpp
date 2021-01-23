@@ -60,7 +60,7 @@ public:
   ~EmbeddedSurfaceGenerator() override;
 
 
-  static string CatalogName() { return "EmbeddedSurfaceGenerator"; }
+  static string catalogName() { return "EmbeddedSurfaceGenerator"; }
 
   virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 

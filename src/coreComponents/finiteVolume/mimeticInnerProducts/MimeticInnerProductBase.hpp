@@ -160,7 +160,7 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
     // in the implementation of the transmissibility multiplier (see below)
     // TODO: see what it would take to bring the (harmonically averaged) two-point trans here
     real64 diagEntry = 0.0;
-    MimeticInnerProductHelpers::computeInvTpfaTransWithMultiplier< NF >( elemPerm,
+    MimeticInnerProductHelpers::computeInvTPFATransWithMultiplier< NF >( elemPerm,
                                                                          faceNormal,
                                                                          faceArea,
                                                                          transMultiplier[elemToFaces[ifaceLoc]],

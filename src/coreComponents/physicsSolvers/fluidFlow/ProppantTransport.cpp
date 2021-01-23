@@ -260,11 +260,11 @@ void ProppantTransport::updateProppantModel( Group & dataGroup, localIndex const
   SlurryFluidBase const & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
   arrayView2d< real64 const > const fluidDens            = fluid.fluidDensity();
-  arrayView2d< real64 const > const dFluidDens_dPres     = fluid.dFluidDensityDPressure();
-  arrayView3d< real64 const > const dFluidDens_dCompConc = fluid.dFluidDensityDComponentConcentration();
+  arrayView2d< real64 const > const dFluidDens_dPres     = fluid.dFluidDensity_dPressure();
+  arrayView3d< real64 const > const dFluidDens_dCompConc = fluid.dFluidDensity_dComponentConcentration();
   arrayView2d< real64 const > const fluidVisc            = fluid.fluidViscosity();
-  arrayView2d< real64 const > const dFluidVisc_dPres     = fluid.dFluidViscosityDPressure();
-  arrayView3d< real64 const > const dFluidVisc_dCompConc = fluid.dFluidViscosityDComponentConcentration();
+  arrayView2d< real64 const > const dFluidVisc_dPres     = fluid.dFluidViscosity_dPressure();
+  arrayView3d< real64 const > const dFluidVisc_dCompConc = fluid.dFluidViscosity_dComponentConcentration();
 
   ParticleFluidBase & proppant = getConstitutiveModel< ParticleFluidBase >( dataGroup, m_proppantModelNames[targetIndex] );
 
@@ -607,11 +607,11 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
     arrayView1d< real64 const > const proppantLiftFlux =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::proppantLiftFluxString );
 
-    SlurryFluidBase const & fluid = GetConstitutiveModel< SlurryFluidBase >( subRegion, targetIndex );
+    SlurryFluidBase const & fluid = getConstitutiveModel< SlurryFluidBase >( subRegion, targetIndex );
 
     arrayView3d< real64 const > const componentDens = fluid.componentDensity();
-    arrayView3d< real64 const > const dCompDens_dPres = fluid.dComponentDensityDPressure();
-    arrayView4d< real64 const > const dCompDens_dCompConc = fluid.dComponentDensityDComponentConcentration();
+    arrayView3d< real64 const > const dCompDens_dPres = fluid.dComponentDensity_dPressure();
+    arrayView4d< real64 const > const dCompDens_dCompConc = fluid.dComponentDensity_dComponentConcentration();
 
     AccumulationKernel::launch( subRegion.size(),
                                 m_numComponents,
@@ -785,7 +785,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
     arrayView1d< real64 const > const
     dProppantConc = subRegion->getReference< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString );
 
-    fs->ApplyBoundaryConditionToSystem< FieldSpecificationEqual,
+    fs->applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                         parallelDevicePolicy<> >( lset,
                                                                   time_n + dt,
                                                                   subRegion,
@@ -843,7 +843,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       GEOSX_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
       bcStatusMap[subRegionName][setName][comp] = true;
 
-      fs->ApplyFieldValue< FieldSpecificationEqual >( targetSet,
+      fs->applyFieldValue< FieldSpecificationEqual >( targetSet,
                                                       time_n + dt,
                                                       subRegion,
                                                       viewKeyStruct::bcComponentConcentrationString );
@@ -953,7 +953,7 @@ ProppantTransport::calculateResidualNorm( DomainPartition const & domain,
   } );
 
   // compute global residual norm
-  real64 const globalResidualNorm = MpiWrapper::Sum( localResidualNorm, MPI_COMM_GEOSX );
+  real64 const globalResidualNorm = MpiWrapper::sum( localResidualNorm, MPI_COMM_GEOSX );
   return sqrt( globalResidualNorm );
 }
 

@@ -79,7 +79,7 @@ public:
 
   virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const;
 
-  virtual real64 dLimitTangentialTractionNormDNormalTraction( real64 const normalTraction ) const;
+  virtual real64 dLimitTangentialTractionNorm_dNormalTraction( real64 const normalTraction ) const;
 
   /// accessor for penalty stiffness
   inline real64 stiffness() const { return m_penaltyStiffness; }
@@ -96,7 +96,7 @@ public:
    * @param[in] aperture the model aperture/gap
    * @return
    */
-  inline real64 dEffectiveApertureDAperture( real64 const aperture ) const
+  inline real64 dEffectiveAperture_dAperture( real64 const aperture ) const
   {
     real64 aperPlus = aperture;
     real64 aperMinus = aperture - 1.0e-6;

@@ -98,7 +98,7 @@ public:
   static string catalogName() { return "PerforationData"; }
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
   virtual const string getCatalogName() const override { return catalogName(); }
 

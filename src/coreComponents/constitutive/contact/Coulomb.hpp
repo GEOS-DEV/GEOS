@@ -49,7 +49,7 @@ public:
 
   virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const override final;
 
-  virtual real64 dLimitTangentialTractionNormDNormalTraction( real64 const normalTraction ) const override final;
+  virtual real64 dLimitTangentialTractionNorm_dNormalTraction( real64 const normalTraction ) const override final;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -62,9 +62,9 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string CatalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return m_catalogNameString; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 

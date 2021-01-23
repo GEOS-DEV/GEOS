@@ -33,7 +33,7 @@ TaskBase::TaskBase( std::string const & name,
 TaskBase::~TaskBase()
 { }
 
-TaskBase::CatalogInterface::CatalogType & TaskBase::GetCatalog()
+TaskBase::CatalogInterface::CatalogType & TaskBase::getCatalog()
 {
   static TaskBase::CatalogInterface::CatalogType catalog;
   return catalog;

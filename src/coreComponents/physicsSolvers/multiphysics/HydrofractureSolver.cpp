@@ -388,14 +388,14 @@ real64 HydrofractureSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //    m_flowSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
 //
 //    // apply boundary conditions to system
-//    m_flowSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
+//    m_flowSolver->applyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
 //
 //    // call the default linear solver on the system
 //    m_flowSolver->SolveSystem( getLinearSystemRepository(),
 //                 getLinearSolverParameters() );
 //
 //    // apply the system solution to the fields/variables
-//    m_flowSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
+//    m_flowSolver->applySystemSolution( getLinearSystemRepository(), 1.0, domain );
 //
 //    if (dtReturnTemporary < dtReturn)
 //    {
@@ -422,17 +422,17 @@ real64 HydrofractureSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //    ApplyFractureFluidCoupling( domain, *getLinearSystemRepository() );
 //
 //    // apply boundary conditions to system
-//    m_solidSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
+//    m_solidSolver->applyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
 //
 //    // call the default linear solver on the system
 //    m_solidSolver->SolveSystem( getLinearSystemRepository(),
 //                 getLinearSolverParameters() );
 //
 //    // apply the system solution to the fields/variables
-//    m_solidSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
+//    m_solidSolver->applySystemSolution( getLinearSystemRepository(), 1.0, domain );
 //
-//    if( m_flowSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
-//        m_solidSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
+//    if( m_flowSolver->calculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
+//        m_solidSolver->calculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
 //    {
 //      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 //      break;
@@ -478,7 +478,7 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
   m_solidSolver->setupDofs( domain, dofManager );
   m_flowSolver->setupDofs( domain, dofManager );
 
-  // restrict coupling to fracture regions only (as done originally in SetupSystem)
+  // restrict coupling to fracture regions only (as done originally in setupSystem)
   ElementRegionManager const & elemManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   string_array fractureRegions;
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
@@ -552,7 +552,7 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   localRhs.setName( this->getName() + "/localRhs" );
   localSolution.setName( this->getName() + "/localSolution" );
 
-  m_flowSolver->setUpDfluxDApertureMatrix( domain, dofManager, localMatrix );
+  m_flowSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
 }
 
@@ -890,7 +890,7 @@ HydrofractureSolver::
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
   CRSMatrixView< real64 const, localIndex const > const
-  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidualDAperture().toViewConst();
+  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
 
   ContactRelationBase const * const
   contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
@@ -903,7 +903,7 @@ HydrofractureSolver::
                                                             FaceElementSubRegion const & subRegion )
   {
     string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
-    SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+    SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
     arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< array1d< globalIndex > >( dispDofKey );
@@ -945,7 +945,7 @@ HydrofractureSolver::
           {
             nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
             real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
-            real64 const dAper_dU = contactRelation->dEffectiveApertureDAperture( aperture[ei] ) * dGap_dU;
+            real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
             dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
           }
         }
@@ -979,7 +979,7 @@ HydrofractureSolver::
                 dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
               real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
               real64 const
-              dAper_dU = contactRelation->dEffectiveApertureDAperture( aperture[ei2] ) * dGap_dU;
+              dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
               dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
             }
           }

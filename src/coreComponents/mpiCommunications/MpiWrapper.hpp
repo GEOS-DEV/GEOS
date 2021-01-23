@@ -154,7 +154,7 @@ public:
   static int cartCoords( MPI_Comm comm, int rank, int maxdims, int coords[] );
 
   static int cartCreate( MPI_Comm comm_old, int ndims, const int dims[], const int periods[],
-                          int reorder, MPI_Comm * comm_cart );
+                         int reorder, MPI_Comm * comm_cart );
 
   static int cartRank( MPI_Comm comm, const int coords[] );
 
@@ -346,7 +346,7 @@ public:
    * @param srcRank The rank that is sending the \p value.
    */
   template< typename T >
-  static void Broadcast( T & value, int srcRank = 0, MPI_Comm comm = MPI_COMM_GEOSX );
+  static void broadcast( T & value, int srcRank = 0, MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Strongly typed wrapper around MPI_Gather().
@@ -558,7 +558,7 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
   return MPI_Allgather( sendbuf, sendcount, getMpiType< T_SEND >(), recvbuf, recvcount, getMpiType< T_RECV >(), comm );
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
-                 "MpiWrapper::Allgather() for serial run requires send and receive buffers are of the same type" );
+                 "MpiWrapper::allgather() for serial run requires send and receive buffers are of the same type" );
   GEOSX_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
   *recvbuf = *sendbuf;
   return 0;
@@ -683,7 +683,7 @@ void MpiWrapper::broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ), MP
 
 template<>
 inline
-void MpiWrapper::Broadcast< std::string >( std::string & MPI_PARAM( value ),
+void MpiWrapper::broadcast< std::string >( std::string & MPI_PARAM( value ),
                                            int MPI_PARAM( srcRank ),
                                            MPI_Comm MPI_PARAM( comm ) )
 {

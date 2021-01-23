@@ -82,7 +82,7 @@ std::string readRootNode( std::string const & rootPath )
     GEOSX_LOG_RANK_VAR( rankFilePattern );
   }
 
-  MpiWrapper::Broadcast( rankFilePattern, 0 );
+  MpiWrapper::broadcast( rankFilePattern, 0 );
 
   char buffer[ 1024 ];
   GEOSX_ERROR_IF_GE( std::snprintf( buffer, 1024, rankFilePattern.data(), MpiWrapper::commRank() ), 1024 );

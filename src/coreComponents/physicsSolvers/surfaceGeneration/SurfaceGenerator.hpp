@@ -65,7 +65,7 @@ public:
   ~SurfaceGenerator() override;
 
 
-  static string CatalogName() { return "SurfaceGenerator"; }
+  static string catalogName() { return "SurfaceGenerator"; }
 
   virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 

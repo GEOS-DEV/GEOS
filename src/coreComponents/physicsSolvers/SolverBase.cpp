@@ -89,7 +89,7 @@ Group * SolverBase::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), 
   return nullptr;
 }
 
-SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
+SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
 {
   static SolverBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -616,7 +616,7 @@ void SolverBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
 void SolverBase::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                             DofManager & GEOSX_UNUSED_PARAM( dofManager ) ) const
 {
-  GEOSX_ERROR( "SolverBase::SetupDofs called!. Should be overridden." );
+  GEOSX_ERROR( "SolverBase::setupDofs called!. Should be overridden." );
 }
 
 void SolverBase::setupSystem( DomainPartition & domain,
@@ -667,7 +667,7 @@ void SolverBase::applyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time 
                                           CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
                                           arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
 {
-  GEOSX_ERROR( "SolverBase::ApplyBoundaryConditions called!. Should be overridden." );
+  GEOSX_ERROR( "SolverBase::applyBoundaryConditions called!. Should be overridden." );
 }
 
 namespace
@@ -757,7 +757,7 @@ SolverBase::calculateResidualNorm( DomainPartition const & GEOSX_UNUSED_PARAM( d
                                    DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( localRhs ) )
 {
-  GEOSX_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden." );
+  GEOSX_ERROR( "SolverBase::calculateResidualNorm called!. Should be overridden." );
   return 0;
 }
 
@@ -841,7 +841,7 @@ void SolverBase::applySystemSolution( DofManager const & GEOSX_UNUSED_PARAM( dof
                                       real64 const GEOSX_UNUSED_PARAM( scalingFactor ),
                                       DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
-  GEOSX_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden." );
+  GEOSX_ERROR( "SolverBase::applySystemSolution called!. Should be overridden." );
 }
 
 void SolverBase::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( const ) )

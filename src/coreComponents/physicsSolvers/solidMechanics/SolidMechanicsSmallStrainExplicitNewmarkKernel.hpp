@@ -247,7 +247,7 @@ public:
 #endif
     }
 
-    FE_TYPE::plus_gradNajAij( q, invJ, stressLocal, stack.fLocal );
+    FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
 #endif
   }
 

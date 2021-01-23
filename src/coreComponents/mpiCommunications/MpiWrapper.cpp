@@ -55,7 +55,7 @@ int MpiWrapper::cartCoords( MPI_Comm comm, int rank, int maxdims, int coords[] )
 }
 
 int MpiWrapper::cartCreate( MPI_Comm comm_old, int ndims, const int dims[], const int periods[],
-                             int reorder, MPI_Comm * comm_cart )
+                            int reorder, MPI_Comm * comm_cart )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Cart_create( comm_old, ndims, dims, periods, reorder, comm_cart );

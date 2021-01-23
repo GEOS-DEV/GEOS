@@ -57,7 +57,7 @@ ConstitutiveBase::~ConstitutiveBase()
 
 
 
-ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::GetCatalog()
+ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::getCatalog()
 {
   static ConstitutiveBase::CatalogInterface::CatalogType catalog;
   return catalog;

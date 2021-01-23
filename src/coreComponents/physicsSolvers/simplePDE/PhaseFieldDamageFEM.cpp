@@ -263,7 +263,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
       constitutive::ConstitutiveBase * const
       solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( m_solidModelName );
 
-      constitutive::ConstitutivePassThru< constitutive::DamageBase >::Execute( solidModel,
+      constitutive::ConstitutivePassThru< constitutive::DamageBase >::execute( solidModel,
                                                                                [&]( auto * const damageModel )
       {
         using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
@@ -445,11 +445,11 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  applyDirichletBcImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+  applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
   if( getLogLevel() == 2 )
   {
-    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
     GEOSX_LOG_RANK_0( "\nJacobian:\n" );
     std::cout << localMatrix.toViewConst();
     GEOSX_LOG_RANK_0( "\nResidual:\n" );
@@ -469,7 +469,7 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 //                          std::to_string( newtonIter ) + ".mtx";
 //    rhs.write( filename_rhs );
 //
-//    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::ApplyBoundaryConditions" );
+//    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
 //    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
 //    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
 //  }
@@ -561,11 +561,11 @@ void PhaseFieldDamageFEM::solveSystem( DofManager const & dofManager,
   }
 }
 
-void PhaseFieldDamageFEM::applyDirichletBcImplicit( real64 const time,
-                                                     DofManager const & dofManager,
-                                                     DomainPartition & domain,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                     arrayView1d< real64 > const & localRhs )
+void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
+                                                    DofManager const & dofManager,
+                                                    DomainPartition & domain,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs )
 
 {
   GEOSX_MARK_FUNCTION;
@@ -579,7 +579,7 @@ void PhaseFieldDamageFEM::applyDirichletBcImplicit( real64 const time,
                         Group * const targetGroup,
                         string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
   {
-    bc->ApplyBoundaryConditionToSystem< FieldSpecificationEqual,
+    bc->applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                         parallelDevicePolicy< 32 > >( targetSet,
                                                                       time,
                                                                       targetGroup,

@@ -171,7 +171,7 @@ public:
   template< typename TYPE >
   static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::CatalogName();
+    std::string castedName = TYPE::catalogName();
     std::string objectName = object.getName();
 
     if( castedName != objectName )
@@ -294,7 +294,7 @@ class CatalogEntryConstructor
 public:
   /**
    * @brief Constructor creates a catalog entry using the key defined by
-   * TYPE::CatalogName(), and value of CatalogEntry<TYPE,BASETYPE,ARGS...>.
+   * TYPE::catalogName(), and value of CatalogEntry<TYPE,BASETYPE,ARGS...>.
    */
   CatalogEntryConstructor()
   {
@@ -319,7 +319,7 @@ public:
                              << " catalog component of derived type "
                              << LvArray::system::demangle( typeid(TYPE).name())
                              << " where " << LvArray::system::demangle( typeid(TYPE).name())
-                             << "::CatalogName() = " << TYPE::CatalogName());
+                             << "::catalogName() = " << TYPE::catalogName());
 #endif
   }
 
@@ -423,7 +423,7 @@ public:
   static CatalogType & getCatalog()
   {
 #if BASEHOLDSCATALOG == 1
-    return BASETYPE::GetCatalog();
+    return BASETYPE::getCatalog();
 #else
     static CatalogType catalog;
     return catalog;
@@ -460,7 +460,7 @@ public:
   template< typename TYPE >
   static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::CatalogName();
+    std::string castedName = TYPE::catalogName();
     std::string objectName = object.getName();
 
     if( castedName != objectName )
@@ -584,20 +584,20 @@ public:
                                                                    << " , ... >" );
 #endif
 
-    std::string name = TYPE::CatalogName();
+    std::string name = TYPE::catalogName();
 #if ( __cplusplus >= 201402L )
     std::unique_ptr< CatalogEntry< BASETYPE, TYPE > > temp = std::make_unique< CatalogEntry< BASETYPE, TYPE > >();
 #else
     std::unique_ptr< CatalogEntry< BASETYPE, TYPE > > temp = std::unique_ptr< CatalogEntry< BASETYPE, TYPE > >( new CatalogEntry< BASETYPE, TYPE >()  );
 #endif
-    ( CatalogInterface< BASETYPE >::GetCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
+    ( CatalogInterface< BASETYPE >::getCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Registered " << LvArray::system::demangle( typeid(BASETYPE).name())
                              << " catalog component of derived type "
                              << LvArray::system::demangle( typeid(TYPE).name())
                              << " where " << LvArray::system::demangle( typeid(TYPE).name())
-                             << "::CatalogName() = " << TYPE::CatalogName());
+                             << "::catalogName() = " << TYPE::catalogName());
 #endif
   }
 

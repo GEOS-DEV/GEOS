@@ -91,7 +91,7 @@ public:
    * @brief Return the name of the InternalMeshGenerator in object Catalog.
    * @return string that contains the key name to InternalMeshGenerator in the Catalog
    */
-  static string CatalogName() { return "InternalMesh"; }
+  static string catalogName() { return "InternalMesh"; }
 
 //  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
 //

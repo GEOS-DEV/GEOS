@@ -90,7 +90,7 @@ public:
    * for the string specified in fieldPath as a substring in the objectPath specified in the input
    * file, checks if fieldName is equal to the fieldName specified in the input file, and check if
    * the time parameter falls within the beginTime and endTime of the FieldSpecificationBase object,
-   * and calls FieldSpecificationBase::ApplyFieldValue().
+   * and calls FieldSpecificationBase::applyFieldValue().
    *
    */
   template< typename POLICY=parallelHostPolicy >
@@ -131,7 +131,7 @@ public:
    * for the string specified in fieldPath as a substring in the objectPath specified in the input
    * file, checks if fieldName is equal to the fieldName specified in the input file, and check if
    * the time parameter falls within the beginTime and endTime of the FieldSpecificationBase object,
-   * and calls FieldSpecificationBase::ApplyFieldValue(), and calls the lambda function
+   * and calls FieldSpecificationBase::applyFieldValue(), and calls the lambda function
    * to apply any operations required for completing the application of the value to the field in addition to
    * setting the target field.
    */
@@ -145,8 +145,8 @@ public:
   /**
    * @brief Function to apply a value directly to a field variable and applies a lambda
    *        for any post operations that are needed.
-   * @tparam PRELAMBDA The type of the lambda function to be called before the ApplyFieldValue
-   * @tparam POSTLAMBDA The type of the lambda function to be called after the ApplyFieldValue
+   * @tparam PRELAMBDA The type of the lambda function to be called before the applyFieldValue
+   * @tparam POSTLAMBDA The type of the lambda function to be called after the applyFieldValue
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
    * @param domain The DomainPartition object.
@@ -172,7 +172,7 @@ public:
    * as a substring in the objectPath specified in the input file, checks if fieldName is equal to
    * the fieldName specified in the input file, and check if the time parameter falls within the
    * beginTime and endTime of the FieldSpecificationBase object, and calls
-   * FieldSpecificationBase::ApplyFieldValue(), and calls the postLambda function to apply any
+   * FieldSpecificationBase::applyFieldValue(), and calls the postLambda function to apply any
    * operations required for completing the application of the value to the field in addition to
    * setting the target field.
    */

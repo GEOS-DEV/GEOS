@@ -92,7 +92,7 @@ void MultiPhaseMultiComponentFluid::postProcessInput()
 
   GEOSX_ERROR_IF( m_phasePVTParaFiles.size() != NP, "The number of phasePVTParaFiles is not the same as the number of phases!" );
 
-  createPvtModels();
+  createPVTModels();
 
 }
 
@@ -105,7 +105,7 @@ void MultiPhaseMultiComponentFluid::initializePostSubGroups( Group * const group
 }
 
 
-void MultiPhaseMultiComponentFluid::createPvtModels()
+void MultiPhaseMultiComponentFluid::createPVTModels()
 {
   for( std::string & filename : m_phasePVTParaFiles )
   {

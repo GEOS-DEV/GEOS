@@ -391,12 +391,12 @@ void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegio
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
   arrayView3d< real64 const > const & phaseFrac = fluid.phaseFraction();
-  arrayView3d< real64 const > const & dPhaseFrac_dPres = fluid.dPhaseFractionDPressure();
-  arrayView4d< real64 const > const & dPhaseFrac_dComp = fluid.dPhaseFractionDGlobalCompFraction();
+  arrayView3d< real64 const > const & dPhaseFrac_dPres = fluid.dPhaseFraction_dPressure();
+  arrayView4d< real64 const > const & dPhaseFrac_dComp = fluid.dPhaseFraction_dGlobalCompFraction();
 
   arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
-  arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensityDPressure();
-  arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensityDGlobalCompFraction();
+  arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
+  arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
 
   CompositionalMultiphaseFlowKernels::KernelLaunchSelector2< CompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel
                                                              >( numFluidComponents(), numFluidPhases(),
@@ -441,8 +441,8 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
   arrayView3d< real64 const > const & phaseMassDens = fluid.phaseMassDensity();
-  arrayView3d< real64 const > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensityDPressure();
-  arrayView4d< real64 const > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensityDGlobalCompFraction();
+  arrayView3d< real64 const > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
+  arrayView4d< real64 const > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
 
   TotalMassDensityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
                                                             numFluidComponents(),
@@ -692,7 +692,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( DomainPartition const & doma
     arrayView1d< real64 const > const & wellElemVolume =
       subRegion.getReference< array1d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
 
-    MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & totalDens = fluid.totalDensity();
 
     ResidualNormKernel::launch< parallelDevicePolicy<>,
@@ -1224,7 +1224,7 @@ void CompositionalMultiphaseWell::formPressureRelations( DomainPartition const &
       else
       {
         wellControls.setControl( WellControls::Control::BHP,
-                                 wellControls.getTargetBhp() );
+                                 wellControls.getTargetBHP() );
 
         GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
                                                               << " from rate constraint to BHP constraint" );

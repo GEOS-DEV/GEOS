@@ -31,7 +31,7 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( SingleFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CompressibleSinglePhaseFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >

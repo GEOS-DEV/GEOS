@@ -86,7 +86,7 @@ void SinglePhaseWell::initializePreSubGroups( Group * const rootGroup )
   DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  ValidateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+  validateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
 }
 
 void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex ) const
@@ -251,7 +251,7 @@ void SinglePhaseWell::formPressureRelations( DomainPartition const & domain,
     // get well constitutive data
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & wellElemDensity = fluid.density();
-    arrayView2d< real64 const > const & dWellElemDensity_dPres = fluid.dDensityDPressure();
+    arrayView2d< real64 const > const & dWellElemDensity_dPres = fluid.dDensity_dPressure();
 
     localIndex const controlHasSwitched =
       PressureRelationKernel::launch< parallelDevicePolicy<>,
@@ -283,7 +283,7 @@ void SinglePhaseWell::formPressureRelations( DomainPartition const & domain,
       else
       {
         wellControls.setControl( WellControls::Control::BHP,
-                                 wellControls.getTargetBhp() );
+                                 wellControls.getTargetBHP() );
 
         GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
                                                               << " from rate constraint to BHP constraint" );
@@ -323,9 +323,9 @@ void SinglePhaseWell::computePerforationRates( WellElementSubRegion & subRegion,
   // get well constitutive data
   SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
   arrayView2d< real64 const > const wellElemDensity = fluid.density();
-  arrayView2d< real64 const > const dWellElemDensity_dPres = fluid.dDensityDPressure();
+  arrayView2d< real64 const > const dWellElemDensity_dPres = fluid.dDensity_dPressure();
   arrayView2d< real64 const > const wellElemViscosity = fluid.viscosity();
-  arrayView2d< real64 const > const dWellElemViscosity_dPres = fluid.dViscosityDPressure();
+  arrayView2d< real64 const > const dWellElemViscosity_dPres = fluid.dViscosity_dPressure();
 
   // get well variables on perforations
   arrayView1d< real64 const > const perfGravCoef =

@@ -60,11 +60,11 @@ public:
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "SourceFlux"; }
+  static string catalogName() { return "SourceFlux"; }
 
   virtual const string getCatalogName() const override
   {
-    return SourceFluxBoundaryCondition::CatalogName();
+    return SourceFluxBoundaryCondition::catalogName();
   }
 
 };

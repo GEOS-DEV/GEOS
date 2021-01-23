@@ -50,7 +50,7 @@ public:
    * @brief The catalog name interface
    * @return name of the TableFunction in the FunctionBase catalog
    */
-  static string CatalogName() { return "TableFunction"; }
+  static string catalogName() { return "TableFunction"; }
 
   /**
    * @brief Parse a table file.

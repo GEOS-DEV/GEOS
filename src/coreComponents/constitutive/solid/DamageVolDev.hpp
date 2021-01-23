@@ -47,7 +47,7 @@ public:
   {}
 
 
-  using DamageUpdates< UPDATE_BASE >::GetStiffness;
+  using DamageUpdates< UPDATE_BASE >::getStiffness;
   using DamageUpdates< UPDATE_BASE >::smallStrainNoState;
   using DamageUpdates< UPDATE_BASE >::smallStrain;
   using DamageUpdates< UPDATE_BASE >::hypoElastic;
@@ -129,7 +129,7 @@ public:
   }
   #endif
 
-  //Modified GetStiffness function to account for Vol-Dev Decomposition of Stresses.
+  //Modified getStiffness function to account for Vol-Dev Decomposition of Stresses.
   GEOSX_HOST_DEVICE inline
   virtual void getStiffness( localIndex const k,
                              localIndex const q,

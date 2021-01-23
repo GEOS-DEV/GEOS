@@ -138,7 +138,7 @@ public:
   { return "NodeManager"; }
 
   /**
-   * @brief Provide a virtual access to CatalogName().
+   * @brief Provide a virtual access to catalogName().
    * @return string that contains the NodeManager catalog name
    */
   const string getCatalogName() const override final
@@ -215,11 +215,11 @@ public:
                                        bool const overwriteDownMaps ) override;
 
   /**
-   * @brief Call FixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
+   * @brief Call fixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
    * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
    */
-  void FixUpDownMaps( bool const clearIfUnmapped );
+  void fixUpDownMaps( bool const clearIfUnmapped );
 
   ///@}
 

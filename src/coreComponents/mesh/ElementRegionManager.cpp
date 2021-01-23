@@ -85,14 +85,14 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
   GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
   Group * const elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
-  return elementRegions->RegisterGroup( childName,
+  return elementRegions->registerGroup( childName,
                                         CatalogInterface::factory( childKey, childName, elementRegions ) );
 
 }
 
 void ElementRegionManager::expandObjectCatalogs()
 {
-  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::GetCatalog();
+  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::getCatalog();
   for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin();
        iter!=catalog.end();
        ++iter )

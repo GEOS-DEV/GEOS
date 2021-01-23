@@ -74,7 +74,7 @@ public:
   /**
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
-  static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
+  static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
 
   virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
@@ -185,13 +185,13 @@ public:
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    */
-  void applyDisplacementBcImplicit( real64 const time,
-                                     DofManager const & dofManager,
-                                     DomainPartition & domain,
-                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                     arrayView1d< real64 > const & localRhs );
+  void applyDisplacementBCImplicit( real64 const time,
+                                    DofManager const & dofManager,
+                                    DomainPartition & domain,
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    arrayView1d< real64 > const & localRhs );
 
-  void crsApplyTractionBc( real64 const time,
+  void crsApplyTractionBC( real64 const time,
                            DofManager const & dofManager,
                            DomainPartition & domain,
                            arrayView1d< real64 > const & localRhs );

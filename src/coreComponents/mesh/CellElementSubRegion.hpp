@@ -99,7 +99,7 @@ public:
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   ///@}
 

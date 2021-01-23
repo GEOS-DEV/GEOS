@@ -440,7 +440,7 @@ struct PressureRelationKernel
     localIndex const NC = numComponents;
     localIndex const resNDOF = numDofPerResElement;
 
-    real64 const targetBHP = wellControls.getTargetBhp();
+    real64 const targetBHP = wellControls.getTargetBHP();
     real64 const targetRate = wellControls.getTargetRate();
     WellControls::Control const currentControl = wellControls.getControl();
     WellControls::Type const wellType = wellControls.getType();
@@ -1026,7 +1026,7 @@ struct PresCompFracInitializationKernel
     localIndex const NC = numComponents;
     localIndex const NP = numPhases;
 
-    real64 const targetBHP = wellControls.getTargetBhp();
+    real64 const targetBHP = wellControls.getTargetBHP();
     WellControls::Control const currentControl = wellControls.getControl();
     WellControls::Type const wellType = wellControls.getType();
     localIndex const iwelemControl = wellControls.getReferenceWellElementIndex();
@@ -1370,7 +1370,7 @@ struct SolutionCheckKernel
 
         // if component density is not allowed, the time step fails if a component density is negative
         // otherwise, we just check that the total density is positive, and negative component densities
-        // will be chopped (i.e., set to zero) in ApplySystemSolution
+        // will be chopped (i.e., set to zero) in applySystemSolution
         if( !allowCompDensChopping )
         {
           for( localIndex ic = 0; ic < numComponents; ++ic )

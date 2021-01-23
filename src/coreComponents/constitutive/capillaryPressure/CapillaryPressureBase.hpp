@@ -124,7 +124,7 @@ public:
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
   arrayView3d< real64 const > phaseCapPressure() const { return m_phaseCapPressure; }
-  arrayView4d< real64 const > dPhaseCapPressureDPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
+  arrayView4d< real64 const > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {

@@ -41,14 +41,14 @@ ConstitutiveManager::~ConstitutiveManager()
 Group * ConstitutiveManager::createChild( string const & childKey, string const & childName )
 {
   std::unique_ptr< ConstitutiveBase > material = ConstitutiveBase::CatalogInterface::factory( childKey, childName, this );
-  return RegisterGroup< ConstitutiveBase >( childName, std::move( material ) );
+  return registerGroup< ConstitutiveBase >( childName, std::move( material ) );
 }
 
 
 void ConstitutiveManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from ConstitutiveBase here
-  for( auto & catalogIter: ConstitutiveBase::GetCatalog())
+  for( auto & catalogIter: ConstitutiveBase::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }
@@ -79,7 +79,7 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
 
 
   ConstitutiveBase * const
-  rval = constitutiveGroup->RegisterGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
+  rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
                                                                std::move( material ) );
   rval->setSizedFromParent( 1 );
   rval->resize( constitutiveGroup->size() );

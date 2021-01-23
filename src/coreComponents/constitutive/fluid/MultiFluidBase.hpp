@@ -274,34 +274,34 @@ public:
   void setMassFlag( bool flag );
 
   arrayView3d< real64 const > phaseFraction() const { return m_phaseFraction; }
-  arrayView3d< real64 const > dPhaseFractionDPressure() const { return m_dPhaseFraction_dPressure; }
-  arrayView3d< real64 const > dPhaseFractionDTemperature() const { return m_dPhaseFraction_dTemperature; }
-  arrayView4d< real64 const > dPhaseFractionDGlobalCompFraction() const { return m_dPhaseFraction_dGlobalCompFraction; }
+  arrayView3d< real64 const > dPhaseFraction_dPressure() const { return m_dPhaseFraction_dPressure; }
+  arrayView3d< real64 const > dPhaseFraction_dTemperature() const { return m_dPhaseFraction_dTemperature; }
+  arrayView4d< real64 const > dPhaseFraction_dGlobalCompFraction() const { return m_dPhaseFraction_dGlobalCompFraction; }
 
   arrayView3d< real64 const > phaseDensity() const { return m_phaseDensity; }
-  arrayView3d< real64 const > dPhaseDensityDPressure() const { return m_dPhaseDensity_dPressure; }
-  arrayView3d< real64 const > dPhaseDensityDTemperature() const { return m_dPhaseDensity_dTemperature; }
-  arrayView4d< real64 const > dPhaseDensityDGlobalCompFraction() const { return m_dPhaseDensity_dGlobalCompFraction; }
+  arrayView3d< real64 const > dPhaseDensity_dPressure() const { return m_dPhaseDensity_dPressure; }
+  arrayView3d< real64 const > dPhaseDensity_dTemperature() const { return m_dPhaseDensity_dTemperature; }
+  arrayView4d< real64 const > dPhaseDensity_dGlobalCompFraction() const { return m_dPhaseDensity_dGlobalCompFraction; }
 
   arrayView3d< real64 const > phaseMassDensity() const { return m_phaseMassDensity; }
-  arrayView3d< real64 const > dPhaseMassDensityDPressure() const { return m_dPhaseMassDensity_dPressure; }
-  arrayView3d< real64 const > dPhaseMassDensityDTemperature() const { return m_dPhaseMassDensity_dTemperature; }
-  arrayView4d< real64 const > dPhaseMassDensityDGlobalCompFraction() const { return m_dPhaseMassDensity_dGlobalCompFraction; }
+  arrayView3d< real64 const > dPhaseMassDensity_dPressure() const { return m_dPhaseMassDensity_dPressure; }
+  arrayView3d< real64 const > dPhaseMassDensity_dTemperature() const { return m_dPhaseMassDensity_dTemperature; }
+  arrayView4d< real64 const > dPhaseMassDensity_dGlobalCompFraction() const { return m_dPhaseMassDensity_dGlobalCompFraction; }
 
   arrayView3d< real64 const > phaseViscosity() const { return m_phaseViscosity; }
-  arrayView3d< real64 const > dPhaseViscosityDPressure() const { return m_dPhaseViscosity_dPressure; }
-  arrayView3d< real64 const > dPhaseViscosityDTemperature() const { return m_dPhaseViscosity_dTemperature; }
-  arrayView4d< real64 const > dPhaseViscosityDGlobalCompFraction() const { return m_dPhaseViscosity_dGlobalCompFraction; }
+  arrayView3d< real64 const > dPhaseViscosity_dPressure() const { return m_dPhaseViscosity_dPressure; }
+  arrayView3d< real64 const > dPhaseViscosity_dTemperature() const { return m_dPhaseViscosity_dTemperature; }
+  arrayView4d< real64 const > dPhaseViscosity_dGlobalCompFraction() const { return m_dPhaseViscosity_dGlobalCompFraction; }
 
   arrayView4d< real64 const > phaseCompFraction() const { return m_phaseCompFraction; }
-  arrayView4d< real64 const > dPhaseCompFractionDPressure() const { return m_dPhaseCompFraction_dPressure; }
-  arrayView4d< real64 const > dPhaseCompFractionDTemperature() const { return m_dPhaseCompFraction_dTemperature; }
-  arrayView5d< real64 const > dPhaseCompFractionDGlobalCompFraction() const { return m_dPhaseCompFraction_dGlobalCompFraction; }
+  arrayView4d< real64 const > dPhaseCompFraction_dPressure() const { return m_dPhaseCompFraction_dPressure; }
+  arrayView4d< real64 const > dPhaseCompFraction_dTemperature() const { return m_dPhaseCompFraction_dTemperature; }
+  arrayView5d< real64 const > dPhaseCompFraction_dGlobalCompFraction() const { return m_dPhaseCompFraction_dGlobalCompFraction; }
 
   arrayView2d< real64 const > totalDensity() const { return m_totalDensity; }
-  arrayView2d< real64 const > dTotalDensityDPressure() const { return m_dTotalDensity_dPressure; }
-  arrayView2d< real64 const > dTotalDensityDTemperature() const { return m_dTotalDensity_dTemperature; }
-  arrayView3d< real64 const > dTotalDensityDGlobalCompFraction() const { return m_dTotalDensity_dGlobalCompFraction; }
+  arrayView2d< real64 const > dTotalDensity_dPressure() const { return m_dTotalDensity_dPressure; }
+  arrayView2d< real64 const > dTotalDensity_dTemperature() const { return m_dTotalDensity_dTemperature; }
+  arrayView3d< real64 const > dTotalDensity_dGlobalCompFraction() const { return m_dTotalDensity_dGlobalCompFraction; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {

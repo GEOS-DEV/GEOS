@@ -58,7 +58,7 @@ public:
  * @param[in] val R1Tensor to be inserted
  */
 template<>
-void VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index, R1Tensor const & val );
+void VTKGEOSXData::customInsertValue< R1Tensor >( localIndex index, R1Tensor const & val );
 
 }
 }

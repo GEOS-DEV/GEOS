@@ -602,7 +602,7 @@ public:
 
 protected:
 
-  void setUp() override
+  void SetUp() override
   {
     globalIndex constexpr n = 100;
     compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
@@ -659,7 +659,7 @@ public:
 
 protected:
 
-  void setUp() override
+  void SetUp() override
   {
     globalIndex constexpr n = 100;
     compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
@@ -743,7 +743,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestElasticity2D, PetscInterface, )
 //  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 //  typename LAI::ParallelVector x;
 //  localIndex const localSize = rank*10;
-//  globalIndex const globalSize = MpiWrapper::Sum( localSize );
+//  globalIndex const globalSize = MpiWrapper::sum( localSize );
 //
 //  x.createWithLocalSize( localSize, MPI_COMM_WORLD );
 //

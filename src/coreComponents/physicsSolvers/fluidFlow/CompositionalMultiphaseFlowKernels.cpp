@@ -99,14 +99,14 @@ ComponentFractionKernel::
 #define INST_ComponentFractionKernel( NC ) \
   template \
   void ComponentFractionKernel:: \
-    Launch< NC >( localIndex const size, \
+    launch< NC >( localIndex const size, \
                   arrayView2d< real64 const > const & compDens, \
                   arrayView2d< real64 const > const & dCompDens, \
                   arrayView2d< real64 > const & compFrac, \
                   arrayView3d< real64 > const & dCompFrac_dCompDens ); \
   template \
   void ComponentFractionKernel:: \
-    Launch< NC >( SortedArrayView< localIndex const > const & targetSet, \
+    launch< NC >( SortedArrayView< localIndex const > const & targetSet, \
                   arrayView2d< real64 const > const & compDens, \
                   arrayView2d< real64 const > const & dCompDens, \
                   arrayView2d< real64 > const & compFrac, \
@@ -253,7 +253,7 @@ void PhaseVolumeFractionKernel::
   template \
   void \
   PhaseVolumeFractionKernel:: \
-    Launch< NC, NP >( localIndex const size, \
+    launch< NC, NP >( localIndex const size, \
                       arrayView2d< real64 const > const & compDens, \
                       arrayView2d< real64 const > const & dCompDens, \
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
@@ -269,7 +269,7 @@ void PhaseVolumeFractionKernel::
   template \
   void \
   PhaseVolumeFractionKernel:: \
-    Launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
+    launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
                       arrayView2d< real64 const > const & compDens, \
                       arrayView2d< real64 const > const & dCompDens, \
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
@@ -451,7 +451,7 @@ void PhaseMobilityKernel::
   template \
   void \
   PhaseMobilityKernel:: \
-    Launch< NC, NP >( localIndex const size, \
+    launch< NC, NP >( localIndex const size, \
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                       arrayView3d< real64 const > const & phaseDens, \
                       arrayView3d< real64 const > const & dPhaseDens_dPres, \
@@ -469,7 +469,7 @@ void PhaseMobilityKernel::
   template \
   void \
   PhaseMobilityKernel:: \
-    Launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
+    launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                       arrayView3d< real64 const > const & phaseDens, \
                       arrayView3d< real64 const > const & dPhaseDens_dPres, \
@@ -512,7 +512,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 AccumulationKernel::
-  Compute( localIndex const numPhases,
+  compute( localIndex const numPhases,
            real64 const & volume,
            real64 const & porosityOld,
            real64 const & porosityRef,
@@ -650,7 +650,7 @@ AccumulationKernel::
     real64 localAccum[NC];
     real64 localAccumJacobian[NC][NDOF];
 
-    Compute< NC >( numPhases,
+    compute< NC >( numPhases,
                    volume[ei],
                    porosityOld[ei],
                    porosityRef[ei],
@@ -698,7 +698,7 @@ AccumulationKernel::
   template \
   void \
   AccumulationKernel:: \
-    Launch< NC >( localIndex const numPhases, \
+    launch< NC >( localIndex const numPhases, \
                   localIndex const size, \
                   globalIndex const rankOffset, \
                   arrayView1d< globalIndex const > const & dofNumber, \
@@ -739,7 +739,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 FluxKernel::
-  Compute( localIndex const numPhases,
+  compute( localIndex const numPhases,
            localIndex const stencilSize,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
@@ -1055,7 +1055,7 @@ FluxKernel::
     stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
     stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
 
-    FluxKernel::Compute< NC, NUM_ELEMS, MAX_STENCIL >( numPhases,
+    FluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL >( numPhases,
                                                        stencilSize,
                                                        seri[iconn],
                                                        sesri[iconn],
@@ -1123,7 +1123,7 @@ FluxKernel::
 #define INST_FluxKernel( NC, STENCIL_TYPE ) \
   template \
   void FluxKernel:: \
-    Launch< NC, STENCIL_TYPE >( localIndex const numPhases, \
+    launch< NC, STENCIL_TYPE >( localIndex const numPhases, \
                                 STENCIL_TYPE const & stencil, \
                                 globalIndex const rankOffset, \
                                 ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber, \
@@ -1171,7 +1171,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 VolumeBalanceKernel::
-  Compute( real64 const & volume,
+  compute( real64 const & volume,
            real64 const & porosityRef,
            real64 const & pvMult,
            real64 const & dPvMult_dPres,
@@ -1243,7 +1243,7 @@ VolumeBalanceKernel::
     real64 localVolBalance;
     real64 localVolBalanceJacobian[NDOF];
 
-    Compute< NC, NP >( volume[ei],
+    compute< NC, NP >( volume[ei],
                        porosityRef[ei],
                        pvMult[ei][0],
                        dPvMult_dPres[ei][0],
@@ -1275,7 +1275,7 @@ VolumeBalanceKernel::
 #define INST_VolumeBalanceKernel( NC, NP ) \
   template \
   void VolumeBalanceKernel:: \
-    Launch< NC, NP >( localIndex const size, \
+    launch< NC, NP >( localIndex const size, \
                       globalIndex const rankOffset, \
                       arrayView1d< globalIndex const > const & dofNumber, \
                       arrayView1d< integer const > const & elemGhostRank, \

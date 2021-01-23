@@ -161,7 +161,7 @@ public:
    * @brief Get typeid for current group
    * @return @p typeid(*this)
    */
-  virtual const std::type_info & getTypeid() const
+  virtual const std::type_info & getTypeId() const
   {
     return typeid(*this);
   }
@@ -173,7 +173,7 @@ public:
    */
   bool checkTypeId( std::type_info const & typeToCheck ) const
   {
-    return typeToCheck == getTypeid();
+    return typeToCheck == getTypeId();
   }
 
   /**
@@ -209,7 +209,7 @@ public:
   T * registerGroup( std::string const & name, std::unique_ptr< T > newObject );
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name          The name of the group to use as a string key.
@@ -223,7 +223,7 @@ public:
                      T * newObject );
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name The name of the group to use as a string key.
@@ -238,7 +238,7 @@ public:
   }
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in,out] keyIndex A KeyIndexT object that will be used to specify the name of
@@ -256,7 +256,7 @@ public:
   }
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @tparam TBASE The type whose type catalog will be used to look up the new sub-group type
@@ -270,7 +270,7 @@ public:
   T * registerGroup( std::string const & name, std::string const & catalogName )
   {
     std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
-    return RegisterGroup< T >( name, std::move( newGroup ) );
+    return registerGroup< T >( name, std::move( newGroup ) );
   }
 
   /**
@@ -752,7 +752,7 @@ public:
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    *
-   * This function will first call InitializePreSubGroups() on this Group, then
+   * This function will first call initializePreSubGroups() on this Group, then
    * loop over all subgroups and call Initialize() on them, then
    * call InitializePostSubGroups() on this Group.
    *
@@ -808,7 +808,7 @@ public:
   void processInputFileRecursive( xmlWrapper::xmlNode & targetNode );
 
   /**
-   * @brief Recursively call PostProcessInput() to apply post processing after
+   * @brief Recursively call postProcessInput() to apply post processing after
    * reading input values.
    */
   void postProcessInputRecursive();

@@ -42,13 +42,13 @@ NeighborCommunicator::NeighborCommunicator():
 { }
 
 void NeighborCommunicator::mpiISendReceive( buffer_unit_type const * const sendBuffer,
-                                             int const sendSize,
-                                             MPI_Request & sendRequest,
-                                             buffer_unit_type * const receiveBuffer,
-                                             int const receiveSize,
-                                             MPI_Request & receiveRequest,
-                                             int const commID,
-                                             MPI_Comm mpiComm )
+                                            int const sendSize,
+                                            MPI_Request & sendRequest,
+                                            buffer_unit_type * const receiveBuffer,
+                                            int const receiveSize,
+                                            MPI_Request & receiveRequest,
+                                            int const commID,
+                                            MPI_Comm mpiComm )
 {
   int const sendTag = CommTag( MpiWrapper::commRank(), m_neighborRank, commID );
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
@@ -70,67 +70,67 @@ void NeighborCommunicator::mpiISendReceive( buffer_unit_type const * const sendB
 }
 
 void NeighborCommunicator::mpiISendReceiveBufferSizes( int const commID,
-                                                        MPI_Comm mpiComm )
+                                                       MPI_Comm mpiComm )
 {
   mpiISendReceiveBufferSizes( commID,
-                               m_mpiSendBufferRequest[commID],
-                               m_mpiRecvBufferRequest[commID],
-                               mpiComm );
+                              m_mpiSendBufferRequest[commID],
+                              m_mpiRecvBufferRequest[commID],
+                              mpiComm );
 }
 
 void NeighborCommunicator::mpiISendReceiveBufferSizes( int const commID,
-                                                        MPI_Request & mpiSendRequest,
-                                                        MPI_Request & mpiRecvRequest,
-                                                        MPI_Comm mpiComm )
+                                                       MPI_Request & mpiSendRequest,
+                                                       MPI_Request & mpiRecvRequest,
+                                                       MPI_Comm mpiComm )
 {
 //  m_sendBufferSize[commID] = LvArray::integerConversion<int>( m_sendBuffer[commID].size());
   mpiISendReceive( &m_sendBufferSize[commID], 1, mpiSendRequest,
-                    &m_receiveBufferSize[commID],
-                    1, mpiRecvRequest,
-                    commID,
-                    mpiComm );
+                   &m_receiveBufferSize[commID],
+                   1, mpiRecvRequest,
+                   commID,
+                   mpiComm );
 }
 
 void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
-                                                    MPI_Comm mpiComm )
+                                                   MPI_Comm mpiComm )
 {
   mpiISendReceiveBuffers( commID,
-                           m_mpiSendBufferRequest[commID],
-                           m_mpiRecvBufferRequest[commID],
-                           mpiComm );
+                          m_mpiSendBufferRequest[commID],
+                          m_mpiRecvBufferRequest[commID],
+                          mpiComm );
 }
 
 void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
-                                                    MPI_Request & mpiSendRequest,
-                                                    MPI_Request & mpiRecvRequest,
-                                                    MPI_Comm mpiComm )
+                                                   MPI_Request & mpiSendRequest,
+                                                   MPI_Request & mpiRecvRequest,
+                                                   MPI_Comm mpiComm )
 {
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
   mpiISendReceive( m_sendBuffer[commID].data(),
-                    LvArray::integerConversion< int >( m_sendBuffer[commID].size()),
-                    mpiSendRequest,
-                    m_receiveBuffer[commID].data(),
-                    LvArray::integerConversion< int >( m_receiveBuffer[commID].size()),
-                    mpiRecvRequest,
-                    commID,
-                    mpiComm );
+                   LvArray::integerConversion< int >( m_sendBuffer[commID].size()),
+                   mpiSendRequest,
+                   m_receiveBuffer[commID].data(),
+                   LvArray::integerConversion< int >( m_receiveBuffer[commID].size()),
+                   mpiRecvRequest,
+                   commID,
+                   mpiComm );
 
 }
 
 void NeighborCommunicator::mpiISendReceive( int const commID,
-                                             MPI_Comm mpiComm )
+                                            MPI_Comm mpiComm )
 {
   mpiISendReceive( commID,
-                    m_mpiSendBufferRequest[commID],
-                    m_mpiRecvBufferRequest[commID],
-                    mpiComm );
+                   m_mpiSendBufferRequest[commID],
+                   m_mpiRecvBufferRequest[commID],
+                   mpiComm );
 }
 
 void NeighborCommunicator::mpiISendReceive( int const commID,
-                                             MPI_Request & mpiSendRequest,
-                                             MPI_Request & mpiRecvRequest,
-                                             MPI_Comm mpiComm )
+                                            MPI_Request & mpiSendRequest,
+                                            MPI_Request & mpiRecvRequest,
+                                            MPI_Comm mpiComm )
 {
   mpiISendReceiveBufferSizes( commID, mpiComm );
 
@@ -140,28 +140,28 @@ void NeighborCommunicator::mpiISendReceive( int const commID,
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
   mpiISendReceive( m_sendBuffer[commID].data(),
-                    m_sendBufferSize[commID],
-                    mpiSendRequest,
-                    m_receiveBuffer[commID].data(),
-                    m_receiveBufferSize[commID],
-                    mpiRecvRequest,
-                    commID,
-                    mpiComm );
+                   m_sendBufferSize[commID],
+                   mpiSendRequest,
+                   m_receiveBuffer[commID].data(),
+                   m_receiveBufferSize[commID],
+                   mpiRecvRequest,
+                   commID,
+                   mpiComm );
 }
 
 void NeighborCommunicator::mpiISendReceive( buffer_unit_type const * const sendBuffer,
-                                             int const sendSize,
-                                             int const commID,
-                                             MPI_Comm mpiComm )
+                                            int const sendSize,
+                                            int const commID,
+                                            MPI_Comm mpiComm )
 {
   mpiISendReceive( &sendSize,
-                    1,
-                    m_mpiSendBufferRequest[commID],
-                    &m_receiveBufferSize[commID],
-                    1,
-                    m_mpiRecvBufferRequest[commID],
-                    commID,
-                    mpiComm );
+                   1,
+                   m_mpiSendBufferRequest[commID],
+                   &m_receiveBufferSize[commID],
+                   1,
+                   m_mpiRecvBufferRequest[commID],
+                   commID,
+                   mpiComm );
 
   MpiWrapper::waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
   MpiWrapper::waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
@@ -169,20 +169,20 @@ void NeighborCommunicator::mpiISendReceive( buffer_unit_type const * const sendB
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
   mpiISendReceive( sendBuffer,
-                    sendSize,
-                    m_mpiSendBufferRequest[commID],
-                    m_receiveBuffer[commID].data(),
-                    m_receiveBufferSize[commID],
-                    m_mpiRecvBufferRequest[commID],
-                    commID,
-                    mpiComm );
+                   sendSize,
+                   m_mpiSendBufferRequest[commID],
+                   m_receiveBuffer[commID].data(),
+                   m_receiveBufferSize[commID],
+                   m_mpiRecvBufferRequest[commID],
+                   commID,
+                   mpiComm );
 }
 
 void NeighborCommunicator::mpiWaitAll( int const GEOSX_UNUSED_PARAM( commID ),
-                                        MPI_Request & mpiSendRequest,
-                                        MPI_Status & mpiSendStatus,
-                                        MPI_Request & mpiRecvRequest,
-                                        MPI_Status & mpiReceiveStatus )
+                                       MPI_Request & mpiSendRequest,
+                                       MPI_Status & mpiSendStatus,
+                                       MPI_Request & mpiRecvRequest,
+                                       MPI_Status & mpiReceiveStatus )
 
 {
   MpiWrapper::waitall( 1, &mpiRecvRequest, &mpiReceiveStatus );
@@ -361,8 +361,8 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
   this->resizeSendBuffer( commID, bufferSize );
   this->postSizeSend( commID );
 
-  buffer_type & sendBuffer = sendBuffer( commID );
-  buffer_unit_type * sendBufferPtr = sendBuffer.data();
+  buffer_type & sendBuff = sendBuffer( commID );
+  buffer_unit_type * sendBufferPtr = sendBuff.data();
 
   int const packedSize = PackGhosts( sendBufferPtr,
                                      nodeManager, nodeAdjacencyList,
@@ -385,8 +385,8 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   FaceManager & faceManager = *(mesh.getFaceManager());
   ElementRegionManager & elemManager = *(mesh.getElemManager());
 
-  buffer_type const & receiveBuffer = receiveBuffer( commID );
-  buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
+  buffer_type const & receiveBuff = receiveBuffer( commID );
+  buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
 
   int unpackedSize = 0;
 
@@ -440,8 +440,8 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
   arrayView1d< globalIndex const > const edgeLocalToGlobal = edgeManager.localToGlobalMap();
   arrayView1d< globalIndex const > const faceLocalToGlobal = faceManager.localToGlobalMap();
 
-  buffer_type & sendBuffer = sendBuffer( commID );
-  buffer_unit_type * sendBufferPtr = sendBuffer.data();
+  buffer_type & sendBuff = sendBuffer( commID );
+  buffer_unit_type * sendBufferPtr = sendBuff.data();
 
   int bufferSize = 0;
   bufferSize += bufferOps::Pack< false >( sendBufferPtr,
@@ -525,8 +525,8 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
   localIndex_array & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   localIndex_array & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
 
-  buffer_type const & receiveBuffer = receiveBuffer( commID );
-  buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
+  buffer_type const & receiveBuff = receiveBuffer( commID );
+  buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
 
   bufferOps::UnpackSyncList( receiveBufferPtr,
                              nodeGhostsToSend,
@@ -616,9 +616,9 @@ void NeighborCommunicator::packCommBufferForSync( std::map< string, string_array
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
   arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
 
-  buffer_type & sendBuffer = sendBuffer( commID );
-  int const bufferSize =  LvArray::integerConversion< int >( sendBuffer.size());
-  buffer_unit_type * sendBufferPtr = sendBuffer.data();
+  buffer_type & sendBuff = sendBuffer( commID );
+  int const bufferSize =  LvArray::integerConversion< int >( sendBuff.size());
+  buffer_unit_type * sendBufferPtr = sendBuff.data();
 
   int packedSize = 0;
   if( fieldNames.count( "node" ) > 0 )
@@ -661,8 +661,8 @@ void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array >
 {
   GEOSX_MARK_FUNCTION;
 
-  buffer_type const & receiveBuffer = receiveBuffer( commID );
-  buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
+  buffer_type const & receiveBuff = receiveBuffer( commID );
+  buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
 
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());

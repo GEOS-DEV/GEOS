@@ -101,7 +101,7 @@ public:
   { return "ZoneManager"; }
 
   /**
-   * @brief Virtual access to CatalogName()
+   * @brief Virtual access to catalogName()
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
   virtual const string getCatalogName() const override final
@@ -1116,7 +1116,7 @@ ElementRegionManager::constructViewAccessor( string const & viewName, string con
         group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->getGroup( neighborName );
       }
 
-      if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->getTypeid() == typeid( VIEWTYPE ) )
+      if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->getTypeId() == typeid( VIEWTYPE ) )
       {
         viewAccessor[kReg][kSubReg] = group->getReference< VIEWTYPE >( viewName );
       }
@@ -1147,7 +1147,7 @@ ElementRegionManager::
         group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->getGroup( neighborName );
       }
 
-      if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->getTypeid() == typeid( VIEWTYPE ) )
+      if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->getTypeId() == typeid( VIEWTYPE ) )
       {
         viewAccessor[kReg][kSubReg] = group->getReference< VIEWTYPE >( viewName );
       }
@@ -1399,7 +1399,7 @@ ElementRegionManager::
                                       arrayView1d< string const > const & materialNames,
                                       bool const allowMissingViews ) const
 {
-  return ConstructMaterialViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( viewName,
+  return constructMaterialViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( viewName,
                                                                                         regionNames,
                                                                                         materialNames,
                                                                                         allowMissingViews );
@@ -1428,7 +1428,7 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
         string const constitutiveName = cm->getGroup( matIndex )->getName();
 
         CONSTITUTIVE_TYPE * const
-        constitutiveRelation = constitutiveGroup->GetGroup< CONSTITUTIVE_TYPE >( constitutiveName );
+        constitutiveRelation = constitutiveGroup->getGroup< CONSTITUTIVE_TYPE >( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           accessor[kReg][kSubReg][matIndex] = constitutiveRelation;

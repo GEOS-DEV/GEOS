@@ -42,7 +42,7 @@ public:
    * @brief The catalog name interface
    * @return name of the TableFunction in the FunctionBase catalog
    */
-  static string CatalogName() { return "SymbolicFunction"; }
+  static string catalogName() { return "SymbolicFunction"; }
 
   /**
    * @brief Initialize the table function

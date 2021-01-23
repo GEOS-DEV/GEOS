@@ -364,7 +364,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 }
 
 
-void NodeManager::FixUpDownMaps( bool const clearIfUnmapped )
+void NodeManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( m_toEdgesRelation,
                                     m_toEdgesRelation.relatedObjectGlobalToLocal(),

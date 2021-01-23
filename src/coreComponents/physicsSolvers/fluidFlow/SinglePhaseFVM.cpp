@@ -49,7 +49,7 @@ SinglePhaseFVM< BASE >::SinglePhaseFVM( const std::string & name,
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::InitializePreSubGroups( Group * const rootGroup )
+void SinglePhaseFVM< BASE >::initializePreSubGroups( Group * const rootGroup )
 {
   BASE::initializePreSubGroups( rootGroup );
 
@@ -64,7 +64,7 @@ void SinglePhaseFVM< BASE >::InitializePreSubGroups( Group * const rootGroup )
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const & domain,
+void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
                                         DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
@@ -79,7 +79,7 @@ void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const & domain,
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition & domain,
+void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
                                           DofManager & dofManager,
                                           CRSMatrix< real64, globalIndex > & localMatrix,
                                           array1d< real64 > & localRhs,
@@ -99,7 +99,7 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition & domain,
 }
 
 template< typename BASE >
-real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const & domain,
+real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & domain,
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localRhs )
 {
@@ -144,7 +144,7 @@ real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const & do
 
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
+void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
                                                   DomainPartition & domain )
@@ -168,7 +168,7 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                 real64 const dt,
                                                 DomainPartition const & domain,
                                                 DofManager const & dofManager,
@@ -229,7 +229,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 
 template< typename BASE >
 void
-SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
+SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
                                                  real64 const dt,
                                                  DomainPartition & domain,
                                                  DofManager const & dofManager,
@@ -239,11 +239,11 @@ SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   BASE::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyFaceDirichletBc( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::applyFaceDirichletBc( real64 const time_n,
+void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                    real64 const dt,
                                                    DofManager const & dofManager,
                                                    DomainPartition & domain,
@@ -299,7 +299,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBc( real64 const time_n,
     }
 
     // first, evaluate BC to get primary field values (pressure)
-    fs->ApplyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+    fs->applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                             time_n + dt,
                                                                             targetGroup,
                                                                             viewKeyStruct::facePressureString );
@@ -350,7 +350,7 @@ void SinglePhaseFVM< BASE >::setUpDflux_dApertureMatrix( DomainPartition & domai
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > &
-  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidualDAperture();
+  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
 
   {
     localIndex numRows = 0;

@@ -90,7 +90,7 @@ struct ConstitutivePassThru< SolidBase >
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
+      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
                    constitutiveRelation<<" ) is named "<<name );
     }
@@ -122,7 +122,7 @@ struct ConstitutivePassThru< NullModel >
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::Execute( "<<
+      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
                    constitutiveRelation<<" ) is named "<<name );
 
@@ -163,7 +163,7 @@ struct ConstitutivePassThru< PoroElasticBase >
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
+      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
                    constitutiveRelation<<" ) is named "<<name );
     }
@@ -202,7 +202,7 @@ struct ConstitutivePassThru< DamageBase >
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<DamgeBase>::Execute( "<<
+      GEOSX_ERROR( "ConstitutivePassThru<DamgeBase>::execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
                    constitutiveRelation<<" ) is named "<<name );
     }

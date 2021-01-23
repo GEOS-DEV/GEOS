@@ -60,7 +60,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlock * source )
   this->constructGlobalToLocalMap();
   source->forExternalProperties( [&]( dataRepository::WrapperBase * const wrapper )
   {
-    std::type_index typeIndex = std::type_index( wrapper->getTypeid());
+    std::type_index typeIndex = std::type_index( wrapper->getTypeId());
     rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
                                     [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) )
@@ -167,7 +167,7 @@ localIndex CellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
   return unPackedSize;
 }
 
-void CellElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
+void CellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( nodeList(),
                                     m_unmappedGlobalIndicesInNodelist,

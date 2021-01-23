@@ -277,7 +277,7 @@ protected:
 
 private:
 
-  void createPvtModels();
+  void createPVTModels();
 
   // phase PVT parameter filenames
   path_array m_phasePVTParaFiles;

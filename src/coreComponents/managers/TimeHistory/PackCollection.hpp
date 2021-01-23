@@ -41,7 +41,7 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "PackCollection"; }
+  static string catalogName() { return "PackCollection"; }
 
   /// @copydoc dataRepository::Group::InitializePostSubGroups
   void initializePostSubGroups( Group * const group ) override;

@@ -370,7 +370,7 @@ real64 HypreVector::norm1() const
   {
     loc_norm1 += std::fabs( local_data[i] );
   }
-  return MpiWrapper::Sum( loc_norm1, getComm() );
+  return MpiWrapper::sum( loc_norm1, getComm() );
 }
 
 real64 HypreVector::norm2() const
@@ -389,7 +389,7 @@ real64 HypreVector::normInf() const
   {
     loc_normInf = std::max( loc_normInf, std::fabs( local_data[i] ) );
   }
-  return MpiWrapper::Max( loc_normInf, getComm() );
+  return MpiWrapper::max( loc_normInf, getComm() );
 }
 
 void HypreVector::print( std::ostream & os ) const
@@ -462,7 +462,7 @@ void HypreVector::write( string const & filename,
         {
           myID = MpiWrapper::commSize( getComm() );
         }
-        int printID = MpiWrapper::Min( myID, getComm() );
+        int printID = MpiWrapper::min( myID, getComm() );
 
         // Write to file vector
         if( MpiWrapper::commRank( getComm() ) == printID )

@@ -75,8 +75,8 @@ ProblemManager::ProblemManager( const std::string & name,
                                               &FieldSpecificationManager::get() );//->setRestartFlags(RestartFlags::NO_WRITE);
 
 
-  // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
-  // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
+  // registerGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
+  // registerGroup<ElementRegionManager>(groupKeys.elementRegionManager);
 
   m_eventManager = registerGroup< EventManager >( groupKeys.eventManager );
   registerGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
@@ -716,7 +716,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  feDiscretization->CalculateShapeFunctionGradients( X, &subRegion, finiteElement );
+                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                              subRegion.getName() ) ];

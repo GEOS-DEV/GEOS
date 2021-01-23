@@ -312,7 +312,7 @@ void LaplaceFEM::applyBoundaryConditions( real64 const time_n,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  applyDirichletBcImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+  applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 }
 
 /*
@@ -333,13 +333,13 @@ void LaplaceFEM::solveSystem( DofManager const & dofManager,
 /*
    DIRICHLET BOUNDARY CONDITIONS
    This is the boundary condition method applied for this particular solver.
-   It is called by the more generic "ApplyBoundaryConditions" method.
+   It is called by the more generic "applyBoundaryConditions" method.
  */
-void LaplaceFEM::applyDirichletBcImplicit( real64 const time,
-                                            DofManager const & dofManager,
-                                            DomainPartition & domain,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs )
+void LaplaceFEM::applyDirichletBCImplicit( real64 const time,
+                                           DofManager const & dofManager,
+                                           DomainPartition & domain,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs )
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
 
@@ -353,7 +353,7 @@ void LaplaceFEM::applyDirichletBcImplicit( real64 const time,
                         Group * const targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc->ApplyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
+    bc->applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
                                                                                                time,
                                                                                                targetGroup,
                                                                                                m_fieldName,

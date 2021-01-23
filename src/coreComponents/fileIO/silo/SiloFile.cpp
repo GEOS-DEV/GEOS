@@ -613,7 +613,7 @@ void SiloFile::writeMeshObject( string const & meshName,
     DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
     DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
 
-    writeMultiXxxx( DB_UCDMESH, DBPutMultimesh, 0, meshName, cycleNumber, "/", optlist );
+    writeMultiXXXX( DB_UCDMESH, DBPutMultimesh, 0, meshName, cycleNumber, "/", optlist );
   }
 
   DBFreeOptlist( optlist );
@@ -687,7 +687,7 @@ void SiloFile::writeBeamMesh( string const & meshName,
     {
       DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
       DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
-      writeMultiXxxx( DB_UCDMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist );
+      writeMultiXXXX( DB_UCDMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist );
     }
   }
 
@@ -718,7 +718,7 @@ void SiloFile::writePointMesh( string const & meshName,
   #endif
     if( rank == 0 )
     {
-      writeMultiXxxx( DB_POINTMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist );
+      writeMultiXXXX( DB_POINTMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist );
     }
   }
 
@@ -924,7 +924,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 
         if( wrapper->getPlotLevel() < m_plotLevel )
         {
-          std::type_info const & typeID = wrapper->getTypeid();
+          std::type_info const & typeID = wrapper->getTypeId();
 
           if( typeID == typeid( array2d< real64 > ) ||
               typeID == typeid( array3d< real64 > ) ||
@@ -938,7 +938,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 
     for( auto fieldName : fieldNames )
     {
-      if( fieldName.second->getTypeid() == typeid( array2d< real64 >))
+      if( fieldName.second->getTypeId() == typeid( array2d< real64 >))
       {
         writeMaterialDataField2d< real64, real64 >( meshName,
                                                     fieldName.first,
@@ -949,7 +949,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
                                                     rootDirectory,
                                                     regionMaterialList );
       }
-      if( fieldName.second->getTypeid() == typeid( array3d< real64 >))
+      if( fieldName.second->getTypeId() == typeid( array3d< real64 >))
       {
         writeMaterialDataField3d< real64, real64 >( meshName,
                                                     fieldName.first,
@@ -960,7 +960,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
                                                     rootDirectory,
                                                     regionMaterialList );
       }
-      if( fieldName.second->getTypeid() == typeid( array4d< real64 >))
+      if( fieldName.second->getTypeId() == typeid( array4d< real64 >))
       {
         writeMaterialDataField4d< real64, real64 >( meshName,
                                                     fieldName.first,
@@ -1283,7 +1283,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
         viewPointers[esr][fieldName] = wrapper;
 
-        std::type_info const & typeID = wrapper->getTypeid();
+        std::type_info const & typeID = wrapper->getTypeId();
 
         rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                         false,
@@ -1310,7 +1310,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
   {
     WrapperBase * const wrapper = wrapperIter.second;
     string const fieldName = wrapper->getName();
-    std::type_info const & typeID = wrapper->getTypeid();
+    std::type_info const & typeID = wrapper->getTypeId();
 
     rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                     false,
@@ -1995,7 +1995,7 @@ void SiloFile::writePolygonMeshObject( const std::string & meshName,
     DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
     DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
 
-    writeMultiXxxx( DB_UCDMESH, DBPutMultimesh, 0, meshName, cycleNumber, "/", optlist );
+    writeMultiXXXX( DB_UCDMESH, DBPutMultimesh, 0, meshName, cycleNumber, "/", optlist );
   }
 
   DBFreeOptlist( optlist );
@@ -2046,7 +2046,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       // the field name is the key to the map
       string const fieldName = wrapper->getName();
 
-      std::type_info const & typeID = wrapper->getTypeid();
+      std::type_info const & typeID = wrapper->getTypeId();
 
       // TODO This is wrong. problem with uniqueness
       if( typeID==typeid(array1d< real64 >) )
@@ -2123,7 +2123,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
 
 
 template< typename CBF >
-void SiloFile::writeMultiXxxx( const DBObjectType type,
+void SiloFile::writeMultiXXXX( const DBObjectType type,
                                CBF DBPutMultiCB,
                                int const centering,
                                string const name,
@@ -2322,7 +2322,7 @@ void SiloFile::writeDataField( string const & meshName,
     }
 
 
-    writeMultiXxxx( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
+    writeMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
                     optlist );
   }
 
@@ -2587,7 +2587,7 @@ void SiloFile::writeDataField( string const & meshName,
     }
 
 
-    writeMultiXxxx( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
+    writeMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
                     optlist );
   }
 
@@ -2879,7 +2879,7 @@ void SiloFile::writeMaterialDataField( string const & meshName,
 //      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
-    writeMultiXxxx( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
+    writeMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
                     optlist );
   }
 

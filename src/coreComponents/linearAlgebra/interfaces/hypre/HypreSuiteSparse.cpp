@@ -72,7 +72,7 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
     {
       rank = MpiWrapper::commSize( matrix.getComm() );
     }
-    SSData.setWorkingRank( MpiWrapper::Min( rank, matrix.getComm() ) );
+    SSData.setWorkingRank( MpiWrapper::min( rank, matrix.getComm() ) );
   }
 
   // Define a new communicator restricted to ranks with at least one matrix row

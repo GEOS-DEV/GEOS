@@ -121,7 +121,7 @@ public:
 
 protected:
 
-  void setUp()
+  void SetUp() override
   {
     // Compute matrix and preconditioner
     globalIndex constexpr n = 100;
@@ -195,7 +195,7 @@ protected:
   Matrix laplace2D;
   PreconditionerIdentity< LAI > identity;
 
-  void setUp()
+  void SetUp() override
   {
     globalIndex constexpr n = 100;
     compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );

@@ -64,10 +64,10 @@ struct host_device_static_if<true>
 }
 
 #define static_if( condition ) \
-  geosx::static_if_wrapper<condition>::if_function( [&] () -> void
+  geosx::static_if_wrapper<condition>::ifFunction( [&] () -> void
 
 #define static_if_host_device( condition ) \
-  geosx::host_device_static_if<condition>::if_function( [&] () -> void
+  geosx::host_device_static_if<condition>::ifFunction( [&] () -> void
 
 #define end_static_if );
 

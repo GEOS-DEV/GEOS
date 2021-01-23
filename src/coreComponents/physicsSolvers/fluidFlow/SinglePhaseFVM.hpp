@@ -200,7 +200,7 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void setUpDfluxDApertureMatrix( DomainPartition & domain,
+  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
                                            DofManager const & dofManager,
                                            CRSMatrix< real64, globalIndex > & localMatrix ) override final;
 
@@ -237,7 +237,7 @@ private:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void applyFaceDirichletBc( real64 const time_n,
+  void applyFaceDirichletBC( real64 const time_n,
                              real64 const dt,
                              DofManager const & faceSet,
                              DomainPartition & domain,

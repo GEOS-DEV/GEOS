@@ -74,7 +74,7 @@ public:
 
 
   /**
-   * @copydoc SolidBase::GetStiffness
+   * @copydoc SolidBase::getStiffness
    */
   GEOSX_HOST_DEVICE inline
   virtual void getStiffness( localIndex const k,

@@ -46,14 +46,14 @@ Group * FunctionManager::createChild( string const & functionCatalogKey,
 {
   GEOSX_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
   std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::factory( functionCatalogKey, functionName, this );
-  return this->RegisterGroup< FunctionBase >( functionName, std::move( function ) );
+  return this->registerGroup< FunctionBase >( functionName, std::move( function ) );
 }
 
 
 void FunctionManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from FunctionBase here
-  for( auto & catalogIter: FunctionBase::GetCatalog())
+  for( auto & catalogIter: FunctionBase::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }

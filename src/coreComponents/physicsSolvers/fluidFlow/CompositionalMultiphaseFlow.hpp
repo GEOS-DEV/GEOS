@@ -86,7 +86,7 @@ public:
    * @brief name of the solver in the object catalog
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
-  static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
+  static string catalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
   virtual void
   registerDataOnMesh( Group * const MeshBodies ) override;
@@ -349,7 +349,7 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void applyDirichletBc( real64 const time,
+  void applyDirichletBC( real64 const time,
                          real64 const dt,
                          DofManager const & dofManager,
                          DomainPartition & domain,
@@ -365,7 +365,7 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void applySourceFluxBc( real64 const time,
+  void applySourceFluxBC( real64 const time,
                           real64 const dt,
                           DofManager const & dofManager,
                           DomainPartition & domain,

@@ -44,7 +44,7 @@ public:
 
   // "CatalogName()" return the string used as XML tag in the input file.
   // It ties the XML tag with this C++ classes. This is important.
-  static string CatalogName() { return "LaplaceFEM"; }
+  static string catalogName() { return "LaplaceFEM"; }
 
   // This method ties properties with their supporting mesh
   virtual void registerDataOnMesh( Group * const MeshBodies ) override final;
@@ -121,12 +121,12 @@ public:
 
   // This method is specific to this Laplace solver
   // It is used to apply Dirichlet boundary condition
-  // and called when the base class ApplyBoundaryConditions() is called
-  void applyDirichletBcImplicit( real64 const time,
-                                  DofManager const & dofManager,
-                                  DomainPartition & domain,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs );
+  // and called when the base class applyBoundaryConditions() is called
+  void applyDirichletBCImplicit( real64 const time,
+                                 DofManager const & dofManager,
+                                 DomainPartition & domain,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs );
 
   // Choice of transient treatment options (steady, backward, forward Euler scheme):
   //START_SPHINX_INCLUDE_01

@@ -144,7 +144,7 @@ void FlowSolverBase::initializePreSubGroups( Group * const rootGroup )
   for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    ValidateModelMapping( *meshLevel.getElemManager(), m_solidModelNames );
+    validateModelMapping( *meshLevel.getElemManager(), m_solidModelNames );
   }
 
   // fill stencil targetRegions
@@ -255,11 +255,11 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   m_elementSeparationCoefficient.clear();
-  m_elementSeparationCoefficient = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::separationCoeffString );
+  m_elementSeparationCoefficient = elemManager.constructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::separationCoeffString );
   m_elementSeparationCoefficient.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::separationCoeffString );
 
   m_element_dSeparationCoefficient_dAperture.clear();
-  m_element_dSeparationCoefficient_dAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >(
+  m_element_dSeparationCoefficient_dAperture = elemManager.constructArrayViewAccessor< real64, 1 >(
     FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
   m_element_dSeparationCoefficient_dAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
 #endif
@@ -275,7 +275,7 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
   return rval;
 }
 
-void FlowSolverBase::setUpDfluxDApertureMatrix( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+void FlowSolverBase::setUpDflux_dApertureMatrix( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
                                                  DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                                  CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ) )
 {

@@ -49,7 +49,7 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "TimeHistory"; }
+  static string catalogName() { return "TimeHistory"; }
 
   /**
    * @brief Perform initalization after all subgroups have been initialized.
@@ -63,7 +63,7 @@ public:
 
   /**
    * @brief Writes out a time history file.
-   * @copydoc EventBase::Execute()
+   * @copydoc EventBase::execute()
    */
   virtual void execute( real64 const time_n,
                         real64 const dt,

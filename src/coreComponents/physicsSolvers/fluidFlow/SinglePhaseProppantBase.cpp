@@ -44,7 +44,7 @@ void SinglePhaseProppantBase::validateFluidModels( DomainPartition const & domai
   for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
     MeshLevel const & meshLevel = *Group::groupCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
-    ValidateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+    validateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 }
 
@@ -52,9 +52,9 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
 {
   SlurryFluidBase const & slurryFluid = dynamicCast< SlurryFluidBase const & >( fluid );
   return { slurryFluid.density(),
-           slurryFluid.dDensityDPressure(),
+           slurryFluid.dDensity_dPressure(),
            slurryFluid.viscosity(),
-           slurryFluid.dViscosityDPressure(),
+           slurryFluid.dViscosity_dPressure(),
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::densityString )->getDefaultValue(),
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString )->getDefaultValue() };
 }
@@ -89,7 +89,7 @@ void SinglePhaseProppantBase::updateFluidModel( Group & dataGroup, localIndex co
   arrayView1d< integer const > const isProppantBoundaryElement =
     dataGroup.getReference< array1d< integer > >( ProppantTransport::viewKeyStruct::isProppantBoundaryString );
 
-  SlurryFluidBase & fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
+  SlurryFluidBase & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
   constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
@@ -132,7 +132,7 @@ void SinglePhaseProppantBase::resetViewsPrivate( ElementRegionManager const & el
   m_dVisc_dPres.setName( getName() + "/accessors/" + SlurryFluidBase::viewKeyStruct::dVisc_dPresString );
 
   m_transTMultiplier.clear();
-  m_transTMultiplier = elemManager.ConstructArrayViewAccessor< real64, 2 >( ProppantTransport::viewKeyStruct::transTMultiplierString );
+  m_transTMultiplier = elemManager.constructArrayViewAccessor< real64, 2 >( ProppantTransport::viewKeyStruct::transTMultiplierString );
   m_transTMultiplier.setName( getName() + "/accessors/" + ProppantTransport::viewKeyStruct::transTMultiplierString );
 }
 

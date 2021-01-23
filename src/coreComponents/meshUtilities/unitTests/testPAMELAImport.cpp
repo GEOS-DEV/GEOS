@@ -67,7 +67,7 @@ void TestMeshImport( string const & inputStringMesh,
   // Check if the computed center match with the imported center
   if( !propertyToTest.empty() )
   {
-    auto centerProperty = elemManager->ConstructArrayViewAccessor< real64, 2 >( propertyToTest );
+    auto centerProperty = elemManager->constructArrayViewAccessor< real64, 2 >( propertyToTest );
     elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion )
     {

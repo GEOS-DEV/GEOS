@@ -49,7 +49,7 @@ void RegisterAndApplyField( DomainPartition * domain,
                                          Group * const targetGroup,
                                          string const name )
   {
-    bc->ApplyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, name );
+    bc->applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, name );
   } );
 }
 

@@ -514,11 +514,11 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
         m_constKeyValues[index].second = rawPtr( index );
         m_constValues[index].second = rawPtr( index );
       }
-      else if( source->getTypeid() != m_values[index].second->getTypeid() )
+      else if( source->getTypeId() != m_values[index].second->getTypeId() )
       {
         GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
-                     ") with a different type without overwrite flag\n"<<" "<<source->getTypeid().name()<<" != "<<
-                     m_values[index].second->getTypeid().name() );
+                     ") with a different type without overwrite flag\n"<<" "<<source->getTypeId().name()<<" != "<<
+                     m_values[index].second->getTypeId().name() );
       }
       else
       {

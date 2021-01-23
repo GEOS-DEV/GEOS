@@ -283,7 +283,7 @@ struct FieldSpecificationOp
     GEOSX_UNUSED_VAR( index );
     GEOSX_UNUSED_VAR( component );
     GEOSX_UNUSED_VAR( value );
-    GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
+    GEOSX_ERROR( "readFieldValue: unsupported operation" );
   }
 
   /**
@@ -392,7 +392,7 @@ struct FieldSpecificationOp
     GEOSX_UNUSED_VAR( index );
     GEOSX_UNUSED_VAR( component );
     GEOSX_UNUSED_VAR( value );
-    GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
+    GEOSX_ERROR( "readFieldValue: unsupported operation" );
   }
 
 };

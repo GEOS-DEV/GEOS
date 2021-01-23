@@ -102,7 +102,7 @@ struct MimeticInnerProductHelpers
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  computeInvTpfaTransWithMultiplier( real64 const (&elemPerm)[ 3 ],
+  computeInvTPFATransWithMultiplier( real64 const (&elemPerm)[ 3 ],
                                      real64 const (&faceNormal)[ 3 ],
                                      real64 const & faceArea,
                                      real64 const & transMult,

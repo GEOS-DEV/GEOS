@@ -176,15 +176,15 @@ public:
                      arrayView1d< real64 > const & localRhs ) = 0;
 
   void
-  applyDiricletBc( real64 const time_n,
-                   real64 const dt,
-                   DomainPartition & domain,
-                   DofManager const & dofManager,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs ) const;
+  applyDirichletBC( real64 const time_n,
+                    real64 const dt,
+                    DomainPartition & domain,
+                    DofManager const & dofManager,
+                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                    arrayView1d< real64 > const & localRhs ) const;
 
   void
-  applySourceFluxBc( real64 const time_n,
+  applySourceFluxBC( real64 const time_n,
                      real64 const dt,
                      DomainPartition & domain,
                      DofManager const & dofManager,

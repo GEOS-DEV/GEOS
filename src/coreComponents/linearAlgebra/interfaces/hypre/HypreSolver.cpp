@@ -302,8 +302,8 @@ void CreateHypreKrylovSolver( LinearSolverParameters const & params,
 } // namespace
 
 void HypreSolver::solveDirect( HypreMatrix & mat,
-                                HypreVector & sol,
-                                HypreVector & rhs )
+                               HypreVector & sol,
+                               HypreVector & rhs )
 {
   if( m_parameters.direct.parallel )
   {
@@ -316,9 +316,9 @@ void HypreSolver::solveDirect( HypreMatrix & mat,
 }
 
 void HypreSolver::solveKrylov( HypreMatrix & mat,
-                                HypreVector & sol,
-                                HypreVector & rhs,
-                                DofManager const * const dofManager )
+                               HypreVector & sol,
+                               HypreVector & rhs,
+                               DofManager const * const dofManager )
 {
   Stopwatch watch;
 

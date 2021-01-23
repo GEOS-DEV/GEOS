@@ -81,14 +81,14 @@ Group * EventManager::createChild( string const & childKey, string const & child
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
-  return this->RegisterGroup< EventBase >( childName, std::move( event ) );
+  return this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
 
 void EventManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from EventBase here
-  for( auto & catalogIter: EventBase::GetCatalog())
+  for( auto & catalogIter: EventBase::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }

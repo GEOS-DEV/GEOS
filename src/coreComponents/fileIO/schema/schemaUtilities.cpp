@@ -226,7 +226,7 @@ void SchemaConstruction( Group * const group,
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
-            std::string const wrappedTypeName = rtTypes::typeNames( wrapper->getTypeid() );
+            std::string const wrappedTypeName = rtTypes::typeNames( wrapper->getTypeId() );
             std::string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
             GEOSX_LOG_VAR( wrappedTypeName );
             GEOSX_LOG_VAR( xmlSafeName );

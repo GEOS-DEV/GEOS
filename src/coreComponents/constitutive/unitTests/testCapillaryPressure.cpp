@@ -43,7 +43,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
   capPressureCopy.allocateConstitutiveData( capPressure.getParent(), 1 );
 
   arrayView3d< real64 const > phaseCapPressure = capPressure.phaseCapPressure();
-  arrayView4d< real64 const > dPhaseCapPressure_dSat = capPressure.dPhaseCapPressureDPhaseVolFraction();
+  arrayView4d< real64 const > dPhaseCapPressure_dSat = capPressure.dPhaseCapPressure_dPhaseVolFraction();
   arrayView3d< real64 const > phaseCapPressureCopy = capPressureCopy.phaseCapPressure();
 
   // set the fluid state to current

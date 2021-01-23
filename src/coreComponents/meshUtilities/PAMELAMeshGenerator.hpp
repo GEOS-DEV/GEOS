@@ -54,7 +54,7 @@ public:
  * @brief Return the name of the PAMELAMeshGenerator in object Catalog.
  * @return string that contains the key name to PAMELAMeshGenerator in the Catalog
  */
-  static string CatalogName() { return "PAMELAMeshGenerator"; }
+  static string catalogName() { return "PAMELAMeshGenerator"; }
 
 ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct

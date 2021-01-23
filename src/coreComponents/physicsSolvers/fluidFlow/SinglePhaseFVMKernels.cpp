@@ -359,7 +359,7 @@ FluxKernel::computeJunction( localIndex const numFluxElems,
 
 template<>
 void FluxKernel::
-  Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
+  launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
                                     real64 const dt,
                                     globalIndex const rankOffset,
                                     ElementViewConst< arrayView1d< globalIndex > > const & dofNumber,
@@ -444,7 +444,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  Launch< FaceElementStencil >( FaceElementStencil const & stencil,
+  launch< FaceElementStencil >( FaceElementStencil const & stencil,
                                 real64 const dt,
                                 globalIndex const rankOffset,
                                 ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,

@@ -188,7 +188,7 @@ void HDFHistIO::init( bool exists_okay )
   }
 
   std::vector< globalIndex > counts( size );
-  MpiWrapper::Allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
+  MpiWrapper::allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
 
   hsize_t minIdxCount = std::numeric_limits< hsize_t >::max( );
   int key = 0;

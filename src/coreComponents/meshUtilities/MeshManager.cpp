@@ -38,14 +38,14 @@ Group * MeshManager::createChild( string const & childKey, string const & childN
 {
   GEOSX_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
   std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
-  return this->RegisterGroup< MeshGeneratorBase >( childName, std::move( solver ) );
+  return this->registerGroup< MeshGeneratorBase >( childName, std::move( solver ) );
 }
 
 
 void MeshManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from MeshGeneratorBase here
-  for( auto & catalogIter: MeshGeneratorBase::GetCatalog())
+  for( auto & catalogIter: MeshGeneratorBase::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }

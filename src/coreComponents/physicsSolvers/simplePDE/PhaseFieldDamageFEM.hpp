@@ -46,7 +46,7 @@ public:
 
   virtual ~PhaseFieldDamageFEM() override;
 
-  static string CatalogName()
+  static string catalogName()
   {
     return "PhaseFieldDamageFEM";
   }
@@ -121,11 +121,11 @@ public:
 
   /**@}*/
 
-  void applyDirichletBcImplicit( real64 const time,
-                                  DofManager const & dofManager,
-                                  DomainPartition & domain,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs );
+  void applyDirichletBCImplicit( real64 const time,
+                                 DofManager const & dofManager,
+                                 DomainPartition & domain,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs );
 
   enum class timeIntegrationOption
   {

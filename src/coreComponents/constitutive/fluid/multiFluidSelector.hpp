@@ -35,7 +35,7 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 {
   ConstitutivePassThruHandler< BlackOilFluid,
                                CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               MultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >

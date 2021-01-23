@@ -272,7 +272,7 @@ struct PressureRelationKernel
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
-    real64 const targetBHP = wellControls.getTargetBhp();
+    real64 const targetBHP = wellControls.getTargetBHP();
     real64 const targetRate = wellControls.getTargetRate();
     WellControls::Control const currentControl = wellControls.getControl();
     WellControls::Type const wellType = wellControls.getType();
@@ -534,7 +534,7 @@ struct PresInitializationKernel
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPressure )
   {
-    real64 const targetBHP = wellControls.getTargetBhp();
+    real64 const targetBHP = wellControls.getTargetBHP();
     WellControls::Control const currentControl = wellControls.getControl();
     WellControls::Type const wellType = wellControls.getType();
     localIndex const iwelemControl = wellControls.getReferenceWellElementIndex();

@@ -81,9 +81,9 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   ///@}
 

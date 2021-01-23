@@ -124,7 +124,7 @@ void SinglePhaseBase::validateFluidModels( DomainPartition const & domain ) cons
   for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
     MeshLevel const & meshLevel = *Group::groupCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
-    ValidateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+    validateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 }
 
@@ -132,9 +132,9 @@ SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( Constitutiv
 {
   SingleFluidBase const & singleFluid = dynamicCast< SingleFluidBase const & >( fluid );
   return { singleFluid.density(),
-           singleFluid.dDensityDPressure(),
+           singleFluid.dDensity_dPressure(),
            singleFluid.viscosity(),
-           singleFluid.dViscosityDPressure(),
+           singleFluid.dViscosity_dPressure(),
            singleFluid.defaultDensity(),
            singleFluid.defaultViscosity() };
 }
@@ -231,7 +231,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups( Group * const
   resetViews( mesh );
 
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
-  // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
+  // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
   {
@@ -448,7 +448,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 }
 
 template< bool ISPORO, typename POLICY >
-void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
+void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                           CellElementSubRegion & subRegion,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -518,7 +518,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
 }
 
 template< bool ISPORO, typename POLICY >
-void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
+void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                           SurfaceElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -534,7 +534,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
   arrayView1d< real64 const > const & deltaVolume = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
   arrayView1d< real64 const > const & poroMult = getPoreVolumeMult( subRegion );
 
-  ConstitutiveBase const & fluid = GetConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
+  ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
   FluidPropViews const fluidProps = getFluidProperties( fluid );
   arrayView2d< real64 const > const & density = fluidProps.dens;
   arrayView2d< real64 const > const & dDens_dPres = fluidProps.dDens_dPres;
@@ -581,7 +581,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                         [&]( localIndex const targetIndex,
                                                                              auto & subRegion )
   {
-    AccumulationLaunch< ISPORO, POLICY >( targetIndex, subRegion, dofManager, localMatrix, localRhs );
+    accumulationLaunch< ISPORO, POLICY >( targetIndex, subRegion, dofManager, localMatrix, localRhs );
   } );
 }
 
@@ -594,16 +594,16 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  applySourceFluxBc( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  applyDiricletBc( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  applySourceFluxBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  applyDirichletBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
-void SinglePhaseBase::applyDiricletBc( real64 const time_n,
-                                       real64 const dt,
-                                       DomainPartition & domain,
-                                       DofManager const & dofManager,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                       arrayView1d< real64 > const & localRhs ) const
+void SinglePhaseBase::applyDirichletBC( real64 const time_n,
+                                        real64 const dt,
+                                        DomainPartition & domain,
+                                        DofManager const & dofManager,
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -630,7 +630,7 @@ void SinglePhaseBase::applyDiricletBc( real64 const time_n,
       subRegion->getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
     // call the application of the boundary condition to alter the matrix and rhs
-    fs->ApplyBoundaryConditionToSystem< FieldSpecificationEqual,
+    fs->applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                         parallelDevicePolicy<> >( lset,
                                                                   time_n + dt,
                                                                   subRegion,
@@ -645,7 +645,7 @@ void SinglePhaseBase::applyDiricletBc( real64 const time_n,
   } );
 }
 
-void SinglePhaseBase::applySourceFluxBc( real64 const time_n,
+void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                          real64 const dt,
                                          DomainPartition & domain,
                                          DofManager const & dofManager,
@@ -681,7 +681,7 @@ void SinglePhaseBase::applySourceFluxBc( real64 const time_n,
       }
     }
 
-    fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd,
+    fs->applyBoundaryConditionToSystem< FieldSpecificationAdd,
                                         parallelDevicePolicy<> >( localSet.toViewConst(),
                                                                   time_n + dt,
                                                                   dt,

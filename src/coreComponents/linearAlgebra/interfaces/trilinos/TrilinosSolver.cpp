@@ -247,8 +247,8 @@ void CreateTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO 
 } // namespace
 
 void TrilinosSolver::solveDirect( EpetraMatrix & mat,
-                                   EpetraVector & sol,
-                                   EpetraVector & rhs )
+                                  EpetraVector & sol,
+                                  EpetraVector & rhs )
 {
   if( m_parameters.direct.parallel )
   {
@@ -261,8 +261,8 @@ void TrilinosSolver::solveDirect( EpetraMatrix & mat,
 }
 
 void TrilinosSolver::solveKrylov( EpetraMatrix & mat,
-                                   EpetraVector & sol,
-                                   EpetraVector & rhs )
+                                  EpetraVector & sol,
+                                  EpetraVector & rhs )
 {
   // Time setup and solve
   Stopwatch watch;

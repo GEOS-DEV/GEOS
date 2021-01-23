@@ -48,7 +48,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "FaceElementSubRegion"; }
 
   /**
@@ -57,7 +57,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return FaceElementSubRegion::CatalogName();
+    return FaceElementSubRegion::catalogName();
   }
 
   ///@}
@@ -106,7 +106,7 @@ public:
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
 
   virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 

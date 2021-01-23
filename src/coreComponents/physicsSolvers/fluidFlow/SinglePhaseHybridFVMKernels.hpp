@@ -631,7 +631,7 @@ struct FluxKernel
 
     // get the fluid data
     arrayView2d< real64 const > const elemDens = fluid.density();
-    arrayView2d< real64 const > const dElemDens_dp = fluid.dDensityDPressure();
+    arrayView2d< real64 const > const dElemDens_dp = fluid.dDensity_dPressure();
 
     // assemble the residual and Jacobian element by element
     // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
@@ -646,7 +646,7 @@ struct FluxKernel
 
       // recompute the local transmissibility matrix at each iteration
       // we can decide later to precompute transMatrix if needed
-      IP_TYPE::template Compute< NF >( nodePosition,
+      IP_TYPE::template compute< NF >( nodePosition,
                                        transMultiplier,
                                        faceToNodes,
                                        elemToFaces[ei],

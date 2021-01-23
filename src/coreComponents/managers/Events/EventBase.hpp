@@ -65,7 +65,7 @@ public:
                                             dataRepository::Group * domain ) override;
   /**
    * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
-   * @copydoc ExecutableGroup::Execute()
+   * @copydoc ExecutableGroup::execute()
    */
   virtual void execute( real64 const time_n,
                         real64 const dt,
@@ -210,8 +210,8 @@ public:
 
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
-  /// @copydoc dataRepository::Group::GetCatalog()
-  static CatalogInterface::CatalogType & GetCatalog();
+  /// @copydoc dataRepository::Group::getCatalog()
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Get the sum of the exit flags for the event/sub-events from the last execution.
