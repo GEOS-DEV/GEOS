@@ -10,8 +10,17 @@ set( finiteVolume_headers
      FluxApproximationBase.hpp
      TwoPointFluxApproximation.hpp
      FluxStencil.hpp
-     HybridFVMInnerProduct.hpp
+     # HybridFVMInnerProduct.hpp
      ProjectionEDFMHelper.hpp
+     HybridMimeticDiscretization.hpp
+     MimeticInnerProductDispatch.hpp     
+     mimeticInnerProducts/MimeticInnerProductBase.hpp
+     mimeticInnerProducts/QuasiTPFAInnerProduct.hpp
+     mimeticInnerProducts/QuasiRTInnerProduct.hpp
+     mimeticInnerProducts/TPFAInnerProduct.hpp
+     mimeticInnerProducts/SimpleInnerProduct.hpp
+     mimeticInnerProducts/BdVLMInnerProduct.hpp
+     mimeticInnerProducts/MimeticInnerProductHelpers.hpp
    )
 #
 # Specify all sources
@@ -25,6 +34,7 @@ set( finiteVolume_sources
      FluxApproximationBase.cpp
      TwoPointFluxApproximation.cpp
      ProjectionEDFMHelper.cpp
+     HybridMimeticDiscretization.cpp
    )
 
 if ( BUILD_OBJ_LIBS )

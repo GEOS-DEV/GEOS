@@ -14,6 +14,7 @@ set( subdirs
      mpiCommunications
      physicsSolvers
      python
+     virtualElement
      )
 
 #set( subdirs
@@ -83,11 +84,6 @@ endif()
 if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
-
-if( GEOSX_USE_ATK )
-  set( extraComponentsLinkList ${extraComponentsLinkList} axom )
-endif()
-
 
 if( GEOSX_BUILD_SHARED_LIBS )
   set( GEOSX_BUILD_SHARED_BOOL TRUE CACHE BOOL "" )

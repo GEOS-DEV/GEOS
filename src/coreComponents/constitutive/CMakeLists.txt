@@ -12,8 +12,8 @@ set( constitutive_headers
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
-     contact/MohrCoulomb.hpp
-     fluid/MultiPhaseMultiComponentFluid.hpp
+     contact/Coulomb.hpp
+     fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTFunctions/BrineCO2DensityFunction.hpp
      fluid/PVTFunctions/BrineViscosityFunction.hpp
      fluid/PVTFunctions/CO2SolubilityFunction.hpp
@@ -33,7 +33,10 @@ set( constitutive_headers
      fluid/ProppantSlurryFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
+     solid/AuxiliaryFunctionsSpectral.hpp
      solid/Damage.hpp
+     solid/DamageVolDev.hpp
+     solid/DamageSpectral.hpp
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
      solid/LinearElasticTransverseIsotropic.hpp
@@ -64,7 +67,7 @@ set( constitutive_sources
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactRelationBase.cpp
-     contact/MohrCoulomb.cpp
+     contact/Coulomb.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp     
      fluid/PVTFunctions/BrineCO2DensityFunction.cpp
@@ -81,6 +84,8 @@ set( constitutive_sources
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp               
      solid/Damage.cpp
+     solid/DamageVolDev.cpp
+     solid/DamageSpectral.cpp
      solid/LinearElasticAnisotropic.cpp
      solid/LinearElasticIsotropic.cpp
      solid/LinearElasticTransverseIsotropic.cpp

@@ -56,6 +56,16 @@ struct HypreInterface
   static std::unique_ptr< PreconditionerBase< HypreInterface > >
   createPreconditioner( LinearSolverParameters params );
 
+  /**
+   * @brief Create a hypre-based preconditioner object.
+   * @param params the preconditioner parameters
+   * @param nearNullKernel the user-provided near null kernel
+   * @return owning pointer to the newly created preconditioner
+   */
+  static std::unique_ptr< PreconditionerBase< HypreInterface > >
+  createPreconditioner( LinearSolverParameters params,
+                        array1d< HypreVector > const & nearNullKernel );
+
   /// Alias for HypreMatrix
   using ParallelMatrix = HypreMatrix;
   /// Alias for HypreVector

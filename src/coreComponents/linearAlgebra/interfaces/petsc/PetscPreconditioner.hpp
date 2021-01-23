@@ -24,7 +24,7 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 /**
- * @name Hypre forward declarations.
+ * @name PETSc forward declarations.
  *
  * Forward declare PETSc's solver structs and pointer aliases in order
  * to avoid including PETSc headers and leaking into the rest of GEOSX.
@@ -33,9 +33,12 @@
 
 /// PETSc preconditioner struct forward declaration
 extern "C" struct _p_PC;
+extern "C" struct _p_MatNullSpace;
 
 /// Preconditioner pointer alias
 using PC = _p_PC *;
+/// Near null space pointer alias
+using MatNullSpace = _p_MatNullSpace *;
 
 ///@}
 
@@ -66,6 +69,13 @@ public:
    * @param params preconditioner parameters
    */
   explicit PetscPreconditioner( LinearSolverParameters params );
+
+  /**
+   * @brief Constructor.
+   * @param params preconditioner parameters
+   * @param nearNullKernel the user-provided near null kernel
+   */
+  PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & nearNullKernel );
 
   /**
    * @brief Destructor.
@@ -102,6 +112,9 @@ private:
 
   /// Pointer to the PETSc implementation
   PC m_precond;
+
+  /// Pointer to the near null space
+  MatNullSpace m_nullsp;
 };
 
 }

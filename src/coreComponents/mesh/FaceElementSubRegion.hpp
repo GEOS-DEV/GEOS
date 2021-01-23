@@ -96,16 +96,6 @@ public:
   void CalculateElementGeometricQuantities( localIndex const index,
                                             arrayView1d< real64 const > const & faceArea );
 
-  /**
-   * @brief Function to compute the geometric quantities of a specific face element.
-   * @param k index of the face element
-   * @param faceArea array of all surface areas
-   * @param faceRotationMatrix array of all rotation matrix
-   */
-  void CalculateElementGeometricQuantities( localIndex const k,
-                                            arrayView1d< real64 const > const & faceArea,
-                                            arrayView3d< real64 const > const & faceRotationMatrix );
-
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
@@ -141,9 +131,6 @@ public:
 
     /// String key for the derivative of the jacobian.
     static constexpr auto detJString = "detJ";
-
-    /// String for registering the elementRotationMatrix with the repository.
-    static constexpr auto elementRotationMatrixString  = "elementRotationMatrix";
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
 
@@ -195,17 +182,6 @@ public:
    * @return the number of nodes per face element
    */
   //virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
-
-  /**
-   * @brief Get face element rotation matrix.
-   * @return a list of all face element rotation matrixces.
-   */
-  arrayView3d< real64 > getElementRotationMatrix() { return m_elementRotationMatrix; }
-
-  /**
-   * @copydoc getElementRotationMatrix()
-   */
-  arrayView3d< real64 const > getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /**
@@ -278,9 +254,6 @@ private:
 
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
-
-  /// The member level field for the element rotation matrix
-  array3d< real64 > m_elementRotationMatrix;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient
