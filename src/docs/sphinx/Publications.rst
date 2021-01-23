@@ -2,34 +2,7 @@
 Publications
 ###############################################################################
 
-Last updated 14-July-2020
-
-Preprints
-=========
-
-.. list-table::
-   :widths: 100
-   :header-rows: 0
-
-   * - | **Simulation of coupled multiphase flow and geomechanics in porous media with embedded discrete fractures**
-       | M Cusini, JA White, N Castelletto, RR Settgast
-       | arXiv preprint
-       | `arXiv:2007.05069 <https://arxiv.org/abs/2007.05069>`_
-
-   * - | **Nonlinear multigrid based on local spectral coarsening for heterogeneous diffusion problems**
-       | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
-       | arXiv preprint
-       | `arXiv:2005.01275 <https://arxiv.org/abs/2005.01275>`_
-
-   * - | **Efficient solvers for hybridized three-field mixed finite element coupled poromechanics**
-       | M Frigo, N Castelletto, M Ferronato, JA White
-       | arXiv preprint
-       | `arXiv:2002.09603 <https://arxiv.org/abs/2002.09603>`_
-
-   * - | **Enhanced multiscale restriction-smoothed basis (MsRSB) preconditioning with applications to porous media flow and geomechanics**
-       | S Bosma, S Klevtsov, O Møyner, N Castelletto
-       | arXiv preprint
-       | `arXiv:1912.06934 <https://arxiv.org/abs/1912.06934>`_
+Last updated 22-January-2021
 
 
 2020
@@ -38,6 +11,31 @@ Preprints
 .. list-table::
    :widths: 100
    :header-rows: 0
+
+   * - | **Simulation of coupled multiphase flow and geomechanics in porous media with embedded discrete fractures**
+       | M Cusini, JA White, N Castelletto, RR Settgast
+       | International Journal for Numerical and Analytical Methods in Geomechanics (2020)
+       | `doi:10.1002/nag.3168 <https://doi.org/10.1002/nag.3168>`_
+
+   * - | **An anisotropic viscoplasticity model for shale based on layered microstructure homogenization**
+       | J Choo, SJ Semnani, JA White
+       | International Journal for Numerical and Analytical Methods in Geomechanics (2020)
+       | `doi.org:10.1002/nag.3167 <https://doi.org/10.1002/nag.3167>`_
+
+   * - | **Nonlinear multigrid based on local spectral coarsening for heterogeneous diffusion problems**
+       | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
+       | Computer Methods in Applied Mechanics and Engineering (2020)
+       | `doi:10.1016/j.cma.2020.113432 <https://doi.org/10.1016/j.cma.2020.113432>`_
+
+   * - | **Efficient solvers for hybridized three-field mixed finite element coupled poromechanics**
+       | M Frigo, N Castelletto, M Ferronato, JA White
+       | Computers and Mathematics with Applications (2020)
+       | `doi.org:10.1016/j.camwa.2020.07.010 <https://doi.org/10.1016/j.camwa.2020.07.010>`_
+
+   * - | **Enhanced multiscale restriction-smoothed basis (MsRSB) preconditioning with applications to porous media flow and geomechanics**
+       | S Bosma, S Klevtsov, O Møyner, N Castelletto
+       | Journal of Computational Physics (2020)
+       | `doi.org:10.1016/j.jcp.2020.109934 <https://doi.org/10.1016/j.jcp.2020.109934>`_
 
    * - | **An inelastic homogenization framework for layered materials with planes of weakness**
        | SJ Semnani, JA White
