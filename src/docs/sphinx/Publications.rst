@@ -34,7 +34,7 @@ Last updated 22-January-2021
 
    * - | **Enhanced multiscale restriction-smoothed basis (MsRSB) preconditioning with applications to porous media flow and geomechanics**
        | S Bosma, S Klevtsov, O Møyner, N Castelletto
-       | Journal of Computational Physics (2020)
+       | Journal of Computational Physics 428, 109934
        | `doi.org:10.1016/j.jcp.2020.109934 <https://doi.org/10.1016/j.jcp.2020.109934>`_
 
    * - | **An inelastic homogenization framework for layered materials with planes of weakness**
@@ -99,4 +99,3 @@ Last updated 22-January-2021
        | M Frigo, N Castelletto, M Ferronato
        | SIAM Journal on Scientific Computing 41 (4), B694-B720
        | `doi:10.1137/18M120645X <https://doi.org/10.1137/18M120645X>`_
-
