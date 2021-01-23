@@ -24,7 +24,7 @@ Last updated 22-January-2021
 
    * - | **Nonlinear multigrid based on local spectral coarsening for heterogeneous diffusion problems**
        | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
-       | Computer Methods in Applied Mechanics and Engineering (2020)
+       | Computer Methods in Applied Mechanics and Engineering 372, 113432
        | `doi:10.1016/j.cma.2020.113432 <https://doi.org/10.1016/j.cma.2020.113432>`_
 
    * - | **Efficient solvers for hybridized three-field mixed finite element coupled poromechanics**
@@ -99,5 +99,4 @@ Last updated 22-January-2021
        | M Frigo, N Castelletto, M Ferronato
        | SIAM Journal on Scientific Computing 41 (4), B694-B720
        | `doi:10.1137/18M120645X <https://doi.org/10.1137/18M120645X>`_
-
 
