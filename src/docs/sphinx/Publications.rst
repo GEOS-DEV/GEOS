@@ -36,6 +36,16 @@ Preprints and Early-Views
        | International Journal for Numerical and Analytical Methods in Geomechanics 
        | `doi:10.1002/nag.3168 <https://doi.org/10.1002/nag.3168>`_
 
+   * - | **A macroelement stabilization for mixed finite element/finite volume discretizations of multiphase poromechanics**
+       | JT Camargo, JA White, RI Borja
+       | Computational Geosciences
+       | `doi:10.1007/s10596-020-09964-3 <https://doi.org/10.1007/s10596-020-09964-3>`_
+
+   * - | **Approximate inverse-based block preconditioners in poroelasticity**
+       | A Franceschini, N Castelletto, M Ferronato
+       | Computational Geosciences
+       | `doi:10.1007/s10596-020-09981-2 <https://doi.org/10.1007/s10596-020-09981-2>`_
+
 
 2021
 ====
@@ -45,7 +55,7 @@ Preprints and Early-Views
    :header-rows: 0
 
    * - | **Enhanced multiscale restriction-smoothed basis (MsRSB) preconditioning with applications to porous media flow and geomechanics**
-       | SMB Bosma, S Klevtsov, O Møyner, N Castelletto
+       | SBM Bosma, S Klevtsov, O Møyner, N Castelletto
        | Journal of Computational Physics 
        | `doi.org:10.1016/j.jcp.2020.109934 <https://doi.org/10.1016/j.jcp.2020.109934>`_
 
@@ -71,16 +81,6 @@ Preprints and Early-Views
        | A Franceschini, N Castelletto, JA White, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering 
        | `doi:10.1016/j.cma.2020.113161 <https://doi.org/10.1016/j.cma.2020.113161>`_
-
-   * - | **A macroelement stabilization for mixed finite element/finite volume discretizations of multiphase poromechanics**
-       | JT Camargo, JA White, RI Borja
-       | Computational Geosciences
-       | `doi:10.1007/s10596-020-09964-3 <https://doi.org/10.1007/s10596-020-09964-3>`_
-
-   * - | **Approximate inverse-based block preconditioners in poroelasticity**
-       | A Franceschini, N Castelletto, M Ferronato
-       | Computational Geosciences
-       | `doi:10.1007/s10596-020-09981-2 <https://doi.org/10.1007/s10596-020-09981-2>`_
 
    * - | **Multi-stage preconditioners for thermal–compositional–reactive flow in porous media**.
        | MA Cremon, N Castelletto, JA White
