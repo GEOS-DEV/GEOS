@@ -44,9 +44,9 @@
       xCoords="{ 0, 10 , 100 }"
       yCoords="{ 0, 10 , 100 }"
       zCoords="{ 0, 10 , 100 }"
-      nx="{ 50, 20}"
-      ny="{ 51, 20}"
-      nz="{ 10, 20 }"
+      nx="{ 10, 10}"
+      ny="{ 11, 10}"
+      nz="{ 10, 10 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -54,10 +54,10 @@
     <BoundedPlane
       name="FracturePlane"
       normal="0, 1, 0"
-      origin="5.5, 5.5, 5.5"
+      origin="0, 5.5, 5.5"
       lengthVector="1, 0, 0"
       widthVector="0, 0, 1"
-      dimensions="{ 10, 11 }"/>
+      dimensions="{ 20, 11 }"/>
   </Geometry>
 
   <Events
