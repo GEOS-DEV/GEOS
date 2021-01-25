@@ -26,8 +26,6 @@
 namespace geosx
 {
 
-static constexpr localIndex maxDimensions = 4;
-
 class TableFunctionKernelWrapper;
 
 /**
@@ -114,12 +112,12 @@ public:
    * @brief Get the table axes definitions
    * @return a reference to an array of arrays that define each table axis
    */
-  ArrayOfArrays< real64 > const & getCoordinates() const { return m_coordinates; }
+  ArrayOfArraysView< real64 const > getCoordinates() const { return m_coordinates.toViewConst(); }
 
   /**
    * @copydoc getCoordinates() const
    */
-  ArrayOfArrays< real64 > & getCoordinates()       { return m_coordinates; }
+  ArrayOfArraysView< real64 > getCoordinates() { return m_coordinates.toView(); }
 
   /**
    * @brief Get the table values
@@ -136,24 +134,28 @@ public:
    * @brief Set the interpolation method
    * @param method The interpolation method
    */
-  void setInterpolationMethod( InterpolationType const method ) { m_interpolationMethod = method; }
+  void setInterpolationMethod( InterpolationType const method );
 
   /**
    * @brief Set the table coordinates
    * @param coordinates An array of arrays containing table coordinate definitions
    */
-  void setTableCoordinates( ArrayOfArrays< real64 > coordinates ) { m_coordinates = coordinates; }
+  void setTableCoordinates( array1d< real64_array > coordinates );
 
   /**
    * @brief Set the table values
    * @param values An array of table values in fortran order
    */
-  void setTableValues( real64_array values ) { m_values = values; }
+  void setTableValues( real64_array values );
 
   /**
-   * @brief Returns an instance of the kernel wrapper
+   * @brief Create an instance of the kernel wrapper
+   * @return the kernel wrapper
    */
   TableFunctionKernelWrapper createKernelWrapper() const;
+
+  /// maximum dimensions for the coordinates in the table
+  static constexpr localIndex maxDimensions = 4;
 
 private:
   /// Coordinates for 1D table
@@ -197,17 +199,33 @@ private:
 
 };
 
+/**
+ * @class TableFunctionKernelWrapper
+ *
+ * A class encapsulating the kernel function doing the interpolation in the table
+ */
 class TableFunctionKernelWrapper
 {
 public:
 
+  /**
+   * @brief The constructor of the kernel wrapper
+   * @param[in] interpolationMethod table interpolation method
+   * @param[in] coordinates array of table axes
+   * @param[in] values table values (in fortran order)
+   * @param[in] dimensions number of active table dimensions
+   * @param[in] size size of the table
+   * @param[in] indexIncrement array used to locate values within ND tables
+   * @param[in] corners corners of the box that surround the value in N dimensions
+   * @param[in] numCorners number of active table corners
+   */
   TableFunctionKernelWrapper( TableFunction::InterpolationType interpolationMethod,
                               ArrayOfArraysView< real64 const > const & coordinates,
                               arrayView1d< real64 const > const & values,
                               localIndex dimensions,
                               arrayView1d< localIndex const > const & size,
                               arrayView1d< localIndex const > const & indexIncrement,
-                              localIndex const (&corners)[maxDimensions][16],
+                              localIndex const (&corners)[TableFunction::maxDimensions][16],
                               localIndex const numCorners )
     :
     m_interpolationMethod( interpolationMethod ),
@@ -218,7 +236,7 @@ public:
     m_indexIncrement( indexIncrement ),
     m_numCorners( numCorners )
   {
-    LvArray::tensorOps::copy< maxDimensions, 16 >( m_corners, corners );
+    LvArray::tensorOps::copy< TableFunction::maxDimensions, 16 >( m_corners, corners );
   }
 
   /// Default copy constructor
@@ -233,7 +251,12 @@ public:
   /// Deleted move assignment operator
   TableFunctionKernelWrapper & operator=( TableFunctionKernelWrapper && ) = delete;
 
-  /// Main compute function to interpolate in the table and return the derivatives
+  /**
+   * @brief Main compute function to interpolate in the table and return the derivatives
+   * @param[in] input vector of input value
+   * @param[out] value interpolated value
+   * @param[out] derivatives vector of derivatives of interpolated value wrt the variables present in inptu
+   */
   template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOSX_HOST_DEVICE
   void
@@ -263,7 +286,7 @@ private:
    * @brief The corners of the box that surround the value in N dimensions
    * m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
    */
-  localIndex m_corners[maxDimensions][16];
+  localIndex m_corners[TableFunction::maxDimensions][16];
 
   /// The number of active table corners
   localIndex m_numCorners;
@@ -285,10 +308,10 @@ TableFunctionKernelWrapper::Compute( IN_ARRAY const & input, real64 & value, OUT
   // Linear interpolation
   if( m_interpolationMethod == TableFunction::InterpolationType::Linear )
   {
-    localIndex bounds[maxDimensions][2] = { 0 };
-    real64 weights[maxDimensions][2] = { 0.0 };
-    real64 dWeights_dInput[maxDimensions][2] = { 0.0 };
-    real64 dCornerValue_dInput[2] = { 0.0 };
+    localIndex bounds[TableFunction::maxDimensions][2] = {{ 0 }};
+    real64 weights[TableFunction::maxDimensions][2] = {{ 0.0 }};
+    real64 dWeights_dInput[TableFunction::maxDimensions][2] = { 0.0 };
+    real64 dCornerValue_dInput[TableFunction::maxDimensions] = { 0.0 };
 
     // Determine position, weights
     for( localIndex ii=0; ii<m_dimensions; ++ii )
@@ -354,8 +377,8 @@ TableFunctionKernelWrapper::Compute( IN_ARRAY const & input, real64 & value, OUT
         for( localIndex kk = 0; kk<m_dimensions; ++kk )
         {
           dCornerValue_dInput[kk] *= ( jj == kk )
-                             ? dWeights_dInput[kk][m_corners[kk][ii]]
-                             : weights[kk][m_corners[kk][ii]];
+                             ? dWeights_dInput[jj][m_corners[jj][ii]]
+                       : weights[jj][m_corners[jj][ii]];
         }
       }
 

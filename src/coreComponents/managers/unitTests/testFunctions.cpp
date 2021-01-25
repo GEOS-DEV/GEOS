@@ -12,6 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include "codingUtilities/UnitTestUtilities.hpp"
 #include "gtest/gtest.h"
 #include "managers/initialization.hpp"
 #include "managers/Functions/FunctionManager.hpp"
@@ -24,7 +25,6 @@
 #include <random>
 
 using namespace geosx;
-
 
 
 void evaluate1DFunction( FunctionBase * function,
@@ -41,7 +41,28 @@ void evaluate1DFunction( FunctionBase * function,
   }
 }
 
+void checkDirectionalDerivative( real64 const (&input)[4],
+                                 real64 (& perturbedInput)[4],
+                                 real64 const & val,
+                                 real64 & perturbedVal,
+                                 real64 const (&derivatives)[4],
+                                 real64 (& perturbedDerivatives)[4],
+                                 real64 const & perturb,
+                                 real64 const & relTol,
+                                 localIndex const direction,
+                                 TableFunctionKernelWrapper kernelWrapper )
+{
+  LvArray::tensorOps::copy< 4 >( perturbedInput, input );
+  real64 const dInput = perturb * ( input[direction] + perturb );
+  perturbedInput[direction] += dInput;
+  kernelWrapper.Compute( perturbedInput, perturbedVal, perturbedDerivatives );
 
+  // std::cout << "perturbVal - val = " << perturbedVal - val << std::endl
+  //      << "(perturbedVal-val)/dInput = " << (perturbedVal-val)/dInput << std::endl
+  //      << "derivatives[" << direction << "] = " << derivatives[direction] << std::endl;
+
+  geosx::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geosx::testing::DEFAULT_ABS_TOL );
+}
 
 TEST( FunctionTests, 1DTable )
 {
@@ -52,14 +73,13 @@ TEST( FunctionTests, 1DTable )
   localIndex Ntest = 6;
 
   // Setup table
-  ArrayOfArrays< real64 > coordinates;
-  array1d< real64 > tmp;
-  tmp.resize( Naxis );
-  tmp[0] = -1.0;
-  tmp[1] = 0.0;
-  tmp[2] = 2.0;
-  tmp[3] = 5.0;
-  coordinates.appendArray( tmp.begin(), tmp.end() );
+  array1d< real64_array > coordinates;
+  coordinates.resize( 1 );
+  coordinates[0].resize( Naxis );
+  coordinates[0][0] = -1.0;
+  coordinates[0][1] = 0.0;
+  coordinates[0][2] = 2.0;
+  coordinates[0][3] = 5.0;
 
   real64_array values( Naxis );
   values[0] = 1.0;
@@ -143,19 +163,17 @@ TEST( FunctionTests, 2DTable )
   string inputName = "coordinates";
 
   // Setup table
-  ArrayOfArrays< real64 > coordinates;
-  array1d< real64 > tmp;
-  tmp.resize( Nx );
-  tmp[0] = -1.0;
-  tmp[1] = 0.0;
-  tmp[2] = 2.0;
-  coordinates.appendArray( tmp.begin(), tmp.end() );
-  tmp.resize( Ny );
-  tmp[0] = -1.0;
-  tmp[1] = 0.0;
-  tmp[2] = 1.0;
-  tmp[3] = 2.0;
-  coordinates.appendArray( tmp.begin(), tmp.end() );
+  array1d< real64_array > coordinates;
+  coordinates.resize( Ndim );
+  coordinates[0].resize( Nx );
+  coordinates[0][0] = -1.0;
+  coordinates[0][1] = 0.0;
+  coordinates[0][2] = 2.0;
+  coordinates[1].resize( Ny );
+  coordinates[1][0] = -1.0;
+  coordinates[1][1] = 0.0;
+  coordinates[1][2] = 1.0;
+  coordinates[1][3] = 2.0;
 
   real64_array values( Nx * Ny );
   localIndex tablePosition = 0;
@@ -236,7 +254,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 {
   FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
 
-  // 3D table with linear interpolation
+  // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y + 7*z + 11*t
   localIndex Ndim = 4;
   localIndex Nx = 3;
@@ -249,30 +267,26 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   string timeName = "time";
 
   // Setup table
-  ArrayOfArrays< real64 > coordinates;
-  array1d< real64 > tmp;
-  tmp.resize( Nx );
-  tmp[0] = -1.0;
-  tmp[1] = 0.0;
-  tmp[2] = 1.0;
-  coordinates.appendArray( tmp.begin(), tmp.end() );
-  tmp.resize( Ny );
-  tmp[0] = -1.0;
-  tmp[1] = 0.0;
-  tmp[2] = 0.5;
-  tmp[3] = 1.0;
-  coordinates.appendArray( tmp.begin(), tmp.end() );
-  tmp.resize( Nz );
-  tmp[0] = -1.0;
-  tmp[1] = -0.4;
-  tmp[2] = 0.3;
-  tmp[3] = 0.5;
-  tmp[4] = 1.0;
-  coordinates.appendArray( tmp.begin(), tmp.end() );
-  tmp.resize( Nt );
-  tmp[0] = -1.0;
-  tmp[1] = 1.0;
-  coordinates.appendArray( tmp.begin(), tmp.end() );
+  array1d< real64_array > coordinates;
+  coordinates.resize( Ndim );
+  coordinates[0].resize( Nx );
+  coordinates[0][0] = -1.0;
+  coordinates[0][1] = 0.0;
+  coordinates[0][2] = 1.0;
+  coordinates[1].resize( Ny );
+  coordinates[1][0] = -1.0;
+  coordinates[1][1] = 0.0;
+  coordinates[1][2] = 0.5;
+  coordinates[1][3] = 1.0;
+  coordinates[2].resize( Nz );
+  coordinates[2][0] = -1.0;
+  coordinates[2][1] = -0.4;
+  coordinates[2][2] = 0.3;
+  coordinates[2][3] = 0.5;
+  coordinates[2][4] = 1.0;
+  coordinates[3].resize( Nt );
+  coordinates[3][0] = -1.0;
+  coordinates[3][1] = 1.0;
 
   real64_array values( Nx * Ny * Nz * Nt );
   localIndex tablePosition = 0;
@@ -362,7 +376,131 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   }
 }
 
+TEST( FunctionTests, 4DTable_derivatives )
+{
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
 
+  // 4D table with linear interpolation
+  // f(x, y, z, t) = 2.0 + 3*x - 5*y*y + 7*z*z*z + 11*t*t*t*t
+  localIndex Ndim = 4;
+  localIndex Nx = 3;
+  localIndex Ny = 4;
+  localIndex Nz = 5;
+  localIndex Nt = 4;
+  string coordinatesName = "coordinates";
+  string timeName = "time";
+
+  // Setup table
+  array1d< real64_array > coordinates;
+  coordinates.resize( Ndim );
+  coordinates[0].resize( Nx );
+  coordinates[0][0] = -1.0;
+  coordinates[0][1] = 0.0;
+  coordinates[0][2] = 1.0;
+  coordinates[1].resize( Ny );
+  coordinates[1][0] = -1.0;
+  coordinates[1][1] = 0.0;
+  coordinates[1][2] = 0.5;
+  coordinates[1][3] = 1.0;
+  coordinates[2].resize( Nz );
+  coordinates[2][0] = -1.0;
+  coordinates[2][1] = -0.4;
+  coordinates[2][2] = 0.3;
+  coordinates[2][3] = 0.5;
+  coordinates[2][4] = 1.0;
+  coordinates[3].resize( Nt );
+  coordinates[3][0] = -1.0;
+  coordinates[3][1] = 0.34;
+  coordinates[3][2] = 0.5;
+  coordinates[3][3] = 1.0;
+
+  real64_array values( Nx * Ny * Nz * Nt );
+  localIndex tablePosition = 0;
+  for( localIndex mm=0; mm<Nt; ++mm )
+  {
+    for( localIndex kk=0; kk<Nz; ++kk )
+    {
+      for( localIndex jj=0; jj<Ny; ++jj )
+      {
+        for( localIndex ii=0; ii<Nx; ++ii )
+        {
+          real64 x = coordinates[0][ii];
+          real64 y = coordinates[1][jj];
+          real64 z = coordinates[2][kk];
+          real64 t = coordinates[3][mm];
+
+          values[tablePosition] = 2.0 + (3*x) - (5*y*y) + (7*z*z*z) + (11*t*t*t*t);
+          ++tablePosition;
+        }
+      }
+    }
+  }
+
+  // Set variable names
+  string_array inputVarNames( 2 );
+  inputVarNames[0] = coordinatesName;
+  inputVarNames[1] = timeName;
+
+  // Initialize the table
+  TableFunction * table_c = functionManager->CreateChild( "TableFunction", "table_c" )->group_cast< TableFunction * >();
+  table_c->setTableCoordinates( coordinates );
+  table_c->setTableValues( values );
+  table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_c->setInputVarNames( inputVarNames );
+  table_c->reInitializeFunction();
+
+  real64 const relTol = 1e-4;
+  real64 const eps = std::numeric_limits< real64 >::epsilon();
+  real64 const perturb = std::sqrt( eps );
+
+  real64 const start = coordinates[0][0]-0.1; // start outside the table, to check derivatives there too
+  real64 const end = coordinates[0][Nx-1]+0.1; // end outside the table
+  localIndex const nSamples = 7; // try not to fall on the coordinates of the table, otherwise the finite-difference approximation won't
+                                 // work
+  real64 const delta = (end-start)/nSamples;
+
+  real64 val = 0.0;
+  real64 perturbedVal = 0.0;
+  real64 input[4] = { start, start, start, start };
+  real64 perturbedInput[4] = { 0.0 };
+  real64 derivatives[4] = { 0.0 };
+  real64 perturbedDerivatives[4] = { 0.0 };
+
+  TableFunctionKernelWrapper kernelWrapper = table_c->createKernelWrapper();
+  for( localIndex mm=0; mm<nSamples; ++mm )
+  {
+    input[2] = start;
+    for( localIndex kk=0; kk<nSamples; ++kk )
+    {
+      input[1] = start;
+      for( localIndex jj=0; jj<nSamples; ++jj )
+      {
+        input[0] = start;
+        for( localIndex ii=0; ii<nSamples; ++ii )
+        {
+          // evaluate once to get the analytical derivatives
+          kernelWrapper.Compute( input, val, derivatives );
+
+          // check derivatives
+
+          for( localIndex direction = 0; direction < Ndim; ++direction )
+          {
+            checkDirectionalDerivative( input, perturbedInput,
+                                        val, perturbedVal,
+                                        derivatives, perturbedDerivatives,
+                                        perturb, relTol, direction, kernelWrapper );
+          }
+
+
+          input[0] += delta;
+        }
+        input[1] += delta;
+      }
+      input[2] += delta;
+    }
+    input[3] += delta;
+  }
+}
 
 #ifdef GEOSX_USE_MATHPRESSO
 

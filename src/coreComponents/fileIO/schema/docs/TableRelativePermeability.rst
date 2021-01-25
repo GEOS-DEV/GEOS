@@ -1,11 +1,12 @@
 
 
-================= ============ ======== =========================================== 
-Name              Type         Default  Description                                 
-================= ============ ======== =========================================== 
-name              string       required A name is required for any non-unique nodes 
-phaseNames        string_array required List of fluid phases                        
-relPermTableNames string_array required List of relative permeability tables        
-================= ============ ======== =========================================== 
+========================= ============ ======== ========================================================================== 
+Name                      Type         Default  Description                                                                
+========================= ============ ======== ========================================================================== 
+gasOilRelPermTableNames   string_array {}       List of relative permeability tables for the pair (gas phase, oil phase)   
+name                      string       required A name is required for any non-unique nodes                                
+phaseNames                string_array required List of fluid phases                                                       
+waterOilRelPermTableNames string_array {}       List of relative permeability tables for the pair (water phase, oil phase) 
+========================= ============ ======== ========================================================================== 
 
 

@@ -114,6 +114,27 @@ void TableFunction::parseFile( array1d< T > & target, string const & filename, c
   inputStream.close();
 }
 
+void TableFunction::setInterpolationMethod( InterpolationType const method )
+{
+  m_interpolationMethod = method;
+  reInitializeFunction();
+}
+
+void TableFunction::setTableCoordinates( array1d< real64_array > coordinates )
+{
+  m_coordinates.resize( 0 );
+  for( localIndex i = 0; i < coordinates.size(); ++i )
+  {
+    m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
+  }
+  reInitializeFunction();
+}
+
+void TableFunction::setTableValues( real64_array values )
+{
+  m_values = std::move( values );
+  reInitializeFunction();
+}
 
 void TableFunction::InitializeFunction()
 {
@@ -168,7 +189,7 @@ void TableFunction::reInitializeFunction()
   }
 
   // Error checking
-  GEOSX_ERROR_IF( increment != m_values.size(), "Table dimensions do not match!" );
+  //GEOSX_ERROR_IF( increment != m_values.size(), "Table dimensions do not match!" );
 
   // Build a quick map to help with linear interpolation
   m_numCorners = static_cast< localIndex >(pow( 2, m_dimensions ));
@@ -181,8 +202,6 @@ void TableFunction::reInitializeFunction()
   }
 
   // Create the kernel wrapper
-  // Warning! This function must be called AFTER all the input parameters have been set (interpolation method, etc)
-  // TODO: see if there is a better way, this seems quite error prone
   m_kernelWrapper =
     std::make_unique< TableFunctionKernelWrapper >( m_interpolationMethod,
                                                     m_coordinates.toViewConst(),

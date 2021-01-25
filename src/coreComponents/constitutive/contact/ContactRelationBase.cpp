@@ -107,7 +107,7 @@ void ContactRelationBase::InitializePreSubGroups( Group * const )
   TableFunction * const apertureTable = dynamic_cast< TableFunction * >(m_apertureFunction);
   if( apertureTable!=nullptr )
   {
-    ArrayOfArrays< real64 > & xvals0 = apertureTable->getCoordinates();
+    ArrayOfArraysView< real64 > xvals0 = apertureTable->getCoordinates();
     array1d< real64 > & yvals = apertureTable->getValues();
 
     GEOSX_ERROR_IF( xvals0.size() > 1,

@@ -53,6 +53,7 @@ set( constitutive_headers
      relativePermeability/relativePermeabilitySelector.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/TableRelativePermeability.hpp
+     relativePermeability/RelativePermeabilityInterpolators.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp

@@ -1935,10 +1935,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityType">
+		<!--gasOilRelPermTableNames => List of relative permeability tables for the pair (gas phase, oil phase)-->
+		<xsd:attribute name="gasOilRelPermTableNames" type="string_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--relPermTableNames => List of relative permeability tables-->
-		<xsd:attribute name="relPermTableNames" type="string_array" use="required" />
+		<!--waterOilRelPermTableNames => List of relative permeability tables for the pair (water phase, oil phase)-->
+		<xsd:attribute name="waterOilRelPermTableNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
