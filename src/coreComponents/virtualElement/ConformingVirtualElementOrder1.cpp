@@ -21,33 +21,24 @@ namespace geosx
 {
 namespace virtualElement
 {
-  void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
-                                                          localIndex const & regionIndex,
-                                                          localIndex const & subRegionIndex,
-                                                          localIndex const & cellIndex )
+  void ConformingVirtualElementOrder1::
+  ComputeProjectors( localIndex const & cellIndex,
+                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                     CellBlock::NodeMapType const & cellToNodes,
+                     CellBlock::FaceMapType const & elementToFaceMap,
+                     FaceManager::NodeMapType const & faceToNodeMap,
+                     FaceManager::EdgeMapType const & faceToEdgeMap,
+                     EdgeManager::NodeMapType const & edgeToNodeMap,
+                     arrayView2d< real64 const > const faceCenters,
+                     arrayView2d< real64 const > const faceNormals,
+                     arrayView1d< real64 const> const faceAreas,
+                     arraySlice1d< real64 const > const & cellCenter,
+                     real64 const & cellVolume,
+                     MeshLevel const & GEOSX_UNUSED_PARAM(mesh),
+                     localIndex const & GEOSX_UNUSED_PARAM(regionIndex),
+                     localIndex const & GEOSX_UNUSED_PARAM(subRegionIndex)
+                     )
   {
-    // Get geometry managers
-    NodeManager const & nodeManager = *mesh.getNodeManager();
-    EdgeManager const & edgeManager = *mesh.getEdgeManager();
-    FaceManager const & faceManager = *mesh.getFaceManager();
-    ElementRegionManager const & elementManager = *mesh.getElemManager();
-
-    // Get pre-computed maps
-    CellElementRegion const & cellRegion =
-      *elementManager.GetRegion< CellElementRegion >( regionIndex );
-    CellElementSubRegion const & cellSubRegion =
-      *cellRegion.GetSubRegion< CellElementSubRegion >( subRegionIndex );
-    CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
-    FixedOneToManyRelation const & elementToFaceMap = cellSubRegion.faceList();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
-      nodeManager.referencePosition();
-
-    // Get pre-computed geometrical properties.
-    arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
-    arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
-    arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
-    arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
-    arraySlice1d< real64 const > cellCenter = cellCenters[cellIndex];
     localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
     localIndex const numCellPoints = cellToNodes[cellIndex].size();
     m_numSupportPoints = numCellPoints;
@@ -86,18 +77,18 @@ namespace virtualElement
     for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
     {
       localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
-      real64 const faceArea = faceManager.faceArea()[faceIndex];
-      arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
+      real64 const faceArea = faceAreas[faceIndex];
+      arraySlice1d< localIndex const > faceToNodes = faceToNodeMap[faceIndex];
       // - compute integrals calling auxiliary method
       array1d< real64 > faceBasisIntegrals;
       real64 threeDMonomialIntegrals[3] = { 0.0 };
-      ComputeFaceIntegrals(nodeManager.referencePosition(),
-                           faceManager.nodeList()[faceIndex],
-                           faceManager.edgeList()[faceIndex],
+      ComputeFaceIntegrals(nodesCoords,
+                           faceToNodes,
+                           faceToEdgeMap[faceIndex],
                            faceArea,
                            faceCenters[faceIndex],
                            faceNormals[faceIndex],
-                           edgeManager.nodeList(),
+                           edgeToNodeMap,
                            invCellDiameter,
                            cellCenter,
                            faceBasisIntegrals,
@@ -145,7 +136,7 @@ namespace virtualElement
     for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
     {
       localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
-      arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
+      arraySlice1d< localIndex const > faceToNodes = faceToNodeMap[faceIndex];
       arraySlice1d< real64 const > faceCenter = faceCenters[faceIndex];
       localIndex const numFaceVertices = faceToNodes.size();
       for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
@@ -191,7 +182,7 @@ namespace virtualElement
     // Compute integral mean of basis functions and of derivatives of basis functions.
     // Compute VEM degrees of freedom of the piNabla projection minus the identity (used for
     // m_stabilizationMatrix).
-    real64 const invCellVolume = 1.0/cellVolumes[cellIndex];
+    real64 const invCellVolume = 1.0/cellVolume;
     real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
     m_basisFunctionsIntegralMean.resize( numCellPoints );
     m_basisDerivativesIntegralMean = basisTimesNormalBoundaryInt;

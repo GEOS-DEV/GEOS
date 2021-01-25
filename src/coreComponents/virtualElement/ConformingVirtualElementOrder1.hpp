@@ -90,10 +90,21 @@ public:
   virtual ~ConformingVirtualElementOrder1() override
   {}
 
-  void ComputeProjectors( MeshLevel const & mesh,
+  void ComputeProjectors( localIndex const & cellIndex,
+                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                          CellBlock::NodeMapType const & cellToNodes,
+                          CellBlock::FaceMapType const & elementToFaceMap,
+                          FaceManager::NodeMapType const & faceToNodeMap,
+                          FaceManager::EdgeMapType const & faceToEdgeMap,
+                          EdgeManager::NodeMapType const & edgeToNodeMap,
+                          arrayView2d< real64 const > const faceCenters,
+                          arrayView2d< real64 const > const faceNormals,
+                          arrayView1d< real64 const> const faceAreas,
+                          arraySlice1d< real64 const > const & cellCenter,
+                          real64 const & cellVolume,
+                          MeshLevel const & mesh,
                           localIndex const & regionIndex,
-                          localIndex const & subRegionIndex,
-                          localIndex const & cellIndex ) override;
+                          localIndex const & subRegionIndex );
 
   virtual localIndex getNumQuadraturePoints() const override
   {

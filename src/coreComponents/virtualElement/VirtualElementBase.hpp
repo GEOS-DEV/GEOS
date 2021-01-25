@@ -18,7 +18,10 @@
 #ifndef GEOSX_VIRTUALELEMENT_VIRTUALELEMENTBASE_HPP_
 #define GEOSX_VIRTUALELEMENT_VIRTUALELEMENTBASE_HPP_
 
-#include "mesh/MeshLevel.hpp"
+#include "mesh/CellBlock.hpp"
+#include "mesh/FaceManager.hpp"
+#include "mesh/EdgeManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 namespace geosx
 {
@@ -36,10 +39,6 @@ public:
 
   /// Default destructor.
   virtual ~VirtualElementBase() = default;
-
-  /// @brief Compute VEM projectors on the geometry.
-  virtual void ComputeProjectors( MeshLevel const &, localIndex const &,
-                                  localIndex const &, localIndex const & ) = 0;
 
   /**
    * @brief Virtual getter for the number of quadrature points per element.
