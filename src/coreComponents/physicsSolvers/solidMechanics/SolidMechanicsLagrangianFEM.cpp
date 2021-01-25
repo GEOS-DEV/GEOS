@@ -977,10 +977,10 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
                                                CRSMatrix< real64, globalIndex > & localMatrix,
                                                array1d< real64 > & localRhs,
                                                array1d< real64 > & localSolution,
-                                               bool const setSparisty )
+                                               bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparisty );
+  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
   MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
   NodeManager const & nodeManager = *(mesh.getNodeManager());
