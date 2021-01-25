@@ -204,8 +204,8 @@ TEST( VirtualElementBase, unitCube )
                                   faceManager.faceNormal(),
                                   faceManager.faceArea(),
                                   cellCenters[cellIndex],
-                                  cellVolumes[cellIndex],
-                                  mesh, 0, 0 );
+                                  cellVolumes[cellIndex]
+                                  );
 
     checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
                                   vemElement.m_basisFunctionsIntegralMean );
@@ -292,8 +292,8 @@ TEST( VirtualElementBase, wedges )
                                   faceManager.faceNormal(),
                                   faceManager.faceArea(),
                                   cellCenters[cellIndex],
-                                  cellVolumes[cellIndex],
-                                  mesh, 0, 0);
+                                  cellVolumes[cellIndex]
+                                  );
     checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
                                   vemElement.m_basisFunctionsIntegralMean );
     checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),

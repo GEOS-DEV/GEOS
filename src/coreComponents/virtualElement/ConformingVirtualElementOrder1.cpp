@@ -33,10 +33,7 @@ namespace virtualElement
                      arrayView2d< real64 const > const faceNormals,
                      arrayView1d< real64 const> const faceAreas,
                      arraySlice1d< real64 const > const & cellCenter,
-                     real64 const & cellVolume,
-                     MeshLevel const & GEOSX_UNUSED_PARAM(mesh),
-                     localIndex const & GEOSX_UNUSED_PARAM(regionIndex),
-                     localIndex const & GEOSX_UNUSED_PARAM(subRegionIndex)
+                     real64 const & cellVolume
                      )
   {
     localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
