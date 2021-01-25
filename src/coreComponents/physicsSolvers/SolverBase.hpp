@@ -50,7 +50,7 @@ public:
   SolverBase & operator=( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase && ) = delete;
 
-  static string CatalogName() { return "SolverBase"; }
+  static string catalogName() { return "SolverBase"; }
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
@@ -59,7 +59,7 @@ public:
   /**
    * This method is called when its host event is triggered
    */
-  virtual void Execute( real64 const time_n,
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -133,7 +133,7 @@ public:
    * This function is the entry point to perform a solver step. The choice of time integration
    * method is determined in this function, and the appropriate step function is called.
    */
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain );
@@ -148,7 +148,7 @@ public:
    *
    * T
    */
-  virtual void SetNextDt( real64 const & currentDt,
+  virtual void setNextDt( real64 const & currentDt,
                           real64 & nextDt );
 
   /**
@@ -159,7 +159,7 @@ public:
    *
    * T
    */
-  void SetNextDtBasedOnNewtonIter( real64 const & currentDt,
+  void setNextDtBasedOnNewtonIter( real64 const & currentDt,
                                    real64 & nextDt );
 
 
@@ -171,7 +171,7 @@ public:
    * @param domain the domain object
    * @return return the timestep that was achieved during the step.
    */
-  virtual real64 ExplicitStep( real64 const & time_n,
+  virtual real64 explicitStep( real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain );
@@ -193,7 +193,7 @@ public:
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
-  virtual real64 NonlinearImplicitStep( real64 const & time_n,
+  virtual real64 nonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
                                         integer const cycleNumber,
                                         DomainPartition & domain );
@@ -217,7 +217,7 @@ public:
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual bool
-  LineSearch( real64 const & time_n,
+  lineSearch( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition & domain,
@@ -246,7 +246,7 @@ public:
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
-  virtual real64 LinearImplicitStep( real64 const & time_n,
+  virtual real64 linearImplicitStep( real64 const & time_n,
                                      real64 const & dt,
                                      integer const cycleNumber,
                                      DomainPartition & domain );
@@ -268,7 +268,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain );
 
@@ -277,7 +277,7 @@ public:
    * @param dofManager degree-of-freedom manager associated with the linear system
    */
   virtual void
-  SetupDofs( DomainPartition const & domain,
+  setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const;
 
   /**
@@ -292,7 +292,7 @@ public:
    *       sufficient for most single-physics solvers.
    */
   virtual void
-  SetupSystem( DomainPartition & domain,
+  setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
                array1d< real64 > & localRhs,
@@ -319,7 +319,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  AssembleSystem( real64 const time,
+  assembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
@@ -339,7 +339,7 @@ public:
    * completion of the system assembly, but is separated for use in coupled solvers.
    */
   virtual void
-  ApplyBoundaryConditions( real64 const time,
+  applyBoundaryConditions( real64 const time,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -355,7 +355,7 @@ public:
    * @param rhs system right-hand side vector
    */
   void
-  DebugOutputSystem( real64 const & time,
+  debugOutputSystem( real64 const & time,
                      integer const cycleNumber,
                      integer const nonlinearIteration,
                      ParallelMatrix const & matrix,
@@ -369,7 +369,7 @@ public:
    * @param solution system solution vector
    */
   void
-  DebugOutputSolution( real64 const & time,
+  debugOutputSolution( real64 const & time,
                        integer const cycleNumber,
                        integer const nonlinearIteration,
                        ParallelVector const & solution ) const;
@@ -385,7 +385,7 @@ public:
    * a tolerance.
    */
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs );
 
@@ -404,7 +404,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  solveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution );
@@ -424,7 +424,7 @@ public:
    *
    */
   virtual bool
-  CheckSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor );
@@ -437,7 +437,7 @@ public:
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
   virtual real64
-  ScalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution );
 
@@ -465,7 +465,7 @@ public:
    *
    */
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain );
@@ -482,7 +482,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain );
+  resetStateToBeginningOfStep( DomainPartition & domain );
 
   /**
    * @brief perform cleanup for implicit timestep
@@ -498,7 +498,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain );
 
@@ -506,17 +506,17 @@ public:
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
    */
-  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
+  virtual real64 getTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
   {return m_nextDt;};
   /**@}*/
 
   real64 GetTimestepRequest()
   {return m_nextDt;};
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   struct viewKeyStruct
   {
@@ -660,16 +660,16 @@ public:
 
 protected:
 
-  static real64 EisenstatWalker( real64 const newNewtonNorm,
+  static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
 
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
-  static BASETYPE const & GetConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
+  static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
-  static BASETYPE & GetConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
+  static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
 
   /**
    * @brief Partially validates constitutive model names input.
@@ -683,7 +683,7 @@ protected:
    * If @p allowEmpty is true and the input is empty, returns false, which the solver can
    * interpret as a signal this type of model is disabled for the run (for optional models).
    */
-  bool CheckModelNames( array1d< string > & modelNames,
+  bool checkModelNames( array1d< string > & modelNames,
                         string const & attribute,
                         bool const allowEmpty = false ) const;
 
@@ -693,12 +693,12 @@ protected:
    * @param elemRegionManager reference to element manager
    * @param modelNames list of model names
    *
-   * This function is typically called from solver's InitializePreSubGroups() method,
+   * This function is typically called from solver's initializePreSubGroups() method,
    * after constitutive models have been set up but before they are used.
    * Looks up each model by name and type in each subregion of target regions.
    */
   template< typename MODEL_TYPE = constitutive::ConstitutiveBase >
-  void ValidateModelMapping( ElementRegionManager const & elemRegionManager,
+  void validateModelMapping( ElementRegionManager const & elemRegionManager,
                              arrayView1d< string const > const & modelNames ) const;
 
   real64 m_cflFactor;
@@ -741,43 +741,43 @@ private:
 };
 
 template< typename BASETYPE, typename LOOKUP_TYPE >
-BASETYPE const & SolverBase::GetConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
+BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
 {
   Group const * const constitutiveModels =
-    dataGroup.GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  BASETYPE const * const model = constitutiveModels->GetGroup< BASETYPE >( key );
+  BASETYPE const * const model = constitutiveModels->getGroup< BASETYPE >( key );
   GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
 
   return *model;
 }
 
 template< typename BASETYPE, typename LOOKUP_TYPE >
-BASETYPE & SolverBase::GetConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
+BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
 {
   Group * const constitutiveModels =
-    dataGroup.GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  BASETYPE * const model = constitutiveModels->GetGroup< BASETYPE >( key );
+  BASETYPE * const model = constitutiveModels->getGroup< BASETYPE >( key );
   GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
 
   return *model;
 }
 
 template< typename MODEL_TYPE >
-void SolverBase::ValidateModelMapping( ElementRegionManager const & elemRegionManager,
+void SolverBase::validateModelMapping( ElementRegionManager const & elemRegionManager,
                                        arrayView1d< string const > const & modelNames ) const
 {
   GEOSX_ERROR_IF_NE( modelNames.size(), m_targetRegionNames.size() );
   for( localIndex k = 0; k < modelNames.size(); ++k )
   {
-    ElementRegionBase const & region = *elemRegionManager.GetRegion( m_targetRegionNames[k] );
+    ElementRegionBase const & region = *elemRegionManager.getRegion( m_targetRegionNames[k] );
     for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
     {
-      ElementSubRegionBase const & subRegion = *region.GetSubRegion( esr );
-      MODEL_TYPE const * const model = subRegion.GetConstitutiveModels()->GetGroup< MODEL_TYPE >( modelNames[k] );
+      ElementSubRegionBase const & subRegion = *region.getSubRegion( esr );
+      MODEL_TYPE const * const model = subRegion.getConstitutiveModels()->getGroup< MODEL_TYPE >( modelNames[k] );
       GEOSX_ERROR_IF( model == nullptr,
                       getName() << ": constitutive model " << modelNames[k] << " not found in " << region.getName() << '/' << subRegion.getName() );
     }

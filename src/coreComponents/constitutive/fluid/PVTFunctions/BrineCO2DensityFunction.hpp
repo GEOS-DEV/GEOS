@@ -38,17 +38,17 @@ public:
 
 
   static constexpr auto m_catalogName = "BrineCO2Density";
-  static string CatalogName()                    { return m_catalogName; }
-  virtual string getCatalogName() const override final { return CatalogName(); }
+  static string catalogName()                    { return m_catalogName; }
+  virtual string getCatalogName() const override final { return catalogName(); }
 
 
-  virtual PVTFuncType FunctionType() const override
+  virtual PVTFuncType functionType() const override
   {
     return PVTFuncType::DENSITY;
 
   }
 
-  virtual void Evaluation( EvalVarArgs const & pressure,
+  virtual void evaluation( EvalVarArgs const & pressure,
                            EvalVarArgs const & temperature,
                            arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value,
@@ -57,9 +57,9 @@ public:
 
 private:
 
-  void MakeTable( string_array const & inputPara );
+  void makeTable( string_array const & inputPara );
 
-  void CalculateBrineDensity( real64_array const & pressure, real64_array const & temperature, real64 const & salinity, real64_array2d const & density );
+  void calculateBrineDensity( real64_array const & pressure, real64_array const & temperature, real64 const & salinity, real64_array2d const & density );
 
   TableFunctionPtr m_BrineDensityTable;
   localIndex m_CO2Index;

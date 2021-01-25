@@ -274,8 +274,8 @@ void compute2DElasticityOperator( MPI_Comm const comm,
                                   real64 const poissonRatio,
                                   MATRIX & elasticity2D )
 {
-  localIndex const rank  = LvArray::integerConversion< localIndex >( MpiWrapper::Comm_rank( comm ) );
-  localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::Comm_size( comm ) );
+  localIndex const rank  = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
+  localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::commSize( comm ) );
 
   GEOSX_ERROR_IF( nCellsY < nproc, "Less than one cell row per processor is not supported" );
 

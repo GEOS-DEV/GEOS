@@ -40,7 +40,7 @@ TEST( SinglePhaseBaseKernels, mobility )
     real64 mob;
     real64 dMob_dPres;
 
-    MobilityKernel::Compute( dens[i], dDens_dPres[i], visc[i], dVisc_dPres[i], mob, dMob_dPres );
+    MobilityKernel::compute( dens[i], dDens_dPres[i], visc[i], dVisc_dPres[i], mob, dMob_dPres );
 
     // compute etalon
     real64 const mob_et = dens[i] / visc[i];
@@ -82,7 +82,7 @@ TEST( SinglePhaseBaseKernels, accumulation )
     real64 accumJacobian;
     real64 poroNew;
 
-    AccumulationKernel< CellElementSubRegion >::Compute< false >( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
+    AccumulationKernel< CellElementSubRegion >::compute< false >( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
                                                                   poroRef[i], poroOld[i], pvMult[i], dPvMult_dPres[i],
                                                                   0.0, 0.0, 0.0, 0.0, poroNew, accum, accumJacobian );
 

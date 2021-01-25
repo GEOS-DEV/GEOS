@@ -82,7 +82,7 @@ TableFunction::~TableFunction()
 
 
 template< typename T >
-void TableFunction::parse_file( array1d< T > & target, string const & filename, char delimiter )
+void TableFunction::parseFile( array1d< T > & target, string const & filename, char delimiter )
 {
   std::ifstream inputStream( filename.c_str());
   std::string lineString;
@@ -115,7 +115,7 @@ void TableFunction::parse_file( array1d< T > & target, string const & filename, 
 }
 
 
-void TableFunction::InitializeFunction()
+void TableFunction::initializeFunction()
 {
   // Read in data
   if( m_coordinates.size() > 0 )
@@ -139,10 +139,10 @@ void TableFunction::InitializeFunction()
     m_dimensions = LvArray::integerConversion< localIndex >( m_coordinateFiles.size());
     m_coordinates.resize( m_dimensions );
 
-    parse_file( m_values, m_voxelFile, ',' );
+    parseFile( m_values, m_voxelFile, ',' );
     for( localIndex ii=0; ii<m_dimensions; ++ii )
     {
-      parse_file( m_coordinates[ii], m_coordinateFiles[ii], ',' );
+      parseFile( m_coordinates[ii], m_coordinateFiles[ii], ',' );
       m_size.emplace_back( m_coordinates[ii].size());
     }
   }
@@ -180,7 +180,7 @@ void TableFunction::reInitializeFunction()
 }
 
 
-real64 TableFunction::Evaluate( real64 const * const input ) const
+real64 TableFunction::evaluate( real64 const * const input ) const
 {
   real64 result = 0.0;
 

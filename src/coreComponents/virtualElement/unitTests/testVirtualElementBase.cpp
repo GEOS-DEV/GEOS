@@ -161,23 +161,23 @@ TEST( VirtualElementBase, unitCube )
   xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
 
   ProblemManager * problemManager = new ProblemManager( "Problem", nullptr );
-  problemManager->InitializePythonInterpreter();
-  problemManager->ProcessInputFileRecursive( xmlProblemNode );
+  problemManager->initializePythonInterpreter();
+  problemManager->processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
   DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->GetGroup< MeshManager >
+  MeshManager * meshManager = problemManager->getGroup< MeshManager >
                                 ( problemManager->groupKeys.meshManager );
-  meshManager->GenerateMeshLevels( domain );
+  meshManager->generateMeshLevels( domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->ProcessInputFileRecursive( topLevelNode );
-  elementManager->PostProcessInputRecursive();
-  problemManager->ProblemSetup();
+  elementManager->processInputFileRecursive( topLevelNode );
+  elementManager->postProcessInputRecursive();
+  problemManager->problemSetup();
 
   ConformingVirtualElementOrder1 vemElement;
-  vemElement.ComputeProjectors( mesh, 0, 0, 0 );
+  vemElement.computeProjectors( mesh, 0, 0, 0 );
 
   checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
                                 vemElement.m_basisFunctionsIntegralMean );
@@ -186,9 +186,9 @@ TEST( VirtualElementBase, unitCube )
 
   NodeManager const & nodeManager = *mesh.getNodeManager();
   CellElementRegion const & cellRegion =
-    *elementManager->GetRegion< CellElementRegion >( 0 );
+    *elementManager->getRegion< CellElementRegion >( 0 );
   CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion< CellElementSubRegion >( 0 );
+    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
@@ -233,26 +233,26 @@ TEST( VirtualElementBase, wedges )
   xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
 
   ProblemManager * problemManager = new ProblemManager( "Problem", nullptr );
-  problemManager->InitializePythonInterpreter();
-  problemManager->ProcessInputFileRecursive( xmlProblemNode );
+  problemManager->initializePythonInterpreter();
+  problemManager->processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
   DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->GetGroup< MeshManager >
+  MeshManager * meshManager = problemManager->getGroup< MeshManager >
                                 ( problemManager->groupKeys.meshManager );
-  meshManager->GenerateMeshLevels( domain );
+  meshManager->generateMeshLevels( domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->ProcessInputFileRecursive( topLevelNode );
-  elementManager->PostProcessInputRecursive();
-  problemManager->ProblemSetup();
+  elementManager->processInputFileRecursive( topLevelNode );
+  elementManager->postProcessInputRecursive();
+  problemManager->problemSetup();
 
   ConformingVirtualElementOrder1 vemElement;
   CellElementRegion const & cellRegion =
-    *elementManager->GetRegion< CellElementRegion >( 0 );
+    *elementManager->getRegion< CellElementRegion >( 0 );
   CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion< CellElementSubRegion >( 0 );
+    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
@@ -261,7 +261,7 @@ TEST( VirtualElementBase, wedges )
   localIndex const numCells = cellSubRegion.getElementVolume().size();
   for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
-    vemElement.ComputeProjectors( mesh, 0, 0, cellIndex );
+    vemElement.computeProjectors( mesh, 0, 0, cellIndex );
     checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
                                   vemElement.m_basisFunctionsIntegralMean );
     checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),

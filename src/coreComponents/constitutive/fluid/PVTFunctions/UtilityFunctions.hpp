@@ -120,7 +120,7 @@ public:
     return *this;
   }
 
-  EvalArgs & Exponent( const EvalArgs & arg )
+  EvalArgs & exponent( const EvalArgs & arg )
   {
     const T & v = arg.m_var;
     this->m_var = exp( v );
@@ -418,16 +418,16 @@ typedef EvalArgs< real64, MAX_VAR_DIM > EvalVarArgs;
 class TableFunctionBase
 {
 public:
-  virtual const string & TableName() const = 0;
+  virtual const string & tableName() const = 0;
   virtual ~TableFunctionBase(){}
 
-  virtual EvalArgs1D Value( const EvalArgs1D & x ) const = 0;
+  virtual EvalArgs1D value( const EvalArgs1D & x ) const = 0;
 
-  virtual EvalArgs2D Value( const EvalArgs2D & x ) const = 0;
+  virtual EvalArgs2D value( const EvalArgs2D & x ) const = 0;
 
-  virtual EvalArgs2D Value( const EvalArgs2D & x, const EvalArgs2D & y ) const = 0;
+  virtual EvalArgs2D value( const EvalArgs2D & x, const EvalArgs2D & y ) const = 0;
 
-  virtual void Print() const = 0;
+  virtual void print() const = 0;
 };
 
 
@@ -442,41 +442,41 @@ public:
 
   ~XYTable(){}
 
-  real64_array & XArray()
+  real64_array & xArray()
   {
     return m_x;
   }
 
-  real64_array & YArray()
+  real64_array & yArray()
   {
     return m_y;
   }
 
-  real64_array2d & ValueArray()
+  real64_array2d & valueArray()
   {
     return m_value;
   }
 
 
-  virtual string const & TableName() const
+  virtual string const & tableName() const
   {
     return m_tableName;
   }
 
 
-  virtual EvalArgs1D Value( EvalArgs1D const & ) const
+  virtual EvalArgs1D value( EvalArgs1D const & ) const
   {
     return 0;
   }
 
-  virtual EvalArgs2D Value( EvalArgs2D const & ) const
+  virtual EvalArgs2D value( EvalArgs2D const & ) const
   {
     return 0;
   }
 
-  virtual EvalArgs2D Value( EvalArgs2D const & x, EvalArgs2D const & y ) const;
+  virtual EvalArgs2D value( EvalArgs2D const & x, EvalArgs2D const & y ) const;
 
-  virtual void Print() const
+  virtual void print() const
   {}
 
 private:
@@ -495,36 +495,36 @@ public:
   XTable( string const & tableName, real64_array const & x, real64_array const & value ): m_tableName( tableName ), m_x( x ), m_value( value ) {}
   ~XTable(){}
 
-  real64_array & XArray()
+  real64_array & xArray()
   {
     return m_x;
   }
 
-  real64_array & ValueArray()
+  real64_array & valueArray()
   {
     return m_value;
   }
 
-  virtual string const & TableName() const
+  virtual string const & tableName() const
   {
     return m_tableName;
   }
 
-  virtual EvalArgs1D Value( EvalArgs1D const & x ) const
+  virtual EvalArgs1D value( EvalArgs1D const & x ) const
   {
 
-    return GetValue< EvalArgs1D >( x );
+    return getValue< EvalArgs1D >( x );
 
   }
 
-  virtual EvalArgs2D Value( EvalArgs2D const & x ) const
+  virtual EvalArgs2D value( EvalArgs2D const & x ) const
   {
 
-    return GetValue< EvalArgs2D >( x );
+    return getValue< EvalArgs2D >( x );
 
   }
 
-  virtual EvalArgs2D Value( EvalArgs2D const &, EvalArgs2D const & ) const
+  virtual EvalArgs2D value( EvalArgs2D const &, EvalArgs2D const & ) const
   {
     return 0;
   }
@@ -532,9 +532,9 @@ public:
 private:
 
   template< class T >
-  T GetValue( T const & x ) const;
+  T getValue( T const & x ) const;
 
-  virtual void Print() const
+  virtual void print() const
   {}
 
   string m_tableName;

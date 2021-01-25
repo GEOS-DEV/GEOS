@@ -90,7 +90,7 @@ HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, 
   m_mpioFapl( parallelAccess ),
   m_comm( comm )
 {
-  int rnk = MpiWrapper::Comm_rank( comm );
+  int rnk = MpiWrapper::commRank( comm );
 #ifdef GEOSX_USE_MPI
   if( m_mpioFapl )
   {
@@ -178,8 +178,8 @@ void HDFHistIO::init( bool exists_okay )
 {
   globalIndex localIdxCount = LvArray::integerConversion< globalIndex >( m_dims[0] );
 
-  int size = MpiWrapper::Comm_size( m_comm );
-  int rank = MpiWrapper::Comm_rank( m_comm );
+  int size = MpiWrapper::commSize( m_comm );
+  int rank = MpiWrapper::commRank( m_comm );
 
   int color = MPI_UNDEFINED;
   if( localIdxCount > 0 )
@@ -188,7 +188,7 @@ void HDFHistIO::init( bool exists_okay )
   }
 
   std::vector< globalIndex > counts( size );
-  MpiWrapper::Allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
+  MpiWrapper::allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
 
   hsize_t minIdxCount = std::numeric_limits< hsize_t >::max( );
   int key = 0;
@@ -209,7 +209,7 @@ void HDFHistIO::init( bool exists_okay )
     }
   }
 
-  m_subcomm = MpiWrapper::Comm_split( m_comm, color, key );
+  m_subcomm = MpiWrapper::commSplit( m_comm, color, key );
   // create a dataset in the file if needed, don't erase file
   if( m_subcomm != MPI_COMM_NULL )
   {
@@ -230,7 +230,7 @@ void HDFHistIO::init( bool exists_okay )
 
     HDFFile target( m_filename, false, true, m_subcomm );
 
-    bool inTarget = target.CheckInTarget( m_name );
+    bool inTarget = target.checkInTarget( m_name );
     if( !inTarget )
     {
       hid_t dcplId = 0;
@@ -412,7 +412,7 @@ void HDFSerialHistIO::init( bool exists_okay )
     // why is this killing things, only in this context, only on lassen?
     HDFFile target( m_filename, false, false, m_comm );
     //
-    bool inTarget = target.CheckInTarget( m_name );
+    bool inTarget = target.checkInTarget( m_name );
     if( !inTarget )
     {
       hid_t dcplId = 0;

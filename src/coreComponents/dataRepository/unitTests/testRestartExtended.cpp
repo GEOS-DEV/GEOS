@@ -262,7 +262,7 @@ TEST( testRestartExtended, testRestartExtended )
   createStringArrayView( root, view_restart_name, view_restart_sfp, view_restart_arr );
 
   /* Create a new group. */
-  Group * strings_group = root->RegisterGroup( "strings" );
+  Group * strings_group = root->registerGroup( "strings" );
   strings_group->resize( group_size + 1 );
 
   /* Create a new string Wrapper. */
@@ -280,7 +280,7 @@ TEST( testRestartExtended, testRestartExtended )
                     view_goodbye_str );
 
   /* Create a new group. */
-  Group * real64_group = root->RegisterGroup( "real64" );
+  Group * real64_group = root->registerGroup( "real64" );
   real64_group->resize( group_size + 2 );
 
   /* Create a new real64_array Wrapper. */
@@ -308,7 +308,7 @@ TEST( testRestartExtended, testRestartExtended )
                    view_real642_data );
 
   /* Create a new group. */
-  Group * mixed_group = real64_group->RegisterGroup( "mixed" );
+  Group * mixed_group = real64_group->registerGroup( "mixed" );
   mixed_group->resize( group_size + 3 );
 
   /* Create a new localIndex_array Wrapper. */
@@ -425,15 +425,15 @@ TEST( testRestartExtended, testRestartExtended )
   Wrapper< string > * view_hope_new = root->registerWrapper< string >( view_hope_name );
   Wrapper< string_array > * view_restart_new = root->registerWrapper< string_array >( view_restart_name );
 
-  Group * strings_group_new = root->RegisterGroup( "strings" );
+  Group * strings_group_new = root->registerGroup( "strings" );
   Wrapper< string > * view_hello_new = strings_group_new->registerWrapper< string >( view_hello_name );
   Wrapper< string > * view_goodbye_new = strings_group_new->registerWrapper< string >( view_goodbye_name );
 
-  Group * real64_group_new = root->RegisterGroup( "real64" );
+  Group * real64_group_new = root->registerGroup( "real64" );
   Wrapper< real64_array > * view_real641_new = real64_group_new->registerWrapper< real64_array >( view_real641_name );
   Wrapper< real64_array > * view_real642_new = real64_group_new->registerWrapper< real64_array >( view_real642_name );
 
-  Group * mixed_group_new = real64_group_new->RegisterGroup( "mixed" );
+  Group * mixed_group_new = real64_group_new->registerGroup( "mixed" );
   Wrapper< localIndex_array > * view_localIndex_new = mixed_group_new->registerWrapper< localIndex_array >( view_localIndex_name );
   Wrapper< real32_array > * view_real32_new = mixed_group_new->registerWrapper< real32_array >( view_real32_name );
   Wrapper< string > * view_what_new = mixed_group_new->registerWrapper< string >( view_what_name );

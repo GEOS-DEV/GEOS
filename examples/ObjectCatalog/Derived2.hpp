@@ -22,7 +22,7 @@ public:
 
   ~Derived2();
 
-  static std::string CatalogName() { return "derived2"; }
-  std::string const getName() const override final { return CatalogName(); }
+  static std::string catalogName() { return "derived2"; }
+  std::string const getName() const override final { return catalogName(); }
 
 };

@@ -38,9 +38,9 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static std::string CatalogName() { return "CompositionalMultiphaseFluid"; }
+  static std::string catalogName() { return "CompositionalMultiphaseFluid"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
@@ -54,7 +54,7 @@ public:
   } viewKeysCompositionalMultiphaseFluid;
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 

@@ -52,7 +52,7 @@ public:
 
   virtual ~NumericalMethodsManager() override;
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /// Contains the keys for the object names in the data repository.
   struct groupKeysStruct

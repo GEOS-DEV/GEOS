@@ -33,7 +33,7 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
 MeshGeneratorBase::~MeshGeneratorBase()
 {}
 
-MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::GetCatalog()
+MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog()
 {
   static MeshGeneratorBase::CatalogInterface::CatalogType catalog;
   return catalog;

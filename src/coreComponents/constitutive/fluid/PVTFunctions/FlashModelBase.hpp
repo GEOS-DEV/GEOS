@@ -47,7 +47,7 @@ public:
                                                              string_array const &,
                                                              string_array const &,
                                                              real64_array const & >;
-  static typename CatalogInterface::CatalogType & GetCatalog()
+  static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
@@ -55,7 +55,7 @@ public:
   virtual string getCatalogName() const = 0;
 
 
-  string const & FlashModelName() const
+  string const & flashModelName() const
   {
     return m_modelName;
   }
@@ -64,7 +64,7 @@ public:
   //input: P, T, totalCompFraction
   //output: phaseFraction, phaseCompFraction
 
-  virtual void Partition( EvalVarArgs const & pressure,
+  virtual void partition( EvalVarArgs const & pressure,
                           EvalVarArgs const & temperature,
                           arraySlice1d< EvalVarArgs const > const & compFraction,
                           arraySlice1d< EvalVarArgs > const & phaseFraction,

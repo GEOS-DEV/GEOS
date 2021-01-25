@@ -40,17 +40,17 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName()
+  static string catalogName()
   {
     return "SolidMechanicsEmbeddedFractures";
   }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void SetupDofs( DomainPartition const & domain,
+  virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void SetupSystem( DomainPartition & domain,
+  virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
                             array1d< real64 > & localRhs,
@@ -58,15 +58,15 @@ public:
                             bool const setSparsity = true ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
-  virtual void ImplicitStepComplete( real64 const & time_n,
+  virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
                                      DomainPartition & domain ) override final;
 
-  virtual void AssembleSystem( real64 const time,
+  virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
@@ -74,7 +74,7 @@ public:
                                arrayView1d< real64 > const & localRhs ) override;
 
 
-  virtual void ApplyBoundaryConditions( real64 const time,
+  virtual void applyBoundaryConditions( real64 const time,
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
@@ -82,19 +82,19 @@ public:
                                         arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override final;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition & domain ) override;
@@ -115,7 +115,7 @@ public:
 
 protected:
 
-  void AddCouplingNumNonzeros( DomainPartition & domain,
+  void addCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,
                                arrayView1d< localIndex > const & rowLengths ) const;
 
@@ -125,7 +125,7 @@ protected:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
    */
-  void AddCouplingSparsityPattern( DomainPartition const & domain,
+  void addCouplingSparsityPattern( DomainPartition const & domain,
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 

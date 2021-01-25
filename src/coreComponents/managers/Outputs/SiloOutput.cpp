@@ -75,7 +75,7 @@ SiloOutput::~SiloOutput()
 
 
 
-void SiloOutput::Execute( real64 const time_n,
+void SiloOutput::execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const eventCounter,
@@ -84,12 +84,12 @@ void SiloOutput::Execute( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
+  DomainPartition * domainPartition = Group::groupCast< DomainPartition * >( domain );
   SiloFile silo;
 
-  int const size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOSX );
 
   integer const numFiles = parallelThreads() == 0 ? size : parallelThreads();
 
@@ -99,12 +99,12 @@ void SiloOutput::Execute( real64 const time_n,
   silo.setWriteCellElementMesh( m_writeCellElementMesh );
   silo.setWriteFaceElementMesh( m_writeFaceElementMesh );
   silo.setPlotFileRoot( m_plotFileRoot );
-  silo.Initialize( numFiles );
-  silo.WaitForBatonWrite( rank, cycleNumber, eventCounter, false );
-  silo.WriteDomainPartition( *domainPartition, cycleNumber, time_n + dt * eventProgress, 0 );
-  silo.HandOffBaton();
-  silo.ClearEmptiesFromMultiObjects( cycleNumber );
-  silo.Finish();
+  silo.initialize( numFiles );
+  silo.waitForBatonWrite( rank, cycleNumber, eventCounter, false );
+  silo.writeDomainPartition( *domainPartition, cycleNumber, time_n + dt * eventProgress, 0 );
+  silo.handOffBaton();
+  silo.clearEmptiesFromMultiObjects( cycleNumber );
+  silo.finish();
 
 }
 

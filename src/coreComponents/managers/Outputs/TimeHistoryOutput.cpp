@@ -43,7 +43,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
     collector->registerBufferCall( ii, [this, ii]() { return m_io[ii]->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
   }
-  int rnk = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int rnk = MpiWrapper::commRank( MPI_COMM_GEOSX );
   if( rnk == 0 )
   {
     HistoryMetadata timeMetadata = collector->getTimeMetadata( );
@@ -68,17 +68,17 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
         metaCollector->registerBufferCall( ii, [&metaIOs, ii] () { return metaIOs[ii]->getBufferHead( ); } );
         metaIOs[ii]->init( false );
       }
-      metaCollector->Execute( 0.0, 0.0, 0, 0, 0, domainGroup );
+      metaCollector->execute( 0.0, 0.0, 0, 0, 0, domainGroup );
       for( localIndex ii = 0; ii < metaCollector->getCollectionCount( ); ++ii )
       {
         metaIOs[ii]->write( );
       }
     }
   }
-  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
-void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
+void TimeHistoryOutput::initializePostSubGroups( Group * const group )
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
@@ -87,15 +87,15 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
   ProblemManager & pm = dynamicCast< ProblemManager & >( *group );
   for( auto collector_path : m_collectorPaths )
   {
-    Group * tmp = this->GetGroupByPath( collector_path );
-    HistoryCollection * collector = Group::group_cast< HistoryCollection * >( tmp );
+    Group * tmp = this->getGroupByPath( collector_path );
+    HistoryCollection * collector = Group::groupCast< HistoryCollection * >( tmp );
     GEOSX_ERROR_IF( collector == nullptr, "The target of a time history output event must be a collector! " << collector_path );
-    collector->InitializePostSubGroups( group );
+    collector->initializePostSubGroups( group );
     initCollectorParallel( pm, collector );
   }
 }
 
-void TimeHistoryOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                  integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -112,13 +112,13 @@ void TimeHistoryOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   m_recordCount += newBuffered;
 }
 
-void TimeHistoryOutput::Cleanup( real64 const time_n,
+void TimeHistoryOutput::cleanup( real64 const time_n,
                                  integer const cycleNumber,
                                  integer const eventCounter,
                                  real64 const eventProgress,
                                  dataRepository::Group * domain )
 {
-  Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+  execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
   // remove any unused trailing space reserved to write additional histories
   for( auto & th_io : m_io )
   {

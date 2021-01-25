@@ -123,7 +123,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
 
 
 
-  FluxKernel::Compute( stencilSize,
+  FluxKernel::compute( stencilSize,
                        seri[0],
                        sesri[0],
                        sei[0],

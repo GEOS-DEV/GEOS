@@ -103,7 +103,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( std::string const & name,
 
 }
 
-void NonlinearSolverParameters::PostProcessInput()
+void NonlinearSolverParameters::postProcessInput()
 {
   if( m_dtCutIterLimit <= m_dtIncIterLimit )
   {

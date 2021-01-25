@@ -151,11 +151,11 @@ template< typename T >
 void pushStatsIntoAdiak( std::string const & name, T const value )
 {
 #if defined( GEOSX_USE_CALIPER )
-  T const total = MpiWrapper::Sum( value );
+  T const total = MpiWrapper::sum( value );
   adiak::value( name + " sum", total );
-  adiak::value( name + " mean", double( total ) / MpiWrapper::Comm_size() );
-  adiak::value( name + " min", MpiWrapper::Min( value ) );
-  adiak::value( name + " max", MpiWrapper::Max( value ) );
+  adiak::value( name + " mean", double( total ) / MpiWrapper::commSize() );
+  adiak::value( name + " min", MpiWrapper::min( value ) );
+  adiak::value( name + " max", MpiWrapper::max( value ) );
 #else
   GEOSX_UNUSED_VAR( name );
   GEOSX_UNUSED_VAR( value );

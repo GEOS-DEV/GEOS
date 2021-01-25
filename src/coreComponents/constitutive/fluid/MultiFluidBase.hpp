@@ -163,7 +163,7 @@ protected:
 
 private:
 
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
@@ -173,7 +173,7 @@ private:
                         arraySlice2d< real64 > const & phaseCompFraction,
                         real64 & totalDensity ) const = 0;
 
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
@@ -201,7 +201,7 @@ private:
                         real64 & dTotalDensity_dTemperature,
                         arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const = 0;
 
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
@@ -345,14 +345,14 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /**
    * @brief Function called internally to resize member arrays
    * @param size primary dimension (e.g. number of cells)
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
-  void ResizeFields( localIndex const size, localIndex const numPts );
+  void resizeFields( localIndex const size, localIndex const numPts );
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;

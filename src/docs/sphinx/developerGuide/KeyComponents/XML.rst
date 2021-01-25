@@ -198,7 +198,7 @@ To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is 
     // childName = "nameOfThisSolverInstance" (string)
     // SolverBase::CatalogInterface = the Catalog attached to the base Solver class
     // hasKeyName = bool method to test if the childKey string is present in the Catalog
-    // RegisterGroup = method to create a new instance of the solver and add it to the group tree
+    // registerGroup = method to create a new instance of the solver and add it to the group tree
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/PhysicsSolverManager.cpp
    :language: c++

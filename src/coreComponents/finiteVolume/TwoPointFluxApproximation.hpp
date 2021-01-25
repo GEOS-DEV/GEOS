@@ -37,7 +37,7 @@ public:
    * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
-  static std::string CatalogName() { return "TwoPointFluxApproximation"; }
+  static std::string catalogName() { return "TwoPointFluxApproximation"; }
 
   TwoPointFluxApproximation() = delete;
 

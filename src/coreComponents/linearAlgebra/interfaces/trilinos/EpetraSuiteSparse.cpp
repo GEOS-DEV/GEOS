@@ -48,7 +48,7 @@ void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
   const Epetra_Map & originalMap = matrix.unwrapped().DomainMap();
   globalIndex const numGlobalElements = matrix.numGlobalRows();
 
-  int const rank = MpiWrapper::Comm_rank( matrix.getComm() );
+  int const rank = MpiWrapper::commRank( matrix.getComm() );
 
   globalIndex numMyElements = 0;
   if( rank == workingRank )
@@ -107,7 +107,7 @@ int SuiteSparseSolve( SuiteSparse & SSData,
 
   serialB.Import( b.unwrapped(), *importToSerial, Insert );
 
-  int const rank = MpiWrapper::Comm_rank( SSData.getComm() );
+  int const rank = MpiWrapper::commRank( SSData.getComm() );
   if( rank == SSData.workingRank() )
   {
     // Extract Serial versions of X and B

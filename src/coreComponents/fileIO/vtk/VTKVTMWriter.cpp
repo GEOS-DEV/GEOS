@@ -36,30 +36,30 @@ VTKVTMWriter::VTKVTMWriter( string const & filePath ):
   vtkFileNode.append_child( "vtkMultiBlockDataSet" );
 }
 
-void VTKVTMWriter::Save() const
+void VTKVTMWriter::save() const
 {
-  int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   if( mpiRank == 0 )
   {
     m_vtmFile.save_file( m_filePath.c_str() );
   }
 }
 
-void VTKVTMWriter::AddBlock( string const & blockName ) const
+void VTKVTMWriter::addBlock( string const & blockName ) const
 {
   auto vtkMultiBlockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" );
   auto blockNode = vtkMultiBlockNode.append_child( "Block" );
   blockNode.append_attribute( "name" ) = blockName.c_str();
 }
 
-void VTKVTMWriter::AddSubBlock( string const & blockName, string const & subBlockName ) const
+void VTKVTMWriter::addSubBlock( string const & blockName, string const & subBlockName ) const
 {
   auto blockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() );
   auto subBlockNode = blockNode.append_child( "Block" );
   subBlockNode.append_attribute( "name" ) = subBlockName.c_str();
 }
 
-void VTKVTMWriter::AddDataToSubBlock( string const & blockName, string const & subBlockName, string const & filePath, int mpiRank ) const
+void VTKVTMWriter::addDataToSubBlock( string const & blockName, string const & subBlockName, string const & filePath, int mpiRank ) const
 {
   auto blockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() );
   auto subBlockNode = blockNode.find_child_by_attribute( "Block", "name", subBlockName.c_str() );

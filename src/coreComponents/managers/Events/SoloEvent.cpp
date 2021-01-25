@@ -53,7 +53,7 @@ SoloEvent::~SoloEvent()
 {}
 
 
-void SoloEvent::EstimateEventTiming( real64 const time,
+void SoloEvent::estimateEventTiming( real64 const time,
                                      real64 const dt,
                                      integer const cycle,
                                      Group * GEOSX_UNUSED_PARAM( domain ))
@@ -86,7 +86,7 @@ void SoloEvent::EstimateEventTiming( real64 const time,
 }
 
 
-real64 SoloEvent::GetEventTypeDtRequest( real64 const time )
+real64 SoloEvent::getEventTypeDtRequest( real64 const time )
 {
   real64 requestedDt = std::numeric_limits< real64 >::max();
 

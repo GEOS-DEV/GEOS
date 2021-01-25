@@ -35,16 +35,16 @@ VTKPVDWriter::VTKPVDWriter( string const & fileName ):
   vtkFileNode.append_child( "Collection" );
 }
 
-void VTKPVDWriter::Save() const
+void VTKPVDWriter::save() const
 {
-  int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   if( mpiRank == 0 )
   {
     m_pvdFile.save_file( m_fileName.c_str() );
   }
 }
 
-void VTKPVDWriter::AddData( real64 time, string const & filePath ) const
+void VTKPVDWriter::addData( real64 time, string const & filePath ) const
 {
   auto collectionNode = m_pvdFile.child( "VTKFile" ).child( "Collection" );
   auto dataSetNode = collectionNode.append_child( "DataSet" );

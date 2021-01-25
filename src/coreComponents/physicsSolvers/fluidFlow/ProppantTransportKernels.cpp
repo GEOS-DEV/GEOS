@@ -34,7 +34,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 AccumulationKernel::
-  Compute( localIndex const NC,
+  compute( localIndex const NC,
            real64 const proppantConcOld,
            real64 const proppantConcNew,
            arraySlice1d< real64 const > const & componentDensOld,
@@ -80,7 +80,7 @@ AccumulationKernel::
 
 void
 AccumulationKernel::
-  Launch( localIndex const size,
+  launch( localIndex const size,
           localIndex const NC,
           localIndex const NDOF,
           globalIndex const rankOffset,
@@ -120,7 +120,7 @@ AccumulationKernel::
 
       real64 const proppantLiftVolume = proppantLiftFlux[ei] * dt;
 
-      Compute( NC,
+      compute( NC,
                proppantConc[ei],
                proppantConc[ei] + dProppantConc[ei],
                componentDensOld[ei],
@@ -158,7 +158,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 FluxKernel::
-  ComputeJunction( localIndex const numElems,
+  computeJunction( localIndex const numElems,
                    localIndex const numDofPerCell,
                    arraySlice1d< localIndex const > const & stencilElementIndices,
                    arraySlice1d< real64 const > const & stencilWeights,
@@ -779,7 +779,7 @@ FluxKernel::
 
 template<>
 void FluxKernel::
-  Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  launch< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                     localIndex const GEOSX_UNUSED_PARAM( numDofPerCell ),
                                     real64 const GEOSX_UNUSED_PARAM( dt ),
                                     globalIndex const GEOSX_UNUSED_PARAM( rankOffset ),
@@ -824,7 +824,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  Launch< FaceElementStencil >( FaceElementStencil const & stencil,
+  launch< FaceElementStencil >( FaceElementStencil const & stencil,
                                 localIndex const numDofPerCell,
                                 real64 const dt,
                                 globalIndex const rankOffset,
@@ -895,7 +895,7 @@ void FluxKernel::
       localIndex const er = seri[iconn][0];
       localIndex const esr = sesri[iconn][0];
 
-      ComputeJunction( numFluxElems,
+      computeJunction( numFluxElems,
                        numDofPerCell,
                        sei[iconn],
                        weights[iconn],
@@ -969,7 +969,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 FluxKernel::
-  ComputeCellBasedFlux( localIndex const numElems,
+  computeCellBasedFlux( localIndex const numElems,
                         arraySlice1d< localIndex const > const & stencilElementIndices,
                         arraySlice1d< real64 const > const & stencilWeights,
                         arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
@@ -1076,7 +1076,7 @@ FluxKernel::
 
 template<>
 void FluxKernel::
-  LaunchCellBasedFluxCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  launchCellBasedFluxCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                                             ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
                                                             R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                             ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
@@ -1090,7 +1090,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  LaunchCellBasedFluxCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchCellBasedFluxCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
                                                         FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
                                                         R1Tensor const & unitGravityVector,
                                                         FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
@@ -1116,7 +1116,7 @@ void FluxKernel::
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
 
-    ComputeCellBasedFlux( numFluxElems,
+    computeCellBasedFlux( numFluxElems,
                           sei[iconn],
                           weights[iconn],
                           cellCenterToEdgeCenters[iconn],
@@ -1135,7 +1135,7 @@ void FluxKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  LaunchProppantPackVolumeCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  launchProppantPackVolumeCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                                                  real64 const GEOSX_UNUSED_PARAM( proppantDensity ),
                                                                  real64 const GEOSX_UNUSED_PARAM( proppantDiameter ),
@@ -1163,7 +1163,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 ProppantPackVolumeKernel::
-  ComputeProppantPackVolume( localIndex const numElems,
+  computeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
                              real64 const proppantDensity,
                              real64 const proppantDiameter,
@@ -1300,7 +1300,7 @@ ProppantPackVolumeKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  LaunchProppantPackVolumeCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchProppantPackVolumeCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
                                                              real64 const dt,
                                                              real64 const proppantDensity,
                                                              real64 const proppantDiameter,
@@ -1338,7 +1338,7 @@ void ProppantPackVolumeKernel::
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
 
-    ComputeProppantPackVolume( numFluxElems,
+    computeProppantPackVolume( numFluxElems,
                                dt,
                                proppantDensity,
                                proppantDiameter,
@@ -1370,7 +1370,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 ProppantPackVolumeKernel::
-  UpdateProppantPackVolume( localIndex const numElems,
+  updateProppantPackVolume( localIndex const numElems,
                             arraySlice1d< localIndex const > const & stencilElementIndices,
                             arraySlice1d< real64 const > const & stencilWeights,
                             arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
@@ -1441,7 +1441,7 @@ ProppantPackVolumeKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  LaunchProppantPackVolumeUpdate< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  launchProppantPackVolumeUpdate< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                                             R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                             real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
                                                             ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
@@ -1452,7 +1452,7 @@ void ProppantPackVolumeKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  LaunchProppantPackVolumeUpdate< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchProppantPackVolumeUpdate< FaceElementStencil >( FaceElementStencil const & stencil,
                                                         R1Tensor const & unitGravityVector,
                                                         real64 const maxProppantConcentration,
                                                         ElementView< arrayView1d< integer const > > const & isProppantMobile,
@@ -1475,7 +1475,7 @@ void ProppantPackVolumeKernel::
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
 
-    UpdateProppantPackVolume( numFluxElems,
+    updateProppantPackVolume( numFluxElems,
                               sei[iconn],
                               weights[iconn],
                               cellCenterToEdgeCenters[iconn],

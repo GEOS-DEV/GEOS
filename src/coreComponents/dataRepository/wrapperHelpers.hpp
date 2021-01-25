@@ -447,12 +447,12 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
 template< typename T >
 void pushDataToConduitNode( InterObjectRelation< T > const & var,
                             conduit::Node & node )
-{return pushDataToConduitNode( var.Base(), node ); }
+{return pushDataToConduitNode( var.base(), node ); }
 
 template< typename T >
 void pullDataFromConduitNode( InterObjectRelation< T > & var,
                               conduit::Node const & node )
-{ return pullDataFromConduitNode( var.Base(), node ); }
+{ return pullDataFromConduitNode( var.base(), node ); }
 
 
 /// TODO: Remove this function once https://github.com/visit-dav/visit/issues/4637 is fixed and released.

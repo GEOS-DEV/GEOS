@@ -62,11 +62,11 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "Cylinder"; }
+  static string catalogName() { return "Cylinder"; }
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
+  bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
 
 private:

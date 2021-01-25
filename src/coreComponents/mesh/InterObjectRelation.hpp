@@ -52,40 +52,40 @@ public:
    * @brief Get a reference to this object cast to BASETYPE const.
    * @return A reference to this object cast to BASETYPE const.
    */
-  const base_type & Base() const { return static_cast< const BASETYPE & >(*this); }
+  const base_type & base() const { return static_cast< const BASETYPE & >(*this); }
 
   /**
    * @brief Get a reference to this object cast to BASETYPE.
    * @return A reference to this object cast to BASETYPE.
    */
-  base_type & Base() { return dynamic_cast< BASETYPE & >(*this); }
+  base_type & base() { return dynamic_cast< BASETYPE & >(*this); }
 
   /**
    * @brief Set the related object.
    * @param relatedObject The related object to use for mapping.
    */
-  void SetRelatedObject( ObjectManagerBase const * const relatedObject )
+  void setRelatedObject( ObjectManagerBase const * const relatedObject )
   { m_relatedObject = relatedObject; }
 
   /**
    * @brief Get the related object.
    * @return The related object.
    */
-  const ObjectManagerBase * RelatedObject() const
+  const ObjectManagerBase * relatedObject() const
   { return m_relatedObject; }
 
   /**
    * @brief Get the LocalToGlobal mapping from the related object.
    * @return The LocalToGlobal mapping from the related object.
    */
-  arrayView1d< globalIndex const > RelatedObjectLocalToGlobal() const
+  arrayView1d< globalIndex const > relatedObjectLocalToGlobal() const
   { return this->m_relatedObject->localToGlobalMap(); }
 
   /**
    * @brief Get the GlobalToLocal mapping from the related object.
    * @return The GlobalToLocal mapping from the related object.
    */
-  unordered_map< globalIndex, localIndex > const & RelatedObjectGlobalToLocal() const
+  unordered_map< globalIndex, localIndex > const & relatedObjectGlobalToLocal() const
   { return this->m_relatedObject->globalToLocalMap(); }
 
 private:

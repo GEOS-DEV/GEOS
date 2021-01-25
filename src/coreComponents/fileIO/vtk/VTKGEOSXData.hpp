@@ -46,7 +46,7 @@ public:
    * @param[in] val value to be inserted
    */
   template< typename T >
-  void CustomInsertValue( localIndex index, T const & val )
+  void customInsertValue( localIndex index, T const & val )
   {
     this->InsertValue( index, val );
   }
@@ -58,7 +58,7 @@ public:
  * @param[in] val R1Tensor to be inserted
  */
 template<>
-void VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index, R1Tensor const & val );
+void VTKGEOSXData::customInsertValue< R1Tensor >( localIndex index, R1Tensor const & val );
 
 }
 }

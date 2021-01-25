@@ -415,12 +415,12 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     }
     else
     {
-      nullConstitutiveModel = elementSubRegion.template RegisterGroup< constitutive::NullModel >( "nullModelGroup" );
+      nullConstitutiveModel = elementSubRegion.template registerGroup< constitutive::NullModel >( "nullModelGroup" );
       constitutiveRelation = nullConstitutiveModel;
     }
 
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
-    constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
+    constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( constitutiveRelation,
                                                                       [&maxResidualContribution,
                                                                        &nodeManager,
                                                                        &edgeManager,
@@ -435,7 +435,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
 
-      string const elementTypeString = elementSubRegion.GetElementTypeString();
+      string const elementTypeString = elementSubRegion.getElementTypeString();
 
       FiniteElementBase &
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );

@@ -65,14 +65,14 @@ struct ExponentialCompute< T, ExponentApproximationType::Full, false >
 {
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
     y = y0 * exp( alpha * (x - x0));
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
     y = y0 * exp( alpha * (x - x0));
     dy_dx = alpha * y;
@@ -84,14 +84,14 @@ struct ExponentialCompute< T, ExponentApproximationType::Full, true >
 {
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
   {
     x = x0 + log( y / y0 ) / alpha;
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
   {
     const T alpha_inv = T( 1.0 ) / alpha;
     x = x0 + alpha_inv * log( y / y0 );
@@ -104,7 +104,7 @@ struct ExponentialCompute< T, ExponentApproximationType::Quadratic, false >
 {
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
     const T z = T( 1.0 ) + alpha * (x - x0);
     y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
@@ -112,7 +112,7 @@ struct ExponentialCompute< T, ExponentApproximationType::Quadratic, false >
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
     const T z = T( 1.0 ) + alpha * (x - x0);
     y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
@@ -125,7 +125,7 @@ struct ExponentialCompute< T, ExponentApproximationType::Quadratic, true >
 {
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
   {
     const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
     x = x0 + (z - 1) / alpha;
@@ -133,7 +133,7 @@ struct ExponentialCompute< T, ExponentApproximationType::Quadratic, true >
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
   {
     const T alpha_inv = T( 1.0 ) / alpha;
     const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
@@ -147,14 +147,14 @@ struct ExponentialCompute< T, ExponentApproximationType::Linear, false >
 {
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
     y = y0 * (T( 1.0 ) + alpha * (x - x0));
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
     y = y0 * (T( 1.0 ) + alpha * (x - x0));
     dy_dx = alpha * y0;
@@ -166,14 +166,14 @@ struct ExponentialCompute< T, ExponentApproximationType::Linear, true >
 {
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
   {
     x = x0 + (y / y0 - 1) / alpha;
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  static void compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
   {
     const T alpha_inv = T( 1.0 ) / alpha;
     x = x0 + alpha_inv * (y / y0 - 1);
@@ -219,7 +219,7 @@ public:
   GEOSX_HOST_DEVICE
   ExponentialRelation( T x0, T y0, T alpha )
   {
-    SetCoefficients( x0, y0, alpha );
+    setCoefficients( x0, y0, alpha );
   }
 
   // *** setters ***
@@ -231,7 +231,7 @@ public:
    * @param alpha exponential coefficient
    */
   GEOSX_HOST_DEVICE
-  void SetCoefficients( T x0, T y0, T alpha )
+  void setCoefficients( T x0, T y0, T alpha )
   {
     m_x0 = x0;
     m_y0 = y0;
@@ -246,9 +246,9 @@ public:
    * @param y
    */
   GEOSX_HOST_DEVICE
-  void Compute( const T & x, T & y ) const
+  void compute( const T & x, T & y ) const
   {
-    detail::ExponentialCompute< T, EAT >::Compute( m_x0, m_y0, m_alpha, x, y );
+    detail::ExponentialCompute< T, EAT >::compute( m_x0, m_y0, m_alpha, x, y );
   }
 
 
@@ -258,9 +258,9 @@ public:
    * @param x
    */
   GEOSX_HOST_DEVICE
-  void Inverse( const T & y, T & x ) const
+  void inverse( const T & y, T & x ) const
   {
-    detail::ExponentialCompute< T, EAT, true >::Compute( m_x0, m_y0, m_alpha, y, x );
+    detail::ExponentialCompute< T, EAT, true >::compute( m_x0, m_y0, m_alpha, y, x );
   }
 
   // *** derivative computes ***
@@ -272,9 +272,9 @@ public:
    * @param dy_dx
    */
   GEOSX_HOST_DEVICE
-  void Compute( const T & x, T & y, T & dy_dx ) const
+  void compute( const T & x, T & y, T & dy_dx ) const
   {
-    detail::ExponentialCompute< T, EAT >::Compute( m_x0, m_y0, m_alpha, x, y, dy_dx );
+    detail::ExponentialCompute< T, EAT >::compute( m_x0, m_y0, m_alpha, x, y, dy_dx );
   }
 
   /**
@@ -284,9 +284,9 @@ public:
    * @param dx_dy
    */
   GEOSX_HOST_DEVICE
-  void Inverse( const T & y, T & x, T & dx_dy ) const
+  void inverse( const T & y, T & x, T & dx_dy ) const
   {
-    detail::ExponentialCompute< T, EAT, true >::Compute( m_x0, m_y0, m_alpha, y, x, dx_dy );
+    detail::ExponentialCompute< T, EAT, true >::compute( m_x0, m_y0, m_alpha, y, x, dx_dy );
   }
 
 private:

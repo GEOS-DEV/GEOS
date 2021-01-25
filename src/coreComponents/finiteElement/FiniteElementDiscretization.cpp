@@ -56,7 +56,7 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 {}
 
 
-void FiniteElementDiscretization::PostProcessInput()
+void FiniteElementDiscretization::postProcessInput()
 {
   GEOSX_ERROR_IF( m_order!=1, "Higher order finite element spaces are currently not supported." );
   GEOSX_ERROR_IF( m_formulation!="default", "Only standard element formulations are currently supported." );

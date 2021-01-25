@@ -226,7 +226,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   // 2) Compute analytical derivatives //
   ///////////////////////////////////////
 
-  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+  AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                          dFacePres,
                                                          faceGravCoef,
                                                          elemToFaces,
@@ -244,7 +244,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   jacobian.setValues< parallelHostPolicy >( 0.0 );
   rhs.setValues< parallelHostPolicy >( 0 );
 
-  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+  AssemblerKernelHelper::assembleConstraints< NF >( faceDofNumber,
                                                     faceGhostRank,
                                                     elemToFaces,
                                                     elemDofNumber,
@@ -267,7 +267,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
   LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+  AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                          dFacePres,
                                                          faceGravCoef,
                                                          elemToFaces,
@@ -284,7 +284,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
   rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
 
-  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+  AssemblerKernelHelper::assembleConstraints< NF >( faceDofNumber,
                                                     faceGhostRank,
                                                     elemToFaces,
                                                     elemDofNumber,
@@ -319,7 +319,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
     LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
     LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-    AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+    AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                            dFacePres,
                                                            faceGravCoef,
                                                            elemToFaces,
@@ -336,7 +336,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
     jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
     rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
 
-    AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+    AssemblerKernelHelper::assembleConstraints< NF >( faceDofNumber,
                                                       faceGhostRank,
                                                       elemToFaces,
                                                       elemDofNumber,
@@ -432,7 +432,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   // 2) Compute analytical derivatives //
   ///////////////////////////////////////
 
-  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+  AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                          dFacePres,
                                                          faceGravCoef,
                                                          elemToFaces,
@@ -450,7 +450,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   jacobian.setValues< parallelHostPolicy >( 0.0 );
   rhs.setValues< parallelHostPolicy >( 0 );
 
-  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
+  AssemblerKernelHelper::assembleOneSidedMassFluxes< NF >( faceDofNumber,
                                                            elemToFaces,
                                                            elemDofNumber,
                                                            0,
@@ -477,7 +477,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
   LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+  AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                          dFacePres,
                                                          faceGravCoef,
                                                          elemToFaces,
@@ -494,7 +494,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
   rhsPerturb.setValues< serialPolicy >( 0.0 );
 
-  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
+  AssemblerKernelHelper::assembleOneSidedMassFluxes< NF >( faceDofNumber,
                                                            elemToFaces,
                                                            elemDofNumber,
                                                            0,
@@ -532,7 +532,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
     LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
     LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-    AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+    AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                            dFacePres,
                                                            faceGravCoef,
                                                            elemToFaces,
@@ -549,7 +549,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
     jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
     rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
 
-    AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
+    AssemblerKernelHelper::assembleOneSidedMassFluxes< NF >( faceDofNumber,
                                                              elemToFaces,
                                                              elemDofNumber,
                                                              0,
