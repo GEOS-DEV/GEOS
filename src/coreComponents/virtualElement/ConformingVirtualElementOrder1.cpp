@@ -24,7 +24,7 @@ namespace virtualElement
   void ConformingVirtualElementOrder1::
   ComputeProjectors( localIndex const & cellIndex,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                     CellBlock::NodeMapType const & cellToNodes,
+                     CellBlock::NodeMapType const & cellToNodeMap,
                      CellBlock::FaceMapType const & elementToFaceMap,
                      FaceManager::NodeMapType const & faceToNodeMap,
                      FaceManager::EdgeMapType const & faceToEdgeMap,
@@ -37,7 +37,7 @@ namespace virtualElement
                      )
   {
     localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
-    localIndex const numCellPoints = cellToNodes[cellIndex].size();
+    localIndex const numCellPoints = cellToNodeMap[cellIndex].size();
     m_numSupportPoints = numCellPoints;
 
     // Compute other geometrical properties.
@@ -46,14 +46,14 @@ namespace virtualElement
     map< localIndex, localIndex > cellPointsPosition;
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
       cellPointsPosition.insert( std::pair< localIndex, localIndex >
-                                 ( cellToNodes( cellIndex, numVertex ), numVertex ));
+                                 ( cellToNodeMap( cellIndex, numVertex ), numVertex ));
     // - compute cell diameter.
     real64 cellDiameter = ComputeDiameter< 3,
                                            arrayView2d< real64 const,
                                                         nodes::REFERENCE_POSITION_USD >
                                            const &,
                                            arraySlice1d< localIndex const > const & >
-      ( nodesCoords, cellToNodes[cellIndex], numCellPoints );
+      ( nodesCoords, cellToNodeMap[cellIndex], numCellPoints );
     real64 const invCellDiameter = 1.0/cellDiameter;
 
     // Compute basis functions and scaled monomials integrals on the boundary.
@@ -190,7 +190,7 @@ namespace virtualElement
     {
       for( localIndex pos = 0; pos < 3; ++pos )
         monomialVemDofs( pos, numVertex ) = invCellDiameter*
-          (nodesCoords( cellToNodes( cellIndex, numVertex ), pos ) - cellCenter( pos ));
+          (nodesCoords( cellToNodeMap( cellIndex, numVertex ), pos ) - cellCenter( pos ));
     }
     for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
     {

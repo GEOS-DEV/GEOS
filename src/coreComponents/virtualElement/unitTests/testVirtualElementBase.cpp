@@ -128,6 +128,62 @@ checkStabilizationMatrixConsistency
   }
 }
 
+static void testCellsInMeshLevel( MeshLevel const & mesh )
+{
+  // Get managers.
+  ElementRegionManager const & elementManager = *mesh.getElemManager();
+  CellElementRegion const & cellRegion =
+    *elementManager.GetRegion< CellElementRegion >( 0 );
+  CellElementSubRegion const & cellSubRegion =
+    *cellRegion.GetSubRegion< CellElementSubRegion >( 0 );
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+  FaceManager const & faceManager = *mesh.getFaceManager();
+  EdgeManager const & edgeManager = *mesh.getEdgeManager();
+
+  // Get geometric properties to be passed as inputs.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
+    nodeManager.referencePosition();
+  CellBlock::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
+  CellBlock::FaceMapType const & elementToFaceMap = cellSubRegion.faceList();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager.nodeList();
+  FaceManager::EdgeMapType const & faceToEdgeMap = faceManager.edgeList();
+  EdgeManager::NodeMapType const & edgeToNodeMap = edgeManager.nodeList();
+  arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
+  arrayView1d< real64 const> const faceAreas = faceManager.faceArea();
+  arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
+  arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
+
+  // Construct element
+  ConformingVirtualElementOrder1 vemElement;
+
+  // Loop over cells.
+  localIndex const numCells = cellSubRegion.getElementVolume().size();
+  for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
+  {
+    vemElement.ComputeProjectors( cellIndex,
+                                  nodesCoords,
+                                  cellToNodeMap,
+                                  elementToFaceMap,
+                                  faceToNodeMap,
+                                  faceToEdgeMap,
+                                  edgeToNodeMap,
+                                  faceCenters,
+                                  faceNormals,
+                                  faceAreas,
+                                  cellCenters[cellIndex],
+                                  cellVolumes[cellIndex]
+                                  );
+
+    checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
+                                  vemElement.m_basisFunctionsIntegralMean );
+    checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
+                                             vemElement.m_basisDerivativesIntegralMean );
+    checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodeMap, cellCenters,
+                                         vemElement.m_stabilizationMatrix );
+  }
+}
+
 TEST( VirtualElementBase, unitCube )
 {
   string const inputStream=
@@ -170,50 +226,15 @@ TEST( VirtualElementBase, unitCube )
     ( problemManager->groupKeys.meshManager );
   meshManager->GenerateMeshLevels( domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->ProcessInputFileRecursive( topLevelNode );
-  elementManager->PostProcessInputRecursive();
+  ElementRegionManager & elementManager = *mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  elementManager.ProcessInputFileRecursive( topLevelNode );
+  elementManager.PostProcessInputRecursive();
   problemManager->ProblemSetup();
 
-  //
-  CellElementRegion const & cellRegion =
-    *elementManager->GetRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion< CellElementSubRegion >( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
-  EdgeManager const & edgeManager = *mesh.getEdgeManager();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
-    nodeManager.referencePosition();
-  CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
-  arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
-  arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
-  localIndex const numCells = cellSubRegion.getElementVolume().size();
-  ConformingVirtualElementOrder1 vemElement;
-  for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
-  {
-    vemElement.ComputeProjectors( cellIndex,
-                                  nodesCoords,
-                                  cellToNodes,
-                                  cellSubRegion.faceList(),
-                                  faceManager.nodeList(),
-                                  faceManager.edgeList(),
-                                  edgeManager.nodeList(),
-                                  faceManager.faceCenter(),
-                                  faceManager.faceNormal(),
-                                  faceManager.faceArea(),
-                                  cellCenters[cellIndex],
-                                  cellVolumes[cellIndex]
-                                  );
+  // Test computed projectors for all cells in MeshLevel
+  testCellsInMeshLevel(mesh);
 
-    checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
-                                  vemElement.m_basisFunctionsIntegralMean );
-    checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
-                                             vemElement.m_basisDerivativesIntegralMean );
-    checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
-                                         vemElement.m_stabilizationMatrix );
-  }
   delete problemManager;
 }
 
@@ -256,7 +277,7 @@ TEST( VirtualElementBase, wedges )
   // Open mesh levels
   DomainPartition * domain  = problemManager->getDomainPartition();
   MeshManager * meshManager = problemManager->GetGroup< MeshManager >
-                                ( problemManager->groupKeys.meshManager );
+    ( problemManager->groupKeys.meshManager );
   meshManager->GenerateMeshLevels( domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * elementManager = mesh.getElemManager();
@@ -265,44 +286,9 @@ TEST( VirtualElementBase, wedges )
   elementManager->PostProcessInputRecursive();
   problemManager->ProblemSetup();
 
-  CellElementRegion const & cellRegion =
-    *elementManager->GetRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion< CellElementSubRegion >( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
-  EdgeManager const & edgeManager = *mesh.getEdgeManager();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoords =
-    nodeManager.referencePosition();
-  CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
-  arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
-  arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
-  localIndex const numCells = cellSubRegion.getElementVolume().size();
-  ConformingVirtualElementOrder1 vemElement;
-  for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
-  {
-    vemElement.ComputeProjectors( cellIndex,
-                                  nodesCoords,
-                                  cellToNodes,
-                                  cellSubRegion.faceList(),
-                                  faceManager.nodeList(),
-                                  faceManager.edgeList(),
-                                  edgeManager.nodeList(),
-                                  faceManager.faceCenter(),
-                                  faceManager.faceNormal(),
-                                  faceManager.faceArea(),
-                                  cellCenters[cellIndex],
-                                  cellVolumes[cellIndex]
-                                  );
-    checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
-                                  vemElement.m_basisFunctionsIntegralMean );
-    checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
-                                             vemElement.m_basisDerivativesIntegralMean );
+  // Test computed projectors for all cells in MeshLevel
+  testCellsInMeshLevel(mesh);
 
-
-    checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
-                                         vemElement.m_stabilizationMatrix );
-  }
   delete problemManager;
 }
 
