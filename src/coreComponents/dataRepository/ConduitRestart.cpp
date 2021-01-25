@@ -38,14 +38,14 @@ std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
   std::string rootDirName, rootFileName;
   splitPath( rootPath, rootDirName, rootFileName );
 
-  if( MpiWrapper::Comm_rank() == 0 )
+  if( MpiWrapper::commRank() == 0 )
   {
     makeDirsForPath( rootPath );
 
     root[ "protocol/name" ] = "hdf5";
     root[ "protocol/version" ] = CONDUIT_VERSION;
 
-    root[ "number_of_files" ] = MpiWrapper::Comm_size();
+    root[ "number_of_files" ] = MpiWrapper::commSize();
     root[ "file_pattern" ] = rootFileName + "/rank_%07d.hdf5";
 
     root[ "number_of_trees" ] = 1;
@@ -54,10 +54,10 @@ std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
     conduit::relay::io::save( root, rootPath + ".root", "hdf5" );
   }
 
-  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOSX );
 
   std::vector< char > buffer( rootPath.size() + 64 );
-  GEOSX_ERROR_IF_GE( std::snprintf( buffer.data(), buffer.size(), "%s/rank_%07d.hdf5", rootPath.data(), MpiWrapper::Comm_rank() ), 1024 );
+  GEOSX_ERROR_IF_GE( std::snprintf( buffer.data(), buffer.size(), "%s/rank_%07d.hdf5", rootPath.data(), MpiWrapper::commRank() ), 1024 );
   return buffer.data();
 }
 
@@ -65,13 +65,13 @@ std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
 std::string readRootNode( std::string const & rootPath )
 {
   std::string rankFilePattern;
-  if( MpiWrapper::Comm_rank() == 0 )
+  if( MpiWrapper::commRank() == 0 )
   {
     conduit::Node node;
     conduit::relay::io::load( rootPath + ".root", "hdf5", node );
 
     int const nFiles = node.fetch_child( "number_of_files" ).value();
-    GEOSX_ERROR_IF_NE( nFiles, MpiWrapper::Comm_size() );
+    GEOSX_ERROR_IF_NE( nFiles, MpiWrapper::commSize() );
 
     std::string const filePattern = node.fetch_child( "file_pattern" ).as_string();
 
@@ -82,10 +82,10 @@ std::string readRootNode( std::string const & rootPath )
     GEOSX_LOG_RANK_VAR( rankFilePattern );
   }
 
-  MpiWrapper::Broadcast( rankFilePattern, 0 );
+  MpiWrapper::broadcast( rankFilePattern, 0 );
 
   char buffer[ 1024 ];
-  GEOSX_ERROR_IF_GE( std::snprintf( buffer, 1024, rankFilePattern.data(), MpiWrapper::Comm_rank() ), 1024 );
+  GEOSX_ERROR_IF_GE( std::snprintf( buffer, 1024, rankFilePattern.data(), MpiWrapper::commRank() ), 1024 );
   return buffer;
 }
 

@@ -240,11 +240,11 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
 
   GEOSX_ERROR_IF( notFound, "Phase water/liquid is not found!" );
 
-  MakeTable( inputPara );
+  makeTable( inputPara );
 
 }
 
-void CO2SolubilityFunction::MakeTable( string_array const & inputPara )
+void CO2SolubilityFunction::makeTable( string_array const & inputPara )
 {
 
   real64_array pressures;
@@ -316,7 +316,7 @@ void CO2SolubilityFunction::MakeTable( string_array const & inputPara )
 
 }
 
-void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & compFraction,
+void CO2SolubilityFunction::partition( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & compFraction,
                                        arraySlice1d< EvalVarArgs > const & phaseFraction, arraySlice2d< EvalVarArgs > const & phaseCompFraction ) const
 {
 
@@ -328,7 +328,7 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
   T.m_der[1] = 1.0;
 
   //solubiltiy mol/kg(water)  X = Csat/W
-  solubility = m_CO2SolubilityTable->Value( P, T );
+  solubility = m_CO2SolubilityTable->value( P, T );
 
   real64 const waterMW = m_componentMolarWeight[m_waterIndex];
 

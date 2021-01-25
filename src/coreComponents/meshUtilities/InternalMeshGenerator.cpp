@@ -134,7 +134,7 @@ InternalMeshGenerator::~InternalMeshGenerator()
 /**
  * @param domain
  */
-void InternalMeshGenerator::GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void InternalMeshGenerator::generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   //  lvector numElements;
   //
@@ -148,7 +148,7 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition & GEOSX_UNUS
 
 }
 
-void InternalMeshGenerator::PostProcessInput()
+void InternalMeshGenerator::postProcessInput()
 {
 
 
@@ -309,7 +309,7 @@ void InternalMeshGenerator::PostProcessInput()
 
 
 
-Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -319,15 +319,15 @@ Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( c
  * @param partition
  * @param domain
  */
-void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
+void InternalMeshGenerator::generateMesh( DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
   // This cannot find groupkeys:
   // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
-  MeshBody * const meshBody = meshBodies->RegisterGroup< MeshBody >( this->getName() );
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup< MeshLevel >( std::string( "Level0" ));
+  Group * const meshBodies = domain->getGroup( std::string( "MeshBodies" ));
+  MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( this->getName() );
+  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) &&
@@ -337,7 +337,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   // Make sure that the node manager fields are initialized
 
-  CellBlockManager * elementManager = domain->GetGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManager * elementManager = domain->getGroup< CellBlockManager >( keys::cellManager );
   Group & nodeSets = nodeManager->sets();
 
   PartitionBase & partition = domain->getReference< PartitionBase >( keys::partitionManager );
@@ -349,9 +349,9 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock * cellBlock = elementManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( cellBlockName );
+    CellBlock * cellBlock = elementManager->getGroup( keys::cellBlocks )->registerGroup< CellBlock >( cellBlockName );
     string elementType = m_elementType[aa++];
-    cellBlock->SetElementType( elementType );
+    cellBlock->setElementType( elementType );
   }
 
 
@@ -419,7 +419,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     //    lastElemIndexInPartition[i] = -2;
     for( int k = 0; k < m_numElemsTotal[i]; ++k )
     {
-      if( partition.IsCoordInPartition( elemCenterCoords[i][k], i ) )
+      if( partition.isCoordInPartition( elemCenterCoords[i][k], i ) )
       {
         firstElemIndexInPartition[i] = k;
         break;
@@ -430,7 +430,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     {
       for( int k = firstElemIndexInPartition[i]; k < m_numElemsTotal[i]; ++k )
       {
-        if( partition.IsCoordInPartition( elemCenterCoords[i][k], i ) )
+        if( partition.isCoordInPartition( elemCenterCoords[i][k], i ) )
         {
           lastElemIndexInPartition[i] = k;
         }
@@ -567,7 +567,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
             }
           }
 
-          nodeLocalToGlobal[localNodeIndex] = NodeGlobalIndex( index );
+          nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
 
           // cartesian-specific nodesets
           if( m_mapToRadial == 0 )
@@ -653,7 +653,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 //          ElementRegionT& elemRegion =
 // domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
-          CellBlock * elemRegion =  elementManager->GetRegion( m_regionNames[ regionOffset ] );
+          CellBlock * elemRegion =  elementManager->getRegion( m_regionNames[ regionOffset ] );
           int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion->numNodesPerElement());
           integer_array nodeIDInBox( 8 );
 
@@ -738,9 +738,9 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 for( int iEle = 0; iEle < m_numElePerBox[iR]; ++iEle )
                 {
                   localIndex & localElemIndex = localElemIndexInRegion[ m_regionNames[ regionOffset ] ];
-                  elemLocalToGlobal[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
+                  elemLocalToGlobal[localElemIndex] = elemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
 
-                  GetElemToNodesRelationInBox( m_elementType[iR], index, iEle, nodeIDInBox.data(),
+                  getElemToNodesRelationInBox( m_elementType[iR], index, iEle, nodeIDInBox.data(),
                                                numNodesPerElem );
 
                   for( localIndex iN = 0; iN < numNodesPerElem; ++iN )
@@ -920,7 +920,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   if( m_delayMeshDeformation == 0 )
   {
-    RemapMesh( domain );
+    remapMesh( domain );
   }
 }
 
@@ -931,7 +931,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
  * @param nodeIDInBox
  * @param node_size
  */
-void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string & elementType,
+void InternalMeshGenerator::getElemToNodesRelationInBox( const std::string & elementType,
                                                          const int index[],
                                                          const int & iEle,
                                                          int nodeIDInBox[],
@@ -1220,7 +1220,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string & ele
   }
 }
 
-void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
+void InternalMeshGenerator::remapMesh( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())

@@ -21,7 +21,7 @@ namespace geosx
 {
 namespace virtualElement
 {
-void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
+void ConformingVirtualElementOrder1::computeProjectors( MeshLevel const & mesh,
                                                         localIndex const & regionIndex,
                                                         localIndex const & subRegionIndex,
                                                         localIndex const & cellIndex )
@@ -33,9 +33,9 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
 
   // Get pre-computed maps
   CellElementRegion const & cellRegion =
-    *elementManager.GetRegion< CellElementRegion >( regionIndex );
+    *elementManager.getRegion< CellElementRegion >( regionIndex );
   CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion< CellElementSubRegion >( subRegionIndex );
+    *cellRegion.getSubRegion< CellElementSubRegion >( subRegionIndex );
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   FixedOneToManyRelation const & elementToFaceMap = cellSubRegion.faceList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
@@ -97,7 +97,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
     // - compute integrals calling auxiliary method
     array1d< real64 > faceBasisIntegrals;
     array1d< real64 > threeDMonomialIntegrals;
-    ComputeFaceIntegrals( mesh, faceIndex, invCellDiameter, cellCenter,
+    computeFaceIntegrals( mesh, faceIndex, invCellDiameter, cellCenter,
                           faceBasisIntegrals, threeDMonomialIntegrals );
     // - get outward face normal
     array1d< real64 > faceNormal( 3 );
@@ -235,7 +235,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
 
 void
 ConformingVirtualElementOrder1::
-  ComputeFaceIntegrals( MeshLevel const & mesh,
+  computeFaceIntegrals( MeshLevel const & mesh,
                         localIndex const & faceIndex,
                         real64 const & invCellDiameter,
                         arraySlice1d< real64 const > const & cellCenter,

@@ -22,9 +22,9 @@ TEST( testXML, testXML )
 {
   geosx::ProblemManager problemManager( "Problem", nullptr );
 
-  problemManager.InitializePythonInterpreter();
-  problemManager.ParseCommandLineInput();
-  problemManager.ParseInputFile();
+  problemManager.initializePythonInterpreter();
+  problemManager.parseCommandLineInput();
+  problemManager.parseInputFile();
 }
 
 int main( int argc, char * * argv )
