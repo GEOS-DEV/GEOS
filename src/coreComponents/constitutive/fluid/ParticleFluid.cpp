@@ -79,9 +79,9 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
 
 ParticleFluid::~ParticleFluid() = default;
 
-void ParticleFluid::PostProcessInput()
+void ParticleFluid::postProcessInput()
 {
-  ParticleFluidBase::PostProcessInput();
+  ParticleFluidBase::postProcessInput();
 
   GEOSX_ERROR_IF( m_proppantDensity < 500.0,
                   "Invalid proppantDensity in ParticleFluid, which must >= 500.0 " );

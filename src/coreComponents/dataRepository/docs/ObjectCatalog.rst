@@ -71,7 +71,7 @@ The definition of the method is given as:
    :end-before: //STOP_SPHINX
 
 It can be seen that the static ``Factory`` method is simply a wrapper that calls the virtual 
-``Allocate`` method on a the catalog which is returned by ``GetCatalog()``.
+``Allocate`` method on a the catalog which is returned by ``getCatalog()``.
 The usage of the ``Factory`` method will be further discussed in the `Usage`_ section.
 
 .. note::
@@ -134,12 +134,12 @@ The base class for this example is defined as:
 There a couple of things to note in the definition of ``Base``:
 
 * ``Base`` has a convenience alias to use in place of the fully templated ``CatalogInterface`` name.
-* ``Base`` defines a ``GetCatalog()`` function that returns a static instantiation of a 
+* ``Base`` defines a ``getCatalog()`` function that returns a static instantiation of a
   ``CatalogInterface::CatalogType``.
-  The ``CatalogInterface::GetCatalog()`` function actually calls this function within the base
+  The ``CatalogInterface::getCatalog()`` function actually calls this function within the base
   class.
   This means that the base class actually owns the catalog, and the ``CatalogInterface`` is only
-  operating on that ``Base::GetCatalog()``, and that the definition of this function is required.
+  operating on that ``Base::getCatalog()``, and that the definition of this function is required.
 
 Adding A New Type To The Catalog
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -149,7 +149,7 @@ There are three requirements for the new type to be registered in the catalog:
 
 * The derived type must have a constructor with the arguments specified by the
   variadic parameter pack specified in the catalog.
-* There must be a static function ``static string CatalogName()`` that returns the 
+* There must be a static function ``static string catalogName()`` that returns the
   name of the type that will be used to as keyname when it is registered ``Base``'s catalog.
 * The new type must be registered with the catalog held in ``Base``. 
   To accomplish this, a convenience macro ``REGISTER_CATALOG_ENTRY()`` is provided.
@@ -192,11 +192,11 @@ The result of running this test is::
     Calling constructor for CatalogEntryConstructor< Derived1 , Base , ... >
     Calling constructor for CatalogInterface< Base , ... >
     Calling constructor for CatalogEntry< Derived1 , Base , ... >
-    Registered Base catalog component of derived type Derived1 where Derived1::CatalogName() = derived1
+    Registered Base catalog component of derived type Derived1 where Derived1::catalogName() = derived1
     Calling constructor for CatalogEntryConstructor< Derived2 , Base , ... >
     Calling constructor for CatalogInterface< Base , ... >
     Calling constructor for CatalogEntry< Derived2 , Base , ... >
-    Registered Base catalog component of derived type Derived2 where Derived2::CatalogName() = derived2
+    Registered Base catalog component of derived type Derived2 where Derived2::catalogName() = derived2
     Running main() from gtest_main.cc
     [==========] Running 1 test from 1 test case.
     [----------] Global test environment set-up.
@@ -227,7 +227,7 @@ The result of running this test is::
     Calling destructor for CatalogEntry< Derived1 , Base , ... >
     Calling destructor for CatalogInterface< Base , ... >
 
-In the preceding output, it is clear that the static catalog in ``Base::GetCatalog()`` 
+In the preceding output, it is clear that the static catalog in ``Base::getCatalog()``
 is initialized prior the execution of main, and destroyed after the completion of main.
 In practice, there have been no indicators of problems due to the use of a statically 
 initialized/deinitialized catalog.

@@ -38,30 +38,30 @@ ConstitutiveManager::~ConstitutiveManager()
 {}
 
 
-Group * ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
+Group * ConstitutiveManager::createChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr< ConstitutiveBase > material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
-  return RegisterGroup< ConstitutiveBase >( childName, std::move( material ) );
+  std::unique_ptr< ConstitutiveBase > material = ConstitutiveBase::CatalogInterface::factory( childKey, childName, this );
+  return registerGroup< ConstitutiveBase >( childName, std::move( material ) );
 }
 
 
-void ConstitutiveManager::ExpandObjectCatalogs()
+void ConstitutiveManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from ConstitutiveBase here
-  for( auto & catalogIter: ConstitutiveBase::GetCatalog())
+  for( auto & catalogIter: ConstitutiveBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 
 
 ConstitutiveBase *
-ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
+ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                                                dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex ) const
 {
   ConstitutiveBase const * const
-  constitutiveRelation = GetConstitutiveRelation( constitutiveRelationInstanceName );
+  constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
 
   std::unique_ptr< ConstitutiveBase >
   material = constitutiveRelation->deliverClone( constitutiveRelationInstanceName, parent );
@@ -69,17 +69,17 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   material->allocateConstitutiveData( parent,
                                       numConstitutivePointsPerParentIndex );
 
-  dataRepository::Group * constitutiveGroup = parent->GetGroup( groupKeyStruct::constitutiveModelsString );
+  dataRepository::Group * constitutiveGroup = parent->getGroup( groupKeyStruct::constitutiveModelsString );
   if( constitutiveGroup == nullptr )
   {
-    constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString )->
+    constitutiveGroup = parent->registerGroup( groupKeyStruct::constitutiveModelsString )->
                           setSizedFromParent( 1 );
     constitutiveGroup->resize( parent->size() );
   }
 
 
   ConstitutiveBase * const
-  rval = constitutiveGroup->RegisterGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
+  rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
                                                                std::move( material ) );
   rval->setSizedFromParent( 1 );
   rval->resize( constitutiveGroup->size() );

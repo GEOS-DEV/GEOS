@@ -39,34 +39,34 @@ FieldSpecificationManager::~FieldSpecificationManager()
   // TODO Auto-generated destructor stub
 }
 
-Group * FieldSpecificationManager::CreateChild( string const & childKey, string const & childName )
+Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup( childName, std::move( bc ) );
+  std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::factory( childKey, childName, this );
+  return this->registerGroup( childName, std::move( bc ) );
 }
 
 
-void FieldSpecificationManager::ExpandObjectCatalogs()
+void FieldSpecificationManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from BoundaryConditionBase here
-  for( auto & catalogIter: FieldSpecificationBase::GetCatalog())
+  for( auto & catalogIter: FieldSpecificationBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 
 
-void FieldSpecificationManager::ApplyInitialConditions( Group * domain ) const
+void FieldSpecificationManager::applyInitialConditions( Group * domain ) const
 {
 
-  Apply( 0.0, domain, "", "",
+  apply( 0.0, domain, "", "",
          [&]( FieldSpecificationBase const * const bc,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
               Group * const targetGroup,
               string const fieldName )
   {
-    bc->ApplyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+    bc->applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
   } );
 }
 

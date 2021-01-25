@@ -93,7 +93,7 @@ LinearElasticTransverseIsotropic::~LinearElasticTransverseIsotropic()
 
 
 
-void LinearElasticTransverseIsotropic::PostProcessInput()
+void LinearElasticTransverseIsotropic::postProcessInput()
 {
   real64 const Et = m_defaultYoungsModulusTransverse;
   real64 const Ea = m_defaultYoungsModulusAxial;

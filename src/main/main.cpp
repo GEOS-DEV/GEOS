@@ -49,7 +49,7 @@ int main( int argc, char *argv[] )
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   std::string restartFileName;
-  bool restart = ProblemManager::ParseRestart( restartFileName );
+  bool restart = ProblemManager::parseRestart( restartFileName );
   if( restart )
   {
     GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
@@ -59,31 +59,31 @@ int main( int argc, char *argv[] )
   {
     ProblemManager problemManager( "Problem", nullptr );
 
-    problemManager.InitializePythonInterpreter();
-    problemManager.ParseCommandLineInput();
+    problemManager.initializePythonInterpreter();
+    problemManager.parseCommandLineInput();
 
     if( !problemManager.getSchemaFileName().empty() )
     {
-      problemManager.GenerateDocumentation();
+      problemManager.generateDocumentation();
     }
     else
     {
-      problemManager.ParseInputFile();
+      problemManager.parseInputFile();
 
-      problemManager.ProblemSetup();
+      problemManager.problemSetup();
 
       if( restart )
       {
-        problemManager.ReadRestartOverwrite();
+        problemManager.readRestartOverwrite();
       }
 
-      MpiWrapper::Barrier( MPI_COMM_GEOSX );
+      MpiWrapper::barrier( MPI_COMM_GEOSX );
       GEOSX_LOG_RANK_0( "Running simulation" );
 
       gettimeofday( &tim, nullptr );
       const real64 t_initialize = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
 
-      problemManager.RunSimulation();
+      problemManager.runSimulation();
 
       gettimeofday( &tim, nullptr );
       const real64 t_run = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
@@ -92,7 +92,7 @@ int main( int argc, char *argv[] )
                         "s, run time = " << t_run - t_initialize << "s" );
     }
 
-    problemManager.ClosePythonInterpreter();
+    problemManager.closePythonInterpreter();
   }
 
   GEOSX_MARK_FUNCTION_END;

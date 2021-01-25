@@ -38,18 +38,18 @@ MeshLevel::MeshLevel( string const & name,
 
 {
 
-  RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager );
+  registerGroup( groupStructKeys::nodeManagerString, &m_nodeManager );
 
-  RegisterGroup( groupStructKeys::edgeManagerString, &m_edgeManager );
-
-
-  RegisterGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager );
-  m_faceManager.nodeList().SetRelatedObject( &m_nodeManager );
+  registerGroup( groupStructKeys::edgeManagerString, &m_edgeManager );
 
 
-  RegisterGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager );
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager );
+  m_faceManager.nodeList().setRelatedObject( &m_nodeManager );
 
-  RegisterGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager );
+
+  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager );
+
+  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 }
@@ -57,16 +57,16 @@ MeshLevel::MeshLevel( string const & name,
 MeshLevel::~MeshLevel()
 {}
 
-void MeshLevel::InitializePostInitialConditions_PostSubGroups( Group * const )
+void MeshLevel::initializePostInitialConditionsPostSubGroups( Group * const )
 {
   m_elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    subRegion.CalculateElementGeometricQuantities( m_nodeManager, m_faceManager );
+    subRegion.calculateElementGeometricQuantities( m_nodeManager, m_faceManager );
   } );
 }
 
 
-void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
+void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,
                                         localIndex_array & edgeAdjacencyList,
                                         localIndex_array & faceAdjacencyList,
@@ -94,7 +94,7 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
 
   for( localIndex a=0; a<elemManager->numRegions(); ++a )
   {
-    elementAdjacencySet[a].resize( elemManager->GetRegion( a )->numSubRegions() );
+    elementAdjacencySet[a].resize( elemManager->getRegion( a )->numSubRegions() );
   }
 
   nodeAdjacencySet.insert( seedNodeList.begin(), seedNodeList.end() );
@@ -114,7 +114,7 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
 
     for( typename dataRepository::indexType kReg=0; kReg<elemManager->numRegions(); ++kReg )
     {
-      ElementRegionBase const * const elemRegion = elemManager->GetRegion( kReg );
+      ElementRegionBase const * const elemRegion = elemManager->getRegion( kReg );
 
       elemRegion->forElementSubRegionsIndex< CellElementSubRegion,
                                              WellElementSubRegion >( [&]( localIndex const kSubReg,
@@ -158,7 +158,7 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
 
   for( localIndex kReg=0; kReg<elemManager->numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = elemManager->GetRegion( kReg );
+    ElementRegionBase const * const elemRegion = elemManager->getRegion( kReg );
 
     for( localIndex kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
     {

@@ -48,11 +48,11 @@ public:
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "Dirichlet"; }
+  static string catalogName() { return "Dirichlet"; }
 
   virtual const string getCatalogName() const
   {
-    return DirichletBoundaryCondition::CatalogName();
+    return DirichletBoundaryCondition::catalogName();
   }
 
 };

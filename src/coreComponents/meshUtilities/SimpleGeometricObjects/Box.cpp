@@ -59,7 +59,7 @@ Box::~Box()
 
 
 
-void Box::PostProcessInput()
+void Box::postProcessInput()
 {
   LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
   LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );
@@ -77,7 +77,7 @@ void Box::PostProcessInput()
   }
 }
 
-bool Box::IsCoordInObject( real64 const ( &coord ) [3] ) const
+bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
 {
   real64 coord0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
   if( std::fabs( m_strikeAngle ) >= 1e-20 )

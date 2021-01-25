@@ -97,14 +97,14 @@ public:
    * @brief Get the linear distance between the well head and the perforation.
    * @return the distance between the well head and the perforation
    */
-  real64 const & GetDistanceFromWellHead() const { return m_distanceFromHead; }
+  real64 const & getDistanceFromWellHead() const { return m_distanceFromHead; }
 
 
   /**
    * @brief Get the well Peaceman index at the perforation.
    * @return the well transmissibility
    */
-  real64 GetWellTransmissibility() const { return m_wellTransmissibility; }
+  real64 getWellTransmissibility() const { return m_wellTransmissibility; }
 
   ///@}
 
@@ -128,7 +128,7 @@ public:
 
 protected:
 
-  void PostProcessInput() override;
+  void postProcessInput() override;
 
 private:
 

@@ -105,7 +105,7 @@ private:
    * @param c The stiffness array in Voigt notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void GetStiffness( localIndex const k,
+  virtual void getStiffness( localIndex const k,
                              localIndex const q,
                              real64 ( &c )[6][6] ) const = 0;
 
@@ -117,7 +117,7 @@ private:
    * @param[out] stress Pointer to the stress data in Voigt notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState( localIndex const k,
+  virtual void smallStrainNoState( localIndex const k,
                                    real64 const ( &voigtStrain )[ 6 ],
                                    real64 ( &stress )[ 6 ] ) const = 0;
 
@@ -130,7 +130,7 @@ private:
    *                                 notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
+  virtual void smallStrain( localIndex const k,
                             localIndex const q,
                             real64 const ( &voigtStrainInc )[ 6 ] ) const = 0;
 
@@ -144,7 +144,7 @@ private:
    * @param[in] Rot The incremental rotation tensor
    */
   GEOSX_HOST_DEVICE
-  virtual void HypoElastic( localIndex const k,
+  virtual void hypoElastic( localIndex const k,
                             localIndex const q,
                             real64 const ( &Ddt )[ 6 ],
                             real64 const ( &Rot )[ 3 ][ 3 ] ) const = 0;
@@ -156,7 +156,7 @@ private:
    * @param[out] stress Pointer to the stress data in Voigt notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
+  virtual void hyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
                              real64 ( &stress )[ 6 ] ) const = 0;
 
@@ -167,7 +167,7 @@ private:
    * @param[in] FmI The deformation gradient minus Identity
    */
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
+  virtual void hyperElastic( localIndex const k,
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const = 0;
 
@@ -248,7 +248,7 @@ public:
   ///@}
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;

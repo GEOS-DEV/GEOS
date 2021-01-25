@@ -129,21 +129,21 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
     stateStress.setValues< serialPolicy >( 0 );
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressSliceCheck( stateStress, stressV );
 
     voigtStrain( strainV, Ddt );
     stateStress.setValues< serialPolicy >( 0 );
-    cw.SmallStrain( 0, 0, strainV );
+    cw.smallStrain( 0, 0, strainV );
     stressSliceCheck( stateStress, stressV );
 
     stateStress.setValues< serialPolicy >( 0 );
-    cw.SmallStrainNoState( 0, strainV, stressV2 );
+    cw.smallStrainNoState( 0, strainV, stressV2 );
     stressCheck( stressV, stressV2 );
 
 
@@ -158,7 +158,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -173,7 +173,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -188,7 +188,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -203,7 +203,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -218,7 +218,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -253,10 +253,10 @@ TEST( LinearElasticAnisotropicTests, testXML )
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
-  constitutiveManager.PostProcessInputRecursive();
+  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  constitutiveManager.postProcessInputRecursive();
 
-  LinearElasticAnisotropic * const model = constitutiveManager.GetConstitutiveRelation< LinearElasticAnisotropic >( "granite" );
+  LinearElasticAnisotropic * const model = constitutiveManager.getConstitutiveRelation< LinearElasticAnisotropic >( "granite" );
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 1 );
   model->allocateConstitutiveData( &disc, 1 );
@@ -265,7 +265,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   LinearElasticAnisotropicUpdates kernelWrapper = model->createKernelUpdates();
 
   real64 stiffness[6][6];
-  kernelWrapper.GetStiffness( 0, 0, stiffness );
+  kernelWrapper.getStiffness( 0, 0, stiffness );
 
   real64 c[6][6] = {
     { 1.0e10, 1.1e9, 1.2e9, 1.3e9, 1.4e9, 1.5e9 },
