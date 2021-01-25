@@ -21,257 +21,258 @@ namespace geosx
 {
 namespace virtualElement
 {
-void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
-                                                        localIndex const & regionIndex,
-                                                        localIndex const & subRegionIndex,
-                                                        localIndex const & cellIndex )
-{
-  // Get geometry managers
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
-  ElementRegionManager const & elementManager = *mesh.getElemManager();
+  void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
+                                                          localIndex const & regionIndex,
+                                                          localIndex const & subRegionIndex,
+                                                          localIndex const & cellIndex )
+  {
+    // Get geometry managers
+    NodeManager const & nodeManager = *mesh.getNodeManager();
+    EdgeManager const & edgeManager = *mesh.getEdgeManager();
+    FaceManager const & faceManager = *mesh.getFaceManager();
+    ElementRegionManager const & elementManager = *mesh.getElemManager();
 
-  // Get pre-computed maps
-  CellElementRegion const & cellRegion =
-    *elementManager.GetRegion< CellElementRegion >( regionIndex );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion< CellElementSubRegion >( subRegionIndex );
-  CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
-  FixedOneToManyRelation const & elementToFaceMap = cellSubRegion.faceList();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
-    nodeManager.referencePosition();
+    // Get pre-computed maps
+    CellElementRegion const & cellRegion =
+      *elementManager.GetRegion< CellElementRegion >( regionIndex );
+    CellElementSubRegion const & cellSubRegion =
+      *cellRegion.GetSubRegion< CellElementSubRegion >( subRegionIndex );
+    CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
+    FixedOneToManyRelation const & elementToFaceMap = cellSubRegion.faceList();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
+      nodeManager.referencePosition();
 
-  // Get pre-computed geometrical properties.
-  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
-  arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
-  arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
-  arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
-  arraySlice1d< real64 const > cellCenter = cellCenters[cellIndex];
-  localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
-  localIndex const numCellPoints = cellToNodes[cellIndex].size();
-  m_numSupportPoints = numCellPoints;
+    // Get pre-computed geometrical properties.
+    arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+    arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
+    arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
+    arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
+    arraySlice1d< real64 const > cellCenter = cellCenters[cellIndex];
+    localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
+    localIndex const numCellPoints = cellToNodes[cellIndex].size();
+    m_numSupportPoints = numCellPoints;
 
-  // Compute other geometrical properties.
-  //  - compute map used to locate local point position by global id (used in the computation of
-  //    basis functions boundary integrals.
-  map< localIndex, localIndex > cellPointsPosition;
-  for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
-    cellPointsPosition.insert( std::pair< localIndex, localIndex >
+    // Compute other geometrical properties.
+    //  - compute map used to locate local point position by global id (used in the computation of
+    //    basis functions boundary integrals.
+    map< localIndex, localIndex > cellPointsPosition;
+    for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
+      cellPointsPosition.insert( std::pair< localIndex, localIndex >
                                  ( cellToNodes( cellIndex, numVertex ), numVertex ));
-  // - compute cell diameter.
-  real64 cellDiameter = ComputeDiameter< 3,
-                                         arrayView2d< real64 const,
-                                                      nodes::REFERENCE_POSITION_USD >
-                                         const &,
-                                         arraySlice1d< localIndex const > const & >
-                          ( nodesCoords, cellToNodes[cellIndex], numCellPoints );
-  real64 const invCellDiameter = 1.0/cellDiameter;
+    // - compute cell diameter.
+    real64 cellDiameter = ComputeDiameter< 3,
+                                           arrayView2d< real64 const,
+                                                        nodes::REFERENCE_POSITION_USD >
+                                           const &,
+                                           arraySlice1d< localIndex const > const & >
+      ( nodesCoords, cellToNodes[cellIndex], numCellPoints );
+    real64 const invCellDiameter = 1.0/cellDiameter;
 
-  // Compute basis functions and scaled monomials integrals on the boundary.
-  array1d< real64 > basisBoundaryIntegrals( numCellPoints );
-  array2d< real64 > basisTimesNormalBoundaryInt( numCellPoints, 3 );
-  array2d< real64 > basisTimesMonomNormalDerBoundaryInt( numCellPoints, 3 );
-  real64 monomBoundaryIntegrals[4] = { 0.0 };
-  // - initialize vectors
-  for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
-  {
-    basisBoundaryIntegrals[numBasisFunction] = 0.0;
-    for( localIndex i = 0; i < 3; ++i )
-      basisTimesNormalBoundaryInt[numBasisFunction][i] = 0.0;
-    for( localIndex i = 0; i < 3; ++i )
-      basisTimesMonomNormalDerBoundaryInt[numBasisFunction][i] = 0.0;
-  }
-  // - loop over faces and perform computations on the boundary
-  for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
-  {
-    localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
-    arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
-    // - compute integrals calling auxiliary method
-    array1d< real64 > faceBasisIntegrals;
-    real64 threeDMonomialIntegrals[3] = { 0.0 };
-    ComputeFaceIntegrals( mesh, faceIndex, invCellDiameter, cellCenter,
-                          faceBasisIntegrals, threeDMonomialIntegrals );
-    // - get outward face normal
-    real64 faceNormal[3] { faceNormals[faceIndex][0],
-                           faceNormals[faceIndex][1],
-                           faceNormals[faceIndex][2] };
-    real64 signTestVector[3];
-    signTestVector[0] = faceCenters[faceIndex][0] - cellCenter[0];
-    signTestVector[1] = faceCenters[faceIndex][1] - cellCenter[1];
-    signTestVector[2] = faceCenters[faceIndex][2] - cellCenter[2];
-    if( signTestVector[0]*faceNormal[0] +
-        signTestVector[1]*faceNormal[1] +
-        signTestVector[2]*faceNormal[2] < 0 )
+    // Compute basis functions and scaled monomials integrals on the boundary.
+    array1d< real64 > basisBoundaryIntegrals( numCellPoints );
+    array2d< real64 > basisTimesNormalBoundaryInt( numCellPoints, 3 );
+    array2d< real64 > basisTimesMonomNormalDerBoundaryInt( numCellPoints, 3 );
+    real64 monomBoundaryIntegrals[4] = { 0.0 };
+    // - initialize vectors
+    for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
     {
-      faceNormal[0] = -faceNormal[0];
-      faceNormal[1] = -faceNormal[1];
-      faceNormal[2] = -faceNormal[2];
-    }
-    // - add contributions to integrals of monomials
-    monomBoundaryIntegrals[0] += faceManager.faceArea()[faceIndex];
-    for( localIndex monomInd = 1; monomInd < 4; ++monomInd )
-      monomBoundaryIntegrals[monomInd] += threeDMonomialIntegrals[monomInd-1];
-    // - add contributions to integrals of basis functions
-    for( localIndex numFaceBasisFunction = 0; numFaceBasisFunction < faceToNodes.size();
-         ++numFaceBasisFunction )
-    {
-      localIndex basisFunctionIndex = cellPointsPosition
-                                        .find( faceToNodes[numFaceBasisFunction] )->second;
-      basisBoundaryIntegrals[basisFunctionIndex] += faceBasisIntegrals[numFaceBasisFunction];
-      for( localIndex pos = 0; pos < 3; ++pos )
-      {
-        basisTimesNormalBoundaryInt[basisFunctionIndex][pos] +=
-          faceNormal[pos]*faceBasisIntegrals( numFaceBasisFunction );
-        basisTimesMonomNormalDerBoundaryInt[basisFunctionIndex][pos] +=
-          faceNormal[pos]*faceBasisIntegrals( numFaceBasisFunction )*invCellDiameter;
-      }
-    }
-  }
-
-  // Compute non constant scaled monomials' integrals on the polyhedron.
-  real64 monomInternalIntegrals[3] = { 0.0 };
-  m_numQuadraturePoints = 0;
-  for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
-  {
-    localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
-    arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
-    arraySlice1d< real64 const > faceCenter = faceCenters[faceIndex];
-    localIndex const numFaceVertices = faceToNodes.size();
-    for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
-    {
-      ++m_numQuadraturePoints;
-      localIndex numNextVertex = (numVertex+1)%numFaceVertices;
-      // compute value of 3D monomials at the quadrature point on the sub-tetrahedron (the
-      // barycenter).
-      // The result is ((v0 + v1 + faceCenter + cellCenter)/4 - cellCenter) / cellDiameter =
-      // = (v0 + v1 + faceCenter - 3*cellcenter)/(4*cellDiameter).
-      real64 monomialValues[3];
-      for( localIndex pos = 0; pos < 3; ++pos )
-      {
-        monomialValues[pos] = (nodesCoords( faceToNodes( numVertex ), pos ) +
-                               nodesCoords( faceToNodes( numNextVertex ), pos ) +
-                               faceCenter( pos ) - 3*cellCenter( pos ))*invCellDiameter/4.0;
-      }
-      // compute quadrature weight (the volume of the sub-tetrahedron).
-      real64 edgeTangentsMatrix[3][3];
+      basisBoundaryIntegrals[numBasisFunction] = 0.0;
       for( localIndex i = 0; i < 3; ++i )
-      {
-        edgeTangentsMatrix[0][i] = faceCenter( i ) - cellCenter( i );
-        edgeTangentsMatrix[1][i] = nodesCoords( faceToNodes( numVertex ), i ) - cellCenter( i );
-        edgeTangentsMatrix[2][i] = nodesCoords( faceToNodes( numNextVertex ), i ) -
-                                   cellCenter( i );
-      }
-      real64 subTetVolume = LvArray::math::abs
-                              ( edgeTangentsMatrix[0][0] *
-                              ( edgeTangentsMatrix[1][1] * edgeTangentsMatrix[2][2] -
-                                edgeTangentsMatrix[1][2] * edgeTangentsMatrix[2][1] ) +
-                              edgeTangentsMatrix[1][0] *
-                              ( edgeTangentsMatrix[0][2] * edgeTangentsMatrix[2][1] -
-                                edgeTangentsMatrix[0][1] * edgeTangentsMatrix[2][2] ) +
-                              edgeTangentsMatrix[2][0] *
-                              ( edgeTangentsMatrix[0][1] * edgeTangentsMatrix[1][2] -
-                                edgeTangentsMatrix[0][2] * edgeTangentsMatrix[1][1] )
-                              ) / 6.0;
+        basisTimesNormalBoundaryInt[numBasisFunction][i] = 0.0;
       for( localIndex i = 0; i < 3; ++i )
-        monomInternalIntegrals[i] += monomialValues[i]*subTetVolume;
+        basisTimesMonomNormalDerBoundaryInt[numBasisFunction][i] = 0.0;
     }
-  }
+    // - loop over faces and perform computations on the boundary
+    for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
+    {
+      localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
+      real64 const faceArea = faceManager.faceArea()[faceIndex];
+      arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
+      // - compute integrals calling auxiliary method
+      array1d< real64 > faceBasisIntegrals;
+      real64 threeDMonomialIntegrals[3] = { 0.0 };
+      ComputeFaceIntegrals(nodeManager.referencePosition(),
+                           faceManager.nodeList()[faceIndex],
+                           faceManager.edgeList()[faceIndex],
+                           faceArea,
+                           faceCenters[faceIndex],
+                           faceNormals[faceIndex],
+                           edgeManager.nodeList(),
+                           invCellDiameter,
+                           cellCenter,
+                           faceBasisIntegrals,
+                           threeDMonomialIntegrals );
+      // - get outward face normal
+      real64 faceNormal[3] { faceNormals[faceIndex][0],
+          faceNormals[faceIndex][1],
+          faceNormals[faceIndex][2] };
+      real64 signTestVector[3];
+      signTestVector[0] = faceCenters[faceIndex][0] - cellCenter[0];
+      signTestVector[1] = faceCenters[faceIndex][1] - cellCenter[1];
+      signTestVector[2] = faceCenters[faceIndex][2] - cellCenter[2];
+      if( signTestVector[0]*faceNormal[0] +
+          signTestVector[1]*faceNormal[1] +
+          signTestVector[2]*faceNormal[2] < 0 )
+      {
+        faceNormal[0] = -faceNormal[0];
+        faceNormal[1] = -faceNormal[1];
+        faceNormal[2] = -faceNormal[2];
+      }
+      // - add contributions to integrals of monomials
+      monomBoundaryIntegrals[0] += faceArea;
+      for( localIndex monomInd = 1; monomInd < 4; ++monomInd )
+        monomBoundaryIntegrals[monomInd] += threeDMonomialIntegrals[monomInd-1];
+      // - add contributions to integrals of basis functions
+      for( localIndex numFaceBasisFunction = 0; numFaceBasisFunction < faceToNodes.size();
+           ++numFaceBasisFunction )
+      {
+        localIndex basisFunctionIndex = cellPointsPosition
+          .find( faceToNodes[numFaceBasisFunction] )->second;
+        basisBoundaryIntegrals[basisFunctionIndex] += faceBasisIntegrals[numFaceBasisFunction];
+        for( localIndex pos = 0; pos < 3; ++pos )
+        {
+          basisTimesNormalBoundaryInt[basisFunctionIndex][pos] +=
+            faceNormal[pos]*faceBasisIntegrals( numFaceBasisFunction );
+          basisTimesMonomNormalDerBoundaryInt[basisFunctionIndex][pos] +=
+            faceNormal[pos]*faceBasisIntegrals( numFaceBasisFunction )*invCellDiameter;
+        }
+      }
+    }
 
-  // Compute integral mean of basis functions and of derivatives of basis functions.
-  // Compute VEM degrees of freedom of the piNabla projection minus the identity (used for
-  // m_stabilizationMatrix).
-  real64 const invCellVolume = 1.0/cellVolumes[cellIndex];
-  real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
-  m_basisFunctionsIntegralMean.resize( numCellPoints );
-  m_basisDerivativesIntegralMean = basisTimesNormalBoundaryInt;
-  array2d< real64 > piNablaVemDofsMinusIdentity( numCellPoints, numCellPoints );
-  // - compute values of scaled monomials at the vertices (used for piNablaVemDofs)
-  array2d< real64 > monomialVemDofs( 3, numCellPoints );
-  for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
-  {
-    for( localIndex pos = 0; pos < 3; ++pos )
-      monomialVemDofs( pos, numVertex ) = invCellDiameter*
-                                          (nodesCoords( cellToNodes( cellIndex, numVertex ), pos ) - cellCenter( pos ));
-  }
-  for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
-  {
-    // - solve linear system to obtain dofs of piNabla proj wrt monomial basis
-    real64 piNablaDofs[4];
-    piNablaDofs[1] = monomialDerivativeInverse *
-                     basisTimesMonomNormalDerBoundaryInt[numBasisFunction][0];
-    piNablaDofs[2] = monomialDerivativeInverse *
-                     basisTimesMonomNormalDerBoundaryInt[numBasisFunction][1];
-    piNablaDofs[3] = monomialDerivativeInverse *
-                     basisTimesMonomNormalDerBoundaryInt[numBasisFunction][2];
-    piNablaDofs[0] = (basisBoundaryIntegrals[numBasisFunction] -
-                      piNablaDofs[1]*monomBoundaryIntegrals[1] -
-                      piNablaDofs[2]*monomBoundaryIntegrals[2] -
-                      piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
-    // - integrate piNabla proj and compute integral means
-    m_basisFunctionsIntegralMean( numBasisFunction ) = piNablaDofs[0] + invCellVolume *
-                                                       (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
-                                                        + piNablaDofs[3] * monomInternalIntegrals[2]);
-    // - compute integral means of derivatives
-    for( localIndex i = 0; i < 3; ++i )
-      m_basisDerivativesIntegralMean[numBasisFunction][i] =
-        -invCellVolume *basisTimesNormalBoundaryInt[numBasisFunction][i];
-    // - compute VEM dofs of piNabla projection
+    // Compute non constant scaled monomials' integrals on the polyhedron.
+    real64 monomInternalIntegrals[3] = { 0.0 };
+    m_numQuadraturePoints = 0;
+    for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
+    {
+      localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
+      arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
+      arraySlice1d< real64 const > faceCenter = faceCenters[faceIndex];
+      localIndex const numFaceVertices = faceToNodes.size();
+      for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+      {
+        ++m_numQuadraturePoints;
+        localIndex numNextVertex = (numVertex+1)%numFaceVertices;
+        // compute value of 3D monomials at the quadrature point on the sub-tetrahedron (the
+        // barycenter).
+        // The result is ((v0 + v1 + faceCenter + cellCenter)/4 - cellCenter) / cellDiameter =
+        // = (v0 + v1 + faceCenter - 3*cellcenter)/(4*cellDiameter).
+        real64 monomialValues[3];
+        for( localIndex pos = 0; pos < 3; ++pos )
+        {
+          monomialValues[pos] = (nodesCoords( faceToNodes( numVertex ), pos ) +
+                                 nodesCoords( faceToNodes( numNextVertex ), pos ) +
+                                 faceCenter( pos ) - 3*cellCenter( pos ))*invCellDiameter/4.0;
+        }
+        // compute quadrature weight (the volume of the sub-tetrahedron).
+        real64 edgeTangentsMatrix[3][3];
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          edgeTangentsMatrix[0][i] = faceCenter( i ) - cellCenter( i );
+          edgeTangentsMatrix[1][i] = nodesCoords( faceToNodes( numVertex ), i ) - cellCenter( i );
+          edgeTangentsMatrix[2][i] = nodesCoords( faceToNodes( numNextVertex ), i ) -
+            cellCenter( i );
+        }
+        real64 subTetVolume = LvArray::math::abs
+          ( edgeTangentsMatrix[0][0] *
+            ( edgeTangentsMatrix[1][1] * edgeTangentsMatrix[2][2] -
+              edgeTangentsMatrix[1][2] * edgeTangentsMatrix[2][1] ) +
+            edgeTangentsMatrix[1][0] *
+            ( edgeTangentsMatrix[0][2] * edgeTangentsMatrix[2][1] -
+              edgeTangentsMatrix[0][1] * edgeTangentsMatrix[2][2] ) +
+            edgeTangentsMatrix[2][0] *
+            ( edgeTangentsMatrix[0][1] * edgeTangentsMatrix[1][2] -
+              edgeTangentsMatrix[0][2] * edgeTangentsMatrix[1][1] )
+            ) / 6.0;
+        for( localIndex i = 0; i < 3; ++i )
+          monomInternalIntegrals[i] += monomialValues[i]*subTetVolume;
+      }
+    }
+
+    // Compute integral mean of basis functions and of derivatives of basis functions.
+    // Compute VEM degrees of freedom of the piNabla projection minus the identity (used for
+    // m_stabilizationMatrix).
+    real64 const invCellVolume = 1.0/cellVolumes[cellIndex];
+    real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
+    m_basisFunctionsIntegralMean.resize( numCellPoints );
+    m_basisDerivativesIntegralMean = basisTimesNormalBoundaryInt;
+    array2d< real64 > piNablaVemDofsMinusIdentity( numCellPoints, numCellPoints );
+    // - compute values of scaled monomials at the vertices (used for piNablaVemDofs)
+    array2d< real64 > monomialVemDofs( 3, numCellPoints );
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
     {
-      piNablaVemDofsMinusIdentity( numVertex, numBasisFunction ) = piNablaDofs[0] +
-                                                                   piNablaDofs[1]*monomialVemDofs( 0, numVertex ) +
-                                                                   piNablaDofs[2]*monomialVemDofs( 1, numVertex ) +
-                                                                   piNablaDofs[3]*monomialVemDofs( 2, numVertex );
+      for( localIndex pos = 0; pos < 3; ++pos )
+        monomialVemDofs( pos, numVertex ) = invCellDiameter*
+          (nodesCoords( cellToNodes( cellIndex, numVertex ), pos ) - cellCenter( pos ));
     }
-    piNablaVemDofsMinusIdentity( numBasisFunction, numBasisFunction ) -= 1;
-  }
-
-  // Compute stabilization matrix.
-  // The result is piNablaVemDofsMinusIdentity^T * piNablaVemDofsMinusIdentity.
-  m_stabilizationMatrix.resize( numCellPoints, numCellPoints );
-  for( localIndex i = 0; i < numCellPoints; ++i )
-  {
-    for( localIndex j = 0; j < numCellPoints; ++j )
+    for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
     {
-      real64 rowColProd = 0;
-      for( localIndex k = 0; k < numCellPoints; ++k )
-        rowColProd += piNablaVemDofsMinusIdentity( k, i )*piNablaVemDofsMinusIdentity( k, j );
-      m_stabilizationMatrix( i, j ) = cellDiameter*rowColProd;
+      // - solve linear system to obtain dofs of piNabla proj wrt monomial basis
+      real64 piNablaDofs[4];
+      piNablaDofs[1] = monomialDerivativeInverse *
+        basisTimesMonomNormalDerBoundaryInt[numBasisFunction][0];
+      piNablaDofs[2] = monomialDerivativeInverse *
+        basisTimesMonomNormalDerBoundaryInt[numBasisFunction][1];
+      piNablaDofs[3] = monomialDerivativeInverse *
+        basisTimesMonomNormalDerBoundaryInt[numBasisFunction][2];
+      piNablaDofs[0] = (basisBoundaryIntegrals[numBasisFunction] -
+                        piNablaDofs[1]*monomBoundaryIntegrals[1] -
+                        piNablaDofs[2]*monomBoundaryIntegrals[2] -
+                        piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
+      // - integrate piNabla proj and compute integral means
+      m_basisFunctionsIntegralMean( numBasisFunction ) = piNablaDofs[0] + invCellVolume *
+        (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
+         + piNablaDofs[3] * monomInternalIntegrals[2]);
+      // - compute integral means of derivatives
+      for( localIndex i = 0; i < 3; ++i )
+        m_basisDerivativesIntegralMean[numBasisFunction][i] =
+          -invCellVolume *basisTimesNormalBoundaryInt[numBasisFunction][i];
+      // - compute VEM dofs of piNabla projection
+      for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
+      {
+        piNablaVemDofsMinusIdentity( numVertex, numBasisFunction ) = piNablaDofs[0] +
+          piNablaDofs[1]*monomialVemDofs( 0, numVertex ) +
+          piNablaDofs[2]*monomialVemDofs( 1, numVertex ) +
+          piNablaDofs[3]*monomialVemDofs( 2, numVertex );
+      }
+      piNablaVemDofsMinusIdentity( numBasisFunction, numBasisFunction ) -= 1;
+    }
+
+    // Compute stabilization matrix.
+    // The result is piNablaVemDofsMinusIdentity^T * piNablaVemDofsMinusIdentity.
+    m_stabilizationMatrix.resize( numCellPoints, numCellPoints );
+    for( localIndex i = 0; i < numCellPoints; ++i )
+    {
+      for( localIndex j = 0; j < numCellPoints; ++j )
+      {
+        real64 rowColProd = 0;
+        for( localIndex k = 0; k < numCellPoints; ++k )
+          rowColProd += piNablaVemDofsMinusIdentity( k, i )*piNablaVemDofsMinusIdentity( k, j );
+        m_stabilizationMatrix( i, j ) = cellDiameter*rowColProd;
+      }
     }
   }
-}
 
 void
 ConformingVirtualElementOrder1::
-ComputeFaceIntegrals( MeshLevel const & mesh,
-                      localIndex const & faceIndex,
+ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                      arraySlice1d< localIndex const > const & faceToNodes,
+                      arraySlice1d< localIndex const > const & faceToEdges,
+                      real64 const & faceArea,
+                      arraySlice1d< real64 const > const & faceCenter,
+                      arraySlice1d< real64 const > const & faceNormal,
+                      EdgeManager::NodeMapType const & edgeToNodes,
                       real64 const & invCellDiameter,
                       arraySlice1d< real64 const > const & cellCenter,
                       array1d< real64 > & basisIntegrals,
                       real64 * threeDMonomialIntegrals )
 {
-  // Get geometry managers.
-  FaceManager const & faceManager = *mesh.getFaceManager();
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  EdgeManager const & edgeManager = *mesh.getEdgeManager();
-
-  // Get pre-computed maps.
-  arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
-  FaceManager::EdgeMapType faceToEdges = faceManager.edgeList();
-  EdgeManager::NodeMapType edgeToNodes = edgeManager.nodeList();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
-    nodeManager.referencePosition();
-
   // Get pre-computed geometrical properties.
-  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
-  arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
-  arrayView1d< real64 const > faceAreas = faceManager.faceArea();
   localIndex const numFaceVertices = faceToNodes.size();     // also equal to n. face's edges.
 
   // Compute other geometrical properties.
   //  - compute rotation matrix.
   array2d< real64 > faceRotationMatrix( 3, 3 );
-  computationalGeometry::RotationMatrix_3D( faceNormals[faceIndex], faceRotationMatrix );
+  computationalGeometry::RotationMatrix_3D( faceNormal, faceRotationMatrix );
   //  - below we compute the diameter, the rotated vertices and the rotated center.
   array2d< real64 > faceRotatedVertices( numFaceVertices, 2 );
   real64 faceDiameter = 0;
@@ -296,20 +297,20 @@ ComputeFaceIntegrals( MeshLevel const & mesh,
   // - rotate the face centroid as done for the vertices.
   real64 faceRotatedCentroid[2];
   faceRotatedCentroid[0] =
-    faceRotationMatrix( 0, 1 )*faceCenters( faceIndex, 0 ) +
-    faceRotationMatrix( 1, 1 )*faceCenters( faceIndex, 1 ) +
-    faceRotationMatrix( 2, 1 )*faceCenters( faceIndex, 2 );
+    faceRotationMatrix( 0, 1 )*faceCenter[0] +
+    faceRotationMatrix( 1, 1 )*faceCenter[1] +
+    faceRotationMatrix( 2, 1 )*faceCenter[2];
   faceRotatedCentroid[1] =
-    faceRotationMatrix( 0, 2 )*faceCenters( faceIndex, 0 ) +
-    faceRotationMatrix( 1, 2 )*faceCenters( faceIndex, 1 ) +
-    faceRotationMatrix( 2, 2 )*faceCenters( faceIndex, 2 );
+    faceRotationMatrix( 0, 2 )*faceCenter[0] +
+    faceRotationMatrix( 1, 2 )*faceCenter[1] +
+    faceRotationMatrix( 2, 2 )*faceCenter[2];
   // - compute edges' lengths, outward pointing normals and local edge-to-nodes map.
   array2d< real64 > edgeOutwardNormals( numFaceVertices, 2 );
   array1d< real64 > edgeLengths( numFaceVertices );
   array2d< localIndex > localEdgeToNodes( numFaceVertices, 2 );
   for( localIndex numEdge = 0; numEdge < numFaceVertices; ++numEdge )
   {
-    if( edgeToNodes( faceToEdges( faceIndex, numEdge ), 0 ) == faceToNodes( numEdge ))
+    if( edgeToNodes( faceToEdges[numEdge], 0 ) == faceToNodes( numEdge ))
     {
       localEdgeToNodes( numEdge, 0 ) = numEdge;
       localEdgeToNodes( numEdge, 1 ) = (numEdge+1)%numFaceVertices;
@@ -381,7 +382,7 @@ ComputeFaceIntegrals( MeshLevel const & mesh,
     // ((v(0) + v(1) + faceCenter)/3 - cellCenter)/cellDiameter.
     real64 threeDMonomialValues[3];
     for( localIndex i = 0; i < 3; ++i )
-      threeDMonomialValues[i] = ( (faceCenters[faceIndex][i] +
+      threeDMonomialValues[i] = ( (faceCenter[i] +
                                    nodesCoords[faceToNodes(numSubTriangle)][i] +
                                    nodesCoords[faceToNodes(nextVertex)][i]) / 3.0 -
                                   cellCenter[i] ) * invCellDiameter;
@@ -421,7 +422,7 @@ ComputeFaceIntegrals( MeshLevel const & mesh,
       basisTimesMonomNormalDerBoundaryInt[numVertex][i] *= 0.5*invFaceDiameter;
 
   // Compute integral mean of basis functions on this face.
-  real64 invFaceArea = 1.0/faceAreas[faceIndex];
+  real64 invFaceArea = 1.0/faceArea;
   real64 monomialDerivativeInverse = (faceDiameter*faceDiameter)*invFaceArea;
   basisIntegrals.resize( numFaceVertices );
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
@@ -434,7 +435,7 @@ ComputeFaceIntegrals( MeshLevel const & mesh,
     piNablaDofs[0] = (boundaryQuadratureWeights[numVertex] -
                       piNablaDofs[1]*monomBoundaryIntegrals[1] -
                       piNablaDofs[2]*monomBoundaryIntegrals[2])/monomBoundaryIntegrals[0];
-    basisIntegrals[numVertex] = piNablaDofs[0]*faceAreas[faceIndex] +
+    basisIntegrals[numVertex] = piNablaDofs[0]*faceArea +
       (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]);
   }
 }

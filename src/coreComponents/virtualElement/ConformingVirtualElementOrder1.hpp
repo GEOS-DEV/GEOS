@@ -27,21 +27,26 @@ namespace virtualElement
 {
 class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
-public:
+  private:
+  void
+  ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                        arraySlice1d< localIndex const > const & faceToNodes,
+                        arraySlice1d< localIndex const > const & faceToEdges,
+                        real64 const & faceArea,
+                        arraySlice1d< real64 const > const & faceCenter,
+                        arraySlice1d< real64 const > const & faceNormal,
+                        EdgeManager::NodeMapType const & edgeToNodes,
+                        real64 const & invCellDiameter,
+                        arraySlice1d< real64 const > const & cellCenter,
+                        array1d< real64 > & basisIntegrals,
+                        real64 * threeDMonomialIntegrals );
+  public:
 
   localIndex m_numQuadraturePoints;
   localIndex m_numSupportPoints;
   array1d< real64 > m_basisFunctionsIntegralMean;
   array2d< real64 > m_basisDerivativesIntegralMean;
   array2d< real64 > m_stabilizationMatrix;
-
-  GEOSX_FORCE_INLINE
-  void ComputeFaceIntegrals( MeshLevel const & mesh,
-                             localIndex const & faceId,
-                             real64 const & invCellDiameter,
-                             arraySlice1d< real64 const > const & cellCenter,
-                             array1d< real64 > & basisIntegrals,
-                             real64 * threeDMonomialIntegrals );
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   real64 ComputeDiameter( POINT_COORDS_TYPE points,
