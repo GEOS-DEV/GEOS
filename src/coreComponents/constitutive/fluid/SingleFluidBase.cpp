@@ -48,9 +48,9 @@ SingleFluidBase::SingleFluidBase( std::string const & name, Group * const parent
 
 SingleFluidBase::~SingleFluidBase() = default;
 
-void SingleFluidBase::PostProcessInput()
+void SingleFluidBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
   this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString )->setApplyDefaultValue( m_defaultDensity );
   this->getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString )->setApplyDefaultValue( m_defaultViscosity );
 

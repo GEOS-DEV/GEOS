@@ -42,7 +42,7 @@ SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
 SinglePhaseReservoir::~SinglePhaseReservoir()
 {}
 
-void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition const & domain,
+void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        SparsityPatternView< globalIndex > const & pattern ) const
 {
@@ -51,24 +51,24 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition const & d
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
-  // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
+  // TODO: remove this and just call SolverBase::setupSystem when DofManager can handle the coupling
 
   // Populate off-diagonal sparsity between well and reservoir
 
-  string const resDofKey  = dofManager.getKey( m_wellSolver->ResElementDofName() );
-  string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
+  string const resDofKey  = dofManager.getKey( m_wellSolver->resElementDofName() );
+  string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
 
-  localIndex const wellNDOF = m_wellSolver->NumDofPerWellElement();
+  localIndex const wellNDOF = m_wellSolver->numDofPerWellElement();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
-    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
+    elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
   {
-    PerforationData const * const perforationData = subRegion.GetPerforationData();
+    PerforationData const * const perforationData = subRegion.getPerforationData();
 
     // get the well degrees of freedom and ghosting info
     arrayView1d< globalIndex const > const & wellElemDofNumber =
@@ -130,7 +130,7 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition const & d
   } );
 }
 
-void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
                                                   DomainPartition const & domain,
                                                   DofManager const & dofManager,
@@ -140,9 +140,9 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
-  string const resDofKey = dofManager.getKey( m_wellSolver->ResElementDofName() );
+  string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
-    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
+    elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
     resDofNumberAccessor.toNestedViewConst();
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -151,10 +151,10 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
   {
-    PerforationData const * const perforationData = subRegion.GetPerforationData();
+    PerforationData const * const perforationData = subRegion.getPerforationData();
 
     // get the degrees of freedom
-    string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
+    string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
     arrayView1d< globalIndex const > const wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 

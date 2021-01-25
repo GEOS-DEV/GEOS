@@ -45,7 +45,7 @@ KrylovSolver< VECTOR >::KrylovSolver( LinearOperator< Vector > const & matrix,
 
 template< typename VECTOR >
 std::unique_ptr< KrylovSolver< VECTOR > >
-KrylovSolver< VECTOR >::Create( LinearSolverParameters const & parameters,
+KrylovSolver< VECTOR >::create( LinearSolverParameters const & parameters,
                                 LinearOperator< VECTOR > const & matrix,
                                 LinearOperator< VECTOR > const & precond )
 {

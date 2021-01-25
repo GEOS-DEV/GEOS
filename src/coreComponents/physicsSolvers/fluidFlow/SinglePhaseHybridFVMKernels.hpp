@@ -69,7 +69,7 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
+  computeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
                             arrayView1d< real64 const > const & dFacePres,
                             arrayView1d< real64 const > const & faceGravCoef,
                             arraySlice1d< localIndex const > const & elemToFaces,
@@ -150,7 +150,7 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  UpdateUpwindedCoefficients( localIndex const er,
+  updateUpwindedCoefficients( localIndex const er,
                               localIndex const esr,
                               localIndex const ei,
                               arrayView2d< localIndex const > const & elemRegionList,
@@ -232,7 +232,7 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  AssembleOneSidedMassFluxes( arrayView1d< globalIndex const > const & faceDofNumber,
+  assembleOneSidedMassFluxes( arrayView1d< globalIndex const > const & faceDofNumber,
                               arraySlice1d< localIndex const > const & elemToFaces,
                               globalIndex const elemDofNumber,
                               globalIndex const rankOffset,
@@ -313,7 +313,7 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
+  assembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                        arrayView1d< integer const > const & faceGhostRank,
                        arraySlice1d< localIndex const > const & elemToFaces,
                        globalIndex const elemDofNumber,
@@ -417,7 +417,7 @@ struct AssemblerKernel
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  Compute( localIndex const er,
+  compute( localIndex const er,
            localIndex const esr,
            localIndex const ei,
            SortedArrayView< localIndex const > const & regionFilter,
@@ -463,7 +463,7 @@ struct AssemblerKernel
 
     // for each one-sided face of the elem,
     // compute the volumetric flux using transMatrix
-    AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+    AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                            dFacePres,
                                                            faceGravCoef,
                                                            elemToFaces,
@@ -484,7 +484,7 @@ struct AssemblerKernel
     {
       // This functions is really not necessary
       // TODO: remove this function and don't store the upwinded mobilities like in CompositionalMultiphaseHybrid
-      AssemblerKernelHelper::UpdateUpwindedCoefficients< NF >( er, esr, ei,
+      AssemblerKernelHelper::updateUpwindedCoefficients< NF >( er, esr, ei,
                                                                elemRegionList,
                                                                elemSubRegionList,
                                                                elemList,
@@ -506,7 +506,7 @@ struct AssemblerKernel
 
       // use the computed one sided vol fluxes and the upwinded mobilities
       // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
-      AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
+      AssemblerKernelHelper::assembleOneSidedMassFluxes< NF >( faceDofNumber,
                                                                elemToFaces,
                                                                elemDofNumber[er][esr][ei],
                                                                rankOffset,
@@ -523,7 +523,7 @@ struct AssemblerKernel
 
     // use the computed one sided vol fluxes to assemble the constraints
     // enforcing flux continuity at this element's faces
-    AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+    AssemblerKernelHelper::assembleConstraints< NF >( faceDofNumber,
                                                       faceGhostRank,
                                                       elemToFaces,
                                                       elemDofNumber[er][esr][ei],
@@ -580,7 +580,7 @@ struct FluxKernel
    */
   template< typename IP_TYPE, localIndex NF >
   static void
-  Launch( localIndex er,
+  launch( localIndex er,
           localIndex esr,
           CellElementSubRegion const & subRegion,
           constitutive::SingleFluidBase const & fluid,
@@ -646,7 +646,7 @@ struct FluxKernel
 
       // recompute the local transmissibility matrix at each iteration
       // we can decide later to precompute transMatrix if needed
-      IP_TYPE::template Compute< NF >( nodePosition,
+      IP_TYPE::template compute< NF >( nodePosition,
                                        transMultiplier,
                                        faceToNodes,
                                        elemToFaces[ei],
@@ -657,7 +657,7 @@ struct FluxKernel
                                        transMatrix );
 
       // perform flux assembly in this element
-      SinglePhaseHybridFVMKernels::AssemblerKernel::Compute< NF >( er, esr, ei,
+      SinglePhaseHybridFVMKernels::AssemblerKernel::compute< NF >( er, esr, ei,
                                                                    regionFilter,
                                                                    elemRegionList,
                                                                    elemSubRegionList,
@@ -698,7 +698,7 @@ struct ResidualNormKernel
 
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
   static void
-  Launch( LOCAL_VECTOR const localResidual,
+  launch( LOCAL_VECTOR const localResidual,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & facePresDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
@@ -777,7 +777,7 @@ void KernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 {
   helpers::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
   {
-    KERNELWRAPPER::template Launch< IP_TYPE, NF() >( std::forward< ARGS >( args )... );
+    KERNELWRAPPER::template launch< IP_TYPE, NF() >( std::forward< ARGS >( args )... );
   } );
 }
 

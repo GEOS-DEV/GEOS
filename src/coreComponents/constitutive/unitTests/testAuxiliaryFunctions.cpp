@@ -139,7 +139,7 @@ TEST( AuxFunctions, GetStiffness )
   real64 strain[6] = {3, 4, 5, 1, 2, 1};
   real64 d = 0.5;
   real64 c[6][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
-  GetStiffnessTest( c, strain, d );
+  getStiffnessTest( c, strain, d );
   std::cout << "The Stiffness is: " << std::endl;
   GEOSX_LOG( c );
 }

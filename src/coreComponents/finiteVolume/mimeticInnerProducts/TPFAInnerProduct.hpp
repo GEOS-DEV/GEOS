@@ -52,7 +52,7 @@ public:
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+  compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
            ArrayOfArraysView< localIndex const > const & faceToNodes,
            arraySlice1d< localIndex const > const & elemToFaces,
@@ -67,7 +67,7 @@ public:
 template< localIndex NF >
 GEOSX_HOST_DEVICE
 void
-TPFAInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                            arrayView1d< real64 const > const & transMultiplier,
                            ArrayOfArraysView< localIndex const > const & faceToNodes,
                            arraySlice1d< localIndex const > const & elemToFaces,
@@ -84,7 +84,7 @@ TPFAInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
 
   // 0) assemble full coefficient tensor from principal axis/components
   real64 permTensor[ 3 ][ 3 ] = {{ 0 }};
-  MimeticInnerProductHelpers::MakeFullTensor( elemPerm, permTensor );
+  MimeticInnerProductHelpers::makeFullTensor( elemPerm, permTensor );
 
   // we are ready to compute the transmissibility matrix
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )

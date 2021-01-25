@@ -70,9 +70,9 @@ VanGenuchtenBakerRelativePermeability::~VanGenuchtenBakerRelativePermeability()
 {}
 
 
-void VanGenuchtenBakerRelativePermeability::PostProcessInput()
+void VanGenuchtenBakerRelativePermeability::postProcessInput()
 {
-  RelativePermeabilityBase::PostProcessInput();
+  RelativePermeabilityBase::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 

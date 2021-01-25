@@ -40,10 +40,10 @@ public:
   {}
 
   static constexpr auto m_catalogName = "CO2Solubility";
-  static string CatalogName()                    { return m_catalogName; }
-  virtual string getCatalogName() const override final { return CatalogName(); }
+  static string catalogName()                    { return m_catalogName; }
+  virtual string getCatalogName() const override final { return catalogName(); }
 
-  virtual void Partition( EvalVarArgs const & pressure,
+  virtual void partition( EvalVarArgs const & pressure,
                           EvalVarArgs const & temperature,
                           arraySlice1d< EvalVarArgs const > const & compFraction,
                           arraySlice1d< EvalVarArgs > const & phaseFraction,
@@ -51,7 +51,7 @@ public:
 
 private:
 
-  void MakeTable( const string_array & inputPara );
+  void makeTable( const string_array & inputPara );
 
   TableFunctionPtr m_CO2SolubilityTable;
   localIndex m_CO2Index;

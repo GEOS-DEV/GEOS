@@ -21,14 +21,14 @@
 namespace geosx
 {
 
-void ExecutableGroup::SignalToPrepareForExecution( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ExecutableGroup::signalToPrepareForExecution( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                    real64 const GEOSX_UNUSED_PARAM( dt ),
                                                    integer const GEOSX_UNUSED_PARAM( cycle ),
                                                    dataRepository::Group *
                                                    GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void ExecutableGroup::Cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ExecutableGroup::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                integer const GEOSX_UNUSED_PARAM( eventCounter ),
                                real64 const GEOSX_UNUSED_PARAM( eventProgress ),

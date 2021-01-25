@@ -55,17 +55,17 @@ pvt::PHASE_TYPE getPVTPackagePhaseType( string const & name )
 
 } // namespace
 
-void MultiFluidPVTPackageWrapper::PostProcessInput()
+void MultiFluidPVTPackageWrapper::postProcessInput()
 {
-  MultiFluidBase::PostProcessInput();
+  MultiFluidBase::postProcessInput();
 
   m_phaseTypes.resize( numFluidPhases() );
   std::transform( m_phaseNames.begin(), m_phaseNames.end(), m_phaseTypes.begin(), getPVTPackagePhaseType );
 }
 
-void MultiFluidPVTPackageWrapper::InitializePostSubGroups( Group * const group )
+void MultiFluidPVTPackageWrapper::initializePostSubGroups( Group * const group )
 {
-  MultiFluidBase::InitializePostSubGroups( group );
+  MultiFluidBase::initializePostSubGroups( group );
   createFluid();
 }
 
@@ -81,7 +81,7 @@ MultiFluidPVTPackageWrapper::deliverClone( string const & name,
   return clone;
 }
 
-void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
+void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 temperature,
                                                  arraySlice1d< real64 const, 0 > const & composition,
                                                  arraySlice1d< real64, 0 > const & phaseFrac,
@@ -197,7 +197,7 @@ void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
   }
 }
 
-void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
+void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 temperature,
                                                  arraySlice1d< real64 const, 0 > const & composition,
                                                  arraySlice1d< real64 > const & phaseFraction,

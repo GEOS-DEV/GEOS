@@ -401,7 +401,7 @@ typename MeshHelper< LOC >::ManagerType const & getObjectManager( MeshLevel cons
 {
   using ObjectManager = typename MeshHelper< LOC >::ManagerType;
   GEOSX_ASSERT( mesh != nullptr );
-  ObjectManager const * manager = mesh->GetGroup< ObjectManager >( MeshHelper< LOC >::managerGroupName );
+  ObjectManager const * manager = mesh->getGroup< ObjectManager >( MeshHelper< LOC >::managerGroupName );
   GEOSX_ASSERT( manager != nullptr );
   return *manager;
 }
@@ -855,7 +855,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
 
   static Accessor get( Mesh * const mesh, string const & key )
   {
-    return mesh->getElemManager()->template ConstructViewAccessor< ArrayType, ViewType >( key );
+    return mesh->getElemManager()->template constructViewAccessor< ArrayType, ViewType >( key );
   }
 
   static inline INDEX value( Accessor & indexArray,

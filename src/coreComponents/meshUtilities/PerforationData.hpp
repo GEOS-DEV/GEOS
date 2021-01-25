@@ -95,12 +95,12 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "PerforationData"; }
+  static string catalogName() { return "PerforationData"; }
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override { return CatalogName(); }
+  virtual const string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -113,70 +113,70 @@ public:
    * @brief Set the global number of perforations used for well initialization.
    * @param[in] nPerfs global number of perforations (obtained from InternalWellGenerator)
    */
-  void SetNumPerforationsGlobal( globalIndex nPerfs ) { m_numPerforationsGlobal = nPerfs; }
+  void setNumPerforationsGlobal( globalIndex nPerfs ) { m_numPerforationsGlobal = nPerfs; }
 
 
   /**
    * @brief Get the global number of perforations (used for well initialization).
    * @return global number of perforations
    */
-  globalIndex GetNumPerforationsGlobal() const { return m_numPerforationsGlobal; }
+  globalIndex getNumPerforationsGlobal() const { return m_numPerforationsGlobal; }
 
 
   /**
    * @brief Get perforation-to-mesh-element connectivity.
    * @return list of element region/subregion/index connected to each perforation
    */
-  ToElementRelation< array1d< localIndex > > & GetMeshElements() { return m_toMeshElements; }
+  ToElementRelation< array1d< localIndex > > & getMeshElements() { return m_toMeshElements; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation-to-mesh-element connectivity.
    * @return list of element region/subregion/index connected to each perforation
    */
-  ToElementRelation< array1d< localIndex > > const & GetMeshElements() const { return m_toMeshElements; }
+  ToElementRelation< array1d< localIndex > > const & getMeshElements() const { return m_toMeshElements; }
 
 
   /**
    * @brief Get perforation-to-well-element connectivity.
    * @return list of well element index connected to each perforation
    */
-  arrayView1d< localIndex > GetWellElements() { return m_wellElementIndex; }
+  arrayView1d< localIndex > getWellElements() { return m_wellElementIndex; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation-to-well-element connectivity.
    * @return list of well element index connected to each perforation
    */
-  arrayView1d< localIndex const > GetWellElements() const { return m_wellElementIndex; }
+  arrayView1d< localIndex const > getWellElements() const { return m_wellElementIndex; }
 
 
   /**
    * @brief Get perforation locations.
    * @return list of perforation locations
    */
-  arrayView2d< real64 > GetLocation() { return m_location; }
+  arrayView2d< real64 > getLocation() { return m_location; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation location arrayView.
    * @return list of perforation locations
    */
-  arrayView2d< real64 const > GetLocation() const { return m_location; }
+  arrayView2d< real64 const > getLocation() const { return m_location; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation well indices array.
    * @return list of perforation well indices
    */
-  arrayView1d< real64 const > GetWellTransmissibility() const { return m_wellTransmissibility; }
+  arrayView1d< real64 const > getWellTransmissibility() const { return m_wellTransmissibility; }
 
 
   /**
    * @brief Get perforation well indices.
    * @return list of perforation well indices
    */
-  arrayView1d< real64 > GetWellTransmissibility() { return m_wellTransmissibility; }
+  arrayView1d< real64 > getWellTransmissibility() { return m_wellTransmissibility; }
 
   ///@}
 
@@ -191,7 +191,7 @@ public:
    * @param[in] wellElemSubRegion  subRegion corresponding to this well
    * @param[in] permeabilityKey key to access the permeability in the reservoir
    */
-  void ComputeWellTransmissibility( MeshLevel const & mesh,
+  void computeWellTransmissibility( MeshLevel const & mesh,
                                     WellElementSubRegion const * const wellElemSubRegion,
                                     string const & permeabilityKey );
 
@@ -208,7 +208,7 @@ public:
    * @param[in] globalToLocalWellElementMap  global-to-local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void ConnectToWellElements( InternalWellGenerator const & wellGeometry,
+  void connectToWellElements( InternalWellGenerator const & wellGeometry,
                               unordered_map< globalIndex, localIndex > const & globalToLocalWellElementMap,
                               globalIndex elemOffsetGlobal );
 
@@ -281,7 +281,7 @@ private:
    * @param[out] dy dimension of the element in the y-direction
    * @param[out] dz dimension of the element in the z-direction
    */
-  void GetReservoirElementDimensions( MeshLevel const & mesh,
+  void getReservoirElementDimensions( MeshLevel const & mesh,
                                       localIndex const er, localIndex const esr, localIndex const ei,
                                       real64 & dx, real64 & dy, real64 & dz ) const;
 

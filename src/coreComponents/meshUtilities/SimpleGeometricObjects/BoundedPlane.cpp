@@ -56,7 +56,7 @@ BoundedPlane::BoundedPlane( const std::string & name, Group * const parent ):
 BoundedPlane::~BoundedPlane()
 {}
 
-void BoundedPlane::PostProcessInput()
+void BoundedPlane::postProcessInput()
 {
   // Make sure that you have an orthonormal basis.
   LvArray::tensorOps::normalize< 3 >( m_normal );
@@ -109,7 +109,7 @@ void BoundedPlane::findRectangleLimits()
   }
 }
 
-bool BoundedPlane::IsCoordInObject( real64 const ( &coord ) [3] ) const
+bool BoundedPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
 {
   bool isInside = true;
 

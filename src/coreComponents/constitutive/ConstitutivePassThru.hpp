@@ -54,7 +54,7 @@ struct ConstitutivePassThru< SolidBase >
 
   template< typename LAMBDA >
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
+  void execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
@@ -90,7 +90,7 @@ struct ConstitutivePassThru< SolidBase >
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
+      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
                    constitutiveRelation<<" ) is named "<<name );
     }
@@ -106,7 +106,7 @@ struct ConstitutivePassThru< NullModel >
 {
   template< typename LAMBDA >
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
+  void execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
@@ -122,7 +122,7 @@ struct ConstitutivePassThru< NullModel >
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::Execute( "<<
+      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
                    constitutiveRelation<<" ) is named "<<name );
 
@@ -139,7 +139,7 @@ struct ConstitutivePassThru< PoroElasticBase >
 {
   template< typename LAMBDA >
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
+  void execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
@@ -163,7 +163,7 @@ struct ConstitutivePassThru< PoroElasticBase >
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
+      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
                    constitutiveRelation<<" ) is named "<<name );
     }
@@ -178,7 +178,7 @@ struct ConstitutivePassThru< DamageBase >
 {
   template< typename LAMBDA >
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
+  void execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
@@ -202,7 +202,7 @@ struct ConstitutivePassThru< DamageBase >
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<DamgeBase>::Execute( "<<
+      GEOSX_ERROR( "ConstitutivePassThru<DamgeBase>::execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
                    constitutiveRelation<<" ) is named "<<name );
     }

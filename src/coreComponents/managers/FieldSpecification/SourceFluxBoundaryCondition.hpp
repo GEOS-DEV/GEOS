@@ -54,17 +54,17 @@ public:
    * @param[in] rootGroup A group that is passed in to the initialization functions
    *                      in order to facilitate the initialization.
    */
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
   /**
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "SourceFlux"; }
+  static string catalogName() { return "SourceFlux"; }
 
   virtual const string getCatalogName() const override
   {
-    return SourceFluxBoundaryCondition::CatalogName();
+    return SourceFluxBoundaryCondition::catalogName();
   }
 
 };

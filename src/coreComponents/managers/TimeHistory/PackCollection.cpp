@@ -28,13 +28,13 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setDescription( "The minimum size of the set(s) to be collected (use for sets that expand during the simulation)." );
 }
 
-void PackCollection::InitializePostSubGroups( Group * const group )
+void PackCollection::initializePostSubGroups( Group * const group )
 {
   localIndex numSets = m_setNames.size( );
   m_collectionCount = numSets == 0 ? 1 : numSets;
   DomainPartition & domain = *( dynamicCast< ProblemManager & >( *group ).getDomainPartition( ) );
   updateSetsIndices( domain );
-  HistoryCollection::InitializePostSubGroups( group );
+  HistoryCollection::initializePostSubGroups( group );
 }
 
 HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex collectionIdx )
@@ -70,7 +70,7 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
   {
     // if sets are specified we retrieve the field only from those sets
 
-    Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+    Group const * set_group = target_object->getGroup( ObjectManagerBase::groupKeyStruct::setsString );
     m_setsIndices.resize( num_sets );
     localIndex set_idx = 0;
     for( auto & set_name : m_setNames )
@@ -129,12 +129,12 @@ ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & dom
   string processedPath;
   for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
   {
-    dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+    dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
     if( elemRegionSubGroup != nullptr )
     {
       targetGroup = elemRegionSubGroup;
     }
-    dataRepository::Group * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
+    dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
     if( elemSubRegionSubGroup != nullptr )
     {
       targetGroup = elemSubRegionSubGroup;
@@ -144,12 +144,12 @@ ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & dom
     {
       continue;
     }
-    targetGroup = targetGroup->GetGroup( targetTokens[pathLevel] );
+    targetGroup = targetGroup->getGroup( targetTokens[pathLevel] );
     processedPath += "/" + targetTokens[pathLevel];
     GEOSX_ERROR_IF( targetGroup == nullptr, "PackCollction::getTargetObject( ): Last entry in objectPath (" << processedPath << ") is not found" );
   }
 
-  return targetGroup->group_cast< ObjectManagerBase const * >();
+  return targetGroup->groupCast< ObjectManagerBase const * >();
 }
 
 void PackCollection::collect( DomainPartition & domain,
@@ -180,7 +180,7 @@ void PackCollection::collect( DomainPartition & domain,
     array1d< localIndex > setIndices( numIndices );
     filterGhostIndices( collectionIdx, setIndices, ghostRank );
     // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the indices
-    target->PackByIndex( buffer, setIndices, false, true );
+    target->packByIndex( buffer, setIndices, false, true );
   }
 
 }

@@ -71,13 +71,13 @@ integer FunctionBase::isFunctionOfTime() const
 }
 
 
-real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const group,
+real64_array FunctionBase::evaluateStats( dataRepository::Group const * const group,
                                           real64 const time,
                                           SortedArray< localIndex > const & set ) const
 {
   localIndex N = set.size();
   real64_array sub( N );
-  Evaluate( group, time, set.toViewConst(), sub );
+  evaluate( group, time, set.toViewConst(), sub );
 
   real64_array result( 3 );
   result[0] = 1e10;   // min

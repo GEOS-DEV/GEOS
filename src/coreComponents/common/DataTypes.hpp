@@ -777,7 +777,7 @@ private:
    * @return the return type of lambda
    */
   template< typename LAMBDA >
-  static auto ApplyArrayTypeLambda1( const TypeIDs type,
+  static auto applyArrayTypeLambda1( const TypeIDs type,
                                      LAMBDA lambda )
   {
     switch( type )
@@ -833,7 +833,7 @@ private:
    * @return the return type of lambda
    */
   template< typename LAMBDA >
-  static auto ApplyArrayTypeLambda2( const TypeIDs type,
+  static auto applyArrayTypeLambda2( const TypeIDs type,
                                      bool const errorIfTypeNotFound,
                                      LAMBDA && lambda )
   {

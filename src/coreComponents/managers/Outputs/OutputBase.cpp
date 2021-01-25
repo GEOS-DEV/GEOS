@@ -47,25 +47,25 @@ OutputBase::OutputBase( std::string const & name,
 OutputBase::~OutputBase()
 {}
 
-OutputBase::CatalogInterface::CatalogType & OutputBase::GetCatalog()
+OutputBase::CatalogInterface::CatalogType & OutputBase::getCatalog()
 {
   static OutputBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
 
-void OutputBase::InitializePreSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
+void OutputBase::initializePreSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();
 }
 
 
-void OutputBase::SetupDirectoryStructure()
+void OutputBase::setupDirectoryStructure()
 {
   string childDirectory = m_childDirectory;
 
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   if( rank == 0 )
   {
     if( !childDirectory.empty())

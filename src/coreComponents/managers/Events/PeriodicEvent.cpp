@@ -82,7 +82,7 @@ PeriodicEvent::PeriodicEvent( const std::string & name,
 PeriodicEvent::~PeriodicEvent()
 {}
 
-void PeriodicEvent::EstimateEventTiming( real64 const time,
+void PeriodicEvent::estimateEventTiming( real64 const time,
                                          real64 const dt,
                                          integer const cycle,
                                          Group * domain )
@@ -112,31 +112,31 @@ void PeriodicEvent::EstimateEventTiming( real64 const time,
 
   if( this->isReadyForExec() && ( !m_functionName.empty() ) )
   {
-    CheckOptionalFunctionThreshold( time, dt, cycle, domain );
+    checkOptionalFunctionThreshold( time, dt, cycle, domain );
   }
 }
 
-void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
+void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
                                                     real64 const GEOSX_UNUSED_PARAM( dt ),
                                                     integer const GEOSX_UNUSED_PARAM( cycle ),
                                                     Group * GEOSX_UNUSED_PARAM( domain ))
 {
   // Grab the function
-  FunctionManager & functionManager = FunctionManager::Instance();
-  FunctionBase * function = functionManager.GetGroup< FunctionBase >( m_functionName );
+  FunctionManager & functionManager = FunctionManager::instance();
+  FunctionBase * function = functionManager.getGroup< FunctionBase >( m_functionName );
 
   real64 result = 0.0;
   if( m_functionInputObject.empty())
   {
     // This is a time-only function
-    result = function->Evaluate( &time );
+    result = function->evaluate( &time );
   }
   else
   {
     // Link the target object
     if( m_functionTarget == nullptr )
     {
-      m_functionTarget = this->GetGroupByPath( m_functionInputObject );
+      m_functionTarget = this->getGroupByPath( m_functionInputObject );
     }
 
     // Get the set
@@ -150,7 +150,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
     }
     else
     {
-      dataRepository::Group const * sets = m_functionTarget->GetGroup( periodicEventViewKeys.functionSetNames );
+      dataRepository::Group const * sets = m_functionTarget->getGroup( periodicEventViewKeys.functionSetNames );
       SortedArrayView< localIndex const > const &
       functionSet = sets->getReference< SortedArray< localIndex > >( m_functionInputSetname );
 
@@ -161,7 +161,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
     }
 
     // Find the function (min, average, max)
-    real64_array stats = function->EvaluateStats( m_functionTarget, time, mySet );
+    real64_array stats = function->evaluateStats( m_functionTarget, time, mySet );
     result = stats[m_functionStatOption];
 
     // Because the function applied to an object may differ by rank, synchronize
@@ -185,7 +185,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
 }
 
 
-real64 PeriodicEvent::GetEventTypeDtRequest( real64 const time )
+real64 PeriodicEvent::getEventTypeDtRequest( real64 const time )
 {
   real64 requestedDt = std::numeric_limits< real64 >::max();
 
@@ -209,7 +209,7 @@ real64 PeriodicEvent::GetEventTypeDtRequest( real64 const time )
   return requestedDt;
 }
 
-void PeriodicEvent::Cleanup( real64 const time_n,
+void PeriodicEvent::cleanup( real64 const time_n,
                              integer const cycleNumber,
                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
                              real64 const GEOSX_UNUSED_PARAM( eventProgress ),
@@ -218,17 +218,17 @@ void PeriodicEvent::Cleanup( real64 const time_n,
   // Only call the cleanup method of the target/children if it is within its application time
   if( isActive( time_n ) )
   {
-    ExecutableGroup * target = GetEventTarget();
+    ExecutableGroup * target = getEventTarget();
     if( target != nullptr )
     {
       // Cleanup the target
-      target->Cleanup( time_n, cycleNumber, 0, 0, domain );
+      target->cleanup( time_n, cycleNumber, 0, 0, domain );
     }
 
     // Cleanup any sub-events
     this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
     {
-      subEvent.Cleanup( time_n, cycleNumber, 0, 0, domain );
+      subEvent.cleanup( time_n, cycleNumber, 0, 0, domain );
     } );
   }
 }

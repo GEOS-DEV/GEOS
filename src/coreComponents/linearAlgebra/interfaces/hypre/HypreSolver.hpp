@@ -75,14 +75,14 @@ private:
   LinearSolverParameters m_parameters;
   LinearSolverResult m_result;
 
-  void solve_direct( HypreMatrix & mat,
-                     HypreVector & sol,
-                     HypreVector & rhs );
+  void solveDirect( HypreMatrix & mat,
+                    HypreVector & sol,
+                    HypreVector & rhs );
 
-  void solve_krylov( HypreMatrix & mat,
-                     HypreVector & sol,
-                     HypreVector & rhs,
-                     DofManager const * const dofManager );
+  void solveKrylov( HypreMatrix & mat,
+                    HypreVector & sol,
+                    HypreVector & rhs,
+                    DofManager const * const dofManager );
 
 };
 

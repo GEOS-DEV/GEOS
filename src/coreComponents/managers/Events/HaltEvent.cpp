@@ -48,7 +48,7 @@ HaltEvent::~HaltEvent()
 {}
 
 
-void HaltEvent::EstimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
+void HaltEvent::estimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
                                      real64 const GEOSX_UNUSED_PARAM( dt ),
                                      integer const GEOSX_UNUSED_PARAM( cycle ),
                                      Group * GEOSX_UNUSED_PARAM( domain ))
@@ -75,7 +75,7 @@ void HaltEvent::EstimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
 
   if( this->isReadyForExec() )
   {
-    this->SetExitFlag( 1 );
+    this->setExitFlag( 1 );
   }
 }
 

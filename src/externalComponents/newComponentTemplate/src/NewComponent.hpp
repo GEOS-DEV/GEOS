@@ -40,7 +40,7 @@ public:
                 Group * const parent);
   virtual ~NewComponent() override;
 
-  static std::string CatalogName() { return "NewComponent"; }
+  static std::string catalogName() { return "NewComponent"; }
 
 
   virtual real64 SolverStep( real64 const& time_n,
