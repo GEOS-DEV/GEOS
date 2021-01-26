@@ -192,7 +192,7 @@ public:
   }
 
   /**
-   * @copydoc GetPerforationData()
+   * @copydoc getPerforationData()
    */
   PerforationData const * getPerforationData() const
   {
