@@ -70,7 +70,7 @@ public:
 
   /**
    * @brief Writes out a Blueprint plot file at the end of the simulation.
-   * @copydetails ExecutableGroup::Cleanup()
+   * @copydetails ExecutableGroup::cleanup()
    */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,

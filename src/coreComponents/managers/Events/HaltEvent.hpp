@@ -51,7 +51,7 @@ public:
   static string catalogName() { return "HaltEvent"; }
 
   /**
-   * @copydoc EventBase::EstimateEventTiming()
+   * @copydoc EventBase::estimateEventTiming()
    * @note This event is designed to look at the external clock. Currently,
    * if the event is triggered it will set a flag, which will
    * instruct the code to exit.  This is useful for managing walltime

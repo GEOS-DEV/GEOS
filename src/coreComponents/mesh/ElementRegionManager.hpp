@@ -939,7 +939,7 @@ public:
             string_array const & wrapperNames,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
-  /// @copydoc dataRepository::Group::Unpack
+  /// @copydoc dataRepository::Group::unpack
   using ObjectManagerBase::unpack;
 
   /**
