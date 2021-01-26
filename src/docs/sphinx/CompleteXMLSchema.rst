@@ -309,13 +309,6 @@ Element: LagrangianContact
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact.rst
 
 
-.. _XML_LagrangianContactWithFlow:
-
-Element: LagrangianContactWithFlow
-==================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContactWithFlow.rst
-
-
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -594,6 +587,13 @@ Element: SolidMechanics_LagrangianFEM
 Element: SoloEvent
 ==================
 .. include:: ../../coreComponents/fileIO/schema/docs/SoloEvent.rst
+
+
+.. _XML_SolverBase:
+
+Element: SolverBase
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolverBase.rst
 
 
 .. _XML_Solvers:
@@ -1034,13 +1034,6 @@ Datastructure: LagrangianContact
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact_other.rst
 
 
-.. _DATASTRUCTURE_LagrangianContactWithFlow:
-
-Datastructure: LagrangianContactWithFlow
-========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContactWithFlow_other.rst
-
-
 .. _DATASTRUCTURE_LaplaceFEM:
 
 Datastructure: LaplaceFEM
@@ -1333,6 +1326,13 @@ Datastructure: SolidMechanics_LagrangianFEM
 Datastructure: SoloEvent
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SoloEvent_other.rst
+
+
+.. _DATASTRUCTURE_SolverBase:
+
+Datastructure: SolverBase
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolverBase_other.rst
 
 
 .. _DATASTRUCTURE_Solvers:

@@ -133,7 +133,7 @@ public:
   template< typename _BASE=BASE >
   static
   typename std::enable_if< std::is_same< _BASE, SinglePhaseBase >::value, string >::type
-  CatalogName()
+  catalogName()
   {
     return "SinglePhaseFVM";
   }
@@ -141,7 +141,7 @@ public:
   template< typename _BASE=BASE >
   static
   typename std::enable_if< std::is_same< _BASE, SinglePhaseProppantBase >::value, string >::type
-  CatalogName()
+  catalogName()
   {
     return "SinglePhaseProppantFVM";
   }
@@ -154,11 +154,11 @@ public:
   /**@{*/
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
+  setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition & domain,
+  setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
                array1d< real64 > & localRhs,
@@ -166,7 +166,7 @@ public:
                bool const setSparsity = true ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -174,12 +174,12 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
@@ -194,7 +194,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const time_n,
+  assembleFluxTerms( real64 const time_n,
                      real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
@@ -207,7 +207,7 @@ public:
 
   /**@}*/
 
-  virtual void InitializePreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {} viewKeysSinglePhaseFVM;
@@ -238,7 +238,7 @@ private:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void ApplyFaceDirichletBC( real64 const time_n,
+  void applyFaceDirichletBC( real64 const time_n,
                              real64 const dt,
                              DofManager const & faceSet,
                              DomainPartition & domain,

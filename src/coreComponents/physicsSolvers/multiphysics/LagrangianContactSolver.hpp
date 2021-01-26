@@ -40,23 +40,23 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName()
+  static string catalogName()
   {
     return "LagrangianContact";
   }
 
   virtual void
-  InitializePreSubGroups( Group * const rootGroup ) override;
+  initializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void
-  RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
+  setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition & domain,
+  setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
                array1d< real64 > & localRhs,
@@ -64,17 +64,17 @@ public:
                bool const setSparsity = true ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
   virtual void
-  ImplicitStepComplete( real64 const & time_n,
+  implicitStepComplete( real64 const & time_n,
                         real64 const & dt,
                         DomainPartition & domain ) override final;
 
   virtual void
-  AssembleSystem( real64 const time,
+  assembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
@@ -82,7 +82,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time,
+  applyBoundaryConditions( real64 const time,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -90,50 +90,50 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  solveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  solverStep( real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
               DomainPartition & domain ) override;
 
   virtual void
-  SetNextDt( real64 const & currentDt,
+  setNextDt( real64 const & currentDt,
              real64 & nextDt ) override;
 
 
   virtual real64
-  ExplicitStep( real64 const & time_n,
+  explicitStep( real64 const & time_n,
                 real64 const & dt,
                 integer const cycleNumber,
                 DomainPartition & domain ) override;
 
   virtual real64
-  NonlinearImplicitStep( real64 const & time_n,
+  nonlinearImplicitStep( real64 const & time_n,
                          real64 const & dt,
                          integer const cycleNumber,
                          DomainPartition & domain ) override;
 
   virtual bool
-  LineSearch( real64 const & time_n,
+  lineSearch( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition & domain,
@@ -144,19 +144,19 @@ public:
               real64 const scaleFactor,
               real64 & lastResidual ) override;
 
-  void ComputeFaceDisplacementJump( DomainPartition & domain );
+  void computeFaceDisplacementJump( DomainPartition & domain );
 
-  void AssembleForceResidualDerivativeWrtTraction( DomainPartition & domain,
+  void assembleForceResidualDerivativeWrtTraction( DomainPartition & domain,
                                                    DofManager const & dofManager,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
-  void AssembleTractionResidualDerivativeWrtDisplacementAndTraction( DomainPartition const & domain,
+  void assembleTractionResidualDerivativeWrtDisplacementAndTraction( DomainPartition const & domain,
                                                                      DofManager const & dofManager,
                                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs );
 
-  void AssembleStabilization( DomainPartition const & domain,
+  void assembleStabilization( DomainPartition const & domain,
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
@@ -193,10 +193,10 @@ public:
   integer const & getActiveSetMaxIter() const { return m_activeSetMaxIter; }
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
   virtual void
-  InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+  initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 private:
 
@@ -232,7 +232,7 @@ private:
     static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed
   };
 
-  string FractureStateToString( integer const & state ) const
+  string fractureStateToString( integer const & state ) const
   {
     string stringState;
     switch( state )
@@ -261,35 +261,35 @@ private:
     return stringState;
   }
 
-  void CreatePreconditioner( DomainPartition const & domain );
+  void createPreconditioner( DomainPartition const & domain );
 
 public:
 
-  void InitializeFractureState( MeshLevel & mesh,
+  void initializeFractureState( MeshLevel & mesh,
                                 string const & fieldName ) const;
 
-  void SetFractureStateForElasticStep( DomainPartition & domain ) const;
+  void setFractureStateForElasticStep( DomainPartition & domain ) const;
 
-  bool UpdateFractureState( DomainPartition & domain ) const;
+  bool updateFractureState( DomainPartition & domain ) const;
 
-  void SynchronizeFractureState( DomainPartition & domain ) const;
+  void synchronizeFractureState( DomainPartition & domain ) const;
 
-  bool IsFractureAllInStickCondition( DomainPartition const & domain ) const;
+  bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
 
-  void ComputeFractureStateStatistics( DomainPartition const & domain,
+  void computeFractureStateStatistics( DomainPartition const & domain,
                                        globalIndex & numStick,
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
 
-  bool IsElementInOpenState( FaceElementSubRegion const & subRegion,
+  bool isElementInOpenState( FaceElementSubRegion const & subRegion,
                              localIndex const kfe ) const;
 
-  void ComputeRotationMatrices( DomainPartition & domain ) const;
+  void computeRotationMatrices( DomainPartition & domain ) const;
 
-  void ComputeTolerances( DomainPartition & domain ) const;
+  void computeTolerances( DomainPartition & domain ) const;
 
-  void ComputeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+  void computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                              localIndex const kf0,
                              array1d< real64 > & nodalArea ) const;
@@ -298,7 +298,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static bool CompareFractureStates( integer const state0,
+  static bool compareFractureStates( integer const state0,
                                      integer const state1 )
   {
     return state0 == state1

@@ -26,7 +26,7 @@ namespace SinglePhaseFVMKernels
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::Compute( localIndex const stencilSize,
+FluxKernel::compute( localIndex const stencilSize,
                      arraySlice1d< localIndex const > const & seri,
                      arraySlice1d< localIndex const > const & sesri,
                      arraySlice1d< localIndex const > const & sei,
@@ -122,7 +122,7 @@ FluxKernel::Compute( localIndex const stencilSize,
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::Compute( localIndex const stencilSize,
+FluxKernel::compute( localIndex const stencilSize,
                      arraySlice1d< localIndex const > const &,
                      arraySlice1d< localIndex const > const &,
                      arraySlice1d< localIndex const > const & sei,
@@ -216,7 +216,7 @@ FluxKernel::Compute( localIndex const stencilSize,
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::ComputeJunction( localIndex const numFluxElems,
+FluxKernel::computeJunction( localIndex const numFluxElems,
                              arraySlice1d< localIndex const > const & stencilElementIndices,
                              arraySlice1d< real64 const > const & stencilWeights,
                              arrayView1d< real64 const > const & pres,
@@ -374,7 +374,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
 
 template<>
 void FluxKernel::
-  Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
+  launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
                                     real64 const dt,
                                     globalIndex const rankOffset,
                                     ElementViewConst< arrayView1d< globalIndex > > const & dofNumber,
@@ -417,7 +417,7 @@ void FluxKernel::
     stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
     stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
 
-    Compute( stencilSize,
+    compute( stencilSize,
              seri[iconn],
              sesri[iconn],
              sei[iconn],
@@ -460,7 +460,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  Launch< FaceElementStencil >( FaceElementStencil const & stencil,
+  launch< FaceElementStencil >( FaceElementStencil const & stencil,
                                 real64 const dt,
                                 globalIndex const rankOffset,
                                 ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -541,7 +541,7 @@ void FluxKernel::
 
       }
 
-      ComputeJunction( numFluxElems,
+      computeJunction( numFluxElems,
                        sei[iconn],
                        effectiveWeights,
                        pres[er][esr],

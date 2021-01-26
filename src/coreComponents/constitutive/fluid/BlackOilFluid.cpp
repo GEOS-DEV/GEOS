@@ -66,12 +66,12 @@ BlackOilFluid::deliverClone( string const & name,
   return clone;
 }
 
-void BlackOilFluid::PostProcessInput()
+void BlackOilFluid::postProcessInput()
 {
   // TODO maybe use different names?
   m_componentNames = m_phaseNames;
 
-  MultiFluidPVTPackageWrapper::PostProcessInput();
+  MultiFluidPVTPackageWrapper::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 

@@ -40,25 +40,25 @@ public:
 
 
   static constexpr auto m_catalogName = "SpanWagnerCO2Density";
-  static string CatalogName()                    { return m_catalogName; }
-  virtual string getCatalogName() const override final { return CatalogName(); }
+  static string catalogName()                    { return m_catalogName; }
+  virtual string getCatalogName() const override final { return catalogName(); }
 
 
-  virtual PVTFuncType FunctionType() const override
+  virtual PVTFuncType functionType() const override
   {
     return PVTFuncType::DENSITY;
   }
 
-  virtual void Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
+  virtual void evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value, bool useMass = 0 ) const override;
 
-  static void CalculateCO2Density( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density );
+  static void calculateCO2Density( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density );
 
 private:
 
-  void MakeTable( string_array const & inputPara );
+  void makeTable( string_array const & inputPara );
 
-  static void SpanWagnerCO2Density( real64 const & T, real64 const & P, real64 & rho, real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ));
+  static void spanWagnerCO2Density( real64 const & T, real64 const & P, real64 & rho, real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ));
 
 
   TableFunctionPtr m_CO2DensityTable;

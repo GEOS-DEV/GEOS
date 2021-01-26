@@ -68,7 +68,7 @@ containers stored within a ``Group``.
 
 Adding New Groups
 ^^^^^^^^^^^^^^^^^
-To add new sub-``Group`` s there are several ``RegisterGroup`` functions that add a new ``Group`` under 
+To add new sub-``Group`` s there are several ``registerGroup`` functions that add a new ``Group`` under
 the calling ``Group`` scope.
 A listing of these functions is provided:
 

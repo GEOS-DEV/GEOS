@@ -73,7 +73,7 @@ void addUmpireHighWaterMarks()
 
   // If each rank doesn't have the same number of allocators you can't aggregate them.
   std::size_t const numAllocators = allocatorNames.size();
-  std::size_t const minNumAllocators = MpiWrapper::Min( numAllocators );
+  std::size_t const minNumAllocators = MpiWrapper::min( numAllocators );
 
   if( numAllocators != minNumAllocators )
   {
@@ -109,7 +109,7 @@ void addUmpireHighWaterMarks()
     // Get the total number of bytes allocated with this allocator across ranks.
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
-    std::size_t const totalMark = MpiWrapper::Sum( mark );
+    std::size_t const totalMark = MpiWrapper::sum( mark );
     GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " <<
                       std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
 
@@ -149,7 +149,7 @@ void setupCaliper()
   // MPI info
 #if defined( GEOSX_USE_MPI )
   adiak::value( "MPI", "On" );
-  adiak::value( "mpi ranks", MpiWrapper::Comm_size() );
+  adiak::value( "mpi ranks", MpiWrapper::commSize() );
 #else
   adiak::value( "MPI", "Off" );
   adiak::value( "mpi ranks", 1 );
@@ -221,7 +221,7 @@ struct Arg : public option::Arg
    * @param option the option to parse.
    * @return option::ARG_ILLEGAL.
    */
-  static option::ArgStatus Unknown( option::Option const & option, bool )
+  static option::ArgStatus unknown( option::Option const & option, bool )
   {
     GEOSX_LOG_RANK( "Unknown option: " << option.name );
     return option::ARG_ILLEGAL;
@@ -232,7 +232,7 @@ struct Arg : public option::Arg
    * @param option the option to parse.
    * @return option::ARK_OK if the parse was successful, option::ARG_ILLEGAL otherwise.
    */
-  static option::ArgStatus NonEmpty( const option::Option & option, bool )
+  static option::ArgStatus nonEmpty( const option::Option & option, bool )
   {
     if((option.arg != nullptr) && (option.arg[0] != 0))
     {
@@ -248,7 +248,7 @@ struct Arg : public option::Arg
    * @param option the option to parse.
    * @return option::ARK_OK if the parse was successful, option::ARG_ILLEGAL otherwise.
    */
-  static option::ArgStatus Numeric( const option::Option & option, bool )
+  static option::ArgStatus numeric( const option::Option & option, bool )
   {
     char * endptr = nullptr;
     if((option.arg != nullptr) && strtol( option.arg, &endptr, 10 )) {}
@@ -290,19 +290,19 @@ void parseCommandLineOptions( int argc, char * * argv )
 
   const option::Descriptor usage[] =
   {
-    { UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
+    { UNKNOWN, 0, "", "", Arg::unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
     { HELP, 0, "?", "help", Arg::None, "\t-?, --help" },
-    { INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)" },
-    { RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename" },
-    { XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction" },
-    { YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction" },
-    { ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction" },
-    { SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema" },
+    { INPUT, 0, "i", "input", Arg::nonEmpty, "\t-i, --input, \t Input xml filename (required)" },
+    { RESTART, 0, "r", "restart", Arg::nonEmpty, "\t-r, --restart, \t Target restart filename" },
+    { XPAR, 0, "x", "xpartitions", Arg::numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction" },
+    { YPAR, 0, "y", "ypartitions", Arg::numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction" },
+    { ZPAR, 0, "z", "zpartitions", Arg::numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction" },
+    { SCHEMA, 0, "s", "schema", Arg::nonEmpty, "\t-s, --schema, \t Name of the output schema" },
     { NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication" },
-    { PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
+    { PROBLEMNAME, 0, "n", "name", Arg::nonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
     { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned \t Suppress usage of pinned memory for MPI communication buffers" },
-    { OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files" },
-    { TIMERS, 0, "t", "timers", Arg::NonEmpty, "\t-t, --timers, \t String specifying the type of timer output." },
+    { OUTPUTDIR, 0, "o", "output", Arg::nonEmpty, "\t-o, --output, \t Directory to put the output files" },
+    { TIMERS, 0, "t", "timers", Arg::nonEmpty, "\t-t, --timers, \t String specifying the type of timer output." },
     { SUPPRESS_MOVE_LOGGING, 0, "", "suppress-move-logging", Arg::None, "\t--suppress-move-logging \t Suppress logging of host-device data migration" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
@@ -331,7 +331,7 @@ void parseCommandLineOptions( int argc, char * * argv )
       GEOSX_LOG_RANK_0( "An input xml must be specified!" );
     }
 
-    MpiWrapper::Finalize();
+    MpiWrapper::finalize();
     exit( !options[HELP] );
   }
 
@@ -532,15 +532,15 @@ void setupOpenMP()
 ///////////////////////////////////////////////////////////////////////////////
 void setupMPI( int argc, char * argv[] )
 {
-  MpiWrapper::Init( &argc, &argv );
-  MPI_COMM_GEOSX = MpiWrapper::Comm_dup( MPI_COMM_WORLD );
+  MpiWrapper::init( &argc, &argv );
+  MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void finalizeMPI()
 {
-  MpiWrapper::Comm_free( MPI_COMM_GEOSX );
-  MpiWrapper::Finalize();
+  MpiWrapper::commFree( MPI_COMM_GEOSX );
+  MpiWrapper::finalize();
 }
 
 } // namespace geosx

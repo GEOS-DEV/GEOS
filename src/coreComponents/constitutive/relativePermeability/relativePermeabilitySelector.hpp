@@ -44,7 +44,7 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
 {
   ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
                                BrooksCoreyBakerRelativePermeability,
-                               VanGenuchtenBakerRelativePermeability >::Execute( relPerm, std::forward< LAMBDA >( lambda ) );
+                               VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -53,7 +53,7 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
 {
   ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
                                BrooksCoreyBakerRelativePermeability,
-                               VanGenuchtenBakerRelativePermeability >::Execute( relPerm, std::forward< LAMBDA >( lambda ) );
+                               VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
 #undef PASSTHROUGH_HANDLE_CASE

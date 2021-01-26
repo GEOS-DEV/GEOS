@@ -180,30 +180,30 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
     GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
   dataRepository::Group * commandLine =
-    problemManager.GetGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
-  commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.Key() )->
+    problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
+  commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() )->
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-  problemManager.InitializePythonInterpreter();
-  problemManager.ProcessInputFileRecursive( xmlProblemNode );
+  problemManager.initializePythonInterpreter();
+  problemManager.processInputFileRecursive( xmlProblemNode );
 
   DomainPartition & domain  = *problemManager.getDomainPartition();
 
   constitutive::ConstitutiveManager & constitutiveManager = *domain.getConstitutiveManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-  constitutiveManager.ProcessInputFileRecursive( topLevelNode );
+  constitutiveManager.processInputFileRecursive( topLevelNode );
 
-  MeshManager & meshManager = *problemManager.GetGroup< MeshManager >( problemManager.groupKeys.meshManager );
-  meshManager.GenerateMeshLevels( &domain );
+  MeshManager & meshManager = *problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.generateMeshLevels( &domain );
 
   ElementRegionManager & elementManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
-  elementManager.ProcessInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( topLevelNode );
 
-  problemManager.ProblemSetup();
+  problemManager.problemSetup();
 }
 
 } // namespace testing
