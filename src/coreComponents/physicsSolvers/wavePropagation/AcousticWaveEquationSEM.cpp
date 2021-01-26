@@ -172,7 +172,7 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 	
 			///Compute invJ = DF^{-1}
 			real64 invJ[3][3];
-			finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2::invJacobianTransformation(q,xLocal,invJ);
+			FE_TYPE::invJacobianTransformation(q,xLocal,invJ);
 			
 			for(localIndex a=0; a < numNodesPerFace; ++a)
 			  {
