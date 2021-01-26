@@ -57,10 +57,6 @@ void checkDirectionalDerivative( real64 const (&input)[4],
   perturbedInput[direction] += dInput;
   kernelWrapper.Compute( perturbedInput, perturbedVal, perturbedDerivatives );
 
-  // std::cout << "perturbVal - val = " << perturbedVal - val << std::endl
-  //      << "(perturbedVal-val)/dInput = " << (perturbedVal-val)/dInput << std::endl
-  //      << "derivatives[" << direction << "] = " << derivatives[direction] << std::endl;
-
   geosx::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geosx::testing::DEFAULT_ABS_TOL );
 }
 

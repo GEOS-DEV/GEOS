@@ -131,6 +131,12 @@ public:
   array1d< real64 > & getValues()       { return m_values; }
 
   /**
+   * @brief Get the interpolation method
+   * @return The interpolation method
+   */
+  InterpolationType getInterpolationMethod() const { return m_interpolationMethod; }
+
+  /**
    * @brief Set the interpolation method
    * @param method The interpolation method
    */

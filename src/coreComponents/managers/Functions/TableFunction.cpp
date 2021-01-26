@@ -227,17 +227,11 @@ TableFunctionKernelWrapper TableFunction::createKernelWrapper() const
 
 real64 TableFunction::Evaluate( real64 const * const input ) const
 {
-  // 1) copy the pointer input into an array
   real64 scalarValue = 0;
-  stackArray1d< real64, maxDimensions > inputArray( m_dimensions );
   stackArray1d< real64, maxDimensions > derivativesArray( m_dimensions );
-  for( localIndex ii=0; ii<m_dimensions; ++ii )
-  {
-    inputArray[ii] = input[ii];
-  }
 
-  // 2) interpolate in table, return scalar value (derivates are discarded)
-  m_kernelWrapper->Compute( inputArray, scalarValue, derivativesArray );
+  // interpolate in table, return scalar value (derivatives are discarded)
+  m_kernelWrapper->Compute( input, scalarValue, derivativesArray );
   return scalarValue;
 }
 

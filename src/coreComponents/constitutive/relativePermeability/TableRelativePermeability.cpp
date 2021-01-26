@@ -39,11 +39,13 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
   registerWrapper( viewKeyStruct::gasOilRelPermTableNamesString, &m_gasOilRelPermTableNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of relative permeability tables for the pair (gas phase, oil phase)" );
+
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
+    setSizedFromParent( 0 );
 }
 
 TableRelativePermeability::~TableRelativePermeability()
 {}
-
 
 void TableRelativePermeability::PostProcessInput()
 {
@@ -60,7 +62,13 @@ void TableRelativePermeability::PostProcessInput()
 
 }
 
-void TableRelativePermeability::InitializePreSubGroups( Group * const )
+void TableRelativePermeability::InitializePreSubGroups( Group * const group )
+{
+  RelativePermeabilityBase::InitializePreSubGroups( group );
+  CreateAllTableKernelWrappers();
+}
+
+void TableRelativePermeability::CreateAllTableKernelWrappers()
 {
   FunctionManager const & functionManager = FunctionManager::Instance();
 
@@ -107,6 +115,9 @@ real64 TableRelativePermeability::ValidateRelativePermeabilityTable( TableFuncti
   array1d< real64 > const & relPerm = relPermTable.getValues();
   real64 minVolFraction = phaseVolFrac[0];
 
+  GEOSX_ERROR_IF( relPermTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+                  "The interpolation method for the relative permeability tables must be linear" );
+
   GEOSX_ERROR_IF( coords.size() != 1,
                   "The relative permeability table must contain one vector of phase volume fraction, and one vector of relative permeabilities" );
   GEOSX_ERROR_IF( coords.sizeOfArray( 0 ) < 2,
@@ -147,8 +158,17 @@ real64 TableRelativePermeability::ValidateRelativePermeabilityTable( TableFuncti
   return minVolFraction;
 }
 
-void TableRelativePermeability::SetMinPhaseVolumeFraction()
-{}
+std::unique_ptr< ConstitutiveBase >
+TableRelativePermeability::deliverClone( string const & name, Group * const parent ) const
+{
+  std::unique_ptr< ConstitutiveBase >
+  clone = RelativePermeabilityBase::deliverClone( name, parent );
+  TableRelativePermeability & tableRelPerm = dynamicCast< TableRelativePermeability & >( *clone );
+
+  // TODO: see if it is simpler to just add a copy constructor for the wrappers, and let GEOSX copy everything automatically.
+  tableRelPerm.CreateAllTableKernelWrappers();
+  return clone;
+}
 
 TableRelativePermeability::KernelWrapper TableRelativePermeability::createKernelWrapper()
 {
