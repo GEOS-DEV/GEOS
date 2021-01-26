@@ -84,14 +84,21 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
   DomainPartition * domain = problemManager->GetGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NodeManager & nodes = *mesh.getNodeManager();
+  NodeManager & nodeManager = *mesh.getNodeManager();
+  FaceManager & faceManager = *mesh.getFaceManager();
 
   /// get the array of indicators: 1 if the node is on the boundary; 0 otherwise
-  arrayView1d< integer const > const nodesDomainBoundaryIndicator = nodes.getDomainBoundaryIndicator();
-
-  arrayView1d< real64 > const mass = nodes.getExtrinsicData< extrinsicMeshData::MassVector >();
+  arrayView1d< integer const > const nodesDomainBoundaryIndicator = nodeManager.getDomainBoundaryIndicator();
+  arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+  
+  /// Get table containing all the face normals
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+  
+  arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
   /// damping matrix to be computed for each dof in the boundary of the mesh
-  arrayView1d< real64 > const damping = nodes.getExtrinsicData< extrinsicMeshData::DampingVector >();
+  arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -104,8 +111,12 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
       arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
+      /// get the map element to faces
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+      
       arrayView1d< real64 const > const c = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
 
+      
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::dispatch3D( fe,
@@ -116,12 +127,14 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
+	constexpr localIndex numFacesPerElem = 6; // FE_TYPE::numNodes;
+	constexpr localIndex numNodesPerFace = 4; // FE_TYPE::numNodes;
+	
         real64 N[numNodesPerElem];
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
           real64 const invC2 = 1.0 / ( c[k] * c[k] );
-	  real64 const alpha = 1.0/c[k];
+	  //real64 const alpha = 1.0/c[k];
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
@@ -129,17 +142,61 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
-	      ///update mass matrix
+	      /// update mass matrix
               mass[elemsToNodes[k][a]] +=  invC2 * detJ[k][q] * N[a];
-
-	      /// update damping matrix
-	      if(nodesDomainBoundaryIndicator[elemsToNodes[k][a]] == 1)
-		{
-		  damping[elemsToNodes[k][a]] += alpha*detJ[k][q] * N[a];
-		}
             }
           }
         }
+	
+	/// update damping matrix
+	for( localIndex k=0; k < elemsToFaces.size( 0 ); ++k )
+	  {
+	    real64 const alpha = 1.0/c[k];	    
+	    
+	    for( localIndex kfe=0; kfe< numFacesPerElem; ++kfe )
+	      {
+		/// Face on the domain boundary
+		if(facesDomainBoundaryIndicator[elemsToFaces[k][kfe]]==1)
+		  {
+		    real64 xLocal[numNodesPerElem][3];
+		    for( localIndex a=0; a< numNodesPerElem; ++a )
+		      {
+			for( localIndex i=0 ; i<3; ++i )
+			  {
+			    xLocal[a][i] = X( elemsToNodes(k,a), i);
+			  }
+		      }
+		    for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+		      {
+			FE_TYPE::calcN( q, N );
+	
+			///Compute invJ = DF^{-1}
+			real64 invJ[3][3];
+			finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2::invJacobianTransformation(q,xLocal,invJ);
+			
+			for(localIndex a=0; a < numNodesPerFace; ++a)
+			  {
+			    //if(nodesDomainBoundaryIndicator[elemsToNodes[k][a]] == 1)
+			    // {
+			    /// compute ds=||detJ*invJ*normalFace_{kfe}||
+			    real64 tmp[3]={0};
+			    real64 ds = 0.0;
+			    for(localIndex i=0; i<3; ++i)
+			      {
+				for(localIndex j = 0; j < 3; ++j)
+				  {
+				    tmp[i] += invJ[j][i]*faceNormal[elemsToFaces[k][kfe]][j];
+				  }
+				ds +=tmp[i]*tmp[i];
+			      }
+			    ds = std::sqrt(ds);
+			    damping[elemsToNodes[k][facesToNodes[kfe][a]]] += alpha*detJ[k][q]*ds*N[a];
+			  }
+		      }
+		  }
+	      }
+	  }
+	
       } );
     } );
   } );
@@ -188,7 +245,6 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
   arrayView1d< real64 > const p_n = nodes.getExtrinsicData< extrinsicMeshData::Pressure_n >();
   arrayView1d< real64 > const p_np1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
   
-  /// Raja do not compile here
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodes.referencePosition().toViewConst(); //nodes.referencePosition();
 
   /// Vector to contain the product of the stiffness matrix R_h and the pressure p_n
@@ -216,7 +272,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
+	
         real64 N[numNodesPerElem];
         real64 gradN[ numNodesPerElem ][ 3 ];
 
