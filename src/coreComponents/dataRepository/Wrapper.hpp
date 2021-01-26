@@ -293,7 +293,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::Pack
+  /// @copydoc geosx::WrapperBase::pack
   virtual
   localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
   {
@@ -318,7 +318,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackByIndex
+  /// @copydoc geosx::WrapperBase::packByIndex
   virtual
   localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
   {
@@ -346,7 +346,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackSize
+  /// @copydoc geosx::WrapperBase::packSize
   virtual
   localIndex packSize( bool withMetadata, bool onDevice ) const override final
   {
@@ -372,7 +372,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackByIndexSize
+  /// @copydoc geosx::WrapperBase::packByIndexSize
   virtual
   localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
   {
@@ -401,7 +401,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::Unpack
+  /// @copydoc geosx::WrapperBase::unpack
   virtual
   localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
   {
@@ -431,7 +431,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::UnpackByIndex
+  /// @copydoc geosx::WrapperBase::unpackByIndex
   virtual
   localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) override final
   {
