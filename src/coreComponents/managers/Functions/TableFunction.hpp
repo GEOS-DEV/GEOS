@@ -63,7 +63,7 @@ public:
    * @brief The catalog name interface
    * @return name of the TableFunction in the FunctionBase catalog
    */
-  static string CatalogName() { return "TableFunction"; }
+  static string catalogName() { return "TableFunction"; }
 
   /**
    * @brief Parse a table file.
@@ -79,7 +79,7 @@ public:
   /**
    * @brief Initialize the table function
    */
-  virtual void InitializeFunction() override;
+  virtual void initializeFunction() override;
 
   /**
    * @brief Build the maps used to evaluate the table function
@@ -93,12 +93,12 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::Group const * const group,
+  virtual void evaluate( dataRepository::Group const * const group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const override final
   {
-    FunctionBase::EvaluateT< TableFunction >( group, time, set, result );
+    FunctionBase::evaluateT< TableFunction >( group, time, set, result );
   }
 
   /**
@@ -106,7 +106,7 @@ public:
    * @param input a scalar input
    * @return the function result
    */
-  virtual real64 Evaluate( real64 const * const input ) const override final;
+  virtual real64 evaluate( real64 const * const input ) const override final;
 
   /**
    * @brief Get the table axes definitions
@@ -266,7 +266,7 @@ public:
   template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOSX_HOST_DEVICE
   void
-  Compute( IN_ARRAY const & input, real64 & value, OUT_ARRAY && derivatives ) const;
+  compute( IN_ARRAY const & input, real64 & value, OUT_ARRAY && derivatives ) const;
 
 private:
 
@@ -303,7 +303,7 @@ private:
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
 void
-TableFunctionKernelWrapper::Compute( IN_ARRAY const & input, real64 & value, OUT_ARRAY && derivatives ) const
+TableFunctionKernelWrapper::compute( IN_ARRAY const & input, real64 & value, OUT_ARRAY && derivatives ) const
 {
   value = 0.0;
   for( localIndex i = 0; i < m_dimensions; ++i )

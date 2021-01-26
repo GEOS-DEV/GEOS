@@ -62,7 +62,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "SinglePhaseReservoir"; }
+  static string catalogName() { return "SinglePhaseReservoir"; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -73,11 +73,11 @@ public:
 
   /**@}*/
 
-  virtual void AddCouplingSparsityPattern( DomainPartition const & domain,
+  virtual void addCouplingSparsityPattern( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern ) const override;
 
-  virtual void AssembleCouplingTerms( real64 const time_n,
+  virtual void assembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,

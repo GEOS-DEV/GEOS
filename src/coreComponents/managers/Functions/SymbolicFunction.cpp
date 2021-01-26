@@ -54,7 +54,7 @@ SymbolicFunction::SymbolicFunction( const std::string & name,
 SymbolicFunction::~SymbolicFunction()
 {}
 
-void SymbolicFunction::InitializeFunction()
+void SymbolicFunction::initializeFunction()
 {
   // Register variables
   for( localIndex ii=0; ii<m_variableNames.size(); ++ii )

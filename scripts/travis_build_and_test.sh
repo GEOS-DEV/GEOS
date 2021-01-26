@@ -47,8 +47,13 @@ if [[ "$*" == *--test-documentation* ]]; then
   exit 0
 fi
 
-or_die make -j $(nproc) VERBOSE=1
-or_die make install VERBOSE=1
+# "Make" target check (builds geosx executable target only if true)
+if [[ "$*" == *--build-exe-only* ]]; then
+  or_die make -j $(nproc) geosx VERBOSE=1
+else
+  or_die make -j $(nproc) VERBOSE=1
+  or_die make install VERBOSE=1
+fi
 
 # Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then

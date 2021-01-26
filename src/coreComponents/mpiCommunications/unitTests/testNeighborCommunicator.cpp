@@ -74,7 +74,7 @@ TEST( TestNeighborComms, testBuffers )
     auto nc = NeighborCommunicator();
     nc.resizeSendBuffer( 0, sz );
 
-    auto & sb = nc.SendBuffer( 0 );
+    auto & sb = nc.sendBuffer( 0 );
     for( size_t ii = 0; ii < sz; ++ii )
       sb[ii] = sd[ii];
 

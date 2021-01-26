@@ -37,7 +37,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
 
   // create a clone of the rel perm to run updates on
   std::unique_ptr< ConstitutiveBase > relPermCopyPtr = relPerm.deliverClone( "fluidCopy", nullptr );
-  RelativePermeabilityBase & relPermCopy = *relPermCopyPtr->group_cast< RelativePermeabilityBase * >();
+  RelativePermeabilityBase & relPermCopy = *relPermCopyPtr->groupCast< RelativePermeabilityBase * >();
 
   relPerm.allocateConstitutiveData( relPerm.getParent(), 1 );
   relPermCopy.allocateConstitutiveData( relPerm.getParent(), 1 );
@@ -50,7 +50,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
   {
     typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
-    relPermWrapper.Update( 0, 0, saturation );
+    relPermWrapper.update( 0, 0, saturation );
   } );
 
   // update saturation and check derivatives
@@ -69,7 +69,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
     constitutive::constitutiveUpdatePassThru( relPermCopy, [&] ( auto & castedRelPerm )
     {
       typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
-      relPermWrapper.Update( 0, 0, satNew );
+      relPermWrapper.update( 0, 0, satNew );
     } );
 
     string const var = "phaseVolFrac[" + phases[jp] + "]";
@@ -86,7 +86,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
 
 RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< BrooksCoreyRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< BrooksCoreyRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -104,13 +104,13 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * 
   phaseRelPermMaxVal.resize( 2 );
   phaseRelPermMaxVal[0] = 0.8; phaseRelPermMaxVal[1] = 0.9;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
 RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< BrooksCoreyBakerRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< BrooksCoreyBakerRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -129,13 +129,13 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & n
   waterOilRelPermMaxVal.resize( 2 );
   waterOilRelPermMaxVal[0] = 0.8; waterOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
 RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< BrooksCoreyBakerRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< BrooksCoreyBakerRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -162,13 +162,13 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const &
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.95;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
 RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< VanGenuchtenBakerRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< VanGenuchtenBakerRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -187,13 +187,13 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & 
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.5; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
 RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< VanGenuchtenBakerRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< VanGenuchtenBakerRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -222,13 +222,13 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const 
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
 RelativePermeabilityBase * makeTableRelPermTwoPhase( string const & name, Group * parent )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // 1) First, define the tables
 
@@ -252,14 +252,14 @@ RelativePermeabilityBase * makeTableRelPermTwoPhase( string const & name, Group 
     values[i] = coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction * table_w = functionManager->CreateChild( "TableFunction", "water_swof" )->group_cast< TableFunction * >();
+  TableFunction * table_w = functionManager->createChild( "TableFunction", "water_swof" )->groupCast< TableFunction * >();
   table_w->setTableCoordinates( coordinates );
   table_w->setTableValues( values );
   table_w->reInitializeFunction();
 
   table_w->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction * table_o = functionManager->CreateChild( "TableFunction", "oil_swof" )->group_cast< TableFunction * >();
+  TableFunction * table_o = functionManager->createChild( "TableFunction", "oil_swof" )->groupCast< TableFunction * >();
   table_o->setTableCoordinates( coordinates );
   table_o->setTableValues( values );
   table_o->reInitializeFunction();
@@ -268,7 +268,7 @@ RelativePermeabilityBase * makeTableRelPermTwoPhase( string const & name, Group 
 
   // 2) Then set up the constitutive model
 
-  auto relPerm = parent->RegisterGroup< TableRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< TableRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -278,13 +278,13 @@ RelativePermeabilityBase * makeTableRelPermTwoPhase( string const & name, Group 
   waterOilTableNames.resize( 2 );
   waterOilTableNames[0] = "water_swof"; waterOilTableNames[1] = "oil_swof";
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
 RelativePermeabilityBase * makeTableRelPermThreePhase( string const & name, Group * parent )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // 1) First, define the tables
 
@@ -310,14 +310,14 @@ RelativePermeabilityBase * makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction * table_ow_w = functionManager->CreateChild( "TableFunction", "water_swof" )->group_cast< TableFunction * >();
+  TableFunction * table_ow_w = functionManager->createChild( "TableFunction", "water_swof" )->groupCast< TableFunction * >();
   table_ow_w->setTableCoordinates( coordinates );
   table_ow_w->setTableValues( values );
   table_ow_w->reInitializeFunction();
 
   table_ow_w->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction * table_ow_o = functionManager->CreateChild( "TableFunction", "oil_swof" )->group_cast< TableFunction * >();
+  TableFunction * table_ow_o = functionManager->createChild( "TableFunction", "oil_swof" )->groupCast< TableFunction * >();
   table_ow_o->setTableCoordinates( coordinates );
   table_ow_o->setTableValues( values );
   table_ow_o->reInitializeFunction();
@@ -339,14 +339,14 @@ RelativePermeabilityBase * makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction * table_og_g = functionManager->CreateChild( "TableFunction", "gas_sgof" )->group_cast< TableFunction * >();
+  TableFunction * table_og_g = functionManager->createChild( "TableFunction", "gas_sgof" )->groupCast< TableFunction * >();
   table_og_g->setTableCoordinates( coordinates );
   table_og_g->setTableValues( values );
   table_og_g->reInitializeFunction();
 
   table_og_g->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction * table_og_o = functionManager->CreateChild( "TableFunction", "oil_sgof" )->group_cast< TableFunction * >();
+  TableFunction * table_og_o = functionManager->createChild( "TableFunction", "oil_sgof" )->groupCast< TableFunction * >();
   table_og_o->setTableCoordinates( coordinates );
   table_og_o->setTableValues( values );
   table_og_o->reInitializeFunction();
@@ -355,7 +355,7 @@ RelativePermeabilityBase * makeTableRelPermThreePhase( string const & name, Grou
 
   // 2) Then set up the constitutive model
 
-  auto relPerm = parent->RegisterGroup< TableRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< TableRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -369,7 +369,7 @@ RelativePermeabilityBase * makeTableRelPermThreePhase( string const & name, Grou
   gasOilTableNames.resize( 2 );
   gasOilTableNames[0] = "gas_sgof"; gasOilTableNames[1] = "oil_sgof";
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
@@ -380,8 +380,8 @@ TEST( testRelPerm, numericalDerivatives_brooksCoreyRelPerm )
 
   RelativePermeabilityBase * relperm = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   // TODO test over a range of values
   array1d< real64 > sat( 4 );
@@ -400,8 +400,8 @@ TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
 
   RelativePermeabilityBase * relperm = makeBrooksCoreyBakerRelPermTwoPhase( "relPerm", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -429,8 +429,8 @@ TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
 
   RelativePermeabilityBase * relperm = makeBrooksCoreyBakerRelPermThreePhase( "relPerm", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -460,8 +460,8 @@ TEST( testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
 
   RelativePermeabilityBase * relperm = makeVanGenuchtenBakerRelPermTwoPhase( "relPerm", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -488,8 +488,8 @@ TEST( testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase )
 
   RelativePermeabilityBase * relperm = makeVanGenuchtenBakerRelPermThreePhase( "relPerm", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -518,8 +518,8 @@ TEST( testRelPerm, numericalDerivatives_TableRelPermTwoPhase )
 
   RelativePermeabilityBase * relperm = makeTableRelPermTwoPhase( "relPerm", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -546,8 +546,8 @@ TEST( testRelPerm, numericalDerivatives_TableRelPermThreePhase )
 
   RelativePermeabilityBase * relperm = makeTableRelPermThreePhase( "relPerm", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;

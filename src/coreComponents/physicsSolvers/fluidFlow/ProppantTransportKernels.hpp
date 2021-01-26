@@ -35,7 +35,7 @@ namespace ProppantTransportKernels
 struct FluidUpdateKernel
 {
   template< typename FLUID_WRAPPER >
-  static void Launch( FLUID_WRAPPER const & fluidWrapper,
+  static void launch( FLUID_WRAPPER const & fluidWrapper,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & dPres,
                       arrayView2d< real64 const > const & componentConcentration,
@@ -53,7 +53,7 @@ struct FluidUpdateKernel
 
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.UpdateFluidProperty( a, q,
+        fluidWrapper.updateFluidProperty( a, q,
                                           pres[a] + dPres[a],
                                           compConc,
                                           0.0 );
@@ -67,7 +67,7 @@ struct FluidUpdateKernel
 struct ComponentDensityUpdateKernel
 {
   template< typename FLUID_WRAPPER >
-  static void Launch( FLUID_WRAPPER const & fluidWrapper,
+  static void launch( FLUID_WRAPPER const & fluidWrapper,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & dPres,
                       arrayView2d< real64 const > const & componentConcentration,
@@ -85,7 +85,7 @@ struct ComponentDensityUpdateKernel
 
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.UpdateComponentDensity( a, q,
+        fluidWrapper.updateComponentDensity( a, q,
                                              pres[a] + dPres[a],
                                              compConc );
       }
@@ -98,7 +98,7 @@ struct ComponentDensityUpdateKernel
 struct ProppantUpdateKernel
 {
   template< typename PROPPANT_WRAPPER >
-  static void Launch( PROPPANT_WRAPPER const & proppantWrapper,
+  static void launch( PROPPANT_WRAPPER const & proppantWrapper,
                       arrayView1d< real64 const > const & proppantConc,
                       arrayView1d< real64 const > const & dProppantConc,
                       arrayView2d< real64 const > const & fluidDens,
@@ -110,7 +110,7 @@ struct ProppantUpdateKernel
   {
     forAll< parallelDevicePolicy<> >( proppantWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      proppantWrapper.Update( a,
+      proppantWrapper.update( a,
                               proppantConc[a] + dProppantConc[a],
                               fluidDens[a][0],
                               dFluidDens_dPres[a][0],
@@ -129,7 +129,7 @@ struct AccumulationKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( localIndex const NC,
+  compute( localIndex const NC,
            real64 const proppantConcOld,
            real64 const proppantConcNew,
            arraySlice1d< real64 const > const & componentDensOld,
@@ -143,7 +143,7 @@ struct AccumulationKernel
            arraySlice2d< real64 > const & localAccumJacobian );
 
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           localIndex const NC,
           localIndex const NDOF,
           globalIndex const rankOffset,
@@ -187,7 +187,7 @@ struct FluxKernel
    */
   template< typename STENCIL_TYPE >
   static void
-  Launch( STENCIL_TYPE const & stencil,
+  launch( STENCIL_TYPE const & stencil,
           localIndex const numDofPerCell,
           real64 const dt,
           globalIndex const rankOffset,
@@ -230,7 +230,7 @@ struct FluxKernel
 
   template< typename STENCIL_TYPE >
   static void
-  LaunchCellBasedFluxCalculation( STENCIL_TYPE const & stencil,
+  launchCellBasedFluxCalculation( STENCIL_TYPE const & stencil,
                                   ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
                                   R1Tensor const & unitGravityVector,
                                   ElementViewConst< arrayView1d< real64 const > > const & pres,
@@ -250,7 +250,7 @@ struct FluxKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  ComputeJunction( localIndex const numElems,
+  computeJunction( localIndex const numElems,
                    localIndex const numDofPerCell,
                    arraySlice1d< localIndex const > const & stencilElementIndices,
                    arraySlice1d< real64 const > const & stencilWeights,
@@ -292,7 +292,7 @@ struct FluxKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  ComputeCellBasedFlux( localIndex const numElems,
+  computeCellBasedFlux( localIndex const numElems,
                         arraySlice1d< localIndex const > const & stencilElementIndices,
                         arraySlice1d< real64 const > const & stencilWeights,
                         arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
@@ -318,7 +318,7 @@ struct ProppantPackVolumeKernel
 
   template< typename STENCIL_TYPE >
   static void
-  LaunchProppantPackVolumeCalculation( STENCIL_TYPE const & stencil,
+  launchProppantPackVolumeCalculation( STENCIL_TYPE const & stencil,
                                        real64 const dt,
                                        real64 const proppantDensity,
                                        real64 const proppantDiameter,
@@ -343,7 +343,7 @@ struct ProppantPackVolumeKernel
 
   template< typename STENCIL_TYPE >
   static void
-  LaunchProppantPackVolumeUpdate( STENCIL_TYPE const & stencil,
+  launchProppantPackVolumeUpdate( STENCIL_TYPE const & stencil,
                                   R1Tensor const & unitGravityVector,
                                   real64 const maxProppantConcentration,
                                   ElementView< arrayView1d< integer const > > const & isProppantMobile,
@@ -354,7 +354,7 @@ struct ProppantPackVolumeKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  ComputeProppantPackVolume( localIndex const numElems,
+  computeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
                              real64 const proppantDensity,
                              real64 const proppantDiameter,
@@ -383,7 +383,7 @@ struct ProppantPackVolumeKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  UpdateProppantPackVolume( localIndex const numElems,
+  updateProppantPackVolume( localIndex const numElems,
                             arraySlice1d< localIndex const > const & stencilElementIndices,
                             arraySlice1d< real64 const > const & stencilWeights,
                             arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,

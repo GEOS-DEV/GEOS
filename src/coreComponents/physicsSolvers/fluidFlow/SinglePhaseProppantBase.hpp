@@ -54,11 +54,11 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
-  virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const override;
+  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const override;
 
 protected:
 
-  virtual void ValidateFluidModels( DomainPartition const & domain ) const override;
+  virtual void validateFluidModels( DomainPartition const & domain ) const override;
 
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
 
@@ -66,7 +66,7 @@ protected:
 
 private:
 
-  virtual void ResetViewsPrivate( ElementRegionManager const & elemManager ) override;
+  virtual void resetViewsPrivate( ElementRegionManager const & elemManager ) override;
 
 };
 }

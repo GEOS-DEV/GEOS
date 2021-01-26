@@ -40,14 +40,14 @@ public:
   /*!
    * @brief Triggers the file output
    */
-  void Save() const;
+  void save() const;
 
   /*!
    * @brief Add a dataset associated to a time-step
    * @param[in] time the time step
    * @param[in] filePath path to the file associated with the time-step
    */
-  void AddData( real64 time, string const & filePath ) const;
+  void addData( real64 time, string const & filePath ) const;
 private:
 
   /// PVD XML file

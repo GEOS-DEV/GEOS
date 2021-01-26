@@ -47,9 +47,9 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
 TableRelativePermeability::~TableRelativePermeability()
 {}
 
-void TableRelativePermeability::PostProcessInput()
+void TableRelativePermeability::postProcessInput()
 {
-  RelativePermeabilityBase::PostProcessInput();
+  RelativePermeabilityBase::postProcessInput();
 
   GEOSX_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
                   "TableRelativePermeability: reference oil phase has not been defined and must be included in model" );
@@ -62,23 +62,23 @@ void TableRelativePermeability::PostProcessInput()
 
 }
 
-void TableRelativePermeability::InitializePreSubGroups( Group * const group )
+void TableRelativePermeability::initializePreSubGroups( Group * const group )
 {
-  RelativePermeabilityBase::InitializePreSubGroups( group );
-  CreateAllTableKernelWrappers();
+  RelativePermeabilityBase::initializePreSubGroups( group );
+  createAllTableKernelWrappers();
 }
 
-void TableRelativePermeability::CreateAllTableKernelWrappers()
+void TableRelativePermeability::createAllTableKernelWrappers()
 {
-  FunctionManager const & functionManager = FunctionManager::Instance();
+  FunctionManager const & functionManager = FunctionManager::instance();
 
   m_phaseMinVolumeFraction.resize( PhaseType::MAX_NUM_PHASES );
 
   // check water-oil relperms
   for( localIndex ip = 0; ip < m_waterOilRelPermTableNames.size(); ++ip )
   {
-    TableFunction const & relPermTable = *functionManager.GetGroup< TableFunction const >( m_waterOilRelPermTableNames[ip] );
-    real64 const minVolPhaseFrac = ValidateRelativePermeabilityTable( relPermTable );
+    TableFunction const & relPermTable = *functionManager.getGroup< TableFunction const >( m_waterOilRelPermTableNames[ip] );
+    real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
     if( ip == 0 ) // water
     {
       m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = minVolPhaseFrac;
@@ -93,8 +93,8 @@ void TableRelativePermeability::CreateAllTableKernelWrappers()
   // check gas-oil relperms
   for( localIndex ip = 0; ip < m_gasOilRelPermTableNames.size(); ++ip )
   {
-    TableFunction const & relPermTable = *functionManager.GetGroup< TableFunction const >( m_gasOilRelPermTableNames[ip] );
-    real64 const minVolPhaseFrac = ValidateRelativePermeabilityTable( relPermTable );
+    TableFunction const & relPermTable = *functionManager.getGroup< TableFunction const >( m_gasOilRelPermTableNames[ip] );
+    real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
     if( ip == 0 ) // gas
     {
       m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::GAS]] = minVolPhaseFrac;
@@ -108,7 +108,7 @@ void TableRelativePermeability::CreateAllTableKernelWrappers()
   }
 }
 
-real64 TableRelativePermeability::ValidateRelativePermeabilityTable( TableFunction const & relPermTable ) const
+real64 TableRelativePermeability::validateRelativePermeabilityTable( TableFunction const & relPermTable ) const
 {
   ArrayOfArraysView< real64 const > coords = relPermTable.getCoordinates();
   arraySlice1d< real64 const > phaseVolFrac = coords[0];
@@ -166,7 +166,7 @@ TableRelativePermeability::deliverClone( string const & name, Group * const pare
   TableRelativePermeability & tableRelPerm = dynamicCast< TableRelativePermeability & >( *clone );
 
   // TODO: see if it is simpler to just add a copy constructor for the wrappers, and let GEOSX copy everything automatically.
-  tableRelPerm.CreateAllTableKernelWrappers();
+  tableRelPerm.createAllTableKernelWrappers();
   return clone;
 }
 

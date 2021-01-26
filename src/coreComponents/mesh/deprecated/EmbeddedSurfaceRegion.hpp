@@ -71,11 +71,11 @@ public:
    * @brief Get the key name for the EmbeddedSurfaceRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EmbeddedSurfaceElementRegion"; }
 
   virtual const string getCatalogName() const override final
-  { return EmbeddedSurfaceRegion::CatalogName(); }
+  { return EmbeddedSurfaceRegion::catalogName(); }
 
   ///@}
 
@@ -105,7 +105,7 @@ public:
   };
 
 protected:
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups( Group * const ) override;
 
 private:
 

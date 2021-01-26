@@ -51,7 +51,7 @@ struct Baker
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( real64 const & shiftedWaterVolFrac,
+  compute( real64 const & shiftedWaterVolFrac,
            real64 const & gasVolFrac,
            arraySlice1d< integer const > const & phaseOrder,
            real64 const & relPerm_wo,

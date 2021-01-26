@@ -62,17 +62,17 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseRelPerm,
                         arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const > const & phaseVolFraction ) const override
   {
-    Compute( phaseVolFraction,
+    compute( phaseVolFraction,
              m_phaseRelPerm[k][q],
              m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
   }
@@ -100,14 +100,14 @@ public:
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name, Group * const parent ) const override;
 
-  static std::string CatalogName() { return "TableRelativePermeability"; }
+  static std::string catalogName() { return "TableRelativePermeability"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
    */
-  void CreateAllTableKernelWrappers();
+  void createAllTableKernelWrappers();
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = TableRelativePermeabilityUpdate;
@@ -133,9 +133,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups( Group * const ) override;
 
 private:
 
@@ -143,7 +143,7 @@ private:
    * @brief Validate the relative permeability table provided in input (increasing phase vol frac and rel perm, etc)
    * @param[in] relPermTable the relative permeability table (kr vs s) for a given phase)
    */
-  real64 ValidateRelativePermeabilityTable( TableFunction const & relPermTable ) const;
+  real64 validateRelativePermeabilityTable( TableFunction const & relPermTable ) const;
 
   /// Relative permeability table names (one for each phase in the oil-water pair)
   array1d< string > m_waterOilRelPermTableNames;
@@ -166,7 +166,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 TableRelativePermeabilityUpdate::
-  Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  compute( arraySlice1d< real64 const > const & phaseVolFraction,
            arraySlice1d< real64 > const & phaseRelPerm,
            arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -197,13 +197,13 @@ TableRelativePermeabilityUpdate::
   if( ip_water >= 0 )
   {
     // water rel perm
-    m_waterOilRelPermTableKernelWrappers[RelativePermeabilityBase::WaterOilPairPhaseType::WATER].Compute( &(phaseVolFraction)[ip_water],
+    m_waterOilRelPermTableKernelWrappers[RelativePermeabilityBase::WaterOilPairPhaseType::WATER].compute( &(phaseVolFraction)[ip_water],
                                                                                                           phaseRelPerm[ip_water],
                                                                                                           relPermDerivative );
     dPhaseRelPerm_dPhaseVolFrac[ip_water][ip_water] = relPermDerivative[0];
 
     // oil rel perm
-    m_waterOilRelPermTableKernelWrappers[RelativePermeabilityBase::WaterOilPairPhaseType::OIL].Compute( &(phaseVolFraction)[ip_oil],
+    m_waterOilRelPermTableKernelWrappers[RelativePermeabilityBase::WaterOilPairPhaseType::OIL].compute( &(phaseVolFraction)[ip_oil],
                                                                                                         phaseRelPerm[ip_oil],
                                                                                                         relPermDerivative );
     dPhaseRelPerm_dPhaseVolFrac[ip_oil][ip_oil] = relPermDerivative[0];
@@ -214,13 +214,13 @@ TableRelativePermeabilityUpdate::
   if( ip_gas >= 0 )
   {
     // gas rel perm
-    m_gasOilRelPermTableKernelWrappers[RelativePermeabilityBase::GasOilPairPhaseType::GAS].Compute( &(phaseVolFraction)[ip_gas],
+    m_gasOilRelPermTableKernelWrappers[RelativePermeabilityBase::GasOilPairPhaseType::GAS].compute( &(phaseVolFraction)[ip_gas],
                                                                                                     phaseRelPerm[ip_gas],
                                                                                                     relPermDerivative );
     dPhaseRelPerm_dPhaseVolFrac[ip_gas][ip_gas] = relPermDerivative[0];
 
     // oil rel perm
-    m_gasOilRelPermTableKernelWrappers[RelativePermeabilityBase::GasOilPairPhaseType::OIL].Compute( &(phaseVolFraction)[ip_oil],
+    m_gasOilRelPermTableKernelWrappers[RelativePermeabilityBase::GasOilPairPhaseType::OIL].compute( &(phaseVolFraction)[ip_oil],
                                                                                                     phaseRelPerm[ip_oil],
                                                                                                     relPermDerivative );
     dPhaseRelPerm_dPhaseVolFrac[ip_oil][ip_oil] = relPermDerivative[0];
@@ -247,7 +247,7 @@ TableRelativePermeabilityUpdate::
     real64 const shiftedWaterVolFrac = (phaseVolFraction[ip_water] - m_phaseMinVolumeFraction[ip_water]);
 
     // TODO: add template to choose the interpolator from the XML file
-    relpermInterpolators::Baker::Compute( shiftedWaterVolFrac,
+    relpermInterpolators::Baker::compute( shiftedWaterVolFrac,
                                           phaseVolFraction[ip_gas],
                                           m_phaseOrder,
                                           oilRelPerm_wo,

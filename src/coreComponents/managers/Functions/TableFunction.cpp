@@ -136,7 +136,7 @@ void TableFunction::setTableValues( real64_array values )
   reInitializeFunction();
 }
 
-void TableFunction::InitializeFunction()
+void TableFunction::initializeFunction()
 {
   // Read in data
   if( m_coordinates.size() > 0 )
@@ -188,9 +188,6 @@ void TableFunction::reInitializeFunction()
     increment *= m_size[ii];
   }
 
-  // Error checking
-  //GEOSX_ERROR_IF( increment != m_values.size(), "Table dimensions do not match!" );
-
   // Build a quick map to help with linear interpolation
   m_numCorners = static_cast< localIndex >(pow( 2, m_dimensions ));
   for( localIndex ii=0; ii<m_numCorners; ++ii )
@@ -215,6 +212,10 @@ void TableFunction::reInitializeFunction()
 
 TableFunctionKernelWrapper TableFunction::createKernelWrapper() const
 {
+  // note: we do some error checking here because it cannot be done in reInitialization (since it is now called in all the setters)
+  GEOSX_ERROR_IF( m_indexIncrement[m_dimensions-1] * m_size[m_dimensions-1] != m_values.size(),
+                  "Table dimensions do not match!" );
+
   return TableFunctionKernelWrapper( m_interpolationMethod,
                                      m_coordinates.toViewConst(),
                                      m_values.toViewConst(),
@@ -225,13 +226,13 @@ TableFunctionKernelWrapper TableFunction::createKernelWrapper() const
                                      m_numCorners );
 }
 
-real64 TableFunction::Evaluate( real64 const * const input ) const
+real64 TableFunction::evaluate( real64 const * const input ) const
 {
   real64 scalarValue = 0;
   stackArray1d< real64, maxDimensions > derivativesArray( m_dimensions );
 
   // interpolate in table, return scalar value (derivatives are discarded)
-  m_kernelWrapper->Compute( input, scalarValue, derivativesArray );
+  m_kernelWrapper->compute( input, scalarValue, derivativesArray );
   return scalarValue;
 }
 

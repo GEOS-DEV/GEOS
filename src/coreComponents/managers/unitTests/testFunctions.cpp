@@ -34,7 +34,7 @@ void evaluate1DFunction( FunctionBase * function,
   for( localIndex ii=0; ii<inputs.size(); ++ii )
   {
     real64 input = inputs[ii];
-    real64 predicted = function->Evaluate( &input );
+    real64 predicted = function->evaluate( &input );
     real64 expected = outputs[ii];
 
     ASSERT_NEAR( predicted, expected, 1e-10 );
@@ -55,14 +55,14 @@ void checkDirectionalDerivative( real64 const (&input)[4],
   LvArray::tensorOps::copy< 4 >( perturbedInput, input );
   real64 const dInput = perturb * ( input[direction] + perturb );
   perturbedInput[direction] += dInput;
-  kernelWrapper.Compute( perturbedInput, perturbedVal, perturbedDerivatives );
+  kernelWrapper.compute( perturbedInput, perturbedVal, perturbedDerivatives );
 
   geosx::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geosx::testing::DEFAULT_ABS_TOL );
 }
 
 TEST( FunctionTests, 1DTable )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // 1D table, various interpolation methods
   localIndex Naxis = 4;
@@ -83,7 +83,7 @@ TEST( FunctionTests, 1DTable )
   values[2] = -5.0;
   values[3] = 7.0;
 
-  TableFunction * table_a = functionManager->CreateChild( "TableFunction", "table_a" )->group_cast< TableFunction * >();
+  TableFunction * table_a = functionManager->createChild( "TableFunction", "table_a" )->groupCast< TableFunction * >();
   table_a->setTableCoordinates( coordinates );
   table_a->setTableValues( values );
   table_a->reInitializeFunction();
@@ -148,7 +148,7 @@ TEST( FunctionTests, 1DTable )
 
 TEST( FunctionTests, 2DTable )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // 2D table with linear interpolation
   // f(x, y) = 2*x - 3*y + 5
@@ -189,7 +189,7 @@ TEST( FunctionTests, 2DTable )
   inputVarNames[0] = inputName;
 
   // Initialize the table
-  TableFunction * table_b = functionManager->CreateChild( "TableFunction", "table_b" )->group_cast< TableFunction * >();
+  TableFunction * table_b = functionManager->createChild( "TableFunction", "table_b" )->groupCast< TableFunction * >();
   table_b->setTableCoordinates( coordinates );
   table_b->setTableValues( values );
   table_b->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -236,7 +236,7 @@ TEST( FunctionTests, 2DTable )
   }
 
   // Evaluate the function in batch mode
-  table_b->Evaluate( &(testGroup), 0.0, set.toView(), output );
+  table_b->evaluate( &(testGroup), 0.0, set.toView(), output );
 
   // Compare results
   for( localIndex ii=0; ii<Ntest; ++ii )
@@ -248,7 +248,7 @@ TEST( FunctionTests, 2DTable )
 
 TEST( FunctionTests, 4DTable_multipleInputs )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y + 7*z + 11*t
@@ -311,7 +311,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   inputVarNames[1] = timeName;
 
   // Initialize the table
-  TableFunction * table_c = functionManager->CreateChild( "TableFunction", "table_c" )->group_cast< TableFunction * >();
+  TableFunction * table_c = functionManager->createChild( "TableFunction", "table_c" )->groupCast< TableFunction * >();
   table_c->setTableCoordinates( coordinates );
   table_c->setTableValues( values );
   table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -362,7 +362,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
     }
 
     // Evaluate the function in batch mode
-    table_c->Evaluate( &(testGroup), t, set.toView(), output );
+    table_c->evaluate( &(testGroup), t, set.toView(), output );
 
     // Compare results
     for( localIndex jj=0; jj<Ntest; ++jj )
@@ -374,7 +374,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 
 TEST( FunctionTests, 4DTable_derivatives )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y*y + 7*z*z*z + 11*t*t*t*t
@@ -438,7 +438,7 @@ TEST( FunctionTests, 4DTable_derivatives )
   inputVarNames[1] = timeName;
 
   // Initialize the table
-  TableFunction * table_c = functionManager->CreateChild( "TableFunction", "table_c" )->group_cast< TableFunction * >();
+  TableFunction * table_c = functionManager->createChild( "TableFunction", "table_c" )->groupCast< TableFunction * >();
   table_c->setTableCoordinates( coordinates );
   table_c->setTableValues( values );
   table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -475,7 +475,7 @@ TEST( FunctionTests, 4DTable_derivatives )
         for( localIndex ii=0; ii<nSamples; ++ii )
         {
           // evaluate once to get the analytical derivatives
-          kernelWrapper.Compute( input, val, derivatives );
+          kernelWrapper.compute( input, val, derivatives );
 
           // check derivatives
 
@@ -502,7 +502,7 @@ TEST( FunctionTests, 4DTable_derivatives )
 
 TEST( FunctionTests, 4DTable_symbolic )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // Symbolic function with four inputs
   string expression = "1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d)";
@@ -520,11 +520,11 @@ TEST( FunctionTests, 4DTable_symbolic )
   inputVarNames[3] = nameD;
 
   // Initialize the table
-  SymbolicFunction * table_d = functionManager->CreateChild( "SymbolicFunction", "table_d" )->group_cast< SymbolicFunction * >();
+  SymbolicFunction * table_d = functionManager->createChild( "SymbolicFunction", "table_d" )->groupCast< SymbolicFunction * >();
   table_d->setSymbolicExpression( expression );
   table_d->setInputVarNames( inputVarNames );
   table_d->setSymbolicVariableNames( inputVarNames );
-  table_d->InitializeFunction();
+  table_d->initializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
   string groupName = "testGroup";
@@ -570,7 +570,7 @@ TEST( FunctionTests, 4DTable_symbolic )
   }
 
   // Evaluate the function in batch mode
-  table_d->Evaluate( &(testGroup), 0.0, set.toView(), output );
+  table_d->evaluate( &(testGroup), 0.0, set.toView(), output );
 
   // Compare results
   for( localIndex jj=0; jj<Ntest; ++jj )

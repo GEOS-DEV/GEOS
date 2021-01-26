@@ -67,17 +67,17 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseRelPerm,
                         arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const > const & phaseVolFraction ) const override
   {
-    Compute( phaseVolFraction,
+    compute( phaseVolFraction,
              m_phaseRelPerm[k][q],
              m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
   }
@@ -100,7 +100,7 @@ private:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  EvaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
+  evaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
                                real64 const & dScaledVolFrac_dVolFrac,
                                real64 const & exponent,
                                real64 const & maxValue,
@@ -126,9 +126,9 @@ public:
 
   virtual ~BrooksCoreyBakerRelativePermeability() override;
 
-  static std::string CatalogName() { return "BrooksCoreyBakerRelativePermeability"; }
+  static std::string catalogName() { return "BrooksCoreyBakerRelativePermeability"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyBakerRelativePermeabilityUpdate;
@@ -151,7 +151,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   array1d< real64 > m_phaseMinVolumeFraction;
 
@@ -171,7 +171,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 BrooksCoreyBakerRelativePermeabilityUpdate::
-  Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  compute( arraySlice1d< real64 const > const & phaseVolFraction,
            arraySlice1d< real64 > const & phaseRelPerm,
            arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
@@ -207,7 +207,7 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
     real64 const waterMaxValue = m_waterOilRelPermMaxValue[RelativePermeabilityBase::WaterOilPairPhaseType::WATER];
 
     // water rel perm
-    EvaluateBrooksCoreyFunction( scaledWaterVolFrac,
+    evaluateBrooksCoreyFunction( scaledWaterVolFrac,
                                  volFracScaleInv,
                                  waterExponent,
                                  waterMaxValue,
@@ -218,7 +218,7 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
     real64 const oilMaxValue_wo = m_waterOilRelPermMaxValue[RelativePermeabilityBase::WaterOilPairPhaseType::OIL];
 
     // oil rel perm
-    EvaluateBrooksCoreyFunction( scaledOilVolFrac,
+    evaluateBrooksCoreyFunction( scaledOilVolFrac,
                                  volFracScaleInv,
                                  oilExponent_wo,
                                  oilMaxValue_wo,
@@ -237,7 +237,7 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
     real64 const gasMaxValue = m_gasOilRelPermMaxValue[RelativePermeabilityBase::GasOilPairPhaseType::GAS];
 
     // gas rel perm
-    EvaluateBrooksCoreyFunction( scaledGasVolFrac,
+    evaluateBrooksCoreyFunction( scaledGasVolFrac,
                                  volFracScaleInv,
                                  gasExponent,
                                  gasMaxValue,
@@ -248,7 +248,7 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
     real64 const oilMaxValue_go = m_gasOilRelPermMaxValue[RelativePermeabilityBase::GasOilPairPhaseType::OIL];
 
     // oil rel perm
-    EvaluateBrooksCoreyFunction( scaledOilVolFrac,
+    evaluateBrooksCoreyFunction( scaledOilVolFrac,
                                  volFracScaleInv,
                                  oilExponent_go,
                                  oilMaxValue_go,
@@ -277,7 +277,7 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
     real64 const shiftedWaterVolFrac = (phaseVolFraction[ip_water] - m_phaseMinVolumeFraction[ip_water]);
 
     // TODO: change name of the class and add template to choose interpolation
-    relpermInterpolators::Baker::Compute( shiftedWaterVolFrac,
+    relpermInterpolators::Baker::compute( shiftedWaterVolFrac,
                                           phaseVolFraction[ip_gas],
                                           m_phaseOrder,
                                           oilRelPerm_wo,
@@ -293,7 +293,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 BrooksCoreyBakerRelativePermeabilityUpdate::
-  EvaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
+  evaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
                                real64 const & dScaledVolFrac_dVolFrac,
                                real64 const & exponent,
                                real64 const & maxValue,
