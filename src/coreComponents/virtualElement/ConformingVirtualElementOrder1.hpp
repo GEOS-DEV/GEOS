@@ -27,7 +27,7 @@ namespace virtualElement
 {
 class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
-  private:
+private:
   void
   ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                         arraySlice1d< localIndex const > const & faceToNodes,
@@ -40,13 +40,15 @@ class ConformingVirtualElementOrder1 final : public VirtualElementBase
                         arraySlice1d< real64 const > const & cellCenter,
                         array1d< real64 > & basisIntegrals,
                         real64 * threeDMonomialIntegrals );
-  public:
 
   localIndex m_numQuadraturePoints;
   localIndex m_numSupportPoints;
+  array1d< real64 > m_quadratureWeights;
   array1d< real64 > m_basisFunctionsIntegralMean;
-  array2d< real64 > m_basisDerivativesIntegralMean;
   array2d< real64 > m_stabilizationMatrix;
+  array2d< real64 > m_basisDerivativesIntegralMean;
+
+public:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   real64 ComputeDiameter( POINT_COORDS_TYPE points,
@@ -100,7 +102,7 @@ public:
                      EdgeManager::NodeMapType const & edgeToNodeMap,
                      arrayView2d< real64 const > const faceCenters,
                      arrayView2d< real64 const > const faceNormals,
-                     arrayView1d< real64 const> const faceAreas,
+                     arrayView1d< real64 const > const faceAreas,
                      arraySlice1d< real64 const > const & cellCenter,
                      real64 const & cellVolume
                      );
@@ -113,6 +115,44 @@ public:
   {
     return m_numSupportPoints;
   }
+
+  real64 getStabilizationValue( localIndex const iBasisFunction,
+                                localIndex const jBasisFunction
+                                ) const override
+  { return m_stabilizationMatrix[iBasisFunction][jBasisFunction]; }
+
+  /**
+   * @brief Get the shape function projected derivatives at a given quadrature point.
+   * @details The output contains the integral mean of derivatives.
+   * @param q The quadrature point index.
+   * @param gradN Return array of the shape function projected derivatives. Size will be @ref
+   * getNumSupportPoints() x 3.
+   */
+  void getGradN( localIndex const q,
+                 arrayView2d< real64 const > & gradN ) const override
+  {
+    GEOSX_UNUSED_VAR( q );
+    gradN = m_basisDerivativesIntegralMean;
+  }
+
+  /**
+   * @brief Get the shape function projections at a given quadrature point.
+   * @details The output contains the integral mean of functions
+   * @param q The quadrature point index.
+   * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
+   */
+  void getN( localIndex const q,
+             arrayView1d< real64 const > & N ) const override
+  {
+    GEOSX_UNUSED_VAR( q );
+    N = m_basisFunctionsIntegralMean;
+  }
+
+  virtual real64 transformedQuadratureWeight( localIndex const q ) const
+  {
+    return m_quadratureWeights[q];
+  }
+
 };
 }
 }

@@ -51,6 +51,40 @@ public:
    * @return The number of support points per element.
    */
   virtual localIndex getNumSupportPoints() const = 0;
+
+  /**
+   * @brief Virtual getter for a value of the stabilization matrix.
+   * @param iBasisFunction The row index.
+   * @param jBasisFunction The column index.
+   * @return The requested value.
+   */
+  virtual real64 getStabilizationValue( localIndex const iBasisFunction,
+                                        localIndex const jBasisFunction
+                                        ) const = 0;
+
+  /**
+   * @brief Get the shape function projected derivatives at a given quadrature point.
+   * @param q The quadrature point index.
+   * @param gradN Return array of the shape function projected derivatives. Size will be @ref
+   * getNumSupportPoints() x 3.
+   * @note See documentation of derived classes to know the projection used.
+   */
+  virtual void getGradN( localIndex const q, arrayView2d< real64 const > & gradN ) const = 0;
+
+  /**
+   * @brief Get the shape function projections at a given quadrature point.
+   * @param q The quadrature point index.
+   * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
+   * @note See documentation of derived classes to know the projection used.
+   */
+  virtual void getN( localIndex const q, arrayView1d< real64 const > & N ) const = 0;
+
+  /**
+   * @brief Get the integration weight for a quadrature point.
+   * @param q Index of the quadrature point.
+   * @return The weight.
+   */
+  virtual real64 transformedQuadratureWeight( localIndex const q ) const = 0;
 };
 }
 }
