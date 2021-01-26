@@ -37,10 +37,6 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
       localIndex const hostCellIdx = surfaceElementsToCells.m_toElementIndex[fracElement][0];
       CellID cellID( hostCellRegionIdx, hostCellSubRegionIdx, hostCellIdx );
 
-      // get cell center
-      // real64 cellCenter[ 3 ];
-      // LvArray::tensorOps::copy< 3 >(cellCenter, m_cellCenters[ hostCellRegionIdx ][ hostCellSubRegionIdx ][ hostCellIdx ]);
-
       // get host cell faces
       CellElementRegion const * cellRegion = m_elementManager->GetRegion< CellElementRegion >( hostCellRegionIdx );
       CellElementSubRegion const * cellSubRegion = cellRegion->GetSubRegion< CellElementSubRegion >(hostCellSubRegionIdx);
