@@ -57,7 +57,7 @@ public:
    * @param[out] elementAdjacencyList the elements adjacent to the input nodes of seedNodeList
    * @param[in] depth the depth of the search for adjacent quantities (first-order neighbors, neighbors of neighbors, etc)
    */
-  void GenerateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
+  void generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                localIndex_array & nodeAdjacencyList,
                                localIndex_array & edgeAdjacencyList,
                                localIndex_array & faceAdjacencyList,
@@ -65,7 +65,7 @@ public:
                                integer const depth );
 
 
-  virtual void InitializePostInitialConditions_PostSubGroups( Group * const ) override;
+  virtual void initializePostInitialConditionsPostSubGroups( Group * const ) override;
 
   /// @cond DO_NOT_DOCUMENT
 

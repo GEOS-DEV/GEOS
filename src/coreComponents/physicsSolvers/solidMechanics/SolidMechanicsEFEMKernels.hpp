@@ -342,7 +342,7 @@ public:
 
     int Heaviside[ numNodesPerElem ];
 
-    m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
+    m_constitutiveUpdate.getStiffness( k, q, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.X,

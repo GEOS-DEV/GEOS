@@ -52,7 +52,7 @@ public:
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+  compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
            ArrayOfArraysView< localIndex const > const & faceToNodes,
            arraySlice1d< localIndex const > const & elemToFaces,
@@ -67,7 +67,7 @@ public:
 template< localIndex NF >
 GEOSX_HOST_DEVICE
 void
-QuasiTPFAInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+QuasiTPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                 arrayView1d< real64 const > const & transMultiplier,
                                 ArrayOfArraysView< localIndex const > const & faceToNodes,
                                 arraySlice1d< localIndex const > const & elemToFaces,
@@ -77,7 +77,7 @@ QuasiTPFAInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSI
                                 real64 const & lengthTolerance,
                                 arraySlice2d< real64 > const & transMatrix )
 {
-  MimeticInnerProductBase::ComputeParametricInnerProduct< NF >( nodePosition,
+  MimeticInnerProductBase::computeParametricInnerProduct< NF >( nodePosition,
                                                                 transMultiplier,
                                                                 faceToNodes,
                                                                 elemToFaces,

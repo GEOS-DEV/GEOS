@@ -73,9 +73,9 @@ void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group * cons
 }
 
 
-void ProppantSlurryFluid::PostProcessInput()
+void ProppantSlurryFluid::postProcessInput()
 {
-  SlurryFluidBase::PostProcessInput();
+  SlurryFluidBase::postProcessInput();
 
   GEOSX_ERROR_IF_LT_MSG( m_compressibility, 0.0,
                          getName() << ": invalid value of " << viewKeyStruct::compressibilityString );

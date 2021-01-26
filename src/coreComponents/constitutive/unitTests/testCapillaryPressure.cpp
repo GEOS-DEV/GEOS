@@ -37,7 +37,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
 
   // create a clone of the capillary pressure to run updates on
   std::unique_ptr< ConstitutiveBase > capPressureCopyPtr = capPressure.deliverClone( "fluidCopy", nullptr );
-  CapillaryPressureBase & capPressureCopy = *capPressureCopyPtr->group_cast< CapillaryPressureBase * >();
+  CapillaryPressureBase & capPressureCopy = *capPressureCopyPtr->groupCast< CapillaryPressureBase * >();
 
   capPressure.allocateConstitutiveData( capPressure.getParent(), 1 );
   capPressureCopy.allocateConstitutiveData( capPressure.getParent(), 1 );
@@ -50,7 +50,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
   constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
   {
     typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
-    capPresWrapper.Update( 0, 0, saturation );
+    capPresWrapper.update( 0, 0, saturation );
   } );
 
   // update saturation and check derivatives
@@ -69,7 +69,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
     constitutive::constitutiveUpdatePassThru( capPressureCopy, [&] ( auto & castedCapPres )
     {
       typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
-      capPresWrapper.Update( 0, 0, satNew );
+      capPresWrapper.update( 0, 0, satNew );
     } );
 
     string var = "phaseVolFrac[" + phases[jp] + "]";
@@ -86,7 +86,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
 
 CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name, Group * parent )
 {
-  auto capPressure = parent->RegisterGroup< BrooksCoreyCapillaryPressure >( name );
+  auto capPressure = parent->registerGroup< BrooksCoreyCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -108,14 +108,14 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name,
   auto & capPressureEpsilon = capPressure->getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-4;
 
-  capPressure->PostProcessInputRecursive();
+  capPressure->postProcessInputRecursive();
   return capPressure;
 }
 
 
 CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & name, Group * parent )
 {
-  auto capPressure = parent->RegisterGroup< BrooksCoreyCapillaryPressure >( name );
+  auto capPressure = parent->registerGroup< BrooksCoreyCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -137,14 +137,14 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & nam
   auto & capPressureEpsilon = capPressure->getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-7;
 
-  capPressure->PostProcessInputRecursive();
+  capPressure->postProcessInputRecursive();
   return capPressure;
 }
 
 
 CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name, Group * parent )
 {
-  auto capPressure = parent->RegisterGroup< VanGenuchtenCapillaryPressure >( name );
+  auto capPressure = parent->registerGroup< VanGenuchtenCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -167,13 +167,13 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name
   auto & capPressureEpsilon = capPressure->getReference< real64 >( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-4;
 
-  capPressure->PostProcessInputRecursive();
+  capPressure->postProcessInputRecursive();
   return capPressure;
 }
 
 CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( string const & name, Group * parent )
 {
-  auto capPressure = parent->RegisterGroup< VanGenuchtenCapillaryPressure >( name );
+  auto capPressure = parent->registerGroup< VanGenuchtenCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -196,7 +196,7 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( string const & na
   auto & capPressureEpsilon = capPressure->getReference< real64 >( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-4;
 
-  capPressure->PostProcessInputRecursive();
+  capPressure->postProcessInputRecursive();
   return capPressure;
 }
 
@@ -208,8 +208,8 @@ TEST( testCapPressure, numericalDerivatives_brooksCoreyCapPressureTwoPhase )
 
   CapillaryPressureBase * fluid = makeBrooksCoreyCapPressureTwoPhase( "capPressure", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -235,8 +235,8 @@ TEST( testCapPressure, numericalDerivatives_brooksCoreyCapPressureThreePhase )
 
   CapillaryPressureBase * fluid = makeBrooksCoreyCapPressureThreePhase( "capPressure", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -265,8 +265,8 @@ TEST( testCapPressure, numericalDerivatives_vanGenuchtenCapPressureTwoPhase )
 
   CapillaryPressureBase * fluid = makeVanGenuchtenCapPressureTwoPhase( "capPressure", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -293,8 +293,8 @@ TEST( testCapPressure, numericalDerivatives_vanGenuchtenCapPressureThreePhase )
 
   CapillaryPressureBase * fluid = makeVanGenuchtenCapPressureThreePhase( "capPressure", parent.get() );
 
-  parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initialize( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;

@@ -80,10 +80,10 @@ void LinearElasticIsotropic::setDefaultShearModulus( real64 const shearModulus )
 }
 
 
-void LinearElasticIsotropic::PostProcessInput()
+void LinearElasticIsotropic::postProcessInput()
 {
 
-  SolidBase::PostProcessInput();
+  SolidBase::postProcessInput();
 
   real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
   real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );

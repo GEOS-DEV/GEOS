@@ -45,16 +45,16 @@ public:
    * @brief Return the name of the aggregate element sub-region in the object catalog.
    * @return string that contains the AggregateElementSubRegion catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "AggregateCell"; }
 
   /**
-   * @brief Provide a virtual access to CatalogName().
+   * @brief Provide a virtual access to catalogName().
    * @return string that contains the AggregateElementSubRegion catalog name
    */
   virtual const string getCatalogName() const override
   {
-    return AggregateElementSubRegion::CatalogName();
+    return AggregateElementSubRegion::catalogName();
   }
   ///@}
 
@@ -80,7 +80,7 @@ public:
    * @param[in] aggregateIndex index of the aggregate coarse cell
    * @return the number of fine cell in the aggregate
    */
-  localIndex GetNbCellsPerAggregate( localIndex aggregateIndex ) const
+  localIndex getNbCellsPerAggregate( localIndex aggregateIndex ) const
   {
     return m_nbFineCellsPerCoarseCell[aggregateIndex + 1] - m_nbFineCellsPerCoarseCell[aggregateIndex];
   }
@@ -109,7 +109,7 @@ public:
    * @param[in] fineToCoarse index array of fine cells to be aggregated to form coarse cells
    * @param[in] barycenters coordinates of the elements center
    */
-  void CreateFromFineToCoarseMap( localIndex nbAggregates,
+  void createFromFineToCoarseMap( localIndex nbAggregates,
                                   arrayView1d< localIndex const > const & fineToCoarse,
                                   arrayView2d< real64 const > const & barycenters );
 
@@ -117,12 +117,12 @@ public:
    * @brief Accessor to the relation array between fine and coarse elements.
    * @return the relation array between fine and coarse elements ordered by aggregates
    */
-  const array1d< localIndex > & GetFineToCoarseMap()
+  const array1d< localIndex > & getFineToCoarseMap()
   {
     return m_fineToCoarse;
   }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) override
   {
     GEOSX_UNUSED_VAR( nodeManager );

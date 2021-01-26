@@ -64,10 +64,10 @@ BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara
   GEOSX_ERROR_IF( notFound, "Component Water/Brine is not found!" );
 
 
-  MakeTable( inputPara );
+  makeTable( inputPara );
 }
 
-void BrineCO2DensityFunction::MakeTable( string_array const & inputPara )
+void BrineCO2DensityFunction::makeTable( string_array const & inputPara )
 {
   real64_array pressures;
   real64_array temperatures;
@@ -132,13 +132,13 @@ void BrineCO2DensityFunction::MakeTable( string_array const & inputPara )
 
   real64_array2d densities( nP, nT );
 
-  CalculateBrineDensity( pressures, temperatures, m, densities );
+  calculateBrineDensity( pressures, temperatures, m, densities );
 
   m_BrineDensityTable = std::make_shared< XYTable >( "BrineDensityTable", pressures, temperatures, densities );
 }
 
 
-void BrineCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature,
+void BrineCO2DensityFunction::evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature,
                                           arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
 {
   EvalArgs2D P, T, density;
@@ -148,7 +148,7 @@ void BrineCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, EvalVarA
   T.m_var = temperature.m_var;
   T.m_der[1] = 1.0;
 
-  density = m_BrineDensityTable->Value( P, T );
+  density = m_BrineDensityTable->value( P, T );
 
   constexpr real64 a = 37.51;
   constexpr real64 b = -9.585e-2;
@@ -181,7 +181,7 @@ void BrineCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, EvalVarA
   }
 }
 
-void BrineCO2DensityFunction::CalculateBrineDensity( real64_array const & pressure, real64_array const & temperature, real64 const & salinity,
+void BrineCO2DensityFunction::calculateBrineDensity( real64_array const & pressure, real64_array const & temperature, real64 const & salinity,
                                                      real64_array2d const & density )
 {
   constexpr real64 c1 = -9.9595;

@@ -57,7 +57,7 @@ Group::~Group()
 //  m_conduitNode.parent()->remove( m_name );
 }
 
-Group::CatalogInterface::CatalogType & Group::GetCatalog()
+Group::CatalogInterface::CatalogType & Group::getCatalog()
 {
   static Group::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -125,7 +125,7 @@ void Group::reserve( indexType const newSize )
   m_capacity = newSize;
 }
 
-void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
+void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
   xmlWrapper::addIncludedXML( targetNode );
 
@@ -140,22 +140,22 @@ void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     }
 
     // Create children
-    Group * newChild = CreateChild( childNode.name(), childName );
+    Group * newChild = createChild( childNode.name(), childName );
     if( newChild == nullptr )
     {
-      newChild = GetGroup( childName );
+      newChild = getGroup( childName );
     }
     if( newChild != nullptr )
     {
-      newChild->ProcessInputFileRecursive( childNode );
+      newChild->processInputFileRecursive( childNode );
     }
   }
 
-  ProcessInputFile( targetNode );
+  processInputFile( targetNode );
 //  ProcessInputFile_PostProcess();
 }
 
-void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
 {
 
   std::set< string > processedXmlNodes;
@@ -182,48 +182,48 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
   }
 }
 
-void Group::PostProcessInputRecursive()
+void Group::postProcessInputRecursive()
 {
   for( auto const & subGroupIter : m_subGroups )
   {
-    subGroupIter.second->PostProcessInputRecursive();
+    subGroupIter.second->postProcessInputRecursive();
   }
-  PostProcessInput();
+  postProcessInput();
 }
 
 
 
-void Group::RegisterDataOnMeshRecursive( Group * const meshBodies )
+void Group::registerDataOnMeshRecursive( Group * const meshBodies )
 {
-  RegisterDataOnMesh( meshBodies );
+  registerDataOnMesh( meshBodies );
   for( auto && subGroup : m_subGroups )
   {
-    subGroup.second->RegisterDataOnMeshRecursive( meshBodies );
+    subGroup.second->registerDataOnMeshRecursive( meshBodies );
   }
 }
 
 
-Group * Group::CreateChild( string const & childKey, string const & childName )
+Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in Group::Catalog" );
   GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
-  return RegisterGroup( childName,
-                        CatalogInterface::Factory( childKey, childName, this ) );
+  return registerGroup( childName,
+                        CatalogInterface::factory( childKey, childName, this ) );
 }
 
 
-void Group::PrintDataHierarchy( integer indent )
+void Group::printDataHierarchy( integer indent )
 {
   for( auto & view : this->wrappers() )
   {
-    GEOSX_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->get_typeid().name());
+    GEOSX_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->getTypeId().name());
   }
 
   for( auto & group : this->m_subGroups )
   {
     GEOSX_LOG( string( indent, '\t' )<<group.first<<':' );
-    group.second->PrintDataHierarchy( indent + 1 );
+    group.second->printDataHierarchy( indent + 1 );
   }
 }
 
@@ -248,7 +248,7 @@ void Group::deregisterGroup( std::string const & name )
   m_conduitNode.remove( name );
 }
 
-void Group::InitializationOrder( string_array & order )
+void Group::initializationOrder( string_array & order )
 {
   for( auto & subGroupIter : this->m_subGroups )
   {
@@ -256,42 +256,42 @@ void Group::InitializationOrder( string_array & order )
   }
 }
 
-void Group::Initialize( Group * const group )
+void Group::initialize( Group * const group )
 {
   static localIndex indent = 0;
 
-  InitializePreSubGroups( group );
+  initializePreSubGroups( group );
 
   string_array initOrder;
-  InitializationOrder( initOrder );
+  initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
   {
     ++indent;
-    this->GetGroup( groupName )->Initialize( group );
+    this->getGroup( groupName )->initialize( group );
     --indent;
   }
 
-  InitializePostSubGroups( group );
+  initializePostSubGroups( group );
 }
 
 
-void Group::InitializePostInitialConditions( Group * const rootGroup )
+void Group::initializePostInitialConditions( Group * const rootGroup )
 {
-  InitializePostInitialConditions_PreSubGroups( rootGroup );
+  initializePostInitialConditionsPreSubGroups( rootGroup );
 
   string_array initOrder;
-  InitializationOrder( initOrder );
+  initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
   {
-    this->GetGroup( groupName )->InitializePostInitialConditions( rootGroup );
+    this->getGroup( groupName )->initializePostInitialConditions( rootGroup );
   }
 
-  InitializePostInitialConditions_PostSubGroups( rootGroup );
+  initializePostInitialConditionsPostSubGroups( rootGroup );
 }
 
-localIndex Group::PackSize( string_array const & wrapperNames,
+localIndex Group::packSize( string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             bool on_device ) const
@@ -308,11 +308,11 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperPair.first );
       if( packList.empty() )
       {
-        packedSize += wrapperPair.second->PackSize( true, on_device );
+        packedSize += wrapperPair.second->packSize( true, on_device );
       }
       else
       {
-        packedSize += wrapperPair.second->PackByIndexSize( packList, true, on_device );
+        packedSize += wrapperPair.second->packByIndexSize( packList, true, on_device );
       }
     }
   }
@@ -325,11 +325,11 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->PackSize( true, on_device );
+        packedSize += wrapper->packSize( true, on_device );
       }
       else
       {
-        packedSize += wrapper->PackByIndexSize( packList, true, on_device );
+        packedSize += wrapper->packByIndexSize( packList, true, on_device );
       }
     }
   }
@@ -340,7 +340,7 @@ localIndex Group::PackSize( string_array const & wrapperNames,
     for( auto const & keyGroupPair : this->m_subGroups )
     {
       packedSize += bufferOps::PackSize( keyGroupPair.first );
-      packedSize += keyGroupPair.second->PackSize( wrapperNames, packList, recursive, on_device );
+      packedSize += keyGroupPair.second->packSize( wrapperNames, packList, recursive, on_device );
     }
   }
 
@@ -348,16 +348,16 @@ localIndex Group::PackSize( string_array const & wrapperNames,
 }
 
 
-localIndex Group::PackSize( string_array const & wrapperNames,
+localIndex Group::packSize( string_array const & wrapperNames,
                             integer const recursive,
                             bool on_device ) const
 {
   arrayView1d< localIndex const > nullArray;
-  return PackSize( wrapperNames, nullArray, recursive, on_device );
+  return packSize( wrapperNames, nullArray, recursive, on_device );
 }
 
 
-localIndex Group::Pack( buffer_unit_type * & buffer,
+localIndex Group::pack( buffer_unit_type * & buffer,
                         string_array const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
@@ -376,11 +376,11 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
       if( packList.empty() )
       {
         // invoke wrapper pack kernel
-        packedSize += wrapperPair.second->Pack( buffer, true, on_device );
+        packedSize += wrapperPair.second->pack( buffer, true, on_device );
       }
       else
       {
-        packedSize += wrapperPair.second->PackByIndex( buffer, packList, true, on_device );
+        packedSize += wrapperPair.second->packByIndex( buffer, packList, true, on_device );
       }
     }
   }
@@ -393,11 +393,11 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
       packedSize += bufferOps::Pack< true >( buffer, wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->Pack( buffer, true, on_device );
+        packedSize += wrapper->pack( buffer, true, on_device );
       }
       else
       {
-        packedSize += wrapper->PackByIndex( buffer, packList, true, on_device );
+        packedSize += wrapper->packByIndex( buffer, packList, true, on_device );
       }
     }
   }
@@ -410,23 +410,23 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : this->m_subGroups )
     {
       packedSize += bufferOps::Pack< true >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, on_device );
+      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, on_device );
     }
   }
 
   return packedSize;
 }
 
-localIndex Group::Pack( buffer_unit_type * & buffer,
+localIndex Group::pack( buffer_unit_type * & buffer,
                         string_array const & wrapperNames,
                         integer const recursive,
                         bool on_device ) const
 {
   arrayView1d< localIndex const > nullArray;
-  return Pack( buffer, wrapperNames, nullArray, recursive, on_device );
+  return pack( buffer, wrapperNames, nullArray, recursive, on_device );
 }
 
-localIndex Group::Unpack( buffer_unit_type const * & buffer,
+localIndex Group::unpack( buffer_unit_type const * & buffer,
                           arrayView1d< localIndex > & packList,
                           integer const recursive,
                           bool on_device )
@@ -447,7 +447,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
     WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-    wrapper->UnpackByIndex( buffer, packList, true, on_device );
+    wrapper->unpackByIndex( buffer, packList, true, on_device );
   }
 
 
@@ -466,7 +466,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
+      unpackedSize += this->getGroup( subGroupName )->unpack( buffer, packList, recursive, on_device );
     }
   }
 
@@ -551,12 +551,12 @@ void Group::postRestartInitializationRecursive( Group * const domain )
   this->postRestartInitialization( domain );
 }
 
-void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaRoot ),
+void Group::setSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaRoot ),
                                  xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaParent ),
                                  integer GEOSX_UNUSED_PARAM( documentationType ) )
 {}
 
-void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBody ) )
+void Group::registerDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBody ) )
 {}
 
 

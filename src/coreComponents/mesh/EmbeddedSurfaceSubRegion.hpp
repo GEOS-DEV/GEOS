@@ -51,7 +51,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EmbeddedSurfaceSubRegion"; }
 
   /**
@@ -60,7 +60,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return EmbeddedSurfaceSubRegion::CatalogName();
+    return EmbeddedSurfaceSubRegion::catalogName();
   }
 
   ///@}
@@ -88,7 +88,7 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
   /**
@@ -110,7 +110,7 @@ public:
    * @param fracture pointer to the bounded plane which is defining the embedded surface element
    * @return boolean defining whether the embedded element was added or not
    */
-  bool AddNewEmbeddedSurface( localIndex const cellIndex,
+  bool addNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
                               NodeManager & nodeManager,
@@ -130,7 +130,7 @@ public:
    * @param k embedded surface cell index
    * @return value of the Heaviside
    */
-  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
+  real64 computeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k ) const;
 
 
@@ -183,7 +183,7 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
-  virtual string GetElementTypeString() const override final { return "Embedded"; }
+  virtual string getElementTypeString() const override final { return "Embedded"; }
 
   /**
    * @name Properties Getters

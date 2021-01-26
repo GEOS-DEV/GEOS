@@ -124,7 +124,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
   // create a clone of the fluid to run updates on
   std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", nullptr );
-  MultiFluidBase & fluidCopy = *fluidCopyPtr->group_cast< MultiFluidBase * >();
+  MultiFluidBase & fluidCopy = *fluidCopyPtr->groupCast< MultiFluidBase * >();
 
   fluid.allocateConstitutiveData( fluid.getParent(), 1 );
   fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
@@ -180,7 +180,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    fluidWrapper.Update( 0, 0, P, T, composition );
+    fluidWrapper.update( 0, 0, P, T, composition );
   } );
 
   // now perturb variables and update the copied fluid's state
@@ -191,7 +191,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
     // update pressure and check derivatives
     {
       real64 const dP = perturbParameter * (P + perturbParameter);
-      fluidWrapper.Update( 0, 0, P + dP, T, composition );
+      fluidWrapper.update( 0, 0, P + dP, T, composition );
 
       checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, absTol, "phaseFrac", "Pres", phases );
       checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
@@ -212,7 +212,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
     // update temperature and check derivatives
     {
       real64 const dT = perturbParameter * (T + perturbParameter);
-      fluidWrapper.Update( 0, 0, P, T + dT, composition );
+      fluidWrapper.update( 0, 0, P, T + dT, composition );
 
       checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, absTol, "phaseFrac", "Temp", phases );
       checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
@@ -254,7 +254,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       for( localIndex ic = 0; ic < NC; ++ic )
         compNew[ic] /= sum;
 
-      fluidWrapper.Update( 0, 0, P, T, compNew );
+      fluidWrapper.update( 0, 0, P, T, compNew );
 
       string const var = "compFrac[" + components[jc] + "]";
       checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
@@ -269,7 +269,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
 MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
 {
-  auto fluid = parent.RegisterGroup< CompositionalMultiphaseFluid >( name );
+  auto fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -301,7 +301,7 @@ MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 
@@ -316,8 +316,8 @@ protected:
 
     fluid = makeCompositionalFluid( "fluid", *parent );
 
-    parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
+    parent->initialize( parent.get() );
+    parent->initializePostInitialConditions( parent.get() );
   }
 
   std::unique_ptr< Group > parent;
@@ -358,7 +358,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
 
 MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup< BlackOilFluid >( name );
+  auto fluid = parent->registerGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -385,13 +385,13 @@ MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
   auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
   fluidType = BlackOilFluid::FluidType::LiveOil;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 
 MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup< BlackOilFluid >( name );
+  auto fluid = parent->registerGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -418,7 +418,7 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
   fluidType = BlackOilFluid::FluidType::DeadOil;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 
@@ -450,8 +450,8 @@ protected:
     parent->resize( 1 );
     fluid = makeLiveOilFluid( "fluid", parent.get());
 
-    parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
+    parent->initialize( parent.get() );
+    parent->initializePostInitialConditions( parent.get() );
   }
 
   virtual void TearDown() override
@@ -512,8 +512,8 @@ protected:
     parent->resize( 1 );
     fluid = makeDeadOilFluid( "fluid", parent.get());
 
-    parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
+    parent->initialize( parent.get() );
+    parent->initializePostInitialConditions( parent.get() );
   }
 
   virtual void TearDown() override

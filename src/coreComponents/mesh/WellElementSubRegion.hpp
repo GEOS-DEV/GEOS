@@ -77,12 +77,12 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static const string CatalogName() { return "wellElementSubRegion"; }
+  static const string catalogName() { return "wellElementSubRegion"; }
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
+  virtual const string getCatalogName() const override { return WellElementSubRegion::catalogName(); }
 
   ///@}
 
@@ -91,7 +91,7 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const &,
+  virtual void calculateElementGeometricQuantities( NodeManager const &,
                                                     FaceManager const & ) override
   {}
 
@@ -159,7 +159,7 @@ public:
    * @brief Get for the top element index.
    * @return local index of well's top element or -1 if it is not on current rank
    */
-  localIndex GetTopWellElementIndex() const
+  localIndex getTopWellElementIndex() const
   {
     return m_topWellElementIndex;
   }
@@ -168,7 +168,7 @@ public:
    * @brief Set the name of the WellControls object of this well.
    * @param[in] name the name of the WellControls object
    */
-  void SetWellControlsName( string const & name )
+  void setWellControlsName( string const & name )
   {
     m_wellControlsName = name;
   }
@@ -177,7 +177,7 @@ public:
    * @brief Get the name of the WellControls object of this well.
    * @return a string containing the name of the WellControls object
    */
-  string const & GetWellControlsName() const
+  string const & getWellControlsName() const
   {
     return m_wellControlsName;
   }
@@ -186,7 +186,7 @@ public:
    * @brief Get all the local perforations.
    * @return a pointer to the PerforationData object
    */
-  PerforationData * GetPerforationData()
+  PerforationData * getPerforationData()
   {
     return &m_perforationData;
   }
@@ -194,7 +194,7 @@ public:
   /**
    * @copydoc GetPerforationData()
    */
-  PerforationData const * GetPerforationData() const
+  PerforationData const * getPerforationData() const
   {
     return &m_perforationData;
   }
@@ -203,7 +203,7 @@ public:
    * @brief Set for the MPI rank that owns this well (i.e. the top segment).
    * @param[in] rank MPI rank of the owner process
    */
-  void SetTopRank( int rank )
+  void setTopRank( int rank )
   {
     m_topRank = rank;
   }
@@ -212,7 +212,7 @@ public:
    * @brief Get the MPI rank that owns this well (i.e. the top segment).
    * @return MPI rank of the owner process
    */
-  int GetTopRank() const
+  int getTopRank() const
   {
     return m_topRank;
   }
@@ -221,7 +221,7 @@ public:
    * @brief Check if well is owned by current rank
    * @return true if the well is owned by current rank, false otherwise
    */
-  bool IsLocallyOwned() const;
+  bool isLocallyOwned() const;
 
   ///@}
 
@@ -240,7 +240,7 @@ public:
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void Generate( MeshLevel & mesh,
+  void generate( MeshLevel & mesh,
                  InternalWellGenerator const & wellGeometry,
                  arrayView1d< integer > & elemStatus,
                  globalIndex nodeOffsetGlobal,
@@ -251,13 +251,13 @@ public:
    * @param[in] mesh the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    */
-  void ConnectPerforationsToMeshElements( MeshLevel & mesh,
+  void connectPerforationsToMeshElements( MeshLevel & mesh,
                                           InternalWellGenerator const & wellGeometry );
 
   /**
    * @brief Reconstruct the (local) map nextWellElemId using nextWellElemIdGlobal after the ghost exchange.
    */
-  void ReconstructLocalConnectivity();
+  void reconstructLocalConnectivity();
 
   ///@}
 
@@ -266,11 +266,11 @@ public:
    */
   ///@{
 
-  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   /**
@@ -281,17 +281,17 @@ public:
    * @param[in] overwriteDownMaps Clear the down maps provided.
    * @return The packed size.
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   ///@}
 
   /// @cond DO_NOT_DOCUMENT
-  void DebugWellElementSubRegionsAfterSetupCommunications() const;
+  void debugWellElementSubRegionsAfterSetupCommunications() const;
   /// @endcond
 
   /**
@@ -365,7 +365,7 @@ private:
    * @param[out] wellElemStatus list of current well element status. Status values are defined in
    *                            enum SegmentStatus. They are used to partition well elements.
    */
-  void AssignUnownedElementsInReservoir( MeshLevel & mesh,
+  void assignUnownedElementsInReservoir( MeshLevel & mesh,
                                          InternalWellGenerator const & wellGeometry,
                                          SortedArray< globalIndex >           const & unownedElems,
                                          SortedArray< globalIndex > & localElems,
@@ -380,7 +380,7 @@ private:
    *
    * This function also checks that if two ranks are neighbors in the well, they are also neighbors in the mesh.
    */
-  void CheckPartitioningValidity( InternalWellGenerator const & wellGeometry,
+  void checkPartitioningValidity( InternalWellGenerator const & wellGeometry,
                                   SortedArray< globalIndex > & localElems,
                                   arrayView1d< integer > & elemStatusGlobal ) const;
 
@@ -395,7 +395,7 @@ private:
    *
    * The function WellElementSubRegion::CollectLocalAndBoundaryNodes must have been called before this function.
    */
-  void UpdateNodeManagerSize( MeshLevel & mesh,
+  void updateNodeManagerSize( MeshLevel & mesh,
                               InternalWellGenerator const & wellGeometry,
                               SortedArray< globalIndex > const & localNodes,
                               SortedArray< globalIndex > const & boundaryNodes,
@@ -412,7 +412,7 @@ private:
    *
    * The function WellElementSubRegion::UpdateNodeManagerSize must have been called before this function
    */
-  void ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
+  void constructSubRegionLocalElementMaps( MeshLevel & mesh,
                                            InternalWellGenerator const & wellGeometry,
                                            SortedArray< globalIndex > const & localElems,
                                            globalIndex nodeOffsetGlobal,
@@ -425,14 +425,14 @@ private:
    * This function is the equivalent of NodeManager::SetElementMaps for well elements.
    * The function WellElementSubRegion::ConstructSubRegionLocalElementMaps must have been called before this function
    */
-  void UpdateNodeManagerNodeToElementMap( MeshLevel & mesh );
+  void updateNodeManagerNodeToElementMap( MeshLevel & mesh );
 
   /// @cond DO_NOT_DOCUMENT
-  void DebugNodeManager( MeshLevel const & mesh ) const;
+  void debugNodeManager( MeshLevel const & mesh ) const;
   /// @endcond
 
   /// @cond DO_NOT_DOCUMENT
-  void DebugWellElementSubRegions( arrayView1d< integer const > const & wellElemStatus, globalIndex elemOffsetGlobal ) const;
+  void debugWellElementSubRegions( arrayView1d< integer const > const & wellElemStatus, globalIndex elemOffsetGlobal ) const;
   /// @endcond
 
   /**
@@ -443,7 +443,7 @@ private:
    * @return the pack size
    */
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
   /// Map of unmapped global indices in the element-to-node map
