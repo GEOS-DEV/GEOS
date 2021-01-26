@@ -31,12 +31,13 @@ using namespace dataRepository;
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                                     dataRepository::Group * const parent ):
   SurfaceElementSubRegion( name, parent ),
-  m_origin(),
   m_normalVector(),
   m_tangentVector1(),
   m_tangentVector2(),
   m_numOfJumpEnrichments( 3 ),
-  m_connectivityIndex()
+  m_connectivityIndex(),
+  // m_surfaceElementsToCells(),
+  m_parentPlaneName()
 {
   registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector )->
     setDescription( "Unit normal vector to the embedded surface." );
@@ -59,7 +60,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setApplyDefaultValue( 1 )->
     setDescription( "Connectivity index of each EmbeddedSurface." );
 
-  m_origin.resizeDimension< 1 >( 3 );
   m_normalVector.resizeDimension< 1 >( 3 );
   m_tangentVector1.resizeDimension< 1 >( 3 );
   m_tangentVector2.resizeDimension< 1 >( 3 );
@@ -216,10 +216,10 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       m_toNodesRelation( surfaceIndex, inode ) = elemNodes[inode];
     }
 
-    m_surfaceElementsToCells.m_toElementIndex[ surfaceIndex ][0]        = cellIndex;
-    m_surfaceElementsToCells.m_toElementSubRegion[ surfaceIndex ][0]    =  subRegionIndex;
-    m_surfaceElementsToCells.m_toElementRegion[ surfaceIndex ][0]       =  regionIndex;
-    LvArray::tensorOps::copy< 3 >( m_origin[ surfaceIndex ], origin );
+    m_surfaceElementsToCells.m_toElementIndex[ surfaceIndex ][0]     = cellIndex;
+    m_surfaceElementsToCells.m_toElementSubRegion[ surfaceIndex ][0] =  subRegionIndex;
+    m_surfaceElementsToCells.m_toElementRegion[ surfaceIndex ][0]    =  regionIndex;
+    m_parentPlaneName[ surfaceIndex ] = fracture->getName();
     LvArray::tensorOps::copy< 3 >( m_normalVector[ surfaceIndex ], normalVector );
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], fracture->getWidthVector());
     LvArray::tensorOps::copy< 3 >( m_tangentVector2[ surfaceIndex ], fracture->getLengthVector());

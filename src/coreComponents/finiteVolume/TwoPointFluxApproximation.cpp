@@ -642,8 +642,8 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
 
   arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const permeabilityTensor =
-    elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coeffTensor =
+      elemManager.ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
   arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
@@ -671,7 +671,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
       localIndex const ei  = surfaceElementsToCells.m_toElementIndex[kes][0];
 
       // Here goes EDFM transmissibility computation.
-      real64 avPerm = LvArray::tensorOps::l2Norm< 3 >( permeabilityTensor[er][esr][ei] );
+      real64 avPerm = LvArray::tensorOps::l2Norm< 3 >( coeffTensor[er][esr][ei] );
 
       real64 const ht = connectivityIndex[kes] * avPerm;   // Using matrix perm coz assuming fracture is highly permeable for now.
 
@@ -818,7 +818,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencilProjection( MeshLevel 
 
   addFractureFractureConnections( mesh, fractureSubRegion, fractureRegionIndex );
   addFractureMatrixConnections( mesh, fractureSubRegion, fractureRegionIndex );
-  ProjectionEDFMHelper pedfm(mesh, geometricObjManager);
+  ProjectionEDFMHelper pedfm(mesh, geometricObjManager, m_coeffName, cellStencil);
   pedfm.addNonNeighboringConnections(fractureSubRegion);
   exit(0);
 }

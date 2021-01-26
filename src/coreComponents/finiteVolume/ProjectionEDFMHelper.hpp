@@ -9,7 +9,10 @@ namespace geosx {
 class ProjectionEDFMHelper {
  public:
   ProjectionEDFMHelper( MeshLevel const & mesh,
-                        GeometricObjectManager const * geometricObjManager );
+                        GeometricObjectManager const * geometricObjManager,
+                        std::string const & coeffName,
+                        CellElementStencilTPFA & stencil );
+
   void addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion);
 
   virtual ~ProjectionEDFMHelper() = default;
@@ -32,7 +35,7 @@ class ProjectionEDFMHelper {
                                       localIndex const fracElement,
                                       EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
 
-  bool intersection( arraySlice1d< real64 const > const & fracOrigin,
+  bool intersection( real64 (&fracOrigin)[3],
                      arraySlice1d< real64 const > const & fracNormal,
                      localIndex edgeIdx,
                      real64 (&tmp)[3] ) const noexcept;
@@ -40,11 +43,11 @@ class ProjectionEDFMHelper {
   bool isBoundaryFace( localIndex faceIdx ) const noexcept;
   bool onLargerSide( localIndex faceIdx,
                      real64 signedDistanceCellCenterToFrac,
-                     arraySlice1d< real64 const > const & fracOrigin,
+                     real64 (&fracOrigin)[3],
                      arraySlice1d< real64 const > const & fracNormal ) const noexcept;
   real64 getSignedDistanceCellCenterToFracPlane( CellID const & hostCellID,
                                                  arraySlice1d< real64 const > const & fracNormal,
-                                                 arraySlice1d< real64 const > const & fracOrigin,
+                                                 real64 const (&fracOrigin)[3],
                                                  real64 (&tmp)[3] ) const noexcept;
   bool neighborOnSameSide( localIndex faceIdx,
                            real64 signedDistanceCellCenterToFrac,
@@ -58,7 +61,10 @@ class ProjectionEDFMHelper {
                                            EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                            localIndex faceIdx ) const;
 
-  // void addNonNeighboringConnection(  )
+  void addNonNeighboringConnection( localIndex fracElement,
+                                    CellID const & cell,
+                                    real64 transmissibility,
+                                    EmbeddedSurfaceSubRegion const & fractureSubRegion );
 
   MeshLevel const & m_mesh;
   GeometricObjectManager const * m_geometricObjManager;
@@ -75,6 +81,8 @@ class ProjectionEDFMHelper {
   ArrayOfArraysView< localIndex const > const m_facesToNodes;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > m_nodeReferencePosition;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_cellCenters;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_permTensor;
+  CellElementStencilTPFA & m_stencil;
 };
 
 }  // end namespace geosx
