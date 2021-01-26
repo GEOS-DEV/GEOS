@@ -82,7 +82,7 @@ public:
   ///@}
 
   /**
-   * @copydoc dataRepository::Group::RegisterDataOnMeshRecursive( Group * const )
+   * @copydoc dataRepository::Group::registerDataOnMeshRecursive( Group * const )
    */
   virtual void registerDataOnMeshRecursive( Group * const meshBodies ) override final;
 
