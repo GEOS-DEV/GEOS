@@ -87,7 +87,7 @@ public:
              dataRepository::Group * domain );
 
   /**
-   * @copydoc dataRepository::Group::CreateChild()
+   * @copydoc dataRepository::Group::createChild()
    *
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
    * e.g.:

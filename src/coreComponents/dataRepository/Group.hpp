@@ -377,7 +377,7 @@ public:
   }
 
   /**
-   * @copydoc GetGroup(localIndex)
+   * @copydoc getGroup(localIndex)
    */
   template< typename T = Group >
   T const * getGroup( localIndex index ) const
@@ -398,7 +398,7 @@ public:
   }
 
   /**
-   * @copydoc GetGroup(string const &)
+   * @copydoc getGroup(string const &)
    */
   template< typename T = Group >
   T const * getGroup( string const & name ) const
@@ -448,7 +448,7 @@ public:
   }
 
   /**
-   * @copydoc GetGroup(subGroupMap::KeyIndex const & key)
+   * @copydoc getGroup(subGroupMap::KeyIndex const & key)
    */
   template< typename T = Group >
   T const * getGroup( subGroupMap::KeyIndex const & key ) const
@@ -471,7 +471,7 @@ public:
   }
 
   /**
-   * @copydoc GetGroupByPath(string const &)
+   * @copydoc getGroupByPath(string const &)
    */
   template< typename T = Group >
   T const * getGroupByPath( string const & path ) const;

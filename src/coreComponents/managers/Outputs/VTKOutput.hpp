@@ -60,7 +60,7 @@ public:
 
   /**
    * @brief Write one final set of vtk files as the code exits
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
