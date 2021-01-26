@@ -204,7 +204,6 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( 
   /*
    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */
-
   // Add the embedded elements to the fracture stencil.
   addToFractureStencil( domain );
 
@@ -213,6 +212,11 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( 
 
 void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 {
+  // ProblemManager * problemManager = Group::group_cast< ProblemManager * >( domain.getParent() );
+   // Get geometric object manager
+  // GeometricObjectManager * geometricObjManager = problemManager->GetGroup< GeometricObjectManager >( "Geometry" );
+  GeometricObjectManager * geometricObjManager = domain.getParent()->GetGroup< GeometricObjectManager >( "Geometry" );
+
   // Add embedded elements to the fracture Stencil
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -228,7 +232,8 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addEDFracToFractureStencil( *meshLevel,
-                                                this->m_fractureRegionName );
+                                                this->m_fractureRegionName,
+                                                geometricObjManager );
       }
     }
   }

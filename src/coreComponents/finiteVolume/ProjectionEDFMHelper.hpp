@@ -8,7 +8,8 @@ namespace geosx {
 
 class ProjectionEDFMHelper {
  public:
-  ProjectionEDFMHelper(MeshLevel const & m_mesh);
+  ProjectionEDFMHelper( MeshLevel const & mesh,
+                        GeometricObjectManager const * geometricObjManager );
   void addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion);
 
   virtual ~ProjectionEDFMHelper() = default;
@@ -31,25 +32,36 @@ class ProjectionEDFMHelper {
                                       localIndex const fracElement,
                                       EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
 
-  bool intersection(R1Tensor const & fracOrigin,
-                    R1Tensor const & fracNormal,
-                    localIndex edgeIdx,
-                    R1Tensor & tmp) const noexcept;
+  bool intersection( arraySlice1d< real64 const > const & fracOrigin,
+                     arraySlice1d< real64 const > const & fracNormal,
+                     localIndex edgeIdx,
+                     real64 (&tmp)[3] ) const noexcept;
 
-  bool isBoundaryFace(localIndex faceIdx) const noexcept;
+  bool isBoundaryFace( localIndex faceIdx ) const noexcept;
   bool onLargerSide( localIndex faceIdx,
                      real64 signedDistanceCellCenterToFrac,
-                     R1Tensor const & fracOrigin,
-                     R1Tensor const & fracNormal ) const noexcept;
-  real64 getSingedDistanceCellCenterToFracPlane( CellID const & hostCellID,
-                                                 R1Tensor const & fracNormal,
-                                                 R1Tensor const & fracOrigin,
-                                                 R1Tensor & tmp) const noexcept;
+                     arraySlice1d< real64 const > const & fracOrigin,
+                     arraySlice1d< real64 const > const & fracNormal ) const noexcept;
+  real64 getSignedDistanceCellCenterToFracPlane( CellID const & hostCellID,
+                                                 arraySlice1d< real64 const > const & fracNormal,
+                                                 arraySlice1d< real64 const > const & fracOrigin,
+                                                 real64 (&tmp)[3] ) const noexcept;
   bool neighborOnSameSide( localIndex faceIdx,
-                           read64 signedDistanceCellCenterToFrac,
-                           CellID const & hostCellID ) const;
+                           real64 signedDistanceCellCenterToFrac,
+                           CellID const & hostCellID,
+                           EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
+
+  CellID otherCell( localIndex faceIdx, CellID const & hostCellID ) const;
+
+  real64 fractureMatrixTransmissilibility( CellID const & neighborCell,
+                                           localIndex fracElement,
+                                           EmbeddedSurfaceSubRegion const & fractureSubRegion,
+                                           localIndex faceIdx ) const;
+
+  // void addNonNeighboringConnection(  )
 
   MeshLevel const & m_mesh;
+  GeometricObjectManager const * m_geometricObjManager;
   ElementRegionManager const * const m_elementManager;
   FaceManager const * const m_faceManager;
   NodeManager const * const m_nodeManager;
@@ -58,6 +70,8 @@ class ProjectionEDFMHelper {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodesCoord;
   arrayView2d< localIndex const > const m_edgeToNodes;
   arrayView2d< localIndex const > const m_facesToCells;
+  arrayView2d< localIndex const > const m_facesToRegions;
+  arrayView2d< localIndex const > const m_facesToSubRegions;
   ArrayOfArraysView< localIndex const > const m_facesToNodes;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > m_nodeReferencePosition;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_cellCenters;

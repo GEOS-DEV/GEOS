@@ -741,9 +741,12 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
       stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters( numElems );
       stackArray1d< integer, maxElems > isGhostConnectors( numElems );
 
-      //TODO get edge geometry
-      R1Tensor const edgeCenter = embSurfEdgeManager.calculateCenter( ke, X );
-      real64 const edgeLength   = embSurfEdgeManager.calculateLength( ke, X ).L2_Norm();
+      // TODO get edge geometry
+      real64 edgeCenter[3], edgeSegment[3];
+      embSurfEdgeManager.calculateCenter( ke, X, edgeCenter );
+      embSurfEdgeManager.calculateLength( ke, X, edgeSegment );
+      real64 const edgeLength  = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
+
 
       // loop over all embedded surface elements attached to the connector and add them to the stencil
       for( localIndex kes = 0; kes < numElems; kes++ )
@@ -784,18 +787,20 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
 }
 
 void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
-                                                            string const & embeddedSurfaceRegionName ) const
+                                                            string const & embeddedSurfaceRegionName,
+                                                            GeometricObjectManager const * geometricObjManager ) const
 {
   // bool const projection = false;
   bool const projection = true;
 
   if ( projection )
-    addEDFracToFractureStencilProjection( mesh, embeddedSurfaceRegionName );
+    addEDFracToFractureStencilProjection( mesh, embeddedSurfaceRegionName, geometricObjManager );
   else addEDFracToFractureStencilStandard( mesh, embeddedSurfaceRegionName );
 }
 
 void TwoPointFluxApproximation::addEDFracToFractureStencilProjection( MeshLevel & mesh,
-                                                                      string const & embeddedSurfaceRegionName ) const
+                                                                      string const & embeddedSurfaceRegionName,
+                                                                      GeometricObjectManager const * geometricObjManager ) const
 {
   // Get the stencils
   ElementRegionManager & elemManager = *( mesh.getElemManager() );
@@ -813,7 +818,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencilProjection( MeshLevel 
 
   addFractureFractureConnections( mesh, fractureSubRegion, fractureRegionIndex );
   addFractureMatrixConnections( mesh, fractureSubRegion, fractureRegionIndex );
-  ProjectionEDFMHelper pedfm(mesh);
+  ProjectionEDFMHelper pedfm(mesh, geometricObjManager);
   pedfm.addNonNeighboringConnections(fractureSubRegion);
   exit(0);
 }

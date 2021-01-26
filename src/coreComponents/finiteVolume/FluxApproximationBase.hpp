@@ -25,6 +25,7 @@
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
 #include "managers/DomainPartition.hpp"
+#include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 
 namespace geosx
 {
@@ -162,9 +163,11 @@ public:
    * @brief Add a new embedded fracture stencil.
    * @param[in,out] mesh the mesh on which to add the fracture stencil
    * @param[in] embeddedSurfaceRegionName the embedded surface element region name
+   * @param[in] geometricObjManager the geometric object manager that contains the geometric shapes of embedded fractures
    */
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const = 0;
+                                           string const & embeddedSurfaceRegionName,
+                                           GeometricObjectManager const * geometricObjManager ) const = 0;
 
   /**
    * @brief View keys.

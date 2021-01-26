@@ -68,14 +68,16 @@ protected:
                                        SortedArrayView< localIndex const > const & faceSet ) const override;
 
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const override;
+                                           string const & embeddedSurfaceRegionName,
+                                           GeometricObjectManager const * geometricObjManager ) const override;
 
   void addEDFracToFractureStencilStandard( MeshLevel & mesh,
                                            string const & embeddedSurfaceRegionName ) const;
 
   /* New stuff */
   void addEDFracToFractureStencilProjection( MeshLevel & mesh,
-                                             string const & embeddedSurfaceRegionName ) const;
+                                             string const & embeddedSurfaceRegionName,
+                                             GeometricObjectManager const * geometricObjManager ) const;
 
   void addFractureFractureConnections( MeshLevel & mesh,
                                        EmbeddedSurfaceSubRegion const & fractureSubRegion,

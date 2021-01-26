@@ -267,12 +267,12 @@ public:
    * @param k index of the embedded surface element
    * @return the second tangent vector of a specific embedded surface element
    */
-  R1Tensor & getOrigin( localIndex k ) { return m_origin[k]; }
+  arraySlice1d< real64 > getOrigin( localIndex k ) { return m_origin[k]; }
 
   /**
    * @copydoc getTangentVector2( localIndex k )
    */
-  R1Tensor const & getOrigin( localIndex k ) const { return m_origin[k]; }
+  arraySlice1d< real64 const > getOrigin( localIndex k ) const { return m_origin[k]; }
 
 
   /**
@@ -324,7 +324,7 @@ public:
 private:
 
   // Point within the plane of each embedded surface element
-  array1d< R1Tensor > m_origin;
+  array2d< real64 > m_origin;
 
   /// normal vector to the embedded surface element
   array2d< real64 > m_normalVector;
