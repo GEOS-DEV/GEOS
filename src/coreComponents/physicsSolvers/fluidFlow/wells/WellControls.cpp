@@ -90,25 +90,25 @@ WellControls::WellControls( string const & name, Group * const parent )
 WellControls::~WellControls()
 {}
 
-void WellControls::SwitchToBHPControl( real64 const & val )
+void WellControls::switchToBHPControl( real64 const & val )
 {
   m_currentControl = Control::BHP;
   m_targetBHP = val;
 }
 
-void WellControls::SwitchToTotalRateControl( real64 const & val )
+void WellControls::switchToTotalRateControl( real64 const & val )
 {
   m_currentControl = Control::TOTALVOLRATE;
   m_targetTotalRate = val;
 }
 
-void WellControls::SwitchToPhaseRateControl( real64 const & val )
+void WellControls::switchToPhaseRateControl( real64 const & val )
 {
   m_currentControl = Control::PHASEVOLRATE;
   m_targetPhaseRate = val;
 }
 
-void WellControls::PostProcessInput()
+void WellControls::postProcessInput()
 {
   // 3.a) check target BHP
   if( m_targetBHP < 0 )
@@ -151,10 +151,10 @@ void WellControls::PostProcessInput()
 }
 
 
-void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
+void WellControls::initializePostInitialConditionsPreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
-  if( GetType() == Type::PRODUCER
+  if( getType() == Type::PRODUCER
       && (m_targetPhaseRate > 0.0 || m_targetTotalRate > 0.0) )
   {
     m_targetTotalRate *= -1;

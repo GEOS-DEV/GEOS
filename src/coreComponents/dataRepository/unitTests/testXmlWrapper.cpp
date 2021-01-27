@@ -28,55 +28,55 @@ TEST( testXmlWrapper, array3d_errors )
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    xmlWrapper::StringToInputVariable( array, input );
+    xmlWrapper::stringToInputVariable( array, input );
   }
   // This should fail the num('{')==num('}') test
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17}  , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14,{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8,{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { 0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = "  { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
   {
     input = " { { {,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
   {
     input = " { { {},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2}}{ } }";
     array3d< int > array;
-    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::stringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
 
@@ -120,7 +120,7 @@ TEST( testXmlWrapper, array3d )
   input += " }";
 
   array3d< int > array;
-  xmlWrapper::StringToInputVariable( array, input );
+  xmlWrapper::stringToInputVariable( array, input );
 
   ASSERT_EQ( array.size( 0 ), numI );
   ASSERT_EQ( array.size( 1 ), numJ );

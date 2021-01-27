@@ -177,8 +177,8 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  SinglePhaseWell & wellSolver = *solver.GetWellSolver()->group_cast< SinglePhaseWell * >();
-  SinglePhaseFVM< SinglePhaseBase > & flowSolver = *solver.GetFlowSolver()->group_cast< SinglePhaseFVM< SinglePhaseBase > * >();
+  SinglePhaseWell & wellSolver = *solver.getWellSolver()->groupCast< SinglePhaseWell * >();
+  SinglePhaseFVM< SinglePhaseBase > & flowSolver = *solver.getFlowSolver()->groupCast< SinglePhaseFVM< SinglePhaseBase > * >();
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > const & residual = solver.getLocalRhs();
@@ -188,7 +188,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   // assemble the analytical residual
-  solver.ResetStateToBeginningOfStep( domain );
+  solver.resetStateToBeginningOfStep( domain );
 
   residual.setValues< parallelDevicePolicy<> >( 0.0 );
   jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -203,8 +203,8 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.setValues< parallelDevicePolicy<> >( 0.0 );
 
-  string const & resDofKey  = dofManager.getKey( wellSolver.ResElementDofName() );
-  string const & wellDofKey = dofManager.getKey( wellSolver.WellElementDofName() );
+  string const & resDofKey  = dofManager.getKey( wellSolver.resElementDofName() );
+  string const & wellDofKey = dofManager.getKey( wellSolver.wellElementDofName() );
 
   // at this point we start assembling the finite-difference block by block
 
@@ -214,7 +214,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
   for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
-    ElementRegionBase * const elemRegion = elemManager.GetRegion( er );
+    ElementRegionBase * const elemRegion = elemManager.getRegion( er );
     elemRegion->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       // get the dof numbers and ghosting information
@@ -232,7 +232,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         {
-          solver.ResetStateToBeginningOfStep( domain );
+          solver.resetStateToBeginningOfStep( domain );
 
           // here is the perturbation in the pressure of the element
           real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
@@ -243,12 +243,12 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
           flowSolver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                      ElementSubRegionBase & subRegion2 )
           {
-            flowSolver.UpdateState( subRegion2, targetIndex2 );
+            flowSolver.updateState( subRegion2, targetIndex2 );
           } );
           wellSolver.forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex3,
                                                                              WellElementSubRegion & subRegion3 )
           {
-            wellSolver.UpdateState( subRegion3, targetIndex3 );
+            wellSolver.updateState( subRegion3, targetIndex3 );
           } );
 
           residual.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -294,7 +294,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
     for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       {
-        solver.ResetStateToBeginningOfStep( domain );
+        solver.resetStateToBeginningOfStep( domain );
 
         // here is the perturbation in the pressure of the well element
         real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
@@ -302,7 +302,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dWellElemPressure[iwelem] = dP;
 
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver.UpdateState( subRegion, targetIndex );
+        wellSolver.updateState( subRegion, targetIndex );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
         jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -322,7 +322,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
     for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       {
-        solver.ResetStateToBeginningOfStep( domain );
+        solver.resetStateToBeginningOfStep( domain );
 
         // here is the perturbation in the pressure of the well element
         real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
@@ -330,7 +330,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dConnRate[iwelem] = dRate;
 
         // after perturbing, update the rate-dependent quantities in the well (well controls)
-        wellSolver.UpdateState( subRegion, targetIndex );
+        wellSolver.updateState( subRegion, targetIndex );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
         jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -348,7 +348,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
   } );
 
   // assemble the analytical jacobian
-  solver.ResetStateToBeginningOfStep( domain );
+  solver.resetStateToBeginningOfStep( domain );
 
   residual.setValues< parallelDevicePolicy<> >( 0.0 );
   jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -370,17 +370,17 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( *problemManager, xmlInput );
-    solver = problemManager->GetPhysicsSolverManager().GetGroup< SinglePhaseReservoir >( "reservoirSystem" );
+    solver = problemManager->getPhysicsSolverManager().getGroup< SinglePhaseReservoir >( "reservoirSystem" );
 
     DomainPartition & domain = *problemManager->getDomainPartition();
 
-    solver->SetupSystem( domain,
+    solver->setupSystem( domain,
                          solver->getDofManager(),
                          solver->getLocalMatrix(),
                          solver->getLocalRhs(),
                          solver->getLocalSolution() );
 
-    solver->ImplicitStepSetup( time, dt, domain );
+    solver->implicitStepSetup( time, dt, domain );
   }
 
   static real64 constexpr time = 0.0;
@@ -406,7 +406,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->AssembleCouplingTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleCouplingTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -421,7 +421,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->GetWellSolver()->AssembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->getWellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -436,7 +436,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->GetWellSolver()->FormPressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->getWellSolver()->formPressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

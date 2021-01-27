@@ -20,7 +20,7 @@ Function Description
 
  .. code-block:: c
 
-  double PVTPackage::CO2Model::ComputeMassDensity(double P, double T)
+  double PVTPackage::CO2Model::computeMassDensity(double P, double T)
 
 ``input parameters:`` 
 
@@ -36,7 +36,7 @@ Function Description
 
  .. code-block:: c
 
-  double PVTPackage::CO2Model::ComputeVisc(double P, double T)
+  double PVTPackage::CO2Model::computeVisc(double P, double T)
 
 ``input parameters:``
 
@@ -51,7 +51,7 @@ Function Description
 
  .. code-block:: c
 
-  double PVTPackage::BrineModel::ComputeMassDensity(double P, double T, double salinity)
+  double PVTPackage::BrineModel::computeMassDensity(double P, double T, double salinity)
 
 ``input parameters:``
 

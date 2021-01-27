@@ -60,9 +60,9 @@ BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
 {}
 
 
-void BrooksCoreyRelativePermeability::PostProcessInput()
+void BrooksCoreyRelativePermeability::postProcessInput()
 {
-  RelativePermeabilityBase::PostProcessInput();
+  RelativePermeabilityBase::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 

@@ -53,7 +53,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "SurfaceElementSubRegion"; }
 
   /**
@@ -62,7 +62,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return SurfaceElementSubRegion::CatalogName();
+    return SurfaceElementSubRegion::catalogName();
   }
 
   ///@}

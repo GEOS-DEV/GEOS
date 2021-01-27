@@ -119,88 +119,86 @@ public:
    * @brief Get the well type (injector or producer).
    * @return a well Type enum
    */
-  Type GetType() const { return m_type; }
-
+  Type getType() const { return m_type; }
 
   /**
    * @brief Set the control type to BHP and set a numerical value for the control.
    * @param[in] val value for the BHP control
    */
-  void SwitchToBHPControl( real64 const & val );
+  void switchToBHPControl( real64 const & val );
 
   /**
    * @brief Set the control type to total rate and set a numerical value for the control.
    * @param[in] val value for the total volumetric rate
    */
-  void SwitchToTotalRateControl( real64 const & val );
+  void switchToTotalRateControl( real64 const & val );
 
   /**
    * @brief Set the control type to phase rate and set a numerical value for the control.
    * @param[in] val value for the phase volumetric rate
    */
-  void SwitchToPhaseRateControl( real64 const & val );
+  void switchToPhaseRateControl( real64 const & val );
 
   /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
    */
-  Control GetControl() const { return m_currentControl; }
+  Control getControl() const { return m_currentControl; }
 
   /**
    * @brief Getter for the reference elevation where the BHP control is enforced
    * @return the reference elevation
    */
-  real64 GetReferenceElevation() const { return m_refElevation; }
+  real64 getReferenceElevation() const { return m_refElevation; }
 
   /**
    * @brief Getter for the reference gravity coefficient
    * @return the reference gravity coefficient
    */
-  real64 GetReferenceGravityCoef() const { return m_refGravCoef; }
+  real64 getReferenceGravityCoef() const { return m_refGravCoef; }
 
   /**
    * @brief Setter for the reference gravity
    */
-  void SetReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
+  void setReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
 
 
   /**
    * @brief Get the target Bottom Hole Pressure value.
    * @return a value for the target Bottom Hole Pressure
    */
-  const real64 & GetTargetBHP() const { return m_targetBHP; }
+  const real64 & getTargetBHP() const { return m_targetBHP; }
 
 
   /**
    * @brief Get the target total rate
    * @return the target total rate
    */
-  const real64 & GetTargetTotalRate() const { return m_targetTotalRate; }
+  const real64 & getTargetTotalRate() const { return m_targetTotalRate; }
 
   /**
    * @brief Get the target phase rate
    * @return the target phase rate
    */
-  const real64 & GetTargetPhaseRate() const { return m_targetPhaseRate; }
+  const real64 & getTargetPhaseRate() const { return m_targetPhaseRate; }
 
   /**
    * @brief Get the target phase name
    * @return the target phase name
    */
-  const string & GetTargetPhaseName() const { return m_targetPhaseName; }
-
+  const string & getTargetPhaseName() const { return m_targetPhaseName; }
 
   /**
    * @brief Const accessor for the composition of the injection rate
    * @return a global component fraction vector
    */
-  arrayView1d< real64 const > GetInjectionStream() const { return m_injectionStream; }
+  arrayView1d< real64 const > getInjectionStream() const { return m_injectionStream; }
 
   /**
    * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
    * @return 1 if we use surface conditions, and 0 otherwise
    */
-  integer UseSurfaceConditions() const { return m_useSurfaceConditions; }
+  integer useSurfaceConditions() const { return m_useSurfaceConditions; }
 
   ///@}
 
@@ -256,14 +254,14 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /**
    * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
    * @param[in] rootGroup A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
 
 private:
 

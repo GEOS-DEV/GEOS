@@ -73,7 +73,7 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "SimpleGeometricObjectBase"; }
+  static string catalogName() { return "SimpleGeometricObjectBase"; }
 
   /**
    * @brief Type alias for catalog interface used by this class.
@@ -81,9 +81,9 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   ///@}
 
@@ -92,7 +92,7 @@ public:
    * @param[in] coord the coordinates to test
    * @return true if the coordinates are in the object, false otherwise
    */
-  virtual bool IsCoordInObject( real64 const ( &coord ) [3] ) const = 0;
+  virtual bool isCoordInObject( real64 const ( &coord ) [3] ) const = 0;
 
 };
 

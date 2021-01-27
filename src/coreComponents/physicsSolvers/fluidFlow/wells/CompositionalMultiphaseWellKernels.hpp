@@ -117,7 +117,7 @@ struct ControlEquationHelper
 
   GEOSX_HOST_DEVICE
   static void
-  Compute( globalIndex const rankOffset,
+  compute( globalIndex const rankOffset,
            localIndex const numComponents,
            WellControls::Control const currentControl,
            localIndex const targetPhaseIndex,
@@ -226,7 +226,7 @@ struct FluxKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           globalIndex const rankOffset,
           localIndex const numComponents,
           localIndex const numDofPerResElement,
@@ -244,8 +244,8 @@ struct FluxKernel
     localIndex const NC = numComponents;
     localIndex const resNDOF = numDofPerResElement;
 
-    WellControls::Type const wellType = wellControls.GetType();
-    arrayView1d< real64 const > const & injection = wellControls.GetInjectionStream();
+    WellControls::Type const wellType = wellControls.getType();
+    arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
 
     // loop over the well elements to compute the fluxes between elements
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
@@ -478,7 +478,7 @@ struct PressureRelationKernel
 
   template< typename POLICY, typename REDUCE_POLICY >
   static localIndex
-  Launch( localIndex const size,
+  launch( localIndex const size,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
@@ -501,11 +501,11 @@ struct PressureRelationKernel
     localIndex const resNDOF = numDofPerResElement;
 
     // static well control data
-    WellControls::Type const wellType = wellControls.GetType();
-    WellControls::Control const currentControl = wellControls.GetControl();
-    real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const targetTotalRate = wellControls.GetTargetTotalRate();
-    real64 const targetPhaseRate = wellControls.GetTargetPhaseRate();
+    WellControls::Type const wellType = wellControls.getType();
+    WellControls::Control const currentControl = wellControls.getControl();
+    real64 const targetBHP = wellControls.getTargetBHP();
+    real64 const targetTotalRate = wellControls.getTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.getTargetPhaseRate();
 
     // dynamic well control data
     real64 const & currentBHP =
@@ -558,7 +558,7 @@ struct PressureRelationKernel
           switchControl.max( 1 );
         }
 
-        ControlEquationHelper::Compute( rankOffset,
+        ControlEquationHelper::compute( rankOffset,
                                         NC,
                                         newControl,
                                         targetPhaseIndex,
@@ -671,7 +671,7 @@ struct PerforationKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           localIndex const numComponents,
           localIndex const numPhases,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
@@ -1004,7 +1004,7 @@ struct VolumeBalanceKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           localIndex const numComponents,
           localIndex const numPhases,
           localIndex const numDofPerWellElement,
@@ -1093,7 +1093,7 @@ struct PresCompFracInitializationKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const perforationSize,
+  launch( localIndex const perforationSize,
           localIndex const subRegionSize,
           localIndex const numComponents,
           localIndex const numPhases,
@@ -1114,10 +1114,10 @@ struct PresCompFracInitializationKernel
     localIndex const NC = numComponents;
     localIndex const NP = numPhases;
 
-    real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const refWellElemGravCoef = wellControls.GetReferenceGravityCoef();
-    WellControls::Control const currentControl = wellControls.GetControl();
-    WellControls::Type const wellType = wellControls.GetType();
+    real64 const targetBHP = wellControls.getTargetBHP();
+    real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
+    WellControls::Control const currentControl = wellControls.getControl();
+    WellControls::Type const wellType = wellControls.getType();
 
     // loop over all perforations to compute an average total mass density and component fraction
     RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTotalMassDens( 0 );
@@ -1164,21 +1164,21 @@ struct PresCompFracInitializationKernel
       sumCompFrac[ic] = sum.get();
     }
 
-    real64 const pres = ( wellControls.GetType() == WellControls::Type::PRODUCER )
-                        ? MpiWrapper::Min( minResPressure.get() )
-                        : MpiWrapper::Max( maxResPressure.get() );
-    real64 const avgTotalMassDens = MpiWrapper::Sum( sumTotalMassDens.get() ) / numPerforations;
+    real64 const pres = ( wellControls.getType() == WellControls::Type::PRODUCER )
+                        ? MpiWrapper::min( minResPressure.get() )
+                        : MpiWrapper::max( maxResPressure.get() );
+    real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / numPerforations;
 
     stackArray1d< real64, maxNumComp > avgCompFrac( NC );
     // compute average component fraction
-    if( wellControls.GetType() == WellControls::Type::PRODUCER )
+    if( wellControls.getType() == WellControls::Type::PRODUCER )
     {
       // use average comp frac from reservoir
       real64 compFracSum = 0;
       real64 const tol = 1e-13;
       for( localIndex ic = 0; ic < NC; ++ic )
       {
-        avgCompFrac[ic] = MpiWrapper::Sum( sumCompFrac[ic] ) / numPerforations;
+        avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic] ) / numPerforations;
         compFracSum += avgCompFrac[ic];
       }
       GEOSX_ERROR_IF( compFracSum < 1 - tol || compFracSum > 1 + tol,
@@ -1189,7 +1189,7 @@ struct PresCompFracInitializationKernel
       // use average comp frac from XML file
       for( localIndex ic = 0; ic < NC; ++ic )
       {
-        avgCompFrac[ic] = wellControls.GetInjectionStream()[ic];
+        avgCompFrac[ic] = wellControls.getInjectionStream()[ic];
       }
     }
 
@@ -1238,7 +1238,7 @@ struct CompDensInitializationKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const subRegionSize,
+  launch( localIndex const subRegionSize,
           localIndex const numComponents,
           arrayView2d< real64 const > const & wellElemCompFrac,
           arrayView2d< real64 const > const & wellElemTotalDens,
@@ -1262,17 +1262,17 @@ struct RateInitializationKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const subRegionSize,
+  launch( localIndex const subRegionSize,
           localIndex const targetPhaseIndex,
           WellControls const & wellControls,
           arrayView3d< real64 const > const & phaseDens,
           arrayView2d< real64 const > const & totalDens,
           arrayView1d< real64 > const & connRate )
   {
-    WellControls::Control const control = wellControls.GetControl();
-    WellControls::Type const wellType = wellControls.GetType();
-    real64 const targetTotalRate = wellControls.GetTargetTotalRate();
-    real64 const targetPhaseRate = wellControls.GetTargetPhaseRate();
+    WellControls::Control const control = wellControls.getControl();
+    WellControls::Type const wellType = wellControls.getType();
+    real64 const targetTotalRate = wellControls.getTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.getTargetPhaseRate();
 
     // Estimate the connection rates
     forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
@@ -1314,7 +1314,7 @@ struct TotalMassDensityKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const subRegionSize,
+  launch( localIndex const subRegionSize,
           localIndex const numComponents,
           localIndex const numPhases,
           arrayView2d< real64 const > const & phaseVolFrac,
@@ -1369,7 +1369,7 @@ struct ResidualNormKernel
 
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
   static void
-  Launch( LOCAL_VECTOR const localResidual,
+  launch( LOCAL_VECTOR const localResidual,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
@@ -1383,11 +1383,11 @@ struct ResidualNormKernel
           real64 const dt,
           real64 * localResidualNorm )
   {
-    WellControls::Type const wellType = wellControls.GetType();
-    WellControls::Control const currentControl = wellControls.GetControl();
-    real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const targetTotalRate = wellControls.GetTargetTotalRate();
-    real64 const targetPhaseRate = wellControls.GetTargetPhaseRate();
+    WellControls::Type const wellType = wellControls.getType();
+    WellControls::Control const currentControl = wellControls.getControl();
+    real64 const targetBHP = wellControls.getTargetBHP();
+    real64 const targetTotalRate = wellControls.getTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.getTargetPhaseRate();
     real64 const absTargetTotalRate = fabs( targetTotalRate );
     real64 const absTargetPhaseRate = fabs( targetPhaseRate );
 
@@ -1456,7 +1456,7 @@ struct SolutionScalingKernel
 {
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
   static real64
-  Launch( LOCAL_VECTOR const localSolution,
+  launch( LOCAL_VECTOR const localSolution,
           globalIndex const rankOffset,
           localIndex const numComponents,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
@@ -1529,7 +1529,7 @@ struct SolutionCheckKernel
 {
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
   static localIndex
-  Launch( LOCAL_VECTOR const localSolution,
+  launch( LOCAL_VECTOR const localSolution,
           globalIndex const rankOffset,
           localIndex const numComponents,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
@@ -1562,7 +1562,7 @@ struct SolutionCheckKernel
 
         // if component density is not allowed, the time step fails if a component density is negative
         // otherwise, we just check that the total density is positive, and negative component densities
-        // will be chopped (i.e., set to zero) in ApplySystemSolution
+        // will be chopped (i.e., set to zero) in applySystemSolution
         if( !allowCompDensChopping )
         {
           for( localIndex ic = 0; ic < numComponents; ++ic )

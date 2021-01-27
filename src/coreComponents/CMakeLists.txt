@@ -14,6 +14,7 @@ set( subdirs
      mpiCommunications
      physicsSolvers
      python
+     virtualElement
      )
 
 #set( subdirs

@@ -92,7 +92,7 @@ struct ControlEquationHelper
 
   GEOSX_HOST_DEVICE
   static void
-  Compute( globalIndex const rankOffset,
+  compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
            real64 const & targetBHP,
            real64 const & targetRate,
@@ -161,7 +161,7 @@ struct FluxKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -260,7 +260,7 @@ struct PressureRelationKernel
 
   template< typename POLICY, typename REDUCE_POLICY >
   static localIndex
-  Launch( localIndex const size,
+  launch( localIndex const size,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
@@ -276,10 +276,10 @@ struct PressureRelationKernel
           arrayView1d< real64 > const & localRhs )
   {
     // static well control data
-    WellControls::Type const wellType = wellControls.GetType();
-    WellControls::Control const currentControl = wellControls.GetControl();
-    real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const targetRate = wellControls.GetTargetTotalRate();
+    WellControls::Type const wellType = wellControls.getType();
+    WellControls::Control const currentControl = wellControls.getControl();
+    real64 const targetBHP = wellControls.getTargetBHP();
+    real64 const targetRate = wellControls.getTargetTotalRate();
 
     // dynamic well control data
     real64 const & currentBHP =
@@ -317,7 +317,7 @@ struct PressureRelationKernel
           switchControl.max( 1 );
         }
 
-        ControlEquationHelper::Compute( rankOffset,
+        ControlEquationHelper::compute( rankOffset,
                                         newControl,
                                         targetBHP,
                                         targetRate,
@@ -396,7 +396,7 @@ struct PerforationKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
           ElementViewConst< arrayView1d< real64 const > > const & dResPressure,
           ElementViewConst< arrayView2d< real64 const > > const & resDensity,
@@ -530,7 +530,7 @@ struct PresInitializationKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const perforationSize,
+  launch( localIndex const perforationSize,
           localIndex const subRegionSize,
           localIndex const numPerforations,
           WellControls const & wellControls,
@@ -542,10 +542,10 @@ struct PresInitializationKernel
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPressure )
   {
-    real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const refWellElemGravCoef = wellControls.GetReferenceGravityCoef();
-    WellControls::Control const currentControl = wellControls.GetControl();
-    WellControls::Type const wellType = wellControls.GetType();
+    real64 const targetBHP = wellControls.getTargetBHP();
+    real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
+    WellControls::Control const currentControl = wellControls.getControl();
+    WellControls::Type const wellType = wellControls.getType();
 
     // loop over all perforations to compute an average density
     RAJA::ReduceSum< parallelDeviceReduce, real64 > sumDensity( 0 );
@@ -563,10 +563,10 @@ struct PresInitializationKernel
       minResPressure.min( resPressure[er][esr][ei] );
       maxResPressure.max( resPressure[er][esr][ei] );
     } );
-    real64 const pres = ( wellControls.GetType() == WellControls::Type::PRODUCER )
-                        ? MpiWrapper::Min( minResPressure.get() )
-                        : MpiWrapper::Max( maxResPressure.get() );
-    real64 const avgDensity = MpiWrapper::Sum( sumDensity.get() ) / numPerforations;
+    real64 const pres = ( wellControls.getType() == WellControls::Type::PRODUCER )
+                        ? MpiWrapper::min( minResPressure.get() )
+                        : MpiWrapper::max( maxResPressure.get() );
+    real64 const avgDensity = MpiWrapper::sum( sumDensity.get() ) / numPerforations;
 
     real64 pressureControl = 0.0;
     real64 const gravCoefControl = refWellElemGravCoef;
@@ -604,14 +604,14 @@ struct RateInitializationKernel
 
   template< typename POLICY >
   static void
-  Launch( localIndex const subRegionSize,
+  launch( localIndex const subRegionSize,
           WellControls const & wellControls,
           arrayView2d< real64 const > const & wellElemDens,
           arrayView1d< real64 > const & connRate )
   {
-    real64 const targetRate = wellControls.GetTargetTotalRate();
-    WellControls::Control const control = wellControls.GetControl();
-    WellControls::Type const wellType = wellControls.GetType();
+    real64 const targetRate = wellControls.getTargetTotalRate();
+    WellControls::Control const control = wellControls.getControl();
+    WellControls::Type const wellType = wellControls.getType();
 
     // Estimate the connection rates
     forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
@@ -646,7 +646,7 @@ struct ResidualNormKernel
 
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
   static void
-  Launch( LOCAL_VECTOR const localResidual,
+  launch( LOCAL_VECTOR const localResidual,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
@@ -657,9 +657,9 @@ struct ResidualNormKernel
           real64 const dt,
           real64 * localResidualNorm )
   {
-    WellControls::Control const currentControl = wellControls.GetControl();
-    real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const targetRate = wellControls.GetTargetTotalRate();
+    WellControls::Control const currentControl = wellControls.getControl();
+    real64 const targetBHP = wellControls.getTargetBHP();
+    real64 const targetRate = wellControls.getTargetTotalRate();
     real64 const absTargetRate = fabs( targetRate );
 
     RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
@@ -712,7 +712,7 @@ struct SolutionCheckKernel
 {
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
   static localIndex
-  Launch( LOCAL_VECTOR const localSolution,
+  launch( LOCAL_VECTOR const localSolution,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & presDofNumber,
           arrayView1d< integer const > const & ghostRank,
