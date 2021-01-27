@@ -188,6 +188,11 @@ void TableFunction::reInitializeFunction()
     increment *= m_size[ii];
   }
 
+  if( m_coordinates.size() > 0 && m_values.size() > 0 ) // coordinates and values have been set
+  {
+    GEOSX_ERROR_IF( increment != m_values.size(), "Table dimensions do not match!" );
+  }
+
   // Build a quick map to help with linear interpolation
   m_numCorners = static_cast< localIndex >(pow( 2, m_dimensions ));
   for( localIndex ii=0; ii<m_numCorners; ++ii )
@@ -199,31 +204,27 @@ void TableFunction::reInitializeFunction()
   }
 
   // Create the kernel wrapper
-  m_kernelWrapper =
-    std::make_unique< TableFunctionKernelWrapper >( m_interpolationMethod,
-                                                    m_coordinates.toViewConst(),
-                                                    m_values.toViewConst(),
-                                                    m_dimensions,
-                                                    m_size.toViewConst(),
-                                                    m_indexIncrement.toViewConst(),
-                                                    m_corners,
-                                                    m_numCorners );
+  m_kernelWrapper.create( m_interpolationMethod,
+                          m_coordinates.toViewConst(),
+                          m_values.toViewConst(),
+                          m_dimensions,
+                          m_size.toViewConst(),
+                          m_indexIncrement.toViewConst(),
+                          m_corners,
+                          m_numCorners );
+
 }
 
-TableFunctionKernelWrapper TableFunction::createKernelWrapper() const
+TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
 {
-  // note: we do some error checking here because it cannot be done in reInitialization (since it is now called in all the setters)
-  GEOSX_ERROR_IF( m_indexIncrement[m_dimensions-1] * m_size[m_dimensions-1] != m_values.size(),
-                  "Table dimensions do not match!" );
-
-  return TableFunctionKernelWrapper( m_interpolationMethod,
-                                     m_coordinates.toViewConst(),
-                                     m_values.toViewConst(),
-                                     m_dimensions,
-                                     m_size.toViewConst(),
-                                     m_indexIncrement.toViewConst(),
-                                     m_corners,
-                                     m_numCorners );
+  return TableFunction::KernelWrapper( m_interpolationMethod,
+                                       m_coordinates.toViewConst(),
+                                       m_values.toViewConst(),
+                                       m_dimensions,
+                                       m_size.toViewConst(),
+                                       m_indexIncrement.toViewConst(),
+                                       m_corners,
+                                       m_numCorners );
 }
 
 real64 TableFunction::evaluate( real64 const * const input ) const
@@ -232,9 +233,61 @@ real64 TableFunction::evaluate( real64 const * const input ) const
   stackArray1d< real64, maxDimensions > derivativesArray( m_dimensions );
 
   // interpolate in table, return scalar value (derivatives are discarded)
-  m_kernelWrapper->compute( input, scalarValue, derivativesArray );
+  m_kernelWrapper.compute( input, scalarValue, derivativesArray );
   return scalarValue;
 }
+
+TableFunction::KernelWrapper::KernelWrapper( TableFunction::InterpolationType interpolationMethod,
+                                             ArrayOfArraysView< real64 const > const & coordinates,
+                                             arrayView1d< real64 const > const & values,
+                                             localIndex dimensions,
+                                             arrayView1d< localIndex const > const & size,
+                                             arrayView1d< localIndex const > const & indexIncrement,
+                                             localIndex const (&corners)[TableFunction::maxDimensions][16],
+                                             localIndex const numCorners )
+  :
+  m_interpolationMethod( interpolationMethod ),
+  m_coordinates( coordinates ),
+  m_values( values ),
+  m_dimensions( dimensions ),
+  m_size( size ),
+  m_indexIncrement( indexIncrement ),
+  m_numCorners( numCorners )
+{
+  LvArray::tensorOps::copy< TableFunction::maxDimensions, 16 >( m_corners, corners );
+}
+
+TableFunction::KernelWrapper::KernelWrapper()
+  :
+  m_interpolationMethod(),
+  m_coordinates(),
+  m_values(),
+  m_dimensions( 0 ),
+  m_size(),
+  m_indexIncrement(),
+  m_numCorners( 0 )
+{}
+
+void TableFunction::KernelWrapper::create( TableFunction::InterpolationType interpolationMethod,
+                                           ArrayOfArraysView< real64 const > const & coordinates,
+                                           arrayView1d< real64 const > const & values,
+                                           localIndex dimensions,
+                                           arrayView1d< localIndex const > const & size,
+                                           arrayView1d< localIndex const > const & indexIncrement,
+                                           localIndex const (&corners)[TableFunction::maxDimensions][16],
+                                           localIndex const numCorners )
+{
+  m_interpolationMethod = interpolationMethod;
+  m_coordinates = coordinates;
+  m_values = values;
+  m_dimensions = dimensions;
+  m_size = size;
+  m_indexIncrement = indexIncrement;
+  m_numCorners = numCorners;
+
+  LvArray::tensorOps::copy< TableFunction::maxDimensions, 16 >( m_corners, corners );
+}
+
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, Group * const )
 

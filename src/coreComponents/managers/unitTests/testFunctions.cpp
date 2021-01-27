@@ -50,7 +50,7 @@ void checkDirectionalDerivative( real64 const (&input)[4],
                                  real64 const & perturb,
                                  real64 const & relTol,
                                  localIndex const direction,
-                                 TableFunctionKernelWrapper kernelWrapper )
+                                 TableFunction::KernelWrapper kernelWrapper )
 {
   LvArray::tensorOps::copy< 4 >( perturbedInput, input );
   real64 const dInput = perturb * ( input[direction] + perturb );
@@ -438,12 +438,12 @@ TEST( FunctionTests, 4DTable_derivatives )
   inputVarNames[1] = timeName;
 
   // Initialize the table
-  TableFunction * table_c = functionManager->createChild( "TableFunction", "table_c" )->groupCast< TableFunction * >();
-  table_c->setTableCoordinates( coordinates );
-  table_c->setTableValues( values );
-  table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-  table_c->setInputVarNames( inputVarNames );
-  table_c->reInitializeFunction();
+  TableFunction * table_d = functionManager->createChild( "TableFunction", "table_d" )->groupCast< TableFunction * >();
+  table_d->setTableCoordinates( coordinates );
+  table_d->setTableValues( values );
+  table_d->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_d->setInputVarNames( inputVarNames );
+  table_d->reInitializeFunction();
 
   real64 const relTol = 1e-4;
   real64 const eps = std::numeric_limits< real64 >::epsilon();
@@ -462,7 +462,7 @@ TEST( FunctionTests, 4DTable_derivatives )
   real64 derivatives[4] = { 0.0 };
   real64 perturbedDerivatives[4] = { 0.0 };
 
-  TableFunctionKernelWrapper kernelWrapper = table_c->createKernelWrapper();
+  TableFunction::KernelWrapper kernelWrapper = table_d->createKernelWrapper();
   for( localIndex mm=0; mm<nSamples; ++mm )
   {
     input[2] = start;
@@ -520,11 +520,11 @@ TEST( FunctionTests, 4DTable_symbolic )
   inputVarNames[3] = nameD;
 
   // Initialize the table
-  SymbolicFunction * table_d = functionManager->createChild( "SymbolicFunction", "table_d" )->groupCast< SymbolicFunction * >();
-  table_d->setSymbolicExpression( expression );
-  table_d->setInputVarNames( inputVarNames );
-  table_d->setSymbolicVariableNames( inputVarNames );
-  table_d->initializeFunction();
+  SymbolicFunction * table_e = functionManager->createChild( "SymbolicFunction", "table_e" )->groupCast< SymbolicFunction * >();
+  table_e->setSymbolicExpression( expression );
+  table_e->setInputVarNames( inputVarNames );
+  table_e->setSymbolicVariableNames( inputVarNames );
+  table_e->initializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
   string groupName = "testGroup";
@@ -570,7 +570,7 @@ TEST( FunctionTests, 4DTable_symbolic )
   }
 
   // Evaluate the function in batch mode
-  table_d->evaluate( &(testGroup), 0.0, set.toView(), output );
+  table_e->evaluate( &(testGroup), 0.0, set.toView(), output );
 
   // Compare results
   for( localIndex jj=0; jj<Ntest; ++jj )

@@ -32,8 +32,8 @@ class TableRelativePermeabilityUpdate final : public RelativePermeabilityBaseUpd
 {
 public:
 
-  TableRelativePermeabilityUpdate( arrayView1d< TableFunctionKernelWrapper const > const & waterOilRelPermTableKernelWrappers,
-                                   arrayView1d< TableFunctionKernelWrapper const > const & gasOilRelPermTableKernelWrappers,
+  TableRelativePermeabilityUpdate( arrayView1d< TableFunction::KernelWrapper const > const & waterOilRelPermTableKernelWrappers,
+                                   arrayView1d< TableFunction::KernelWrapper const > const & gasOilRelPermTableKernelWrappers,
                                    arrayView1d< real64 const > const & phaseMinVolumeFraction,
                                    arrayView1d< integer const > const & phaseTypes,
                                    arrayView1d< integer const > const & phaseOrder,
@@ -80,10 +80,10 @@ public:
 private:
 
   /// Kernel wrappers for the water-oil relative permeabilities
-  arrayView1d< TableFunctionKernelWrapper const > m_waterOilRelPermTableKernelWrappers;
+  arrayView1d< TableFunction::KernelWrapper const > m_waterOilRelPermTableKernelWrappers;
 
   /// Kernel wrappers for the gas-oil relative permeabilities
-  arrayView1d< TableFunctionKernelWrapper const > m_gasOilRelPermTableKernelWrappers;
+  arrayView1d< TableFunction::KernelWrapper const > m_gasOilRelPermTableKernelWrappers;
 
   /// Minimum volume fraction for each phase (deduced from the table)
   arrayView1d< real64 const > m_phaseMinVolumeFraction;
@@ -152,10 +152,10 @@ private:
   array1d< string > m_gasOilRelPermTableNames;
 
   /// Relative permeability kernel wrapper for two-phase oil water data
-  array1d< TableFunctionKernelWrapper > m_waterOilRelPermTableKernelWrappers;
+  array1d< TableFunction::KernelWrapper > m_waterOilRelPermTableKernelWrappers;
 
   /// Relative permeability kernel wrapper for two-phase oil gas data
-  array1d< TableFunctionKernelWrapper > m_gasOilRelPermTableKernelWrappers;
+  array1d< TableFunction::KernelWrapper > m_gasOilRelPermTableKernelWrappers;
 
   /// Min phase volume fractions (deduced from the tables). With Baker, only the water phase entry is used
   array1d< real64 > m_phaseMinVolumeFraction;
@@ -170,8 +170,6 @@ TableRelativePermeabilityUpdate::
            arraySlice1d< real64 > const & phaseRelPerm,
            arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  real64 relPermDerivative[ 1 ] = { 0.0 };
-
   localIndex const NP = numPhases();
 
   for( localIndex ip = 0; ip < NP; ++ip )
@@ -199,14 +197,12 @@ TableRelativePermeabilityUpdate::
     // water rel perm
     m_waterOilRelPermTableKernelWrappers[RelativePermeabilityBase::WaterOilPairPhaseType::WATER].compute( &(phaseVolFraction)[ip_water],
                                                                                                           phaseRelPerm[ip_water],
-                                                                                                          relPermDerivative );
-    dPhaseRelPerm_dPhaseVolFrac[ip_water][ip_water] = relPermDerivative[0];
+                                                                                                          &(dPhaseRelPerm_dPhaseVolFrac)[ip_water][ip_water] );
 
     // oil rel perm
     m_waterOilRelPermTableKernelWrappers[RelativePermeabilityBase::WaterOilPairPhaseType::OIL].compute( &(phaseVolFraction)[ip_oil],
-                                                                                                        phaseRelPerm[ip_oil],
-                                                                                                        relPermDerivative );
-    dPhaseRelPerm_dPhaseVolFrac[ip_oil][ip_oil] = relPermDerivative[0];
+                                                                                                        oilRelPerm_wo,
+                                                                                                        &dOilRelPerm_wo_dOilVolFrac );
   }
 
 
@@ -216,14 +212,12 @@ TableRelativePermeabilityUpdate::
     // gas rel perm
     m_gasOilRelPermTableKernelWrappers[RelativePermeabilityBase::GasOilPairPhaseType::GAS].compute( &(phaseVolFraction)[ip_gas],
                                                                                                     phaseRelPerm[ip_gas],
-                                                                                                    relPermDerivative );
-    dPhaseRelPerm_dPhaseVolFrac[ip_gas][ip_gas] = relPermDerivative[0];
+                                                                                                    &(dPhaseRelPerm_dPhaseVolFrac)[ip_gas][ip_gas] );
 
     // oil rel perm
     m_gasOilRelPermTableKernelWrappers[RelativePermeabilityBase::GasOilPairPhaseType::OIL].compute( &(phaseVolFraction)[ip_oil],
-                                                                                                    phaseRelPerm[ip_oil],
-                                                                                                    relPermDerivative );
-    dPhaseRelPerm_dPhaseVolFrac[ip_oil][ip_oil] = relPermDerivative[0];
+                                                                                                    oilRelPerm_go,
+                                                                                                    &dOilRelPerm_go_dOilVolFrac );
   }
 
 
@@ -257,7 +251,6 @@ TableRelativePermeabilityUpdate::
                                           phaseRelPerm[ip_oil],
                                           dPhaseRelPerm_dPhaseVolFrac[ip_oil] );
   }
-
 }
 
 } // namespace constitutive
