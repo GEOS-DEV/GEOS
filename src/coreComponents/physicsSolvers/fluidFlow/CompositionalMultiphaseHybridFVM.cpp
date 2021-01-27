@@ -92,7 +92,7 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups( Group * const roo
 
   if( fvManager.getGroup< HybridMimeticDiscretization >( m_discretizationName ) == nullptr )
   {
-    GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM" );
+    GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM" );
   }
 }
 
@@ -251,7 +251,6 @@ void CompositionalMultiphaseHybridFVM::implicitStepComplete( real64 const & time
   forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
   {
     facePres[iface] += dFacePres[iface];
-    dFacePres[iface] = 0.0;
   } );
 }
 

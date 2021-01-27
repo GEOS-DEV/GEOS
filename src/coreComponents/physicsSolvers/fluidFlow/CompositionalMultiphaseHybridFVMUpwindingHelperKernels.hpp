@@ -94,10 +94,10 @@ struct UpwindingHelper
                             real64 ( & dUpwPhaseViscCoef_dCompDens )[ NP ][ NC ][ NC ],
                             globalIndex & upwViscDofNumber )
   {
-    real64 dUpwMobRatio_dCompDens[ NC ] = { 0.0 };
-    real64 dUpwDensMobRatio_dCompDens[ NC ] = { 0.0 };
-    real64 dPhaseDens_dC[ NC ] = { 0.0 };
-    real64 dPhaseCompFrac_dC[ NC ] = { 0.0 };
+    real64 dUpwMobRatio_dCompDens[ NC ]{};
+    real64 dUpwDensMobRatio_dCompDens[ NC ]{};
+    real64 dPhaseDens_dC[ NC ]{};
+    real64 dPhaseCompFrac_dC[ NC ]{};
 
     // 1) Upwind
     localIndex const er  = ( oneSidedVolFlux > 0 ) ? localIds[0] : neighborIds[0];
@@ -107,7 +107,7 @@ struct UpwindingHelper
     // 2) Compute total mobility: \lambda_T = \sum_{\ell} \lambda_{\ell}
     real64 totalMob = 0;
     real64 dTotalMob_dPres = 0;
-    real64 dTotalMob_dCompDens[ NC ] = { 0.0 };
+    real64 dTotalMob_dCompDens[ NC ]{};
     for( localIndex ip = 0; ip < NP; ++ip )
     {
       totalMob = totalMob + phaseMob[er][esr][ei][ip];
@@ -230,8 +230,8 @@ struct UpwindingHelper
 
     // 2) Compute the total mobility: \lambda_T = \sum_{\ell} \lambda_{\ell}
     real64 totalMob = 0.0;
-    real64 dTotalMob_dPres[ 2 ] = { 0.0 };
-    real64 dTotalMob_dCompDens[ 2 ][ NC ]  = {{ 0.0 }};
+    real64 dTotalMob_dPres[ 2 ]{};
+    real64 dTotalMob_dCompDens[ 2 ][ NC ]{};
 
     computeUpwindedTotalMobility( localIds,
                                   neighborIds,
@@ -245,13 +245,13 @@ struct UpwindingHelper
     real64 const totalMobInv = 1.0 / totalMob;
 
     // 3) Compute the quantities \x_{up}_{c,p} \rho_p \frac{\lambda_p \lambda_m}{\lambda_T}
-    real64 dMobRatio_dPres[ 2 ] = { 0.0 };
-    real64 dMobRatio_dCompDens[ 2 ][ NC ] = {{ 0.0 }};
-    real64 dDensMobRatio_dPres[ 2 ] = { 0.0 };
-    real64 dDensMobRatio_dCompDens[ 2 ][ NC ] = {{ 0.0 }};
+    real64 dMobRatio_dPres[ 2 ]{};
+    real64 dMobRatio_dCompDens[ 2 ][ NC ]{};
+    real64 dDensMobRatio_dPres[ 2 ]{};
+    real64 dDensMobRatio_dCompDens[ 2 ][ NC ]{};
 
-    real64 dPhaseDens_dC[ NC ] = { 0.0 };
-    real64 dPhaseCompFrac_dC[ NC ] = { 0.0 };
+    real64 dPhaseDens_dC[ NC ]{};
+    real64 dPhaseCompFrac_dC[ NC ]{};
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -363,9 +363,9 @@ struct UpwindingHelper
     localIndex const esrn = neighborIds[1];
     localIndex const ein  = neighborIds[2];
 
-    real64 dPhaseMassDens_dCLoc[ NC ] = { 0.0 };
-    real64 dPhaseMassDens_dCNeighbor[ NC ] = { 0.0 };
-    real64 dPhaseMassDens_dC[ NC ] = { 0.0 };
+    real64 dPhaseMassDens_dCLoc[ NC ]{};
+    real64 dPhaseMassDens_dCNeighbor[ NC ]{};
+    real64 dPhaseMassDens_dC[ NC ]{};
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -448,8 +448,8 @@ struct UpwindingHelper
                                 real64 ( & dTotalMob_dCompDens )[ 2 ][ NC ] )
   {
 
-    localIndex totalMobIds[ NP ][ 3 ] = {{ 0 }};
-    localIndex totalMobPos[ NP ] = { 0 };
+    localIndex totalMobIds[ NP ][ 3 ]{};
+    localIndex totalMobPos[ NP ]{};
     setIndicesForTotalMobilityUpwinding< NP >( localIds,
                                                neighborIds,
                                                phaseGravTerm,

@@ -127,10 +127,10 @@ struct AssemblerKernel
            arrayView1d< real64 > const & localRhs )
   {
     // one sided flux
-    real64 oneSidedVolFlux[ NF ] = { 0.0 };
-    real64 dOneSidedVolFlux_dPres[ NF ] = { 0.0 };
-    real64 dOneSidedVolFlux_dFacePres[ NF ][ NF ] = {{ 0.0 }};
-    real64 dOneSidedVolFlux_dCompDens[ NF ][ NC ] = {{ 0.0 }};
+    real64 oneSidedVolFlux[ NF ]{};
+    real64 dOneSidedVolFlux_dPres[ NF ]{};
+    real64 dOneSidedVolFlux_dFacePres[ NF ][ NF ]{};
+    real64 dOneSidedVolFlux_dCompDens[ NF ][ NC ]{};
 
     localIndex const localIds[3] = { er, esr, ei };
 

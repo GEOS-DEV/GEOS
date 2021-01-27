@@ -91,10 +91,10 @@ struct AssemblerKernelHelper
                  real64 ( & dOneSidedVolFlux_dFacePres )[ NF ][ NF ],
                  real64 ( & dOneSidedVolFlux_dCompDens )[ NF ][ NC ] )
   {
-    real64 dPhaseMassDens_dC[ NP ][ NC ] = {{ 0.0 }};
-    real64 dPresDif_dCompDens[ NC ] = { 0.0 };
-    real64 dPhaseGravDif_dCompDens[ NC ] = { 0.0 };
-    real64 dPhaseMobPotDif_dCompDens[ NC ] = { 0.0 };
+    real64 dPhaseMassDens_dC[ NP ][ NC ]{};
+    real64 dPresDif_dCompDens[ NC ]{};
+    real64 dPhaseGravDif_dCompDens[ NC ]{};
+    real64 dPhaseMobPotDif_dCompDens[ NC ]{};
 
     // 0) precompute dPhaseDens_dC since it is always computed at the element center
     for( localIndex ip = 0; ip < NP; ++ip )
@@ -240,35 +240,35 @@ struct AssemblerKernelHelper
     localIndex constexpr NDOF = NC+1;
 
     // dof numbers
-    globalIndex dofColIndicesElemVars[ NDOF*(NF+1) ] = { 0 };
-    globalIndex dofColIndicesFaceVars[ NF ] = { 0 };
+    globalIndex dofColIndicesElemVars[ NDOF*(NF+1) ]{};
+    globalIndex dofColIndicesFaceVars[ NF ]{};
     for( localIndex idof = 0; idof < NDOF; ++idof )
     {
       dofColIndicesElemVars[idof] = elemDofNumber[localIds[0]][localIds[1]][localIds[2]] + idof;
     }
 
     // divergence of fluxes
-    real64 divMassFluxes[ NC ] = { 0.0 };
-    real64 dDivMassFluxes_dElemVars[ NC ][ NDOF*(NF+1) ] = {{ 0.0 }};
-    real64 dDivMassFluxes_dFaceVars[ NC ][ NF ] = {{ 0.0 }};
+    real64 divMassFluxes[ NC ]{};
+    real64 dDivMassFluxes_dElemVars[ NC ][ NDOF*(NF+1) ]{};
+    real64 dDivMassFluxes_dFaceVars[ NC ][ NF ]{};
 
     // auxiliary variables for upwinding
 
     // upwinding phase buoyancy transport coefficients
-    real64 upwPhaseViscCoef[ NP ][ NC ] = {{ 0.0 }};
-    real64 dUpwPhaseViscCoef_dPres[ NP ][ NC ] = {{ 0.0 }};
-    real64 dUpwPhaseViscCoef_dCompDens[ NP ][ NC ][ NC ] = {{{ 0.0 }}};
+    real64 upwPhaseViscCoef[ NP ][ NC ]{};
+    real64 dUpwPhaseViscCoef_dPres[ NP ][ NC ]{};
+    real64 dUpwPhaseViscCoef_dCompDens[ NP ][ NC ][ NC ]{};
     globalIndex upwViscDofNumber = 0;
 
     // gravity term: ( \rho_l - \rho_m ) g \Delta z
-    real64 phaseGravTerm[ NP ][ NP-1 ] = {{ 0.0 }};
-    real64 dPhaseGravTerm_dPres[ NP ][ NP-1 ][ 2 ] = {{{ 0.0 }}};
-    real64 dPhaseGravTerm_dCompDens[ NP ][ NP-1 ][ 2 ][ NC ] = {{{{ 0.0 }}}};
+    real64 phaseGravTerm[ NP ][ NP-1 ]{};
+    real64 dPhaseGravTerm_dPres[ NP ][ NP-1 ][ 2 ]{};
+    real64 dPhaseGravTerm_dCompDens[ NP ][ NP-1 ][ 2 ][ NC ]{};
 
     // upwinding phase buoyancy transport coefficients
-    real64 upwPhaseGravCoef[ NP ][ NP-1 ][ NC ] = {{{ 0.0 }}};
-    real64 dUpwPhaseGravCoef_dPres[ NP ][ NP-1 ][ NC ][ 2 ] = {{{{ 0.0 }}}};
-    real64 dUpwPhaseGravCoef_dCompDens[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] = {{{{{ 0.0 }}}}};
+    real64 upwPhaseGravCoef[ NP ][ NP-1 ][ NC ]{};
+    real64 dUpwPhaseGravCoef_dPres[ NP ][ NP-1 ][ NC ][ 2 ]{};
+    real64 dUpwPhaseGravCoef_dCompDens[ NP ][ NP-1 ][ NC ][ 2 ][ NC ]{};
 
     // for each element, loop over the one-sided faces
     for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -608,12 +608,12 @@ struct AssemblerKernelHelper
     localIndex constexpr NDOF = NC+1;
 
     // fluxes
-    real64 dFlux_dElemVars[ NDOF ] = { 0.0 };
-    real64 dFlux_dFaceVars[ NF ] = { 0.0 };
+    real64 dFlux_dElemVars[ NDOF ]{};
+    real64 dFlux_dFaceVars[ NF ]{};
 
     // dof numbers
-    globalIndex dofColIndicesElemVars[ NDOF ] = { 0 };
-    globalIndex dofColIndicesFaceVars[ NF ] = { 0 };
+    globalIndex dofColIndicesElemVars[ NDOF ]{};
+    globalIndex dofColIndicesFaceVars[ NF ]{};
     for( localIndex idof = 0; idof < NDOF; ++idof )
     {
       dofColIndicesElemVars[idof] = elemDofNumber + idof;

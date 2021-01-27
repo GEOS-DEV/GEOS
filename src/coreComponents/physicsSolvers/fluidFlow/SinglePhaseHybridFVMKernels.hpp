@@ -170,13 +170,13 @@ struct AssemblerKernelHelper
   {
     // fluxes
     real64 divMassFluxes = 0;
-    real64 dDivMassFluxes_dElemVars[ NF+1 ] = { 0.0 };
-    real64 dDivMassFluxes_dFaceVars[ NF ] = { 0.0 };
+    real64 dDivMassFluxes_dElemVars[ NF+1 ]{};
+    real64 dDivMassFluxes_dFaceVars[ NF ]{};
 
     // dof numbers
     globalIndex const eqnRowLocalIndex = elemDofNumber[localIds[0]][localIds[1]][localIds[2]] - rankOffset;
-    globalIndex elemDofColIndices[ NF+1 ] = { 0 };
-    globalIndex faceDofColIndices[ NF ] = { 0 };
+    globalIndex elemDofColIndices[ NF+1 ]{};
+    globalIndex faceDofColIndices[ NF ]{};
     elemDofColIndices[0] = elemDofNumber[localIds[0]][localIds[1]][localIds[2]];
 
     // upwinded mobility
@@ -277,10 +277,10 @@ struct AssemblerKernelHelper
                            arrayView1d< real64 > const & localRhs )
   {
     // fluxes
-    real64 dFlux_dfp[ NF ] = { 0.0 };
+    real64 dFlux_dfp[ NF ]{};
 
     // dof numbers
-    globalIndex dofColIndicesFacePres[ NF ] = { 0 };
+    globalIndex dofColIndicesFacePres[ NF ]{};
     globalIndex const dofColIndexElemPres = elemDofNumber;    // fluxes
 
     // for each element, loop over the local (one-sided) faces
@@ -398,9 +398,9 @@ struct AssemblerKernel
            arrayView1d< real64 > const & localRhs )
   {
     // one sided flux
-    real64 oneSidedVolFlux[ NF ] = { 0.0 };
-    real64 dOneSidedVolFlux_dp[ NF ] = { 0.0 };
-    real64 dOneSidedVolFlux_dfp[ NF ][ NF ] = {{ 0.0 }};
+    real64 oneSidedVolFlux[ NF ]{};
+    real64 dOneSidedVolFlux_dp[ NF ]{};
+    real64 dOneSidedVolFlux_dfp[ NF ][ NF ]{};
 
     localIndex const localIds[3] = { er, esr, ei };
 

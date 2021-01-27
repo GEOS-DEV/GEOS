@@ -163,7 +163,6 @@ void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
   forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
   {
     facePres[iface] += dFacePres[iface];
-    dFacePres[iface] = 0.0;
   } );
 }
 
