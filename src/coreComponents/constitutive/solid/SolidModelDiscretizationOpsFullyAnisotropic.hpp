@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidModelHelperFullyAnisotroipic.hpp
+ * @file SolidModelHelperFullyAnisotropic.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIAZTIONOPSFULLYANISOTROPIC_HPP_
@@ -27,7 +27,7 @@ namespace constitutive
 {
 
 
-struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretizationOps
+struct SolidModelDiscretizationOpsFullyAnisotropic : public SolidModelDiscretizationOps
 {
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
@@ -66,7 +66,7 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOpsFullyAnisotroipic::upperBTDB( BASIS_GRADIENT const & gradN,
+void SolidModelDiscretizationOpsFullyAnisotropic::upperBTDB( BASIS_GRADIENT const & gradN,
                                                               real64 const & detJxW,
                                                               real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
 {
@@ -125,7 +125,7 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOpsFullyAnisotroipic::diagBTDB( BASIS_GRADIENT const & gradN,
+void SolidModelDiscretizationOpsFullyAnisotropic::diagBTDB( BASIS_GRADIENT const & gradN,
                                                              real64 const & detJxW,
                                                              real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
 {
@@ -155,7 +155,7 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOpsFullyAnisotroipic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
+void SolidModelDiscretizationOpsFullyAnisotropic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                                                                    real64 const & detJxW,
                                                                    real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
 {

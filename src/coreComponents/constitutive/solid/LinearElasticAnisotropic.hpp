@@ -21,7 +21,7 @@
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 
 namespace geosx
 {
@@ -41,7 +41,7 @@ namespace constitutive
 class LinearElasticAnisotropicUpdates : public SolidBaseUpdates
 {
 public:
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic;
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   /**
    * @brief Constructor
