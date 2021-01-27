@@ -200,6 +200,19 @@ public:
    */
   integer useSurfaceConditions() const { return m_useSurfaceConditions; }
 
+  /**
+   * @brief Getter for the surface pressure when m_useSurfaceConditions == 1
+   * @return the surface pressure
+   */
+  const real64 & getSurfacePressure() const { return m_surfacePres; }
+
+  /**
+   * @brief Getter for the surface temperature when m_useSurfaceConditions == 1
+   * @return the surface temperature
+   */
+  const real64 & getSurfaceTemperature() const { return m_surfaceTemp; }
+
+
   ///@}
 
   /**
@@ -226,6 +239,10 @@ public:
     static constexpr auto injectionStreamString      = "injectionStream";
     /// String key for checking the rates at surface conditions
     static constexpr auto useSurfaceConditionsString = "useSurfaceConditions";
+    /// String key for the surface pressure
+    static constexpr auto surfacePressureString      = "surfacePressure";
+    /// String key for the surface temperature
+    static constexpr auto surfaceTemperatureString   = "surfaceTemperature";
     /// ViewKey for the reference elevation
     dataRepository::ViewKey referenceElevation   = { refElevString };
     /// ViewKey for the well type
@@ -242,8 +259,13 @@ public:
     dataRepository::ViewKey targetPhaseName      = { targetPhaseNameString };
     /// ViewKey for the well injection stream
     dataRepository::ViewKey injectionStream      = { injectionStreamString };
-    /// ViewKey for the well injection stream
+    /// ViewKey for the surface conditions flag
     dataRepository::ViewKey useSurfaceConditions = { useSurfaceConditionsString };
+    /// ViewKey for the surface pressure
+    dataRepository::ViewKey surfacePressure      = { surfacePressureString };
+    /// ViewKey for the surface temperature
+    dataRepository::ViewKey surfaceTemperature   = { surfaceTemperatureString };
+
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -294,6 +316,12 @@ private:
 
   /// Flag to decide whether rates are controlled at rates or surface conditions
   integer m_useSurfaceConditions;
+
+  /// Surface pressure
+  real64 m_surfacePres;
+
+  /// Surface temperature
+  real64 m_surfaceTemp;
 
 };
 

@@ -228,9 +228,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
     forAll< serialPolicy >( subRegion.size(), [=]( localIndex const iwelem )
     {
       // precompute the depth of the well elements
-      wellElemGravCoef[iwelem] = wellElemLocation( iwelem, 0 ) * gravVector[ 0 ]
-                                 + wellElemLocation( iwelem, 1 ) * gravVector[ 1 ]
-                                 + wellElemLocation( iwelem, 2 ) * gravVector[ 2 ];
+      wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
     } );
 
     // set the reference well element where the BHP control is applied

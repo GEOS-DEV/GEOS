@@ -958,6 +958,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
+		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used-->
+		<xsd:attribute name="surfacePressure" type="real64" default="0" />
+		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used-->
+		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
 		<!--targetBHP => Target bottom-hole pressure-->
 		<xsd:attribute name="targetBHP" type="real64" use="required" />
 		<!--targetPhaseName => Name of the target phase-->

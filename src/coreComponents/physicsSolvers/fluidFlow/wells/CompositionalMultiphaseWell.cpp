@@ -296,8 +296,10 @@ void CompositionalMultiphaseWell::validateWellConstraints( MeshLevel const & mes
     WellControls const & wellControls = getWellControls( subRegion );
     WellControls::Type const wellType = wellControls.getType();
     WellControls::Control const currentControl = wellControls.getControl();
-    real64 const targetTotalRate = wellControls.getTargetTotalRate();
-    real64 const targetPhaseRate = wellControls.getTargetPhaseRate();
+    real64 const & targetTotalRate = wellControls.getTargetTotalRate();
+    real64 const & targetPhaseRate = wellControls.getTargetPhaseRate();
+    integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+    real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
 
     GEOSX_ERROR_IF( wellType == WellControls::Type::INJECTOR && currentControl == WellControls::Control::PHASEVOLRATE,
                     "Phase rate control is not available for injectors" );
@@ -313,6 +315,9 @@ void CompositionalMultiphaseWell::validateWellConstraints( MeshLevel const & mes
                     "Target phase rate cannot be equal to zero for producers" );
     GEOSX_ERROR_IF( wellType == WellControls::Type::PRODUCER && !isZero( targetTotalRate ),
                     "Target total rate cannot be used for producers" );
+
+    GEOSX_ERROR_IF( useSurfaceConditions && surfaceTemp <= 0,
+                    "Surface temperature must be set to a strictly positive value" );
 
     // Find target phase index for phase rate constraint
     for( localIndex ip = 0; ip < fluid.numFluidPhases(); ++ip )
@@ -559,6 +564,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   WellControls & wellControls = getWellControls( subRegion );
 
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+  real64 const & surfacePres = wellControls.getSurfacePressure();
+  real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
 
   arrayView1d< real64 > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString );
@@ -601,6 +608,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 dPhaseFrac_dPres,
                                 dPhaseFrac_dComp,
                                 &useSurfaceConditions,
+                                &surfacePres,
+                                &surfaceTemp,
                                 &temp,
                                 &currentTotalVolRate,
                                 &dCurrentTotalVolRate_dPres,
@@ -618,8 +627,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
       if( useSurfaceConditions )
       {
-        real64 const surfacePres = 101325.0;
-        real64 const surfaceTemp = 293.15;
         // we need to compute the surface density
         fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
       }

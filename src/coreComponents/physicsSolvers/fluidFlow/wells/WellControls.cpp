@@ -34,7 +34,9 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetTotalRate( 0.0 ),
   m_targetPhaseRate( 0.0 ),
   m_targetPhaseName( "" ),
-  m_useSurfaceConditions( 0 )
+  m_useSurfaceConditions( 0 ),
+  m_surfacePres( 0.0 ),
+  m_surfaceTemp( 0.0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -66,11 +68,16 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of the target phase" );
 
-
   registerWrapper( viewKeyStruct::refElevString, &m_refElevation )->
     setDefaultValue( -1 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Reference elevation where BHP control is enforced" );
+
+  registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream )->
+    setDefaultValue( -1 )->
+    setSizedFromParent( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Global component densities for the injection stream" );
 
   registerWrapper( viewKeyStruct::useSurfaceConditionsString, &m_useSurfaceConditions )->
     setDefaultValue( 0 )->
@@ -78,11 +85,15 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
                     "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
 
-  registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream )->
-    setDefaultValue( -1 )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::surfacePressureString, &m_surfacePres )->
+    setDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Global component densities for the injection stream" );
+    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used" );
+
+  registerWrapper( viewKeyStruct::surfaceTemperatureString, &m_surfaceTemp )->
+    setDefaultValue( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used" );
 
 }
 
@@ -144,12 +155,15 @@ void WellControls::postProcessInput()
   GEOSX_ERROR_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
                   "The flag to select surface/reservoir conditions must be equal to 0 or 1" );
 
-  // 6) check that at least one rate constraint has been defined
+  // 6) check the flag for surface / reservoir conditions
+  GEOSX_ERROR_IF( m_useSurfaceConditions == 1 && m_surfacePres <= 0,
+                  "When useSurfaceConditions == 1, the surface pressure must be defined" );
+
+  // 7) check that at least one rate constraint has been defined
   GEOSX_ERROR_IF( m_targetPhaseRate <= 0.0 && m_targetTotalRate <= 0.0,
                   "You need to specify a phase rate constraint for producers, and a total rate constraint for injectors" );
 
 }
-
 
 void WellControls::initializePostInitialConditionsPreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {

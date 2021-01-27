@@ -46,39 +46,39 @@
         name="wellControls1"
         type="producer"
         control="BHP"
-	referenceElevation="3710.03"
+        referenceElevation="3710.03"
         targetBHP="2.7579e7"
         targetPhaseRate="1e6"
-	targetPhaseName="oil"/>
+        targetPhaseName="oil"/>
       <WellControls
         name="wellControls2"
         type="producer"
         control="BHP"
-	referenceElevation="3710.03"	
+        referenceElevation="3710.03"    
         targetBHP="2.7579e7"
         targetPhaseRate="1e6"
-	targetPhaseName="oil"/>
+        targetPhaseName="oil"/>
       <WellControls
         name="wellControls3"
         type="producer"
         control="BHP"
-	referenceElevation="3710.03"	
+        referenceElevation="3710.03"    
         targetBHP="2.7579e7"
         targetPhaseRate="1e6"
-	targetPhaseName="oil"/>
+        targetPhaseName="oil"/>
       <WellControls
         name="wellControls4"
         type="producer"
         control="BHP"
-	referenceElevation="3710.03"	
+        referenceElevation="3710.03"    
         targetBHP="2.7579e7"
         targetPhaseRate="1e6"
-	targetPhaseName="oil"/>
+        targetPhaseName="oil"/>
       <WellControls
         name="wellControls5"
         type="injector"
         control="totalVolRate"
-	referenceElevation="3710.03"	
+        referenceElevation="3710.03"    
         targetBHP="6.8948e9"
         targetTotalRate="1e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>

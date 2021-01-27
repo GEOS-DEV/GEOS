@@ -41,6 +41,8 @@
         name="wellControls2"
         type="injector"
         control="totalVolRate"
+	useSurfaceConditions="1"
+	surfacePressure="101325"
 	referenceElevation="12"
         targetBHP="1e7"
         targetTotalRate="1e-6"/>

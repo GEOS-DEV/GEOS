@@ -118,7 +118,7 @@ void SinglePhaseWell::validateWellConstraints( MeshLevel const & meshLevel ) con
   } );
 }
 
-void SinglePhaseWell::UpdateBHPForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
+void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -173,7 +173,7 @@ void SinglePhaseWell::UpdateBHPForConstraint( WellElementSubRegion & subRegion, 
   } );
 }
 
-void SinglePhaseWell::UpdateVolRateForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
+void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -208,6 +208,7 @@ void SinglePhaseWell::UpdateVolRateForConstraint( WellElementSubRegion & subRegi
   WellControls & wellControls = getWellControls( subRegion );
 
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+  real64 const & surfacePres = wellControls.getSurfacePressure();
 
   real64 & currentVolRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString );
@@ -229,6 +230,7 @@ void SinglePhaseWell::UpdateVolRateForConstraint( WellElementSubRegion & subRegi
                                 dens,
                                 dDens_dPres,
                                 &useSurfaceConditions,
+                                &surfacePres,
                                 &currentVolRate,
                                 &dCurrentVolRate_dPres,
                                 &dCurrentVolRate_dRate,
@@ -240,7 +242,6 @@ void SinglePhaseWell::UpdateVolRateForConstraint( WellElementSubRegion & subRegi
 
       if( useSurfaceConditions )
       {
-        real64 const surfacePres = 101325.0;
         // we need to compute the surface density
         fluidWrapper.update( iwelemRef, 0, surfacePres );
       }
@@ -279,13 +280,13 @@ void SinglePhaseWell::updateState( WellElementSubRegion & subRegion, localIndex 
 {
   // update volumetric rates for the well constraints
   // Warning! This must be called before updating the fluid model
-  UpdateVolRateForConstraint( subRegion, targetIndex );
+  updateVolRateForConstraint( subRegion, targetIndex );
 
   // update density in the well elements
   updateFluidModel( subRegion, targetIndex );
 
   // update the current BHP
-  UpdateBHPForConstraint( subRegion, targetIndex );
+  updateBHPForConstraint( subRegion, targetIndex );
 
   // update perforation rates
   computePerforationRates( subRegion, targetIndex );

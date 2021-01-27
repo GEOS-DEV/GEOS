@@ -10,6 +10,8 @@ control              geosx_WellControls_Control required | Well control. Valid o
 injectionStream      real64_array               {-1}     Global component densities for the injection stream                                                                                                 
 name                 string                     required A name is required for any non-unique nodes                                                                                                         
 referenceElevation   real64                     required Reference elevation where BHP control is enforced                                                                                                   
+surfacePressure      real64                     0        Surface pressure used to compute volumetric rates when surface conditions are used                                                                  
+surfaceTemperature   real64                     0        Surface temperature used to compute volumetric rates when surface conditions are used                                                               
 targetBHP            real64                     required Target bottom-hole pressure                                                                                                                         
 targetPhaseName      string                              Name of the target phase                                                                                                                            
 targetPhaseRate      real64                     0        Target phase volumetric rate                                                                                                                        

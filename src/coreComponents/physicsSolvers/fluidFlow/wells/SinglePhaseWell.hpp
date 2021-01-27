@@ -142,7 +142,7 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void UpdateVolRateForConstraint( WellElementSubRegion & subRegion,
+  virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion,
                                            localIndex const targetIndex );
 
   /**
@@ -150,7 +150,7 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void UpdateBHPForConstraint( WellElementSubRegion & subRegion,
+  virtual void updateBHPForConstraint( WellElementSubRegion & subRegion,
                                        localIndex const targetIndex );
 
   /**
