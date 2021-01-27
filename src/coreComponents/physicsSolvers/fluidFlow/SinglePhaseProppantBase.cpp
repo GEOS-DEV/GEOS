@@ -28,7 +28,7 @@ namespace geosx
 
 using constitutive::SlurryFluidBase;
 
-SinglePhaseProppantBase::SinglePhaseProppantBase( const std::string & name,
+SinglePhaseProppantBase::SinglePhaseProppantBase( std::string const & name,
                                                   Group * const parent ):
   SinglePhaseBase( name, parent )
 {}

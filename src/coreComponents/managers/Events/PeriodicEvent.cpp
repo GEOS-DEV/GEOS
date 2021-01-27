@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-PeriodicEvent::PeriodicEvent( const std::string & name,
+PeriodicEvent::PeriodicEvent( std::string const & name,
                               Group * const parent ):
   EventBase( name, parent ),
   m_functionTarget( nullptr ),

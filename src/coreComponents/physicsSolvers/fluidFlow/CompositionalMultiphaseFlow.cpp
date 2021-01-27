@@ -47,7 +47,7 @@ using namespace CompositionalMultiphaseFlowKernels;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
-CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
+CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( string const & name,
                                                           Group * const parent )
   :
   FlowSolverBase( name, parent ),

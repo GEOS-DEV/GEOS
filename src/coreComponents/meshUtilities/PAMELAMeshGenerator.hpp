@@ -45,7 +45,7 @@ public:
  * @param[in] name of the PAMELAMeshGenerator object
  * @param[in] parent the parent Group pointer for the MeshGenerator object
  */
-  PAMELAMeshGenerator( const std::string & name,
+  PAMELAMeshGenerator( std::string const & name,
                        Group * const parent );
 
   virtual ~PAMELAMeshGenerator() override;
@@ -79,7 +79,7 @@ public:
 
   virtual void generateMesh( DomainPartition * const domain ) override;
 
-  virtual void getElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( std::string const & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],

@@ -51,7 +51,7 @@ public:
    * @param name The dataset/group name to check for.
    * @return Whether the dataset/group exists in the target.
    */
-  virtual bool checkInTarget( const string & name )
+  virtual bool checkInTarget( string const & name )
   {
     htri_t exists = 0;
     H5E_BEGIN_TRY {

@@ -87,7 +87,7 @@ void getAbsolutePath( std::string const & path, std::string & absolutePath );
  * @retval true if the path is absolute
  * @retval false if the path is relative
  */
-bool isAbsolutePath( const std::string & path );
+bool isAbsolutePath( std::string const & path );
 
 /*!
  * @brief Operator use with the class Path while parsing the XML file

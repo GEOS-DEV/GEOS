@@ -59,7 +59,7 @@ const std::map< string, int > geosx2VTKCellTypes =
  * @param[in] elementType the type of the element (using the abaqus nomenclature)
  * @return the VTK cell identifier
  */
-int ToVTKCellType( const string & elementType )
+int ToVTKCellType( string const & elementType )
 {
   int vtkIdentifier = VTK_EMPTY_CELL;
   try

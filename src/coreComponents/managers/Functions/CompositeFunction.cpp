@@ -32,7 +32,7 @@ std::string const expression = "expression";
 using namespace dataRepository;
 
 
-CompositeFunction::CompositeFunction( const std::string & name,
+CompositeFunction::CompositeFunction( std::string const & name,
                                       Group * const parent ):
   FunctionBase( name, parent ),
   parserContext(),

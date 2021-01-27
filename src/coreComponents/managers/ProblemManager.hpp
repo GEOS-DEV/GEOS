@@ -53,7 +53,7 @@ public:
    * @param name the name of this object manager
    * @param parent the parent Group
    */
-  explicit ProblemManager( const std::string & name,
+  explicit ProblemManager( std::string const & name,
                            Group * const parent );
 
   /**
@@ -180,28 +180,28 @@ public:
    * @brief Returns the problem name
    * @return The problem name
    */
-  const string & getProblemName() const
+  string const & getProblemName() const
   { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
-  const string & getInputFileName() const
+  string const & getInputFileName() const
   { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
-  const string & getRestartFileName() const
+  string const & getRestartFileName() const
   { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
-  const string & getSchemaFileName() const
+  string const & getSchemaFileName() const
   { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
 
   /// Input file xml document handle

@@ -30,7 +30,7 @@ class SymbolicFunction : public FunctionBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  SymbolicFunction( const std::string & name,
+  SymbolicFunction( std::string const & name,
                     dataRepository::Group * const parent );
 
   /**

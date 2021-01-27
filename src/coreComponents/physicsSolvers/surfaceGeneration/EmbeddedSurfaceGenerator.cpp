@@ -42,7 +42,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
+EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( std::string const & name,
                                                     Group * const parent ):
   SolverBase( name, parent )
 {

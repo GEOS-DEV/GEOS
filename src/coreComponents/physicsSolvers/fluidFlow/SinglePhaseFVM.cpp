@@ -41,7 +41,7 @@ using namespace SinglePhaseBaseKernels;
 using namespace SinglePhaseFVMKernels;
 
 template< typename BASE >
-SinglePhaseFVM< BASE >::SinglePhaseFVM( const std::string & name,
+SinglePhaseFVM< BASE >::SinglePhaseFVM( std::string const & name,
                                         Group * const parent ):
   BASE( name, parent )
 {

@@ -32,7 +32,7 @@ class SolidMechanicsLagrangianFEM;
 class HydrofractureSolver : public SolverBase
 {
 public:
-  HydrofractureSolver( const std::string & name,
+  HydrofractureSolver( std::string const & name,
                        Group * const parent );
 
   ~HydrofractureSolver() override;

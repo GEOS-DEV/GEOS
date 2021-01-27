@@ -38,7 +38,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  SinglePhaseReservoir( const std::string & name,
+  SinglePhaseReservoir( std::string const & name,
                         Group * const parent );
 
   /**

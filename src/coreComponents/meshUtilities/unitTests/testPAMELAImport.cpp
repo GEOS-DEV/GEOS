@@ -96,7 +96,7 @@ TEST( PAMELAImport, testGMSH )
     "  fieldNamesInGEOSX=\"{barycenter}\""<<
     "  file=\"" <<gmshFilePath.c_str()<< "\"/>"<<
     "</Mesh>";
-  const string inputStringMesh = inputStreamMesh.str();
+  string const inputStringMesh = inputStreamMesh.str();
 
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
@@ -124,7 +124,7 @@ TEST( PAMELAImport, testECLIPSE )
     "  fieldNamesInGEOSX=\"{PERM}\""<<
     "  file=\"" << eclipseFilePath.c_str()<< "\"/>"<<
     "</Mesh>";
-  const string inputStringMesh = inputStreamMesh.str();
+  string const inputStringMesh = inputStreamMesh.str();
 
   std::stringstream inputStreamRegion;
   inputStreamRegion <<

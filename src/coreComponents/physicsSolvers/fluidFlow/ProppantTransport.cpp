@@ -47,7 +47,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace ProppantTransportKernels;
 
-ProppantTransport::ProppantTransport( const std::string & name,
+ProppantTransport::ProppantTransport( std::string const & name,
                                       Group * const parent ):
   FlowSolverBase( name, parent )
 {

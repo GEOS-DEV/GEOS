@@ -97,14 +97,14 @@ public:
    * @brief The function is to return the name of the ElementRegionManager in the object catalog
    * @return string that contains the catalog name used to register/lookup this class in  the object catalog
    */
-  static const string catalogName()
+  static string const catalogName()
   { return "ZoneManager"; }
 
   /**
    * @brief Virtual access to catalogName()
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
-  virtual const string getCatalogName() const override final
+  virtual string const getCatalogName() const override final
   { return ElementRegionManager::catalogName(); }
 
   /**

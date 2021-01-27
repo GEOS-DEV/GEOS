@@ -62,7 +62,7 @@ public:
    */
   static string catalogName() { return "SourceFlux"; }
 
-  virtual const string getCatalogName() const override
+  virtual string const getCatalogName() const override
   {
     return SourceFluxBoundaryCondition::catalogName();
   }

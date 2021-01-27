@@ -170,7 +170,7 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
 }
 
 
-SurfaceGenerator::SurfaceGenerator( const std::string & name,
+SurfaceGenerator::SurfaceGenerator( std::string const & name,
                                     Group * const parent ):
   SolverBase( name, parent ),
   m_failCriterion( 1 ),

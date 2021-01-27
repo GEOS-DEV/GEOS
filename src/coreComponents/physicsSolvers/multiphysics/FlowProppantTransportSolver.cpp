@@ -31,7 +31,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-FlowProppantTransportSolver::FlowProppantTransportSolver( const std::string & name, Group * const parent ):
+FlowProppantTransportSolver::FlowProppantTransportSolver( std::string const & name, Group * const parent ):
   SolverBase( name, parent ),
   m_proppantSolverName(),
   m_flowSolverName(),

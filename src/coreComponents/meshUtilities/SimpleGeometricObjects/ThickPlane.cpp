@@ -23,7 +23,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ThickPlane::ThickPlane( const std::string & name, Group * const parent ):
+ThickPlane::ThickPlane( std::string const & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
   m_normal{ 0.0, 0.0, 1.0 },

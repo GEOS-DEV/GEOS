@@ -64,7 +64,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseWell( const string & name,
+  SinglePhaseWell( string const & name,
                    Group * const parent );
 
   /// deleted default constructor

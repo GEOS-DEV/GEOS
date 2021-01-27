@@ -52,7 +52,7 @@ namespace keys
 using namespace dataRepository;
 using namespace constitutive;
 
-PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
+PhaseFieldDamageFEM::PhaseFieldDamageFEM( std::string const & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),

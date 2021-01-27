@@ -43,7 +43,7 @@ void getAbsolutePath( std::string const & path, std::string & absolutePath )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool isAbsolutePath( const std::string & path )
+bool isAbsolutePath( std::string const & path )
 {
   return path[ 0 ] == '/';
 }

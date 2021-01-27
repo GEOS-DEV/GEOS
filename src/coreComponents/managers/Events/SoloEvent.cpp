@@ -24,7 +24,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-SoloEvent::SoloEvent( const std::string & name,
+SoloEvent::SoloEvent( std::string const & name,
                       Group * const parent ):
   EventBase( name, parent ),
   m_targetTime( -1.0 ),

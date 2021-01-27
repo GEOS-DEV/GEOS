@@ -71,7 +71,7 @@ public:
    * @brief return the catalog name
    * @return the catalog name
    */
-  virtual const string getCatalogName() const
+  virtual string const getCatalogName() const
   {
     return FieldSpecificationBase::catalogName();
   }
@@ -438,7 +438,7 @@ public:
    * Accessor
    * @return const reference to m_objectPath
    */
-  virtual const string & getObjectPath() const
+  virtual string const & getObjectPath() const
   {
     return m_objectPath;
   }
@@ -447,7 +447,7 @@ public:
    * Accessor
    * @return const reference to m_fieldName
    */
-  virtual const string & getFieldName() const
+  virtual string const & getFieldName() const
   {
     return m_fieldName;
   }

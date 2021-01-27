@@ -80,7 +80,7 @@ public:
    * @brief Get the name of the object being targeted for collection.
    * @return The collection target's name
    */
-  virtual const string & getTargetName( ) const = 0;
+  virtual string const & getTargetName( ) const = 0;
 
   /**
    * @brief Collects history data.

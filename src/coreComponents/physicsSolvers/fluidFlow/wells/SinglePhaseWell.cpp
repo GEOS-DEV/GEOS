@@ -39,7 +39,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace SinglePhaseWellKernels;
 
-SinglePhaseWell::SinglePhaseWell( const string & name,
+SinglePhaseWell::SinglePhaseWell( string const & name,
                                   Group * const parent ):
   WellSolverBase( name, parent )
 {

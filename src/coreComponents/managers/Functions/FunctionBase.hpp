@@ -46,7 +46,7 @@ class FunctionBase : public dataRepository::Group
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  FunctionBase( const std::string & name,
+  FunctionBase( std::string const & name,
                 dataRepository::Group * const parent );
 
   /**

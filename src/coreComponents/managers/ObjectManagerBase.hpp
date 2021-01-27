@@ -68,7 +68,7 @@ public:
    * @brief Get the name of the catalog.
    * @return The name.
    */
-  virtual const string getCatalogName() const = 0;
+  virtual string const getCatalogName() const = 0;
   ///@}
 
   using dataRepository::Group::packSize;
@@ -304,7 +304,7 @@ public:
    * @brief Creates a new set.
    * @param newSetName The set name.
    */
-  void createSet( const std::string & newSetName );
+  void createSet( std::string const & newSetName );
 
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
@@ -314,7 +314,7 @@ public:
    */
   void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   const array2d< localIndex > & map,
-                                  const std::string & setName );
+                                  std::string const & setName );
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
    * @param inputSet The input set.
@@ -323,7 +323,7 @@ public:
    */
   void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   const array1d< localIndex_array > & map,
-                                  const std::string & setName );
+                                  std::string const & setName );
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
    * @param inputSet The input set.
@@ -332,7 +332,7 @@ public:
    */
   void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   ArrayOfArraysView< localIndex const > const & map,
-                                  const std::string & setName );
+                                  std::string const & setName );
 
   /**
    * @brief Constructs the global to local map.

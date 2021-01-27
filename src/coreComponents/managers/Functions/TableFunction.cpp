@@ -40,7 +40,7 @@ using namespace dataRepository;
 
 
 
-TableFunction::TableFunction( const std::string & name,
+TableFunction::TableFunction( std::string const & name,
                               Group * const parent ):
   FunctionBase( name, parent ),
   m_tableCoordinates1D(),

@@ -59,14 +59,14 @@ public:
    * @brief Return the name of the FaceManager in the object catalog.
    * @return string that contains the catalog name of the FaceManager
    */
-  static const string catalogName()
+  static string const catalogName()
   { return "FaceManager"; }
 
   /**
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the catalog name of the FaceManager
    */
-  virtual const string getCatalogName() const override
+  virtual string const getCatalogName() const override
   { return FaceManager::catalogName(); }
   ///@}
 

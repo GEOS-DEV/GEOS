@@ -41,7 +41,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::string & name,
+SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( std::string const & name,
                                                                   Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),

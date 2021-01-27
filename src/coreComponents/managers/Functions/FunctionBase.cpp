@@ -26,7 +26,7 @@ using namespace dataRepository;
 
 
 
-FunctionBase::FunctionBase( const std::string & name,
+FunctionBase::FunctionBase( std::string const & name,
                             Group * const parent ):
   Group( name, parent ),
   m_inputVarNames()

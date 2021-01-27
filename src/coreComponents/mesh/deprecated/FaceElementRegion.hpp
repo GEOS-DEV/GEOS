@@ -72,10 +72,10 @@ public:
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return a string containing the key name.
    */
-  static const string catalogName()
+  static string const catalogName()
   { return "FaceElementRegion"; }
 
-  virtual const string getCatalogName() const override final
+  virtual string const getCatalogName() const override final
   { return FaceElementRegion::catalogName(); }
 
   ///@}

@@ -29,7 +29,7 @@ namespace stringutilities
 /**
  * String tokenizing function
  **/
-string_array Tokenize( const std::string & str, const std::string & delimiters )
+string_array Tokenize( std::string const & str, std::string const & delimiters )
 {
   string_array tokens;
 

@@ -59,7 +59,7 @@ public:
    * @param dims The extent of each dimension of the array being collected.
    * @param type The std::type_index of the array being collected (std::type_index(typeid(T)))
    */
-  HistoryMetadata( const string & name, localIndex rank, localIndex * dims, std::type_index type ):
+  HistoryMetadata( string const & name, localIndex rank, localIndex * dims, std::type_index type ):
     m_name( name ),
     m_rank( rank ),
     m_dims( dims, dims+rank ),
@@ -71,7 +71,7 @@ public:
    * @param count The extent of the one-dimensional array.
    * @param type The std::type_index of the array being collected (std::type_index(typeid(T)))
    */
-  HistoryMetadata( const string & name, localIndex count, std::type_index type ):
+  HistoryMetadata( string const & name, localIndex count, std::type_index type ):
     m_name( name ),
     m_rank( 1 ),
     m_dims( &count, &count+1 ),
@@ -82,7 +82,7 @@ public:
    *         to the history output files.
    * @param name The name to set.
    */
-  void setName( const string & name )
+  void setName( string const & name )
   {
     m_name = name;
   }
@@ -90,7 +90,7 @@ public:
    * @brief Get the name.
    * @return The name of the data being collected.
    */
-  const string & getName( ) const
+  string const & getName( ) const
   {
     return m_name;
   }

@@ -27,7 +27,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Box::Box( const std::string & name, Group * const parent ):
+Box::Box( std::string const & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_min{ 0.0, 0.0, 0.0 },
   m_max{ 0.0, 0.0, 0.0 },

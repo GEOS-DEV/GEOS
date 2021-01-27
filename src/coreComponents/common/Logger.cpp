@@ -44,7 +44,7 @@ MPI_Comm comm;
 
 #ifdef GEOSX_USE_MPI
 
-void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
+void InitializeLogger( MPI_Comm mpi_comm, std::string const & rankOutputDir )
 {
   internal::comm = mpi_comm;
   MPI_Comm_rank( mpi_comm, &internal::rank );
@@ -71,7 +71,7 @@ void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
 
 #endif
 
-void InitializeLogger( const std::string & rankOutputDir )
+void InitializeLogger( std::string const & rankOutputDir )
 {
   if( rankOutputDir != "" )
   {

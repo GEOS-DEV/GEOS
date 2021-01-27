@@ -38,7 +38,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  TableFunction( const std::string & name,
+  TableFunction( std::string const & name,
                  dataRepository::Group * const parent );
 
   /**

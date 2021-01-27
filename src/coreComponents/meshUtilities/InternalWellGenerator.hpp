@@ -68,7 +68,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  InternalWellGenerator( const std::string & name,
+  InternalWellGenerator( std::string const & name,
                          Group * const parent );
 
   /**

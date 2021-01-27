@@ -33,7 +33,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-ReservoirSolverBase::ReservoirSolverBase( const std::string & name,
+ReservoirSolverBase::ReservoirSolverBase( std::string const & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_flowSolverName(),

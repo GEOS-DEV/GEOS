@@ -48,7 +48,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace CompositionalMultiphaseWellKernels;
 
-CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
+CompositionalMultiphaseWell::CompositionalMultiphaseWell( string const & name,
                                                           Group * const parent )
   :
   WellSolverBase( name, parent ),

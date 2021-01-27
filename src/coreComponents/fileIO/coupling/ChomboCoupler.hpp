@@ -39,7 +39,7 @@ public:
    * @param inputPath filename The name of the file to read from.
    * @param mesh The mesh to communicate.
    */
-  ChomboCoupler( MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh );
+  ChomboCoupler( MPI_Comm const comm, std::string const & outputPath, std::string const & inputPath, MeshLevel & mesh );
 
   /**
    * @brief Write data to file.

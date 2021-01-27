@@ -71,13 +71,13 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static const string catalogName()
+  static string const catalogName()
   { return "WellElementRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override final
+  virtual string const getCatalogName() const override final
   { return WellElementRegion::catalogName(); }
 
   ///@}
@@ -169,7 +169,7 @@ public:
 private:
 
   /// Name of the (unique) subregion
-  const string m_subRegionName;
+  string const m_subRegionName;
 
   /// Name of the well constraint
   string m_wellControlsName;

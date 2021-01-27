@@ -56,7 +56,7 @@ class CellElementSubRegion;
 class FaceElementSubRegion;
 
 
-ProblemManager::ProblemManager( const std::string & name,
+ProblemManager::ProblemManager( std::string const & name,
                                 Group * const parent ):
   dataRepository::Group( name, parent ),
   m_physicsSolverManager( nullptr ),

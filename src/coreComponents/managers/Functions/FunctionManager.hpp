@@ -34,7 +34,7 @@ class FunctionManager : public dataRepository::Group
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  FunctionManager( const std::string & name,
+  FunctionManager( std::string const & name,
                    dataRepository::Group * const parent );
 
   /**

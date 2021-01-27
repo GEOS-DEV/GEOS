@@ -189,7 +189,7 @@ public:
    * @param problemTime the current problem time
    * @param lnodelist
    */
-  void writePolygonMeshObject( const std::string & meshName,
+  void writePolygonMeshObject( std::string const & meshName,
                                const localIndex nnodes,
                                real64 * coords[3],
                                const globalIndex * dummy1,

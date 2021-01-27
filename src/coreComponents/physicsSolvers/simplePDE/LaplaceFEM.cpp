@@ -80,7 +80,7 @@ using namespace dataRepository;
  */
 
 //START_SPHINX_INCLUDE_01
-LaplaceFEM::LaplaceFEM( const std::string & name,
+LaplaceFEM::LaplaceFEM( std::string const & name,
                         Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),

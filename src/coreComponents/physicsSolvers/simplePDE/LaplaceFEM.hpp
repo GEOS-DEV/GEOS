@@ -36,7 +36,7 @@ public:
   LaplaceFEM() = delete;
 
   // The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
-  LaplaceFEM( const std::string & name,
+  LaplaceFEM( std::string const & name,
               Group * const parent );
 
   // Destructor

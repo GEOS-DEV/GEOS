@@ -82,7 +82,7 @@ public:
    * @param[in] name of the InternalMeshGenerator
    * @param[in] parent point to the parent Group of the InternalMeshGenerator
    */
-  InternalMeshGenerator( const std::string & name,
+  InternalMeshGenerator( std::string const & name,
                          Group * const parent );
 
   virtual ~InternalMeshGenerator() override;
@@ -112,7 +112,7 @@ public:
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
 
-  virtual void getElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( std::string const & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],

@@ -48,14 +48,14 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string catalogName()
+  static string const catalogName()
   { return "FaceElementSubRegion"; }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual const string getCatalogName() const override
+  virtual string const getCatalogName() const override
   {
     return FaceElementSubRegion::catalogName();
   }

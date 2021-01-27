@@ -81,7 +81,7 @@ Unpack( buffer_unit_type const * & buffer, T * const GEOSX_RESTRICT var, INDEX_T
 }
 
 template< bool DO_PACKING >
-localIndex Pack( buffer_unit_type * & buffer, const std::string & var )
+localIndex Pack( buffer_unit_type * & buffer, std::string const & var )
 {
   const string::size_type varSize = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, varSize );

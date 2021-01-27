@@ -50,7 +50,7 @@ public:
   virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex collectionIdx ) override;
 
   /// @copydoc geosx::HistoryCollection::getTargetName
-  virtual const string & getTargetName( ) const override
+  virtual string const & getTargetName( ) const override
   {
     return m_fieldName;
   }

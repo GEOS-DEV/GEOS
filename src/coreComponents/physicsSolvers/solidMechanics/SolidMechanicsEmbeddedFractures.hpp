@@ -31,7 +31,7 @@ class SolidMechanicsLagrangianFEM;
 class SolidMechanicsEmbeddedFractures : public SolverBase
 {
 public:
-  SolidMechanicsEmbeddedFractures( const std::string & name,
+  SolidMechanicsEmbeddedFractures( std::string const & name,
                                    Group * const parent );
 
   ~SolidMechanicsEmbeddedFractures() override;

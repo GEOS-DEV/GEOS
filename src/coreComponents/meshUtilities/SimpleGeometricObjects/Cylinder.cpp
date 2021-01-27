@@ -27,7 +27,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Cylinder::Cylinder( const std::string & name, Group * const parent ):
+Cylinder::Cylinder( std::string const & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_point1{ 0.0, 0.0, 0.0 },
   m_point2{ 0.0, 0.0, 0.0 },

@@ -931,7 +931,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition * const domain )
  * @param nodeIDInBox
  * @param node_size
  */
-void InternalMeshGenerator::getElemToNodesRelationInBox( const std::string & elementType,
+void InternalMeshGenerator::getElemToNodesRelationInBox( std::string const & elementType,
                                                          const int index[],
                                                          const int & iEle,
                                                          int nodeIDInBox[],

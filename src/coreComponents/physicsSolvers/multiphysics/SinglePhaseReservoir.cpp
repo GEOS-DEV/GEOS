@@ -34,7 +34,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
+SinglePhaseReservoir::SinglePhaseReservoir( std::string const & name,
                                             Group * const parent ):
   ReservoirSolverBase( name, parent )
 {}

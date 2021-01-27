@@ -31,7 +31,7 @@ class FlowSolverBase;
 class FlowProppantTransportSolver : public SolverBase
 {
 public:
-  FlowProppantTransportSolver( const std::string & name,
+  FlowProppantTransportSolver( std::string const & name,
                                Group * const parent );
   ~FlowProppantTransportSolver() override;
 

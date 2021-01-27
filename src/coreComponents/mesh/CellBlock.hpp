@@ -57,13 +57,13 @@ public:
    * @brief Const getter for the catalog name.
    * @return the name of this type in the catalog
    */
-  static const string catalogName()
+  static string const catalogName()
   { return "CellBlock"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override final
+  virtual string const getCatalogName() const override final
   { return CellBlock::catalogName(); }
 
   ///@}

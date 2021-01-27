@@ -118,7 +118,7 @@ Pack( buffer_unit_type * & buffer,
 template< bool DO_PACKING >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      const string & var );
+      string const & var );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >

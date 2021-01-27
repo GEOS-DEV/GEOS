@@ -66,7 +66,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  CompositionalMultiphaseWell( const string & name,
+  CompositionalMultiphaseWell( string const & name,
                                Group * const parent );
 
   /// deleted default constructor

@@ -35,7 +35,7 @@ using namespace constitutive;
 using namespace SinglePhaseHybridFVMKernels;
 using namespace mimeticInnerProduct;
 
-SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string & name,
+SinglePhaseHybridFVM::SinglePhaseHybridFVM( std::string const & name,
                                             Group * const parent ):
   SinglePhaseBase( name, parent ),
   m_faceDofKey( "" ),

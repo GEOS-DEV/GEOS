@@ -59,7 +59,7 @@ constexpr integer LagrangianContactSolver::FractureState::SLIP;
 constexpr integer LagrangianContactSolver::FractureState::NEW_SLIP;
 constexpr integer LagrangianContactSolver::FractureState::OPEN;
 
-LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
+LagrangianContactSolver::LagrangianContactSolver( std::string const & name,
                                                   Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),

@@ -50,7 +50,7 @@ public:
    */
   static string catalogName() { return "Dirichlet"; }
 
-  virtual const string getCatalogName() const
+  virtual string const getCatalogName() const
   {
     return DirichletBoundaryCondition::catalogName();
   }

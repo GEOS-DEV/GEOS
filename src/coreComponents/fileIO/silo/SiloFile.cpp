@@ -1694,7 +1694,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
     // face mesh
-    const std::string facemeshName( "face_mesh" );
+    std::string const facemeshName( "face_mesh" );
 
     if( writeArbitraryPolygon )
     {
@@ -1821,7 +1821,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
     localIndex const numEdges = edgeManager->size();
 
 
-    const std::string edgeMeshName( "edge_mesh" );
+    std::string const edgeMeshName( "edge_mesh" );
 
     const int numEdgeTypes = 1;
     const int numNodesPerEdge = 2;
@@ -1891,7 +1891,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
 }
 
 // Arbitrary polygon. Have to deal with this separately
-void SiloFile::writePolygonMeshObject( const std::string & meshName,
+void SiloFile::writePolygonMeshObject( std::string const & meshName,
                                        const localIndex nnodes,
                                        real64 * coords[3],
                                        const globalIndex *,

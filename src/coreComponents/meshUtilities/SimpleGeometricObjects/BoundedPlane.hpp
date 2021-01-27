@@ -42,7 +42,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  BoundedPlane( const std::string & name,
+  BoundedPlane( std::string const & name,
                 Group * const parent );
 
   /**

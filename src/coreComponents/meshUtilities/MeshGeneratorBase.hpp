@@ -85,7 +85,7 @@ public:
  * @param[in] size the number of node on the element
  *
  */
-  virtual void getElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( std::string const & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],

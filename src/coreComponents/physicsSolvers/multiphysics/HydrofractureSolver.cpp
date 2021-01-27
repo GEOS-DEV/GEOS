@@ -45,7 +45,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-HydrofractureSolver::HydrofractureSolver( const std::string & name,
+HydrofractureSolver::HydrofractureSolver( std::string const & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),

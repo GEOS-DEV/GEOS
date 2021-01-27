@@ -1314,7 +1314,7 @@ public:
    * @brief Get group name.
    * @return group name
    */
-  inline const string getName() const
+  inline string const getName() const
   {
     return m_name;
   }

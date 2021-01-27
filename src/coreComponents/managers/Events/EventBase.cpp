@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-EventBase::EventBase( const std::string & name,
+EventBase::EventBase( std::string const & name,
                       Group * const parent ):
   ExecutableGroup( name, parent ),
   m_lastTime( -1.0e100 ),

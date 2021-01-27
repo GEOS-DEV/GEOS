@@ -71,13 +71,13 @@ public:
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string catalogName()
+  static string const catalogName()
   { return "CellElementRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override final
+  virtual string const getCatalogName() const override final
   { return CellElementRegion::catalogName(); }
 
   ///@}

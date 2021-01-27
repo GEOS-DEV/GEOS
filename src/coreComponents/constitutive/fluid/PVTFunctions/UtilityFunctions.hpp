@@ -418,7 +418,7 @@ typedef EvalArgs< real64, MAX_VAR_DIM > EvalVarArgs;
 class TableFunctionBase
 {
 public:
-  virtual const string & tableName() const = 0;
+  virtual string const & tableName() const = 0;
   virtual ~TableFunctionBase(){}
 
   virtual EvalArgs1D value( const EvalArgs1D & x ) const = 0;

@@ -384,7 +384,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition * const domain )
 
 }
 
-void PAMELAMeshGenerator::getElemToNodesRelationInBox( const std::string & GEOSX_UNUSED_PARAM( elementType ),
+void PAMELAMeshGenerator::getElemToNodesRelationInBox( std::string const & GEOSX_UNUSED_PARAM( elementType ),
                                                        const int GEOSX_UNUSED_PARAM( index )[],
                                                        const int & GEOSX_UNUSED_PARAM( iEle ),
                                                        int GEOSX_UNUSED_PARAM( nodeIDInBox )[],

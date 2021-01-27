@@ -84,10 +84,10 @@ public:
    * @brief Get the key name for the SurfaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string catalogName()
+  static string const catalogName()
   { return "SurfaceElementRegion"; }
 
-  virtual const string getCatalogName() const override final
+  virtual string const getCatalogName() const override final
   { return SurfaceElementRegion::catalogName(); }
 
   ///@}

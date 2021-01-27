@@ -33,7 +33,7 @@ std::string const expression = "expression";
 
 using namespace dataRepository;
 
-SymbolicFunction::SymbolicFunction( const std::string & name,
+SymbolicFunction::SymbolicFunction( std::string const & name,
                                     Group * const parent ):
   FunctionBase( name, parent ),
   parserContext(),

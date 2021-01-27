@@ -34,7 +34,7 @@ class PeriodicEvent : public EventBase
 public:
 
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  PeriodicEvent( const std::string & name,
+  PeriodicEvent( std::string const & name,
                  Group * const parent );
 
   /// Destructor
