@@ -106,9 +106,7 @@ public:
           inputMatrix,
           inputRhs ),
     m_X( nodeManager.referencePosition() ),
-    m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_dNdX( elementSubRegion.dNdX() ),
-    m_detJ( elementSubRegion.detJ() )
+    m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName ))
   {}
 
   //***************************************************************************
@@ -235,8 +233,6 @@ public:
     return maxForce;
   }
 
-
-
 protected:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
@@ -244,14 +240,7 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_primaryField;
 
-  /// The global shape function derivatives array.
-  arrayView4d< real64 const > const m_dNdX;
-
-  /// The global determinant of the parent/physical Jacobian.
-  arrayView2d< real64 const > const m_detJ;
-
 };
-
 
 } // namespace geosx
 
