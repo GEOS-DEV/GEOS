@@ -73,7 +73,7 @@ public:
                         dataRepository::Group * domain ) override;
   /**
    * @brief Writes out a time history file at the end of the simulation.
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,

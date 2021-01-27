@@ -85,7 +85,9 @@ public:
    */
   ///@{
 
+  /// @cond DO_NOT_DOCUMENT
   virtual void GenerateMesh( Group * ) override {}
+  /// @endcond
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.

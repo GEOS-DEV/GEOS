@@ -635,9 +635,9 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 #else
 
     GEOSX_UNUSED_VAR( neighbors );
-    AssignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
-    AssignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
-    AssignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );
+    assignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
+    assignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
+    assignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );
 
 #endif
 

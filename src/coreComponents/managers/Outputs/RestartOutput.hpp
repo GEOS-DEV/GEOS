@@ -60,7 +60,7 @@ public:
 
   /**
    * @brief Write one final restart file as the code exits
-   * @copydetails ExecutableGroup::Cleanup()
+   * @copydetails ExecutableGroup::cleanup()
    */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
