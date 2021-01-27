@@ -171,7 +171,7 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 			FE_TYPE::calcN( q, N );
 	
 			///Compute invJ = DF^{-1}
-			real64 invJ[3][3];
+			real64 invJ[3][3]={{0}};
 			FE_TYPE::invJacobianTransformation(q,xLocal,invJ);
 			
 			for(localIndex a=0; a < numNodesPerFace; ++a)
