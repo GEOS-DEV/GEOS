@@ -72,18 +72,18 @@ real64 ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction( real64
 }
 
 Group *
-ContactRelationBase::CreateChild( string const & catalogKey, string const & childName )
+ContactRelationBase::createChild( string const & catalogKey, string const & childName )
 {
-  FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::GetCatalog();
+  FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::getCatalog();
   GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
 
-  m_apertureFunction = FunctionManager::Instance().RegisterGroup( childName, FunctionBase::CatalogInterface::Factory( catalogKey, childName, this ) );
+  m_apertureFunction = FunctionManager::instance().registerGroup( childName, FunctionBase::CatalogInterface::factory( catalogKey, childName, this ) );
 
   return m_apertureFunction;
 }
 
 
-void ContactRelationBase::SetSchemaDeviations( xmlWrapper::xmlNode,
+void ContactRelationBase::setSchemaDeviations( xmlWrapper::xmlNode,
                                                xmlWrapper::xmlNode schemaParent,
                                                integer )
 {
@@ -102,7 +102,7 @@ void ContactRelationBase::SetSchemaDeviations( xmlWrapper::xmlNode,
 
 
 
-void ContactRelationBase::InitializePreSubGroups( Group * const )
+void ContactRelationBase::initializePreSubGroups( Group * const )
 {
   TableFunction * const apertureTable = dynamic_cast< TableFunction * >(m_apertureFunction);
   if( apertureTable!=nullptr )

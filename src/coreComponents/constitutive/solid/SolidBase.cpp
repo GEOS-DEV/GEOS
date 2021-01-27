@@ -55,7 +55,7 @@ SolidBase::~SolidBase()
 {}
 
 
-void SolidBase::PostProcessInput()
+void SolidBase::postProcessInput()
 {
   this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString )->
     setApplyDefaultValue( m_defaultDensity );

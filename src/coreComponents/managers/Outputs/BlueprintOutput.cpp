@@ -100,7 +100,7 @@ BlueprintOutput::BlueprintOutput( std::string const & name,
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void BlueprintOutput::Execute( real64 const time,
+void BlueprintOutput::execute( real64 const time,
                                real64 const,
                                integer const cycle,
                                integer const,
@@ -138,7 +138,7 @@ void BlueprintOutput::Execute( real64 const time,
   /// Generate the Blueprint index.
   conduit::Node fileRoot;
   conduit::Node & index = fileRoot[ "blueprint_index/mesh" ];
-  conduit::blueprint::mesh::generate_index( mesh, "mesh", MpiWrapper::Comm_size(), index );
+  conduit::blueprint::mesh::generate_index( mesh, "mesh", MpiWrapper::commSize(), index );
 
   /// Verify that the index conforms to the Blueprint.
   info.reset();
@@ -211,15 +211,15 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
     conduit::Node & topology = topologies[ topologyName ];
     topology[ "coordset" ] = coordset.name();
     topology[ "type" ] = "unstructured";
-    topology[ "elements/shape" ] = internal::toBlueprintShape( subRegion.GetElementTypeString() );
+    topology[ "elements/shape" ] = internal::toBlueprintShape( subRegion.getElementTypeString() );
     internal::reorderElementToNodeMap( subRegion, topology[ "elements/connectivity" ] );
 
     /// Write out the fields.
     writeOutWrappersAsFields( subRegion, fields, topologyName );
 
     /// Write out the quadrature averaged constitutive data and the full data if requested.
-    Group & averagedSubRegionData = *averagedElementData.RegisterGroup( topologyName );
-    subRegion.GetConstitutiveModels()->forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
+    Group & averagedSubRegionData = *averagedElementData.registerGroup( topologyName );
+    subRegion.getConstitutiveModels()->forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
     {
       writeOutConstitutiveData( constitutiveModel, fields, topologyName, averagedSubRegionData );
 
@@ -265,7 +265,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
 {
   GEOSX_MARK_FUNCTION;
 
-  Group & averagedConstitutiveData = *averagedSubRegionData.RegisterGroup( constitutiveModel.getName() );
+  Group & averagedConstitutiveData = *averagedSubRegionData.registerGroup( constitutiveModel.getName() );
 
   constitutiveModel.forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
   {

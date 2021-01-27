@@ -167,7 +167,6 @@ public:
   }
   #endif
 
-
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -198,7 +197,6 @@ public:
 
     return m_strainEnergyDensity( k, q );
   }
-
 
   GEOSX_HOST_DEVICE
   real64 getRegularizationLength() const
@@ -245,10 +243,10 @@ public:
   Damage( string const & name, dataRepository::Group * const parent );
   virtual ~Damage() override = default;
 
-  static std::string CatalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return CatalogName(); }
+  static std::string catalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
+  virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;

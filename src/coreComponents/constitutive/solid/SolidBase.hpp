@@ -534,7 +534,7 @@ public:
 protected:
 
   /// Post-process XML input
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
   array3d< real64, solid::STRESS_PERMUTATION > m_newStress;

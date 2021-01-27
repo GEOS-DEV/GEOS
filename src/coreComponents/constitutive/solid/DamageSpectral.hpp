@@ -219,8 +219,8 @@ public:
   virtual ~DamageSpectral() override;
 
 
-  static std::string CatalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return CatalogName(); }
+  static std::string catalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
+  virtual string getCatalogName() const override { return catalogName(); }
 
 
   KernelWrapper createKernelUpdates()

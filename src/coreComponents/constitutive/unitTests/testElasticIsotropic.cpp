@@ -74,8 +74,8 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
-  constitutiveManager.PostProcessInputRecursive();
+  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  constitutiveManager.postProcessInputRecursive();
 
   ///ElasticIsotropic cm( "model", nullptr );
   //real64 constexpr K = 2e10;
@@ -86,7 +86,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
 
-  ElasticIsotropic & cm = *(constitutiveManager.GetConstitutiveRelation< ElasticIsotropic >( "granite" ));
+  ElasticIsotropic & cm = *(constitutiveManager.getConstitutiveRelation< ElasticIsotropic >( "granite" ));
 
   cm.allocateConstitutiveData( &disc, 2 );
   ElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
@@ -104,7 +104,6 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    //cmw.HypoElastic( 0, 0, Ddt, Rot );
     cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
@@ -124,7 +123,6 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    //cmw.HypoElastic( 0, 0, Ddt, Rot );
     cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
@@ -144,7 +142,6 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    //cmw.HypoElastic( 0, 0, Ddt, Rot );
     cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
@@ -164,9 +161,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    //cmw.HypoElastic( 0, 0, Ddt, Rot );
     cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
-
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
@@ -185,7 +180,6 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    //cmw.HypoElastic( 0, 0, Ddt, Rot );
     cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
@@ -205,7 +199,6 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    //cmw.HypoElastic( 0, 0, Ddt, Rot );
     cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );

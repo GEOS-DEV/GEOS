@@ -91,9 +91,9 @@ ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
 {}
 
 
-void ElasticTransverseIsotropic::PostProcessInput()
+void ElasticTransverseIsotropic::postProcessInput()
 {
-  SolidBase::PostProcessInput();
+  SolidBase::postProcessInput();
 
   real64 const Et = m_defaultYoungsModulusTransverse;
   real64 const Ea = m_defaultYoungsModulusAxial;

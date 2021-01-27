@@ -263,12 +263,11 @@ public:
 
     real64 N[numNodesPerElem];
     FE_TYPE::calcN( q, N );
-    FE_TYPE::plus_gradNajAij_plus_NaFi( dNdX,
-                                        stress,
-                                        N,
-                                        gravityForce,
-                                        reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-
+    FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
+                                     stress,
+                                     N,
+                                     gravityForce,
+                                     reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
   }
 

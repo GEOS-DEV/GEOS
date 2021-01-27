@@ -37,7 +37,7 @@ RestartOutput::RestartOutput( std::string const & name,
 RestartOutput::~RestartOutput()
 {}
 
-void RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void RestartOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                              real64 const GEOSX_UNUSED_PARAM( dt ),
                              integer const cycleNumber,
                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -46,8 +46,8 @@ void RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
-  ProblemManager * problemManager = Group::group_cast< ProblemManager * >( domainPartition->getParent());
+  DomainPartition * domainPartition = Group::groupCast< DomainPartition * >( domain );
+  ProblemManager * problemManager = Group::groupCast< ProblemManager * >( domainPartition->getParent());
 
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
@@ -55,11 +55,11 @@ void RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   sprintf( fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber );
 
   problemManager->prepareToWrite();
-  FunctionManager::Instance().prepareToWrite();
+  FunctionManager::instance().prepareToWrite();
   FieldSpecificationManager::get().prepareToWrite();
   writeTree( fileName );
   problemManager->finishWriting();
-  FunctionManager::Instance().finishWriting();
+  FunctionManager::instance().finishWriting();
   FieldSpecificationManager::get().finishWriting();
 }
 

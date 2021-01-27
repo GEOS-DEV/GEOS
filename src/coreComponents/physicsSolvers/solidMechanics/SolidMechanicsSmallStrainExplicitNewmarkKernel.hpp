@@ -221,7 +221,7 @@ public:
 #endif
     }
 
-    FE_TYPE::plus_gradNajAij( dNdX, stressLocal, stack.fLocal );
+    FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
 
 #else
     real64 invJ[3][3];
@@ -250,7 +250,7 @@ public:
 #endif
     }
 
-    FE_TYPE::plus_gradNajAij( q, invJ, stressLocal, stack.fLocal );
+    FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
 #endif
   }
 

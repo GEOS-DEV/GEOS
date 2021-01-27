@@ -192,7 +192,7 @@ public:
     LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
-    FE_TYPE::plus_gradNajAij( dNdX, P, stack.fLocal );
+    FE_TYPE::plusGradNajAij( dNdX, P, stack.fLocal );
   }
 
 

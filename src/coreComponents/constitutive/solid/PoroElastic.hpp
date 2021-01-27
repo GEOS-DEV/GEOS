@@ -111,16 +111,16 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static std::string CatalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
+  static std::string catalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
 
   /**
    * @brief Get catalog name
    * @return Catalog name string
    */
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// Post-process XML input
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /**
    * @brief Deliver a clone of this object
@@ -147,11 +147,11 @@ public:
    * @param[in] q Quadrature index
    */
   inline virtual void
-  StateUpdatePointPressure( real64 const & pres,
+  stateUpdatePointPressure( real64 const & pres,
                             localIndex const k,
                             localIndex const q ) override
   {
-    m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
+    m_poreVolumeRelation.compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
   }
 
   /**
@@ -159,7 +159,7 @@ public:
    * @param pres Pressure array view
    * @param dPres Pressure derivative array view
    */
-  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                          arrayView1d< real64 const > const & dPres ) override final;
 
   /**

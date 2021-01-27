@@ -62,9 +62,9 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const 
 VanGenuchtenCapillaryPressure::~VanGenuchtenCapillaryPressure()
 {}
 
-void VanGenuchtenCapillaryPressure::PostProcessInput()
+void VanGenuchtenCapillaryPressure::postProcessInput()
 {
-  CapillaryPressureBase::PostProcessInput();
+  CapillaryPressureBase::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 

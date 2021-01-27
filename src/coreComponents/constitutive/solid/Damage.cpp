@@ -62,9 +62,9 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
 
 
 template< typename BASE >
-void Damage< BASE >::PostProcessInput()
+void Damage< BASE >::postProcessInput()
 {
-  BASE::PostProcessInput();
+  BASE::postProcessInput();
 }
 
 template< typename BASE >

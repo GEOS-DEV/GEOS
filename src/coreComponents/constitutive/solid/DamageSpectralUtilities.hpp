@@ -344,9 +344,9 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
 
 }
 
-//this function tests the GetStiffness function from DamageSpectral.hpp
+//this function tests the getStiffness function from DamageSpectral.hpp
 GEOSX_HOST_DEVICE inline
-void GetStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
+void getStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
 {
 
   //Spectral Split

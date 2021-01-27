@@ -375,13 +375,13 @@ public:
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string CatalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return m_catalogNameString; }
 
   /**
    * @brief Get catalog name
    * @return Name string
    */
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -481,7 +481,7 @@ public:
 protected:
 
   /// Post-process XML data
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /// The default value of the bulk modulus for any new allocations.
   real64 m_defaultBulkModulus;

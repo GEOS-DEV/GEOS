@@ -97,9 +97,9 @@ void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const pare
 }
 
 
-void DruckerPrager::PostProcessInput()
+void DruckerPrager::postProcessInput()
 {
-  ElasticIsotropic::PostProcessInput();
+  ElasticIsotropic::postProcessInput();
 
   GEOSX_ASSERT_MSG( m_defaultCohesion >= 0, "Negative cohesion value detected" );
   GEOSX_ASSERT_MSG( m_defaultFrictionAngle >= 0, "Negative friction angle detected" );

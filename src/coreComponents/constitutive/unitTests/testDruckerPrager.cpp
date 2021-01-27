@@ -56,8 +56,8 @@ TEST( DruckerPragerTests, testDruckerPrager )
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
-  constitutiveManager.PostProcessInputRecursive();
+  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  constitutiveManager.postProcessInputRecursive();
 
   localIndex constexpr numElem = 2;
   localIndex constexpr numQuad = 4;
@@ -65,7 +65,7 @@ TEST( DruckerPragerTests, testDruckerPrager )
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElem );
 
-  DruckerPrager & cm = *(constitutiveManager.GetConstitutiveRelation< DruckerPrager >( "granite" ));
+  DruckerPrager & cm = *(constitutiveManager.getConstitutiveRelation< DruckerPrager >( "granite" ));
   cm.allocateConstitutiveData( &disc, numQuad );
 
   // confirm allocation sizes
@@ -182,8 +182,8 @@ TEST( DruckerPragerTests, testDruckerPragerExtended )
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
-  constitutiveManager.PostProcessInputRecursive();
+  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  constitutiveManager.postProcessInputRecursive();
 
   localIndex constexpr numElem = 2;
   localIndex constexpr numQuad = 4;
@@ -191,7 +191,7 @@ TEST( DruckerPragerTests, testDruckerPragerExtended )
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElem );
 
-  DruckerPragerExtended & cm = *(constitutiveManager.GetConstitutiveRelation< DruckerPragerExtended >( "granite" ));
+  DruckerPragerExtended & cm = *(constitutiveManager.getConstitutiveRelation< DruckerPragerExtended >( "granite" ));
   cm.allocateConstitutiveData( &disc, numQuad );
 
   // confirm allocation sizes
