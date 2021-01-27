@@ -135,7 +135,7 @@ int SuperLU_Dist::setup()
   PStatInit( &m_stat );
 
   // Create process grid: the target is to have the process grid as square as possible
-  int const num_procs = MpiWrapper::Comm_size( m_comm );
+  int const num_procs = MpiWrapper::commSize( m_comm );
   int prows = static_cast< int >( std::sqrt( num_procs ) );
   while( num_procs % prows )
   {

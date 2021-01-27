@@ -148,7 +148,7 @@ public:
    * @brief Get the singleton catalog for this class.
    * @return reference to the catalog object
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   ///@}
 
@@ -161,7 +161,7 @@ public:
    * @brief Get typeid for current group
    * @return @p typeid(*this)
    */
-  virtual const std::type_info & get_typeid() const
+  virtual const std::type_info & getTypeId() const
   {
     return typeid(*this);
   }
@@ -171,16 +171,16 @@ public:
    * @param typeToCheck value to check against
    * @return true of types are the same, false if not
    */
-  bool CheckTypeID( std::type_info const & typeToCheck ) const
+  bool checkTypeId( std::type_info const & typeToCheck ) const
   {
-    return typeToCheck == get_typeid();
+    return typeToCheck == getTypeId();
   }
 
   /**
    * @brief Prints the data hierarchy recursively.
    * @param[in] indent The level of indentation to add to this level of output.
    */
-  void PrintDataHierarchy( integer indent = 0 );
+  void printDataHierarchy( integer indent = 0 );
 
   /**
    * @brief @return a table formatted string containing all input options.
@@ -206,10 +206,10 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group and takes ownership.
    */
   template< typename T = Group >
-  T * RegisterGroup( std::string const & name, std::unique_ptr< T > newObject );
+  T * registerGroup( std::string const & name, std::unique_ptr< T > newObject );
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name          The name of the group to use as a string key.
@@ -219,11 +219,11 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group but does not take ownership.
    */
   template< typename T = Group >
-  T * RegisterGroup( std::string const & name,
+  T * registerGroup( std::string const & name,
                      T * newObject );
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name The name of the group to use as a string key.
@@ -232,13 +232,13 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * RegisterGroup( std::string const & name )
+  T * registerGroup( std::string const & name )
   {
-    return RegisterGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
+    return registerGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
   }
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in,out] keyIndex A KeyIndexT object that will be used to specify the name of
@@ -248,15 +248,15 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * RegisterGroup( subGroupMap::KeyIndex const & keyIndex )
+  T * registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T * rval = RegisterGroup< T >( keyIndex.Key(), std::move( std::make_unique< T >( keyIndex.Key(), this )) );
-    keyIndex.setIndex( this->m_subGroups.getIndex( keyIndex.Key()) );
+    T * rval = registerGroup< T >( keyIndex.key(), std::move( std::make_unique< T >( keyIndex.key(), this )) );
+    keyIndex.setIndex( this->m_subGroups.getIndex( keyIndex.key()) );
     return rval;
   }
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @tparam TBASE The type whose type catalog will be used to look up the new sub-group type
@@ -267,10 +267,10 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group, typename TBASE = Group >
-  T * RegisterGroup( std::string const & name, std::string const & catalogName )
+  T * registerGroup( std::string const & name, std::string const & catalogName )
   {
     std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
-    return RegisterGroup< T >( name, std::move( newGroup ) );
+    return registerGroup< T >( name, std::move( newGroup ) );
   }
 
   /**
@@ -287,7 +287,7 @@ public:
    *                      sub-Groups.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName );
+  virtual Group * createChild( string const & childKey, string const & childName );
 
   ///@}
 
@@ -305,7 +305,7 @@ public:
    * @return      A pointer to @p T that refers to the @p group
    */
   template< typename T >
-  static T group_cast( Group * group )
+  static T groupCast( Group * group )
   {
     return dynamicCast< T >( group );
   }
@@ -317,7 +317,7 @@ public:
    * @return      A pointer to @p T that refers to the @p group
    */
   template< typename T >
-  static T group_cast( Group const * group )
+  static T groupCast( Group const * group )
   {
     return dynamicCast< T >( group );
   }
@@ -328,7 +328,7 @@ public:
    * @return      A pointer to \p T that refers to this object
    */
   template< typename T >
-  T group_cast()
+  T groupCast()
   {
     return dynamicCast< T >( this );
   }
@@ -339,7 +339,7 @@ public:
    * @return      A pointer to \p T that refers to this object
    */
   template< typename T >
-  T group_cast() const
+  T groupCast() const
   {
     return dynamicCast< T >( this );
   }
@@ -371,18 +371,18 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * GetGroup( localIndex index )
+  T * getGroup( localIndex index )
   {
-    return group_cast< T * >( m_subGroups[index] );
+    return groupCast< T * >( m_subGroups[index] );
   }
 
   /**
-   * @copydoc GetGroup(localIndex)
+   * @copydoc getGroup(localIndex)
    */
   template< typename T = Group >
-  T const * GetGroup( localIndex index ) const
+  T const * getGroup( localIndex index ) const
   {
-    return group_cast< T const * >( m_subGroups[index] );
+    return groupCast< T const * >( m_subGroups[index] );
   }
 
   /**
@@ -392,17 +392,17 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * GetGroup( string const & name )
+  T * getGroup( string const & name )
   {
-    return group_cast< T * >( m_subGroups[name] );
+    return groupCast< T * >( m_subGroups[name] );
   }
 
   /**
-   * @copydoc GetGroup(string const &)
+   * @copydoc getGroup(string const &)
    */
   template< typename T = Group >
-  T const * GetGroup( string const & name ) const
-  { return group_cast< T const * >( m_subGroups[name] ); }
+  T const * getGroup( string const & name ) const
+  { return groupCast< T const * >( m_subGroups[name] ); }
 
   /**
    * @brief @return Return a reference to the Group @p name.
@@ -425,14 +425,14 @@ public:
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
-  T & GetGroupReference( subGroupMap::KeyIndex const & key )
+  T & getGroupReference( subGroupMap::KeyIndex const & key )
   { return dynamicCast< T & >( *m_subGroups[key] ); }
 
   /**
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
-  T const & GetGroupReference( subGroupMap::KeyIndex const & key ) const
+  T const & getGroupReference( subGroupMap::KeyIndex const & key ) const
   { return dynamicCast< T const & >( *m_subGroups[key] ); }
 
   /**
@@ -442,18 +442,18 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * GetGroup( subGroupMap::KeyIndex const & key )
+  T * getGroup( subGroupMap::KeyIndex const & key )
   {
-    return group_cast< T * >( m_subGroups[key] );
+    return groupCast< T * >( m_subGroups[key] );
   }
 
   /**
-   * @copydoc GetGroup(subGroupMap::KeyIndex const & key)
+   * @copydoc getGroup(subGroupMap::KeyIndex const & key)
    */
   template< typename T = Group >
-  T const * GetGroup( subGroupMap::KeyIndex const & key ) const
+  T const * getGroup( subGroupMap::KeyIndex const & key ) const
   {
-    return group_cast< T const * >( m_subGroups[key] );
+    return groupCast< T const * >( m_subGroups[key] );
   }
 
   /**
@@ -465,16 +465,16 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * GetGroupByPath( string const & path )
+  T * getGroupByPath( string const & path )
   {
-    return const_cast< T * >(const_cast< Group const * >(this)->GetGroupByPath< T >( path ));
+    return const_cast< T * >(const_cast< Group const * >(this)->getGroupByPath< T >( path ));
   }
 
   /**
-   * @copydoc GetGroupByPath(string const &)
+   * @copydoc getGroupByPath(string const &)
    */
   template< typename T = Group >
-  T const * GetGroupByPath( string const & path ) const;
+  T const * getGroupByPath( string const & path ) const;
 
   //END_SPHINX_INCLUDE_GET_GROUP
 
@@ -482,7 +482,7 @@ public:
    * @brief Get the subgroups object
    * @return a reference to the sub-group map.
    */
-  subGroupMap & GetSubGroups()
+  subGroupMap & getSubGroups()
   {
     return m_subGroups;
   }
@@ -491,7 +491,7 @@ public:
    * @brief Get the subgroups object
    * @return a reference to const that points to the sub-group map.
    */
-  subGroupMap const & GetSubGroups() const
+  subGroupMap const & getSubGroups() const
   {
     return m_subGroups;
   }
@@ -633,7 +633,7 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroup ), [&]( auto & castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *getGroup( subgroup ), [&]( auto & castedSubGroup )
       {
         lambda( counter, castedSubGroup );
       } );
@@ -658,7 +658,7 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroup ), [&]( auto const & castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *getGroup( subgroup ), [&]( auto const & castedSubGroup )
       {
         lambda( counter, castedSubGroup );
       } );
@@ -752,14 +752,14 @@ public:
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    *
-   * This function will first call InitializePreSubGroups() on this Group, then
+   * This function will first call initializePreSubGroups() on this Group, then
    * loop over all subgroups and call Initialize() on them, then
    * call InitializePostSubGroups() on this Group.
    *
    * @note The order in which the sub-Groups are iterated over is defined by
    * InitializationOrder().
    */
-  void Initialize( Group * const group );
+  void initialize( Group * const group );
 
   /**
    * @brief Sets the initialization order for sub-Groups.
@@ -770,7 +770,7 @@ public:
    * custom order is required by a derived type, this function should be
    * overridden with a implementation that specifies the desired order.
    */
-  virtual void InitializationOrder( string_array & order );
+  virtual void initializationOrder( string_array & order );
 
 
   /**
@@ -789,7 +789,7 @@ public:
    * @note The order in which the sub-Groups are iterated over is defined by
    * InitializationOrder().
    */
-  void InitializePostInitialConditions( Group * const group );
+  void initializePostInitialConditions( Group * const group );
 
   /**
    * @brief Initialization routine to be called after calling reading a restart file.
@@ -805,13 +805,13 @@ public:
    *        file and put them into the wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode );
+  void processInputFileRecursive( xmlWrapper::xmlNode & targetNode );
 
   /**
-   * @brief Recursively call PostProcessInput() to apply post processing after
+   * @brief Recursively call postProcessInput() to apply post processing after
    * reading input values.
    */
-  void PostProcessInputRecursive();
+  void postProcessInputRecursive();
 
   ///@}
 
@@ -893,22 +893,22 @@ public:
    * @brief Build a complete datastructure for schema generation.
    * @param level indent level for printing out the structure
    */
-  void GenerateDataStructureSkeleton( integer const level )
+  void generateDataStructureSkeleton( integer const level )
   {
-    ExpandObjectCatalogs();
+    expandObjectCatalogs();
     std::string indent( level*2, ' ' );
 
     for( auto const & subGroupIter : m_subGroups )
     {
       std::cout << indent << subGroupIter.second->getName() << std::endl;
-      subGroupIter.second->GenerateDataStructureSkeleton( level + 1 );
+      subGroupIter.second->generateDataStructureSkeleton( level + 1 );
     }
   }
 
   /**
    * @brief Expand any catalogs in the data structure.
    */
-  virtual void ExpandObjectCatalogs() {}
+  virtual void expandObjectCatalogs() {}
 
   /**
    * @brief Inform the schema generator of any deviations between the xml and GEOS data structures.
@@ -916,7 +916,7 @@ public:
    * @param schemaParent      XML node for the parent node
    * @param documentationType type of XML schema generated
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+  virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType );
 
@@ -931,7 +931,7 @@ public:
    * @brief Calls RegisterDataOnMesh() recursively.
    * @param[in,out] meshBodies the group of MeshBody objects to register data on.
    */
-  virtual void RegisterDataOnMeshRecursive( Group * const meshBodies );
+  virtual void registerDataOnMeshRecursive( Group * const meshBodies );
 
   /**
    * @brief Register data on mesh entities.
@@ -940,7 +940,7 @@ public:
    * This function is used to register data on mesh entities such as the NodeManager,
    * FaceManager...etc.
    */
-  virtual void RegisterDataOnMesh( Group * const meshBodies );
+  virtual void registerDataOnMesh( Group * const meshBodies );
 
   ///@}
 
@@ -957,7 +957,7 @@ public:
    *                         (buffer must be either pinned or a device pointer)
    * @return                 the size of the buffer required to pack the wrappers.
    */
-  virtual localIndex PackSize( string_array const & wrapperNames,
+  virtual localIndex packSize( string_array const & wrapperNames,
                                integer const recursive,
                                bool on_device = false ) const;
 
@@ -970,7 +970,7 @@ public:
    *                         (buffer must be either pinned or a device pointer)
    * @return                 the size of the buffer required to pack the wrapper indices.
    */
-  virtual localIndex PackSize( string_array const & wrapperNames,
+  virtual localIndex packSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
                                bool on_device = false ) const;
@@ -990,7 +990,7 @@ public:
    * original value of @p buffer plus the size of data packed to the buffer.
    *
    */
-  virtual localIndex Pack( buffer_unit_type * & buffer,
+  virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            integer const recursive,
                            bool on_device = false ) const;
@@ -1010,7 +1010,7 @@ public:
    * pointer is altered and returned to the new location corresponding the
    * original value of @p buffer plus the size of data packed to the buffer.
    */
-  virtual localIndex Pack( buffer_unit_type * & buffer,
+  virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
@@ -1031,7 +1031,7 @@ public:
    * unpacked matches @p packList. If @p packList is empty, the values
    * of the indices that are unpacked are stored and returned in packList.
    */
-  virtual localIndex Unpack( buffer_unit_type const * & buffer,
+  virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool on_device = false );
@@ -1336,7 +1336,7 @@ public:
    */
   localIndex getIndexInParent() const
   {
-    return m_parent->GetSubGroups().getIndex( this->m_name );
+    return m_parent->getSubGroups().getIndex( this->m_name );
   }
 
   /**
@@ -1434,14 +1434,14 @@ protected:
    * This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() {}
+  virtual void postProcessInput() {}
 
   /**
    * @brief Called by Initialize() prior to initializing sub-Groups.
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePreSubGroups( Group * const group )
+  virtual void initializePreSubGroups( Group * const group )
   {
     GEOSX_UNUSED_VAR( group );
   }
@@ -1451,7 +1451,7 @@ protected:
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostSubGroups( Group * const group )
+  virtual void initializePostSubGroups( Group * const group )
   {
     GEOSX_UNUSED_VAR( group );
   }
@@ -1461,7 +1461,7 @@ protected:
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const group )
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const group )
   {
     GEOSX_UNUSED_VAR( group );
   }
@@ -1471,7 +1471,7 @@ protected:
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostInitialConditions_PostSubGroups( Group * const group )
+  virtual void initializePostInitialConditionsPostSubGroups( Group * const group )
   {
     GEOSX_UNUSED_VAR( group );
   }
@@ -1493,7 +1493,7 @@ private:
    *        wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
 
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
@@ -1547,7 +1547,7 @@ using ViewKey = Group::wrapperMap::KeyIndex;
 
 
 template< typename T >
-T * Group::RegisterGroup( std::string const & name,
+T * Group::registerGroup( std::string const & name,
                           std::unique_ptr< T > newObject )
 {
   newObject->m_parent = this;
@@ -1556,7 +1556,7 @@ T * Group::RegisterGroup( std::string const & name,
 
 
 template< typename T >
-T * Group::RegisterGroup( std::string const & name,
+T * Group::registerGroup( std::string const & name,
                           T * newObject )
 {
   return dynamicCast< T * >( m_subGroups.insert( name, newObject, false ) );
@@ -1591,7 +1591,7 @@ template< typename T, typename TBASE >
 Wrapper< TBASE > * Group::registerWrapper( ViewKey const & viewKey )
 {
   ViewKey::index_type index;
-  Wrapper< TBASE > * const rval = registerWrapper< T, TBASE >( viewKey.Key(), &index );
+  Wrapper< TBASE > * const rval = registerWrapper< T, TBASE >( viewKey.key(), &index );
   viewKey.setIndex( index );
 
   return rval;
@@ -1633,12 +1633,12 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
 }
 
 template< typename T >
-T const * Group::GetGroupByPath( string const & path ) const
+T const * Group::getGroupByPath( string const & path ) const
 {
   // needed for getting root correctly with GetGroupByPath("/");
   if( path.empty())
   {
-    return group_cast< T const * >( this );
+    return groupCast< T const * >( this );
   }
 
   size_t directoryMarker = path.find( '/' );
@@ -1646,7 +1646,7 @@ T const * Group::GetGroupByPath( string const & path ) const
   if( directoryMarker == std::string::npos )
   {
     // Target should be a child of this group
-    return this->GetGroup< T >( path );
+    return this->getGroup< T >( path );
   }
   else
   {
@@ -1658,27 +1658,27 @@ T const * Group::GetGroupByPath( string const & path ) const
     {
       if( this->getParent() == nullptr )  // At root
       {
-        return this->GetGroupByPath< T >( subPath );
+        return this->getGroupByPath< T >( subPath );
       }
       else                               // Not at root
       {
-        return this->getParent()->GetGroupByPath< T >( path );
+        return this->getParent()->getGroupByPath< T >( path );
       }
     }
     else if( child[0] == '.' )
     {
       if( child[1] == '.' )               // '../' = Reverse path
       {
-        return this->getParent()->GetGroupByPath< T >( subPath );
+        return this->getParent()->getGroupByPath< T >( subPath );
       }
       else                               // './' = This path
       {
-        return this->GetGroupByPath< T >( subPath );
+        return this->getGroupByPath< T >( subPath );
       }
     }
     else
     {
-      return m_subGroups[child]->GetGroupByPath< T >( subPath );
+      return m_subGroups[child]->getGroupByPath< T >( subPath );
     }
   }
 }

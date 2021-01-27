@@ -57,17 +57,17 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
 
 }
 
-void CompositionalMultiphaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
+void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group * const MeshBodies )
 {
   GEOSX_MARK_FUNCTION;
 
   // 1) Register the elem-centered data
-  CompositionalMultiphaseBase::RegisterDataOnMesh( MeshBodies );
+  CompositionalMultiphaseBase::registerDataOnMesh( MeshBodies );
 
   // 2) Register the face data
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     FaceManager & faceManager = *meshLevel.getFaceManager();
 
@@ -82,26 +82,26 @@ void CompositionalMultiphaseHybridFVM::RegisterDataOnMesh( Group * const MeshBod
   }
 }
 
-void CompositionalMultiphaseHybridFVM::InitializePreSubGroups( Group * const rootGroup )
+void CompositionalMultiphaseHybridFVM::initializePreSubGroups( Group * const rootGroup )
 {
-  CompositionalMultiphaseBase::InitializePreSubGroups( rootGroup );
+  CompositionalMultiphaseBase::initializePreSubGroups( rootGroup );
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( fvManager.GetGroup< HybridMimeticDiscretization >( m_discretizationName ) == nullptr )
+  if( fvManager.getGroup< HybridMimeticDiscretization >( m_discretizationName ) == nullptr )
   {
     GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM" );
   }
 }
 
 
-void CompositionalMultiphaseHybridFVM::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
@@ -113,13 +113,13 @@ void CompositionalMultiphaseHybridFVM::InitializePostInitialConditions_PreSubGro
   string const & coeffName = hmDiscretization.template getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
   m_transMultName = coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString;
 
-  CompositionalMultiphaseBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups( rootGroup );
 
   // in the flux kernel, we need to make sure that we act only on the target regions
   // for that, we need the following region filter
   for( string const & regionName : targetRegionNames() )
   {
-    m_regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
+    m_regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
 
   // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
@@ -138,9 +138,9 @@ void CompositionalMultiphaseHybridFVM::InitializePostInitialConditions_PreSubGro
 
 }
 
-void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
+void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
 {
-  FlowSolverBase::PrecomputeData( mesh );
+  FlowSolverBase::precomputeData( mesh );
 
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager & faceManager = *mesh.getFaceManager();
@@ -207,17 +207,17 @@ void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
 
 }
 
-void CompositionalMultiphaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
+void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                                           real64 const & dt,
                                                           DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   // setup the elem-centered fields
-  CompositionalMultiphaseBase::ImplicitStepSetup( time_n, dt, domain );
+  CompositionalMultiphaseBase::implicitStepSetup( time_n, dt, domain );
 
   // setup the face fields
-  MeshLevel & meshLevel = *domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   FaceManager & faceManager = *meshLevel.getFaceManager();
 
   // get the accumulated pressure updates
@@ -229,17 +229,17 @@ void CompositionalMultiphaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
 }
 
 
-void CompositionalMultiphaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
+void CompositionalMultiphaseHybridFVM::implicitStepComplete( real64 const & time_n,
                                                              real64 const & dt,
                                                              DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   // increment the elem-centered fields
-  CompositionalMultiphaseBase::ImplicitStepComplete( time_n, dt, domain );
+  CompositionalMultiphaseBase::implicitStepComplete( time_n, dt, domain );
 
   // increment the face fields
-  MeshLevel & meshLevel = *domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   FaceManager & faceManager = *meshLevel.getFaceManager();
 
   // get the face-based pressure
@@ -256,7 +256,7 @@ void CompositionalMultiphaseHybridFVM::ImplicitStepComplete( real64 const & time
 }
 
 
-void CompositionalMultiphaseHybridFVM::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                                   DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -292,7 +292,7 @@ void CompositionalMultiphaseHybridFVM::SetupDofs( DomainPartition const & GEOSX_
 }
 
 
-void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
+void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                                           DomainPartition const & domain,
                                                           DofManager const & dofManager,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -321,7 +321,7 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
    */
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
-    MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
     arrayView4d< real64 const > const & phaseCompFrac = fluid.phaseCompFraction();
     arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
     arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
@@ -377,7 +377,7 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
   // get the element dof numbers for the assembly
   string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-    mesh.getElemManager()->ConstructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+    mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
   elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
   // get the face-centered pressures
@@ -459,7 +459,7 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
   } );
 }
 
-real64 CompositionalMultiphaseHybridFVM::ScalingForSystemSolution( DomainPartition const & domain,
+real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartition const & domain,
                                                                    DofManager const & dofManager,
                                                                    arrayView1d< real64 const > const & localSolution )
 {
@@ -588,11 +588,11 @@ real64 CompositionalMultiphaseHybridFVM::ScalingForSystemSolution( DomainPartiti
     scalingFactor = minFaceVal.get();
   }
 
-  return LvArray::math::max( MpiWrapper::Min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
+  return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
 }
 
 
-bool CompositionalMultiphaseHybridFVM::CheckSystemSolution( DomainPartition const & domain,
+bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
                                                             DofManager const & dofManager,
                                                             arrayView1d< real64 const > const & localSolution,
                                                             real64 const scalingFactor )
@@ -623,7 +623,7 @@ bool CompositionalMultiphaseHybridFVM::CheckSystemSolution( DomainPartition cons
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
 
     localIndex const subRegionSolutionCheck =
-      CompositionalMultiphaseBaseKernels::SolutionCheckKernel::Launch< parallelDevicePolicy<>,
+      CompositionalMultiphaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                                        parallelDeviceReduce >( localSolution,
                                                                                                dofManager.rankOffset(),
                                                                                                numFluidComponents(),
@@ -651,7 +651,7 @@ bool CompositionalMultiphaseHybridFVM::CheckSystemSolution( DomainPartition cons
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
   localIndex const faceSolutionCheck =
-    CompositionalMultiphaseHybridFVMKernels::SolutionCheckKernel::Launch< parallelDevicePolicy<>,
+    CompositionalMultiphaseHybridFVMKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                                           parallelDeviceReduce >( localSolution,
                                                                                                   dofManager.rankOffset(),
                                                                                                   faceDofNumber,
@@ -661,10 +661,10 @@ bool CompositionalMultiphaseHybridFVM::CheckSystemSolution( DomainPartition cons
                                                                                                   scalingFactor );
   localCheck = std::min( localCheck, faceSolutionCheck );
 
-  return MpiWrapper::Min( localCheck, MPI_COMM_GEOSX );
+  return MpiWrapper::min( localCheck, MPI_COMM_GEOSX );
 }
 
-void CompositionalMultiphaseHybridFVM::ApplyBoundaryConditions( real64 const time_n,
+void CompositionalMultiphaseHybridFVM::applyBoundaryConditions( real64 const time_n,
                                                                 real64 const dt,
                                                                 DomainPartition & domain,
                                                                 DofManager const & dofManager,
@@ -673,10 +673,10 @@ void CompositionalMultiphaseHybridFVM::ApplyBoundaryConditions( real64 const tim
 {
   GEOSX_MARK_FUNCTION;
 
-  CompositionalMultiphaseBase::ApplyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  CompositionalMultiphaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
-real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition const & domain,
+real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
                                                                 DofManager const & dofManager,
                                                                 arrayView1d< real64 const > const & localRhs )
 {
@@ -713,7 +713,7 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
     arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
     arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString );
 
-    CompositionalMultiphaseBaseKernels::ResidualNormKernel::Launch< parallelDevicePolicy<>,
+    CompositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                     parallelDeviceReduce >( localRhs,
                                                                                             rankOffset,
                                                                                             numFluidComponents(),
@@ -734,7 +734,7 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
   arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
 
   // 2. Compute the residual for the face-based constraints
-  CompositionalMultiphaseHybridFVMKernels::ResidualNormKernel::Launch< parallelDevicePolicy<>,
+  CompositionalMultiphaseHybridFVMKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                        parallelDeviceReduce >( localRhs,
                                                                                                rankOffset,
                                                                                                numFluidPhases(),
@@ -751,7 +751,7 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
   // 3. Combine the two norms
 
   // compute global residual norm
-  real64 const residual = std::sqrt( MpiWrapper::Sum( localResidualNorm ) );
+  real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
@@ -763,7 +763,7 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
   return residual;
 }
 
-void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
+void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                             arrayView1d< real64 const > const & localSolution,
                                                             real64 const scalingFactor,
                                                             DomainPartition & domain )
@@ -790,7 +790,7 @@ void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & d
   // these negative component densities are set to zero in this function
   if( m_allowCompDensChopping )
   {
-    ChopNegativeDensities( domain );
+    chopNegativeDensities( domain );
   }
 
   // 2. apply the face-based update
@@ -806,7 +806,7 @@ void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & d
   fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
-  CommunicationTools::SynchronizeFields( fieldNames,
+  CommunicationTools::synchronizeFields( fieldNames,
                                          &mesh,
                                          domain.getNeighbors() );
 
@@ -815,20 +815,20 @@ void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & d
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
   {
-    UpdateState( subRegion, targetIndex );
+    updateState( subRegion, targetIndex );
   } );
 }
 
 
-void CompositionalMultiphaseHybridFVM::ResetStateToBeginningOfStep( DomainPartition & domain )
+void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   // 1. Reset the cell-centered fields
-  CompositionalMultiphaseBase::ResetStateToBeginningOfStep( domain );
+  CompositionalMultiphaseBase::resetStateToBeginningOfStep( domain );
 
   // 2. Reset the face-based fields
-  MeshLevel & mesh = *domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   FaceManager & faceManager = *mesh.getFaceManager();
 
   // get the accumulated face pressure updates
@@ -840,7 +840,7 @@ void CompositionalMultiphaseHybridFVM::ResetStateToBeginningOfStep( DomainPartit
 }
 
 
-void CompositionalMultiphaseHybridFVM::UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const
+void CompositionalMultiphaseHybridFVM::updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -868,13 +868,13 @@ void CompositionalMultiphaseHybridFVM::UpdatePhaseMobility( Group & dataGroup, l
   arrayView3d< real64 const > const dCompFrac_dCompDens =
     dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
-  MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
+  MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
   arrayView3d< real64 const > const & phaseVisc = fluid.phaseViscosity();
   arrayView3d< real64 const > const & dPhaseVisc_dPres = fluid.dPhaseViscosity_dPressure();
   arrayView4d< real64 const > const & dPhaseVisc_dComp = fluid.dPhaseViscosity_dGlobalCompFraction();
 
-  RelativePermeabilityBase const & relperm = GetConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
+  RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
   arrayView3d< real64 const > const & phaseRelPerm = relperm.phaseRelPerm();
   arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();

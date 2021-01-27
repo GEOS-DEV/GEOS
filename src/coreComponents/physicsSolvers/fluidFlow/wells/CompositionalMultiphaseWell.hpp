@@ -93,9 +93,9 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "CompositionalMultiphaseWell"; }
+  static string catalogName() { return "CompositionalMultiphaseWell"; }
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group * const meshBodies ) override;
 
 
   /**
@@ -107,32 +107,32 @@ public:
 
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
@@ -142,40 +142,40 @@ public:
    * @brief Recompute component fractions from primary variables (component densities)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateComponentFraction( WellElementSubRegion & subRegion ) const;
+  void updateComponentFraction( WellElementSubRegion & subRegion ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex );
+  void updateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdatePhaseVolumeFraction( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+  void updatePhaseVolumeFraction( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
 
   /**
    * @brief Recompute total mass densities from mass density and phase volume fractions
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateTotalMassDensity( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+  void updateTotalMassDensity( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
 
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
+  virtual void updateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
-  virtual string WellElementDofName() const override { return viewKeyStruct::dofFieldString; }
+  virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString; }
 
-  virtual string ResElementDofName() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString; }
+  virtual string resElementDofName() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString; }
 
-  virtual localIndex NumFluidComponents() const override { return m_numComponents; }
+  virtual localIndex numFluidComponents() const override { return m_numComponents; }
 
-  virtual localIndex NumFluidPhases() const override { return m_numPhases; }
+  virtual localIndex numFluidPhases() const override { return m_numPhases; }
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -186,7 +186,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleFluxTerms( real64 const time_n,
+  virtual void assembleFluxTerms( real64 const time_n,
                                   real64 const dt,
                                   DomainPartition const & domain,
                                   DofManager const & dofManager,
@@ -202,7 +202,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleVolumeBalanceTerms( real64 const time_n,
+  virtual void assembleVolumeBalanceTerms( real64 const time_n,
                                            real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
@@ -216,7 +216,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void FormPressureRelations( DomainPartition const & domain,
+  virtual void formPressureRelations( DomainPartition const & domain,
                                       DofManager const & dofManager,
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
@@ -226,7 +226,7 @@ public:
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
-  void ChopNegativeDensities( DomainPartition & domain );
+  void chopNegativeDensities( DomainPartition & domain );
 
   arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
 
@@ -279,11 +279,11 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
 
   /**
    * @brief Checks constitutive models for consistency
@@ -294,13 +294,13 @@ protected:
    * (fluid, relperm) is incompatible with the corresponding models in reservoir
    * regions connected to that particular well.
    */
-  void ValidateConstitutiveModels( MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm ) const;
+  void validateConstitutiveModels( MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Checks injection streams for validity (compositions sum to one)
    * @param meshLevel reference to the mesh
    */
-  void ValidateInjectionStreams( MeshLevel const & meshLevel ) const;
+  void validateInjectionStreams( MeshLevel const & meshLevel ) const;
 
 private:
 
@@ -308,24 +308,24 @@ private:
    * @brief Compute all the perforation rates for this well
    * @param well the well with its perforations
    */
-  void ComputePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
+  void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
    */
-  void ResetViews( DomainPartition & domain ) override;
+  void resetViews( DomainPartition & domain ) override;
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void InitializeWells( DomainPartition & domain ) override;
+  void initializeWells( DomainPartition & domain ) override;
 
   /**
    * @brief Resize the allocated multidimensional fields
    * @param well the well for which the fields are resized
    */
-  void ResizeFields( WellElementSubRegion & subRegion );
+  void resizeFields( WellElementSubRegion & subRegion );
 
   /// the max number of fluid phases
   localIndex m_numPhases;

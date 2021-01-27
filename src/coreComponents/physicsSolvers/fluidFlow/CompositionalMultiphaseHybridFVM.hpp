@@ -77,9 +77,9 @@ public:
    * @brief name of the solver in the object catalog
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
-  static string CatalogName() { return "CompositionalMultiphaseHybridFVM"; }
+  static string catalogName() { return "CompositionalMultiphaseHybridFVM"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -89,16 +89,16 @@ public:
   /**@{*/
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
+  setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -106,32 +106,32 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
@@ -145,7 +145,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const dt,
+  assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -156,7 +156,7 @@ public:
    * @param domain the domain containing the mesh and fields
    */
   virtual void
-  UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
+  updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
 
   /**@}*/
 
@@ -179,14 +179,14 @@ public:
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysCompMultiphaseHybridFVM;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
 protected:
 
   /// precompute the minGravityCoefficient for the buoyancy term
-  void PrecomputeData( MeshLevel & mesh ) override;
+  void precomputeData( MeshLevel & mesh ) override;
 
 private:
 

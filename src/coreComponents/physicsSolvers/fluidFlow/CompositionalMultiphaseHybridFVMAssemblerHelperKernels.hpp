@@ -71,7 +71,7 @@ struct AssemblerKernelHelper
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  ApplyGradient( arrayView1d< real64 const > const & facePres,
+  applyGradient( arrayView1d< real64 const > const & facePres,
                  arrayView1d< real64 const > const & dFacePres,
                  arrayView1d< real64 const > const & faceGravCoef,
                  arraySlice1d< localIndex const > const & elemToFaces,
@@ -204,7 +204,7 @@ struct AssemblerKernelHelper
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  AssembleFluxDivergence( localIndex const (&localIds)[ 3 ],
+  assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
                           globalIndex const rankOffset,
                           arrayView2d< localIndex const > const & elemRegionList,
                           arrayView2d< localIndex const > const & elemSubRegionList,
@@ -277,7 +277,7 @@ struct AssemblerKernelHelper
       // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
 
       localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
-      hybridFVMKernels::CellConnectivity::FindNeighbor( localIds,
+      hybridFVMKernels::CellConnectivity::findNeighbor( localIds,
                                                         ifaceLoc,
                                                         elemRegionList,
                                                         elemSubRegionList,
@@ -290,7 +290,7 @@ struct AssemblerKernelHelper
       // 2) *************** Assemble viscous terms ******************
 
       // 2.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}}{\lambda_T} for each phase at this face
-      UpwindingHelper::UpwindViscousCoefficient< NC, NP >( localIds,
+      UpwindingHelper::upwindViscousCoefficient< NC, NP >( localIds,
                                                            neighborIds,
                                                            phaseDens,
                                                            dPhaseDens_dPres,
@@ -310,7 +310,7 @@ struct AssemblerKernelHelper
                                                            upwViscDofNumber );
 
       // 2.b) Add the \x_{c,\ell} \rho_{\ell} \frac{\lambda_{\ell}}{\lambda_T} q_T of this face to the divergence of the flux in this cell
-      AssembleViscousFlux< NF, NC, NP >( ifaceLoc,
+      assembleViscousFlux< NF, NC, NP >( ifaceLoc,
                                          oneSidedVolFlux,
                                          dOneSidedVolFlux_dPres,
                                          dOneSidedVolFlux_dFacePres,
@@ -336,7 +336,7 @@ struct AssemblerKernelHelper
 
       // 3.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}\lambda_m}{\lambda_T}
       //      and (\rho_{\ell} - \rho_m) g \Delta z for each phase at this face
-      UpwindingHelper::UpwindBuoyancyCoefficient< NC, NP >( localIds,
+      UpwindingHelper::upwindBuoyancyCoefficient< NC, NP >( localIds,
                                                             neighborIds,
                                                             transGravCoef,
                                                             phaseDens,
@@ -360,7 +360,7 @@ struct AssemblerKernelHelper
                                                             dUpwPhaseGravCoef_dCompDens );
 
       // 3.b) Add the buoyancy term of this face to the divergence of the flux in this cell
-      AssembleBuoyancyFlux< NF, NC, NP >( ifaceLoc,
+      assembleBuoyancyFlux< NF, NC, NP >( ifaceLoc,
                                           phaseGravTerm,
                                           dPhaseGravTerm_dPres,
                                           dPhaseGravTerm_dCompDens,
@@ -424,7 +424,7 @@ struct AssemblerKernelHelper
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  AssembleViscousFlux( localIndex const ifaceLoc,
+  assembleViscousFlux( localIndex const ifaceLoc,
                        real64 const (&oneSidedVolFlux)[ NF ],
                        real64 const (&dOneSidedVolFlux_dPres)[ NF ],
                        real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
@@ -519,7 +519,7 @@ struct AssemblerKernelHelper
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  AssembleBuoyancyFlux( localIndex const ifaceLoc,
+  assembleBuoyancyFlux( localIndex const ifaceLoc,
                         real64 const (&phaseGravTerm)[ NP ][ NP-1 ],
                         real64 const (&dPhaseGravTerm_dPres)[ NP ][ NP-1 ][ 2 ],
                         real64 const (&dPhaseGravTerm_dCompDens)[ NP ][ NP-1 ][ 2 ][ NC ],
@@ -593,7 +593,7 @@ struct AssemblerKernelHelper
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  AssembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
+  assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                            arrayView1d< integer const > const & faceGhostRank,
                            arraySlice1d< localIndex const > const & elemToFaces,
                            globalIndex const elemDofNumber,

@@ -50,7 +50,7 @@ public:
    * If the start criteria are satisfied, then the event manager
    * will call this method.
    */
-  virtual void Execute( real64 const time_n,
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -64,7 +64,7 @@ public:
    * @param[in] cycle         global cycle number
    * @param[in,out] domain    the physical domain
    */
-  virtual void SignalToPrepareForExecution( real64 const time_n,
+  virtual void signalToPrepareForExecution( real64 const time_n,
                                             real64 const dt,
                                             integer const cycle,
                                             dataRepository::Group * domain );
@@ -76,7 +76,7 @@ public:
    * @param[in] eventProgress fractional progress in current cycle
    * @param[in,out] domain    the physical domain
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
@@ -87,7 +87,7 @@ public:
    * @param[in] time current time level
    * @return         desired time step size
    */
-  virtual real64 GetTimestepRequest( real64 const time )
+  virtual real64 getTimestepRequest( real64 const time )
   {
     GEOSX_UNUSED_VAR( time );
     return 1e99;
@@ -98,13 +98,13 @@ public:
    * @brief Set the timestep behavior for a target.
    * @param[in] behavior if positive, target does time stepping
    */
-  void SetTimestepBehavior( integer const behavior ) { m_timestepType = behavior; }
+  void setTimestepBehavior( integer const behavior ) { m_timestepType = behavior; }
 
   /**
    * @brief Get the target's time step behavior.
    * @return @p >0 if target does time stepping, @p <=0 otherwise
    */
-  integer GetTimestepBehavior() { return m_timestepType; }
+  integer getTimestepBehavior() { return m_timestepType; }
 
 
 private:

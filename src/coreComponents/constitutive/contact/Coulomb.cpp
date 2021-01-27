@@ -64,7 +64,7 @@ real64 Coulomb::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX
 
 static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
-void Coulomb::PostProcessInput()
+void Coulomb::postProcessInput()
 {
   if( !m_postProcessed )
   {

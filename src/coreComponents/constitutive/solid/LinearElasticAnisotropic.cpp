@@ -70,7 +70,7 @@ void LinearElasticAnisotropic::allocateConstitutiveData( dataRepository::Group *
 
 }
 
-void LinearElasticAnisotropic::PostProcessInput()
+void LinearElasticAnisotropic::postProcessInput()
 {
   // need to get this to work. Need 2d array default value for 3d array.
 //  getWrapper<array1d<real64>>(viewKeyStruct::stiffnessString)->setDefaultValue(m_defaultStiffness);

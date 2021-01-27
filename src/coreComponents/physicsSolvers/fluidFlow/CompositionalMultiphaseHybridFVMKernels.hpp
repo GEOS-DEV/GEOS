@@ -89,7 +89,7 @@ struct AssemblerKernel
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  Compute( localIndex const er, localIndex const esr, localIndex const ei,
+  compute( localIndex const er, localIndex const esr, localIndex const ei,
            SortedArrayView< localIndex const > const & regionFilter,
            arrayView2d< localIndex const > const & elemRegionList,
            arrayView2d< localIndex const > const & elemSubRegionList,
@@ -142,7 +142,7 @@ struct AssemblerKernel
 
     // for each one-sided face of the elem,
     // compute the volumetric flux using transMatrix
-    AssemblerKernelHelper::ApplyGradient< NF, NC, NP >( facePres,
+    AssemblerKernelHelper::applyGradient< NF, NC, NP >( facePres,
                                                         dFacePres,
                                                         faceGravCoef,
                                                         elemToFaces,
@@ -175,7 +175,7 @@ struct AssemblerKernel
 
       // use the computed one sided vol fluxes and the upwinded mobilities
       // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
-      AssemblerKernelHelper::AssembleFluxDivergence< NF, NC, NP >( localIds,
+      AssemblerKernelHelper::assembleFluxDivergence< NF, NC, NP >( localIds,
                                                                    rankOffset,
                                                                    elemRegionList,
                                                                    elemSubRegionList,
@@ -211,7 +211,7 @@ struct AssemblerKernel
 
     // use the computed one sided vol fluxes to assemble the constraints
     // enforcing flux continuity at this element's faces
-    AssemblerKernelHelper::AssembleFaceConstraints< NF, NC, NP >( faceDofNumber,
+    AssemblerKernelHelper::assembleFaceConstraints< NF, NC, NP >( faceDofNumber,
                                                                   faceGhostRank,
                                                                   elemToFaces,
                                                                   elemDofNumber[er][esr][ei],
@@ -284,7 +284,7 @@ struct FluxKernel
    */
   template< typename IP_TYPE, localIndex NF, localIndex NC, localIndex NP >
   static void
-  Launch( localIndex er, localIndex esr,
+  launch( localIndex er, localIndex esr,
           CellElementSubRegion const & subRegion,
           SortedArrayView< localIndex const > const & regionFilter,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
@@ -356,7 +356,7 @@ struct FluxKernel
 
       // recompute the local transmissibility matrix at each iteration
       // we can decide later to precompute transMatrix if needed
-      IP_TYPE::template Compute< NF >( nodePosition,
+      IP_TYPE::template compute< NF >( nodePosition,
                                        transMultiplier,
                                        faceToNodes,
                                        elemToFaces[ei],
@@ -369,7 +369,7 @@ struct FluxKernel
       // currently the gravity term in the transport scheme is treated as in MRST, that is, always with TPFA
       // this is why below we have to recompute the TPFA transmissibility in addition to the transmissibility matrix above
       // TODO: treat the gravity term with a consistent inner product
-      mimeticInnerProduct::TPFAInnerProduct::Compute< NF >( nodePosition,
+      mimeticInnerProduct::TPFAInnerProduct::compute< NF >( nodePosition,
                                                             transMultiplier,
                                                             faceToNodes,
                                                             elemToFaces[ei],
@@ -380,7 +380,7 @@ struct FluxKernel
                                                             transMatrixGrav );
 
       // perform flux assembly in this element
-      CompositionalMultiphaseHybridFVMKernels::AssemblerKernel::Compute< NF, NC, NP >( er, esr, ei,
+      CompositionalMultiphaseHybridFVMKernels::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
                                                                                        regionFilter,
                                                                                        elemRegionList,
                                                                                        elemSubRegionList,
@@ -433,7 +433,7 @@ struct PhaseMobilityKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+  compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseVisc,
            arraySlice1d< real64 const > const & dPhaseVisc_dPres,
            arraySlice2d< real64 const > const & dPhaseVisc_dComp,
@@ -447,7 +447,7 @@ struct PhaseMobilityKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseVisc,
           arrayView3d< real64 const > const & dPhaseVisc_dPres,
@@ -462,7 +462,7 @@ struct PhaseMobilityKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseVisc,
           arrayView3d< real64 const > const & dPhaseVisc_dPres,
@@ -486,7 +486,7 @@ struct ResidualNormKernel
 
   template< typename POLICY, typename REDUCE_POLICY >
   static void
-  Launch( arrayView1d< real64 const > const & localResidual,
+  launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
           localIndex const numPhases,
           arrayView1d< globalIndex const > const & facePresDofNumber,
@@ -551,7 +551,7 @@ struct SolutionCheckKernel
 
   template< typename POLICY, typename REDUCE_POLICY >
   static localIndex
-  Launch( arrayView1d< real64 const > const & localSolution,
+  launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & ghostRank,
@@ -584,7 +584,7 @@ struct PrecomputeKernel
 
   template< typename IP_TYPE, localIndex NF >
   static void
-  Launch( localIndex const subRegionSize,
+  launch( localIndex const subRegionSize,
           localIndex const faceManagerSize,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
           ArrayOfArraysView< localIndex const > const & faceToNodes,
@@ -605,7 +605,7 @@ struct PrecomputeKernel
 
       real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
 
-      IP_TYPE::template Compute< NF >( nodePosition,
+      IP_TYPE::template compute< NF >( nodePosition,
                                        transMultiplier,
                                        faceToNodes,
                                        elemToFaces[ei],
@@ -665,19 +665,19 @@ void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, local
     {
       if( numComps == 2 )
       {
-        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 2, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< IP_TYPE, NF(), 2, 2 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 3 )
       {
-        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 3, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< IP_TYPE, NF(), 3, 2 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 4 )
       {
-        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 4, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< IP_TYPE, NF(), 4, 2 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 5 )
       {
-        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 5, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< IP_TYPE, NF(), 5, 2 >( std::forward< ARGS >( args )... );
       }
       else
       {
@@ -688,19 +688,19 @@ void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, local
     {
       if( numComps == 2 )
       {
-        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 2, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< IP_TYPE, NF(), 2, 3 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 3 )
       {
-        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 3, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< IP_TYPE, NF(), 3, 3 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 4 )
       {
-        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 4, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< IP_TYPE, NF(), 4, 3 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 5 )
       {
-        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 5, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< IP_TYPE, NF(), 5, 3 >( std::forward< ARGS >( args )... );
       }
       else
       {

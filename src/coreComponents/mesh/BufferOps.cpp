@@ -49,8 +49,8 @@ localIndex Pack( buffer_unit_type * & buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( elemRegionIndex );
-        ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion( elemSubRegionIndex );
+        ElementRegionBase const * const elemRegion = elementRegionManager->getRegion( elemRegionIndex );
+        ElementSubRegionBase const * const elemSubRegion = elemRegion->getSubRegion( elemSubRegionIndex );
         sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion->localToGlobalMap()[elemIndex] );
       }
       else
@@ -118,8 +118,8 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 )
       {
-        ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( elemRegionIndex );
-        ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion( elemSubRegionIndex );
+        ElementRegionBase const * const elemRegion = elementRegionManager->getRegion( elemRegionIndex );
+        ElementSubRegionBase const * const elemSubRegion = elemRegion->getSubRegion( elemSubRegionIndex );
 
         localIndex localElementIndex = softMapLookup( elemSubRegion->globalToLocalMap(),
                                                       globalElementIndex,
@@ -179,8 +179,8 @@ localIndex Pack( buffer_unit_type * & buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( elemRegionIndex );
-        ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion( elemSubRegionIndex );
+        ElementRegionBase const * const elemRegion = elementRegionManager->getRegion( elemRegionIndex );
+        ElementSubRegionBase const * const elemSubRegion = elemRegion->getSubRegion( elemSubRegionIndex );
         sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion->localToGlobalMap()[elemIndex] );
       }
       else
@@ -236,10 +236,10 @@ localIndex Unpack( buffer_unit_type const * & buffer,
       if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
       {
         ElementRegionBase const * const
-        elemRegion = elementRegionManager->GetRegion( recvElemRegionIndex );
+        elemRegion = elementRegionManager->getRegion( recvElemRegionIndex );
 
         ElementSubRegionBase const * const
-        elemSubRegion = elemRegion->GetSubRegion( recvElemSubRegionIndex );
+        elemSubRegion = elemRegion->getSubRegion( recvElemSubRegionIndex );
 
         localIndex const recvElemIndex = softMapLookup( elemSubRegion->globalToLocalMap(),
                                                         globalElementIndex,

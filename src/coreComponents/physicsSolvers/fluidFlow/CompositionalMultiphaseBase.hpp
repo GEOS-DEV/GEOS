@@ -79,7 +79,7 @@ public:
 //START_SPHINX_INCLUDE_01
 
   virtual void
-  RegisterDataOnMesh( Group * const MeshBodies ) override;
+  registerDataOnMesh( Group * const MeshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -89,18 +89,18 @@ public:
   /**@{*/
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  solverStep( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
   virtual void
-  AssembleSystem( real64 const time_n,
+  assembleSystem( real64 const time_n,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
@@ -108,7 +108,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -116,16 +116,16 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  solveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
@@ -133,49 +133,49 @@ public:
    * @brief Recompute component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void UpdateComponentFraction( Group & dataGroup ) const;
+  void updateComponentFraction( Group & dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void UpdatePhaseVolumeFraction( Group & dataGroup, localIndex const targetIndex ) const;
+  void updatePhaseVolumeFraction( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Update all relevant solid models using current values of pressure
    * @param dataGroup the group storing the required fields
    */
-  void UpdateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param castedRelPerm the group storing the required fields
    */
-  void UpdateRelPermModel( Group & castedRelPerm, localIndex const targetIndex ) const;
+  void updateRelPermModel( Group & castedRelPerm, localIndex const targetIndex ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param castedCapPres the group storing the required fields
    */
-  void UpdateCapPressureModel( Group & castedCapPres, localIndex const targetIndex ) const;
+  void updateCapPressureModel( Group & castedCapPres, localIndex const targetIndex ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  virtual void UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
+  virtual void updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateState( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateState( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Get the number of fluid components (species)
@@ -198,7 +198,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void AssembleAccumulationTerms( DomainPartition const & domain,
+  void assembleAccumulationTerms( DomainPartition const & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) const;
@@ -213,7 +213,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const dt,
+  assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -228,7 +228,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void AssembleVolumeBalanceTerms( DomainPartition const & domain,
+  void assembleVolumeBalanceTerms( DomainPartition const & domain,
                                    DofManager const & dofManager,
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                    arrayView1d< real64 > const & localRhs ) const;
@@ -299,13 +299,13 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void InitializeFluidState( MeshLevel & mesh ) const;
+  void initializeFluidState( MeshLevel & mesh ) const;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
    */
-  void BackupFields( MeshLevel & mesh ) const;
+  void backupFields( MeshLevel & mesh ) const;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -316,7 +316,7 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void ApplyDirichletBC( real64 const time,
+  void applyDirichletBC( real64 const time,
                          real64 const dt,
                          DofManager const & dofManager,
                          DomainPartition & domain,
@@ -332,7 +332,7 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void ApplySourceFluxBC( real64 const time,
+  void applySourceFluxBC( real64 const time,
                           real64 const dt,
                           DofManager const & dofManager,
                           DomainPartition & domain,
@@ -343,21 +343,21 @@ public:
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
-  void ChopNegativeDensities( DomainPartition & domain );
+  void chopNegativeDensities( DomainPartition & domain );
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   /**
    * @brief Checks constitutive models for consistency
    * @param cm        reference to the global constitutive model manager
    */
-  void ValidateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
+  void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Resize the allocated multidimensional fields
@@ -366,12 +366,12 @@ protected:
    * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
    * once the number of phases/components is known (e.g. component fractions)
    */
-  void ResizeFields( MeshLevel & meshLevel ) const;
+  void resizeFields( MeshLevel & meshLevel ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  void ResetViews( MeshLevel & mesh ) override;
+  void resetViews( MeshLevel & mesh ) override;
 
   /// the max number of fluid phases
   localIndex m_numPhases;

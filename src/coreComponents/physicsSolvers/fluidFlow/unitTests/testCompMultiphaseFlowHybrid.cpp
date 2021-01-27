@@ -188,7 +188,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   // assemble the analytical residual
-  solver.ResetStateToBeginningOfStep( domain );
+  solver.resetStateToBeginningOfStep( domain );
 
   residual.setValues< parallelDevicePolicy<> >( 0.0 );
   jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -238,7 +238,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
       }
 
       {
-        solver.ResetStateToBeginningOfStep( domain );
+        solver.resetStateToBeginningOfStep( domain );
 
         real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
         dPres.move( LvArray::MemorySpace::CPU, true );
@@ -247,7 +247,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.UpdateState( subRegion2, targetIndex2 );
+          solver.updateState( subRegion2, targetIndex2 );
         } );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -263,7 +263,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
-        solver.ResetStateToBeginningOfStep( domain );
+        solver.resetStateToBeginningOfStep( domain );
 
         real64 const dRho = perturbParameter * totalDensity;
         dCompDens.move( LvArray::MemorySpace::CPU, true );
@@ -272,7 +272,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.UpdateState( subRegion2, targetIndex2 );
+          solver.updateState( subRegion2, targetIndex2 );
         } );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -309,7 +309,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
       continue;
     }
 
-    solver.ResetStateToBeginningOfStep( domain );
+    solver.resetStateToBeginningOfStep( domain );
 
     real64 const dFP = perturbParameter * ( facePres[iface] + perturbParameter );
     dFacePres.move( LvArray::MemorySpace::CPU, true );
@@ -327,7 +327,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
   }
 
   // assemble the analytical jacobian
-  solver.ResetStateToBeginningOfStep( domain );
+  solver.resetStateToBeginningOfStep( domain );
 
   residual.setValues< parallelDevicePolicy<> >( 0.0 );
   jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -349,17 +349,17 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( *problemManager, xmlInput );
-    solver = problemManager->GetPhysicsSolverManager().GetGroup< CompositionalMultiphaseHybridFVM >( "compflow" );
+    solver = problemManager->getPhysicsSolverManager().getGroup< CompositionalMultiphaseHybridFVM >( "compflow" );
 
     DomainPartition & domain = *problemManager->getDomainPartition();
 
-    solver->SetupSystem( domain,
+    solver->setupSystem( domain,
                          solver->getDofManager(),
                          solver->getLocalMatrix(),
                          solver->getLocalRhs(),
                          solver->getLocalSolution() );
 
-    solver->ImplicitStepSetup( time, dt, domain );
+    solver->implicitStepSetup( time, dt, domain );
   }
 
   static real64 constexpr time = 0.0;
@@ -386,7 +386,7 @@ TEST_F( CompositionalMultiphaseHybridFlowTest, jacobianNumericalCheck_flux )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->AssembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

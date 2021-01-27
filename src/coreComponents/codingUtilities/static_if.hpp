@@ -28,14 +28,14 @@ template<bool CONDITION>
 struct static_if_wrapper
 {
   template<typename LAMBDA_BODY>
-  constexpr inline static void if_function(LAMBDA_BODY&&) { }
+  constexpr inline static void ifFunction(LAMBDA_BODY&&) { }
 };
 
 template<>
 struct static_if_wrapper<true>
 {
   template<typename LAMBDA_BODY>
-  constexpr inline static void if_function(LAMBDA_BODY&& lambda)
+  constexpr inline static void ifFunction(LAMBDA_BODY&& lambda)
   {
     lambda();
   }
@@ -48,14 +48,14 @@ template <bool COND>
 struct host_device_static_if
 {
   template <typename LAMBDA_BODY>
-  constexpr inline GEOSX_HOST_DEVICE static void if_function(LAMBDA_BODY &&) { }
+  constexpr inline GEOSX_HOST_DEVICE static void ifFunction(LAMBDA_BODY &&) { }
 };
 
 template <>
 struct host_device_static_if<true>
 {
   template <typename LAMBDA_BODY>
-  constexpr inline GEOSX_HOST_DEVICE static void if_function(LAMBDA_BODY && lambda)
+  constexpr inline GEOSX_HOST_DEVICE static void ifFunction(LAMBDA_BODY && lambda)
   {
     lambda();
   }
@@ -64,10 +64,10 @@ struct host_device_static_if<true>
 }
 
 #define static_if( condition ) \
-  geosx::static_if_wrapper<condition>::if_function( [&] () -> void
+  geosx::static_if_wrapper<condition>::ifFunction( [&] () -> void
 
 #define static_if_host_device( condition ) \
-  geosx::host_device_static_if<condition>::if_function( [&] () -> void
+  geosx::host_device_static_if<condition>::ifFunction( [&] () -> void
 
 #define end_static_if );
 

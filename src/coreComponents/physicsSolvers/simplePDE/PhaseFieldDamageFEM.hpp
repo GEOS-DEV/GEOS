@@ -46,12 +46,12 @@ public:
 
   virtual ~PhaseFieldDamageFEM() override;
 
-  static string CatalogName()
+  static string catalogName()
   {
     return "PhaseFieldDamageFEM";
   }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -61,71 +61,71 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual real64 ExplicitStep( real64 const & time_n,
+  virtual real64 explicitStep( real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-  virtual void SetupSystem( DomainPartition & domain,
+  virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
                             array1d< real64 > & localRhs,
                             array1d< real64 > & localSolution,
-                            bool const setSparisty ) override;
+                            bool const setSparsity ) override;
 
-  virtual void SetupDofs( DomainPartition const & domain,
+  virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void AssembleSystem( real64 const time, real64 const dt,
+  virtual void assembleSystem( real64 const time, real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void ApplyBoundaryConditions( real64 const time, real64 const dt,
+  virtual void applyBoundaryConditions( real64 const time, real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs ) override;
 
-  virtual real64 CalculateResidualNorm( DomainPartition const & domain,
+  virtual real64 calculateResidualNorm( DomainPartition const & domain,
                                         DofManager const & dofManager,
                                         arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
+  virtual void solveSystem( DofManager const & dofManager,
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
 
-  virtual void ApplySystemSolution( DofManager const & dofManager,
+  virtual void applySystemSolution( DofManager const & dofManager,
                                     arrayView1d< real64 const > const & localSolution,
                                     real64 const scalingFactor,
                                     DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const &,
+  implicitStepSetup( real64 const &,
                      real64 const &,
                      DomainPartition & ) override {}
 
-  virtual void ImplicitStepComplete( real64 const & time,
+  virtual void implicitStepComplete( real64 const & time,
                                      real64 const & dt,
                                      DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & ) override {}
+  resetStateToBeginningOfStep( DomainPartition & ) override {}
 
   /**@}*/
 
-  void ApplyDirichletBC_implicit( real64 const time,
-                                  DofManager const & dofManager,
-                                  DomainPartition & domain,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs );
+  void applyDirichletBCImplicit( real64 const time,
+                                 DofManager const & dofManager,
+                                 DomainPartition & domain,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs );
 
   enum class timeIntegrationOption
   {
@@ -169,7 +169,7 @@ public:
   }
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
   string m_fieldName;

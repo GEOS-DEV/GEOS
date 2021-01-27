@@ -75,7 +75,7 @@ struct UpwindingHelper
   template< localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  UpwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
+  upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
                             localIndex const (&neighborIds)[ 3 ],
                             ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
                             ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
@@ -193,7 +193,7 @@ struct UpwindingHelper
   template< localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  UpwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
+  upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
                              localIndex const (&neighborIds)[ 3 ],
                              real64 const & transGravCoef,
                              ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
@@ -217,7 +217,7 @@ struct UpwindingHelper
                              real64 ( & dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] )
   {
     // 1) Compute the driving force: T ( \rho^{avg}_{\ell} - \rho^{avg}_m ) g \Delta z
-    ComputePhaseGravTerm( localIds,
+    computePhaseGravTerm( localIds,
                           neighborIds,
                           transGravCoef,
                           phaseMassDens,
@@ -233,7 +233,7 @@ struct UpwindingHelper
     real64 dTotalMob_dPres[ 2 ] = { 0.0 };
     real64 dTotalMob_dCompDens[ 2 ][ NC ]  = {{ 0.0 }};
 
-    ComputeUpwindedTotalMobility( localIds,
+    computeUpwindedTotalMobility( localIds,
                                   neighborIds,
                                   phaseMob,
                                   dPhaseMob_dPres,
@@ -266,7 +266,7 @@ struct UpwindingHelper
         // 3.a) Upwinding using the gravity term
         localIndex eru, esru, eiu, posu; // upwind
         localIndex erd, esrd, eid, posd; // downwind
-        SetIndicesForMobilityRatioUpwinding( localIds, neighborIds,
+        setIndicesForMobilityRatioUpwinding( localIds, neighborIds,
                                              phaseGravTerm[ip][k],
                                              eru, esru, eiu, posu,
                                              erd, esrd, eid, posd );
@@ -345,7 +345,7 @@ struct UpwindingHelper
   template< localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  ComputePhaseGravTerm( localIndex const (&localIds)[ 3 ],
+  computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
                         localIndex const (&neighborIds)[ 3 ],
                         real64 const & transGravCoef,
                         ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
@@ -437,7 +437,7 @@ struct UpwindingHelper
   template< localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  ComputeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
+  computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
                                 localIndex const (&neighborIds)[ 3 ],
                                 ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
                                 ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
@@ -450,7 +450,7 @@ struct UpwindingHelper
 
     localIndex totalMobIds[ NP ][ 3 ] = {{ 0 }};
     localIndex totalMobPos[ NP ] = { 0 };
-    SetIndicesForTotalMobilityUpwinding< NP >( localIds,
+    setIndicesForTotalMobilityUpwinding< NP >( localIds,
                                                neighborIds,
                                                phaseGravTerm,
                                                totalMobIds,
@@ -491,7 +491,7 @@ struct UpwindingHelper
    */
   GEOSX_HOST_DEVICE
   static void
-  SetIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
+  setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
                                        localIndex const (&neighborIds)[ 3 ],
                                        real64 const & gravTerm,
                                        localIndex & eru, localIndex & esru, localIndex & eiu, localIndex & posu,
@@ -532,7 +532,7 @@ struct UpwindingHelper
   template< localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  SetIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
+  setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
                                        localIndex const (&neighborIds)[ 3 ],
                                        real64 const (&gravTerm)[ NP ][ NP-1 ],
                                        localIndex ( & totalMobIds )[ NP ][ 3 ],

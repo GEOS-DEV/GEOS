@@ -34,7 +34,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 PhaseMobilityKernel::
-  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+  compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseVisc,
            arraySlice1d< real64 const > const & dPhaseVisc_dPres,
            arraySlice2d< real64 const > const & dPhaseVisc_dComp,
@@ -90,7 +90,7 @@ PhaseMobilityKernel::
 
 template< localIndex NC, localIndex NP >
 void PhaseMobilityKernel::
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseVisc,
           arrayView3d< real64 const > const & dPhaseVisc_dPres,
@@ -105,7 +105,7 @@ void PhaseMobilityKernel::
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
-    Compute< NC, NP >( dCompFrac_dCompDens[a],
+    compute< NC, NP >( dCompFrac_dCompDens[a],
                        phaseVisc[a][0],
                        dPhaseVisc_dPres[a][0],
                        dPhaseVisc_dComp[a][0],
@@ -121,7 +121,7 @@ void PhaseMobilityKernel::
 
 template< localIndex NC, localIndex NP >
 void PhaseMobilityKernel::
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseVisc,
           arrayView3d< real64 const > const & dPhaseVisc_dPres,
@@ -137,7 +137,7 @@ void PhaseMobilityKernel::
   forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
-    Compute< NC, NP >( dCompFrac_dCompDens[a],
+    compute< NC, NP >( dCompFrac_dCompDens[a],
                        phaseVisc[a][0],
                        dPhaseVisc_dPres[a][0],
                        dPhaseVisc_dComp[a][0],
@@ -155,7 +155,7 @@ void PhaseMobilityKernel::
   template \
   void \
   PhaseMobilityKernel:: \
-    Launch< NC, NP >( localIndex const size, \
+    launch< NC, NP >( localIndex const size, \
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                       arrayView3d< real64 const > const & phaseVisc, \
                       arrayView3d< real64 const > const & dPhaseVisc_dPres, \
@@ -170,7 +170,7 @@ void PhaseMobilityKernel::
   template \
   void \
   PhaseMobilityKernel:: \
-    Launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
+    launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                       arrayView3d< real64 const > const & phaseVisc, \
                       arrayView3d< real64 const > const & dPhaseVisc_dPres, \

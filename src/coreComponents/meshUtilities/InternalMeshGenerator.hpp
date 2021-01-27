@@ -91,13 +91,13 @@ public:
    * @brief Return the name of the InternalMeshGenerator in object Catalog.
    * @return string that contains the key name to InternalMeshGenerator in the Catalog
    */
-  static string CatalogName() { return "InternalMesh"; }
+  static string catalogName() { return "InternalMesh"; }
 
 //  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
 //
 //
 
-  virtual void GenerateElementRegions( DomainPartition & domain ) override;
+  virtual void generateElementRegions( DomainPartition & domain ) override;
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
@@ -105,26 +105,26 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition * const domain ) override;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( const std::string & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],
                                              const int size ) override;
 
-  virtual void RemapMesh ( dataRepository::Group * const domain ) override;
+  virtual void remapMesh ( dataRepository::Group * const domain ) override;
 
 //  int m_delayMeshDeformation;
 
 protected:
 
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 private:
 
@@ -219,7 +219,7 @@ private:
  * @brief Convert ndim node spatialized index to node global index.
  * @param[in] node ndim spatialized array index
  */
-  inline globalIndex NodeGlobalIndex( const int index[3] )
+  inline globalIndex nodeGlobalIndex( const int index[3] )
   {
     globalIndex rval = 0;
 
@@ -231,7 +231,7 @@ private:
  * @brief Convert ndim element spatialized index to element global index.
  * @param[in] element ndim spatialized array index
  */
-  inline globalIndex ElemGlobalIndex( const int index[3] )
+  inline globalIndex elemGlobalIndex( const int index[3] )
   {
     globalIndex rval = 0;
 

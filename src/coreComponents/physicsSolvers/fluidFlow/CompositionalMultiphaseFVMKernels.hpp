@@ -40,7 +40,7 @@ struct PhaseMobilityKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+  compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseDens,
            arraySlice1d< real64 const > const & dPhaseDens_dPres,
            arraySlice2d< real64 const > const & dPhaseDens_dComp,
@@ -57,7 +57,7 @@ struct PhaseMobilityKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseDens,
           arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -75,7 +75,7 @@ struct PhaseMobilityKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseDens,
           arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -114,7 +114,7 @@ struct FluxKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( localIndex const stencilSize,
+  compute( localIndex const stencilSize,
            localIndex const numPhases,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
@@ -144,7 +144,7 @@ struct FluxKernel
 
   template< localIndex NC, typename STENCIL_TYPE >
   static void
-  Launch( localIndex const numPhases,
+  launch( localIndex const numPhases,
           STENCIL_TYPE const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,

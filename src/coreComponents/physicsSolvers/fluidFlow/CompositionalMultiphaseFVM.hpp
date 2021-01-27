@@ -82,7 +82,7 @@ public:
    * @brief name of the solver in the object catalog
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
-  static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFVM; }
+  static string catalogName() { return dataRepository::keys::compositionalMultiphaseFVM; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -92,27 +92,27 @@ public:
   /**@{*/
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
+  setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
@@ -129,7 +129,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const dt,
+  assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -141,7 +141,7 @@ public:
    * @param domain the domain containing the mesh and fields
    */
   virtual void
-  UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
+  updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
 
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
@@ -150,7 +150,7 @@ public:
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysCompMultiphaseFVM;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
 private:
 

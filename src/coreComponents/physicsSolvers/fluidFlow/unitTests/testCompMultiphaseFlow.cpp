@@ -188,8 +188,8 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
     SCOPED_TRACE( subRegion.getParent()->getParent()->getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
-    Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->GetGroup< MultiFluidBase >( fluidName );
+    Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
+    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
 
     arrayView2d< real64 > & compDens =
@@ -205,7 +205,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
     // reset the solver state to zero out variable updates
-    solver.ResetStateToBeginningOfStep( domain );
+    solver.resetStateToBeginningOfStep( domain );
 
     // make a copy of unperturbed values of component fractions
     array2d< real64 > compFracOrig( subRegion.size(), NC );
@@ -221,7 +221,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
     for( localIndex jc = 0; jc < NC; ++jc )
     {
       // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
-      solver.ResetStateToBeginningOfStep( domain );
+      solver.resetStateToBeginningOfStep( domain );
 
       // perturb a single component density in each cell
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -231,7 +231,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       }
 
       // recompute component fractions
-      solver.UpdateComponentFraction( subRegion );
+      solver.updateComponentFraction( subRegion );
 
       // check values in each cell
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -271,8 +271,8 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
     SCOPED_TRACE( subRegion.getParent()->getParent()->getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
-    Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->GetGroup< MultiFluidBase >( fluidName );
+    Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
+    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
@@ -298,7 +298,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
     // reset the solver state to zero out variable updates
-    solver.ResetStateToBeginningOfStep( domain );
+    solver.resetStateToBeginningOfStep( domain );
 
     // make a copy of unperturbed values of component fractions
     array2d< real64 > phaseVolFracOrig( subRegion.size(), NP );
@@ -320,7 +320,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       }
 
       // recompute component fractions
-      solver.UpdateState( subRegion, targetIndex );
+      solver.updateState( subRegion, targetIndex );
 
       // check values in each cell
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -342,7 +342,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
     for( localIndex jc = 0; jc < NC; ++jc )
     {
       // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
-      solver.ResetStateToBeginningOfStep( domain );
+      solver.resetStateToBeginningOfStep( domain );
 
       // perturb a single component density in each cell
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -352,7 +352,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       }
 
       // recompute component fractions
-      solver.UpdateState( subRegion, targetIndex );
+      solver.updateState( subRegion, targetIndex );
 
       // check values in each cell
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -391,8 +391,8 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
     SCOPED_TRACE( subRegion.getParent()->getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
-    Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->GetGroup< MultiFluidBase >( fluidName );
+    Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
+    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
@@ -418,7 +418,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
 
     // reset the solver state to zero out variable updates
-    solver.ResetStateToBeginningOfStep( domain );
+    solver.resetStateToBeginningOfStep( domain );
 
     // make a copy of unperturbed values of component fractions
     array2d< real64 > phaseVolFracOrig( subRegion.size(), NP );
@@ -440,7 +440,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       }
 
       // recompute component fractions
-      solver.UpdateState( subRegion, targetIndex );
+      solver.updateState( subRegion, targetIndex );
 
       // check values in each cell
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -462,7 +462,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
     for( localIndex jc = 0; jc < NC; ++jc )
     {
       // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
-      solver.ResetStateToBeginningOfStep( domain );
+      solver.resetStateToBeginningOfStep( domain );
 
       // perturb a single component density in each cell
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -472,7 +472,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       }
 
       // recompute component fractions
-      solver.UpdateState( subRegion, targetIndex );
+      solver.updateState( subRegion, targetIndex );
 
       // check values in each cell
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -511,7 +511,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   // assemble the analytical residual
-  solver.ResetStateToBeginningOfStep( domain );
+  solver.resetStateToBeginningOfStep( domain );
 
   residual.setValues< parallelDevicePolicy<> >( 0.0 );
   jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -564,7 +564,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
       }
 
       {
-        solver.ResetStateToBeginningOfStep( domain );
+        solver.resetStateToBeginningOfStep( domain );
 
         real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
         dPres.move( LvArray::MemorySpace::CPU, true );
@@ -573,7 +573,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.UpdateState( subRegion2, targetIndex2 );
+          solver.updateState( subRegion2, targetIndex2 );
         } );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -589,7 +589,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
-        solver.ResetStateToBeginningOfStep( domain );
+        solver.resetStateToBeginningOfStep( domain );
 
         real64 const dRho = perturbParameter * totalDensity;
         dCompDens.move( LvArray::MemorySpace::CPU, true );
@@ -598,7 +598,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.UpdateState( subRegion2, targetIndex2 );
+          solver.updateState( subRegion2, targetIndex2 );
         } );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -615,7 +615,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
   } );
 
   // assemble the analytical jacobian
-  solver.ResetStateToBeginningOfStep( domain );
+  solver.resetStateToBeginningOfStep( domain );
 
   residual.setValues< parallelDevicePolicy<> >( 0.0 );
   jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -637,17 +637,17 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( *problemManager, xmlInput );
-    solver = problemManager->GetPhysicsSolverManager().GetGroup< CompositionalMultiphaseFVM >( "compflow" );
+    solver = problemManager->getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
 
     DomainPartition & domain = *problemManager->getDomainPartition();
 
-    solver->SetupSystem( domain,
+    solver->setupSystem( domain,
                          solver->getDofManager(),
                          solver->getLocalMatrix(),
                          solver->getLocalRhs(),
                          solver->getLocalSolution() );
 
-    solver->ImplicitStepSetup( time, dt, domain );
+    solver->implicitStepSetup( time, dt, domain );
   }
 
   static real64 constexpr time = 0.0;
@@ -724,7 +724,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->AssembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -740,7 +740,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->AssembleVolumeBalanceTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleVolumeBalanceTerms( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

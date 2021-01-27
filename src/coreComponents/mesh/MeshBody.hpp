@@ -53,21 +53,21 @@ public:
    * @param [in] newLevel index of the new mesh level
    * @return pointer to the created MeshLevel
    */
-  MeshLevel * CreateMeshLevel( localIndex const newLevel );
+  MeshLevel * createMeshLevel( localIndex const newLevel );
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
    */
-  MeshLevel * getMeshLevel( localIndex const level ) { return this->GetGroup< MeshLevel >( level ); }
+  MeshLevel * getMeshLevel( localIndex const level ) { return this->getGroup< MeshLevel >( level ); }
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to const MeshLevel
    */
-  MeshLevel const * getMeshLevel( localIndex const level ) const { return this->GetGroup< MeshLevel >( level ); }
+  MeshLevel const * getMeshLevel( localIndex const level ) const { return this->getGroup< MeshLevel >( level ); }
 
   /**
    * @brief Set mesh length scale used to define an absolute length tolerance
