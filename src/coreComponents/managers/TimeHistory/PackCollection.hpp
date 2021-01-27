@@ -43,7 +43,7 @@ public:
    */
   static string catalogName() { return "PackCollection"; }
 
-  /// @copydoc dataRepository::Group::InitializePostSubGroups
+  /// @copydoc dataRepository::Group::initializePostSubGroups
   void initializePostSubGroups( Group * const group ) override;
 
   /// @copydoc geosx::HistoryCollection::getMetadata
