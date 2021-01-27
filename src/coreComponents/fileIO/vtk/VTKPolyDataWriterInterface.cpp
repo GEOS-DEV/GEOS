@@ -59,7 +59,7 @@ const std::map< string, int > geosx2VTKCellTypes =
  * @param[in] elementType the type of the element (using the abaqus nomenclature)
  * @return the VTK cell identifier
  */
-int ToVTKCellType( string const & elementType )
+int ToVTKCellType( std::string const & elementType )
 {
   int vtkIdentifier = VTK_EMPTY_CELL;
   try
@@ -82,7 +82,7 @@ void VTKPolyDataWriterInterface::gatherNbElementsInRegion( ElementRegionBase con
   MpiWrapper::gather( &nbElems, 1, nbElemsInRegion.data(), 1, 0, MPI_COMM_GEOSX );
 }
 
-VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
+VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( std::string const & outputName ):
   m_outputFolder( outputName ),
   m_pvd( outputName + ".pvd" ),
   m_previousCycle( -1 )
@@ -439,7 +439,7 @@ void VTKPolyDataWriterInterface::writeVtmFile( real64 time,
     vtmWriter.addSubBlock( er.getCatalogName(), er.getName() );
     for( int i = 0; i < mpiSize; i++ )
     {
-      string const dataSetFile = GetDataSetFilePath( er, time, i );
+      std::string const dataSetFile = GetDataSetFilePath( er, time, i );
       if( nbElemsInRegion[i] > 0 )
       {
         if( mpiRank == 0 )
@@ -472,7 +472,7 @@ void VTKPolyDataWriterInterface::createTimeStepSubFolder( real64 time ) const
   if( mpiRank == 0 )
   {
     mode_t mode = 0773;
-    string const timeStepSubFolder = getTimeStepSubFolder( time );
+    std::string const timeStepSubFolder = getTimeStepSubFolder( time );
     int errorCode = mkdir( timeStepSubFolder.c_str(), mode );
     if( errorCode == -1 )
     {
@@ -491,7 +491,7 @@ void VTKPolyDataWriterInterface::createTimeStepSubFolder( real64 time ) const
 
 void VTKPolyDataWriterInterface::writeUnstructuredGrid( vtkSmartPointer< vtkUnstructuredGrid > ug,
                                                         double time,
-                                                        string const & name ) const
+                                                        std::string const & name ) const
 {
   string timeStepSubFolder = VTKPolyDataWriterInterface::getTimeStepSubFolder( time );
   vtkSmartPointer< vtkXMLUnstructuredGridWriter > vtuWriter =vtkXMLUnstructuredGridWriter::New();

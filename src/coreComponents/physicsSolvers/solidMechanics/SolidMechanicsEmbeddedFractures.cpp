@@ -250,8 +250,8 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
   SurfaceElementRegion const & region = *(elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName ));
   EmbeddedSurfaceSubRegion const & subRegion = *(region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
 
-  string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  std::string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  std::string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
 
   arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   arrayView1d< globalIndex const > const jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
@@ -288,8 +288,8 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
   NodeManager const & nodeManager          = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  std::string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const &
   dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -352,8 +352,8 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
   NodeManager const & nodeManager          = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  std::string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const &
   dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -460,7 +460,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
   // Fracture residual
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  std::string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 

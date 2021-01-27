@@ -513,7 +513,7 @@ public:
   real64 GetTimestepRequest()
   {return m_nextDt;};
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & getCatalog();
@@ -583,12 +583,12 @@ public:
 
   string getDiscretization() const { return m_discretizationName; }
 
-  arrayView1d< string const > targetRegionNames() const { return m_targetRegionNames; }
+  arrayView1d< std::string const > targetRegionNames() const { return m_targetRegionNames; }
 
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
+  virtual std::vector< string > getConstitutiveRelations( std::string const & regionName ) const
   {
     GEOSX_UNUSED_VAR( regionName );
-    GEOSX_ERROR( "SolverBase::getConstitutiveRelations( string const &) should "
+    GEOSX_ERROR( "SolverBase::getConstitutiveRelations( std::string const &) should "
                  "be overridden the solver contains a discretization specification." );
     return std::vector< string >();
   }
@@ -598,7 +598,7 @@ public:
    * @param regionName the region name to find
    * @return index within target regions list
    */
-  localIndex targetRegionIndex( string const & regionName ) const;
+  localIndex targetRegionIndex( std::string const & regionName ) const;
 
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forTargetRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
@@ -684,7 +684,7 @@ protected:
    * interpret as a signal this type of model is disabled for the run (for optional models).
    */
   bool checkModelNames( array1d< string > & modelNames,
-                        string const & attribute,
+                        std::string const & attribute,
                         bool const allowEmpty = false ) const;
 
   /**
@@ -699,7 +699,7 @@ protected:
    */
   template< typename MODEL_TYPE = constitutive::ConstitutiveBase >
   void validateModelMapping( ElementRegionManager const & elemRegionManager,
-                             arrayView1d< string const > const & modelNames ) const;
+                             arrayView1d< std::string const > const & modelNames ) const;
 
   real64 m_cflFactor;
   real64 m_maxStableDt;
@@ -768,7 +768,7 @@ BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, 
 
 template< typename MODEL_TYPE >
 void SolverBase::validateModelMapping( ElementRegionManager const & elemRegionManager,
-                                       arrayView1d< string const > const & modelNames ) const
+                                       arrayView1d< std::string const > const & modelNames ) const
 {
   GEOSX_ERROR_IF_NE( modelNames.size(), m_targetRegionNames.size() );
   for( localIndex k = 0; k < modelNames.size(); ++k )

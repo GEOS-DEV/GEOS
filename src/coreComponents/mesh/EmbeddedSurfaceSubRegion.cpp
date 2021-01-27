@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
+EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( std::string const & name,
                                                     dataRepository::Group * const parent ):
   SurfaceElementSubRegion( name, parent ),
   m_normalVector(),

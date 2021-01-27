@@ -20,7 +20,7 @@ namespace geosx
 {
 namespace vtk
 {
-VTKPVDWriter::VTKPVDWriter( string const & fileName ):
+VTKPVDWriter::VTKPVDWriter( std::string const & fileName ):
   m_fileName( fileName )
 {
   // Declaration of XML version
@@ -44,7 +44,7 @@ void VTKPVDWriter::save() const
   }
 }
 
-void VTKPVDWriter::addData( real64 time, string const & filePath ) const
+void VTKPVDWriter::addData( real64 time, std::string const & filePath ) const
 {
   auto collectionNode = m_pvdFile.child( "VTKFile" ).child( "Collection" );
   auto dataSetNode = collectionNode.append_child( "DataSet" );

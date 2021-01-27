@@ -21,7 +21,7 @@ namespace geosx
 {
 using namespace dataRepository;
 using namespace constitutive;
-FieldSpecificationManager::FieldSpecificationManager( string const & name, Group * const parent ):
+FieldSpecificationManager::FieldSpecificationManager( std::string const & name, Group * const parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
@@ -39,7 +39,7 @@ FieldSpecificationManager::~FieldSpecificationManager()
   // TODO Auto-generated destructor stub
 }
 
-Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
+Group * FieldSpecificationManager::createChild( std::string const & childKey, std::string const & childName )
 {
   std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::factory( childKey, childName, this );
   return this->registerGroup( childName, std::move( bc ) );
@@ -61,10 +61,10 @@ void FieldSpecificationManager::applyInitialConditions( Group * domain ) const
 
   apply( 0.0, domain, "", "",
          [&]( FieldSpecificationBase const * const bc,
-              string const &,
+              std::string const &,
               SortedArrayView< localIndex const > const & targetSet,
               Group * const targetGroup,
-              string const fieldName )
+              std::string const fieldName )
   {
     bc->applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
   } );

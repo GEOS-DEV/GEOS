@@ -26,9 +26,9 @@
 using namespace geosx;
 using namespace geosx::dataRepository;
 
-void TestMeshImport( string const & inputStringMesh,
-                     string const & inputStringRegion,
-                     string const & propertyToTest )
+void TestMeshImport( std::string const & inputStringMesh,
+                     std::string const & inputStringRegion,
+                     std::string const & propertyToTest )
 {
   MeshManager meshManager( "mesh", nullptr );
 
@@ -96,7 +96,7 @@ TEST( PAMELAImport, testGMSH )
     "  fieldNamesInGEOSX=\"{barycenter}\""<<
     "  file=\"" <<gmshFilePath.c_str()<< "\"/>"<<
     "</Mesh>";
-  string const inputStringMesh = inputStreamMesh.str();
+  std::string const inputStringMesh = inputStreamMesh.str();
 
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
@@ -124,7 +124,7 @@ TEST( PAMELAImport, testECLIPSE )
     "  fieldNamesInGEOSX=\"{PERM}\""<<
     "  file=\"" << eclipseFilePath.c_str()<< "\"/>"<<
     "</Mesh>";
-  string const inputStringMesh = inputStreamMesh.str();
+  std::string const inputStringMesh = inputStreamMesh.str();
 
   std::stringstream inputStreamRegion;
   inputStreamRegion <<

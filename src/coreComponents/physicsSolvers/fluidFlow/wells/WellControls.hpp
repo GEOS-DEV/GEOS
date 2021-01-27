@@ -75,7 +75,7 @@ public:
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit WellControls( string const & name, dataRepository::Group * const parent );
+  explicit WellControls( std::string const & name, dataRepository::Group * const parent );
 
 
   /**

@@ -308,7 +308,7 @@ public:
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
 
-  DamageSpectral( string const & name, dataRepository::Group * const parent );
+  DamageSpectral( std::string const & name, dataRepository::Group * const parent );
   virtual ~DamageSpectral() override;
 
 

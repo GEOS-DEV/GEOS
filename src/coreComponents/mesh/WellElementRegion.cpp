@@ -25,7 +25,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-WellElementRegion::WellElementRegion( string const & name, Group * const parent ):
+WellElementRegion::WellElementRegion( std::string const & name, Group * const parent ):
   ElementRegionBase( name, parent ),
   m_subRegionName( name+"uniqueSubRegion" ),
   m_wellControlsName( "" ),

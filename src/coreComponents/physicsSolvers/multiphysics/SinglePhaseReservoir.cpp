@@ -55,8 +55,8 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
 
   // Populate off-diagonal sparsity between well and reservoir
 
-  string const resDofKey  = dofManager.getKey( m_wellSolver->resElementDofName() );
-  string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
+  std::string const resDofKey  = dofManager.getKey( m_wellSolver->resElementDofName() );
+  std::string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
 
   localIndex const wellNDOF = m_wellSolver->numDofPerWellElement();
 
@@ -140,7 +140,7 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
-  string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
+  std::string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
@@ -154,7 +154,7 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
     PerforationData const * const perforationData = subRegion.getPerforationData();
 
     // get the degrees of freedom
-    string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
     arrayView1d< globalIndex const > const wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 

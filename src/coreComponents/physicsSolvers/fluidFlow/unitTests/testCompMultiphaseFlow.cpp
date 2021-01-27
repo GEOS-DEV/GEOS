@@ -186,10 +186,10 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow & solver,
   {
     SCOPED_TRACE( subRegion.getParent()->getParent()->getName() + "/" + subRegion.getName() );
 
-    string const & fluidName = solver.fluidModelNames()[targetIndex];
+    std::string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
     MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
-    arrayView1d< string const > const & components = fluid.componentNames();
+    arrayView1d< std::string const > const & components = fluid.componentNames();
 
     arrayView2d< real64 > & compDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
@@ -269,11 +269,11 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow & 
   {
     SCOPED_TRACE( subRegion.getParent()->getParent()->getName() + "/" + subRegion.getName() );
 
-    string const & fluidName = solver.fluidModelNames()[targetIndex];
+    std::string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
     MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
-    arrayView1d< string const > const & components = fluid.componentNames();
-    arrayView1d< string const > const & phases = fluid.phaseNames();
+    arrayView1d< std::string const > const & components = fluid.componentNames();
+    arrayView1d< std::string const > const & phases = fluid.phaseNames();
 
     arrayView1d< real64 > & pres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
@@ -389,11 +389,11 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow & solver
   {
     SCOPED_TRACE( subRegion.getParent()->getName() + "/" + subRegion.getName() );
 
-    string const & fluidName = solver.fluidModelNames()[targetIndex];
+    std::string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
     MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
-    arrayView1d< string const > const & components = fluid.componentNames();
-    arrayView1d< string const > const & phases = fluid.phaseNames();
+    arrayView1d< std::string const > const & components = fluid.componentNames();
+    arrayView1d< std::string const > const & phases = fluid.phaseNames();
 
     arrayView1d< real64 > & pres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
@@ -525,7 +525,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.setValues< parallelDevicePolicy<> >( 0.0 );
 
-  string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
+  std::string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
 
   solver.forTargetSubRegions( mesh, [&]( localIndex const,
                                          ElementSubRegionBase & subRegion )

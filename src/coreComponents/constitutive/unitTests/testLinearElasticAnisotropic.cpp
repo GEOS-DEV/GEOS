@@ -231,7 +231,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
 {
   ConstitutiveManager constitutiveManager( "constitutive", nullptr );
 
-  string const inputStream =
+  std::string const inputStream =
     "<Constitutive>"
     "  <LinearElasticAnisotropic name=\"granite\""
     "                            defaultDensity=\"2700\""

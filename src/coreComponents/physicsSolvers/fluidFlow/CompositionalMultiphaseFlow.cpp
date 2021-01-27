@@ -47,7 +47,7 @@ using namespace CompositionalMultiphaseFlowKernels;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
-CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( string const & name,
+CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( std::string const & name,
                                                           Group * const parent )
   :
   FlowSolverBase( name, parent ),
@@ -728,7 +728,7 @@ void CompositionalMultiphaseFlow::assembleAccumulationTerms( DomainPartition con
 
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
@@ -856,7 +856,7 @@ void CompositionalMultiphaseFlow::assembleFluxTerms( real64 const dt,
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  std::string const & dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( getName() + "/accessors/" + dofKey );
@@ -902,7 +902,7 @@ void CompositionalMultiphaseFlow::assembleVolumeBalanceTerms( DomainPartition co
 
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
@@ -968,17 +968,17 @@ void CompositionalMultiphaseFlow::applySourceFluxBC( real64 const time,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
   fsManager.apply( time + dt,
                    &domain,
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                    [&]( FieldSpecificationBase const * const fs,
-                        string const &,
+                        std::string const &,
                         SortedArrayView< localIndex const > const & lset,
                         Group * const subRegion,
-                        string const & )
+                        std::string const & )
   {
 
     arrayView1d< globalIndex const > const dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );
@@ -1031,13 +1031,13 @@ void CompositionalMultiphaseFlow::applyDirichletBC( real64 const time,
                    "ElementRegions",
                    viewKeyStruct::pressureString,
                    [&]( FieldSpecificationBase const * const fs,
-                        string const & setName,
+                        std::string const & setName,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group * const subRegion,
-                        string const & )
+                        std::string const & )
   {
     // 1.0. Check whether pressure has already been applied to this set
-    string const & subRegionName = subRegion->getName();
+    std::string const & subRegionName = subRegion->getName();
     GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
                     "Conflicting pressure boundary conditions on set " << setName );
 
@@ -1057,13 +1057,13 @@ void CompositionalMultiphaseFlow::applyDirichletBC( real64 const time,
                    "ElementRegions",
                    viewKeyStruct::globalCompFractionString,
                    [&] ( FieldSpecificationBase const * const fs,
-                         string const & setName,
+                         std::string const & setName,
                          SortedArrayView< localIndex const > const & targetSet,
                          Group * const subRegion,
-                         string const & )
+                         std::string const & )
   {
     // 2.0. Check pressure and record composition bc application
-    string const & subRegionName = subRegion->getName();
+    std::string const & subRegionName = subRegion->getName();
     localIndex const comp = fs->getComponent();
     GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
                     "Pressure boundary condition not prescribed on set '" << setName << "'" );
@@ -1095,7 +1095,7 @@ void CompositionalMultiphaseFlow::applyDirichletBC( real64 const time,
   GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
   globalIndex const rankOffset = dofManager.rankOffset();
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
   // 3. Call constitutive update, back-calculate target global component densities and apply to the system
   fsManager.apply( time + dt,
@@ -1103,14 +1103,14 @@ void CompositionalMultiphaseFlow::applyDirichletBC( real64 const time,
                    "ElementRegions",
                    viewKeyStruct::pressureString,
                    [&] ( FieldSpecificationBase const * const,
-                         string const &,
+                         std::string const &,
                          SortedArrayView< localIndex const > const & targetSet,
                          Group * const subRegion,
-                         string const & )
+                         std::string const & )
   {
     // TODO: hack! Find a better way to get the fluid
     Group const * const region = subRegion->getParent()->getParent();
-    string const & fluidName = m_fluidModelNames[ targetRegionIndex( region->getName() ) ];
+    std::string const & fluidName = m_fluidModelNames[ targetRegionIndex( region->getName() ) ];
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( *subRegion, fluidName );
 
     arrayView1d< integer const > const ghostRank =
@@ -1182,7 +1182,7 @@ real64 CompositionalMultiphaseFlow::calculateResidualNorm( DomainPartition const
   real64 localResidualNorm = 0.0;
 
   globalIndex const rankOffset = dofManager.rankOffset();
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
@@ -1261,7 +1261,7 @@ real64 CompositionalMultiphaseFlow::scalingForSystemSolution( DomainPartition co
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   globalIndex const rankOffset = dofManager.rankOffset();
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
   real64 scalingFactor = 1.0;
 
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
@@ -1330,7 +1330,7 @@ bool CompositionalMultiphaseFlow::checkSystemSolution( DomainPartition const & d
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   globalIndex const rankOffset = dofManager.rankOffset();
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
   int localCheck = 1;
 
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
@@ -1596,6 +1596,6 @@ void CompositionalMultiphaseFlow::resetViews( MeshLevel & mesh )
 }
 
 //START_SPHINX_INCLUDE_01
-REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlow, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlow, std::string const &, Group * const )
 
 } // namespace geosx

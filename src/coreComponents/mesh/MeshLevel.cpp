@@ -27,7 +27,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshLevel::MeshLevel( string const & name,
+MeshLevel::MeshLevel( std::string const & name,
                       Group * const parent ):
   Group( name, parent ),
   m_nodeManager( groupStructKeys::nodeManagerString, this ),

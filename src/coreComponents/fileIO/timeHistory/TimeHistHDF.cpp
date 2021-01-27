@@ -83,7 +83,7 @@ inline hid_t GetHDFArrayDataType( std::type_index const & type, hsize_t const ra
   return H5Tarray_create( GetHDFDataType( type ), rank, dims );
 }
 
-HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm ):
+HDFFile::HDFFile( std::string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm ):
   m_filename( ),
   m_fileId( 0 ),
   m_faplId( 0 ),
@@ -141,10 +141,10 @@ HDFFile::~HDFFile()
   H5Fclose( m_fileId );
 }
 
-HDFHistIO::HDFHistIO( string const & filename,
+HDFHistIO::HDFHistIO( std::string const & filename,
                       localIndex rank,
                       std::vector< localIndex > const & dims,
-                      string const & name,
+                      std::string const & name,
                       std::type_index typeId,
                       localIndex writeHead,
                       localIndex initAlloc,
@@ -361,10 +361,10 @@ void HDFHistIO::resizeBuffer( )
 
 
 
-HDFSerialHistIO::HDFSerialHistIO( string const & filename,
+HDFSerialHistIO::HDFSerialHistIO( std::string const & filename,
                                   localIndex rank,
                                   std::vector< localIndex > const & dims,
-                                  string const & name,
+                                  std::string const & name,
                                   std::type_index typeId,
                                   localIndex writeHead,
                                   localIndex initAlloc,

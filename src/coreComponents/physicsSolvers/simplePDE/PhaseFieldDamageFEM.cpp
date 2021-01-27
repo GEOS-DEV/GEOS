@@ -574,10 +574,10 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                    &domain,
                    "nodeManager",
                    m_fieldName,
-                   [&]( FieldSpecificationBase const * const bc, string const &,
+                   [&]( FieldSpecificationBase const * const bc, std::string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group * const targetGroup,
-                        string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
+                        std::string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
   {
     bc->applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                         parallelDevicePolicy< 32 > >( targetSet,

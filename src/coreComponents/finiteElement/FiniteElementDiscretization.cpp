@@ -63,7 +63,7 @@ void FiniteElementDiscretization::postProcessInput()
 }
 
 std::unique_ptr< FiniteElementBase >
-FiniteElementDiscretization::factory( string const & parentElementShape ) const
+FiniteElementDiscretization::factory( std::string const & parentElementShape ) const
 {
   std::unique_ptr< FiniteElementBase > rval;
   if( m_order==1 )

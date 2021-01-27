@@ -418,7 +418,7 @@ typedef EvalArgs< real64, MAX_VAR_DIM > EvalVarArgs;
 class TableFunctionBase
 {
 public:
-  virtual string const & tableName() const = 0;
+  virtual std::string const & tableName() const = 0;
   virtual ~TableFunctionBase(){}
 
   virtual EvalArgs1D value( const EvalArgs1D & x ) const = 0;
@@ -458,7 +458,7 @@ public:
   }
 
 
-  virtual string const & tableName() const
+  virtual std::string const & tableName() const
   {
     return m_tableName;
   }
@@ -492,7 +492,7 @@ class XTable : public TableFunctionBase
 {
 public:
 
-  XTable( string const & tableName, real64_array const & x, real64_array const & value ): m_tableName( tableName ), m_x( x ), m_value( value ) {}
+  XTable( std::string const & tableName, real64_array const & x, real64_array const & value ): m_tableName( tableName ), m_x( x ), m_value( value ) {}
   ~XTable(){}
 
   real64_array & xArray()
@@ -505,7 +505,7 @@ public:
     return m_value;
   }
 
-  virtual string const & tableName() const
+  virtual std::string const & tableName() const
   {
     return m_tableName;
   }

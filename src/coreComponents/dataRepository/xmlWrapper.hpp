@@ -119,7 +119,7 @@ public:
    */
   template< typename T >
   static std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-  stringToInputVariable( T & target, string const & value )
+  stringToInputVariable( T & target, std::string const & value )
   {
     std::istringstream ss( value );
     ss>>target;
@@ -130,7 +130,7 @@ public:
    * @param[out] target the object to read values into
    * @param[in]  value  the string that contains the data to be parsed into target
    */
-  static void stringToInputVariable( R1Tensor & target, string const & value );
+  static void stringToInputVariable( R1Tensor & target, std::string const & value );
 
   /**
    * @brief Parse a string and fill an Array with the value(s) in the string.
@@ -143,7 +143,7 @@ public:
    */
   template< typename T, int NDIM, typename PERMUTATION >
   static std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-  stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value )
+  stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, std::string const & value )
   { LvArray::input::stringToArray( array, value ); }
 
   ///@}
@@ -170,7 +170,7 @@ public:
   template< typename T, typename T_DEF = T >
   static std::enable_if_t< canParseVariable< T >, bool >
   readAttributeAsType( T & rval,
-                       string const & name,
+                       std::string const & name,
                        xmlNode const & targetNode,
                        T_DEF const & defVal )
   {
@@ -200,7 +200,7 @@ public:
   template< typename T >
   static std::enable_if_t< canParseVariable< T >, bool >
   readAttributeAsType( T & rval,
-                       string const & name,
+                       std::string const & name,
                        xmlNode const & targetNode,
                        bool const required )
   {
@@ -227,7 +227,7 @@ public:
   template< typename T >
   static std::enable_if_t< !dataRepository::DefaultValue< T >::has_default_value, bool >
   readAttributeAsType( T & rval,
-                       string const & name,
+                       std::string const & name,
                        xmlNode const & targetNode,
                        dataRepository::DefaultValue< T > const & )
   { return readAttributeAsType( rval, name, targetNode, false ); }
@@ -244,7 +244,7 @@ public:
   template< typename T >
   static typename std::enable_if_t< dataRepository::DefaultValue< T >::has_default_value, bool >
   readAttributeAsType( T & rval,
-                       string const & name,
+                       std::string const & name,
                        xmlNode const & targetNode,
                        dataRepository::DefaultValue< T > const & defVal )
   { return readAttributeAsType( rval, name, targetNode, defVal.value ); }
@@ -255,7 +255,7 @@ public:
    */
   template< typename T, typename U >
   static std::enable_if_t< !canParseVariable< T >, bool >
-  readAttributeAsType( T &, string const &, xmlNode const &, U const & )
+  readAttributeAsType( T &, std::string const &, xmlNode const &, U const & )
   {
     GEOSX_ERROR( "Cannot parse the given type " << LvArray::system::demangleType< T >() );
     return false;

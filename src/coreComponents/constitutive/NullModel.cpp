@@ -19,7 +19,7 @@ namespace geosx
 namespace constitutive
 {
 
-NullModel::NullModel( string const & name,
+NullModel::NullModel( std::string const & name,
                       Group * const parent ):
   ConstitutiveBase( name, parent )
 {}

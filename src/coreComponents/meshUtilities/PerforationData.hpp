@@ -50,7 +50,7 @@ public:
    * @param[in] name name of this instantiation of PerforationData in the repository
    * @param[in] parent parent group of this instantiation of PerforationData
    */
-  explicit PerforationData( string const & name, dataRepository::Group * const parent );
+  explicit PerforationData( std::string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief Default destructor.
@@ -100,7 +100,7 @@ public:
   /**
    * @copydoc catalogName()
    */
-  virtual string const getCatalogName() const override { return catalogName(); }
+  virtual std::string const getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -193,7 +193,7 @@ public:
    */
   void computeWellTransmissibility( MeshLevel const & mesh,
                                     WellElementSubRegion const * const wellElemSubRegion,
-                                    string const & permeabilityKey );
+                                    std::string const & permeabilityKey );
 
   ///@}
 

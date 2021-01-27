@@ -32,7 +32,7 @@ namespace constitutive
 {
 
 template< typename BASE >
-DamageSpectral< BASE >::DamageSpectral( string const & name, Group * const parent ):
+DamageSpectral< BASE >::DamageSpectral( std::string const & name, Group * const parent ):
   Damage< BASE >( name, parent )
 {}
 
@@ -42,7 +42,7 @@ DamageSpectral< BASE >::~DamageSpectral()
 
 typedef DamageSpectral< LinearElasticIsotropic > DamageSpectralLinearElasticIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageSpectralLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageSpectralLinearElasticIsotropic, std::string const &, Group * const )
 
 }
 } /* namespace geosx */

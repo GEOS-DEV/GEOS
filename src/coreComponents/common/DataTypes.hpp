@@ -970,7 +970,7 @@ struct TypeName
    */
   static string brief()
   {
-    string const full_name = full();
+    std::string const full_name = full();
     string::size_type const pos = full_name.find_last_of( "::" );
     return ( pos == string::npos ) ? full_name : full_name.substr( pos );
   }

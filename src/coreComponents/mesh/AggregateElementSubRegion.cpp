@@ -20,7 +20,7 @@
 
 namespace geosx
 {
-AggregateElementSubRegion::AggregateElementSubRegion( string const & name,
+AggregateElementSubRegion::AggregateElementSubRegion( std::string const & name,
                                                       dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent )
 {}

@@ -59,7 +59,7 @@ public:
    * @param dims The extent of each dimension of the array being collected.
    * @param type The std::type_index of the array being collected (std::type_index(typeid(T)))
    */
-  HistoryMetadata( string const & name, localIndex rank, localIndex * dims, std::type_index type ):
+  HistoryMetadata( std::string const & name, localIndex rank, localIndex * dims, std::type_index type ):
     m_name( name ),
     m_rank( rank ),
     m_dims( dims, dims+rank ),
@@ -71,7 +71,7 @@ public:
    * @param count The extent of the one-dimensional array.
    * @param type The std::type_index of the array being collected (std::type_index(typeid(T)))
    */
-  HistoryMetadata( string const & name, localIndex count, std::type_index type ):
+  HistoryMetadata( std::string const & name, localIndex count, std::type_index type ):
     m_name( name ),
     m_rank( 1 ),
     m_dims( &count, &count+1 ),
@@ -82,7 +82,7 @@ public:
    *         to the history output files.
    * @param name The name to set.
    */
-  void setName( string const & name )
+  void setName( std::string const & name )
   {
     m_name = name;
   }
@@ -90,7 +90,7 @@ public:
    * @brief Get the name.
    * @return The name of the data being collected.
    */
-  string const & getName( ) const
+  std::string const & getName( ) const
   {
     return m_name;
   }
@@ -175,7 +175,7 @@ constexpr bool can_history_io_container = ( traits::is_array_type< T > || traits
 template< typename T >
 inline
 typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, ArrayView< T const, 1, 0 > const & arr, localIndex sizeOverride = -1 )
+getHistoryMetadata( std::string const & name, ArrayView< T const, 1, 0 > const & arr, localIndex sizeOverride = -1 )
 {
   localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
   return HistoryMetadata( name, size, std::type_index( typeid( T )));
@@ -193,7 +193,7 @@ getHistoryMetadata( string const & name, ArrayView< T const, 1, 0 > const & arr,
 template< typename T >
 inline
 typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr, localIndex sizeOverride = -1 )
+getHistoryMetadata( std::string const & name, SortedArrayView< T const > const & arr, localIndex sizeOverride = -1 )
 {
   localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
   return HistoryMetadata( name, size, std::type_index( typeid(T)));
@@ -211,7 +211,7 @@ getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr,
 template< typename ARRAY_T >
 inline
 typename std::enable_if< ( traits::is_array_type< ARRAY_T >) && (ARRAY_T::NDIM > 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex sizeOverride = -1 )
+getHistoryMetadata( std::string const & name, ARRAY_T const & arr, localIndex sizeOverride = -1 )
 {
   localIndex perIndexSize = arr[ 0 ].size( );
   localIndex numIndices = ( sizeOverride >= 0 ? sizeOverride :  arr.size( ) / perIndexSize );
@@ -230,7 +230,7 @@ getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex sizeOve
  */
 template< typename T >
 inline typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride = -1 )
+getHistoryMetadata( std::string const & name, const T & type, localIndex sizeOverride = -1 )
 {
   GEOSX_UNUSED_VAR( type );
   localIndex size = sizeOverride < 0 ? 0 : sizeOverride;
@@ -247,7 +247,7 @@ getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride
  */
 template< typename T >
 inline typename std::enable_if< can_history_io_container< T > && !can_history_io< typename T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride )
+getHistoryMetadata( std::string const & name, const T & type, localIndex sizeOverride )
 {
   GEOSX_ERROR( "Trying to use time history output on an unsupported type." );
   GEOSX_UNUSED_VAR( name );
@@ -266,7 +266,7 @@ getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride
  */
 template< typename T >
 inline typename std::enable_if< !can_history_io_container< T > && !can_history_io< T >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride )
+getHistoryMetadata( std::string const & name, const T & type, localIndex sizeOverride )
 {
   GEOSX_ERROR( "Trying to use time history output on an unsupported type." );
   GEOSX_UNUSED_VAR( name );

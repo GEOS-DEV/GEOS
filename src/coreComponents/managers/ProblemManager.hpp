@@ -83,7 +83,7 @@ public:
    *                  sub-Groups.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /**
    * @brief Parses command line input
@@ -180,28 +180,28 @@ public:
    * @brief Returns the problem name
    * @return The problem name
    */
-  string const & getProblemName() const
+  std::string const & getProblemName() const
   { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
-  string const & getInputFileName() const
+  std::string const & getInputFileName() const
   { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
-  string const & getRestartFileName() const
+  std::string const & getRestartFileName() const
   { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
-  string const & getSchemaFileName() const
+  std::string const & getSchemaFileName() const
   { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
 
   /// Input file xml document handle

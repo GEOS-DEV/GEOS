@@ -33,9 +33,9 @@ class PackCollection : public HistoryCollection
 public:
   /**
    * @brief Constructor
-   * @copydetails dataRepository::Group::Group( string const & name, Group * parent );
+   * @copydetails dataRepository::Group::Group( std::string const & name, Group * parent );
    */
-  PackCollection ( string const & name, Group * parent );
+  PackCollection ( std::string const & name, Group * parent );
 
   /**
    * @brief Catalog name interface
@@ -50,7 +50,7 @@ public:
   virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex collectionIdx ) override;
 
   /// @copydoc geosx::HistoryCollection::getTargetName
-  virtual string const & getTargetName( ) const override
+  virtual std::string const & getTargetName( ) const override
   {
     return m_fieldName;
   }

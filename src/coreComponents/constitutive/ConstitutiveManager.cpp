@@ -27,7 +27,7 @@ namespace constitutive
 {
 
 
-ConstitutiveManager::ConstitutiveManager( string const & name,
+ConstitutiveManager::ConstitutiveManager( std::string const & name,
                                           Group * const parent ):
   Group( name, parent )
 {
@@ -38,7 +38,7 @@ ConstitutiveManager::~ConstitutiveManager()
 {}
 
 
-Group * ConstitutiveManager::createChild( string const & childKey, string const & childName )
+Group * ConstitutiveManager::createChild( std::string const & childKey, std::string const & childName )
 {
   std::unique_ptr< ConstitutiveBase > material = ConstitutiveBase::CatalogInterface::factory( childKey, childName, this );
   return registerGroup< ConstitutiveBase >( childName, std::move( material ) );
@@ -56,7 +56,7 @@ void ConstitutiveManager::expandObjectCatalogs()
 
 
 ConstitutiveBase *
-ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelationInstanceName,
+ConstitutiveManager::hangConstitutiveRelation( std::string const & constitutiveRelationInstanceName,
                                                dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex ) const
 {

@@ -41,10 +41,10 @@ public:
    * @param name actual field name
    * @return prefixed field name that is used to access data
    */
-  inline static string makeFieldName( string const & prefix, string const & name ) { return prefix + "_" + name; }
+  inline static string makeFieldName( std::string const & prefix, std::string const & name ) { return prefix + "_" + name; }
 
 
-  ConstitutiveBase( string const & name,
+  ConstitutiveBase( std::string const & name,
                     Group * const parent );
 
   virtual ~ConstitutiveBase() override;
@@ -55,7 +55,7 @@ public:
    * @param[in]  parent A pointer to the group that contains the instance of the new clone
    * @param[out] clone  A reference to a unique_ptr  that will hold the clone.
    */
-  virtual std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
+  virtual std::unique_ptr< ConstitutiveBase > deliverClone( std::string const & name,
                                                             Group * const parent ) const;
 
 

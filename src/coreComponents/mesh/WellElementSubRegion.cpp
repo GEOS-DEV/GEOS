@@ -23,7 +23,7 @@
 namespace geosx
 {
 
-WellElementSubRegion::WellElementSubRegion( string const & name, Group * const parent ):
+WellElementSubRegion::WellElementSubRegion( std::string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_wellControlsName( "" ),
   m_toNodesRelation(),
@@ -744,7 +744,7 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
 
   // we get the region and subregion indices in the elemManager
   WellElementRegion const * const elemRegion = this->getParent()->getParent()->groupCast< WellElementRegion * >();
-  string const elemRegionName = elemRegion->getName();
+  std::string const elemRegionName = elemRegion->getName();
 
   localIndex const iregion    = elemManager->getRegions().getIndex( elemRegionName );
   localIndex const isubRegion = elemRegion->getSubRegions().getIndex( getName() );

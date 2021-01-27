@@ -38,7 +38,7 @@ class TimeHistoryOutput : public OutputBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  TimeHistoryOutput( string const & name,
+  TimeHistoryOutput( std::string const & name,
                      Group * const parent );
 
   /// Destructor

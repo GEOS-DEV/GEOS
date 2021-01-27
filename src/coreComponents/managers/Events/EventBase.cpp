@@ -118,7 +118,7 @@ EventBase::CatalogInterface::CatalogType & EventBase::getCatalog()
   return catalog;
 }
 
-Group * EventBase::createChild( string const & childKey, string const & childName )
+Group * EventBase::createChild( std::string const & childKey, std::string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );

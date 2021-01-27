@@ -86,7 +86,7 @@ HybridMimeticDiscretization::getCatalog()
 }
 
 std::unique_ptr< MimeticInnerProductBase >
-HybridMimeticDiscretization::factory( string const & mimeticInnerProductType ) const
+HybridMimeticDiscretization::factory( std::string const & mimeticInnerProductType ) const
 {
   std::unique_ptr< MimeticInnerProductBase > rval;
   if( mimeticInnerProductType == MimeticInnerProductTypeStrings::TPFA )

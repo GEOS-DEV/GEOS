@@ -51,7 +51,7 @@ public:
    * @param name The dataset/group name to check for.
    * @return Whether the dataset/group exists in the target.
    */
-  virtual bool checkInTarget( string const & name )
+  virtual bool checkInTarget( std::string const & name )
   {
     htri_t exists = 0;
     H5E_BEGIN_TRY {
@@ -75,7 +75,7 @@ public:
    * @param parallelAccess Whether to access one file in parallel or one file per rank in the comm.
    * @param comm An MPI communicator where each rank in the communicator will be accesing the target file.
    */
-  HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm );
+  HDFFile( std::string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm );
 
   /**
    * Destructor -- Close the file and acccessors.
@@ -119,10 +119,10 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
-  HDFHistIO( string const & filename,
+  HDFHistIO( std::string const & filename,
              localIndex rank,
              std::vector< localIndex > const & dims,
-             string const & name,
+             std::string const & name,
              std::type_index typeId,
              localIndex writeHead = 0,
              localIndex initAlloc = 2,
@@ -138,7 +138,7 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFHistIO( string const & filename,
+  HDFHistIO( std::string const & filename,
              const HistoryMetadata & spec,
              localIndex writeHead = 0,
              localIndex initAlloc = 2,
@@ -230,10 +230,10 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
-  HDFSerialHistIO( string const & filename,
+  HDFSerialHistIO( std::string const & filename,
                    localIndex rank,
                    std::vector< localIndex > const & dims,
-                   string const & name,
+                   std::string const & name,
                    std::type_index typeId,
                    localIndex writeHead = 0,
                    localIndex initAlloc = 2,
@@ -249,7 +249,7 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFSerialHistIO( string const & filename,
+  HDFSerialHistIO( std::string const & filename,
                    const HistoryMetadata & spec,
                    localIndex writeHead = 0,
                    localIndex initAlloc = 2,

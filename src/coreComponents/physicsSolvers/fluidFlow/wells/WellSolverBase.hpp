@@ -84,7 +84,7 @@ public:
   /// deleted move operator
   WellSolverBase & operator=( WellSolverBase && ) = delete;
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /// Expand catalog for schema generation
   virtual void expandObjectCatalogs() override;
@@ -94,13 +94,13 @@ public:
    * @brief setter for the name of the flow solver (needed to use the flow kernels like UpdateFluid)
    * @param name the name of the flow solver
    */
-  void setFlowSolverName( string const & name ) { m_flowSolverName = name; }
+  void setFlowSolverName( std::string const & name ) { m_flowSolverName = name; }
 
   /**
    * @brief getter for the name of the flow solver (used in UpdateState)
    * @return a string containing the name of the flow solver
    */
-  string const & getFlowSolverName() const { return m_flowSolverName; }
+  std::string const & getFlowSolverName() const { return m_flowSolverName; }
 
   /**
    * @brief getter for the number of degrees of freedom per well element
@@ -242,9 +242,9 @@ public:
    */
   virtual void updateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
 
-  arrayView1d< string const > const fluidModelNames() const { return m_fluidModelNames; }
+  arrayView1d< std::string const > const fluidModelNames() const { return m_fluidModelNames; }
 
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+  virtual std::vector< string > getConstitutiveRelations( std::string const & regionName ) const override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

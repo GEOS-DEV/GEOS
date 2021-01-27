@@ -366,9 +366,9 @@ template< typename POLICY,
           typename ... KERNEL_CONSTRUCTOR_PARAMS >
 static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
-                                     arrayView1d< string const > const & targetRegions,
-                                     string const & finiteElementName,
-                                     arrayView1d< string const > const & constitutiveNames,
+                                     arrayView1d< std::string const > const & targetRegions,
+                                     std::string const & finiteElementName,
+                                     arrayView1d< std::string const > const & constitutiveNames,
                                      KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
   GEOSX_MARK_FUNCTION;
@@ -435,7 +435,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
 
-      string const elementTypeString = elementSubRegion.getElementTypeString();
+      std::string const elementTypeString = elementSubRegion.getElementTypeString();
 
       FiniteElementBase &
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );

@@ -28,7 +28,7 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
-                              string const dofKey,
+                              std::string const dofKey,
                               ParallelMatrix & permutationMatrix )
 {
   /* Crates a permutation matrix for a given nodal variable specified by the DofKey. It consider that nDofPerNode
@@ -67,7 +67,7 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerCell,
-                              string const DofKey,
+                              std::string const DofKey,
                               ParallelMatrix & permutationMatrix )
 {
   /* Crates a permutation matrix for a given cell centered variable specified by the DofKey. It consider that

@@ -35,7 +35,7 @@ public:
    * @brief Writer for PVD file
    * @param[in] fileName the file name with the extension
    */
-  VTKPVDWriter( string const & fileName );
+  VTKPVDWriter( std::string const & fileName );
 
   /*!
    * @brief Triggers the file output
@@ -47,14 +47,14 @@ public:
    * @param[in] time the time step
    * @param[in] filePath path to the file associated with the time-step
    */
-  void addData( real64 time, string const & filePath ) const;
+  void addData( real64 time, std::string const & filePath ) const;
 private:
 
   /// PVD XML file
   xmlWrapper::xmlDocument m_pvdFile;
 
   /// Name of the XML File
-  string const m_fileName;
+  std::string const m_fileName;
 };
 }
 }

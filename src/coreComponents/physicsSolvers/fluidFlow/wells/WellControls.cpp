@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-WellControls::WellControls( string const & name, Group * const parent )
+WellControls::WellControls( std::string const & name, Group * const parent )
   : Group( name, parent ),
   m_type( Type::PRODUCER ),
   m_refWellElemIndex( -1 ),

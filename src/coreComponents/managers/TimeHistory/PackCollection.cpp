@@ -2,7 +2,7 @@
 
 namespace geosx
 {
-PackCollection::PackCollection ( string const & name, Group * parent )
+PackCollection::PackCollection ( std::string const & name, Group * parent )
   : HistoryCollection( name, parent )
   , m_setsIndices( )
   , m_objectPath( )

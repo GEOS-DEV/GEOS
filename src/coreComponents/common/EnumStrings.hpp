@@ -115,7 +115,7 @@ struct EnumStrings
    * @param delim delimiter (defaults to single space)
    * @return the string containing all valid strings for this type
    */
-  static string concat( string const & delim = " " )
+  static string concat( std::string const & delim = " " )
   {
     auto const & strings = get();
     return stringutilities::strjoin( begin( strings ), end( strings ), delim );
@@ -143,7 +143,7 @@ struct EnumStrings
    * @param s the string to convert
    * @return the corresponding enum value
    */
-  static enum_type fromString( string const & s )
+  static enum_type fromString( std::string const & s )
   {
     auto const & strings = get();
     auto const it = std::find( begin( strings ), end( strings ), s );

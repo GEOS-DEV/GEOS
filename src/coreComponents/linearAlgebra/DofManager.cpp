@@ -82,7 +82,7 @@ void DofManager::setMesh( DomainPartition & domain,
   m_mesh = m_domain->getMeshBody( meshBodyIndex )->getMeshLevel( meshLevelIndex );
 }
 
-localIndex DofManager::getFieldIndex( string const & name ) const
+localIndex DofManager::getFieldIndex( std::string const & name ) const
 {
   GEOSX_ASSERT_MSG( fieldExists( name ), "DofManager: field does not exist: " << name );
   auto const it = std::find_if( m_fields.begin(), m_fields.end(),
@@ -90,19 +90,19 @@ localIndex DofManager::getFieldIndex( string const & name ) const
   return std::distance( m_fields.begin(), it );
 }
 
-bool DofManager::fieldExists( string const & name ) const
+bool DofManager::fieldExists( std::string const & name ) const
 {
   auto const it = std::find_if( m_fields.begin(), m_fields.end(),
                                 [&]( FieldDescription const & f ) { return f.name == name; } );
   return it != m_fields.end();
 }
 
-string const & DofManager::getKey( string const & fieldName ) const
+string const & DofManager::getKey( std::string const & fieldName ) const
 {
   return m_fields[getFieldIndex( fieldName )].key;
 }
 
-globalIndex DofManager::numGlobalDofs( string const & fieldName ) const
+globalIndex DofManager::numGlobalDofs( std::string const & fieldName ) const
 {
   if( !fieldName.empty() )
   {
@@ -115,7 +115,7 @@ globalIndex DofManager::numGlobalDofs( string const & fieldName ) const
   }
 }
 
-localIndex DofManager::numLocalDofs( string const & fieldName ) const
+localIndex DofManager::numLocalDofs( std::string const & fieldName ) const
 {
   if( !fieldName.empty() )
   {
@@ -179,7 +179,7 @@ array1d< localIndex > DofManager::getLocalDofComponentLabels() const
   return ret;
 }
 
-globalIndex DofManager::rankOffset( string const & fieldName ) const
+globalIndex DofManager::rankOffset( std::string const & fieldName ) const
 {
   if( !fieldName.empty() )
   {
@@ -192,7 +192,7 @@ globalIndex DofManager::rankOffset( string const & fieldName ) const
   }
 }
 
-localIndex DofManager::numComponents( string const & fieldName ) const
+localIndex DofManager::numComponents( std::string const & fieldName ) const
 {
   if( !fieldName.empty() )
   {
@@ -220,24 +220,24 @@ array1d< localIndex > DofManager::numComponentsPerField() const
   return ret;
 }
 
-localIndex DofManager::numLocalSupport( string const & fieldName ) const
+localIndex DofManager::numLocalSupport( std::string const & fieldName ) const
 {
   FieldDescription const & field = m_fields[getFieldIndex( fieldName )];
   return field.numLocalDof / field.numComponents;
 }
 
-globalIndex DofManager::numGlobalSupport( string const & fieldName ) const
+globalIndex DofManager::numGlobalSupport( std::string const & fieldName ) const
 {
   FieldDescription const & field = m_fields[getFieldIndex( fieldName )];
   return field.numGlobalDof / field.numComponents;
 }
 
-DofManager::Location DofManager::getLocation( string const & fieldName ) const
+DofManager::Location DofManager::getLocation( std::string const & fieldName ) const
 {
   return m_fields[getFieldIndex( fieldName )].location;
 }
 
-globalIndex DofManager::globalOffset( string const & fieldName ) const
+globalIndex DofManager::globalOffset( std::string const & fieldName ) const
 {
   GEOSX_ASSERT_MSG( m_reordered, "Global offset not available until after reorderByRank() has been called." );
   return m_fields[getFieldIndex( fieldName )].globalOffset;
@@ -296,33 +296,33 @@ void DofManager::removeIndexArray( FieldDescription const & field )
 }
 
 // Just an interface to allow only three parameters
-void DofManager::addField( string const & fieldName,
+void DofManager::addField( std::string const & fieldName,
                            Location const location )
 {
-  addField( fieldName, location, 1, arrayView1d< string const >() );
+  addField( fieldName, location, 1, arrayView1d< std::string const >() );
 }
 
 // Just another interface to allow four parameters (no regions)
-void DofManager::addField( string const & fieldName,
+void DofManager::addField( std::string const & fieldName,
                            Location const location,
                            localIndex const components )
 {
-  addField( fieldName, location, components, arrayView1d< string const >() );
+  addField( fieldName, location, components, arrayView1d< std::string const >() );
 }
 
 // Just another interface to allow four parameters (no components)
-void DofManager::addField( string const & fieldName,
+void DofManager::addField( std::string const & fieldName,
                            Location const location,
-                           arrayView1d< string const > const & regions )
+                           arrayView1d< std::string const > const & regions )
 {
   addField( fieldName, location, 1, regions );
 }
 
 // The real function, allowing the creation of self-connected blocks
-void DofManager::addField( string const & fieldName,
+void DofManager::addField( std::string const & fieldName,
                            Location const location,
                            localIndex const components,
-                           arrayView1d< string const > const & regions )
+                           arrayView1d< std::string const > const & regions )
 {
   GEOSX_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
   GEOSX_ERROR_IF( fieldExists( fieldName ), "Requested field name '" << fieldName << "' already exists." );
@@ -332,7 +332,7 @@ void DofManager::addField( string const & fieldName,
   m_fields.resize( fieldIndex + 1 );
 
   string suffix;
-  for( string const & regionName : regions )
+  for( std::string const & regionName : regions )
   {
     suffix.append( "_" + regionName );
   }
@@ -362,7 +362,7 @@ void DofManager::addField( string const & fieldName,
   }
   else
   {
-    for( string const & regionName : field.regions )
+    for( std::string const & regionName : field.regions )
     {
       GEOSX_ERROR_IF( elemManager->getRegion( regionName ) == nullptr, "Element region not found: " << regionName );
     }
@@ -725,8 +725,8 @@ void DofManager::setSparsityPattern( MATRIX & matrix,
 // Create the sparsity pattern (location-location). High level interface
 template< typename MATRIX >
 void DofManager::setSparsityPattern( MATRIX & matrix,
-                                     string const & rowFieldName,
-                                     string const & colFieldName,
+                                     std::string const & rowFieldName,
+                                     std::string const & colFieldName,
                                      bool const closePattern ) const
 {
   GEOSX_ERROR_IF( m_reordered, "Cannot set single block sparsity pattern after reorderByRank() has been called." );
@@ -1252,8 +1252,8 @@ void DofManager::setSparsityPattern( SparsityPattern< globalIndex > & pattern ) 
 
 // Create the sparsity pattern (location-location). High level interface
 void DofManager::setSparsityPattern( SparsityPattern< globalIndex > & pattern,
-                                     string const & rowFieldName,
-                                     string const & colFieldName ) const
+                                     std::string const & rowFieldName,
+                                     std::string const & colFieldName ) const
 {
   GEOSX_ERROR_IF( m_reordered, "Cannot set single block sparsity pattern after reorderByRank() has been called." );
   setSparsityPatternOneBlock( pattern, getFieldIndex( rowFieldName ), getFieldIndex( colFieldName ) );
@@ -1292,8 +1292,8 @@ void vectorToFieldKernel( LOCAL_VECTOR const localVector,
 template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
 void vectorToFieldImpl( LOCAL_VECTOR const localVector,
                         ObjectManagerBase & manager,
-                        string const & dofKey,
-                        string const & fieldName,
+                        std::string const & dofKey,
+                        std::string const & fieldName,
                         real64 const scalingFactor,
                         localIndex const dofOffset,
                         localIndex const loComp,
@@ -1355,8 +1355,8 @@ void fieldToVectorKernel( LOCAL_VECTOR localVector,
 template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
 void fieldToVectorImpl( LOCAL_VECTOR localVector,
                         ObjectManagerBase const & manager,
-                        string const & dofKey,
-                        string const & fieldName,
+                        std::string const & dofKey,
+                        std::string const & fieldName,
                         real64 const scalingFactor,
                         localIndex const dofOffset,
                         localIndex const loComp,
@@ -1392,8 +1392,8 @@ void fieldToVectorImpl( LOCAL_VECTOR localVector,
 
 template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
 void DofManager::vectorToField( LOCAL_VECTOR const localVector,
-                                string const & srcFieldName,
-                                string const & dstFieldName,
+                                std::string const & srcFieldName,
+                                std::string const & dstFieldName,
                                 real64 const scalingFactor,
                                 localIndex const loCompIndex,
                                 localIndex const hiCompIndex ) const
@@ -1436,8 +1436,8 @@ void DofManager::vectorToField( LOCAL_VECTOR const localVector,
 // Copy values from DOFs to nodes
 template< typename VECTOR >
 void DofManager::copyVectorToField( VECTOR const & vector,
-                                    string const & srcFieldName,
-                                    string const & dstFieldName,
+                                    std::string const & srcFieldName,
+                                    std::string const & dstFieldName,
                                     real64 const scalingFactor,
                                     localIndex const loCompIndex,
                                     localIndex const hiCompIndex ) const
@@ -1451,8 +1451,8 @@ void DofManager::copyVectorToField( VECTOR const & vector,
 }
 
 void DofManager::copyVectorToField( arrayView1d< real64 const > const & localVector,
-                                    string const & srcFieldName,
-                                    string const & dstFieldName,
+                                    std::string const & srcFieldName,
+                                    std::string const & dstFieldName,
                                     real64 const scalingFactor,
                                     localIndex const loCompIndex,
                                     localIndex const hiCompIndex ) const
@@ -1468,8 +1468,8 @@ void DofManager::copyVectorToField( arrayView1d< real64 const > const & localVec
 // Copy values from DOFs to nodes
 template< typename VECTOR >
 void DofManager::addVectorToField( VECTOR const & vector,
-                                   string const & srcFieldName,
-                                   string const & dstFieldName,
+                                   std::string const & srcFieldName,
+                                   std::string const & dstFieldName,
                                    real64 const scalingFactor,
                                    localIndex const loCompIndex,
                                    localIndex const hiCompIndex ) const
@@ -1483,8 +1483,8 @@ void DofManager::addVectorToField( VECTOR const & vector,
 }
 
 void DofManager::addVectorToField( arrayView1d< real64 const > const & localVector,
-                                   string const & srcFieldName,
-                                   string const & dstFieldName,
+                                   std::string const & srcFieldName,
+                                   std::string const & dstFieldName,
                                    real64 const scalingFactor,
                                    localIndex const loCompIndex,
                                    localIndex const hiCompIndex ) const
@@ -1499,8 +1499,8 @@ void DofManager::addVectorToField( arrayView1d< real64 const > const & localVect
 
 template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
 void DofManager::fieldToVector( LOCAL_VECTOR localVector,
-                                string const & srcFieldName,
-                                string const & dstFieldName,
+                                std::string const & srcFieldName,
+                                std::string const & dstFieldName,
                                 real64 const scalingFactor,
                                 localIndex const loCompIndex,
                                 localIndex const hiCompIndex ) const
@@ -1543,8 +1543,8 @@ void DofManager::fieldToVector( LOCAL_VECTOR localVector,
 // Copy values from nodes to DOFs
 template< typename VECTOR >
 void DofManager::copyFieldToVector( VECTOR & vector,
-                                    string const & srcFieldName,
-                                    string const & dstFieldName,
+                                    std::string const & srcFieldName,
+                                    std::string const & dstFieldName,
                                     real64 const scalingFactor,
                                     localIndex const loCompIndex,
                                     localIndex const hiCompIndex ) const
@@ -1558,8 +1558,8 @@ void DofManager::copyFieldToVector( VECTOR & vector,
 }
 
 void DofManager::copyFieldToVector( arrayView1d< real64 > const & localVector,
-                                    string const & srcFieldName,
-                                    string const & dstFieldName,
+                                    std::string const & srcFieldName,
+                                    std::string const & dstFieldName,
                                     real64 const scalingFactor,
                                     localIndex const loCompIndex,
                                     localIndex const hiCompIndex ) const
@@ -1575,8 +1575,8 @@ void DofManager::copyFieldToVector( arrayView1d< real64 > const & localVector,
 // Copy values from nodes to DOFs
 template< typename VECTOR >
 void DofManager::addFieldToVector( VECTOR & vector,
-                                   string const & srcFieldName,
-                                   string const & dstFieldName,
+                                   std::string const & srcFieldName,
+                                   std::string const & dstFieldName,
                                    real64 const scalingFactor,
                                    localIndex const loCompIndex,
                                    localIndex const hiCompIndex ) const
@@ -1590,8 +1590,8 @@ void DofManager::addFieldToVector( VECTOR & vector,
 }
 
 void DofManager::addFieldToVector( arrayView1d< real64 > const & localVector,
-                                   string const & srcFieldName,
-                                   string const & dstFieldName,
+                                   std::string const & srcFieldName,
+                                   std::string const & dstFieldName,
                                    real64 const scalingFactor,
                                    localIndex const loCompIndex,
                                    localIndex const hiCompIndex ) const
@@ -1605,25 +1605,25 @@ void DofManager::addFieldToVector( arrayView1d< real64 > const & localVector,
 }
 
 // Just an interface to allow only three parameters
-void DofManager::addCoupling( string const & rowFieldName,
-                              string const & colFieldName,
+void DofManager::addCoupling( std::string const & rowFieldName,
+                              std::string const & colFieldName,
                               Connector const connectivity )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, {}, true );
 }
 
 // Just another interface to allow four parameters (no symmetry)
-void DofManager::addCoupling( string const & rowFieldName,
-                              string const & colFieldName,
+void DofManager::addCoupling( std::string const & rowFieldName,
+                              std::string const & colFieldName,
                               Connector const connectivity,
-                              arrayView1d< string const > const & regions )
+                              arrayView1d< std::string const > const & regions )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, regions, true );
 }
 
 // Just another interface to allow four parameters (no regions)
-void DofManager::addCoupling( string const & rowFieldName,
-                              string const & colFieldName,
+void DofManager::addCoupling( std::string const & rowFieldName,
+                              std::string const & colFieldName,
                               Connector const connectivity,
                               bool const symmetric )
 {
@@ -1631,10 +1631,10 @@ void DofManager::addCoupling( string const & rowFieldName,
 }
 
 // The real function, allowing the creation of coupling blocks
-void DofManager::addCoupling( string const & rowFieldName,
-                              string const & colFieldName,
+void DofManager::addCoupling( std::string const & rowFieldName,
+                              std::string const & colFieldName,
                               Connector const connectivity,
-                              arrayView1d< string const > const & regions,
+                              arrayView1d< std::string const > const & regions,
                               bool const symmetric )
 {
   localIndex const rowFieldIndex = getFieldIndex( rowFieldName );
@@ -1670,7 +1670,7 @@ void DofManager::addCoupling( string const & rowFieldName,
     regionList.resize( std::distance( regionList.begin(), std::unique( regionList.begin(), regionList.end() ) ) );
 
     // Check that both fields exist on all regions in the list
-    for( string const & regionName : regionList )
+    for( std::string const & regionName : regionList )
     {
       GEOSX_ERROR_IF( std::find( rowRegions.begin(), rowRegions.end(), regionName ) == rowRegions.end(),
                       "Region '" << regionName << "' does not belong to the domain of field '" << rowFieldName << "'" );
@@ -1695,7 +1695,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   }
 }
 
-void DofManager::addCoupling( string const & fieldName,
+void DofManager::addCoupling( std::string const & fieldName,
                               FluxApproximationBase const & stencils )
 {
   localIndex const fieldIndex = getFieldIndex( fieldName );
@@ -1950,30 +1950,30 @@ void DofManager::printFieldInfo( std::ostream & os ) const
   template void DofManager::setSparsityPattern( LAI::ParallelMatrix &, \
                                                 bool const ) const; \
   template void DofManager::setSparsityPattern( LAI::ParallelMatrix &, \
-                                                string const &, \
-                                                string const &, \
+                                                std::string const &, \
+                                                std::string const &, \
                                                 bool const ) const; \
   template void DofManager::copyVectorToField( LAI::ParallelVector const &, \
-                                               string const &, \
-                                               string const &, \
+                                               std::string const &, \
+                                               std::string const &, \
                                                real64 const, \
                                                localIndex const, \
                                                localIndex const ) const; \
   template void DofManager::addVectorToField( LAI::ParallelVector const &, \
-                                              string const &, \
-                                              string const &, \
+                                              std::string const &, \
+                                              std::string const &, \
                                               real64 const, \
                                               localIndex const, \
                                               localIndex const ) const; \
   template void DofManager::copyFieldToVector( LAI::ParallelVector &, \
-                                               string const &, \
-                                               string const &, \
+                                               std::string const &, \
+                                               std::string const &, \
                                                real64 const, \
                                                localIndex const, \
                                                localIndex const ) const; \
   template void DofManager::addFieldToVector( LAI::ParallelVector &, \
-                                              string const &, \
-                                              string const &, \
+                                              std::string const &, \
+                                              std::string const &, \
                                               real64 const, \
                                               localIndex const, \
                                               localIndex const ) const; \

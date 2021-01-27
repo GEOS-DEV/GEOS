@@ -40,7 +40,7 @@ public:
    * @param [in] name the name of this instantiation of MeshBody
    * @param [in] parent the parent group of this instantiation of MeshBody
    */
-  MeshBody( string const & name,
+  MeshBody( std::string const & name,
             Group * const parent );
 
   /**

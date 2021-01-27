@@ -22,7 +22,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const parent ):
+ElementSubRegionBase::ElementSubRegionBase( std::string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString, this ),
   m_numNodesPerElement(),
@@ -51,7 +51,7 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
 ElementSubRegionBase::~ElementSubRegionBase()
 {}
 
-void ElementSubRegionBase::setElementType( string const & elementType )
+void ElementSubRegionBase::setElementType( std::string const & elementType )
 {
   m_elementTypeString = elementType;
 }

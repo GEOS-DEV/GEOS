@@ -36,7 +36,7 @@ public:
 
   virtual ~PoreVolumeCompressibleSolid() override;
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
+  std::unique_ptr< ConstitutiveBase > deliverClone( std::string const & name,
                                                     Group * const parent ) const override;
 
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,

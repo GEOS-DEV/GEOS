@@ -64,7 +64,7 @@ public:
    * @param functionName the name of the new FunctionManager object in the repository
    * @return the group child
    */
-  virtual Group * createChild( string const & functionCatalogKey, string const & functionName ) override;
+  virtual Group * createChild( std::string const & functionCatalogKey, std::string const & functionName ) override;
 
   /**
    * @brief This function is used to expand any catalogs in the data structure

@@ -30,7 +30,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-PerforationData::PerforationData( string const & name, Group * const parent )
+PerforationData::PerforationData( std::string const & name, Group * const parent )
   : ObjectManagerBase( name, parent ),
   m_numPerforationsGlobal( 0 ),
   m_location( 0, 3 )
@@ -112,7 +112,7 @@ void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
 
 void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                                                    WellElementSubRegion const * const wellElemSubRegion,
-                                                   string const & permeabilityKey )
+                                                   std::string const & permeabilityKey )
 {
 
   // get the permeability in the domain

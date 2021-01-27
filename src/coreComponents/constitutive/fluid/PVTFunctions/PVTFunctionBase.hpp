@@ -34,7 +34,7 @@ class PVTFunction
 {
 public:
 
-  PVTFunction( string const & name, string_array const & componentNames, real64_array const & componentMolarWeight ):
+  PVTFunction( std::string const & name, string_array const & componentNames, real64_array const & componentMolarWeight ):
     m_functionName( name ),
     m_componentNames( componentNames ),
     m_componentMolarWeight( componentMolarWeight )
@@ -54,7 +54,7 @@ public:
   virtual string getCatalogName() const = 0;
 
 
-  string const & functionName() const
+  std::string const & functionName() const
   {
     return m_functionName;
   }

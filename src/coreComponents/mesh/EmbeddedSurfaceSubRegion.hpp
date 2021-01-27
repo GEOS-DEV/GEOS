@@ -51,14 +51,14 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "EmbeddedSurfaceSubRegion"; }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual string const getCatalogName() const override
+  virtual std::string const getCatalogName() const override
   {
     return EmbeddedSurfaceSubRegion::catalogName();
   }
@@ -75,7 +75,7 @@ public:
    * @param name the group name
    * @param parent the parent group
    */
-  EmbeddedSurfaceSubRegion( string const & name,
+  EmbeddedSurfaceSubRegion( std::string const & name,
                             dataRepository::Group * const parent );
 
   /// @brief Destructor

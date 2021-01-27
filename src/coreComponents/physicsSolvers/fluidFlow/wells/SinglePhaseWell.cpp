@@ -39,7 +39,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace SinglePhaseWellKernels;
 
-SinglePhaseWell::SinglePhaseWell( string const & name,
+SinglePhaseWell::SinglePhaseWell( std::string const & name,
                                   Group * const parent ):
   WellSolverBase( name, parent )
 {
@@ -190,7 +190,7 @@ void SinglePhaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
                                                                WellElementSubRegion const & subRegion )
   {
     // get a reference to the degree-of-freedom numbers
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< localIndex const > const & nextWellElemIndex =
@@ -230,7 +230,7 @@ void SinglePhaseWell::formPressureRelations( DomainPartition const & domain,
     WellControls & wellControls = getWellControls( subRegion );
 
     // get the degrees of freedom numbers, depth, next well elem index
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< real64 const > const & wellElemGravCoef =
@@ -386,7 +386,7 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion const & subRegion )
   {
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
@@ -425,7 +425,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
                                                                WellElementSubRegion const & subRegion )
   {
     // get the degree of freedom numbers on well elements
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
@@ -590,5 +590,5 @@ void SinglePhaseWell::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseWell, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseWell, std::string const &, Group * const )
 }// namespace geosx

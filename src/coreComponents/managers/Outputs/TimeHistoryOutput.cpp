@@ -1,7 +1,7 @@
 #include "TimeHistoryOutput.hpp"
 namespace geosx
 {
-TimeHistoryOutput::TimeHistoryOutput( string const & name,
+TimeHistoryOutput::TimeHistoryOutput( std::string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),
   m_collectorPaths( ),

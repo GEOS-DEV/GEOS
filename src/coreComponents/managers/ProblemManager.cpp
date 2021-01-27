@@ -152,7 +152,7 @@ ProblemManager::~ProblemManager()
 {}
 
 
-Group * ProblemManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * ProblemManager::createChild( std::string const & GEOSX_UNUSED_PARAM( childKey ), std::string const & GEOSX_UNUSED_PARAM( childName ) )
 { return nullptr; }
 
 
@@ -672,8 +672,8 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
     if( solver!=nullptr )
     {
-      string const discretizationName = solver->getDiscretization();
-      arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
+      std::string const discretizationName = solver->getDiscretization();
+      arrayView1d< std::string const > const & targetRegions = solver->targetRegionNames();
 
       FiniteElementDiscretizationManager const &
       feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
@@ -700,7 +700,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
             {
               elemRegion->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
               {
-                string const elementTypeString = subRegion.getElementTypeString();
+                std::string const elementTypeString = subRegion.getElementTypeString();
 
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( elementTypeString );
 
@@ -762,8 +762,8 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                                       ElementRegionBase & elemRegion,
                                                       ElementSubRegionBase & elemSubRegion )
       {
-        string const regionName = elemRegion.getName();
-        string const subRegionName = elemSubRegion.getName();
+        std::string const regionName = elemRegion.getName();
+        std::string const subRegionName = elemSubRegion.getName();
         string_array const & materialList = elemRegion.getMaterialList();
         TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_pair( regionName, subRegionName ) );
         if( rqIter != regionQuadrature.end() )

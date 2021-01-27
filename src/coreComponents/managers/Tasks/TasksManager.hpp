@@ -38,7 +38,7 @@ public:
   virtual ~TasksManager() override;
 
   /// @copydoc geosx::dataRepository::Group::createChild
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

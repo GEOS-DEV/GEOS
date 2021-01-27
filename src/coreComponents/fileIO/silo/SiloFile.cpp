@@ -153,29 +153,29 @@ template<> int GetNumberOfVariablesInField< string >()
 }
 
 template< typename TYPE >
-void SetVariableNames( string const & fieldName, string_array & varnamestring, char const * varnames[] )
+void SetVariableNames( std::string const & fieldName, string_array & varnamestring, char const * varnames[] )
 {
   varnamestring.resize( GetNumberOfVariablesInField< TYPE >());
   varnamestring[0] = fieldName;
   varnames[0] = varnamestring[0].c_str();
 }
-template void SetVariableNames< int >( string const & fieldName,
+template void SetVariableNames< int >( std::string const & fieldName,
                                        string_array & varnamestring,
                                        char const * varnames[] );
-template void SetVariableNames< unsigned long >( string const & fieldName,
+template void SetVariableNames< unsigned long >( std::string const & fieldName,
                                                  string_array & varnamestring,
                                                  char const * varnames[] );
-template void SetVariableNames< real64 >( string const & fieldName,
+template void SetVariableNames< real64 >( std::string const & fieldName,
                                           string_array & varnamestring,
                                           char const * varnames[] );
-template void SetVariableNames< long long unsigned int >( string const & fieldName,
+template void SetVariableNames< long long unsigned int >( std::string const & fieldName,
                                                           string_array & varnamestring,
                                                           char const * varnames[] );
 
 
 
 template<>
-void SetVariableNames< R1Tensor >( string const & fieldName,
+void SetVariableNames< R1Tensor >( std::string const & fieldName,
                                    string_array & varnamestring,
                                    char const * varnames[] )
 {
@@ -399,7 +399,7 @@ void SiloFile::waitForBatonWrite( int const domainNumber,
 }
 
 
-void SiloFile::waitForBaton( int const domainNumber, string const & restartFileName )
+void SiloFile::waitForBaton( int const domainNumber, std::string const & restartFileName )
 {
 
   int rank = 0;
@@ -468,7 +468,7 @@ void SiloFile::handOffBaton()
  * @param cycleNumber
  * @param problemTime
  */
-void SiloFile::writeMeshObject( string const & meshName,
+void SiloFile::writeMeshObject( std::string const & meshName,
                                 const localIndex nnodes,
                                 real64 * coords[3],
                                 globalIndex const * const globalNodeNum,
@@ -620,7 +620,7 @@ void SiloFile::writeMeshObject( string const & meshName,
 }
 
 
-void SiloFile::writeBeamMesh( string const & meshName,
+void SiloFile::writeBeamMesh( std::string const & meshName,
                               const localIndex nnodes,
                               real64 * coords[3],
                               const localIndex_array & node1,
@@ -640,7 +640,7 @@ void SiloFile::writeBeamMesh( string const & meshName,
   writeBeamMesh( meshName, nnodes, coords, nodelist, cycleNumber, problemTime );
 }
 
-void SiloFile::writeBeamMesh( string const & meshName,
+void SiloFile::writeBeamMesh( std::string const & meshName,
                               const localIndex nnodes,
                               real64 * coords[3],
                               integer_array & nodelist,
@@ -697,7 +697,7 @@ void SiloFile::writeBeamMesh( string const & meshName,
 
 
 
-void SiloFile::writePointMesh( string const & meshName,
+void SiloFile::writePointMesh( std::string const & meshName,
                                const localIndex numPoints,
                                real64 * coords[3],
                                int const cycleNumber,
@@ -725,12 +725,12 @@ void SiloFile::writePointMesh( string const & meshName,
 }
 
 void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegion,
-                                             string const & meshName,
+                                             std::string const & meshName,
                                              string_array const & regionMaterialList,
                                              int const cycleNumber,
                                              real64 const problemTime )
 {
-  string const name = meshName + "_materials";
+  std::string const name = meshName + "_materials";
 
   int const nmat = regionMaterialList.size();
 
@@ -999,16 +999,16 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
   }
 }
 
-void SiloFile::writeMaterialVarDefinition( string const & subDir,
-                                           string const & matDir,
+void SiloFile::writeMaterialVarDefinition( std::string const & subDir,
+                                           std::string const & matDir,
                                            localIndex const matIndex,
-                                           string const & fieldName )
+                                           std::string const & fieldName )
 {
-  string const expressionName = matDir + "/" + fieldName;
+  std::string const expressionName = matDir + "/" + fieldName;
   const char * expObjName = expressionName.c_str();
   const char * const names[1] = { expObjName };
   int const types[1] = { DB_VARTYPE_SCALAR };
-  string const definition = "value_for_material(<" + subDir + "/" + fieldName + ">, " + std::to_string( matIndex ) + ")";
+  std::string const definition = "value_for_material(<" + subDir + "/" + fieldName + ">, " + std::to_string( matIndex ) + ")";
   const char * const defns[1] = { definition.c_str() };
   DBPutDefvars( m_dbBaseFilePtr,
                 expObjName,
@@ -1213,8 +1213,8 @@ void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
 }
 
 void SiloFile::writeGroupSilo( Group const * group,
-                               string const & siloDirName,
-                               string const & meshname,
+                               std::string const & siloDirName,
+                               std::string const & meshname,
                                int const centering,
                                int const cycleNum,
                                real64 const problemTime,
@@ -1254,8 +1254,8 @@ void SiloFile::writeGroupSilo( Group const * group,
 }
 
 void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
-                                       string const & siloDirName,
-                                       string const & meshName,
+                                       std::string const & siloDirName,
+                                       std::string const & meshName,
                                        int const cycleNum,
                                        real64 const problemTime,
                                        bool const isRestart )
@@ -1279,7 +1279,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
       if( wrapper->getPlotLevel() < m_plotLevel )
       {
         // the field name is the key to the map
-        string const fieldName = wrapper->getName();
+        std::string const fieldName = wrapper->getName();
 
         viewPointers[esr][fieldName] = wrapper;
 
@@ -1309,7 +1309,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
   for( auto & wrapperIter : fakeGroup.wrappers() )
   {
     WrapperBase * const wrapper = wrapperIter.second;
-    string const fieldName = wrapper->getName();
+    std::string const fieldName = wrapper->getName();
     std::type_info const & typeID = wrapper->getTypeId();
 
     rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
@@ -1381,7 +1381,7 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
 
 void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
                                  NodeManager const * const nodeManager,
-                                 string const & meshName,
+                                 std::string const & meshName,
                                  const localIndex numNodes,
                                  real64 * coords[3],
                                  globalIndex const * const globalNodeNum,
@@ -1425,7 +1425,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
 
 
-      string const & elementType = elementSubRegion.getElementTypeString();
+      std::string const & elementType = elementSubRegion.getElementTypeString();
       std::vector< int > const & nodeOrdering = elementSubRegion.getVTKNodeOrdering();
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
@@ -1482,7 +1482,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     string_array const
     regionSolidMaterialList2 = elementRegion.getConstitutiveNames< constitutive::PoreVolumeCompressibleSolid >();
 
-    for( string const & entry : regionSolidMaterialList2 )
+    for( std::string const & entry : regionSolidMaterialList2 )
     {
       regionSolidMaterialList.emplace_back( entry );
     }
@@ -1491,7 +1491,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     string_array regionFluidMaterialList = elementRegion.getConstitutiveNames< constitutive::SingleFluidBase >();
     string_array regionMultiPhaseFluidList = elementRegion.getConstitutiveNames< constitutive::MultiFluidBase >();
 
-    for( string const & matName : regionMultiPhaseFluidList )
+    for( std::string const & matName : regionMultiPhaseFluidList )
     {
       regionFluidMaterialList.emplace_back( matName );
     }
@@ -1538,7 +1538,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
     if( numSolids > 0 )
     {
-      string const solidMeshName = meshName + "_Solid";
+      std::string const solidMeshName = meshName + "_Solid";
       writeMeshObject( solidMeshName,
                        numNodes,
                        coords,
@@ -1563,7 +1563,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
     if( numFluids > 0 )
     {
-      string const fluidMeshName = meshName + "_Fluid";
+      std::string const fluidMeshName = meshName + "_Fluid";
       writeMeshObject( fluidMeshName,
                        numNodes,
                        coords,
@@ -1588,7 +1588,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
     if( numContacts > 0 )
     {
-      string const contactMeshName = meshName + "_Contact";
+      std::string const contactMeshName = meshName + "_Contact";
       writeMeshObject( contactMeshName,
                        numNodes,
                        coords,
@@ -1623,8 +1623,8 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
   localIndex const numNodes = nodeManager->size();
 
 
-  string const ghostNodeName = "ghostNodeFlag";
-  string const ghostZoneName = "ghostZoneFlag";
+  std::string const ghostNodeName = "ghostNodeFlag";
+  std::string const ghostZoneName = "ghostZoneFlag";
 
   arrayView1d< integer const > const & nodeGhostRank = nodeManager->ghostRank();
   array1d< char > ghostNodeFlag( nodeGhostRank.size() );
@@ -1633,7 +1633,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition = nodeManager->referencePosition();
 
   bool writeArbitraryPolygon( false );
-  string const meshName( "MeshLevel" );
+  std::string const meshName( "MeshLevel" );
 
   //set the nodal coordinate data structure
   real64 * coords[3];
@@ -1672,7 +1672,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
   ElementRegionManager const * const elementManager = meshLevel->getElemManager();
   elementManager->forElementRegions( [&]( ElementRegionBase const & elemRegion )
   {
-    string const regionName = elemRegion.getName();
+    std::string const regionName = elemRegion.getName();
 
     writeElementMesh( elemRegion,
                       nodeManager,
@@ -2026,13 +2026,13 @@ int getTensorRankOfArray( ArrayView< TYPE const, NDIM, USD > const & field )
 }
 
 template< typename OUTPUTTYPE >
-void SiloFile::writeWrappersToSilo( string const & meshname,
+void SiloFile::writeWrappersToSilo( std::string const & meshname,
                                     const dataRepository::Group::wrapperMap & wrappers,
                                     int const centering,
                                     int const cycleNum,
                                     real64 const problemTime,
                                     bool const GEOSX_UNUSED_PARAM( isRestart ),
-                                    string const & multiRoot,
+                                    std::string const & multiRoot,
                                     const localIndex_array & GEOSX_UNUSED_PARAM( mask ) )
 {
 
@@ -2044,7 +2044,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
     if( wrapper->getPlotLevel() <= m_plotLevel )
     {
       // the field name is the key to the map
-      string const fieldName = wrapper->getName();
+      std::string const fieldName = wrapper->getName();
 
       std::type_info const & typeID = wrapper->getTypeId();
 
@@ -2126,9 +2126,9 @@ template< typename CBF >
 void SiloFile::writeMultiXXXX( const DBObjectType type,
                                CBF DBPutMultiCB,
                                int const centering,
-                               string const name,
+                               std::string const name,
                                const int,
-                               string const & multiRoot,
+                               std::string const & multiRoot,
                                const DBoptlist * optlist )
 {
   (void)centering;
@@ -2191,13 +2191,13 @@ void SiloFile::writeMultiXXXX( const DBObjectType type,
  * @param problemTime
  */
 template< typename OUTTYPE, typename TYPE >
-void SiloFile::writeDataField( string const & meshName,
-                               string const & fieldName,
+void SiloFile::writeDataField( std::string const & meshName,
+                               std::string const & fieldName,
                                arrayView1d< TYPE const > const & field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
-                               string const & multiRoot )
+                               std::string const & multiRoot )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField< TYPE >();
   int nels = LvArray::integerConversion< int >( field.size());
@@ -2331,13 +2331,13 @@ void SiloFile::writeDataField( string const & meshName,
 }
 
 template< typename OUTTYPE, typename TYPE, int USD >
-void SiloFile::writeDataField( string const & meshName,
-                               string const & fieldName,
+void SiloFile::writeDataField( std::string const & meshName,
+                               std::string const & fieldName,
                                arrayView2d< TYPE const, USD > const & field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
-                               string const & multiRoot )
+                               std::string const & multiRoot )
 {
   int const primaryDimIndex = 0;
   int const secondaryDimIndex = 1;
@@ -2368,13 +2368,13 @@ void SiloFile::writeDataField( string const & meshName,
 }
 
 template< typename OUTTYPE, typename TYPE, int USD >
-void SiloFile::writeDataField( string const & meshName,
-                               string const & fieldName,
+void SiloFile::writeDataField( std::string const & meshName,
+                               std::string const & fieldName,
                                arrayView3d< TYPE const, USD > const & field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
-                               string const & multiRoot )
+                               std::string const & multiRoot )
 {
   int const primaryDimIndex = 0;
   int const secondaryDimIndex1 = 1;
@@ -2461,14 +2461,14 @@ void createSiloVarArrays( ArrayView< TYPE const, 3, USD > const & field,
 
 
 template< typename OUTTYPE, typename TYPE, int NDIM, int USD >
-void SiloFile::writeDataField( string const & meshName,
-                               string const & fieldName,
+void SiloFile::writeDataField( std::string const & meshName,
+                               std::string const & fieldName,
                                ArrayView< TYPE const, NDIM, USD > const & field,
                                int const,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
-                               string const & multiRoot )
+                               std::string const & multiRoot )
 {
   int nvars = 1;
   for( int i=1; i<NDIM; ++i )
@@ -2597,13 +2597,13 @@ void SiloFile::writeDataField( string const & meshName,
 
 
 template< typename OUTTYPE, typename TYPE >
-void SiloFile::writeMaterialDataField2d( string const & meshName,
-                                         string const & fieldName,
+void SiloFile::writeMaterialDataField2d( std::string const & meshName,
+                                         std::string const & fieldName,
                                          ElementRegionBase const & elemRegion,
                                          int const centering,
                                          int const cycleNumber,
                                          real64 const problemTime,
-                                         string const & multiRoot,
+                                         std::string const & multiRoot,
                                          string_array const & materialNames )
 {
   array1d< array1d< array2d< TYPE > > > fieldData( elemRegion.numSubRegions());
@@ -2655,14 +2655,14 @@ void SiloFile::writeMaterialDataField2d( string const & meshName,
 }
 
 template< typename OUTTYPE, typename TYPE >
-void SiloFile::writeMaterialDataField( string const & meshName,
-                                       string const & fieldName,
+void SiloFile::writeMaterialDataField( std::string const & meshName,
+                                       std::string const & fieldName,
                                        array1d< array1d< arrayView2d< TYPE const > > > const & field,
                                        ElementRegionBase const & elemRegion,
                                        int const centering,
                                        int const cycleNumber,
                                        real64 const problemTime,
-                                       string const & multiRoot,
+                                       std::string const & multiRoot,
                                        string_array const & materialNames )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField< TYPE >();
@@ -2888,13 +2888,13 @@ void SiloFile::writeMaterialDataField( string const & meshName,
 
 
 template< typename OUTTYPE, typename TYPE >
-void SiloFile::writeMaterialDataField3d( string const & meshName,
-                                         string const & fieldName,
+void SiloFile::writeMaterialDataField3d( std::string const & meshName,
+                                         std::string const & fieldName,
                                          ElementRegionBase const & elemRegion,
                                          int const centering,
                                          int const cycleNumber,
                                          real64 const problemTime,
-                                         string const & multiRoot,
+                                         std::string const & multiRoot,
                                          string_array const & materialNames )
 {
   localIndex const numSubRegions = elemRegion.numSubRegions();
@@ -2992,13 +2992,13 @@ void SiloFile::writeMaterialDataField3d( string const & meshName,
 
 
 template< typename OUTTYPE, typename TYPE >
-void SiloFile::writeMaterialDataField4d( string const & meshName,
-                                         string const & fieldName,
+void SiloFile::writeMaterialDataField4d( std::string const & meshName,
+                                         std::string const & fieldName,
                                          ElementRegionBase const & elemRegion,
                                          int const centering,
                                          int const cycleNumber,
                                          real64 const problemTime,
-                                         string const & multiRoot,
+                                         std::string const & multiRoot,
                                          string_array const & materialNames )
 {
   localIndex const numSubRegions = elemRegion.numSubRegions();
@@ -3069,14 +3069,14 @@ void SiloFile::writeMaterialDataField4d( string const & meshName,
   }
 }
 
-void SiloFile::writeStressVarDefinition( string const & MatDir )
+void SiloFile::writeStressVarDefinition( std::string const & MatDir )
 {
   {
-    string const expressionName = "/" + MatDir + "/stress";
+    std::string const expressionName = "/" + MatDir + "/stress";
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_TENSOR };
-    string const definition = "{{<"+ MatDir + "/stress_11>,<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_13>},"
+    std::string const definition = "{{<"+ MatDir + "/stress_11>,<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_13>},"
                                                                                                   "{<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_22>,<"+ MatDir + "/stress_23>},"
                                                                                                                                                                      "{<"+ MatDir + "/stress_13>,<"+
                               MatDir + "/stress_23>,<"+ MatDir + "/stress_33>}}";
@@ -3091,11 +3091,11 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
   }
 
   {
-    string const expressionName = "/" + MatDir + "/meanStress";
+    std::string const expressionName = "/" + MatDir + "/meanStress";
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_SCALAR };
-    string const definition = "(<"+ MatDir + "/stress_11>+<"+ MatDir + "/stress_22>+<"+ MatDir + "/stress_33>)/3";
+    std::string const definition = "(<"+ MatDir + "/stress_11>+<"+ MatDir + "/stress_22>+<"+ MatDir + "/stress_33>)/3";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,
@@ -3107,11 +3107,11 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
   }
 
   {
-    string const expressionName = "/" + MatDir + "/principalStress";
+    std::string const expressionName = "/" + MatDir + "/principalStress";
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_VECTOR };
-    string const definition = "eigenvalue(<"+MatDir+"/stress>)";
+    std::string const definition = "eigenvalue(<"+MatDir+"/stress>)";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,
@@ -3123,11 +3123,11 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
   }
 
   {
-    string const expressionName = "/" + MatDir + "/principalStressDirections";
+    std::string const expressionName = "/" + MatDir + "/principalStressDirections";
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_TENSOR };
-    string const definition = "eigenvector(<"+MatDir+"/stress>)";
+    std::string const definition = "eigenvector(<"+MatDir+"/stress>)";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,
@@ -3140,11 +3140,11 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
 
   for( int i=0; i<3; ++i )
   {
-    string const expressionName = "/" + MatDir + "/principalStressVector" + std::to_string( i );
+    std::string const expressionName = "/" + MatDir + "/principalStressVector" + std::to_string( i );
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_VECTOR };
-    string const definition = "transpose(<"+MatDir+"/principalStressDirections>)[" + std::to_string( i ) + "] * <"+ MatDir + "/principalStress>["+
+    std::string const definition = "transpose(<"+MatDir+"/principalStressDirections>)[" + std::to_string( i ) + "] * <"+ MatDir + "/principalStress>["+
                               std::to_string( i ) + "]";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
@@ -3158,8 +3158,8 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
 }
 
 
-void SiloFile::writeVectorVarDefinition( string const & fieldName,
-                                         string const & subDirectory )
+void SiloFile::writeVectorVarDefinition( std::string const & fieldName,
+                                         std::string const & subDirectory )
 {
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
@@ -3168,7 +3168,7 @@ void SiloFile::writeVectorVarDefinition( string const & fieldName,
     int numComponents = 0;
     for( int ivar=0; ivar<siloTOC->nmultivar; ++ivar )
     {
-      string const varName = siloTOC->multivar_names[ivar];
+      std::string const varName = siloTOC->multivar_names[ivar];
       if( ( varName == fieldName + "_0" ) ||
           ( varName == fieldName + "_1" ) ||
           ( varName == fieldName + "_2" ) )
@@ -3179,11 +3179,11 @@ void SiloFile::writeVectorVarDefinition( string const & fieldName,
 
     if( numComponents==3 )
     {
-      string const expressionName = subDirectory + "/" + fieldName;
+      std::string const expressionName = subDirectory + "/" + fieldName;
       const char * expObjName = expressionName.c_str();
       const char * const names[1] = { expObjName };
       int const types[1] = { DB_VARTYPE_VECTOR };
-      string const definition = "{<"+ subDirectory + "/" + fieldName + "_0>,<"+ subDirectory + "/" + fieldName + "_1>,<"+ subDirectory + "/" + fieldName +
+      std::string const definition = "{<"+ subDirectory + "/" + fieldName + "_0>,<"+ subDirectory + "/" + fieldName + "_1>,<"+ subDirectory + "/" + fieldName +
                                 "_2>}";
       const char * const defns[1] = { definition.c_str() };
       DBPutDefvars( m_dbBaseFilePtr,
@@ -3202,7 +3202,7 @@ void SiloFile::writeVectorVarDefinition( string const & fieldName,
 }
 
 
-int SiloFile::getMeshType( string const & meshName ) const
+int SiloFile::getMeshType( std::string const & meshName ) const
 {
   int meshType = -1;
   {

@@ -25,7 +25,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FaceElementRegion::FaceElementRegion( string const & name, Group * const parent ):
+FaceElementRegion::FaceElementRegion( std::string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
   this->GetGroup( viewKeyStruct::elementSubRegions )->registerGroup< FaceElementSubRegion >( "default" );
@@ -56,7 +56,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
                                                  EdgeManager * const edgeManager,
                                                  FaceManager const * const faceManager,
                                                  ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
-                                                 string const & subRegionName,
+                                                 std::string const & subRegionName,
                                                  localIndex const faceIndices[2] )
 {
   localIndex rval = -1;

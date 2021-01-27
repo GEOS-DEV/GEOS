@@ -52,7 +52,7 @@ public:
    * @param[in] name the name of this instantiation of Perforation in the repository
    * @param[in] parent the parent group of this instantiation of Perforation
    */
-  explicit Perforation( string const & name, dataRepository::Group * const parent );
+  explicit Perforation( std::string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief Default destructor.

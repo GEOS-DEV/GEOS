@@ -189,7 +189,7 @@ TEST( LinearElasticIsotropicTests, testXML )
   ConstitutiveManager constitutiveManager( "constitutive", nullptr );
   LinearElasticIsotropic cm( "model", &constitutiveManager );
 
-  string const inputStream =
+  std::string const inputStream =
     "<Constitutive>"
     "  <LinearElasticIsotropic name=\"granite\" "
     "  defaultDensity=\"2700\" "

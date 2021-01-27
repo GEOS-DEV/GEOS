@@ -23,7 +23,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshBody::MeshBody( string const & name,
+MeshBody::MeshBody( std::string const & name,
                     Group * const parent ):
   Group( name, parent ),
   m_globalLengthScale( 0 )

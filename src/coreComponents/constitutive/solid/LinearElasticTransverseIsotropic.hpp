@@ -264,7 +264,7 @@ public:
    * @param[in]name name of the instance in the catalog
    * @param[in]parent the group which contains this instance
    */
-  LinearElasticTransverseIsotropic( string const & name, Group * const parent );
+  LinearElasticTransverseIsotropic( std::string const & name, Group * const parent );
 
   /**
    * Destructor

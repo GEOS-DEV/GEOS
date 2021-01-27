@@ -29,7 +29,7 @@ namespace geosx
 
 using namespace constitutive;
 
-SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
+SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( std::string const & name,
                                                             Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )
 {
@@ -40,5 +40,5 @@ SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 {}
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, std::string const &, dataRepository::Group * const )
 } /* namespace geosx */

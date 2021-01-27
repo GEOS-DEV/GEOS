@@ -84,7 +84,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
   }
 }
 
-CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name, Group * parent )
+CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( std::string const & name, Group * parent )
 {
   auto capPressure = parent->registerGroup< BrooksCoreyCapillaryPressure >( name );
 
@@ -113,7 +113,7 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name,
 }
 
 
-CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & name, Group * parent )
+CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( std::string const & name, Group * parent )
 {
   auto capPressure = parent->registerGroup< BrooksCoreyCapillaryPressure >( name );
 
@@ -142,7 +142,7 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & nam
 }
 
 
-CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name, Group * parent )
+CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( std::string const & name, Group * parent )
 {
   auto capPressure = parent->registerGroup< VanGenuchtenCapillaryPressure >( name );
 
@@ -171,7 +171,7 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name
   return capPressure;
 }
 
-CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( string const & name, Group * parent )
+CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( std::string const & name, Group * parent )
 {
   auto capPressure = parent->registerGroup< VanGenuchtenCapillaryPressure >( name );
 

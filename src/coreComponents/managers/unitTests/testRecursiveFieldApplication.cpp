@@ -29,8 +29,8 @@ using namespace geosx::dataRepository;
 
 
 void RegisterAndApplyField( DomainPartition * domain,
-                            string const & fieldName,
-                            string const & objectPath,
+                            std::string const & fieldName,
+                            std::string const & objectPath,
                             real64 value )
 {
   FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::get();
@@ -44,10 +44,10 @@ void RegisterAndApplyField( DomainPartition * domain,
 
   fieldSpecificationManager.apply( 0., domain, "", "",
                                    [&] ( FieldSpecificationBase const * const bc,
-                                         string const &,
+                                         std::string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          Group * const targetGroup,
-                                         string const name )
+                                         std::string const name )
   {
     bc->applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, name );
   } );

@@ -53,7 +53,7 @@ public:
 
   ///@}
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   virtual void expandObjectCatalogs() override;
 

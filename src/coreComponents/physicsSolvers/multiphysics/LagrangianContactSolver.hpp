@@ -184,7 +184,7 @@ public:
 
   } LagrangianContactSolverViewKeys;
 
-  string const & getContactRelationName() const { return m_contactRelationName; }
+  std::string const & getContactRelationName() const { return m_contactRelationName; }
 
 protected:
   virtual void postProcessInput() override final;
@@ -208,7 +208,7 @@ private:
 
   real64 const m_slidingCheckTolerance = 0.05;
 
-  string const m_tractionKey = viewKeyStruct::tractionString;
+  std::string const m_tractionKey = viewKeyStruct::tractionString;
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 
@@ -260,7 +260,7 @@ private:
 public:
 
   void initializeFractureState( MeshLevel & mesh,
-                                string const & fieldName ) const;
+                                std::string const & fieldName ) const;
 
   void setFractureStateForElasticStep( DomainPartition & domain ) const;
 

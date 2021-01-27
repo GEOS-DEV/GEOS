@@ -24,7 +24,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FiniteElementDiscretizationManager::FiniteElementDiscretizationManager( string const & name, Group * const parent ):
+FiniteElementDiscretizationManager::FiniteElementDiscretizationManager( std::string const & name, Group * const parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
@@ -36,7 +36,7 @@ FiniteElementDiscretizationManager::~FiniteElementDiscretizationManager()
 }
 
 
-Group * FiniteElementDiscretizationManager::createChild( string const & childKey, string const & childName )
+Group * FiniteElementDiscretizationManager::createChild( std::string const & childKey, std::string const & childName )
 {
   // These objects should probably not be registered on managed group...
   std::unique_ptr< Group > fem = Group::CatalogInterface::factory( childKey, childName, this );

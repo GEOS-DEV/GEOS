@@ -34,7 +34,7 @@ MeshManager::MeshManager( std::string const & name,
 MeshManager::~MeshManager()
 {}
 
-Group * MeshManager::createChild( string const & childKey, string const & childName )
+Group * MeshManager::createChild( std::string const & childKey, std::string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
   std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );

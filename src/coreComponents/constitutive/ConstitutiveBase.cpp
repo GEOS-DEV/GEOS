@@ -75,7 +75,7 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const p
     {
       if( wrapper.second->sizedFromParent() )
       {
-        string const wrapperName = wrapper.first;
+        std::string const wrapperName = wrapper.first;
         parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
           setRestartFlags( RestartFlags::NO_WRITE );
       }
@@ -86,7 +86,7 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const p
   {
     if( wrapper.second->sizedFromParent() )
     {
-      string const wrapperName = wrapper.first;
+      std::string const wrapperName = wrapper.first;
       parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
         setRestartFlags( RestartFlags::NO_WRITE );
     }
@@ -96,7 +96,7 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const p
 }
 
 std::unique_ptr< ConstitutiveBase >
-ConstitutiveBase::deliverClone( string const & name,
+ConstitutiveBase::deliverClone( std::string const & name,
                                 Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase >

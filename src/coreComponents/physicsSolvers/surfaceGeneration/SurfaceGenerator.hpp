@@ -122,7 +122,7 @@ public:
 
   // SortedArray< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
 
-  inline string const getFractureRegionName() const { return m_fractureRegionName; }
+  inline std::string const getFractureRegionName() const { return m_fractureRegionName; }
 
 protected:
 

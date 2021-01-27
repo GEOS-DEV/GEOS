@@ -57,7 +57,7 @@ public:
    * @param[in] childName the name of the child to be added
    * @return the Event
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /**
    * @brief This method is used to expand any catalogs in the data structure

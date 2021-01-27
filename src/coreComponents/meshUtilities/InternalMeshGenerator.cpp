@@ -36,7 +36,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const parent ):
+InternalMeshGenerator::InternalMeshGenerator( std::string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
 //    m_vertices({this->registerWrapper<real64_array>(keys::xCoords).reference(),
 //                this->registerWrapper<real64_array>(keys::yCoords).reference(),
@@ -309,7 +309,7 @@ void InternalMeshGenerator::postProcessInput()
 
 
 
-Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * InternalMeshGenerator::createChild( std::string const & GEOSX_UNUSED_PARAM( childKey ), std::string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }

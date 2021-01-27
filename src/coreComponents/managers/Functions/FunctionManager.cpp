@@ -41,8 +41,8 @@ FunctionManager::~FunctionManager()
 }
 
 
-Group * FunctionManager::createChild( string const & functionCatalogKey,
-                                      string const & functionName )
+Group * FunctionManager::createChild( std::string const & functionCatalogKey,
+                                      std::string const & functionName )
 {
   GEOSX_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
   std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::factory( functionCatalogKey, functionName, this );

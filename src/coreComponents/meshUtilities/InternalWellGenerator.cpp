@@ -31,7 +31,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
+InternalWellGenerator::InternalWellGenerator( std::string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
   m_numElemsPerSegment( 0 ),
   m_radius( 0 ),
@@ -118,7 +118,7 @@ void InternalWellGenerator::postProcessInput()
   // TODO: check that with no branching we can go from top to bottom and touch all the elements
 }
 
-Group * InternalWellGenerator::createChild( string const & childKey, string const & childName )
+Group * InternalWellGenerator::createChild( std::string const & childKey, std::string const & childName )
 {
   if( childKey == keys::perforation )
   {

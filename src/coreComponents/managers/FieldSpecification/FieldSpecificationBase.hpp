@@ -52,7 +52,7 @@ public:
    * alias to define the catalog type for this base type
    */
   using CatalogInterface = dataRepository::CatalogInterface< FieldSpecificationBase,
-                                                             string const &,
+                                                             std::string const &,
                                                              dataRepository::Group * const >;
 
   /**
@@ -71,7 +71,7 @@ public:
    * @brief return the catalog name
    * @return the catalog name
    */
-  virtual string const getCatalogName() const
+  virtual std::string const getCatalogName() const
   {
     return FieldSpecificationBase::catalogName();
   }
@@ -86,7 +86,7 @@ public:
    * @param name the name of the FieldSpecificationBase in the data repository
    * @param parent the parent group of this group.
    */
-  FieldSpecificationBase( string const & name, dataRepository::Group * parent );
+  FieldSpecificationBase( std::string const & name, dataRepository::Group * parent );
 
   /**
    * destructor
@@ -124,7 +124,7 @@ public:
   void applyFieldValue( SortedArrayView< localIndex const > const & targetSet,
                         real64 const time,
                         dataRepository::Group * dataGroup,
-                        string const & fieldname ) const;
+                        std::string const & fieldname ) const;
 
   /**
    * @brief Function to apply a boundary condition to a system of equations
@@ -149,8 +149,8 @@ public:
   void applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                        real64 const time,
                                        dataRepository::Group const * const dataGroup,
-                                       string const & fieldName,
-                                       string const & dofMapName,
+                                       std::string const & fieldName,
+                                       std::string const & dofMapName,
                                        integer const & dofDim,
                                        typename LAI::ParallelMatrix & matrix,
                                        typename LAI::ParallelVector & rhs ) const;
@@ -294,8 +294,8 @@ public:
   void applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                        real64 const time,
                                        dataRepository::Group const * const dataGroup,
-                                       string const & fieldName,
-                                       string const & dofMapName,
+                                       std::string const & fieldName,
+                                       std::string const & dofMapName,
                                        globalIndex const dofRankOffset,
                                        CRSMatrixView< real64, globalIndex const > const & matrix,
                                        arrayView1d< real64 > const & rhs ) const;
@@ -429,7 +429,7 @@ public:
    * Accessor
    * @return const reference to m_function
    */
-  string const & getFunctionName() const
+  std::string const & getFunctionName() const
   {
     return m_functionName;
   }
@@ -438,7 +438,7 @@ public:
    * Accessor
    * @return const reference to m_objectPath
    */
-  virtual string const & getObjectPath() const
+  virtual std::string const & getObjectPath() const
   {
     return m_objectPath;
   }
@@ -447,7 +447,7 @@ public:
    * Accessor
    * @return const reference to m_fieldName
    */
-  virtual string const & getFieldName() const
+  virtual std::string const & getFieldName() const
   {
     return m_fieldName;
   }
@@ -521,7 +521,7 @@ public:
    * Mutator
    * @param[in] fieldName The name of the field
    */
-  void setFieldName( string const & fieldName )
+  void setFieldName( std::string const & fieldName )
   {
     m_fieldName = fieldName;
   }
@@ -530,7 +530,7 @@ public:
    * Mutator
    * @param[in] objectPath The path for the object
    */
-  void setObjectPath( string const & objectPath )
+  void setObjectPath( std::string const & objectPath )
   {
     m_objectPath = objectPath;
   }
@@ -557,7 +557,7 @@ public:
    * Mutator
    * @param[in] setName The name of the set
    */
-  void addSetName( string const & setName )
+  void addSetName( std::string const & setName )
   {
     m_setNames.emplace_back( setName );
   }
@@ -668,7 +668,7 @@ template< typename FIELD_OP, typename POLICY >
 void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const > const & targetSet,
                                               real64 const time,
                                               dataRepository::Group * dataGroup,
-                                              string const & fieldName ) const
+                                              std::string const & fieldName ) const
 {
   dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index( wrapper->getTypeId());
@@ -689,8 +689,8 @@ template< typename FIELD_OP, typename LAI >
 void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                                              real64 const time,
                                                              dataRepository::Group const * const dataGroup,
-                                                             string const & fieldName,
-                                                             string const & dofMapName,
+                                                             std::string const & fieldName,
+                                                             std::string const & dofMapName,
                                                              integer const & dofDim,
                                                              typename LAI::ParallelMatrix & matrix,
                                                              typename LAI::ParallelVector & rhs ) const
@@ -954,8 +954,8 @@ template< typename FIELD_OP, typename POLICY >
 void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                                              real64 const time,
                                                              dataRepository::Group const * const dataGroup,
-                                                             string const & fieldName,
-                                                             string const & dofMapName,
+                                                             std::string const & fieldName,
+                                                             std::string const & dofMapName,
                                                              globalIndex const dofRankOffset,
                                                              CRSMatrixView< real64, globalIndex const > const & matrix,
                                                              arrayView1d< real64 > const & rhs ) const
@@ -1009,7 +1009,7 @@ FieldSpecificationBase::
                                   LAMBDA && lambda ) const
 {
   integer const component = getComponent();
-  string const & functionName = getReference< string >( viewKeyStruct::functionNameString );
+  std::string const & functionName = getReference< string >( viewKeyStruct::functionNameString );
   FunctionManager & functionManager = FunctionManager::instance();
 
   array1d< globalIndex > dofArray( targetSet.size() );

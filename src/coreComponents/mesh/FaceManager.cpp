@@ -31,7 +31,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FaceManager::FaceManager( string const &, Group * const parent ):
+FaceManager::FaceManager( std::string const &, Group * const parent ):
   ObjectManagerBase( "FaceManager", parent )
 {
   this->registerWrapper( viewKeyStruct::nodeListString, &m_nodeList );

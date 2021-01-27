@@ -50,7 +50,7 @@ public:
     return "CellBlockManager";
   }
 
-  virtual string const getCatalogName() const override final
+  virtual std::string const getCatalogName() const override final
   { return CellBlockManager::catalogName(); }
 
 
@@ -59,14 +59,14 @@ public:
    * @param name name of this instantiation of CellBlockManager
    * @param parent pointer to the parent Group of this instantiation of CellBlockManager
    */
-  CellBlockManager( string const & name, Group * const parent );
+  CellBlockManager( std::string const & name, Group * const parent );
 
   /**
    * @brief Destructor
    */
   virtual ~CellBlockManager() override;
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   using Group::resize;
 
@@ -80,8 +80,8 @@ public:
                string_array const & regionNames,
                string_array const & elementTypes );
 
-//  CellBlock & CreateRegion( string const & regionName,
-//                               string const & elementType,
+//  CellBlock & CreateRegion( std::string const & regionName,
+//                               std::string const & elementType,
 //                               integer const & numElements );
 
   /**
@@ -89,7 +89,7 @@ public:
    * @param regionName name of the element sub-region
    * @return pointer to the element sub-region
    */
-  CellBlock * getRegion( string const & regionName )
+  CellBlock * getRegion( std::string const & regionName )
   {
     return this->getGroup( dataRepository::keys::cellBlocks )->getGroup< CellBlock >( regionName );
   }

@@ -94,7 +94,7 @@ public:
                     globalIndex const rankOffset,
                     CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                     arrayView1d< real64 > const & inputRhs,
-                    string const & fieldName ):
+                    std::string const & fieldName ):
     Base( nodeManager,
           edgeManager,
           faceManager,

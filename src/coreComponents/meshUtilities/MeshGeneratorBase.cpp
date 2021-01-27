@@ -24,7 +24,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent ):
+MeshGeneratorBase::MeshGeneratorBase( std::string const & name, Group * const parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );

@@ -61,7 +61,7 @@ public:
    * @param[in] delimiter The delimiter used for file entries.
    */
   template< typename T >
-  void parseFile( array1d< T > & target, string const & filename, char delimiter );
+  void parseFile( array1d< T > & target, std::string const & filename, char delimiter );
 
   /**
    * @brief Initialize the table function

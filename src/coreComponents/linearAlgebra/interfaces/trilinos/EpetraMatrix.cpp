@@ -817,7 +817,7 @@ void EpetraMatrix::print( std::ostream & os ) const
   m_matrix->Print( os );
 }
 
-void EpetraMatrix::write( string const & filename,
+void EpetraMatrix::write( std::string const & filename,
                           LAIOutputFormat const format ) const
 {
   GEOSX_LAI_ASSERT( ready() );

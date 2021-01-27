@@ -287,7 +287,7 @@ public:
    *                      sub-Groups.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * createChild( string const & childKey, string const & childName );
+  virtual Group * createChild( std::string const & childKey, std::string const & childName );
 
   ///@}
 
@@ -392,7 +392,7 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * getGroup( string const & name )
+  T * getGroup( std::string const & name )
   {
     return groupCast< T * >( m_subGroups[name] );
   }
@@ -401,7 +401,7 @@ public:
    * @copydoc getGroup(string const &)
    */
   template< typename T = Group >
-  T const * getGroup( string const & name ) const
+  T const * getGroup( std::string const & name ) const
   { return groupCast< T const * >( m_subGroups[name] ); }
 
   /**
@@ -411,25 +411,25 @@ public:
    * @note Will abort if the group doesn't exist.
    */
   template< typename T = Group >
-  T & getGroupReference( string const & key )
+  T & getGroupReference( std::string const & key )
   { return dynamicCast< T & >( *m_subGroups[ key ] ); }
 
   /**
-   * @copydoc getGroupReference( string const & )
+   * @copydoc getGroupReference( std::string const & )
    */
   template< typename T = Group >
-  T const & getGroupReference( string const & key ) const
+  T const & getGroupReference( std::string const & key ) const
   { return dynamicCast< T const & >( *m_subGroups[ key ] ); }
 
   /**
-   * @copydoc getGroupReference( string const & )
+   * @copydoc getGroupReference( std::string const & )
    */
   template< typename T = Group >
   T & getGroupReference( subGroupMap::KeyIndex const & key )
   { return dynamicCast< T & >( *m_subGroups[key] ); }
 
   /**
-   * @copydoc getGroupReference( string const & )
+   * @copydoc getGroupReference( std::string const & )
    */
   template< typename T = Group >
   T const & getGroupReference( subGroupMap::KeyIndex const & key ) const
@@ -465,7 +465,7 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * getGroupByPath( string const & path )
+  T * getGroupByPath( std::string const & path )
   {
     return const_cast< T * >(const_cast< Group const * >(this)->getGroupByPath< T >( path ));
   }
@@ -474,7 +474,7 @@ public:
    * @copydoc getGroupByPath(string const &)
    */
   template< typename T = Group >
-  T const * getGroupByPath( string const & path ) const;
+  T const * getGroupByPath( std::string const & path ) const;
 
   //END_SPHINX_INCLUDE_GET_GROUP
 
@@ -872,14 +872,14 @@ public:
    * @param wrapper a pointer to the an existing wrapper.
    * @return        an un-typed pointer to the newly registered/created wrapper
    */
-  WrapperBase * registerWrapper( string const & name,
+  WrapperBase * registerWrapper( std::string const & name,
                                  std::unique_ptr< WrapperBase > wrapper );
 
   /**
    * @brief Removes a Wrapper from this group.
    * @param name the name of the Wrapper to remove from this group.
    */
-  void deregisterWrapper( string const & name );
+  void deregisterWrapper( std::string const & name );
 
   ///@}
   //END_SPHINX_INCLUDE_REGISTER_WRAPPER
@@ -1314,7 +1314,7 @@ public:
    * @brief Get group name.
    * @return group name
    */
-  inline string const getName() const
+  inline std::string const getName() const
   {
     return m_name;
   }
@@ -1633,7 +1633,7 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
 }
 
 template< typename T >
-T const * Group::getGroupByPath( string const & path ) const
+T const * Group::getGroupByPath( std::string const & path ) const
 {
   // needed for getting root correctly with GetGroupByPath("/");
   if( path.empty())
@@ -1651,8 +1651,8 @@ T const * Group::getGroupByPath( string const & path ) const
   else
   {
     // Split the path
-    string const child = path.substr( 0, directoryMarker );
-    string const subPath = path.substr( directoryMarker+1, path.size());
+    std::string const child = path.substr( 0, directoryMarker );
+    std::string const subPath = path.substr( directoryMarker+1, path.size());
 
     if( directoryMarker == 0 )            // From root
     {

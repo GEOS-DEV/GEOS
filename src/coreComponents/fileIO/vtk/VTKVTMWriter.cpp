@@ -21,7 +21,7 @@ namespace geosx
 {
 namespace vtk
 {
-VTKVTMWriter::VTKVTMWriter( string const & filePath ):
+VTKVTMWriter::VTKVTMWriter( std::string const & filePath ):
   m_filePath( filePath )
 {
   // Declaration of XML version
@@ -45,21 +45,21 @@ void VTKVTMWriter::save() const
   }
 }
 
-void VTKVTMWriter::addBlock( string const & blockName ) const
+void VTKVTMWriter::addBlock( std::string const & blockName ) const
 {
   auto vtkMultiBlockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" );
   auto blockNode = vtkMultiBlockNode.append_child( "Block" );
   blockNode.append_attribute( "name" ) = blockName.c_str();
 }
 
-void VTKVTMWriter::addSubBlock( string const & blockName, string const & subBlockName ) const
+void VTKVTMWriter::addSubBlock( std::string const & blockName, std::string const & subBlockName ) const
 {
   auto blockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() );
   auto subBlockNode = blockNode.append_child( "Block" );
   subBlockNode.append_attribute( "name" ) = subBlockName.c_str();
 }
 
-void VTKVTMWriter::addDataToSubBlock( string const & blockName, string const & subBlockName, string const & filePath, int mpiRank ) const
+void VTKVTMWriter::addDataToSubBlock( std::string const & blockName, std::string const & subBlockName, std::string const & filePath, int mpiRank ) const
 {
   auto blockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() );
   auto subBlockNode = blockNode.find_child_by_attribute( "Block", "name", subBlockName.c_str() );

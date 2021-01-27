@@ -45,8 +45,8 @@ public:
   /// Destructor
   virtual ~OutputManager() override;
 
-  /// @copydoc geosx::dataRepository::Group::createChild( string const & childKey, string const & childName )
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  /// @copydoc geosx::dataRepository::Group::createChild( std::string const & childKey, std::string const & childName )
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

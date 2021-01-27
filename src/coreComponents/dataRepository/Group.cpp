@@ -24,7 +24,7 @@ namespace geosx
 namespace dataRepository
 {
 
-conduit::Node & conduitNodeFromParent( string const & name, Group * const parent )
+conduit::Node & conduitNodeFromParent( std::string const & name, Group * const parent )
 {
   if( parent == nullptr )
   {
@@ -63,7 +63,7 @@ Group::CatalogInterface::CatalogType & Group::getCatalog()
   return catalog;
 }
 
-WrapperBase * Group::registerWrapper( string const & name,
+WrapperBase * Group::registerWrapper( std::string const & name,
                                       std::unique_ptr< WrapperBase > wrapper )
 {
   return m_wrappers.insert( name,
@@ -71,7 +71,7 @@ WrapperBase * Group::registerWrapper( string const & name,
                             true );
 }
 
-void Group::deregisterWrapper( string const & name )
+void Group::deregisterWrapper( std::string const & name )
 {
   GEOSX_ERROR_IF( !hasWrapper( name ), "Wrapper " << name << " doesn't exist." );
   m_wrappers.erase( name );
@@ -169,7 +169,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
 
   for( xmlWrapper::xmlAttribute attribute=targetNode.first_attribute(); attribute; attribute = attribute.next_attribute() )
   {
-    string const childName = attribute.name();
+    std::string const childName = attribute.name();
     if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation" )
     {
       GEOSX_ERROR_IF( processedXmlNodes.count( childName )==0,
@@ -203,7 +203,7 @@ void Group::registerDataOnMeshRecursive( Group * const meshBodies )
 }
 
 
-Group * Group::createChild( string const & childKey, string const & childName )
+Group * Group::createChild( std::string const & childKey, std::string const & childName )
 {
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in Group::Catalog" );
@@ -562,7 +562,7 @@ void Group::registerDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBody ) )
 
 void Group::enableLogLevelInput()
 {
-  string const logLevelString = "logLevel";
+  std::string const logLevelString = "logLevel";
 
   registerWrapper( logLevelString, &m_logLevel )->
     setApplyDefaultValue( 0 )->

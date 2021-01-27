@@ -250,7 +250,7 @@ void PoroelasticSolver::updateDeformationForCoupling( DomainPartition & domain )
                                                                   ElementRegionBase & elemRegion,
                                                                   CellElementSubRegion & elementSubRegion )
   {
-    string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( elemRegion.getName() )];
+    std::string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( elemRegion.getName() )];
     SolidBase const & solid = getConstitutiveModel< SolidBase >( elementSubRegion, solidName );
 
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -364,13 +364,13 @@ void PoroelasticSolver::assembleCouplingTerms( DomainPartition const & domain,
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
 
-  string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & uDofNumber = nodeManager.getReference< globalIndex_array >( uDofKey );
 
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incr_disp = nodeManager.incrementalDisplacement();
 
   globalIndex const rankOffset = dofManager.rankOffset();
-  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  std::string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   // begin subregion loop
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [&]( localIndex const,
@@ -379,10 +379,10 @@ void PoroelasticSolver::assembleCouplingTerms( DomainPartition const & domain,
                                                                   ElementRegionBase const & region,
                                                                   CellElementSubRegion const & elementSubRegion )
   {
-    string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
+    std::string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( elementSubRegion, fluidName );
 
-    string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( region.getName() )];
+    std::string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( region.getName() )];
     SolidBase const & solid = getConstitutiveModel< SolidBase >( elementSubRegion, solidName );
 
     arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();

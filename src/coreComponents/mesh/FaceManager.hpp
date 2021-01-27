@@ -59,14 +59,14 @@ public:
    * @brief Return the name of the FaceManager in the object catalog.
    * @return string that contains the catalog name of the FaceManager
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "FaceManager"; }
 
   /**
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the catalog name of the FaceManager
    */
-  virtual string const getCatalogName() const override
+  virtual std::string const getCatalogName() const override
   { return FaceManager::catalogName(); }
   ///@}
 
@@ -94,7 +94,7 @@ public:
    * @param[in] name the name of FaceManager
    * @param[in] parent the parent Group object of FaceManager
    */
-  FaceManager( string const & name, Group * const parent );
+  FaceManager( std::string const & name, Group * const parent );
 
   /**
    * @brief Destructor override from ObjectManager

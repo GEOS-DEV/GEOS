@@ -35,7 +35,7 @@ public:
   virtual ~CompositionalMultiphaseFluid() override;
 
   virtual std::unique_ptr< ConstitutiveBase >
-  deliverClone( string const & name,
+  deliverClone( std::string const & name,
                 Group * const parent ) const override;
 
   static std::string catalogName() { return "CompositionalMultiphaseFluid"; }

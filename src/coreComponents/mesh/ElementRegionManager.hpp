@@ -97,14 +97,14 @@ public:
    * @brief The function is to return the name of the ElementRegionManager in the object catalog
    * @return string that contains the catalog name used to register/lookup this class in  the object catalog
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "ZoneManager"; }
 
   /**
    * @brief Virtual access to catalogName()
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
-  virtual string const getCatalogName() const override final
+  virtual std::string const getCatalogName() const override final
   { return ElementRegionManager::catalogName(); }
 
   /**
@@ -112,7 +112,7 @@ public:
    * @param [in] name the name of this ObjectManager
    * @param [in] parent the parent Group
    */
-  ElementRegionManager( string const & name, Group * const parent );
+  ElementRegionManager( std::string const & name, Group * const parent );
 
   /**
    * @brief Destructor
@@ -168,7 +168,7 @@ public:
    * @param childName name of the new ElementRegion object
    * @return pointer to the created ElementRegion object
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
   /**
@@ -227,7 +227,7 @@ public:
    * @return pointer to const ElementRegionBase
    */
   template< typename T=ElementRegionBase >
-  T const * getRegion( string const & regionName ) const
+  T const * getRegion( std::string const & regionName ) const
   {
     return this->getGroup( groupKeyStruct::elementRegionsGroup )->getGroup< T >( regionName );
   }
@@ -238,7 +238,7 @@ public:
    * @return pointer to ElementRegionBase
    */
   template< typename T=ElementRegionBase >
-  T * getRegion( string const & regionName )
+  T * getRegion( std::string const & regionName )
   {
     return this->getGroup( groupKeyStruct::elementRegionsGroup )->getGroup< T >( regionName );
   }
@@ -765,7 +765,7 @@ public:
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
-  constructViewAccessor( string const & name, string const & neighborName = string() ) const;
+  constructViewAccessor( std::string const & name, std::string const & neighborName = string() ) const;
 
   /**
    * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
@@ -776,7 +776,7 @@ public:
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
-  constructViewAccessor( string const & name, string const & neighborName = string() );
+  constructViewAccessor( std::string const & name, std::string const & neighborName = string() );
 
   /**
    * @brief This is a function to construct a ElementViewAccessor to access array data registered on the mesh.
@@ -788,7 +788,7 @@ public:
    */
   template< typename T, int NDIM >
   ElementViewAccessor< ArrayView< T const, NDIM > >
-  constructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
+  constructArrayViewAccessor( std::string const & name, std::string const & neighborName = string() ) const;
 
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
@@ -799,7 +799,7 @@ public:
    */
   template< typename VIEWTYPE >
   ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
-  constructReferenceAccessor( string const & viewName, string const & neighborName = string() ) const;
+  constructReferenceAccessor( std::string const & viewName, std::string const & neighborName = string() ) const;
 
   /**
    * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
@@ -810,7 +810,7 @@ public:
    */
   template< typename VIEWTYPE >
   ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
-  constructReferenceAccessor( string const & viewName, string const & neighborName = string() );
+  constructReferenceAccessor( std::string const & viewName, std::string const & neighborName = string() );
 
   /**
    * @brief This is a const function to construct a MaterialViewAccessor to access the material data.
@@ -821,7 +821,7 @@ public:
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
-  constructFullMaterialViewAccessor( string const & viewName,
+  constructFullMaterialViewAccessor( std::string const & viewName,
                                      constitutive::ConstitutiveManager const * const cm ) const;
 
   /**
@@ -833,7 +833,7 @@ public:
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
-  constructFullMaterialViewAccessor( string const & viewName,
+  constructFullMaterialViewAccessor( std::string const & viewName,
                                      constitutive::ConstitutiveManager const * const cm );
 
   /**
@@ -849,9 +849,9 @@ public:
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
-  constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
-                                 arrayView1d< string const > const & materialNames,
+  constructMaterialViewAccessor( std::string const & viewName,
+                                 arrayView1d< std::string const > const & regionNames,
+                                 arrayView1d< std::string const > const & materialNames,
                                  bool const allowMissingViews = false ) const;
 
   /**
@@ -867,9 +867,9 @@ public:
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
-  constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
-                                 arrayView1d< string const > const & materialNames,
+  constructMaterialViewAccessor( std::string const & viewName,
+                                 arrayView1d< std::string const > const & regionNames,
+                                 arrayView1d< std::string const > const & materialNames,
                                  bool const allowMissingViews = false );
 
   /**
@@ -884,9 +884,9 @@ public:
    */
   template< typename T, int NDIM >
   ElementViewAccessor< ArrayView< T const, NDIM > >
-  constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
+  constructMaterialArrayViewAccessor( std::string const & viewName,
+                                      arrayView1d< std::string const > const & regionNames,
+                                      arrayView1d< std::string const > const & materialNames,
                                       bool const allowMissingViews = false ) const;
 
   /**
@@ -1098,7 +1098,7 @@ private:
 
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
-ElementRegionManager::constructViewAccessor( string const & viewName, string const & neighborName ) const
+ElementRegionManager::constructViewAccessor( std::string const & viewName, std::string const & neighborName ) const
 {
   ElementViewAccessor< LHS > viewAccessor;
   viewAccessor.resize( numRegions() );
@@ -1129,7 +1129,7 @@ ElementRegionManager::constructViewAccessor( string const & viewName, string con
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::
-  constructViewAccessor( string const & viewName, string const & neighborName )
+  constructViewAccessor( std::string const & viewName, std::string const & neighborName )
 {
   ElementViewAccessor< LHS > viewAccessor;
   viewAccessor.resize( numRegions() );
@@ -1159,7 +1159,7 @@ ElementRegionManager::
 template< typename T, int NDIM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
 ElementRegionManager::
-  constructArrayViewAccessor( string const & name, string const & neighborName ) const
+  constructArrayViewAccessor( std::string const & name, std::string const & neighborName ) const
 {
   return constructViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( name, neighborName );
 }
@@ -1167,7 +1167,7 @@ ElementRegionManager::
 template< typename VIEWTYPE >
 ElementRegionManager::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
 ElementRegionManager::
-  constructReferenceAccessor( string const & viewName, string const & neighborName ) const
+  constructReferenceAccessor( std::string const & viewName, std::string const & neighborName ) const
 {
   ElementViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
   viewAccessor.resize( numRegions() );
@@ -1197,7 +1197,7 @@ ElementRegionManager::
 template< typename VIEWTYPE >
 ElementRegionManager::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
 ElementRegionManager::
-  constructReferenceAccessor( string const & viewName, string const & neighborName )
+  constructReferenceAccessor( std::string const & viewName, std::string const & neighborName )
 {
   ElementViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
   viewAccessor.resize( numRegions() );
@@ -1227,7 +1227,7 @@ ElementRegionManager::
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::MaterialViewAccessor< LHS >
 ElementRegionManager::
-  constructFullMaterialViewAccessor( string const & viewName,
+  constructFullMaterialViewAccessor( std::string const & viewName,
                                      constitutive::ConstitutiveManager const * const cm ) const
 {
   MaterialViewAccessor< LHS > accessor;
@@ -1267,7 +1267,7 @@ ElementRegionManager::
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::MaterialViewAccessor< LHS >
 ElementRegionManager::
-  constructFullMaterialViewAccessor( string const & viewName,
+  constructFullMaterialViewAccessor( std::string const & viewName,
                                      constitutive::ConstitutiveManager const * const cm )
 {
   MaterialViewAccessor< LHS > accessor;
@@ -1306,9 +1306,9 @@ ElementRegionManager::
 
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
-ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
-                                                     arrayView1d< string const > const & materialNames,
+ElementRegionManager::constructMaterialViewAccessor( std::string const & viewName,
+                                                     arrayView1d< std::string const > const & regionNames,
+                                                     arrayView1d< std::string const > const & materialNames,
                                                      bool const allowMissingViews ) const
 {
   GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
@@ -1350,9 +1350,9 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
-ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
-                                                     arrayView1d< string const > const & materialNames,
+ElementRegionManager::constructMaterialViewAccessor( std::string const & viewName,
+                                                     arrayView1d< std::string const > const & regionNames,
+                                                     arrayView1d< std::string const > const & materialNames,
                                                      bool const allowMissingViews )
 {
   GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
@@ -1394,9 +1394,9 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 template< typename T, int NDIM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
 ElementRegionManager::
-  constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
+  constructMaterialArrayViewAccessor( std::string const & viewName,
+                                      arrayView1d< std::string const > const & regionNames,
+                                      arrayView1d< std::string const > const & materialNames,
                                       bool const allowMissingViews ) const
 {
   return constructMaterialViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( viewName,
@@ -1425,7 +1425,7 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
 
       for( localIndex matIndex=0; matIndex<cm->numSubGroups(); ++matIndex )
       {
-        string const constitutiveName = cm->getGroup( matIndex )->getName();
+        std::string const constitutiveName = cm->getGroup( matIndex )->getName();
 
         CONSTITUTIVE_TYPE * const
         constitutiveRelation = constitutiveGroup->getGroup< CONSTITUTIVE_TYPE >( constitutiveName );
@@ -1459,7 +1459,7 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
 
       for( localIndex matIndex=0; matIndex<cm->numSubGroups(); ++matIndex )
       {
-        string const constitutiveName = cm->getGroup( matIndex )->getName();
+        std::string const constitutiveName = cm->getGroup( matIndex )->getName();
 
         CONSTITUTIVE_TYPE * const
         constitutiveRelation = constitutiveGroup->getGroup< CONSTITUTIVE_TYPE >( constitutiveName );

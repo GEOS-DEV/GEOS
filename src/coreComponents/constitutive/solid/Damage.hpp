@@ -256,7 +256,7 @@ public:
   /// @typedef Alias for LinearElasticIsotropicUpdates
   using KernelWrapper = DamageUpdates< typename BASE::KernelWrapper >;
 
-  Damage( string const & name, dataRepository::Group * const parent );
+  Damage( std::string const & name, dataRepository::Group * const parent );
   virtual ~Damage() override = default;
 
 

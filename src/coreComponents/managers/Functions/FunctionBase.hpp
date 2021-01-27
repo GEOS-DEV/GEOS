@@ -156,13 +156,13 @@ void FunctionBase::evaluateT( dataRepository::Group const * const group,
   localIndex varSize[4] = {0, 0, 0, 0};
   int timeVar[4] = {1, 1, 1, 1};
 
-  arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
+  arrayView1d< std::string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
   localIndex const numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
   localIndex groupSize = group->size();
   localIndex totalVarSize = 0;
   for( auto varIndex=0; varIndex<numVars; ++varIndex )
   {
-    string const & varName = inputVarNames[varIndex];
+    std::string const & varName = inputVarNames[varIndex];
 
     if( varName=="time" )
     {

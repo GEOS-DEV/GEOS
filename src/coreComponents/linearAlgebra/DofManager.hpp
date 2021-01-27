@@ -160,7 +160,7 @@ public:
    * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
    */
-  void addField( string const & fieldName,
+  void addField( std::string const & fieldName,
                  Location const location );
 
   /**
@@ -170,7 +170,7 @@ public:
    * @param [in] location Location where it is defined.
    * @param [in] components localIndex number of components (for vector fields).
    */
-  void addField( string const & fieldName,
+  void addField( std::string const & fieldName,
                  Location const location,
                  localIndex const components );
 
@@ -181,9 +181,9 @@ public:
    * @param [in] location Location where it is defined.
    * @param [in] regions names of regions where this field is defined.
    */
-  void addField( string const & fieldName,
+  void addField( std::string const & fieldName,
                  Location const location,
-                 arrayView1d< string const > const & regions );
+                 arrayView1d< std::string const > const & regions );
 
   /**
    * @brief The user can add a field with a support location, connectivity type, string key, number of scalar
@@ -210,10 +210,10 @@ public:
    * @param [in] components localIndex number of components (for vector fields).
    * @param [in] regions names of regions where this field is defined.
    */
-  void addField( string const & fieldName,
+  void addField( std::string const & fieldName,
                  Location const location,
                  localIndex const components,
-                 arrayView1d< string const > const & regions );
+                 arrayView1d< std::string const > const & regions );
 
   /**
    * @brief Just an interface to allow only three parameters.
@@ -222,8 +222,8 @@ public:
    * @param [in] colFieldName string the name of the col field.
    * @param [in] connectivity Connectivity through what they are connected.
    */
-  void addCoupling( string const & rowFieldName,
-                    string const & colFieldName,
+  void addCoupling( std::string const & rowFieldName,
+                    std::string const & colFieldName,
                     Connector const connectivity );
 
   /**
@@ -234,10 +234,10 @@ public:
    * @param [in] connectivity Connectivity through what they are connected.
    * @param [in] regions names of regions where this coupling is defined.
    */
-  void addCoupling( string const & rowFieldName,
-                    string const & colFieldName,
+  void addCoupling( std::string const & rowFieldName,
+                    std::string const & colFieldName,
                     Connector const connectivity,
-                    arrayView1d< string const > const & regions );
+                    arrayView1d< std::string const > const & regions );
 
   /**
    * @brief Just another interface to allow four parameters (no regions, default is everywhere).
@@ -247,8 +247,8 @@ public:
    * @param [in] connectivity Connectivity through what they are connected.
    * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
    */
-  void addCoupling( string const & rowFieldName,
-                    string const & colFieldName,
+  void addCoupling( std::string const & rowFieldName,
+                    std::string const & colFieldName,
                     Connector const connectivity,
                     bool const symmetric );
 
@@ -270,10 +270,10 @@ public:
    * @param [in] regions names of regions where this coupling is defined.
    * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
    */
-  void addCoupling( string const & rowFieldName,
-                    string const & colFieldName,
+  void addCoupling( std::string const & rowFieldName,
+                    std::string const & colFieldName,
                     Connector const connectivity,
-                    arrayView1d< string const > const & regions,
+                    arrayView1d< std::string const > const & regions,
                     bool const symmetric );
 
   /**
@@ -284,7 +284,7 @@ public:
    * The field must be defined on element support. The set of regions is taken
    * automatically from the field definition.
    */
-  void addCoupling( string const & fieldName,
+  void addCoupling( std::string const & fieldName,
                     FluxApproximationBase const & stencils );
 
   /**
@@ -310,7 +310,7 @@ public:
    * @param name field key to check
    * @return flag true if exists
    */
-  bool fieldExists( string const & name ) const;
+  bool fieldExists( std::string const & name ) const;
 
   /**
    * @brief Return the key used to record the field in the DofManager.
@@ -318,7 +318,7 @@ public:
    * @param [in] fieldName string the name of the field.
    * @return string indicating name of the field.
    */
-  string const & getKey( string const & fieldName ) const;
+  std::string const & getKey( std::string const & fieldName ) const;
 
   /**
    * @brief Return global number of dofs across all processors. If field argument is empty, return
@@ -327,7 +327,7 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    * @return     number of global dofs
    */
-  globalIndex numGlobalDofs( string const & fieldName = "" ) const;
+  globalIndex numGlobalDofs( std::string const & fieldName = "" ) const;
 
   /**
    * @brief Return local number of dofs on this processor. If field argument is empty, return
@@ -336,7 +336,7 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    * @return     number of local dofs
    */
-  localIndex numLocalDofs( string const & fieldName = "" ) const;
+  localIndex numLocalDofs( std::string const & fieldName = "" ) const;
 
   /**
    * @brief Return an array of local number of dofs on this processor
@@ -362,7 +362,7 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    * @return     the rank offset
    */
-  globalIndex rankOffset( string const & fieldName = "" ) const;
+  globalIndex rankOffset( std::string const & fieldName = "" ) const;
 
   /**
    * @brief Get the number of components in a field. If field argument is empty, return
@@ -371,7 +371,7 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    * @return     the number of dof components
    */
-  localIndex numComponents( string const & fieldName = "" ) const;
+  localIndex numComponents( std::string const & fieldName = "" ) const;
 
   /**
    * @brief Return an array of number of components per field, sorted by field
@@ -386,28 +386,28 @@ public:
    * @param [in] fieldName the name of the field
    * @return number of local support points
    */
-  localIndex numLocalSupport( string const & fieldName ) const;
+  localIndex numLocalSupport( std::string const & fieldName ) const;
 
   /**
    * @brief Get the local number of support points across all processors.
    * @param [in] fieldName name of the field
    * @return number of global support points
    */
-  globalIndex numGlobalSupport( string const & fieldName ) const;
+  globalIndex numGlobalSupport( std::string const & fieldName ) const;
 
   /**
    * @brief Get the support location type of the field.
    * @param [in] fieldName name of the field
    * @return support location type
    */
-  Location getLocation( string const & fieldName ) const;
+  Location getLocation( std::string const & fieldName ) const;
 
   /**
    * @brief Get global offset of field's block on current processor in the system matrix.
    * @param [in] fieldName name of the field.
    * @return global offset of the field
    */
-  globalIndex globalOffset( string const & fieldName ) const;
+  globalIndex globalOffset( std::string const & fieldName ) const;
 
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
@@ -429,8 +429,8 @@ public:
    */
   template< typename MATRIX >
   void setSparsityPattern( MATRIX & matrix,
-                           string const & rowFieldName,
-                           string const & colFieldName,
+                           std::string const & rowFieldName,
+                           std::string const & colFieldName,
                            bool closePattern = true ) const;
 
   /**
@@ -446,8 +446,8 @@ public:
    * @param [in]  colFieldName name of the col field
    */
   void setSparsityPattern( SparsityPattern< globalIndex > & pattern,
-                           string const & rowFieldName,
-                           string const & colFieldName ) const;
+                           std::string const & rowFieldName,
+                           std::string const & colFieldName ) const;
 
   /**
    * @brief Copy values from LA vectors to simulation data arrays.
@@ -465,8 +465,8 @@ public:
    */
   template< typename VECTOR >
   void copyVectorToField( VECTOR const & vector,
-                          string const & srcFieldName,
-                          string const & dstFieldName,
+                          std::string const & srcFieldName,
+                          std::string const & dstFieldName,
                           real64 const scalingFactor,
                           localIndex const loCompIndex = 0,
                           localIndex const hiCompIndex = -1 ) const;
@@ -485,8 +485,8 @@ public:
    *       Negative value of @p hiCompIndex means use full number of field components
    */
   void copyVectorToField( arrayView1d< real64 const > const & localVector,
-                          string const & srcFieldName,
-                          string const & dstFieldName,
+                          std::string const & srcFieldName,
+                          std::string const & dstFieldName,
                           real64 const scalingFactor,
                           localIndex const loCompIndex = 0,
                           localIndex const hiCompIndex = -1 ) const;
@@ -507,8 +507,8 @@ public:
    */
   template< typename VECTOR >
   void addVectorToField( VECTOR const & vector,
-                         string const & srcFieldName,
-                         string const & dstFieldName,
+                         std::string const & srcFieldName,
+                         std::string const & dstFieldName,
                          real64 const scalingFactor,
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
@@ -527,8 +527,8 @@ public:
    *       Negative value of @p hiCompIndex means use full number of field components
    */
   void addVectorToField( arrayView1d< real64 const > const & localVector,
-                         string const & srcFieldName,
-                         string const & dstFieldName,
+                         std::string const & srcFieldName,
+                         std::string const & dstFieldName,
                          real64 const scalingFactor,
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
@@ -549,8 +549,8 @@ public:
    */
   template< typename VECTOR >
   void copyFieldToVector( VECTOR & vector,
-                          string const & srcFieldName,
-                          string const & dstFieldName,
+                          std::string const & srcFieldName,
+                          std::string const & dstFieldName,
                           real64 const scalingFactor,
                           localIndex const loCompIndex = 0,
                           localIndex const hiCompIndex = -1 ) const;
@@ -570,8 +570,8 @@ public:
    *       Negative value of @p hiCompIndex means use full number of field components
    */
   void copyFieldToVector( arrayView1d< real64 > const & localVector,
-                          string const & srcFieldName,
-                          string const & dstFieldName,
+                          std::string const & srcFieldName,
+                          std::string const & dstFieldName,
                           real64 const scalingFactor,
                           localIndex const loCompIndex = 0,
                           localIndex const hiCompIndex = -1 ) const;
@@ -592,8 +592,8 @@ public:
    */
   template< typename VECTOR >
   void addFieldToVector( VECTOR & vector,
-                         string const & srcFieldName,
-                         string const & dstFieldName,
+                         std::string const & srcFieldName,
+                         std::string const & dstFieldName,
                          real64 const scalingFactor,
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
@@ -613,8 +613,8 @@ public:
    *       Negative value of @p hiCompIndex means use full number of field components
    */
   void addFieldToVector( arrayView1d< real64 > const & localVector,
-                         string const & srcFieldName,
-                         string const & dstFieldName,
+                         std::string const & srcFieldName,
+                         std::string const & dstFieldName,
                          real64 const scalingFactor,
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
@@ -678,7 +678,7 @@ private:
   /**
    * @brief Get field index from string key
    */
-  localIndex getFieldIndex( string const & name ) const;
+  localIndex getFieldIndex( std::string const & name ) const;
 
   /**
    * @brief Create index array for the field
@@ -756,8 +756,8 @@ private:
    */
   template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
   void vectorToField( LOCAL_VECTOR const localVector,
-                      string const & srcFieldName,
-                      string const & dstFieldName,
+                      std::string const & srcFieldName,
+                      std::string const & dstFieldName,
                       real64 const scalingFactor,
                       localIndex const loCompIndex,
                       localIndex const hiCompIndex ) const;
@@ -779,8 +779,8 @@ private:
    */
   template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
   void fieldToVector( LOCAL_VECTOR localVector,
-                      string const & srcFieldName,
-                      string const & dstFieldName,
+                      std::string const & srcFieldName,
+                      std::string const & dstFieldName,
                       real64 const scalingFactor,
                       localIndex const loCompIndex,
                       localIndex const hiCompIndex ) const;

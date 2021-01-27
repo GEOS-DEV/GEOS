@@ -106,7 +106,7 @@ public:
    * @param domainNumber domain partition number
    * @param restartFileName base of the restart file to open
    */
-  void waitForBaton( int const domainNumber, string const & restartFileName );
+  void waitForBaton( int const domainNumber, std::string const & restartFileName );
 
   /**
    * @brief Hand off the Baton when done writing to file
@@ -119,7 +119,7 @@ public:
    * @param subdir the new directory name
    * @param rootdir the root directory path
    */
-  void makeSubDirectory( string const & subdir, string const & rootdir )
+  void makeSubDirectory( std::string const & subdir, std::string const & rootdir )
   {
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
@@ -155,7 +155,7 @@ public:
    * DBPutZonelist2, and calls those functions to create a silo mesh object. In addition
    * the MultiVar is written in the root file.
    */
-  void writeMeshObject( string const & meshName,
+  void writeMeshObject( std::string const & meshName,
                         const localIndex nnodes,
                         real64 * coords[3],
                         const globalIndex * globalNodeNum,
@@ -232,7 +232,7 @@ public:
    */
   void writeElementMesh( ElementRegionBase const & elementRegion,
                          NodeManager const * const nodeManager,
-                         string const & meshName,
+                         std::string const & meshName,
                          const localIndex nnodes,
                          real64 * coords[3],
                          globalIndex const * const globalNodeNum,
@@ -260,7 +260,7 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void writePointMesh( string const & meshName,
+  void writePointMesh( std::string const & meshName,
                        const localIndex numPoints,
                        real64 * coords[3],
                        int const cycleNumber,
@@ -276,7 +276,7 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void writeBeamMesh( string const & meshName,
+  void writeBeamMesh( std::string const & meshName,
                       const localIndex nnodes,
                       real64 * coords[3],
                       const localIndex_array & node1,
@@ -293,7 +293,7 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void writeBeamMesh( string const & meshName,
+  void writeBeamMesh( std::string const & meshName,
                       const localIndex nnodes,
                       real64 * coords[3],
                       integer_array & nodelist,
@@ -308,7 +308,7 @@ public:
    * @param problemTime current problem time
    */
   void writeMaterialMapsFullStorage( ElementRegionBase const & elementRegion,
-                                     string const & meshName,
+                                     std::string const & meshName,
                                      string_array const & regionMaterialList,
                                      int const cycleNumber,
                                      real64 const problemTime );
@@ -324,8 +324,8 @@ public:
    * @param mask indices to write out to the silo file
    */
   void writeGroupSilo( dataRepository::Group const * group,
-                       string const & siloDirName,
-                       string const & meshname,
+                       std::string const & siloDirName,
+                       std::string const & meshname,
                        int const centering,
                        int const cycleNum,
                        real64 const problemTime,
@@ -341,8 +341,8 @@ public:
    * @param isRestart write restart only data
    */
   void writeElementRegionSilo( ElementRegionBase const & elemRegion,
-                               string const & siloDirName,
-                               string const & meshName,
+                               std::string const & siloDirName,
+                               std::string const & meshName,
                                int const cycleNum,
                                real64 const problemTime,
                                bool const isRestart );
@@ -359,13 +359,13 @@ public:
    * @param mask indices to write out to the silo file
    */
   template< typename OUTPUTTYPE >
-  void writeWrappersToSilo( string const & meshname,
+  void writeWrappersToSilo( std::string const & meshname,
                             const dataRepository::Group::wrapperMap & wrappers,
                             int const centering,
                             int const cycleNum,
                             real64 const problemTime,
                             bool const isRestart,
-                            string const & multiRoot,
+                            std::string const & multiRoot,
                             const localIndex_array & mask );
 
   /**
@@ -379,13 +379,13 @@ public:
    * @param multiRoot location to write the multivar entries
    */
   template< typename OUTTYPE, typename TYPE >
-  void writeDataField( string const & meshName,
-                       string const & fieldName,
+  void writeDataField( std::string const & meshName,
+                       std::string const & fieldName,
                        arrayView1d< TYPE const > const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
-                       string const & multiRoot );
+                       std::string const & multiRoot );
 
   /**
    *
@@ -398,13 +398,13 @@ public:
    * @param multiRoot location to write the multivar entries
    */
   template< typename OUTTYPE, typename TYPE, int USD >
-  void writeDataField( string const & meshName,
-                       string const & fieldName,
+  void writeDataField( std::string const & meshName,
+                       std::string const & fieldName,
                        arrayView2d< TYPE const, USD > const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
-                       string const & multiRoot );
+                       std::string const & multiRoot );
 
   /**
    * @param meshName the name of the mesh attach this write to
@@ -416,13 +416,13 @@ public:
    * @param multiRoot location to write the multivar entries
    */
   template< typename OUTTYPE, typename TYPE, int USD >
-  void writeDataField( string const & meshName,
-                       string const & fieldName,
+  void writeDataField( std::string const & meshName,
+                       std::string const & fieldName,
                        arrayView3d< TYPE const, USD > const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
-                       string const & multiRoot );
+                       std::string const & multiRoot );
 
   /**
    * @todo Verify: documentation missing / incomplete
@@ -436,14 +436,14 @@ public:
    * @param multiRoot location to write the multivar entries
    */
   template< typename OUTTYPE, typename TYPE, int NDIM, int USD >
-  void writeDataField( string const & meshName,
-                       string const & fieldName,
+  void writeDataField( std::string const & meshName,
+                       std::string const & fieldName,
                        ArrayView< TYPE const, NDIM, USD > const & field,
                        int const siloTensorRank,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
-                       string const & multiRoot );
+                       std::string const & multiRoot );
 
   /**
    * @todo Verify: documentation missing / incomplete
@@ -458,14 +458,14 @@ public:
    * @param materialNames material names
    */
   template< typename OUTTYPE, typename TYPE >
-  void writeMaterialDataField( string const & meshName,
-                               string const & fieldName,
+  void writeMaterialDataField( std::string const & meshName,
+                               std::string const & fieldName,
                                array1d< array1d< arrayView2d< TYPE const > > > const & field,
                                ElementRegionBase const & elemRegion,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
-                               string const & multiRoot,
+                               std::string const & multiRoot,
                                string_array const & materialNames );
 
   /**
@@ -480,13 +480,13 @@ public:
    * @param materialNames material names
    */
   template< typename OUTTYPE, typename TYPE >
-  void writeMaterialDataField2d( string const & meshName,
-                                 string const & fieldName,
+  void writeMaterialDataField2d( std::string const & meshName,
+                                 std::string const & fieldName,
                                  ElementRegionBase const & elemRegion,
                                  int const centering,
                                  int const cycleNumber,
                                  real64 const problemTime,
-                                 string const & multiRoot,
+                                 std::string const & multiRoot,
                                  string_array const & materialNames );
 
   /**
@@ -501,13 +501,13 @@ public:
    * @param materialNames material names
    */
   template< typename OUTTYPE, typename TYPE >
-  void writeMaterialDataField3d( string const & meshName,
-                                 string const & fieldName,
+  void writeMaterialDataField3d( std::string const & meshName,
+                                 std::string const & fieldName,
                                  ElementRegionBase const & elemRegion,
                                  int const centering,
                                  int const cycleNumber,
                                  real64 const problemTime,
-                                 string const & multiRoot,
+                                 std::string const & multiRoot,
                                  string_array const & materialNames );
 
   /**
@@ -522,13 +522,13 @@ public:
    * @param materialNames material names
    */
   template< typename OUTTYPE, typename TYPE >
-  void writeMaterialDataField4d( string const & meshName,
-                                 string const & fieldName,
+  void writeMaterialDataField4d( std::string const & meshName,
+                                 std::string const & fieldName,
                                  ElementRegionBase const & elemRegion,
                                  int const centering,
                                  int const cycleNumber,
                                  real64 const problemTime,
-                                 string const & multiRoot,
+                                 std::string const & multiRoot,
                                  string_array const & materialNames );
 
   /**
@@ -538,31 +538,31 @@ public:
    * @param matIndex
    * @param fieldName
    */
-  void writeMaterialVarDefinition( string const & subDir,
-                                   string const & matDir,
+  void writeMaterialVarDefinition( std::string const & subDir,
+                                   std::string const & matDir,
                                    localIndex const matIndex,
-                                   string const & fieldName );
+                                   std::string const & fieldName );
 
   /**
    * @todo Verify: documentation missing / incomplete
    * @param MatDir
    */
-  void writeStressVarDefinition( string const & MatDir );
+  void writeStressVarDefinition( std::string const & MatDir );
 
   /**
    * @todo Verify: documentation missing / incomplete
    * @param fieldName vector field name
    * @param subDirectory
    */
-  void writeVectorVarDefinition( string const & fieldName,
-                                 string const & subDirectory );
+  void writeVectorVarDefinition( std::string const & fieldName,
+                                 std::string const & subDirectory );
 
   /**
    * find the silo mesh type that we are attempting to reference
    * @param meshName the name of the mesh object we are attaching data to
    * @return integer that results from a call to DBInqMeshtype()
    */
-  int getMeshType( string const & meshName ) const;
+  int getMeshType( std::string const & meshName ) const;
 
   /**
    * write out a multi mesh or multivar object assocaited with a mesh or var object.
@@ -576,8 +576,8 @@ public:
    */
   template< typename CBF >
   void writeMultiXXXX( const DBObjectType type, CBF DBPutMultiCB,
-                       int const centering, string const name, int const cycleNumber,
-                       string const & multiRoot, const DBoptlist * optlist = nullptr );
+                       int const centering, std::string const name, int const cycleNumber,
+                       std::string const & multiRoot, const DBoptlist * optlist = nullptr );
 
 
   /**
@@ -648,7 +648,7 @@ public:
    * @brief Sets root of the filename that will be read/written
    * @param fileRoot root of the filename
    */
-  void setPlotFileRoot( string const & fileRoot )
+  void setPlotFileRoot( std::string const & fileRoot )
   {
     m_plotFileRoot = fileRoot;
   }
@@ -675,9 +675,9 @@ private:
 
   string m_restartFileRoot;
 
-  string const m_siloDirectory = "siloFiles";
+  std::string const m_siloDirectory = "siloFiles";
 
-  string const m_siloDataSubDirectory = "data";
+  std::string const m_siloDataSubDirectory = "data";
 
   string m_fileName;
 
@@ -853,7 +853,7 @@ template<> inline float CastField< float, real64 >( const real64 & field, int co
  * with the component of the tensor.
  */
 template< typename TYPE >
-void SetVariableNames( string const & fieldName, string_array & varnamestring, char const * varnames[] );
+void SetVariableNames( std::string const & fieldName, string_array & varnamestring, char const * varnames[] );
 
 
 }

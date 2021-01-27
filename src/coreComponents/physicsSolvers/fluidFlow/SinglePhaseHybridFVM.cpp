@@ -99,14 +99,14 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups( Group * 
 
   // in the flux kernel, we need to make sure that we act only on the target regions
   // for that, we need the following region filter
-  for( string const & regionName : targetRegionNames() )
+  for( std::string const & regionName : targetRegionNames() )
   {
     m_regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
 
   // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
   // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
-  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
+  std::string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
   arrayView1d< real64 const > const & transMultiplier =
     faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString );
 
@@ -225,13 +225,13 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   // face data
 
   // get the face-based DOF numbers for the assembly
-  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
+  std::string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
   arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
 
   // get the element dof numbers for the assembly
-  string const & elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const & elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
     mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
   elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
@@ -247,7 +247,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
   // get the face-centered transMultiplier
-  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
+  std::string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
   arrayView1d< real64 const > const & transMultiplier =
     faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString );
 
@@ -330,8 +330,8 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
 
   // get a view into local residual vector
 
-  string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
-  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
+  std::string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -426,8 +426,8 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
 
   localIndex localCheck = 1;
 
-  string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
-  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
+  std::string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 

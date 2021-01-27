@@ -30,7 +30,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-FaceElementSubRegion::FaceElementSubRegion( string const & name,
+FaceElementSubRegion::FaceElementSubRegion( std::string const & name,
                                             dataRepository::Group * const parent ):
   SurfaceElementSubRegion( name, parent ),
   m_unmappedGlobalIndicesInToNodes(),

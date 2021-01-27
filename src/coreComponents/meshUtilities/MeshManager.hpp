@@ -51,7 +51,7 @@ public:
    * @param[in] childName the name of the new object in the collection of sub-meshes
    * @return A pointer to the Group node in the dataRepository of the new object created
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

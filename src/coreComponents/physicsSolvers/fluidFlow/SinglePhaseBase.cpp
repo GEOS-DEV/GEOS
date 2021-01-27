@@ -454,7 +454,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
   globalIndex const rankOffset = dofManager.rankOffset();
   arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
@@ -524,7 +524,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
   globalIndex const rankOffset = dofManager.rankOffset();
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
@@ -608,17 +608,17 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   fsManager.apply( time_n + dt,
                    &domain,
                    "ElementRegions",
                    viewKeyStruct::pressureString,
                    [&]( FieldSpecificationBase const * const fs,
-                        string const &,
+                        std::string const &,
                         SortedArrayView< localIndex const > const & lset,
                         Group * subRegion,
-                        string const & )
+                        std::string const & )
   {
     arrayView1d< globalIndex const > const dofNumber =
       subRegion->getReference< array1d< globalIndex > >( dofKey );
@@ -655,16 +655,16 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   fsManager.apply( time_n + dt, &domain,
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                    [&]( FieldSpecificationBase const * const fs,
-                        string const &,
+                        std::string const &,
                         SortedArrayView< localIndex const > const & lset,
                         Group * subRegion,
-                        string const & ) -> void
+                        std::string const & ) -> void
   {
     arrayView1d< globalIndex const > const
     dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );

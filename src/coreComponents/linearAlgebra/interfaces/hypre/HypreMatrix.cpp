@@ -1236,7 +1236,7 @@ void HypreMatrix::print( std::ostream & os ) const
   }
 }
 
-void HypreMatrix::write( string const & filename,
+void HypreMatrix::write( std::string const & filename,
                          LAIOutputFormat const format ) const
 {
   GEOSX_LAI_ASSERT( ready() );

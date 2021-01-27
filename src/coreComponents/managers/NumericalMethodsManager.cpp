@@ -23,7 +23,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
+NumericalMethodsManager::NumericalMethodsManager( std::string const & name, Group * const parent ):
   Group( name, parent ),
   m_finiteElementDiscretizationManager( groupKeysStruct::finiteElementDiscretizations, this ),
   m_finiteVolumeManager( groupKeysStruct::finiteVolumeManager, this )
@@ -37,8 +37,8 @@ NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * c
 NumericalMethodsManager::~NumericalMethodsManager()
 {}
 
-Group * NumericalMethodsManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
-                                              string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * NumericalMethodsManager::createChild( std::string const & GEOSX_UNUSED_PARAM( childKey ),
+                                              std::string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }

@@ -45,7 +45,7 @@ protected:
   {
     problemManager = new ProblemManager( "Problem", nullptr );
 
-    string const inputStream =
+    std::string const inputStream =
       "<Problem>"
       "  <Mesh>"
       "    <InternalMesh name=\"mesh1\""

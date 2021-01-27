@@ -33,8 +33,8 @@ void checkDerivative( real64 const valueEps,
                       real64 const eps,
                       real64 const relTol,
                       real64 const absTol,
-                      string const & name,
-                      string const & var )
+                      std::string const & name,
+                      std::string const & var )
 {
   real64 const numDeriv = (valueEps - value) / eps;
   checkRelativeError( deriv, numDeriv, relTol, absTol, "d(" + name + ")/d(" + var + ")" );
@@ -45,8 +45,8 @@ void checkDerivative( real64 const valueEps,
                       real64 const deriv,
                       real64 const eps,
                       real64 const relTol,
-                      string const & name,
-                      string const & var )
+                      std::string const & name,
+                      std::string const & var )
 { return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var ); }
 
 void checkDerivative( arraySlice1d< real64 const > const & valueEps,
@@ -55,9 +55,9 @@ void checkDerivative( arraySlice1d< real64 const > const & valueEps,
                       real64 const eps,
                       real64 const relTol,
                       real64 const absTol,
-                      string const & name,
-                      string const & var,
-                      arrayView1d< string const > const & labels )
+                      std::string const & name,
+                      std::string const & var,
+                      arrayView1d< std::string const > const & labels )
 {
   localIndex const size = labels.size( 0 );
 
@@ -75,9 +75,9 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       real64 const eps,
                       real64 const relTol,
                       real64 const absTol,
-                      string const & name,
-                      string const & var,
-                      arrayView1d< string const > const & labels,
+                      std::string const & name,
+                      std::string const & var,
+                      arrayView1d< std::string const > const & labels,
                       Args ... label_lists )
 {
   localIndex const size = labels.size( 0 );
@@ -95,9 +95,9 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       ArraySlice< real64 const, DIM > const & deriv,
                       real64 const eps,
                       real64 const relTol,
-                      string const & name,
-                      string const & var,
-                      arrayView1d< string const > const & labels,
+                      std::string const & name,
+                      std::string const & var,
+                      arrayView1d< std::string const > const & labels,
                       Args ... label_lists )
 { return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var, labels, label_lists ... ); }
 

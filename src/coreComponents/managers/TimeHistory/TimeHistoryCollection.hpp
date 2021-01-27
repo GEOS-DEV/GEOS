@@ -40,7 +40,7 @@ class HistoryCollection : public TaskBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  HistoryCollection( string const & name, Group * parent ):
+  HistoryCollection( std::string const & name, Group * parent ):
     TaskBase( name, parent ),
     m_collectionCount( 1 ),
     m_timeBufferCall(),
@@ -80,7 +80,7 @@ public:
    * @brief Get the name of the object being targeted for collection.
    * @return The collection target's name
    */
-  virtual string const & getTargetName( ) const = 0;
+  virtual std::string const & getTargetName( ) const = 0;
 
   /**
    * @brief Collects history data.

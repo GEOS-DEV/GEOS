@@ -28,10 +28,10 @@ class FiniteElementDiscretizationManager : public dataRepository::Group
 {
 public:
   FiniteElementDiscretizationManager() = delete;
-  FiniteElementDiscretizationManager( string const & name, Group * const parent );
+  FiniteElementDiscretizationManager( std::string const & name, Group * const parent );
   virtual ~FiniteElementDiscretizationManager() override;
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

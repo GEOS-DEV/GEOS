@@ -64,8 +64,8 @@ void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartiti
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
-  string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
-  string const resDofKey  = dofManager.getKey( m_wellSolver->resElementDofName() );
+  std::string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
+  std::string const resDofKey  = dofManager.getKey( m_wellSolver->resElementDofName() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
@@ -161,7 +161,7 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
   localIndex const NC      = m_wellSolver->numFluidComponents();
   localIndex const resNDOF = m_wellSolver->numDofPerResElement();
 
-  string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
+  std::string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
@@ -174,7 +174,7 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
     PerforationData const * const perforationData = subRegion.getPerforationData();
 
     // get the degrees of freedom
-    string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 

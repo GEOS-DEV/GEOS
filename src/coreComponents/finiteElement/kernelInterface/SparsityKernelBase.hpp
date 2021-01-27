@@ -233,8 +233,8 @@ template< typename REGION_TYPE,
                     typename FE_TYPE > class KERNEL_TEMPLATE >
 static
 real64 fillSparsity( MeshLevel & mesh,
-                     arrayView1d< string const > const & targetRegions,
-                     string const & discretizationName,
+                     arrayView1d< std::string const > const & targetRegions,
+                     std::string const & discretizationName,
                      arrayView1d< globalIndex const > const & inputDofNumber,
                      globalIndex const rankOffset,
                      SparsityPattern< globalIndex > & inputSparsityPattern )
@@ -247,7 +247,7 @@ real64 fillSparsity( MeshLevel & mesh,
                                 >( mesh,
                                    targetRegions,
                                    discretizationName,
-                                   arrayView1d< string const >(),
+                                   arrayView1d< std::string const >(),
                                    inputDofNumber,
                                    rankOffset,
                                    inputSparsityPattern );

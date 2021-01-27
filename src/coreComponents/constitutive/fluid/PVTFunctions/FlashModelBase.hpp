@@ -33,7 +33,7 @@ class FlashModel
 {
 public:
 
-  FlashModel( string const & name,
+  FlashModel( std::string const & name,
               string_array const & componentNames,
               real64_array const & componentMolarWeight ):
     m_modelName( name ),
@@ -55,7 +55,7 @@ public:
   virtual string getCatalogName() const = 0;
 
 
-  string const & flashModelName() const
+  std::string const & flashModelName() const
   {
     return m_modelName;
   }

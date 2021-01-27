@@ -68,7 +68,7 @@ public:
    * @brief Get the name of the catalog.
    * @return The name.
    */
-  virtual string const getCatalogName() const = 0;
+  virtual std::string const getCatalogName() const = 0;
   ///@}
 
   using dataRepository::Group::packSize;
@@ -565,7 +565,7 @@ public:
    */
   template< typename MESH_DATA_TRAIT >
   dataRepository::Wrapper< typename MESH_DATA_TRAIT::type > &
-  registerExtrinsicData( string const & nameOfRegisteringObject )
+  registerExtrinsicData( std::string const & nameOfRegisteringObject )
   {
     // These are required to work-around the need for instantiation of
     // the static constexpr trait components. This will not be required once
@@ -596,7 +596,7 @@ public:
    *   that this data be registered.
    */
   template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
-  void registerExtrinsicData( string const & nameOfRegisteringObject )
+  void registerExtrinsicData( std::string const & nameOfRegisteringObject )
   {
     registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject );
     registerExtrinsicData< MESH_DATA_TRAIT1, MESH_DATA_TRAITS... >( nameOfRegisteringObject );
@@ -645,7 +645,7 @@ public:
 #if 0
   template< typename MESH_DATA_TRAIT >
   dataRepository::Wrapper< typename MESH_DATA_TRAIT::Type > &
-  registerExtrinsicData( string const & nameOfRegisteringObject,
+  registerExtrinsicData( std::string const & nameOfRegisteringObject,
                          MESH_DATA_TRAIT const & extrinisicDataTrait )
   {
     // These are required to work-around the need for instantiation of
@@ -654,7 +654,7 @@ public:
 
     //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
     constexpr dataRepository::PlotLevel plotLevel = MESH_DATA_TRAIT::plotLevel;
-    string const description = MESH_DATA_TRAIT::description;
+    std::string const description = MESH_DATA_TRAIT::description;
 
     // This is required for the Tensor classes.
     typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue );
@@ -667,7 +667,7 @@ public:
   }
 
   template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
-  void registerExtrinsicData( string const & nameOfRegisteringObject,
+  void registerExtrinsicData( std::string const & nameOfRegisteringObject,
                               MESH_DATA_TRAIT0 const & extrinisicDataTrait0,
                               MESH_DATA_TRAIT1 const & extrinisicDataTrait1,
                               MESH_DATA_TRAITS && ... extrinisicDataTraits )

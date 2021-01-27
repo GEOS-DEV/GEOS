@@ -105,7 +105,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
 {
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // compute the norm of local residual scaled by cell pore volume
@@ -193,7 +193,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const & dofKey = dofManager.getKey( viewKeyStruct::pressureString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
@@ -276,7 +276,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
   arrayView1d< real64 const > const gravCoefFace =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-  string const & dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  std::string const & dofKey = dofManager.getKey( viewKeyStruct::pressureString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
@@ -287,10 +287,10 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                    "faceManager",
                    viewKeyStruct::pressureString,
                    [&] ( FieldSpecificationBase const * const fs,
-                         string const & setName,
+                         std::string const & setName,
                          SortedArrayView< localIndex const > const & targetSet,
                          Group * const targetGroup,
-                         string const & )
+                         std::string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
     if( stencil.size() == 0 )
@@ -377,7 +377,7 @@ void SinglePhaseFVM< BASE >::setUpDflux_dApertureMatrix( DomainPartition & domai
     }
   }
 
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  std::string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

@@ -55,7 +55,7 @@ BlackOilFluid::~BlackOilFluid()
 {}
 
 std::unique_ptr< ConstitutiveBase >
-BlackOilFluid::deliverClone( string const & name,
+BlackOilFluid::deliverClone( std::string const & name,
                              Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase >

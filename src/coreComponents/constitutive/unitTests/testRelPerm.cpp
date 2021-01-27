@@ -72,7 +72,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
       relPermWrapper.update( 0, 0, satNew );
     } );
 
-    string const var = "phaseVolFrac[" + phases[jp] + "]";
+    std::string const var = "phaseVolFrac[" + phases[jp] + "]";
     checkDerivative( phaseRelPermCopy[ 0 ][ 0 ],
                      phaseRelPerm[ 0 ][ 0 ],
                      dPhaseRelPerm_dS[ jp ].toSliceConst(),
@@ -84,7 +84,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   }
 }
 
-RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * parent )
+RelativePermeabilityBase * makeBrooksCoreyRelPerm( std::string const & name, Group * parent )
 {
   auto relPerm = parent->registerGroup< BrooksCoreyRelativePermeability >( name );
 
@@ -108,7 +108,7 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * 
   return relPerm;
 }
 
-RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, Group * parent )
+RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( std::string const & name, Group * parent )
 {
   auto relPerm = parent->registerGroup< BrooksCoreyBakerRelativePermeability >( name );
 
@@ -134,7 +134,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & n
 }
 
 
-RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, Group * parent )
+RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( std::string const & name, Group * parent )
 {
   auto relPerm = parent->registerGroup< BrooksCoreyBakerRelativePermeability >( name );
 
@@ -167,7 +167,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const &
   return relPerm;
 }
 
-RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & name, Group * parent )
+RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( std::string const & name, Group * parent )
 {
   auto relPerm = parent->registerGroup< VanGenuchtenBakerRelativePermeability >( name );
 
@@ -193,7 +193,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & 
 }
 
 
-RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, Group * parent )
+RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( std::string const & name, Group * parent )
 {
   auto relPerm = parent->registerGroup< VanGenuchtenBakerRelativePermeability >( name );
 

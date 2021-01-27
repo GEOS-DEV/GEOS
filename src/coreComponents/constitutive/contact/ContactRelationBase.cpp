@@ -32,7 +32,7 @@ namespace constitutive
 {
 
 
-ContactRelationBase::ContactRelationBase( string const & name,
+ContactRelationBase::ContactRelationBase( std::string const & name,
                                           Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_penaltyStiffness( 0.0 ),
@@ -72,7 +72,7 @@ real64 ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction( real64
 }
 
 Group *
-ContactRelationBase::createChild( string const & catalogKey, string const & childName )
+ContactRelationBase::createChild( std::string const & catalogKey, std::string const & childName )
 {
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::getCatalog();
   GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
@@ -146,7 +146,7 @@ void ContactRelationBase::initializePreSubGroups( Group * const )
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, std::string const &, Group * const )
 
 }
 } /* namespace geosx */

@@ -186,7 +186,7 @@ public:
 
   void resizeFractureFields( MeshLevel & mesh );
 
-  arrayView1d< string const > const proppantModelNames() const { return m_proppantModelNames; }
+  arrayView1d< std::string const > const proppantModelNames() const { return m_proppantModelNames; }
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {

@@ -36,7 +36,7 @@ OutputManager::~OutputManager()
 
 
 
-Group * OutputManager::createChild( string const & childKey, string const & childName )
+Group * OutputManager::createChild( std::string const & childKey, std::string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Output: " << childKey << ", " << childName );
   std::unique_ptr< OutputBase > output = OutputBase::CatalogInterface::factory( childKey, childName, this );

@@ -40,7 +40,7 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  Coulomb( string const & name, Group * const parent );
+  Coulomb( std::string const & name, Group * const parent );
 
   /**
    * Default Destructor

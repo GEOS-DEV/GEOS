@@ -48,11 +48,11 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  NumericalMethodsManager( string const & name, Group * const parent );
+  NumericalMethodsManager( std::string const & name, Group * const parent );
 
   virtual ~NumericalMethodsManager() override;
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /// Contains the keys for the object names in the data repository.
   struct groupKeysStruct

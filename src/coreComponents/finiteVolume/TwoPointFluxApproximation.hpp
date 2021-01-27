@@ -57,18 +57,18 @@ protected:
   virtual void registerFractureStencil( Group & stencilGroup ) const override;
 
   virtual void addToFractureStencil( MeshLevel & mesh,
-                                     string const & faceElementRegionName,
+                                     std::string const & faceElementRegionName,
                                      bool const initFlag ) const override;
 
   virtual void registerBoundaryStencil( Group & stencilGroup,
-                                        string const & setName ) const override;
+                                        std::string const & setName ) const override;
 
   virtual void computeBoundaryStencil( MeshLevel & mesh,
-                                       string const & setName,
+                                       std::string const & setName,
                                        SortedArrayView< localIndex const > const & faceSet ) const override;
 
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const override;
+                                           std::string const & embeddedSurfaceRegionName ) const override;
 
 
 };

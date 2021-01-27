@@ -33,7 +33,7 @@ public:
    * @brief Build the VTM Writer
    * @param[in] filePath path to the file
    */
-  VTKVTMWriter( string const & filePath );
+  VTKVTMWriter( std::string const & filePath );
 
   /*!
    * @brief Triggers the file output
@@ -46,7 +46,7 @@ public:
    * be CellElementRegion, FaceElementRegion or WellElementREgion)
    * @param[in] blockName Name of the block
    */
-  void addBlock( string const & blockName ) const;
+  void addBlock( std::string const & blockName ) const;
 
   /*!
    * @brief Add a subblock to the VTM file
@@ -54,7 +54,7 @@ public:
    * @param[in] blockName Name of the parent block
    * @param[in] subBlockName Name of the subBlock (usually the name of the Region)
    */
-  void addSubBlock( string const & blockName, string const & subBlockName ) const;
+  void addSubBlock( std::string const & blockName, std::string const & subBlockName ) const;
 
   /*!
    * @brief Add data to the subblock \p subBlockName
@@ -64,7 +64,7 @@ public:
    * @param[in] filePath path to the vtu file containing the unstructured mesh
    * @param[in] mpiRank the mpi rank.
    */
-  void addDataToSubBlock( string const & blockName, string const & subBlockName, string const & filePath, int mpiRank ) const;
+  void addDataToSubBlock( std::string const & blockName, std::string const & subBlockName, std::string const & filePath, int mpiRank ) const;
 
 private:
 
@@ -72,7 +72,7 @@ private:
   xmlWrapper::xmlDocument m_vtmFile;
 
   /// Path to the XML File
-  string const m_filePath;
+  std::string const m_filePath;
 };
 }
 }

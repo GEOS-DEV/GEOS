@@ -37,7 +37,7 @@ public:
    * @param name the name of the FieldSpecificationBase in the data repository
    * @param parent the parent group of this group.
    */
-  SourceFluxBoundaryCondition( string const & name, dataRepository::Group * const parent );
+  SourceFluxBoundaryCondition( std::string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief destructor
@@ -62,7 +62,7 @@ public:
    */
   static string catalogName() { return "SourceFlux"; }
 
-  virtual string const getCatalogName() const override
+  virtual std::string const getCatalogName() const override
   {
     return SourceFluxBoundaryCondition::catalogName();
   }

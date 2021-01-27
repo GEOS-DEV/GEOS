@@ -248,7 +248,7 @@ public:
   struct groupKeyStruct
   {} solidMechanicsGroupKeys;
 
-  arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
+  arrayView1d< std::string const > solidMaterialNames() const { return m_solidMaterialNames; }
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -333,7 +333,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
 
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  std::string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
   resetStressToBeginningOfStep( domain );

@@ -590,7 +590,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
-    string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
+    std::string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
@@ -655,7 +655,7 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   dofNumberAccessor = elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofKey );
@@ -761,7 +761,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   //  Apply Dirichlet BC for proppant concentration
@@ -771,10 +771,10 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                    "ElementRegions",
                    viewKeyStruct::proppantConcentrationString,
                    [&]( FieldSpecificationBase const * const fs,
-                        string const &,
+                        std::string const &,
                         SortedArrayView< localIndex const > const & lset,
                         Group * const subRegion,
-                        string const & )
+                        std::string const & )
   {
     arrayView1d< globalIndex const > const
     dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );
@@ -812,13 +812,13 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                      "ElementRegions",
                      viewKeyStruct::proppantConcentrationString,
                      [&]( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( fs ),
-                          string const & setName,
+                          std::string const & setName,
                           SortedArrayView< localIndex const > const & GEOSX_UNUSED_PARAM( targetSet ),
                           Group * const subRegion,
-                          string const & )
+                          std::string const & )
     {
 
-      string const & subRegionName = subRegion->getName();
+      std::string const & subRegionName = subRegion->getName();
       GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
       bcStatusMap[subRegionName][setName].resize( NC );
       bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
@@ -830,13 +830,13 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                      "ElementRegions",
                      viewKeyStruct::componentConcentrationString,
                      [&] ( FieldSpecificationBase const * const fs,
-                           string const & setName,
+                           std::string const & setName,
                            SortedArrayView< localIndex const > const & targetSet,
                            Group * const subRegion,
-                           string const & )
+                           std::string const & )
     {
 
-      string const & subRegionName = subRegion->getName();
+      std::string const & subRegionName = subRegion->getName();
       localIndex const comp = fs->getComponent();
 
       GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Proppant boundary condition not prescribed on set '" << setName << "'" );
@@ -872,10 +872,10 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                      "ElementRegions",
                      viewKeyStruct::proppantConcentrationString,
                      [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( bc ),
-                           string const & GEOSX_UNUSED_PARAM( setName ),
+                           std::string const & GEOSX_UNUSED_PARAM( setName ),
                            SortedArrayView< localIndex const > const & targetSet,
                            Group * const subRegion,
-                           string const & )
+                           std::string const & )
     {
       arrayView1d< integer const > const ghostRank =
         subRegion->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -923,7 +923,7 @@ ProppantTransport::calculateResidualNorm( DomainPartition const & domain,
   localIndex const NDOF = m_numDofPerCell;
 
   localIndex const rankOffset = dofManager.rankOffset();
-  string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
+  std::string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm = 0.0;

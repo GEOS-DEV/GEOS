@@ -82,7 +82,7 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups( Group * c
   elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
     // get the string to access the permeability
-    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString;
+    std::string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString;
 
     PerforationData * const perforationData = subRegion.getPerforationData();
 
@@ -140,8 +140,8 @@ void ReservoirSolverBase::addCouplingNumNonzeros( DomainPartition & domain,
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
-  string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
-  string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
+  std::string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
+  std::string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resElemDofNumber =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );

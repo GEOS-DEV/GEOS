@@ -55,7 +55,7 @@ public:
    * @brief Constructor
    * @param[in] outputName folder name in which all the files will be written
    */
-  VTKPolyDataWriterInterface( string const & outputName );
+  VTKPolyDataWriterInterface( std::string const & outputName );
 
   /*!
    * @brief Sets the plot level
@@ -264,12 +264,12 @@ private:
    * @param[in] time the current time-step
    * @param[in] name the name of the ElementRegionBase to be written
    */
-  void writeUnstructuredGrid( vtkSmartPointer< vtkUnstructuredGrid > ug, double time, string const & name ) const;
+  void writeUnstructuredGrid( vtkSmartPointer< vtkUnstructuredGrid > ug, double time, std::string const & name ) const;
 
 private:
 
   /// Folder name in which all the files will be written
-  string const m_outputFolder;
+  std::string const m_outputFolder;
 
   /// A writter specialized for PVD files. There is one PVD file per simulation. It is the root
   /// file containing all the paths to the VTM files.

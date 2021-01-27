@@ -256,7 +256,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
       fluidWrapper.update( 0, 0, P, T, compNew );
 
-      string const var = "compFrac[" + components[jc] + "]";
+      std::string const var = "compFrac[" + components[jc] + "]";
       checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
       checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC[jc], dC, relTol, absTol, "phaseDens", var, phases );
       checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC[jc], dC, relTol, absTol, "phaseVisc", var, phases );
@@ -267,7 +267,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   } );
 }
 
-MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
+MultiFluidBase * makeCompositionalFluid( std::string const & name, Group & parent )
 {
   auto fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
 
@@ -356,7 +356,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
   testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
 }
 
-MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
+MultiFluidBase * makeLiveOilFluid( std::string const & name, Group * parent )
 {
   auto fluid = parent->registerGroup< BlackOilFluid >( name );
 
@@ -389,7 +389,7 @@ MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
   return fluid;
 }
 
-MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
+MultiFluidBase * makeDeadOilFluid( std::string const & name, Group * parent )
 {
   auto fluid = parent->registerGroup< BlackOilFluid >( name );
 

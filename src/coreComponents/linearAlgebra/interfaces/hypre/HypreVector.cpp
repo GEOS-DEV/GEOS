@@ -425,7 +425,7 @@ void HypreVector::print( std::ostream & os ) const
   }
 }
 
-void HypreVector::write( string const & filename,
+void HypreVector::write( std::string const & filename,
                          LAIOutputFormat const format ) const
 {
   GEOSX_LAI_ASSERT( ready() );

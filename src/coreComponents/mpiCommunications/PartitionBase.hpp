@@ -109,7 +109,7 @@ public:
 
   //virtual void AssignGlobalIndices( DomainPartition * domain );
 
-//  virtual void FindMatchedBoundaryIndices( string const & key,
+//  virtual void FindMatchedBoundaryIndices( std::string const & key,
 //                                           const ObjectManagerBase& object );
 
 

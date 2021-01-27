@@ -58,7 +58,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  WellElementSubRegion( string const & name,
+  WellElementSubRegion( std::string const & name,
                         Group * const parent );
 
   /**
@@ -77,12 +77,12 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string const catalogName() { return "wellElementSubRegion"; }
+  static std::string const catalogName() { return "wellElementSubRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual string const getCatalogName() const override { return WellElementSubRegion::catalogName(); }
+  virtual std::string const getCatalogName() const override { return WellElementSubRegion::catalogName(); }
 
   ///@}
 
@@ -168,7 +168,7 @@ public:
    * @brief Set the name of the WellControls object of this well.
    * @param[in] name the name of the WellControls object
    */
-  void setWellControlsName( string const & name )
+  void setWellControlsName( std::string const & name )
   {
     m_wellControlsName = name;
   }
@@ -177,7 +177,7 @@ public:
    * @brief Get the name of the WellControls object of this well.
    * @return a string containing the name of the WellControls object
    */
-  string const & getWellControlsName() const
+  std::string const & getWellControlsName() const
   {
     return m_wellControlsName;
   }

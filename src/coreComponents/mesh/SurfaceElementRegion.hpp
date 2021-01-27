@@ -61,7 +61,7 @@ public:
    * @param name the name of the object in the data hierarchy.
    * @param parent a pointer to the parent group in the data hierarchy.
    */
-  SurfaceElementRegion( string const & name, Group * const parent );
+  SurfaceElementRegion( std::string const & name, Group * const parent );
 
   /**
    * @brief Deleted default constructor.
@@ -84,10 +84,10 @@ public:
    * @brief Get the key name for the SurfaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "SurfaceElementRegion"; }
 
-  virtual string const getCatalogName() const override final
+  virtual std::string const getCatalogName() const override final
   { return SurfaceElementRegion::catalogName(); }
 
   ///@}
@@ -114,7 +114,7 @@ public:
                                 EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
-                                string const & subRegionName,
+                                std::string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
   ///@}

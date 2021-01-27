@@ -28,7 +28,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-SolidBase::SolidBase( string const & name,
+SolidBase::SolidBase( std::string const & name,
                       Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_defaultDensity( 0 ),

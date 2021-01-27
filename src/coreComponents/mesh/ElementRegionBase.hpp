@@ -54,7 +54,7 @@ public:
    * @param name the name of the element region
    * @param parent the pointer to the parent group
    */
-  ElementRegionBase( string const & name, Group * const parent );
+  ElementRegionBase( std::string const & name, Group * const parent );
 
 
   /**
@@ -118,16 +118,16 @@ public:
    * @note
    */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE const * getSubRegion( string const & regionName ) const
+  SUBREGIONTYPE const * getSubRegion( std::string const & regionName ) const
   {
     return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
   }
 
   /**
-   * @copydoc getSubRegion( string const & regionName ) const
+   * @copydoc getSubRegion( std::string const & regionName ) const
    */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE * getSubRegion( string const & regionName )
+  SUBREGIONTYPE * getSubRegion( std::string const & regionName )
   {
     return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
   }
@@ -353,7 +353,7 @@ template< typename CONSTITUTIVE_TYPE >
 string_array ElementRegionBase::getConstitutiveNames() const
 {
   string_array rval;
-  for( string const & matName : m_materialList )
+  for( std::string const & matName : m_materialList )
   {
     Group const * const matModel = this->getSubRegion( 0 )->getConstitutiveModels()->getGroup( matName );
     if( dynamic_cast< CONSTITUTIVE_TYPE const * >( matModel ) != nullptr )

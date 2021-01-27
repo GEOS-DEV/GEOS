@@ -45,14 +45,14 @@ public:
    * @brief Return the name of the aggregate element sub-region in the object catalog.
    * @return string that contains the AggregateElementSubRegion catalog name
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "AggregateCell"; }
 
   /**
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the AggregateElementSubRegion catalog name
    */
-  virtual string const getCatalogName() const override
+  virtual std::string const getCatalogName() const override
   {
     return AggregateElementSubRegion::catalogName();
   }
@@ -95,7 +95,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  AggregateElementSubRegion( string const & name,
+  AggregateElementSubRegion( std::string const & name,
                              dataRepository::Group * const parent );
   /**
    * @brief Destructor.

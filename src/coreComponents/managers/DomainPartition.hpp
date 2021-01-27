@@ -192,7 +192,7 @@ public:
    * @param meshName The name of the MeshBody.
    * @return Pointer to a const MeshBody instance matching @p meshName.
    */
-  MeshBody const * getMeshBody( string const & meshName ) const
+  MeshBody const * getMeshBody( std::string const & meshName ) const
   { return this->getGroup( groupKeys.meshBodies )->getGroup< MeshBody >( meshName ); }
 
   /**
@@ -200,7 +200,7 @@ public:
    * @param meshName The name of the MeshBody.
    * @return Pointer to a const MeshBody instance matching @p meshName.
    */
-  MeshBody * getMeshBody( string const & meshName )
+  MeshBody * getMeshBody( std::string const & meshName )
   { return this->getGroup( groupKeys.meshBodies )->getGroup< MeshBody >( meshName ); }
 
   /**

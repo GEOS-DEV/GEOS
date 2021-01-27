@@ -23,7 +23,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, Group * const parent ):
+SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( std::string const & name, Group * const parent ):
   FieldSpecificationBase( name, parent )
 {
   m_normalizeBySetSize = true;
@@ -42,6 +42,6 @@ void SourceFluxBoundaryCondition::initializePreSubGroups( Group * const rootGrou
 }
 
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, SourceFluxBoundaryCondition, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationBase, SourceFluxBoundaryCondition, std::string const &, Group * const )
 
 } /* namespace geosx */

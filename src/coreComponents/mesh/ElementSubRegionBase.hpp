@@ -53,7 +53,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
+  ElementSubRegionBase( std::string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief Destructor.
@@ -209,16 +209,16 @@ public:
    * @return A pointer to the constitutive model.
    */
   template< typename T = constitutive::ConstitutiveBase >
-  T const * getConstitutiveModel( string const & name ) const
+  T const * getConstitutiveModel( std::string const & name ) const
   {
     return m_constitutiveModels.getGroup< T >( name );
   }
 
   /**
-   * @copydoc getConstitutiveModel( string const & ) const
+   * @copydoc getConstitutiveModel( std::string const & ) const
    */
   template< typename T = constitutive::ConstitutiveBase >
-  T * getConstitutiveModel( string const & name )
+  T * getConstitutiveModel( std::string const & name )
   {
     return m_constitutiveModels.getGroup< T >( name );
   }
@@ -236,7 +236,7 @@ public:
    * @brief Set the type of element in this subregion.
    * @param[in] elementType a string specifying the element type
    */
-  virtual void setElementType( string const & elementType );
+  virtual void setElementType( std::string const & elementType );
 
   /**
    * @brief Get the VTK ordering for this subregion.

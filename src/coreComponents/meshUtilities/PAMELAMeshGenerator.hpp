@@ -75,7 +75,7 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   virtual void generateMesh( DomainPartition * const domain ) override;
 
@@ -143,7 +143,7 @@ public:
      * @param[in] regionCellType the type of the cells (TETRA, HEX, WEDGE or PYRAMID)
      * @return the region label
      */
-    static string makeRegionLabel( string const & regionName, string const & regionCellType )
+    static string makeRegionLabel( std::string const & regionName, std::string const & regionCellType )
     {
       return regionName + m_separator + regionCellType;
     }
@@ -154,13 +154,13 @@ public:
      * @param[in] pamelaLabel the surface or region label within PAMELA
      * @return the name of the surface or the region
      */
-    static string retrieveSurfaceOrRegionName( string const & pamelaLabel )
+    static string retrieveSurfaceOrRegionName( std::string const & pamelaLabel )
     {
       string_array const splitLabel = stringutilities::Tokenize( pamelaLabel, m_separator );
       return splitLabel[splitLabel.size() -2 ];
     }
 private:
-    static string const m_separator;
+    static std::string const m_separator;
   };
 };
 

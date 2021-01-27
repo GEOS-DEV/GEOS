@@ -29,7 +29,7 @@ namespace dataRepository
 {
 
 template< typename T >
-Wrapper< array1d< T > > * createArrayView( Group * parent, string const & name,
+Wrapper< array1d< T > > * createArrayView( Group * parent, std::string const & name,
                                            int sfp, const array1d< T > & data )
 {
   Wrapper< array1d< T > > * view = parent->registerWrapper< array1d< T > >( name );
@@ -65,7 +65,7 @@ void checkArrayView( const Wrapper< array1d< T > > * view, int sfp, const array1
 }
 
 template< typename T >
-Wrapper< array2d< T > > * createArray2dView( Group * parent, string const & name,
+Wrapper< array2d< T > > * createArray2dView( Group * parent, std::string const & name,
                                              int sfp, const array2d< T > & data )
 {
   Wrapper< array2d< T > > * view = parent->registerWrapper< array2d< T > >( name );
@@ -113,7 +113,7 @@ void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const arra
 
 
 template< typename T >
-Wrapper< SortedArray< T > > * createSetView( Group * parent, string const & name,
+Wrapper< SortedArray< T > > * createSetView( Group * parent, std::string const & name,
                                              localIndex sfp, const SortedArray< T > & data )
 {
   Wrapper< SortedArray< T > > * view = parent->registerWrapper< SortedArray< T > >( name );
@@ -142,8 +142,8 @@ void checkSetView( const Wrapper< SortedArray< T > > * view, localIndex sfp, con
 }
 
 
-Wrapper< string > * createStringView( Group * parent, string const & name,
-                                      int sfp, string const & str )
+Wrapper< string > * createStringView( Group * parent, std::string const & name,
+                                      int sfp, std::string const & str )
 {
   Wrapper< string > * view = parent->registerWrapper< string >( name );
   view->setSizedFromParent( sfp );
@@ -158,14 +158,14 @@ Wrapper< string > * createStringView( Group * parent, string const & name,
 }
 
 
-void checkStringView( const Wrapper< string > * view, const int sfp, string const & str )
+void checkStringView( const Wrapper< string > * view, const int sfp, std::string const & str )
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->reference(), str );
 }
 
 
-Wrapper< string_array > * createStringArrayView( Group * parent, string const & name,
+Wrapper< string_array > * createStringArrayView( Group * parent, std::string const & name,
                                                  int sfp, const string_array & arr )
 {
   Wrapper< string_array > * view = parent->registerWrapper< string_array >( name );
@@ -189,7 +189,7 @@ void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, 
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), arr.size() );
-  arrayView1d< string const > const & view_data = view->reference();
+  arrayView1d< std::string const > const & view_data = view->reference();
   for( int i = 0; i < view->size(); i++ )
   {
     EXPECT_EQ( view_data[i], arr[i] );
@@ -198,7 +198,7 @@ void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, 
 
 
 template< typename T >
-Wrapper< T > * createScalarView( Group * parent, string const & name,
+Wrapper< T > * createScalarView( Group * parent, std::string const & name,
                                  int sfp, const T & value )
 {
   Wrapper< T > * view = parent->registerWrapper< T >( name );
@@ -224,7 +224,7 @@ void checkScalarView( const Wrapper< T > * view, int sfp, const T value )
 
 TEST( testRestartExtended, testRestartExtended )
 {
-  string const path = "testRestartExtended";
+  std::string const path = "testRestartExtended";
   const int group_size = 44;
   int sfp = 55;
 

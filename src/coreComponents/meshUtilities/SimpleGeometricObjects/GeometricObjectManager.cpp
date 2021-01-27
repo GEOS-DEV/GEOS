@@ -35,7 +35,7 @@ GeometricObjectManager::GeometricObjectManager( std::string const & name,
 GeometricObjectManager::~GeometricObjectManager()
 {}
 
-Group * GeometricObjectManager::createChild( string const & childKey, string const & childName )
+Group * GeometricObjectManager::createChild( std::string const & childKey, std::string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Geometric Object: " << childKey << ", " << childName );
   std::unique_ptr< SimpleGeometricObjectBase > geometriObject = SimpleGeometricObjectBase::CatalogInterface::factory( childKey, childName, this );

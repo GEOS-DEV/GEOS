@@ -41,7 +41,7 @@ MultiFluidPVTPackageWrapper::~MultiFluidPVTPackageWrapper()
 namespace
 {
 
-pvt::PHASE_TYPE getPVTPackagePhaseType( string const & name )
+pvt::PHASE_TYPE getPVTPackagePhaseType( std::string const & name )
 {
   static std::map< string, pvt::PHASE_TYPE > const phaseTypes{
     { "gas", pvt::PHASE_TYPE::GAS },
@@ -70,7 +70,7 @@ void MultiFluidPVTPackageWrapper::initializePostSubGroups( Group * const group )
 }
 
 std::unique_ptr< ConstitutiveBase >
-MultiFluidPVTPackageWrapper::deliverClone( string const & name,
+MultiFluidPVTPackageWrapper::deliverClone( std::string const & name,
                                            Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );

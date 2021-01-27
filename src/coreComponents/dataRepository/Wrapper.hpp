@@ -176,7 +176,7 @@ public:
   ///@{
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual std::unique_ptr< WrapperBase > clone( string const & name,
+  virtual std::unique_ptr< WrapperBase > clone( std::string const & name,
                                                 Group * const parent ) override
   {
     std::unique_ptr< WrapperBase >
@@ -902,7 +902,7 @@ public:
   /**
    * @copydoc WrapperBase::setDescription(string const &)
    */
-  Wrapper< T > * setDescription( string const & description )
+  Wrapper< T > * setDescription( std::string const & description )
   {
     WrapperBase::setDescription( description );
     return this;
@@ -911,7 +911,7 @@ public:
   /**
    * @copydoc WrapperBase::setRegisteringObjects(string const &)
    */
-  Wrapper< T > * setRegisteringObjects( string const & objectName )
+  Wrapper< T > * setRegisteringObjects( std::string const & objectName )
   {
     WrapperBase::setRegisteringObjects( objectName );
     return this;

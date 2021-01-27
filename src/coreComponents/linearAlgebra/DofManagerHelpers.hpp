@@ -785,8 +785,8 @@ struct IndexArrayHelper
   template< typename ... SUBREGIONTYPES >
   static void
   create( Mesh * const mesh,
-          string const & key,
-          string const & description,
+          std::string const & key,
+          std::string const & description,
           std::vector< std::string > const & GEOSX_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase & baseManager = getObjectManager< LOC >( mesh );
@@ -797,7 +797,7 @@ struct IndexArrayHelper
       setDescription( description );
   }
 
-  static Accessor get( Mesh * const mesh, string const & key )
+  static Accessor get( Mesh * const mesh, std::string const & key )
   {
     return getObjectManager< LOC >( mesh ).template getReference< ArrayType >( key );
   }
@@ -815,7 +815,7 @@ struct IndexArrayHelper
   template< typename ... SUBREGIONTYPES >
   static void
   remove( Mesh * const mesh,
-          string const & key,
+          std::string const & key,
           std::vector< std::string > const & GEOSX_UNUSED_PARAM( regions ) )
   {
     getObjectManager< LOC >( mesh ).deregisterWrapper( key );
@@ -837,8 +837,8 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
   template< typename ... SUBREGIONTYPES >
   static void
   create( Mesh * const mesh,
-          string const & key,
-          string const & description,
+          std::string const & key,
+          std::string const & description,
           std::vector< std::string > const & regions )
   {
     mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions,
@@ -853,7 +853,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
     } );
   }
 
-  static Accessor get( Mesh * const mesh, string const & key )
+  static Accessor get( Mesh * const mesh, std::string const & key )
   {
     return mesh->getElemManager()->template constructViewAccessor< ArrayType, ViewType >( key );
   }
@@ -877,7 +877,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
   template< typename ... SUBREGIONTYPES >
   static void
   remove( Mesh * const mesh,
-          string const & key,
+          std::string const & key,
           std::vector< std::string > const & regions )
   {
     mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions,

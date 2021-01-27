@@ -241,7 +241,7 @@ localIndex countLocalObjects( MeshLevel const * const mesh, array1d< string > co
  */
 template< typename MATRIX >
 void makeSparsityTPFA( MeshLevel const * const mesh,
-                       string const & dofIndexKey,
+                       std::string const & dofIndexKey,
                        string_array const & regions,
                        localIndex const numComp,
                        MATRIX & sparsity )
@@ -301,7 +301,7 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
  */
 template< typename MATRIX >
 void makeSparsityFEM( MeshLevel const * const mesh,
-                      string const & dofIndexKey,
+                      std::string const & dofIndexKey,
                       string_array const & regions,
                       localIndex const numComp,
                       MATRIX & sparsity )
@@ -351,8 +351,8 @@ void makeSparsityFEM( MeshLevel const * const mesh,
  */
 template< typename MATRIX >
 void makeSparsityFEM_FVM( MeshLevel const * const mesh,
-                          string const & dofIndexKeyNode,
-                          string const & dofIndexKeyElem,
+                          std::string const & dofIndexKeyNode,
+                          std::string const & dofIndexKeyElem,
                           string_array const & regions,
                           localIndex const numCompNode,
                           localIndex const numCompElem,
@@ -413,7 +413,7 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
  */
 template< typename MATRIX >
 void makeSparsityMass( MeshLevel const * const mesh,
-                       string const & dofIndexKey,
+                       std::string const & dofIndexKey,
                        string_array const & regions,
                        localIndex const numComp,
                        MATRIX & sparsity )
@@ -447,7 +447,7 @@ void makeSparsityMass( MeshLevel const * const mesh,
  */
 template< typename MATRIX >
 void makeSparsityFlux( MeshLevel const * const mesh,
-                       string const & dofIndexKey,
+                       std::string const & dofIndexKey,
                        string_array const & regions,
                        localIndex const numComp,
                        MATRIX & sparsity )

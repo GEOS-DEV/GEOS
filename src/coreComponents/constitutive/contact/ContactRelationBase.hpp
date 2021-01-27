@@ -47,7 +47,7 @@ public:
    * @param name The name of the relation in the data repository
    * @param parent The name of the parent Group that holds this relation object.
    */
-  ContactRelationBase( string const & name,
+  ContactRelationBase( std::string const & name,
                        Group * const parent );
 
   /**
@@ -63,8 +63,8 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual Group * createChild( string const & catalogKey,
-                               string const & name ) override;
+  virtual Group * createChild( std::string const & catalogKey,
+                               std::string const & name ) override;
 
 
   /**

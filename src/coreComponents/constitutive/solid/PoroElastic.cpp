@@ -31,7 +31,7 @@ namespace constitutive
 {
 
 template< typename BASE >
-PoroElastic< BASE >::PoroElastic( string const & name, Group * const parent ):
+PoroElastic< BASE >::PoroElastic( std::string const & name, Group * const parent ):
   BASE( name, parent ),
   m_compressibility(),
   m_referencePressure(),
@@ -76,7 +76,7 @@ void PoroElastic< BASE >::postProcessInput()
 
   if( m_compressibility <= 0 )
   {
-//    string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2
+//    std::string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2
 // constants!";
 //    GEOSX_ERROR( message );
   }
@@ -86,7 +86,7 @@ void PoroElastic< BASE >::postProcessInput()
 
 template< typename BASE >
 std::unique_ptr< ConstitutiveBase >
-PoroElastic< BASE >::deliverClone( string const & name,
+PoroElastic< BASE >::deliverClone( std::string const & name,
                                    dataRepository::Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = BASE::deliverClone( name, parent );
@@ -133,9 +133,9 @@ typedef PoroElastic< LinearElasticIsotropic > PoroLinearElasticIsotropic;
 typedef PoroElastic< LinearElasticAnisotropic > PoroLinearElasticAnisotropic;
 typedef PoroElastic< LinearElasticTransverseIsotropic > PoroLinearElasticTransverseIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticTransverseIsotropic, std::string const &, Group * const )
 
 }
 } /* namespace geosx */

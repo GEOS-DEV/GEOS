@@ -48,14 +48,14 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "FaceElementSubRegion"; }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual string const getCatalogName() const override
+  virtual std::string const getCatalogName() const override
   {
     return FaceElementSubRegion::catalogName();
   }
@@ -72,7 +72,7 @@ public:
    * @param name the group name
    * @param parent the parent group
    */
-  FaceElementSubRegion( string const & name,
+  FaceElementSubRegion( std::string const & name,
                         dataRepository::Group * const parent );
 
 

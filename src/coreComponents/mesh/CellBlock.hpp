@@ -57,13 +57,13 @@ public:
    * @brief Const getter for the catalog name.
    * @return the name of this type in the catalog
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "CellBlock"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual string const getCatalogName() const override final
+  virtual std::string const getCatalogName() const override final
   { return CellBlock::catalogName(); }
 
   ///@}
@@ -83,7 +83,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  CellBlock( string const & name, Group * const parent );
+  CellBlock( std::string const & name, Group * const parent );
 
   /**
    * @brief Copy constructor.
@@ -177,7 +177,7 @@ public:
    */
   ///@{
 
-  virtual void setElementType( string const & elementType ) override;
+  virtual void setElementType( std::string const & elementType ) override;
 
   /**
    * @brief Get the number of the nodes in a face of the element.
@@ -271,7 +271,7 @@ public:
    * @return a non-const reference to the property
    */
   template< typename T >
-  T & addProperty( string const & propertyName )
+  T & addProperty( std::string const & propertyName )
   {
     m_externalPropertyNames.emplace_back( propertyName );
     return this->registerWrapper< T >( propertyName )->reference();

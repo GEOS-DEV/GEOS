@@ -371,7 +371,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups( Group * cons
             localIndex iEle = faceToElementMap[kf][k];
 
             ElementRegionBase * const elementRegion = elementSubRegion->getParent()->getParent()->groupCast< ElementRegionBase * >();
-            string const elementRegionName = elementRegion->getName();
+            std::string const elementRegionName = elementRegion->getName();
             //          localIndex const er = elementManager->GetRegions().getIndex( elementRegionName );
             //          localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
 
@@ -1916,7 +1916,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
       CellElementSubRegion & elemSubRegion = *(elem.first);
       ElementRegionBase * const elemRegion = elemSubRegion.getParent()->getParent()->groupCast< ElementRegionBase * >();
-      string const elemRegionName = elemRegion->getName();
+      std::string const elemRegionName = elemRegion->getName();
 
       localIndex const regionIndex = elementManager.getRegions().getIndex( elemRegionName );
       localIndex const subRegionIndex = elemRegion->getSubRegions().getIndex( elemSubRegion.getName() );

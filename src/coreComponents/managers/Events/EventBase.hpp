@@ -100,7 +100,7 @@ public:
    * </Events>
    * @endcode
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /**
    * @brief Expand any catalogs in the data structure.

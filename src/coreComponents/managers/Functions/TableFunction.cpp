@@ -82,7 +82,7 @@ TableFunction::~TableFunction()
 
 
 template< typename T >
-void TableFunction::parseFile( array1d< T > & target, string const & filename, char delimiter )
+void TableFunction::parseFile( array1d< T > & target, std::string const & filename, char delimiter )
 {
   std::ifstream inputStream( filename.c_str());
   std::string lineString;

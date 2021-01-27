@@ -44,7 +44,7 @@ WellSolverBase::WellSolverBase( std::string const & name,
     setInputFlag( InputFlags::FALSE );
 }
 
-Group * WellSolverBase::createChild( string const & childKey, string const & childName )
+Group * WellSolverBase::createChild( std::string const & childKey, std::string const & childName )
 {
   Group * rval = nullptr;
 
@@ -262,7 +262,7 @@ void WellSolverBase::resetViews( DomainPartition & domain )
 
 WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion )
 {
-  string const & name = subRegion.getWellControlsName();
+  std::string const & name = subRegion.getWellControlsName();
 
   WellControls * wellControls = this->getGroup< WellControls >( name );
   GEOSX_ERROR_IF( wellControls == nullptr, "Well constraint " + name + " not found" );
@@ -272,7 +272,7 @@ WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & sub
 
 WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion ) const
 {
-  string const & name = subRegion.getWellControlsName();
+  std::string const & name = subRegion.getWellControlsName();
 
   WellControls const * wellControls = this->getGroup< WellControls >( name );
   GEOSX_ERROR_IF( wellControls == nullptr, "Well constraint " + name + " not found" );
@@ -280,7 +280,7 @@ WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const
   return *wellControls;
 }
 
-std::vector< string > WellSolverBase::getConstitutiveRelations( string const & regionName ) const
+std::vector< string > WellSolverBase::getConstitutiveRelations( std::string const & regionName ) const
 {
 
   localIndex const regionIndex = this->targetRegionIndex( regionName );

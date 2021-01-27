@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-Perforation::Perforation( string const & name, Group * const parent )
+Perforation::Perforation( std::string const & name, Group * const parent )
   : Group( name, parent ),
   m_distanceFromHead( 0 ),
   m_wellTransmissibility( 0 )

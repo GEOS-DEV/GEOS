@@ -45,7 +45,7 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
-                              string const dofKey,
+                              std::string const dofKey,
                               ParallelMatrix & permutationMatrix );
 
 /**
@@ -61,7 +61,7 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
-                              string const DofKey,
+                              std::string const DofKey,
                               ParallelMatrix & permutationMatrix );
 
 /**
@@ -173,7 +173,7 @@ void ComputeRigidBodyModes( MeshLevel const & mesh,
   {
     if( dofManager.getLocation( selection[k] ) == DofManager::Location::Node )
     {
-      string const & dispDofKey = dofManager.getKey( selection[k] );
+      std::string const & dispDofKey = dofManager.getKey( selection[k] );
       arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
       localIndex const numComponentsField = dofManager.numComponents( selection[k] );
       numComponents = numComponents > 0 ? numComponents : numComponentsField;

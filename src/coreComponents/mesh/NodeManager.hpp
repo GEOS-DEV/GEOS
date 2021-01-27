@@ -141,7 +141,7 @@ public:
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the NodeManager catalog name
    */
-  string const getCatalogName() const override final
+  std::string const getCatalogName() const override final
   { return NodeManager::catalogName(); }
 
   ///@}

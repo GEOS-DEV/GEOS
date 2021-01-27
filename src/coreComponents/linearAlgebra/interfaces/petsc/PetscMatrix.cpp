@@ -928,7 +928,7 @@ void PetscMatrix::print( std::ostream & os ) const
   GEOSX_LAI_CHECK_ERROR( MatView( m_mat, PETSC_VIEWER_STDOUT_( getComm() ) ) );
 }
 
-void PetscMatrix::write( string const & filename,
+void PetscMatrix::write( std::string const & filename,
                          LAIOutputFormat const format ) const
 {
   GEOSX_LAI_ASSERT( ready() );

@@ -30,7 +30,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-FiniteVolumeManager::FiniteVolumeManager( string const & name, Group * const parent )
+FiniteVolumeManager::FiniteVolumeManager( std::string const & name, Group * const parent )
   : Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
@@ -39,7 +39,7 @@ FiniteVolumeManager::FiniteVolumeManager( string const & name, Group * const par
 FiniteVolumeManager::~FiniteVolumeManager()
 {}
 
-Group * FiniteVolumeManager::createChild( string const & childKey, string const & childName )
+Group * FiniteVolumeManager::createChild( std::string const & childKey, std::string const & childName )
 {
   if( childKey == HybridMimeticDiscretization::catalogName() )
   {
@@ -64,7 +64,7 @@ void FiniteVolumeManager::expandObjectCatalogs()
   // Then do the same thing for the HybridMimeticDiscretization
   for( auto & catalogIter: HybridMimeticDiscretization::getCatalog())
   {
-    string const childName = catalogIter.first;
+    std::string const childName = catalogIter.first;
     std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
     this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
   }

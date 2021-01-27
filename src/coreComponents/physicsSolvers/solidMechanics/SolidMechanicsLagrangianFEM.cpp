@@ -674,7 +674,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                                                arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
 
@@ -683,10 +683,10 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                    "nodeManager",
                    keys::TotalDisplacement,
                    [&]( FieldSpecificationBase const * const bc,
-                        string const &,
+                        std::string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group * const targetGroup,
-                        string const fieldName )
+                        std::string const fieldName )
   {
     bc->applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                         parallelDevicePolicy< 32 > >( targetSet,
@@ -715,7 +715,7 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
   arrayView1d< real64 const > const faceArea  = faceManager.getReference< real64_array >( "faceArea" );
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   globalIndex const dofRankOffset = dofManager.rankOffset();
@@ -725,12 +725,12 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
                    "faceManager",
                    string( "Traction" ),
                    [&]( FieldSpecificationBase const * const bc,
-                        string const &,
+                        std::string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group * const,
-                        string const & )
+                        std::string const & )
   {
-    string const & functionName = bc->getFunctionName();
+    std::string const & functionName = bc->getFunctionName();
 
     globalIndex_array nodeDOF;
     real64_array nodeRHS;
@@ -795,7 +795,7 @@ void SolidMechanicsLagrangianFEM::applyChomboPressure( DofManager const & dofMan
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   arrayView1d< real64 const > const facePressure = faceManager.getReference< array1d< real64 > >( "ChomboPressure" );
@@ -1098,17 +1098,17 @@ SolidMechanicsLagrangianFEM::
   FaceManager & faceManager = *mesh.getFaceManager();
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   fsManager.apply( time_n + dt,
                    &domain,
                    "nodeManager",
                    keys::Force,
                    [&]( FieldSpecificationBase const * const bc,
-                        string const &,
+                        std::string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group * const targetGroup,
-                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
+                        std::string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
     bc->applyBoundaryConditionToSystem< FieldSpecificationAdd,
                                         parallelDevicePolicy< 32 > >( targetSet,
@@ -1335,7 +1335,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
     arrayView2d< real64 const > const faceNormal = faceManager->faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager->nodeList().toViewConst();
 
-    string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+    std::string const dofKey = dofManager.getKey( keys::TotalDisplacement );
     arrayView1d< globalIndex > const nodeDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -1441,7 +1441,7 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
 //  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
 //  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
 //
-//  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+//  std::string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 //  arrayView1d<globalIndex> const & nodeDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 //
 //  globalIndex const rankOffset = dofManager.rankOffset();
@@ -1506,5 +1506,5 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   return scalingFactor;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, std::string const &, dataRepository::Group * const )
 }

@@ -47,7 +47,7 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;
 
 std::unique_ptr< ConstitutiveBase >
-PoreVolumeCompressibleSolid::deliverClone( string const & name,
+PoreVolumeCompressibleSolid::deliverClone( std::string const & name,
                                            Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
@@ -76,7 +76,7 @@ void PoreVolumeCompressibleSolid::postProcessInput()
 {
   if( m_compressibility < 0.0 )
   {
-    string const message = "An invalid value of fluid bulk modulus (" + std::to_string( m_compressibility ) + ") is specified";
+    std::string const message = "An invalid value of fluid bulk modulus (" + std::to_string( m_compressibility ) + ") is specified";
     GEOSX_ERROR( message );
   }
   m_poreVolumeRelation.setCoefficients( m_referencePressure, 1.0, m_compressibility );

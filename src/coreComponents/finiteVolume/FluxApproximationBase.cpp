@@ -27,7 +27,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-FluxApproximationBase::FluxApproximationBase( string const & name, Group * const parent )
+FluxApproximationBase::FluxApproximationBase( std::string const & name, Group * const parent )
   : Group( name, parent ),
   m_lengthScale( 1.0 )
 {
@@ -83,10 +83,10 @@ void FluxApproximationBase::registerDataOnMesh( Group * const meshBodies )
                        "faceManager",
                        m_fieldName,
                        [&] ( FieldSpecificationBase const *,
-                             string const & setName,
+                             std::string const & setName,
                              SortedArrayView< localIndex const > const &,
                              Group const *,
-                             string const & )
+                             std::string const & )
       {
         registerBoundaryStencil( stencilGroup, setName );
       } );
@@ -124,10 +124,10 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups( Group *
                        "faceManager",
                        m_fieldName,
                        [&] ( FieldSpecificationBase const *,
-                             string const & setName,
+                             std::string const & setName,
                              SortedArrayView< localIndex const > const & faceSet,
                              Group const *,
-                             string const & )
+                             std::string const & )
       {
         computeBoundaryStencil( mesh, setName, faceSet );
       } );

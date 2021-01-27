@@ -923,7 +923,7 @@ protected:
    * >> load filename
    * >> M = spconvert(filename_root)
    */
-  virtual void write( string const & filename,
+  virtual void write( std::string const & filename,
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;
 
   ///@}

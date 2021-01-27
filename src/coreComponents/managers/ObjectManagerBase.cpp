@@ -469,7 +469,7 @@ localIndex ObjectManagerBase::packSets( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, m_sets.wrappers().size() );
   for( auto const & wrapperIter : m_sets.wrappers() )
   {
-    string const & setName = wrapperIter.first;
+    std::string const & setName = wrapperIter.first;
     SortedArrayView< localIndex const > const & currentSet = m_sets.getReference< SortedArray< localIndex > >( setName );
     packedSize += bufferOps::Pack< DOPACK >( buffer, setName );
     SortedArray< globalIndex > emptySet;

@@ -191,7 +191,7 @@ public:
    * @param name Name of the SolidBase object in the repository.
    * @param parent The parent group of the SolidBase object.
    */
-  SolidBase( string const & name,
+  SolidBase( std::string const & name,
              Group * const parent );
 
   /**

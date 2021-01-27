@@ -24,7 +24,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-ElementRegionBase::ElementRegionBase( string const & name, Group * const parent ):
+ElementRegionBase::ElementRegionBase( std::string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_numericalMethod()
 {

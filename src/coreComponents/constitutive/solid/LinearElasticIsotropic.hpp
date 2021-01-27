@@ -337,7 +337,7 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  LinearElasticIsotropic( string const & name, Group * const parent );
+  LinearElasticIsotropic( std::string const & name, Group * const parent );
 
   /**
    * Default Destructor

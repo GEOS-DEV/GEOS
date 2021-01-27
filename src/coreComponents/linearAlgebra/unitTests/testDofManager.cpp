@@ -95,7 +95,7 @@ protected:
  */
 template< DofManager::Location LOC >
 void checkLocalDofNumbers( MeshLevel const * const mesh,
-                           string const & dofIndexKey,
+                           std::string const & dofIndexKey,
                            string_array const & regions,
                            array1d< globalIndex > & dofNumbers )
 {
@@ -120,7 +120,7 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
  */
 template<>
 void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const mesh,
-                                                         string const & dofIndexKey,
+                                                         std::string const & dofIndexKey,
                                                          string_array const & regions,
                                                          array1d< globalIndex > & dofNumbers )
 {
@@ -226,7 +226,7 @@ void DofManagerIndicesTest::test( std::vector< FieldDesc > fields )
   for( FieldDesc & f : fields )
   {
     array1d< globalIndex > dofNumbers;
-    string const key = dofManager.getKey( f.name );
+    std::string const key = dofManager.getKey( f.name );
     string_array const regions = getRegions( mesh, f.regions );
     switch( f.location )
     {
@@ -392,14 +392,14 @@ protected:
   using Matrix = typename LAI::ParallelMatrix;
 
   using PatternFunc = void ( * )( MeshLevel const * const mesh,
-                                  string const & dofIndexKey,
+                                  std::string const & dofIndexKey,
                                   string_array const & regions,
                                   localIndex const numComp,
                                   Matrix & sparsity );
 
   using CoupledPatternFunc = void ( * )( MeshLevel const * const mesh,
-                                         string const & dofIndexKey1,
-                                         string const & dofIndexKey2,
+                                         std::string const & dofIndexKey1,
+                                         std::string const & dofIndexKey2,
                                          string_array const & regions,
                                          localIndex const numComp1,
                                          localIndex const numComp2,

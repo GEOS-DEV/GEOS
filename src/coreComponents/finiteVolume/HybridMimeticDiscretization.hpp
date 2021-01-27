@@ -35,7 +35,7 @@ class HybridMimeticDiscretization : public dataRepository::Group
 public:
 
   /// Alias for CatalogInterface, necessary declarations for factory instantiation of derived classes
-  using CatalogInterface = dataRepository::CatalogInterface< HybridMimeticDiscretization, string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< HybridMimeticDiscretization, std::string const &, Group * const >;
 
   /**
    * @brief Return the data type in the data repository.
@@ -92,7 +92,7 @@ private:
    * @return A unique_ptr< MimeticInnerProductBase > which contains the new
    *   instantiation.
    */
-  std::unique_ptr< mimeticInnerProduct::MimeticInnerProductBase > factory( string const & mimeticInnerProductType ) const;
+  std::unique_ptr< mimeticInnerProduct::MimeticInnerProductBase > factory( std::string const & mimeticInnerProductType ) const;
 
 };
 

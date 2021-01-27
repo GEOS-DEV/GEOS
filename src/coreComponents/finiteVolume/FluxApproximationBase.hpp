@@ -96,7 +96,7 @@ class FluxApproximationBase : public dataRepository::Group
 public:
 
   /// Alias for CatalogInterface, necessary declarations for factory instantiation of derived classes
-  using CatalogInterface = dataRepository::CatalogInterface< FluxApproximationBase, string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< FluxApproximationBase, std::string const &, Group * const >;
   /**
    * @brief Return the data type in the data repository.
    * @return the data type in the data repository
@@ -110,7 +110,7 @@ public:
    * @param name the name of the FluxApproximationBase in the data repository
    * @param parent the parent group of this group.
    */
-  FluxApproximationBase( string const & name, dataRepository::Group * const parent );
+  FluxApproximationBase( std::string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief Extract stencil stored under the mesh group.
@@ -120,13 +120,13 @@ public:
    * @return reference to the stencil
    */
   template< typename TYPE >
-  TYPE const & getStencil( MeshLevel const & mesh, string const & name ) const;
+  TYPE const & getStencil( MeshLevel const & mesh, std::string const & name ) const;
 
   /**
-   * @copydoc getStencil(MeshLevel const &, string const &) const
+   * @copydoc getStencil(MeshLevel const &, std::string const &) const
    */
   template< typename TYPE >
-  TYPE & getStencil( MeshLevel & mesh, string const & name ) const;
+  TYPE & getStencil( MeshLevel & mesh, std::string const & name ) const;
 
   /**
    * @brief Call a user-provided function for each stencil.
@@ -155,7 +155,7 @@ public:
    * @param[in] initFlag if true initialize physical fields, like pressure
    */
   virtual void addToFractureStencil( MeshLevel & mesh,
-                                     string const & faceElementRegionName,
+                                     std::string const & faceElementRegionName,
                                      bool const initFlag ) const = 0;
 
   /**
@@ -164,7 +164,7 @@ public:
    * @param[in] embeddedSurfaceRegionName the embedded surface element region name
    */
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const = 0;
+                                           std::string const & embeddedSurfaceRegionName ) const = 0;
 
   /**
    * @brief View keys.
@@ -239,7 +239,7 @@ protected:
    * @param setName the face set name (used as the wrapper name)
    */
   virtual void registerBoundaryStencil( Group & stencilGroup,
-                                        string const & setName ) const = 0;
+                                        std::string const & setName ) const = 0;
 
   /**
    * @brief Allocate and populate a stencil to be used in boundary condition application
@@ -248,7 +248,7 @@ protected:
    * @param faceSet set of face indices to use
    */
   virtual void computeBoundaryStencil( MeshLevel & mesh,
-                                       string const & setName,
+                                       std::string const & setName,
                                        SortedArrayView< localIndex const > const & faceSet ) const = 0;
 
   /// name of the primary solution field
@@ -269,14 +269,14 @@ protected:
 };
 
 template< typename TYPE >
-TYPE const & FluxApproximationBase::getStencil( MeshLevel const & mesh, string const & name ) const
+TYPE const & FluxApproximationBase::getStencil( MeshLevel const & mesh, std::string const & name ) const
 {
   Group const & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
   return stencilGroup.getReference< TYPE >( name );
 }
 
 template< typename TYPE >
-TYPE & FluxApproximationBase::getStencil( MeshLevel & mesh, string const & name ) const
+TYPE & FluxApproximationBase::getStencil( MeshLevel & mesh, std::string const & name ) const
 {
   Group & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
   return stencilGroup.getReference< TYPE >( name );

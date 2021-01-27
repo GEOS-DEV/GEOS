@@ -30,7 +30,7 @@ class NullModel : public constitutive::ConstitutiveBase
 public:
 
   /// @copydoc geosx::dataRepository::Group::Group
-  NullModel( string const & name,
+  NullModel( std::string const & name,
              Group * const parent );
 
   /// Destrutor

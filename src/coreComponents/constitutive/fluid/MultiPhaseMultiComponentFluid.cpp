@@ -55,7 +55,7 @@ MultiPhaseMultiComponentFluid::~MultiPhaseMultiComponentFluid()
 
 
 std::unique_ptr< ConstitutiveBase >
-MultiPhaseMultiComponentFluid::deliverClone( string const & name,
+MultiPhaseMultiComponentFluid::deliverClone( std::string const & name,
                                              Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );

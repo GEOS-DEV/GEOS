@@ -245,7 +245,7 @@ public:
    * @param ic component index
    * @return name of ic-th fluid component
    */
-  arrayView1d< string const > componentNames() const { return m_componentNames; }
+  arrayView1d< std::string const > componentNames() const { return m_componentNames; }
 
   /**
    * @return number of fluid phases in the model
@@ -256,7 +256,7 @@ public:
    * @param ip phase index
    * @return name of ip-th fluid phase
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  arrayView1d< std::string const > phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Get the mass flag.

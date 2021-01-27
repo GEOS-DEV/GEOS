@@ -71,7 +71,7 @@ public:
   /// @typedef Alias for LinearElasticIsotropicUpdates
   using KernelWrapper = PoroElasticUpdates< typename BASE::KernelWrapper >;
 
-  PoroElastic( string const & name, dataRepository::Group * const parent );
+  PoroElastic( std::string const & name, dataRepository::Group * const parent );
   virtual ~PoroElastic() override;
 
 
@@ -81,7 +81,7 @@ public:
   virtual void postProcessInput() override;
 
   std::unique_ptr< ConstitutiveBase >
-  deliverClone( string const & name,
+  deliverClone( std::string const & name,
                 dataRepository::Group * const parent ) const override;
 
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,

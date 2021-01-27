@@ -344,7 +344,7 @@ void PetscVector::print( std::ostream & os ) const
   }
 }
 
-void PetscVector::write( string const & filename,
+void PetscVector::write( std::string const & filename,
                          LAIOutputFormat const format ) const
 {
   GEOSX_LAI_ASSERT( ready() );

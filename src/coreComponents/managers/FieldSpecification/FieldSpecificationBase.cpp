@@ -23,7 +23,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
+FieldSpecificationBase::FieldSpecificationBase( std::string const & name, Group * parent ):
   Group( name, parent ),
   m_normalizeBySetSize( false )
 {
@@ -100,6 +100,6 @@ void FieldSpecificationBase::postProcessInput()
 
 
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, std::string const &, Group * const )
 
 }

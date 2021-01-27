@@ -86,13 +86,13 @@ void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol )
 void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, real64 const absTol )
 { EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol ); }
 
-void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, string const & name )
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, std::string const & name )
 {
   SCOPED_TRACE( name );
   EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
 }
 
-void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, real64 const absTol, string const & name )
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, real64 const absTol, std::string const & name )
 {
   SCOPED_TRACE( name );
   EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );

@@ -59,7 +59,7 @@ public:
    * @param[in] name name of the object
    * @param[in] parent pointer to Group that holds this WrapperBase
    */
-  explicit WrapperBase( string const & name,
+  explicit WrapperBase( std::string const & name,
                         Group * const parent );
 
   /// @cond DO_NOT_DOCUMENT
@@ -381,7 +381,7 @@ public:
    * @brief Get name of the wrapper.
    * @return name of the wrapper
    */
-  string const & getName() const
+  std::string const & getName() const
   {
     return m_name;
   }
@@ -416,7 +416,7 @@ public:
    * @param description the description
    * @return a pointer to this wrapper
    */
-  WrapperBase * setDescription( string const & description )
+  WrapperBase * setDescription( std::string const & description )
   {
     m_description = description;
     return this;
@@ -426,7 +426,7 @@ public:
    * @brief Get the description string of the wrapper.
    * @return this wrapper's description string
    */
-  string const & getDescription() const
+  std::string const & getDescription() const
   {
     return m_description;
   }
@@ -453,7 +453,7 @@ public:
    * @param objectName name of the registering object
    * @return pointer to this wrapper
    */
-  WrapperBase * setRegisteringObjects( string const & objectName )
+  WrapperBase * setRegisteringObjects( std::string const & objectName )
   {
     m_registeringObjects.insert( objectName );
     return this;
@@ -481,7 +481,7 @@ public:
    * The overridden function will create a copy of the derived Wrapper<T> the using the provided
    * values of name and parent to differentiate itself from the source.
    */
-  virtual std::unique_ptr< WrapperBase > clone( string const & name,
+  virtual std::unique_ptr< WrapperBase > clone( std::string const & name,
                                                 Group * const parent ) = 0;
 
   /**

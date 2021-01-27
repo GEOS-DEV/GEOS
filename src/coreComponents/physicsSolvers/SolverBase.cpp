@@ -84,7 +84,7 @@ SolverBase::SolverBase( std::string const & name,
 
 SolverBase::~SolverBase() = default;
 
-Group * SolverBase::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * SolverBase::createChild( std::string const & GEOSX_UNUSED_PARAM( childKey ), std::string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -96,7 +96,7 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
 }
 
 bool SolverBase::checkModelNames( array1d< string > & modelNames,
-                                  string const & attribute,
+                                  std::string const & attribute,
                                   bool const allowEmpty ) const
 {
   if( allowEmpty && modelNames.empty() )
@@ -107,7 +107,7 @@ bool SolverBase::checkModelNames( array1d< string > & modelNames,
   // We can disable this if we want to be more strict
   if( modelNames.size() == 1 )
   {
-    string const singleModelName = modelNames[0];
+    std::string const singleModelName = modelNames[0];
     modelNames.resizeDefault( m_targetRegionNames.size(), singleModelName );
   }
 
@@ -117,7 +117,7 @@ bool SolverBase::checkModelNames( array1d< string > & modelNames,
   return true;
 }
 
-localIndex SolverBase::targetRegionIndex( string const & regionName ) const
+localIndex SolverBase::targetRegionIndex( std::string const & regionName ) const
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
   GEOSX_ERROR_IF( pos == m_targetRegionNames.end(), "Region " << regionName << " is not a target of solver " << getName() );
@@ -689,14 +689,14 @@ void debugOutputLAObject( T const & obj,
                           real64 const & GEOSX_UNUSED_PARAM( time ),
                           integer const cycleNumber,
                           integer const nonlinearIteration,
-                          string const & filePrefix,
-                          string const & screenName,
+                          std::string const & filePrefix,
+                          std::string const & screenName,
                           bool const toScreen,
                           bool const toFile )
 {
   if( toScreen )
   {
-    string const frame( screenName.size() + 1, '=' );
+    std::string const frame( screenName.size() + 1, '=' );
     GEOSX_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
     GEOSX_LOG( obj );
   }

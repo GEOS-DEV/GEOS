@@ -57,7 +57,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  CompositionalMultiphaseFlow( string const & name,
+  CompositionalMultiphaseFlow( std::string const & name,
                                Group * const parent );
 
   /// deleted default constructor
@@ -270,9 +270,9 @@ public:
 
   /**@}*/
 
-  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
+  arrayView1d< std::string const > relPermModelNames() const { return m_relPermModelNames; }
 
-  arrayView1d< string const > capPresModelNames() const { return m_capPressureModelNames; }
+  arrayView1d< std::string const > capPresModelNames() const { return m_capPressureModelNames; }
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {

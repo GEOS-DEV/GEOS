@@ -63,7 +63,7 @@ public:
    * @param childName the name of the new FieldSpecificationBase object in the repository
    * @return the group child
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( std::string const & childKey, std::string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;
@@ -96,8 +96,8 @@ public:
   template< typename POLICY=parallelHostPolicy >
   void applyFieldValue( real64 const time,
                         dataRepository::Group * domain,
-                        string const & fieldPath,
-                        string const & fieldName ) const
+                        std::string const & fieldPath,
+                        std::string const & fieldName ) const
   {
     GEOSX_MARK_FUNCTION;
 
@@ -138,8 +138,8 @@ public:
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void applyFieldValue( real64 const time,
                         dataRepository::Group * domain,
-                        string const & fieldPath,
-                        string const & fieldName,
+                        std::string const & fieldPath,
+                        std::string const & fieldName,
                         LAMBDA && lambda ) const;
 
   /**
@@ -179,8 +179,8 @@ public:
   template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
   void applyFieldValue( real64 const time,
                         dataRepository::Group * domain,
-                        string const & fieldPath,
-                        string const & fieldName,
+                        std::string const & fieldPath,
+                        std::string const & fieldName,
                         PRELAMBDA && preLambda,
                         POSTLAMBDA && postLambda ) const;
 
@@ -218,8 +218,8 @@ public:
   template< typename LAMBDA >
   void apply( real64 const time,
               dataRepository::Group * domain,
-              string const & fieldPath,
-              string const & fieldName,
+              std::string const & fieldPath,
+              std::string const & fieldName,
               LAMBDA && lambda ) const
   {
     GEOSX_MARK_FUNCTION;
@@ -234,7 +234,7 @@ public:
       {
         string_array const targetPath = stringutilities::Tokenize( fs->getObjectPath(), "/" );
         localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
-        string const targetName = fs->getFieldName();
+        std::string const targetName = fs->getFieldName();
 
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs->getStartTime() && time < fs->getEndTime() && targetName==fieldName ) )
@@ -283,13 +283,13 @@ private:
    * @param name The name of the BoundaryConditionManager in the data repository.
    * @param parent The parent of BoundaryConditionManager in the data repository.
    */
-  FieldSpecificationManager( string const & name, dataRepository::Group * const parent );
+  FieldSpecificationManager( std::string const & name, dataRepository::Group * const parent );
   virtual ~FieldSpecificationManager() override;
 
   template< typename LAMBDA >
   void applyOnTargetRecursive( Group * target,
                                FieldSpecificationBase const * fs,
-                               string const & targetName,
+                               std::string const & targetName,
                                LAMBDA && lambda
                                ) const
   {
@@ -328,18 +328,18 @@ void
 FieldSpecificationManager::
   applyFieldValue( real64 const time,
                    dataRepository::Group * domain,
-                   string const & fieldPath,
-                   string const & fieldName,
+                   std::string const & fieldPath,
+                   std::string const & fieldName,
                    LAMBDA && lambda ) const
 {
   GEOSX_MARK_FUNCTION;
 
   apply( time, domain, fieldPath, fieldName,
          [&]( FieldSpecificationBase const * const fs,
-              string const &,
+              std::string const &,
               SortedArrayView< localIndex const > const & targetSet,
               Group * const targetGroup,
-              string const & targetField )
+              std::string const & targetField )
   {
     fs->applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
     lambda( fs, targetSet );
@@ -351,8 +351,8 @@ void
 FieldSpecificationManager::
   applyFieldValue( real64 const time,
                    dataRepository::Group * domain,
-                   string const & fieldPath,
-                   string const & fieldName,
+                   std::string const & fieldPath,
+                   std::string const & fieldName,
                    PRELAMBDA && preLambda,
                    POSTLAMBDA && postLambda ) const
 {
@@ -360,10 +360,10 @@ FieldSpecificationManager::
 
   apply( time, domain, fieldPath, fieldName,
          [&]( FieldSpecificationBase const * const fs,
-              string const &,
+              std::string const &,
               SortedArrayView< localIndex const > const & targetSet,
               Group * const targetGroup,
-              string const & targetField )
+              std::string const & targetField )
   {
     preLambda( fs, targetSet );
     fs->applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );

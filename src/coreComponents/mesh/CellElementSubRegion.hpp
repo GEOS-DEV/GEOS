@@ -44,7 +44,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  CellElementSubRegion( string const & name, Group * const parent );
+  CellElementSubRegion( std::string const & name, Group * const parent );
 
   /**
    * @brief Destructor.
@@ -70,7 +70,7 @@ public:
    * @param[in] setName a reference to string containing the name of the set
    */
   void constructSubRegionFromFaceSet( FaceManager const * const faceManager,
-                                      string const & setName );
+                                      std::string const & setName );
 
   ///@}
 

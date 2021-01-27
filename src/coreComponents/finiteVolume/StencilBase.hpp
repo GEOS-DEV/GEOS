@@ -109,7 +109,7 @@ public:
    * @brief Set the name used in data movement logging callbacks.
    * @param name the name prefix for the stencil's data arrays
    */
-  void setName( string const & name );
+  void setName( std::string const & name );
 
   /**
    * @brief Const access to the element regions indices.
@@ -179,7 +179,7 @@ bool StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::zero( localIndex const connector
 }
 
 template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
-void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::setName( string const & name )
+void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::setName( std::string const & name )
 {
   m_elementRegionIndices.setName( name + "/elementRegionIndices" );
   m_elementSubRegionIndices.setName( name + "/elementSubRegionIndices" );

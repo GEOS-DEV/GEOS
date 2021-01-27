@@ -35,7 +35,7 @@ namespace constitutive
 namespace
 {
 
-pvt::EOS_TYPE getCompositionalEosType( string const & name )
+pvt::EOS_TYPE getCompositionalEosType( std::string const & name )
 {
   static std::map< string, pvt::EOS_TYPE > const eosTypes =
   {
@@ -85,7 +85,7 @@ CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
 {}
 
 std::unique_ptr< ConstitutiveBase >
-CompositionalMultiphaseFluid::deliverClone( string const & name,
+CompositionalMultiphaseFluid::deliverClone( std::string const & name,
                                             Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidPVTPackageWrapper::deliverClone( name, parent );

@@ -39,7 +39,7 @@ using namespace dataRepository;
 /// TODO when we are going to port to c++17, we can remove that
 string const PAMELAMeshGenerator::DecodePAMELALabels::m_separator = "_";
 
-PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const parent ):
+PAMELAMeshGenerator::PAMELAMeshGenerator( std::string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent )
 {
 
@@ -86,7 +86,7 @@ void PAMELAMeshGenerator::remapMesh( dataRepository::Group * const GEOSX_UNUSED_
   return;
 }
 
-Group * PAMELAMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * PAMELAMeshGenerator::createChild( std::string const & GEOSX_UNUSED_PARAM( childKey ), std::string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -162,7 +162,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition * const domain )
     {
       auto const cellBlockPAMELA = subPart.second;
       PAMELA::ELEMENTS::TYPE const cellBlockType = cellBlockPAMELA->ElementType;
-      string const & cellBlockName = ElementToLabel.at( cellBlockType );
+      std::string const & cellBlockName = ElementToLabel.at( cellBlockType );
       CellBlock * cellBlock = nullptr;
       if( cellBlockName == "HEX" )
       {
@@ -365,7 +365,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition * const domain )
     {
       auto const cellBlockPAMELA = subPart.second;
       PAMELA::ELEMENTS::TYPE const cellBlockType = cellBlockPAMELA->ElementType;
-      string const cellBlockName = ElementToLabel.at( cellBlockType );
+      std::string const cellBlockName = ElementToLabel.at( cellBlockType );
       if( cellBlockName == "TRIANGLE"  || cellBlockName == "QUAD" )
       {
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();

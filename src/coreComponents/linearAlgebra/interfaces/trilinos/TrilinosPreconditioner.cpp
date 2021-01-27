@@ -78,7 +78,7 @@ TrilinosPreconditioner::~TrilinosPreconditioner() = default;
 namespace
 {
 
-string const & getMLCycleType( string const & value )
+string const & getMLCycleType( std::string const & value )
 {
   static std::map< string, string > const optionMap =
   {
@@ -90,7 +90,7 @@ string const & getMLCycleType( string const & value )
   return optionMap.at( value );
 }
 
-string const & getMLSmootherType( string const & value )
+string const & getMLSmootherType( std::string const & value )
 {
   static std::map< string, string > const optionMap =
   {
@@ -108,7 +108,7 @@ string const & getMLSmootherType( string const & value )
   return optionMap.at( value );
 }
 
-string const & getMLCoarseType( string const & value )
+string const & getMLCoarseType( std::string const & value )
 {
   static std::map< string, string > const optionMap =
   {

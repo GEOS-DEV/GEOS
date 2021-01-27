@@ -32,7 +32,7 @@ class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  DirichletBoundaryCondition( string const & name, dataRepository::Group * const parent );
+  DirichletBoundaryCondition( std::string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief destructor
@@ -50,7 +50,7 @@ public:
    */
   static string catalogName() { return "Dirichlet"; }
 
-  virtual string const getCatalogName() const
+  virtual std::string const getCatalogName() const
   {
     return DirichletBoundaryCondition::catalogName();
   }

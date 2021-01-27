@@ -31,7 +31,7 @@ namespace constitutive
 {
 
 template< typename BASE >
-Damage< BASE >::Damage( string const & name, Group * const parent ):
+Damage< BASE >::Damage( std::string const & name, Group * const parent ):
   BASE( name, parent ),
   m_damage(),
   m_strainEnergyDensity(),
@@ -81,7 +81,7 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group * const par
 
 typedef Damage< LinearElasticIsotropic > DamageLinearElasticIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageLinearElasticIsotropic, std::string const &, Group * const )
 
 }
 } /* namespace geosx */

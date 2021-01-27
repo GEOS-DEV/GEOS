@@ -250,8 +250,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.setValues< parallelDevicePolicy<> >( 0.0 );
 
-  string const resDofKey  = dofManager.getKey( wellSolver.resElementDofName() );
-  string const wellDofKey = dofManager.getKey( wellSolver.wellElementDofName() );
+  std::string const resDofKey  = dofManager.getKey( wellSolver.resElementDofName() );
+  std::string const wellDofKey = dofManager.getKey( wellSolver.wellElementDofName() );
 
   // at this point we start assembling the finite-difference block by block
 

@@ -453,7 +453,7 @@ protected:
    * @param filename name of the output file
    * @param[in] format output format
    */
-  virtual void write( string const & filename,
+  virtual void write( std::string const & filename,
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;
 
   ///@}

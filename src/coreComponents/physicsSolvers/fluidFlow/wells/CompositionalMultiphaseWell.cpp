@@ -48,7 +48,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace CompositionalMultiphaseWellKernels;
 
-CompositionalMultiphaseWell::CompositionalMultiphaseWell( string const & name,
+CompositionalMultiphaseWell::CompositionalMultiphaseWell( std::string const & name,
                                                           Group * const parent )
   :
   WellSolverBase( name, parent ),
@@ -190,9 +190,9 @@ void CompareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 void CompositionalMultiphaseWell::validateConstitutiveModels( MeshLevel const & meshLevel, ConstitutiveManager const & cm ) const
 {
   CompositionalMultiphaseFlow const & flowSolver = *getParent()->getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
-  arrayView1d< string const > const & flowTargetRegionNames = flowSolver.targetRegionNames();
-  arrayView1d< string const > const & flowFluidModels = flowSolver.fluidModelNames();
-  arrayView1d< string const > const & flowRelPermModels = flowSolver.relPermModelNames();
+  arrayView1d< std::string const > const & flowTargetRegionNames = flowSolver.targetRegionNames();
+  arrayView1d< std::string const > const & flowFluidModels = flowSolver.fluidModelNames();
+  arrayView1d< std::string const > const & flowRelPermModels = flowSolver.relPermModelNames();
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion const & subRegion )
@@ -588,7 +588,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_P
     WellControls const & wellControls = getWellControls( subRegion );
 
     // get a reference to the degree-of-freedom numbers
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< localIndex const > const & nextWellElemIndex =
@@ -638,7 +638,7 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( real64 const GEOSX
                                                                WellElementSubRegion const & subRegion )
   {
     // get the degrees of freedom and ghosting info
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
@@ -685,7 +685,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( DomainPartition const & doma
                                                                WellElementSubRegion const & subRegion )
   {
     // get the degree of freedom numbers
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
@@ -730,7 +730,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
                                                                WellElementSubRegion const & subRegion )
   {
     // get the degree of freedom numbers on well elements and ghosting info
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
@@ -777,7 +777,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
                                                                WellElementSubRegion const & subRegion )
   {
     // get the degree of freedom numbers on well elements and ghosting info
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
@@ -1165,7 +1165,7 @@ void CompositionalMultiphaseWell::formPressureRelations( DomainPartition const &
     WellControls & wellControls = getWellControls( subRegion );
 
     // get the degrees of freedom, depth info, next welem index
-    string const wellDofKey = dofManager.getKey( wellElementDofName() );
+    std::string const wellDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< real64 const > const & wellElemGravCoef =
@@ -1275,5 +1275,5 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & GEOSX_UNU
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseWell, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseWell, std::string const &, Group * const )
 }// namespace geosx

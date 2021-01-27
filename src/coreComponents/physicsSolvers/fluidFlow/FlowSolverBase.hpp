@@ -75,11 +75,11 @@ public:
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
-  arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
+  arrayView1d< std::string const > fluidModelNames() const { return m_fluidModelNames; }
 
-  arrayView1d< string const > solidModelNames() const { return m_solidModelNames; }
+  arrayView1d< std::string const > solidModelNames() const { return m_solidModelNames; }
 
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+  virtual std::vector< string > getConstitutiveRelations( std::string const & regionName ) const override;
 
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }

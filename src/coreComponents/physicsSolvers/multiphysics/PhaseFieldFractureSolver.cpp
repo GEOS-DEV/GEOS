@@ -301,7 +301,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   PhaseFieldDamageFEM const &
   damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
 
-  string const & damageFieldName = damageSolver.getFieldName();
+  std::string const & damageFieldName = damageSolver.getFieldName();
 
   //should get reference to damage field here.
   arrayView1d< real64 const > const nodalDamage = nodeManager->getReference< array1d< real64 > >( damageFieldName );

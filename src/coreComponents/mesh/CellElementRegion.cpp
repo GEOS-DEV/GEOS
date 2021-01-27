@@ -26,7 +26,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
+CellElementRegion::CellElementRegion( std::string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames )->
@@ -44,7 +44,7 @@ void CellElementRegion::generateMesh( Group * const cellBlocks )
 {
   Group * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
 
-  for( string const & cellBlockName : this->m_cellBlockNames )
+  for( std::string const & cellBlockName : this->m_cellBlockNames )
   {
     CellElementSubRegion * const subRegion = elementSubRegions->registerGroup< CellElementSubRegion >( cellBlockName );
     CellBlock * const source = cellBlocks->getGroup< CellBlock >( subRegion->getName() );

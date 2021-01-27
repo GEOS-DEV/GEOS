@@ -26,7 +26,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
+CellBlockManager::CellBlockManager( std::string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
 {
   this->registerGroup< Group >( keys::cellBlocks );
@@ -51,20 +51,20 @@ void CellBlockManager::resize( integer_array const & numElements,
 }
 
 
-//CellBlock & CellBlockManager::CreateRegion( string const & regionName,
-//                                             string const & elementType,
+//CellBlock & CellBlockManager::CreateRegion( std::string const & regionName,
+//                                             std::string const & elementType,
 //                                             integer const & numElements )
 //{
 ////  ElementRegion * elemRegion = elementRegions.registerGroup( regionNames );
 ////  elemRegion->resize(numElements);
 //}
 
-Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * CellBlockManager::createChild( std::string const & GEOSX_UNUSED_PARAM( childKey ), std::string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlockManager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlockManager, std::string const &, Group * const )
 }

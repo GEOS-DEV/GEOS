@@ -66,7 +66,7 @@ HyprePreconditioner::~HyprePreconditioner()
 namespace
 {
 
-HYPRE_Int getHypreAMGCycleType( string const & type )
+HYPRE_Int getHypreAMGCycleType( std::string const & type )
 {
   static std::map< string, HYPRE_Int > const typeMap =
   {
@@ -78,7 +78,7 @@ HYPRE_Int getHypreAMGCycleType( string const & type )
   return typeMap.at( type );
 }
 
-HYPRE_Int getHypreAMGRelaxationType( string const & type )
+HYPRE_Int getHypreAMGRelaxationType( std::string const & type )
 {
   static std::map< string, HYPRE_Int > const typeMap =
   {

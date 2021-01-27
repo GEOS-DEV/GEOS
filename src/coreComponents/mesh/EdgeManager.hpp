@@ -57,7 +57,7 @@ public:
   /**
    * @return the string representing the edge manager name in the catalog
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "EdgeManager"; }
 
 
@@ -65,7 +65,7 @@ public:
    * @brief Getter used to access the edge manager catalog name.
    * @return the edge manager catalog name
    */
-  virtual string const getCatalogName() const override
+  virtual std::string const getCatalogName() const override
   { return EdgeManager::catalogName(); }
 
   ///@}

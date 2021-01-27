@@ -28,7 +28,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellBlock::CellBlock( string const & name, Group * const parent ):
+CellBlock::CellBlock( std::string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
   m_toEdgesRelation(),
@@ -255,7 +255,7 @@ void CellBlock::getFaceNodes( localIndex const elementIndex,
   GEOSX_ASSERT_EQ( numNodes, nodeIndicies.size() );
 }
 
-void CellBlock::setElementType( string const & elementType )
+void CellBlock::setElementType( std::string const & elementType )
 {
   m_elementTypeString = elementType;
 

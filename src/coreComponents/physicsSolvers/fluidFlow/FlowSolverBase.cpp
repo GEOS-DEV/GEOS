@@ -265,7 +265,7 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
 #endif
 }
 
-std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & regionName ) const
+std::vector< string > FlowSolverBase::getConstitutiveRelations( std::string const & regionName ) const
 {
 
   localIndex const regionIndex = this->targetRegionIndex( regionName );

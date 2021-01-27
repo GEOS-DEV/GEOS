@@ -1017,7 +1017,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
   arrayView1d< globalIndex const > const & dispDofNumber =
     nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
 
-  string const & dofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  std::string const & dofKey = dofManager.getKey( viewKeyStruct::tractionString );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   arrayView1d< integer const > const & elemGhostRank = nodeManager.ghostRank();
@@ -1310,8 +1310,8 @@ void LagrangianContactSolver::
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
-  string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  std::string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1447,8 +1447,8 @@ void LagrangianContactSolver::
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
-  string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  std::string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1680,7 +1680,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  std::string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // Get the finite volume method used to compute the stabilization
@@ -2118,7 +2118,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 }
 
 void LagrangianContactSolver::initializeFractureState( MeshLevel & mesh,
-                                                       string const & fieldName ) const
+                                                       std::string const & fieldName ) const
 {
   GEOSX_MARK_FUNCTION;
   ElementRegionManager & elemManager = *mesh.getElemManager();

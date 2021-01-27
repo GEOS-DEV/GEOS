@@ -240,7 +240,7 @@ public:
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
 
-  DamageVolDev( string const & name, dataRepository::Group * const parent );
+  DamageVolDev( std::string const & name, dataRepository::Group * const parent );
   virtual ~DamageVolDev() override;
 
 

@@ -48,7 +48,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  WellElementRegion( string const & name, Group * const parent );
+  WellElementRegion( std::string const & name, Group * const parent );
 
   /**
    * @brief Default destructor.
@@ -71,13 +71,13 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "WellElementRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual string const getCatalogName() const override final
+  virtual std::string const getCatalogName() const override final
   { return WellElementRegion::catalogName(); }
 
   ///@}
@@ -91,25 +91,25 @@ public:
    * @brief Set the name of the InternalWellGenerator object of this well.
    * @param[in] name the name of the InternalWellGenerator object
    */
-  void setWellGeneratorName( string const & name ) { m_wellGeneratorName = name; }
+  void setWellGeneratorName( std::string const & name ) { m_wellGeneratorName = name; }
 
   /**
    * @brief Get the name of the InternalWellGenerator object of this well.
    * @return the name of the InternalWellGenerator object
    */
-  string const & getWellGeneratorName() const { return m_wellGeneratorName; }
+  std::string const & getWellGeneratorName() const { return m_wellGeneratorName; }
 
   /**
    * @brief Set the name of the WellControls object of this well.
    * @param name the name of the WellControls object
    */
-  void setWellControlsName( string const & name ) { m_wellControlsName = name; }
+  void setWellControlsName( std::string const & name ) { m_wellControlsName = name; }
 
   /**
    * @brief Get the name of the subRegion.
    * @return the name of the subRegion object
    */
-  string const & getSubRegionName() const { return m_subRegionName; }
+  std::string const & getSubRegionName() const { return m_subRegionName; }
 
   ///@}
 
@@ -169,7 +169,7 @@ public:
 private:
 
   /// Name of the (unique) subregion
-  string const m_subRegionName;
+  std::string const m_subRegionName;
 
   /// Name of the well constraint
   string m_wellControlsName;

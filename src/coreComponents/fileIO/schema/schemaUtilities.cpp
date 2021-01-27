@@ -71,8 +71,8 @@ void ConvertDocumentationToSchema( std::string const & fname,
 }
 
 void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
-                       string const & name,
-                       string const & regex )
+                       std::string const & name,
+                       std::string const & regex )
 {
   std::string const advanced_match_string = ".*[\\[\\]`$].*|";
 
@@ -198,7 +198,7 @@ void SchemaConstruction( Group * const group,
           {
             // Write any additional documentation that isn't expected by the .xsd format in a comment
             // Attribute description
-            string const description = wrapper->getDescription();
+            std::string const description = wrapper->getDescription();
             string commentString = attributeName + " => ";
 
             if( !description.empty())
@@ -235,7 +235,7 @@ void SchemaConstruction( Group * const group,
             // Check if the attribute has a previously unseen non-simple type with a custom validation regex
             if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", xmlSafeName.c_str() ).empty() )
             {
-              string const regex = wrapper->typeRegex();
+              std::string const regex = wrapper->typeRegex();
               if( !regex.empty() )
               {
                 // Append a new simpleType with a custom regex

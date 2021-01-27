@@ -50,7 +50,7 @@ public:
    * @param name the name of the object in the data hierarchy.
    * @param parent a pointer to the parent group in the data hierarchy.
    */
-  CellElementRegion( string const & name, Group * const parent );
+  CellElementRegion( std::string const & name, Group * const parent );
 
   /**
    * @brief Deleted default constructor.
@@ -71,13 +71,13 @@ public:
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "CellElementRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual string const getCatalogName() const override final
+  virtual std::string const getCatalogName() const override final
   { return CellElementRegion::catalogName(); }
 
   ///@}
@@ -91,7 +91,7 @@ public:
    * @brief Add a cellBlockRegion name to the list.
    * @param cellBlockName string containing the cell block region name.
    */
-  void addCellBlockName( string const & cellBlockName )
+  void addCellBlockName( std::string const & cellBlockName )
   {
     m_cellBlockNames.emplace_back( cellBlockName );
   }

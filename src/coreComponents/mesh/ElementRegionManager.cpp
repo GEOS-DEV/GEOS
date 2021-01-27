@@ -29,7 +29,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ElementRegionManager::ElementRegionManager( string const & name, Group * const parent ):
+ElementRegionManager::ElementRegionManager( std::string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
@@ -79,7 +79,7 @@ void ElementRegionManager::SetMaxGlobalIndex()
 
 
 
-Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
+Group * ElementRegionManager::createChild( std::string const & childKey, std::string const & childName )
 {
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
@@ -97,7 +97,7 @@ void ElementRegionManager::expandObjectCatalogs()
        iter!=catalog.end();
        ++iter )
   {
-    string const key = iter->first;
+    std::string const key = iter->first;
     if( key.find( "ElementRegion" ) != std::string::npos )
     {
       this->createChild( key, key );
@@ -124,7 +124,7 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     names.insert( elementRegion.getName() );
   } );
 
-  for( string const & name: names )
+  for( std::string const & name: names )
   {
     ElementRegionBase * const elementRegion = getRegion( name );
     schemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType );
@@ -220,7 +220,7 @@ void ElementRegionManager::generateWells( MeshManager * const meshManager,
   {
 
     // get the global well geometry from the well generator
-    string const generatorName = wellRegion.getWellGeneratorName();
+    std::string const generatorName = wellRegion.getWellGeneratorName();
     InternalWellGenerator const * const wellGeometry =
       meshManager->getGroup< InternalWellGenerator >( generatorName );
 
@@ -236,7 +236,7 @@ void ElementRegionManager::generateWells( MeshManager * const meshManager,
     wellElemCount += wellGeometry->getNumElements();
     wellNodeCount += wellGeometry->getNumNodes();
 
-    string const subRegionName = wellRegion.getSubRegionName();
+    std::string const subRegionName = wellRegion.getSubRegionName();
     WellElementSubRegion * const
     subRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
                   ->getGroup< WellElementSubRegion >( subRegionName );
@@ -554,5 +554,5 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unpackedSize;
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, std::string const &, Group * const )
 }

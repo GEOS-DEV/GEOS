@@ -566,7 +566,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
 
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  std::string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -626,8 +626,8 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  std::string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  std::string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -789,8 +789,8 @@ HydrofractureSolver::
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   fext.setValues< serialPolicy >( 0 );
 
-  string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
+  std::string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  std::string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -884,8 +884,8 @@ HydrofractureSolver::
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ConstitutiveManager const & constitutiveManager = *domain.getConstitutiveManager();
 
-  string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
+  std::string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  std::string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
@@ -902,7 +902,7 @@ HydrofractureSolver::
                                                             ElementRegionBase const & region,
                                                             FaceElementSubRegion const & subRegion )
   {
-    string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
+    std::string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
     arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );

@@ -158,12 +158,12 @@ public:
     return m_matrix.numGlobalRows();
   }
 
-//  void setSolidModelName( string const & name )
+//  void setSolidModelName( std::string const & name )
 //  {
 //    m_solidModelName = name;
 //  }
 
-  string const & getFieldName() const
+  std::string const & getFieldName() const
   {
     return m_fieldName;
   }

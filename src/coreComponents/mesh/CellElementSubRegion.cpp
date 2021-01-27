@@ -22,7 +22,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
+CellElementSubRegion::CellElementSubRegion( std::string const & name, Group * const parent ):
   CellBlock( name, parent )
 {
   registerWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping )->
@@ -77,7 +77,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlock * source )
 }
 
 void CellElementSubRegion::constructSubRegionFromFaceSet( FaceManager const * const faceManager,
-                                                          string const & setName )
+                                                          std::string const & setName )
 {
   SortedArrayView< localIndex const > const & targetSet = faceManager->sets().getReference< SortedArray< localIndex > >( setName );
   m_toFacesRelation.resize( 0, 2 );

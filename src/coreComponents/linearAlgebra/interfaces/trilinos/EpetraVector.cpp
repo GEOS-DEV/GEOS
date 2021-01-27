@@ -326,7 +326,7 @@ void EpetraVector::print( std::ostream & os ) const
   m_vector->Print( os );
 }
 
-void EpetraVector::write( string const & filename,
+void EpetraVector::write( std::string const & filename,
                           LAIOutputFormat const format ) const
 {
   GEOSX_LAI_ASSERT( ready() );

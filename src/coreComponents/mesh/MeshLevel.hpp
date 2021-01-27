@@ -44,7 +44,7 @@ public:
    * @param[in] name the name of the MeshLevel object in the repository
    * @param[in] parent the parent group of the MeshLevel object being constructed
    */
-  MeshLevel( string const & name,
+  MeshLevel( std::string const & name,
              Group * const parent );
   virtual ~MeshLevel() override;
 

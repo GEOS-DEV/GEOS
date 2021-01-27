@@ -81,7 +81,7 @@ public:
    *   instantiation.
    */
   std::unique_ptr< finiteElement::FiniteElementBase >
-  factory( string const & parentElementShape ) const;
+  factory( std::string const & parentElementShape ) const;
 
 private:
 
@@ -115,7 +115,7 @@ FiniteElementDiscretization::
   array2d< real64 > & detJ = elementSubRegion->detJ();
   auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
-  string const elementTypeString = elementSubRegion->getElementTypeString();
+  std::string const elementTypeString = elementSubRegion->getElementTypeString();
 
   constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
   constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;

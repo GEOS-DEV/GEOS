@@ -85,7 +85,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( std::string const & regionName : m_targetRegions )
   {
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
@@ -202,7 +202,7 @@ void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) 
 }
 
 void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
-                                                      string const & faceElementRegionName,
+                                                      std::string const & faceElementRegionName,
                                                       bool const initFlag ) const
 {
   NodeManager * const nodeManager = mesh.getNodeManager();
@@ -629,7 +629,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 }
 
 void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
-                                                            string const & embeddedSurfaceRegionName ) const
+                                                            std::string const & embeddedSurfaceRegionName ) const
 {
   EdgeManager const & embSurfEdgeManager = mesh.getEmbdSurfEdgeManager();
   ElementRegionManager & elemManager = *( mesh.getElemManager() );
@@ -778,14 +778,14 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   }
 }
 
-void TwoPointFluxApproximation::registerBoundaryStencil( Group & stencilGroup, string const & setName ) const
+void TwoPointFluxApproximation::registerBoundaryStencil( Group & stencilGroup, std::string const & setName ) const
 {
   stencilGroup.registerWrapper< BoundaryStencil >( setName )->
     setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
-                                                        string const & setName,
+                                                        std::string const & setName,
                                                         SortedArrayView< localIndex const > const & faceSet ) const
 {
   NodeManager const & nodeManager = *mesh.getNodeManager();
@@ -812,7 +812,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( std::string const & regionName : m_targetRegions )
   {
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }

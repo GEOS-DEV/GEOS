@@ -130,7 +130,7 @@ checkStabilizationMatrixConsistency
 
 TEST( VirtualElementBase, unitCube )
 {
-  string const inputStream=
+  std::string const inputStream=
     "<Problem>"
     "  <Mesh>"
     "    <InternalMesh"
@@ -202,7 +202,7 @@ TEST( VirtualElementBase, unitCube )
 
 TEST( VirtualElementBase, wedges )
 {
-  string const inputStream=
+  std::string const inputStream=
     "<Problem>"
     "  <Mesh>"
     "    <InternalMesh"

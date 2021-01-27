@@ -25,7 +25,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
+SurfaceElementSubRegion::SurfaceElementSubRegion( std::string const & name,
                                                   dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_surfaceElementsToCells(),

@@ -102,7 +102,7 @@ public:
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
                        real64 const dt,
-                       string const & elementListName ):
+                       std::string const & elementListName ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),

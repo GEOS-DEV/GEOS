@@ -49,7 +49,7 @@ public:
    * @param name the name of the object in the data hierarchy.
    * @param parent a pointer to the parent group in the data hierarchy.
    */
-  FaceElementRegion( string const & name, Group * const parent );
+  FaceElementRegion( std::string const & name, Group * const parent );
 
   /**
    * @brief Deleted default constructor.
@@ -72,10 +72,10 @@ public:
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return a string containing the key name.
    */
-  static string const catalogName()
+  static std::string const catalogName()
   { return "FaceElementRegion"; }
 
-  virtual string const getCatalogName() const override final
+  virtual std::string const getCatalogName() const override final
   { return FaceElementRegion::catalogName(); }
 
   ///@}
@@ -103,7 +103,7 @@ public:
                                 EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
-                                string const & subRegionName,
+                                std::string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
   ///@}
