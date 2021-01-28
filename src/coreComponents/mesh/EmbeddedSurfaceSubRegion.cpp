@@ -36,7 +36,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_tangentVector2(),
   m_numOfJumpEnrichments( 3 ),
   m_connectivityIndex(),
-  // m_surfaceElementsToCells(),
   m_parentPlaneName()
 {
   registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector )->
@@ -59,6 +58,9 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   registerWrapper( viewKeyStruct::connectivityIndexString, &m_connectivityIndex )->
     setApplyDefaultValue( 1 )->
     setDescription( "Connectivity index of each EmbeddedSurface." );
+
+  registerWrapper( viewKeyStruct::surfaceElementToParentPlaneString, &m_parentPlaneName )->
+    setDescription( "A map of surface element to the parent fracture name" );
 
   m_normalVector.resizeDimension< 1 >( 3 );
   m_tangentVector1.resizeDimension< 1 >( 3 );

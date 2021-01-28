@@ -214,6 +214,9 @@ public:
     /// Mass creation string.
     constexpr static auto creationMassString = "creationMass";
 
+    /// elbedded surface element to parent plane
+    constexpr static auto surfaceElementToParentPlaneString = "surfaceElementToParentPlane";
+
   };
 
   /// Map between the face elements and the cells

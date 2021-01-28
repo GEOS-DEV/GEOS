@@ -15,6 +15,8 @@ ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
       m_nodesCoord( m_nodeManager->referencePosition() ),
       m_edgeToNodes( m_edgeManager->nodeList() ),
       m_facesToCells( m_faceManager->elementList() ),
+      m_facesToRegions( m_faceManager->elementRegionList() ),
+      m_facesToSubRegions( m_faceManager->elementSubRegionList() ),
       m_facesToNodes( m_faceManager->nodeList().toViewConst() ),
       m_nodeReferencePosition( m_nodeManager->referencePosition() ),
       m_cellCenters( m_elementManager->ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString ) ),
@@ -55,7 +57,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
         m_stencil.zero( faceIdx );
       }
 
-      exit(0);
+      // exit(0);
     }
 
   }
@@ -83,8 +85,8 @@ std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation
     if (isBoundaryFace(iface)) continue;
     // face intersected by frac and non-branching
     if ( intersection( ref(origin), ref(n), iface, tmp ) && neighborOnSameSide( iface, distToFrac,
-                                                                           hostCellID,
-                                                                           fractureSubRegion) )
+                                                                                hostCellID,
+                                                                                fractureSubRegion) )
     {
       faces.push_back( iface );
       continue;
@@ -156,7 +158,7 @@ ProjectionEDFMHelper::otherCell( localIndex faceIdx, CellID const & hostCellID )
   localIndex const ineighbor = (neighbors[0] == hostCellID.index) ? 1 : 0;
   return CellID ( m_facesToRegions[faceIdx][ineighbor],
                   m_facesToSubRegions[faceIdx][ineighbor],
-                  m_facesToSubRegions[faceIdx][ineighbor] );
+                  m_facesToCells[faceIdx][ineighbor] );
 }
 
 bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
