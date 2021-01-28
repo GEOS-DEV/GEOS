@@ -28,7 +28,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const & name,
+VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( string const & name,
                                                               Group * const parent )
   : CapillaryPressureBase( name, parent )
 {
@@ -120,7 +120,7 @@ VanGenuchtenCapillaryPressure::KernelWrapper VanGenuchtenCapillaryPressure::crea
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenCapillaryPressure, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenCapillaryPressure, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

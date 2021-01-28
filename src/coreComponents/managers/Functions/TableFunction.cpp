@@ -27,12 +27,12 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const tableCoordinates = "coordinates";
-std::string const tableValues = "values";
-std::string const tableInterpolation = "interpolation";
-std::string const coordinateFiles = "coordinateFiles";
-std::string const voxelFile = "voxelFile";
-std::string const valueType = "valueType";
+string const tableCoordinates = "coordinates";
+string const tableValues = "values";
+string const tableInterpolation = "interpolation";
+string const coordinateFiles = "coordinateFiles";
+string const voxelFile = "voxelFile";
+string const valueType = "valueType";
 }
 }
 
@@ -40,7 +40,7 @@ using namespace dataRepository;
 
 
 
-TableFunction::TableFunction( const std::string & name,
+TableFunction::TableFunction( const string & name,
                               Group * const parent ):
   FunctionBase( name, parent ),
   m_tableCoordinates1D(),
@@ -85,7 +85,7 @@ template< typename T >
 void TableFunction::parseFile( array1d< T > & target, string const & filename, char delimiter )
 {
   std::ifstream inputStream( filename.c_str());
-  std::string lineString;
+  string lineString;
   T value;
 
   GEOSX_ERROR_IF( !inputStream, "Could not read input file: " << filename );
@@ -302,6 +302,6 @@ real64 TableFunction::evaluate( real64 const * const input ) const
   return result;
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, string const &, Group * const )
 
 } /* namespace ANST */

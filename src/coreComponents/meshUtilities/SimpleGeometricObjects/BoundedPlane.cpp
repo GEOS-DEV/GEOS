@@ -23,7 +23,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-BoundedPlane::BoundedPlane( const std::string & name, Group * const parent ):
+BoundedPlane::BoundedPlane( const string & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
   m_normal{ 0.0, 0.0, 1.0 },
@@ -150,6 +150,6 @@ bool BoundedPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
   return isInside;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, BoundedPlane, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, BoundedPlane, string const &, Group * const )
 
 } /* namespace geosx */

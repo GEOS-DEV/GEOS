@@ -35,7 +35,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
+TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
                                                       Group * const parent )
   : FluxApproximationBase( name, parent )
 {
@@ -903,6 +903,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
 }
 
 
-REGISTER_CATALOG_ENTRY( FluxApproximationBase, TwoPointFluxApproximation, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FluxApproximationBase, TwoPointFluxApproximation, string const &, Group * const )
 
 }

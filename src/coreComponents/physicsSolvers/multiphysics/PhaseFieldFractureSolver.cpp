@@ -34,7 +34,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string & name,
+PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
@@ -365,6 +365,6 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldFractureSolver, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldFractureSolver, string const &, Group * const )
 
 } /* namespace geosx */

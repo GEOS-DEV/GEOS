@@ -70,7 +70,7 @@ void FenghourCO2ViscosityFunction::makeTable( string_array const & inputPara )
   catch( const std::invalid_argument & e )
   {
 
-    GEOSX_ERROR( "Invalid FenghourCO2Viscosity argument:" + std::string( e.what()));
+    GEOSX_ERROR( "Invalid FenghourCO2Viscosity argument:" + string( e.what()));
 
   }
 

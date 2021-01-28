@@ -144,7 +144,7 @@ class ParticleFluidBase : public ConstitutiveBase
 {
 public:
 
-  ParticleFluidBase( std::string const & name, Group * const parent );
+  ParticleFluidBase( string const & name, Group * const parent );
 
   virtual ~ParticleFluidBase() override;
 

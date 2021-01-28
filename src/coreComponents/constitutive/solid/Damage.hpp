@@ -260,7 +260,7 @@ public:
   virtual ~Damage() override = default;
 
 
-  static std::string catalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void postProcessInput() override;

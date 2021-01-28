@@ -42,7 +42,7 @@ std::unordered_map< string, integer > const phaseDict =
 
 }
 
-CapillaryPressureBase::CapillaryPressureBase( std::string const & name,
+CapillaryPressureBase::CapillaryPressureBase( string const & name,
                                               Group * const parent )
   : ConstitutiveBase( name, parent )
 {

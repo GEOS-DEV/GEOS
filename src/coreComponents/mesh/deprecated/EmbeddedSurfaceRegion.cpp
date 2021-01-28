@@ -49,6 +49,6 @@ void EmbeddedSurfaceRegion::initializePreSubGroups( Group * const )
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, string const &, Group * const )
 
 } /* namespace geosx */

@@ -29,7 +29,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-ChomboIO::ChomboIO( std::string const & name, Group * const parent ):
+ChomboIO::ChomboIO( string const & name, Group * const parent ):
   OutputBase( name, parent ),
   m_coupler( nullptr ),
   m_outputPath(),
@@ -97,5 +97,5 @@ void ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   }
 }
 
-REGISTER_CATALOG_ENTRY( OutputBase, ChomboIO, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, ChomboIO, string const &, Group * const )
 } /* namespace geosx */

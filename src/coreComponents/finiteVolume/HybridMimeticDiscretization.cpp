@@ -33,7 +33,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace mimeticInnerProduct;
 
-HybridMimeticDiscretization::HybridMimeticDiscretization( std::string const & name,
+HybridMimeticDiscretization::HybridMimeticDiscretization( string const & name,
                                                           Group * const parent )
   : Group( name, parent )
 {
@@ -116,6 +116,6 @@ HybridMimeticDiscretization::factory( string const & mimeticInnerProductType ) c
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( HybridMimeticDiscretization, HybridMimeticDiscretization, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( HybridMimeticDiscretization, HybridMimeticDiscretization, string const &, Group * const )
 
 }

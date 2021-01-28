@@ -51,10 +51,10 @@ namespace wrapperHelpers
 namespace internal
 {
 
-inline void logOutputType( std::string const & typeString, std::string const & msg )
+inline void logOutputType( string const & typeString, string const & msg )
 {
 #if RESTART_TYPE_LOGGING
-  static std::unordered_set< std::string > m_types;
+  static std::unordered_set< string > m_types;
 
   if( !m_types.count( typeString ) )
   {
@@ -68,14 +68,14 @@ inline void logOutputType( std::string const & typeString, std::string const & m
 }
 
 template< typename T, typename ... INDICES >
-std::string getIndicesToComponent( T const &, int const component, INDICES const ... existingIndices )
+string getIndicesToComponent( T const &, int const component, INDICES const ... existingIndices )
 {
   GEOSX_ERROR_IF_NE( component, 0 );
   return LvArray::indexing::getIndexString( existingIndices ... );
 }
 
 template< typename ... INDICES >
-std::string getIndicesToComponent( R1Tensor const &, int const component, INDICES const ... existingIndices )
+string getIndicesToComponent( R1Tensor const &, int const component, INDICES const ... existingIndices )
 { return LvArray::indexing::getIndexString( existingIndices ..., component ); }
 
 template< typename T >
@@ -108,7 +108,7 @@ size( T const & GEOSX_UNUSED_PARAM( value ) )
 
 
 inline char *
-dataPtr( std::string & var )
+dataPtr( string & var )
 { return const_cast< char * >( var.data() ); }
 
 inline char *
@@ -220,12 +220,12 @@ capacity( T const & value )
 
 template< typename T >
 std::enable_if_t< traits::HasMemberFunction_setName< T > >
-setName( T & value, std::string const & name )
+setName( T & value, string const & name )
 { value.setName( name ); }
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_setName< T > >
-setName( T & GEOSX_UNUSED_PARAM( value ), std::string const & GEOSX_UNUSED_PARAM( name ) )
+setName( T & GEOSX_UNUSED_PARAM( value ), string const & GEOSX_UNUSED_PARAM( name ) )
 {}
 
 template< typename T >
@@ -278,10 +278,10 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
   GEOSX_ERROR_IF_NE( bytesRead, byteSize );
 }
 
-// This is for an std::string since the type of char is different on different platforms :(.
+// This is for an string since the type of char is different on different platforms :(.
 inline
 void
-pushDataToConduitNode( std::string const & var, conduit::Node & node )
+pushDataToConduitNode( string const & var, conduit::Node & node )
 {
   internal::logOutputType( LvArray::system::demangleType( var ), "Output via external pointer: " );
 
@@ -292,12 +292,12 @@ pushDataToConduitNode( std::string const & var, conduit::Node & node )
   node[ "__values__" ].set_external( dtype, ptr );
 }
 
-// This is for Path since it derives from std::string. See overload for std::string.
+// This is for Path since it derives from string. See overload for string.
 inline
 void
 pushDataToConduitNode( Path const & var, conduit::Node & node )
 {
-  pushDataToConduitNode( static_cast< std::string const & >(var), node );
+  pushDataToConduitNode( static_cast< string const & >(var), node );
 }
 
 // This is for an object that doesn't need to be packed but isn't an LvArray.
@@ -460,9 +460,9 @@ template< typename T, int NDIM, int USD >
 std::enable_if_t< std::is_arithmetic< T >::value || traits::is_tensorT< T > >
 addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
                    conduit::Node & fields,
-                   std::string const & fieldName,
-                   std::string const & topology,
-                   std::vector< std::string > const & componentNames )
+                   string const & fieldName,
+                   string const & topology,
+                   std::vector< string > const & componentNames )
 {
   GEOSX_ERROR_IF_LE( var.size(), 0 );
 
@@ -487,14 +487,14 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
   {
     for( int i = 0; i < numComponentsPerValue; ++i )
     {
-      std::string name;
+      string name;
       if( totalNumberOfComponents == 1 )
       {
         name = fieldName;
       }
       else if( componentNames.empty() )
       {
-        std::string indexString = internal::getIndicesToComponent( val, i, indices ... );
+        string indexString = internal::getIndicesToComponent( val, i, indices ... );
         indexString.erase( indexString.begin() );
         indexString.pop_back();
         indexString.pop_back();
@@ -519,9 +519,9 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
 template< typename T >
 void addBlueprintField( T const &,
                         conduit::Node & fields,
-                        std::string const &,
-                        std::string const &,
-                        std::vector< std::string > const & )
+                        string const &,
+                        string const &,
+                        std::vector< string > const & )
 {
   GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
                "\nWas trying to write it to " << fields.path() );
@@ -531,7 +531,7 @@ template< typename T, int NDIM, int USD >
 std::enable_if_t< std::is_arithmetic< T >::value || traits::is_tensorT< T > >
 populateMCArray( ArrayView< T const, NDIM, USD > const & var,
                  conduit::Node & node,
-                 std::vector< std::string > const & componentNames )
+                 std::vector< string > const & componentNames )
 {
   GEOSX_ERROR_IF_LE( var.size(), 0 );
 
@@ -555,7 +555,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
   {
     for( int i = 0; i < numComponentsPerValue; ++i )
     {
-      std::string const name = componentNames.empty() ? internal::getIndicesToComponent( val, i, indices ... ) :
+      string const name = componentNames.empty() ? internal::getIndicesToComponent( val, i, indices ... ) :
                                componentNames[ curComponent++ ];
 
       void const * pointer = internal::getPointerToComponent( val, i );
@@ -567,7 +567,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
 template< typename T >
 void populateMCArray( T const &,
                       conduit::Node & node,
-                      std::vector< std::string > const & )
+                      std::vector< string > const & )
 {
   GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
                "\nWas trying to write it to " << node.path() );

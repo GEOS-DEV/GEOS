@@ -75,7 +75,7 @@ public:
   virtual ~PoroElastic() override;
 
 
-  static std::string catalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void postProcessInput() override;

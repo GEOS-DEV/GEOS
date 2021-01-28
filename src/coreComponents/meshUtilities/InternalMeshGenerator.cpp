@@ -325,9 +325,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition * const domain )
 
   // This cannot find groupkeys:
   // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  Group * const meshBodies = domain->getGroup( std::string( "MeshBodies" ));
+  Group * const meshBodies = domain->getGroup( string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( this->getName() );
-  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
+  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( string( "Level0" ));
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) &&
@@ -355,13 +355,13 @@ void InternalMeshGenerator::generateMesh( DomainPartition * const domain )
   }
 
 
-  SortedArray< localIndex > & xnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "xneg" ) )->reference();
-  SortedArray< localIndex > & xposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "xpos" ) )->reference();
-  SortedArray< localIndex > & ynegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "yneg" ) )->reference();
-  SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "ypos" ) )->reference();
-  SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "zneg" ) )->reference();
-  SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "zpos" ) )->reference();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )->reference();
+  SortedArray< localIndex > & xnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xneg" ) )->reference();
+  SortedArray< localIndex > & xposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xpos" ) )->reference();
+  SortedArray< localIndex > & ynegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "yneg" ) )->reference();
+  SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "ypos" ) )->reference();
+  SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zneg" ) )->reference();
+  SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) )->reference();
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) )->reference();
 
 
   // partition based on even spacing to get load balance
@@ -441,8 +441,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition * const domain )
   // calculate number of elements in this partition from each region, and the
   // total number of nodes
 
-  std::map< std::string, int > numElemsInRegions;
-  std::map< std::string, std::string > elemTypeInRegions;
+  std::map< string, int > numElemsInRegions;
+  std::map< string, string > elemTypeInRegions;
 
   integer_array firstElemIndexForBlockInPartition[3];
   integer_array lastElemIndexForBlockInPartition[3];
@@ -624,9 +624,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition * const domain )
     integer_array numElements;
     string_array elementRegionNames;
     string_array elementTypes;
-    std::map< std::string, localIndex > localElemIndexInRegion;
+    std::map< string, localIndex > localElemIndexInRegion;
 
-    for( std::map< std::string, int >::iterator iterNumElemsInRegion = numElemsInRegions.begin();
+    for( std::map< string, int >::iterator iterNumElemsInRegion = numElemsInRegions.begin();
          iterNumElemsInRegion != numElemsInRegions.end(); ++iterNumElemsInRegion )
     {
 
@@ -641,7 +641,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition * const domain )
 
     // assign global numbers to elements
     regionOffset = 0;
-    SortedArray< std::string > processedRegionNames;
+    SortedArray< string > processedRegionNames;
     localIndex iR = 0;
 
     for( int iblock = 0; iblock < m_nElems[0].size(); ++iblock )
@@ -931,7 +931,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition * const domain )
  * @param nodeIDInBox
  * @param node_size
  */
-void InternalMeshGenerator::getElemToNodesRelationInBox( const std::string & elementType,
+void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementType,
                                                          const int index[],
                                                          const int & iEle,
                                                          int nodeIDInBox[],
@@ -1261,5 +1261,5 @@ void InternalMeshGenerator::remapMesh( dataRepository::Group * const GEOSX_UNUSE
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, string const &, Group * const )
 }
