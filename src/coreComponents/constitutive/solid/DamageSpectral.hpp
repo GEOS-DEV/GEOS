@@ -81,12 +81,10 @@ public:
 
     real64 strain[6];
     UPDATE_BASE::getElasticStrain( k, q, strain );
-
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
 
     real64 mu = m_shearModulus[k];
     real64 lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
-
     real64 damageFactor = getDegradationValue( k, q );
 
     // get eigenvalues and eigenvectors
@@ -124,6 +122,8 @@ public:
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( positivePartOfStrain, eigenVectors, eigenPlus );
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( negativePartOfStrain, eigenVectors, eigenMinus );
 
+    // stress
+
     real64 positiveStress[6] = {};
     real64 negativeStress[6] = {};
     LvArray::tensorOps::scaledCopy< 6 >( positiveStress, Itensor, lambda*tracePlus );
@@ -132,12 +132,10 @@ public:
     LvArray::tensorOps::scaledAdd< 6 >( positiveStress, positivePartOfStrain, 2*mu );
     LvArray::tensorOps::scaledAdd< 6 >( negativeStress, negativePartOfStrain, 2*mu );
 
-    // complete stress
-
     LvArray::tensorOps::copy< 6 >( stress, negativeStress );
     LvArray::tensorOps::scaledAdd< 6 >( stress, positiveStress, damageFactor );
 
-    // construct 4th order IxI tensor
+    // stiffness
 
     real64 IxITensor[6][6] = {};
     for( int i=0; i < 3; i++ )
@@ -148,24 +146,21 @@ public:
       }
     }
 
-    // construct positive part
-
     real64 cPositive[6][6] = {};
     real64 positiveProjector[6][6] = {};
-    PositiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
-    LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda*heaviside( traceOfStrain ));
-    LvArray::tensorOps::scale< 6, 6 >( positiveProjector, 2*mu );
-    LvArray::tensorOps::add< 6, 6 >( cPositive, positiveProjector );
-
-    // construct negative part
-
     real64 negativeProjector[6][6] = {};
-    NegativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
-    LvArray::tensorOps::scaledCopy< 6, 6 >( stiffness, IxITensor, lambda*heaviside( -traceOfStrain ));
-    LvArray::tensorOps::scale< 6, 6 >( negativeProjector, 2*mu );
-    LvArray::tensorOps::add< 6, 6 >( stiffness, negativeProjector );
 
-    // complete stiffness
+    PositiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
+    NegativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
+
+    LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda*heaviside( traceOfStrain ));
+    LvArray::tensorOps::scaledCopy< 6, 6 >( stiffness, IxITensor, lambda*heaviside( -traceOfStrain ));
+
+    LvArray::tensorOps::scale< 6, 6 >( positiveProjector, 2*mu );
+    LvArray::tensorOps::scale< 6, 6 >( negativeProjector, 2*mu );
+
+    LvArray::tensorOps::add< 6, 6 >( cPositive, positiveProjector );
+    LvArray::tensorOps::add< 6, 6 >( stiffness, negativeProjector );
 
     LvArray::tensorOps::scale< 6, 6 >( cPositive, damageFactor );
     LvArray::tensorOps::add< 6, 6 >( stiffness, cPositive );

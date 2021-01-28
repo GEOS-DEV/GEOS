@@ -426,6 +426,93 @@ public:
     GEOSX_ERROR( "getElasticStiffness() not implemented for this model" );
   }
 
+
+  /**
+   * @brief Perform a finite-difference check of the stiffness computation
+   *
+   * This method uses several stress evaluations and finite differencing to
+   * approximate the 6x6 stiffness matrix, and then computes an error between
+   * the coded stiffness method and the finite difference version.
+   *
+   * @note This method only works for models providing the smallStrainUpdate
+   * method returning a 6x6 stiffness.  A similar method would need to be
+   * implemented to check compressed stiffness or finite-strain versions.
+   *
+   * @param k the element number
+   * @param q the quadrature index
+   * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
+   */
+  GEOSX_HOST_DEVICE
+  bool checkSmallStrainStiffness( localIndex k,
+                                  localIndex q,
+                                  real64 ( & strainIncrement )[6],
+                                  bool print = false ) const
+  {
+    real64 stiffness[6][6];     // coded stiffness
+    real64 stiffnessFD[6][6];   // finite difference approximation
+
+    real64 stress[6];           // original stress
+    real64 stressFD[6];         // perturbed stress
+
+    real64 norm = 0;
+    for( localIndex i=0; i<6; ++i )
+    {
+      norm += fabs( strainIncrement[i] );
+    }
+
+    real64 eps = 1e-4*norm;     // finite difference perturbation
+
+    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+
+    for( localIndex i=0; i<6; ++i )
+    {
+      strainIncrement[i] += eps;
+
+      if( i>0 )
+      {
+        strainIncrement[i-1] -= eps;
+      }
+
+      smallStrainUpdate( k, q, strainIncrement, stressFD, stiffnessFD );
+
+      for( localIndex j=0; j<6; ++j )
+      {
+        stiffnessFD[j][i] = (stressFD[j]-stress[j])/eps;
+      }
+    }
+
+    // compute relative error between two versions
+
+    real64 error = 0;
+    norm = 0;
+
+    for( localIndex i=0; i<6; ++i )
+    {
+      for( localIndex j=0; j<6; ++j )
+      {
+        error += fabs( stiffnessFD[i][j]-stiffness[i][j] );
+        norm += fabs( stiffnessFD[i][j] );
+      }
+    }
+    error /= norm;
+
+    // optional printing for debugging purposes
+
+    if( print )
+    {
+      for( localIndex i=0; i<6; ++i )
+      {
+        for( localIndex j=0; j<6; ++j )
+        {
+          printf( "[%8.1e vs %8.1e] ", stiffnessFD[i][j], stiffness[i][j] );
+        }
+        printf( "\n" );
+      }
+    }
+
+    return (error < 1e-3);
+  }
+
 };
 
 

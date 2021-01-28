@@ -108,39 +108,7 @@ TEST( DruckerPragerTests, testDruckerPrager )
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  real64 fd_stiffness[6][6]; // finite difference approximation
-  real64 pstress[6];         // perturbed stress
-  real64 pstiffness[6][6];   // perturbed stiffness
-  real64 eps = 1e-10;        // finite difference perturbation
-
-  cmw.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    strainIncrement[i] += eps;
-
-    if( i>0 )
-    {
-      strainIncrement[i-1] -= eps;
-    }
-
-    cmw.smallStrainUpdate( 0, 0, strainIncrement, pstress, pstiffness );
-
-    for( localIndex j=0; j<6; ++j )
-    {
-      fd_stiffness[j][i] = (pstress[j]-stress[j])/eps;
-    }
-  }
-
-  // confirm entrywise differences are less than a desired tolerance
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    for( localIndex j=0; j<6; ++j )
-    {
-      EXPECT_TRUE( fabs( fd_stiffness[i][j]-stiffness[i][j] ) < 1e-3 );
-    }
-  }
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, strainIncrement ) );
 }
 
 
@@ -242,39 +210,5 @@ TEST( DruckerPragerTests, testDruckerPragerExtended )
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  real64 fd_stiffness[6][6]; // finite difference approximation
-  real64 pstress[6];         // perturbed stress
-  real64 pstiffness[6][6];   // perturbed stiffness
-  real64 eps = 1e-10;        // finite difference perturbation
-
-  cmw.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    strainIncrement[i] += eps;
-
-    if( i>0 )
-    {
-      strainIncrement[i-1] -= eps;
-    }
-
-    cmw.smallStrainUpdate( 0, 0, strainIncrement, pstress, pstiffness );
-
-    for( localIndex j=0; j<6; ++j )
-    {
-      fd_stiffness[j][i] = (pstress[j]-stress[j])/eps;
-    }
-  }
-
-  // confirm entrywise differences are less than a desired tolerance
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    for( localIndex j=0; j<6; ++j )
-    {
-      ///printf("(%.3e,%.3e) ",stiffness[i][j],fd_stiffness[i][j]);
-      EXPECT_TRUE( fabs( fd_stiffness[i][j]-stiffness[i][j] ) < 1e-2 );
-    }
-    //printf("\n");
-  }
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, strainIncrement ) );
 }

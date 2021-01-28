@@ -76,23 +76,6 @@ real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
   return ans;
 }
 
-//compute strain from stresses using SSLE
-template< int USD >
-GEOSX_HOST_DEVICE inline
-void recoverStrainFromStress( arraySlice1d< real64 const, USD > const & stress,
-                              real64 (& strain)[6],
-                              real64 const K,
-                              real64 const mu )
-{
-  real64 E = 9*K*mu / (3*K + mu);
-  real64 nu = (3*K - 2*mu) / (6*K + 2*mu);
-  strain[0] = (stress[0] - nu*(stress[1] + stress[2]))/E;
-  strain[1] = (stress[1] - nu*(stress[0] + stress[2]))/E;
-  strain[2] = (stress[2] - nu*(stress[0] + stress[1]))/E;
-  strain[3] = (1 + nu)*stress[3]/E;
-  strain[4] = (1 + nu)*stress[4]/E;
-  strain[5] = (1 + nu)*stress[5]/E;
-}
 
 //heaviside function, return 1 for positive, 0 for negatives and 0.5 if argument is zero or very close
 GEOSX_HOST_DEVICE inline
