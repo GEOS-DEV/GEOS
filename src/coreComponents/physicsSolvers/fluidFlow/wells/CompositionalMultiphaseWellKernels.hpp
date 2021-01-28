@@ -1204,16 +1204,19 @@ struct PresCompFracInitializationKernel
 
     real64 pressureControl = 0.0;
     real64 const gravCoefControl = refWellElemGravCoef;
-    // initialize the reference pressure
+    // initialize the pressure in the element where the BHP is controlled)
     if( currentControl == WellControls::Control::BHP )
     {
-      // if pressure constraint, set the ref pressure at the constraint
+      // if pressure constraint, initialize the pressure at the constraint
       pressureControl = targetBHP;
     }
     else // rate control
     {
-      // if rate constraint, set the ref pressure slightly
-      // above/below the target pressure depending on well type
+      // initialize the pressure in the element where the BHP is controlled slightly
+      // above/below the target pressure depending on well type.
+      // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
+      //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
+      //       be used for initialization
       pressureControl = ( wellType == WellControls::Type::PRODUCER )
                       ? 0.5 * pres
                       : 2.0 * pres;
