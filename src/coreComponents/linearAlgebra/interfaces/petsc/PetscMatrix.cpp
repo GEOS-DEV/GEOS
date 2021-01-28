@@ -121,7 +121,7 @@ void PetscMatrix::set( real64 const value )
   array1d< PetscScalar > vals_;
   array1d< PetscInt > inds_;
 
-  PetscInt const maxNumRows = MpiWrapper::Max( lastrow - firstrow, getComm() );
+  PetscInt const maxNumRows = MpiWrapper::max( lastrow - firstrow, getComm() );
 
   // loop over rows
   for( PetscInt row = firstrow; row < lastrow; row++ )
@@ -690,7 +690,7 @@ localIndex PetscMatrix::maxRowLength() const
   {
     maxLocalLength = std::max( maxLocalLength, globalRowLength( i ) );
   }
-  return MpiWrapper::Max( maxLocalLength, getComm() );
+  return MpiWrapper::max( maxLocalLength, getComm() );
 }
 
 localIndex PetscMatrix::localRowLength( localIndex localRowIndex ) const
