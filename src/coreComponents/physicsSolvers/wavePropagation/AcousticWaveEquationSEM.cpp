@@ -38,9 +38,12 @@ void AcousticWaveEquationSEM::RegisterDataOnMesh( Group * const MeshBodies )
     NodeManager & nodes = *(meshLevel.getNodeManager());
 
     nodes.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
-                                  extrinsicMeshData::Pressure_n,
-                                  extrinsicMeshData::Pressure_np1,
-                                  extrinsicMeshData::ForcingRHS >( this->getName() );
+				 extrinsicMeshData::Pressure_n,
+				 extrinsicMeshData::Pressure_np1,
+				 extrinsicMeshData::ForcingRHS,
+				 extrinsicMeshData::MassVector,
+				 extrinsicMeshData::DampingVector,
+				 extrinsicMeshData::StiffnessVector>( this->getName() );
 
 
     ElementRegionManager & elemManager = *(meshLevel.getElemManager());
@@ -60,14 +63,14 @@ void AcousticWaveEquationSEM::InitializePreSubGroups( Group * const rootGroup )
   SolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-
+  /* No constituve model
   // Validate solid models in target regions
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< constitutive::SolidBase >( *meshLevel.getElemManager(), m_solidMaterialNames );
   }
-
+  */
   NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
@@ -114,8 +117,9 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
       /// get the map element to faces
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       
-      arrayView1d< real64 const > const c = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
-
+      arrayView1d< real64 > const c = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
+      std::cout << c.size() << std::endl;
+      c.setValues< serialPolicy >(1500);
       
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -147,7 +151,8 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
             }
           }
         }
-	
+
+	//std::cout << "Coucou c'est bon" << std::endl;
 	/// update damping matrix
 	for( localIndex k=0; k < elemsToFaces.size( 0 ); ++k )
 	  {
@@ -190,7 +195,12 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 				ds +=tmp[i]*tmp[i];
 			      }
 			    ds = std::sqrt(ds);
-			    damping[elemsToNodes[k][facesToNodes[kfe][a]]] += alpha*detJ[k][q]*ds*N[a];
+			    //std::cout << kfe << std::endl;
+			    //std::cout << facesToNodes[elemsToFaces[k][kfe]][a] << std::endl;
+			    //damping[elemsToNodes[k][facesToNodes[elemsToFaces[k][kfe]][a]]] += alpha*detJ[k][q]*ds*N[a];
+			    localIndex numFaceGl = elemsToFaces[k][kfe];
+			    localIndex numNodeGl = facesToNodes[numFaceGl][a];
+			    damping[numNodeGl] += alpha*detJ[k][q]*ds*N[a];
 			  }
 		      }
 		  }
@@ -251,7 +261,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
   arrayView1d< real64 > const stiffnessVector = nodes.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
 
   /// Vector to compute rhs
-  arrayView1d< real64 > const rhs = nodes.getExtrinsicData< extrinsicMeshData::RhsVector >();
+  arrayView1d< real64 > const rhs = nodes.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
   
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -262,6 +272,9 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
+      /// get the barycenter of the elem
+      arrayView2d< real64 const > const & elemCenterCoord = elementSubRegion.getElementCenter();
+      
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::dispatch3D( fe,
@@ -315,11 +328,15 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
 		stiffnessVector[elemsToNodes[k][q]] += Rh_k[q][l]*p_n[elemsToNodes[k][l]] ;
 	      }
           }
+	  //if(elemCenterCoord[k][0]== 500.0 && ())
+	  // {  
+	  //  }
         }
       } );
     } );
   } );
 
+  // rhs at 500 500 500
   
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
@@ -333,6 +350,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
   }
+  std::cout << "Pressure[0] = " << p_n[2] << std::endl;
 
   return dt;
 }
