@@ -140,7 +140,6 @@ EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
                            WRITE_AND_READ,
                            "Diagonal Damping Matrix." );
 
-
 EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
                            "mediumVelocity",
                            array1d< real64 >,
@@ -156,13 +155,6 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "Stiffness vector contains R_h*Pressure_n." );
-EXTRINSIC_MESH_DATA_TRAIT( RhsVector,
-                           "rhsVector",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Rhs Vector." );
 
 }
 
