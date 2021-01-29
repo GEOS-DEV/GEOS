@@ -63,14 +63,7 @@ void AcousticWaveEquationSEM::InitializePreSubGroups( Group * const rootGroup )
   SolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-  /* No constituve model
-  // Validate solid models in target regions
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
-  {
-    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    ValidateModelMapping< constitutive::SolidBase >( *meshLevel.getElemManager(), m_solidMaterialNames );
-  }
-  */
+  
   NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
@@ -91,7 +84,6 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
   FaceManager & faceManager = *mesh.getFaceManager();
 
   /// get the array of indicators: 1 if the node is on the boundary; 0 otherwise
-  arrayView1d< integer const > const nodesDomainBoundaryIndicator = nodeManager.getDomainBoundaryIndicator();
   arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
   
@@ -120,7 +112,6 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
       arrayView1d< real64 > const c = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
       std::cout << "Size of the medium velocity array c is " << c.size() << std::endl;
       std::cout << "c[c.size()-1] = " << c[c.size()-1] << std::endl;
-      //c.setValues< serialPolicy >(1500);
       
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -139,7 +130,6 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
           real64 const invC2 = 1.0 / ( c[k] * c[k] );
-	  //real64 const alpha = 1.0/c[k];
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
@@ -153,7 +143,6 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
           }
         }
 
-	//std::cout << "Coucou c'est bon" << std::endl;
 	/// update damping matrix
 	for( localIndex k=0; k < elemsToFaces.size( 0 ); ++k )
 	  {
@@ -182,8 +171,6 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 			
 			for(localIndex a=0; a < numNodesPerFace; ++a)
 			  {
-			    //if(nodesDomainBoundaryIndicator[elemsToNodes[k][a]] == 1)
-			    // {
 			    /// compute ds=||detJ*invJ*normalFace_{kfe}||
 			    real64 tmp[3]={0};
 			    real64 ds = 0.0;
@@ -196,9 +183,7 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 				ds +=tmp[i]*tmp[i];
 			      }
 			    ds = std::sqrt(ds);
-			    //std::cout << kfe << std::endl;
-			    //std::cout << facesToNodes[elemsToFaces[k][kfe]][a] << std::endl;
-			    //damping[elemsToNodes[k][facesToNodes[elemsToFaces[k][kfe]][a]]] += alpha*detJ[k][q]*ds*N[a];
+			    
 			    localIndex numFaceGl = elemsToFaces[k][kfe];
 			    localIndex numNodeGl = facesToNodes[numFaceGl][a];
 			    damping[numNodeGl] += alpha*detJ[k][q]*ds*N[a];
@@ -278,7 +263,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
   arrayView1d< real64 > const p_n = nodes.getExtrinsicData< extrinsicMeshData::Pressure_n >();
   arrayView1d< real64 > const p_np1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
   
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodes.referencePosition().toViewConst(); //nodes.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodes.referencePosition().toViewConst();
 
   /// Vector to contain the product of the stiffness matrix R_h and the pressure p_n
   arrayView1d< real64 > const stiffnessVector = nodes.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
@@ -362,11 +347,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
 	       sourceLocation[0] = elemCenterLocation[k][0];
 	       sourceLocation[1] = elemCenterLocation[k][1];
 	       sourceLocation[2] = elemCenterLocation[k][2];
-	       std::cout << "Source in element k =  " << sourceInElemIndex << std::endl;
-	       std::cout << "sourceLocation[0] = " << sourceLocation[0] << std::endl;
-	       std::cout << "sourceLocation[1] = " << sourceLocation[1] << std::endl;
-	       std::cout << "sourceLocation[2] = " << sourceLocation[2] << std::endl;
-	       //real64 tc = 0.2;
+	       
 	       real64 frequency = 1.0;
 	       real64 fi =0.0;
 	       //if(time_n <=0.4)
@@ -380,35 +361,28 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
 		   real64 const detJ = finiteElement.template getGradN< FE_TYPE >( sourceInElemIndex, q, xLocal, gradN);
 		   
 		   rhs[elemsToNodes[k][q]] +=  fi* detJ * N[q];
-		   std::cout << "For index " << elemsToNodes[k][q] << " rhs = " << rhs[elemsToNodes[k][q]] << std::endl; 
+		   ///std::cout << "For index " << elemsToNodes[k][q] << " rhs = " << rhs[elemsToNodes[k][q]] << std::endl; 
 		 }
-	       //}
-	       //else
-	       // {
-	       // }
-	
 	     }
         }
       } );
     } );
   } );
-
-  // rhs at 500 500 500
   
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
   for( localIndex a=0; a<nodes.size(); ++a )
-  {
-    // pressure update here
-    p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
-    p_nm1[a]=p_n[a];
-    p_n[a] = p_np1[a];
-
-    stiffnessVector[a] = 0.0;
-    rhs[a] = 0.0;
-  }
+    {
+      // pressure update here
+      p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
+      p_nm1[a]=p_n[a];
+      p_n[a] = p_np1[a];
+      
+      stiffnessVector[a] = 0.0;
+      rhs[a] = 0.0;
+    }
   std::cout << "Pressure[505050] = " << p_n[505050] << std::endl;
-
+  
   return dt;
 }
 
