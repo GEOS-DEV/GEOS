@@ -15,8 +15,12 @@ class Sneddon:
 
         E = (9 * K * G) / (3*K+G)
         nu = E / (2 * G) - 1
+        #
+        print("young modulus = ", E, " Pa")
+        print("poisson ratio = ", nu)
+        print("fracture length = ", 2*length, " m")
 
-        self.scaling = ( 4 * (1 - nu)**2 ) * pressure / E;
+        self.scaling = ( 4 * (1 - nu**2) ) * pressure / E;
         self.halfLength = length;
 
     def computeAperture(self, x):
@@ -93,13 +97,16 @@ def main(filesPaths):
     length, origin = getFractureLengthFromXML(xmlFilePath)
 
     x = x - origin
-    print(x)
     # Initialize Sneddon's analytical solution
     sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length, appliedPressure)
 
     # Plot analytical (continuous line) and numerical (markers) aperture solution
     x_analytical = np.linspace(-length, length, 101, endpoint=True)
     aperture_analytical = np.empty(len(x_analytical))
+
+    apertureMaxAnalytical =  sneddonAnalyticalSolution.computeAperture( 0 )
+
+    print("max aperture = ", apertureMaxAnalytical, " m")
 
     cmap = plt.get_cmap("tab10")
     i=0

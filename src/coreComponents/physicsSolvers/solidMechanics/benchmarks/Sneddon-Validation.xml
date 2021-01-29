@@ -38,26 +38,26 @@
   </Solvers>
 
   <Mesh>
-    <InternalMesh
+    <!--InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 1001 }"
       yCoords="{ 0, 1001 }"
       zCoords="{ 0, 100 }"
-      nx="{ 401 }"
-      ny="{ 401 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
-    <!--InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 400, 601, 1001 }"
-      yCoords="{ 0, 400, 601, 1001 }"
-      zCoords="{ 0, 100 }"
-      nx="{ 3, 101, 3 }"
-      ny="{ 3, 101, 3 }"
+      nx="{ 101 }"
+      ny="{ 101 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/-->
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 400, 600, 1000 }"
+      yCoords="{ 0, 400, 601, 1001 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 10, 400, 10 }"
+      ny="{ 10, 201, 10 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
       
   </Mesh>
 
@@ -84,7 +84,7 @@
     <BoundedPlane
       name="FracturePlane"
       normal="0, 1, 0"
-      origin="500.5, 500.5, 50"
+      origin="500, 500.5, 50"
       lengthVector="1, 0, 0"
       widthVector="0, 0, 1"
       dimensions="{ 20, 100 }"/>
