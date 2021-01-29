@@ -115,7 +115,7 @@ public:
                                            real64 const (&X)[numNodes][3],
                                            real64 ( & J )[3][3] )
   {
-    GEOSX_UNUSED_VAR(q, X);
+    GEOSX_UNUSED_VAR( q, X );
 //    jacobianTransformation( q, X, J );
     return LvArray::tensorOps::invert< 3 >( J );
   }
