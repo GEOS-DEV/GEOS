@@ -141,11 +141,7 @@ real64 TableRelativePermeability::validateRelativePermeabilityTable( TableFuncti
     GEOSX_ERROR_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
                     "In the relative permeability table, the phase volume fraction (i.e., saturation) must be between 0 and 1" );
 
-    if( i >= 1 )
-    {
-      GEOSX_ERROR_IF( phaseVolFrac[i] - phaseVolFrac[i-1] < 1e-10,
-                      "In the relative permeability table, the phase volume fraction (i.e., saturation) must be strictly increasing" );
-    }
+    // note that the TableFunction class has already checked that the coordinates are monotone
 
     // check phase relative permeability
     if( i == 0 )

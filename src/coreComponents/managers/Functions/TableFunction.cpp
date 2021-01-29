@@ -125,6 +125,11 @@ void TableFunction::setTableCoordinates( array1d< real64_array > coordinates )
   m_coordinates.resize( 0 );
   for( localIndex i = 0; i < coordinates.size(); ++i )
   {
+    for( localIndex j = 1; j < coordinates[i].size(); ++j )
+    {
+      GEOSX_ERROR_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
+                      "In the table, the coordinates must be strictly increasing, but axis " << i << "is not" );
+    }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
   }
   reInitializeFunction();
