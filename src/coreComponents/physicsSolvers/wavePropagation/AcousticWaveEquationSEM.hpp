@@ -26,8 +26,8 @@ public:
   AcousticWaveEquationSEM( AcousticWaveEquationSEM const & ) = delete;
   AcousticWaveEquationSEM( AcousticWaveEquationSEM && ) = default;
 
-  AcousticWaveEquationSEM& operator=( AcousticWaveEquationSEM const & ) = delete;
-  AcousticWaveEquationSEM& operator=( AcousticWaveEquationSEM && ) = delete;
+  AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM const & ) = delete;
+  AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM && ) = delete;
 
 
   static string CatalogName() { return "AcousticSEM"; }
@@ -57,12 +57,12 @@ public:
 
   /// Returns the value of a Ricker at time t0 with central Fourier frequency f0
   virtual
-  real64 EvaluateRicker(real64 const & t0, real64 const & f0);
+  real64 EvaluateRicker( real64 const & t0, real64 const & f0 );
   /// Returns the value of the second derivative of a Ricker at time t0 with central Fourier frequency f0
   virtual
-  real64 EvaluateSecondDerivativeRicker(real64 const & t0, real64 const & f0);
+  real64 EvaluateSecondDerivativeRicker( real64 const & t0, real64 const & f0 );
 
-  
+
 //  virtual void ApplyBoundaryConditions( real64 const time,
 //                                        real64 const dt,
 //                                        DomainPartition & domain,
