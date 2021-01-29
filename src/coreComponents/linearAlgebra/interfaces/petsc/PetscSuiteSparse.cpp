@@ -34,7 +34,7 @@ void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
 
   MPI_Comm const comm = matrix.getComm();
 
-  int const rank = MpiWrapper::Comm_rank( comm );
+  int const rank = MpiWrapper::commRank( comm );
 
   Mat * localMatrix;
   IS set;
@@ -108,7 +108,7 @@ int SuiteSparseSolve( SuiteSparse & SSData,
   Vec localSol;
   GEOSX_LAI_CHECK_ERROR( VecScatterCreateToZero( x.unwrapped(), &solScatter, &localSol ) );
 
-  int const rank = MpiWrapper::Comm_rank( SSData.getComm() );
+  int const rank = MpiWrapper::commRank( SSData.getComm() );
   if( rank == SSData.workingRank() )
   {
     real64 * dataRhs;
