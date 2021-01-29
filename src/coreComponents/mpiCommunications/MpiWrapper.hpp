@@ -684,8 +684,8 @@ void MpiWrapper::broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ), MP
 template<>
 inline
 void MpiWrapper::broadcast< string >( string & MPI_PARAM( value ),
-                                           int MPI_PARAM( srcRank ),
-                                           MPI_Comm MPI_PARAM( comm ) )
+                                      int MPI_PARAM( srcRank ),
+                                      MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   int size = value.size();

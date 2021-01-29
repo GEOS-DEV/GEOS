@@ -27,7 +27,7 @@
 #include <conduit.hpp>
 
 // System includes
-#include <string>
+
 
 /// @cond DO_NOT_DOCUMENT
 

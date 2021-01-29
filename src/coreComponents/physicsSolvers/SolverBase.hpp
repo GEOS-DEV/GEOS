@@ -26,7 +26,7 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 
-#include <string>
+
 #include <limits>
 
 namespace geosx

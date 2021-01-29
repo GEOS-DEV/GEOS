@@ -34,7 +34,7 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 
 #include <iostream>
-#include <string>
+
 #include <sstream>
 #include <algorithm>
 #include <iterator>

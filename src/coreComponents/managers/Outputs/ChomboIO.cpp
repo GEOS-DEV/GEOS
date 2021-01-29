@@ -20,7 +20,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "managers/DomainPartition.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"
-#include <string>
+
 #include <fstream>
 #include <chrono>
 

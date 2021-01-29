@@ -19,7 +19,7 @@
 #ifndef TASKBASE_HPP_
 #define TASKBASE_HPP_
 
-#include <string>
+
 #include <limits>
 
 #include "dataRepository/ExecutableGroup.hpp"

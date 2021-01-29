@@ -556,7 +556,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
     for( int i = 0; i < numComponentsPerValue; ++i )
     {
       string const name = componentNames.empty() ? internal::getIndicesToComponent( val, i, indices ... ) :
-                               componentNames[ curComponent++ ];
+                          componentNames[ curComponent++ ];
 
       void const * pointer = internal::getPointerToComponent( val, i );
       node[ name ].set_external( dtype, const_cast< void * >( pointer ) );
