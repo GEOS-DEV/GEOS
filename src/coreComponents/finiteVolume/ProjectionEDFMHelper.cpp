@@ -295,14 +295,18 @@ fractureMatrixTransmissilibility( CellID const & neighborCell,
   // fracture projected permeability: equal to one for now
   real64 const directionalPermFracutre = 1.f;
   // matrix permeability
-  auto const neighborPerm =  m_permTensor[neighborCell.region][neighborCell.subRegion][neighborCell.index];
+  // auto const & neighborPerm =  m_permTensor[neighborCell.region][neighborCell.subRegion][neighborCell.index];
+  arraySlice1d<real64 const> neighborPerm =  m_permTensor[neighborCell.region][neighborCell.subRegion][neighborCell.index];
   /* const double Kp2 = (K2 * (c2 - cp).normalize()).norm(); */
   real64 direction[3];
   LvArray::tensorOps::copy< 3 >( direction, cellCenter );
   LvArray::tensorOps::subtract< 3 >( direction, projectionPoint );
   LvArray::tensorOps::normalize< 3 >(direction);
-  LvArray::tensorOps::Ri_eq_symAijBj< 3 >( tmp, neighborPerm, direction );
-  real64 const directionalPermCell = LvArray::tensorOps::l2Norm< 3 >( tmp );
+  // std::cout << "perm neighbor size " << neighborPerm.size(0) << std::endl;
+  // std::cout << "perm neighbor size 1 = " << neighborPerm.size(1) << std::endl;
+  // LvArray::tensorOps::Ri_eq_symAijBj< 3 >( tmp, neighborPerm, direction );
+  // real64 const directionalPermCell = LvArray::tensorOps::l2Norm< 3 >( tmp );
+  real64 const directionalPermCell = LvArray::tensorOps::AiBi< 3 > ( neighborPerm, direction );
 
   // part trasmissibilities
   /* const double T1 = face_area * Kp1 / (c1 - cp).norm(); */
