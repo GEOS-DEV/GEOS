@@ -118,8 +118,9 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       
       arrayView1d< real64 > const c = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
-      std::cout << c.size() << std::endl;
-      c.setValues< serialPolicy >(1500);
+      std::cout << "Size of the medium velocity array c is " << c.size() << std::endl;
+      std::cout << "c[c.size()-1] = " << c[c.size()-1] << std::endl;
+      //c.setValues< serialPolicy >(1500);
       
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -223,18 +224,40 @@ real64 AcousticWaveEquationSEM::SolverStep( real64 const & time_n,
 }
 
 
-/// Returns the value of a Ricker at time t0 with central Fourier frequency f0 and center time tc
-real64 AcousticWaveEquationSEM::EvaluateRicker(real64 const & t0, real64 const & tc, real64 const & f0)
+/// Returns the value of a Ricker at time t0 with central Fourier frequency f0
+real64 AcousticWaveEquationSEM::EvaluateRicker(real64 const & t0, real64 const & f0)
 {
-    real64 pulse = 0;
-    real64 pi = 3.14;
-    real64 tmp = f0*(t0-tc);
-    real64 f0tm1_2 = 2*(tmp*pi)*(tmp*pi);
-    real64 gaussian_term = exp(-f0tm1_2); 
-    pulse = -(t0-tc)*gaussian_term;
-        
+  // Center time
+  real64 T0 = 1.0/f0;
+  real64 pulse = 0.0;
+  if ((t0 <= -0.9*T0) || (t0 >= 2.9*T0))
     return pulse;
+  
+  real64 pi = 3.14;
+  real64 tmp = f0*t0-1.0;
+  real64 f0tm1_2 = 2*(tmp*pi)*(tmp*pi);
+  real64 gaussian_term = exp(-f0tm1_2); 
+  pulse = -(t0-1)*gaussian_term;
+  
+  return pulse;
   }
+/// Returns the value of the second derivative of a Ricker at time t0 with central Fourier frequency f0
+real64 AcousticWaveEquationSEM::EvaluateSecondDerivativeRicker(real64 const & t0, real64 const & f0)
+{
+
+  
+  // derivative of the Ricker
+  real64 der_pulse = 0.0;
+  real64 T0 = 1.0/f0;
+  if ((t0 <= -0.9*T0) || (t0 >= 2.9*T0))
+    return der_pulse;
+
+  real64 pi=3.14;
+  real64 tmp = f0*t0-1.0;
+  real64 f0tm1_2 = (tmp*pi)*(tmp*pi);
+  der_pulse = 2*pi*pi*f0*tmp*(3.0 - 2.0*f0tm1_2)*exp(-f0tm1_2);
+  return der_pulse;
+}
 
 real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
                                               real64 const & dt,
@@ -272,8 +295,11 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      /// get the barycenter of the elem
-      arrayView2d< real64 const > const & elemCenterCoord = elementSubRegion.getElementCenter();
+      /// get the barycenter of the element
+      arrayView2d< real64 const > const & elemCenterLocation = elementSubRegion.getElementCenter();
+      /// The source location
+      real64 sourceLocation[3]={0};
+      localIndex sourceInElemIndex=0;
       
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -305,32 +331,63 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
 
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-          {
-	    ///Calculate the basis function N at the node q
-            FE_TYPE::calcN( q, N );
-	    ///Compute gradN = invJ*\hat{\nabla}N at the node q and return the determinant of the transformation matrix J
-	    real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN);
-	    
-	    for( localIndex i=0; i<numNodesPerElem; ++i )
-            {
-	      for(localIndex j=0; j<numNodesPerElem; ++j )
+	    {
+	      ///Calculate the basis function N at the node q
+	      FE_TYPE::calcN( q, N );
+	      ///Compute gradN = invJ*\hat{\nabla}N at the node q and return the determinant of the transformation matrix J
+	      real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN);
+	      
+	      for( localIndex i=0; i<numNodesPerElem; ++i )
 		{
-		  Rh_k[i][j] = 0.0;
-		  for(localIndex a=0; a<2; ++a)
+		  for(localIndex j=0; j<numNodesPerElem; ++j )
 		    {
-		      Rh_k[i][j] +=  detJ * gradN[i][a]*gradN[j][a];
+		      Rh_k[i][j] = 0.0;
+		      for(localIndex a=0; a < 3; ++a)
+			{
+			  Rh_k[i][j] +=  detJ * gradN[i][a]*gradN[j][a];
+			}
 		    }
 		}
+	      ///Compute local Rh_k*p_n and save in the global vector  
+	      for( localIndex l=0; l< numNodesPerElem; ++l )
+		{
+		  stiffnessVector[elemsToNodes[k][q]] += Rh_k[q][l]*p_n[elemsToNodes[k][l]] ;
+		}
 	    }
-	    ///Compute local Rh_k*p_n and save in the global vector  
-            for( localIndex l=0; l< numNodesPerElem; ++l )
-	      {
-		stiffnessVector[elemsToNodes[k][q]] += Rh_k[q][l]*p_n[elemsToNodes[k][l]] ;
-	      }
-          }
-	  //if(elemCenterCoord[k][0]== 500.0 && ())
-	  // {  
-	  //  }
+
+	  ///Try to get an element in the center of the domain
+	  if(std::abs(elemCenterLocation[k][0]- 505.0) <=1.0 && (std::abs(elemCenterLocation[k][1]- 505.0) <=1.0 && std::abs(elemCenterLocation[k][2]- 505.0) <=1.0))
+	     {
+	       sourceInElemIndex = k;
+	       sourceLocation[0] = elemCenterLocation[k][0];
+	       sourceLocation[1] = elemCenterLocation[k][1];
+	       sourceLocation[2] = elemCenterLocation[k][2];
+	       std::cout << "Source in element k =  " << sourceInElemIndex << std::endl;
+	       std::cout << "sourceLocation[0] = " << sourceLocation[0] << std::endl;
+	       std::cout << "sourceLocation[1] = " << sourceLocation[1] << std::endl;
+	       std::cout << "sourceLocation[2] = " << sourceLocation[2] << std::endl;
+	       //real64 tc = 0.2;
+	       real64 frequency = 1.0;
+	       real64 fi =0.0;
+	       //if(time_n <=0.4)
+	       //{
+	       fi = this->EvaluateRicker(time_n, frequency);
+	       
+	       std::cout << "Ricker at t = " << time_n << "s is fi = " << fi << std::endl;
+	       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+		 {
+		   FE_TYPE::calcN( q, N );
+		   real64 const detJ = finiteElement.template getGradN< FE_TYPE >( sourceInElemIndex, q, xLocal, gradN);
+		   
+		   rhs[elemsToNodes[k][q]] +=  fi* detJ * N[q];
+		   std::cout << "For index " << elemsToNodes[k][q] << " rhs = " << rhs[elemsToNodes[k][q]] << std::endl; 
+		 }
+	       //}
+	       //else
+	       // {
+	       // }
+	
+	     }
         }
       } );
     } );
@@ -350,7 +407,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
   }
-  std::cout << "Pressure[0] = " << p_n[2] << std::endl;
+  std::cout << "Pressure[505050] = " << p_n[505050] << std::endl;
 
   return dt;
 }
