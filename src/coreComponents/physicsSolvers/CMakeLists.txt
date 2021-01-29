@@ -14,8 +14,6 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
-     fluidFlow/CompositionalMultiphaseHybridFVMAssemblerHelperKernels.hpp          
-     fluidFlow/CompositionalMultiphaseHybridFVMUpwindingHelperKernels.hpp
      fluidFlow/HybridFVMHelperKernels.hpp          
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
