@@ -387,7 +387,7 @@ void PetscVector::write( string const & filename,
     GEOSX_LAI_CHECK_ERROR( VecScatterCreateToAll( m_vec, &scatter, &globalVec ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterBegin( scatter, m_vec, globalVec, INSERT_VALUES, SCATTER_FORWARD ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterEnd( scatter, m_vec, globalVec, INSERT_VALUES, SCATTER_FORWARD ) );
-    if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+    if( MpiWrapper::commRank( getComm() ) == 0 )
     {
       PetscScalar *v;
       GEOSX_LAI_CHECK_ERROR( VecGetArray( globalVec, &v ) );
