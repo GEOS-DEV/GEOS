@@ -323,10 +323,10 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, real64 & value, O
   // Linear interpolation
   if( m_interpolationMethod == TableFunction::InterpolationType::Linear )
   {
-    localIndex bounds[TableFunction::maxDimensions][2] = {{ 0 }};
-    real64 weights[TableFunction::maxDimensions][2] = {{ 0.0 }};
-    real64 dWeights_dInput[TableFunction::maxDimensions][2] = {{ 0.0 }};
-    real64 dCornerValue_dInput[TableFunction::maxDimensions] = { 0.0 };
+    localIndex bounds[TableFunction::maxDimensions][2]{};
+    real64 weights[TableFunction::maxDimensions][2]{};
+    real64 dWeights_dInput[TableFunction::maxDimensions][2]{};
+    real64 dCornerValue_dInput[TableFunction::maxDimensions]{};
 
     // Determine position, weights
     for( localIndex ii=0; ii<m_dimensions; ++ii )

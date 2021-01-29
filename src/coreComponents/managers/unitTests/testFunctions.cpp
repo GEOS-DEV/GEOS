@@ -65,8 +65,8 @@ TEST( FunctionTests, 1DTable )
   FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // 1D table, various interpolation methods
-  localIndex Naxis = 4;
-  localIndex Ntest = 6;
+  localIndex const Naxis = 4;
+  localIndex const Ntest = 6;
 
   // Setup table
   array1d< real64_array > coordinates;
@@ -152,11 +152,11 @@ TEST( FunctionTests, 2DTable )
 
   // 2D table with linear interpolation
   // f(x, y) = 2*x - 3*y + 5
-  localIndex Ndim = 2;
-  localIndex Nx = 3;
-  localIndex Ny = 4;
-  localIndex Ntest = 20;
-  string inputName = "coordinates";
+  localIndex const Ndim = 2;
+  localIndex const Nx = 3;
+  localIndex const Ny = 4;
+  localIndex const Ntest = 20;
+  string const inputName = "coordinates";
 
   // Setup table
   array1d< real64_array > coordinates;
@@ -177,8 +177,8 @@ TEST( FunctionTests, 2DTable )
   {
     for( localIndex ii=0; ii<Nx; ++ii )
     {
-      real64 x = coordinates[0][ii];
-      real64 y = coordinates[1][jj];
+      real64 const x = coordinates[0][ii];
+      real64 const y = coordinates[1][jj];
       values[tablePosition] = (2.0*x) - (3.0*y) + 5.0;
       ++tablePosition;
     }
@@ -197,7 +197,7 @@ TEST( FunctionTests, 2DTable )
   table_b->reInitializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string groupName = "testGroup";
+  string const groupName = "testGroup";
   dataRepository::Group testGroup( groupName, nullptr );
 
   real64_array2d testCoordinates;
@@ -229,8 +229,8 @@ TEST( FunctionTests, 2DTable )
       testCoordinates[ii][jj] = distribution( generator );
     }
 
-    real64 x = testCoordinates[ii][0];
-    real64 y = testCoordinates[ii][1];
+    real64 const x = testCoordinates[ii][0];
+    real64 const y = testCoordinates[ii][1];
     expected[ii] = (2.0*x) - (3.0*y) + 5.0;
     set.insert( ii );
   }
@@ -252,15 +252,15 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 
   // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y + 7*z + 11*t
-  localIndex Ndim = 4;
-  localIndex Nx = 3;
-  localIndex Ny = 4;
-  localIndex Nz = 5;
-  localIndex Nt = 2;
-  localIndex Ntest = 20;
-  localIndex Ntimes = 5;
-  string coordinatesName = "coordinates";
-  string timeName = "time";
+  localIndex const Ndim = 4;
+  localIndex const Nx = 3;
+  localIndex const Ny = 4;
+  localIndex const Nz = 5;
+  localIndex const Nt = 2;
+  localIndex const Ntest = 20;
+  localIndex const Ntimes = 5;
+  string const coordinatesName = "coordinates";
+  string const timeName = "time";
 
   // Setup table
   array1d< real64_array > coordinates;
@@ -294,10 +294,10 @@ TEST( FunctionTests, 4DTable_multipleInputs )
       {
         for( localIndex ii=0; ii<Nx; ++ii )
         {
-          real64 x = coordinates[0][ii];
-          real64 y = coordinates[1][jj];
-          real64 z = coordinates[2][kk];
-          real64 t = coordinates[3][mm];
+          real64 const x = coordinates[0][ii];
+          real64 const y = coordinates[1][jj];
+          real64 const z = coordinates[2][kk];
+          real64 const t = coordinates[3][mm];
           values[tablePosition] = 2.0 + (3*x) - (5*y) + (7*z) + (11*t);
           ++tablePosition;
         }
@@ -319,7 +319,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   table_c->reInitializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string groupName = "testGroup";
+  string const groupName = "testGroup";
   dataRepository::Group testGroup( groupName, nullptr );
 
   real64_array2d testCoordinates;
@@ -346,7 +346,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   // Build the inputs
   for( localIndex ii=0; ii<Ntimes; ++ii )
   {
-    real64 t = distribution( generator );
+    real64 const t = distribution( generator );
 
     for( localIndex jj=0; jj<Ntest; ++jj )
     {
@@ -355,9 +355,9 @@ TEST( FunctionTests, 4DTable_multipleInputs )
         testCoordinates[jj][kk] = distribution( generator );
       }
 
-      real64 x = testCoordinates[jj][0];
-      real64 y = testCoordinates[jj][1];
-      real64 z = testCoordinates[jj][2];
+      real64 const x = testCoordinates[jj][0];
+      real64 const y = testCoordinates[jj][1];
+      real64 const z = testCoordinates[jj][2];
       expected[jj] = 2.0 + (3*x) - (5*y) + (7*z) + (11*t);
     }
 
@@ -378,13 +378,13 @@ TEST( FunctionTests, 4DTable_derivatives )
 
   // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y*y + 7*z*z*z + 11*t*t*t*t
-  localIndex Ndim = 4;
-  localIndex Nx = 3;
-  localIndex Ny = 4;
-  localIndex Nz = 5;
-  localIndex Nt = 4;
-  string coordinatesName = "coordinates";
-  string timeName = "time";
+  localIndex const Ndim = 4;
+  localIndex const Nx = 3;
+  localIndex const Ny = 4;
+  localIndex const Nz = 5;
+  localIndex const Nt = 4;
+  string const coordinatesName = "coordinates";
+  string const timeName = "time";
 
   // Setup table
   array1d< real64_array > coordinates;
@@ -411,22 +411,20 @@ TEST( FunctionTests, 4DTable_derivatives )
   coordinates[3][3] = 1.0;
 
   real64_array values( Nx * Ny * Nz * Nt );
-  localIndex tablePosition = 0;
-  for( localIndex mm=0; mm<Nt; ++mm )
+  for( localIndex mm=0, tablePosition=0; mm<Nt; ++mm )
   {
     for( localIndex kk=0; kk<Nz; ++kk )
     {
       for( localIndex jj=0; jj<Ny; ++jj )
       {
-        for( localIndex ii=0; ii<Nx; ++ii )
+        for( localIndex ii=0; ii<Nx; ++ii, ++tablePosition )
         {
-          real64 x = coordinates[0][ii];
-          real64 y = coordinates[1][jj];
-          real64 z = coordinates[2][kk];
-          real64 t = coordinates[3][mm];
+          real64 const x = coordinates[0][ii];
+          real64 const y = coordinates[1][jj];
+          real64 const z = coordinates[2][kk];
+          real64 const t = coordinates[3][mm];
 
           values[tablePosition] = 2.0 + (3*x) - (5*y*y) + (7*z*z*z) + (11*t*t*t*t);
-          ++tablePosition;
         }
       }
     }
@@ -451,28 +449,27 @@ TEST( FunctionTests, 4DTable_derivatives )
 
   real64 const start = coordinates[0][0]-0.1; // start outside the table, to check derivatives there too
   real64 const end = coordinates[0][Nx-1]+0.1; // end outside the table
-  localIndex const nSamples = 7; // try not to fall on the coordinates of the table, otherwise the finite-difference approximation won't
-                                 // work
+  localIndex const nSamples = 7; // try not to fall on table coordinate, otherwise the finite-difference approximation won't work
   real64 const delta = (end-start)/nSamples;
 
   real64 val = 0.0;
   real64 perturbedVal = 0.0;
   real64 input[4] = { start, start, start, start };
-  real64 perturbedInput[4] = { 0.0 };
-  real64 derivatives[4] = { 0.0 };
-  real64 perturbedDerivatives[4] = { 0.0 };
+  real64 perturbedInput[4]{};
+  real64 derivatives[4]{};
+  real64 perturbedDerivatives[4]{};
 
   TableFunction::KernelWrapper kernelWrapper = table_d->createKernelWrapper();
-  for( localIndex mm=0; mm<nSamples; ++mm )
+  for( localIndex mm=0; mm<nSamples; ++mm, input[3] += delta )
   {
     input[2] = start;
-    for( localIndex kk=0; kk<nSamples; ++kk )
+    for( localIndex kk=0; kk<nSamples; ++kk, input[2] += delta )
     {
       input[1] = start;
-      for( localIndex jj=0; jj<nSamples; ++jj )
+      for( localIndex jj=0; jj<nSamples; ++jj, input[1] += delta )
       {
         input[0] = start;
-        for( localIndex ii=0; ii<nSamples; ++ii )
+        for( localIndex ii=0; ii<nSamples; ++ii, input[0] += delta )
         {
           // evaluate once to get the analytical derivatives
           kernelWrapper.compute( input, val, derivatives );
@@ -486,15 +483,9 @@ TEST( FunctionTests, 4DTable_derivatives )
                                         derivatives, perturbedDerivatives,
                                         perturb, relTol, direction, kernelWrapper );
           }
-
-
-          input[0] += delta;
         }
-        input[1] += delta;
       }
-      input[2] += delta;
     }
-    input[3] += delta;
   }
 }
 
@@ -505,15 +496,15 @@ TEST( FunctionTests, 4DTable_symbolic )
   FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
 
   // Symbolic function with four inputs
-  string expression = "1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d)";
-  localIndex Ntest = 20;
+  string const expression = "1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d)";
+  localIndex const Ntest = 20;
 
   // Set variable names
   string_array inputVarNames( 4 );
-  string nameA = "a";
-  string nameB = "b";
-  string nameC = "c";
-  string nameD = "d";
+  string const nameA = "a";
+  string const nameB = "b";
+  string const nameC = "c";
+  string const nameD = "d";
   inputVarNames[0] = nameA;
   inputVarNames[1] = nameB;
   inputVarNames[2] = nameC;
@@ -527,7 +518,7 @@ TEST( FunctionTests, 4DTable_symbolic )
   table_e->initializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string groupName = "testGroup";
+  string const groupName = "testGroup";
   dataRepository::Group testGroup( groupName, nullptr );
   real64_array inputA;
   real64_array inputB;
@@ -557,10 +548,10 @@ TEST( FunctionTests, 4DTable_symbolic )
   // Build the inputs
   for( localIndex ii=0; ii<Ntest; ++ii )
   {
-    real64 a = distribution( generator );
-    real64 b = distribution( generator );
-    real64 c = distribution( generator );
-    real64 d = distribution( generator );
+    real64 const a = distribution( generator );
+    real64 const b = distribution( generator );
+    real64 const c = distribution( generator );
+    real64 const d = distribution( generator );
     inputA[ii] = a;
     inputB[ii] = b;
     inputC[ii] = c;

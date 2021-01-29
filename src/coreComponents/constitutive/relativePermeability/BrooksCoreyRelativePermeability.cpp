@@ -64,7 +64,7 @@ void BrooksCoreyRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
 
-  localIndex const NP = numFluidPhases();
+  localIndex const numPhases = numFluidPhases();
 
   #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
     if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
@@ -75,14 +75,14 @@ void BrooksCoreyRelativePermeability::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermExponent, NP, viewKeyStruct::phaseRelPermExponentString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermMaxValue, NP, viewKeyStruct::phaseRelPermMaxValueString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermExponent, numPhases, viewKeyStruct::phaseRelPermExponentString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermMaxValue, numPhases, viewKeyStruct::phaseRelPermMaxValueString )
 
 #undef COREY_CHECK_INPUT_LENGTH
 
   m_volFracScale = 1.0;
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases; ++ip )
   {
     GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                     "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );

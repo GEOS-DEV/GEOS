@@ -1568,17 +1568,21 @@ the relative residual norm satisfies:
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
-		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation-->
+		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasExp, oilExp }", in that order-->
 		<xsd:attribute name="gasOilRelPermExponent" type="real64_array" default="{1}" />
-		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation-->
+		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasMax, oilMax }", in that order-->
 		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--waterOilRelPermExponent => Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation-->
+		<!--waterOilRelPermExponent => Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterExp, oilExp }", in that order-->
 		<xsd:attribute name="waterOilRelPermExponent" type="real64_array" default="{1}" />
-		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation-->
+		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -1935,27 +1939,33 @@ the relative residual norm satisfies:
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityType">
-		<!--gasOilRelPermTableNames => List of relative permeability tables for the pair (gas phase, oil phase)-->
+		<!--gasOilRelPermTableNames => List of relative permeability tables for the pair (gas phase, oil phase)
+The expected format is "{ gasPermTableName, oilPermTableName }", in that order-->
 		<xsd:attribute name="gasOilRelPermTableNames" type="string_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--waterOilRelPermTableNames => List of relative permeability tables for the pair (water phase, oil phase)-->
+		<!--waterOilRelPermTableNames => List of relative permeability tables for the pair (water phase, oil phase)
+The expected format is "{ waterPermTableName, oilPermTableName }", in that order-->
 		<xsd:attribute name="waterOilRelPermTableNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
-		<!--gasOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation-->
+		<!--gasOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasExp, oilExp }", in that order-->
 		<xsd:attribute name="gasOilRelPermExponentInv" type="real64_array" default="{0.5}" />
-		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation-->
+		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasMax, oilMax }", in that order-->
 		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--waterOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation-->
+		<!--waterOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterExp, oilExp }", in that order-->
 		<xsd:attribute name="waterOilRelPermExponentInv" type="real64_array" default="{0.5}" />
-		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation-->
+		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />

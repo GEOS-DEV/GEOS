@@ -34,11 +34,13 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
 {
   registerWrapper( viewKeyStruct::waterOilRelPermTableNamesString, &m_waterOilRelPermTableNames )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "List of relative permeability tables for the pair (water phase, oil phase)" );
+    setDescription( "List of relative permeability tables for the pair (water phase, oil phase)\n"
+                    "The expected format is \"{ waterPermTableName, oilPermTableName }\", in that order" );
 
   registerWrapper( viewKeyStruct::gasOilRelPermTableNamesString, &m_gasOilRelPermTableNames )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "List of relative permeability tables for the pair (gas phase, oil phase)" );
+    setDescription( "List of relative permeability tables for the pair (gas phase, oil phase)\n"
+                    "The expected format is \"{ gasPermTableName, oilPermTableName }\", in that order" );
 
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
     setSizedFromParent( 0 );
@@ -83,9 +85,13 @@ void TableRelativePermeability::createAllTableKernelWrappers()
     {
       m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = minVolPhaseFrac;
     }
-    else // oil
+    else if( ip == 1 ) // oil
     {
       m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = minVolPhaseFrac;
+    }
+    else
+    {
+      GEOSX_ERROR( "There should be only two table names for the water-oil pair" );
     }
     m_waterOilRelPermTableKernelWrappers.emplace_back( relPermTable.createKernelWrapper() );
   }
@@ -99,9 +105,13 @@ void TableRelativePermeability::createAllTableKernelWrappers()
     {
       m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::GAS]] = minVolPhaseFrac;
     }
-    else // oil
+    else if( ip == 1 ) // oil
     {
       m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = minVolPhaseFrac;
+    }
+    else
+    {
+      GEOSX_ERROR( "There should be only two table names for the gas-oil pair" );
     }
 
     m_gasOilRelPermTableKernelWrappers.emplace_back( relPermTable.createKernelWrapper() );

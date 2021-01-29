@@ -104,11 +104,6 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  /**
-   * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
-   */
-  void createAllTableKernelWrappers();
-
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = TableRelativePermeabilityUpdate;
 
@@ -131,13 +126,16 @@ public:
 
   } vieKeysTableRelativePermeability;
 
-protected:
+private:
 
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups( Group * const ) override;
 
-private:
+  /**
+   * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
+   */
+  void createAllTableKernelWrappers();
 
   /**
    * @brief Validate the relative permeability table provided in input (increasing phase vol frac and rel perm, etc)
@@ -170,86 +168,86 @@ TableRelativePermeabilityUpdate::
            arraySlice1d< real64 > const & phaseRelPerm,
            arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  localIndex const NP = numPhases();
-
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( double & val : dPhaseRelPerm_dPhaseVolFrac )
   {
-    for( localIndex jp = 0; jp < NP; ++jp )
-    {
-      dPhaseRelPerm_dPhaseVolFrac[ip][jp] = 0.0;
-    }
+    val = 0.0;
   }
 
-  integer const ip_water = m_phaseOrder[RelativePermeabilityBase::PhaseType::WATER];
-  integer const ip_oil   = m_phaseOrder[RelativePermeabilityBase::PhaseType::OIL];
-  integer const ip_gas   = m_phaseOrder[RelativePermeabilityBase::PhaseType::GAS];
+  using PT = RelativePermeabilityBase::PhaseType;
+  integer const ipWater = m_phaseOrder[PT::WATER];
+  integer const ipOil   = m_phaseOrder[PT::OIL];
+  integer const ipGas   = m_phaseOrder[PT::GAS];
 
   real64 oilRelPerm_wo = 0; // oil rel perm using two-phase gas-oil data
   real64 dOilRelPerm_wo_dOilVolFrac = 0; // derivative w.r.t to So
   real64 oilRelPerm_go = 0; // oil rel perm using two-phase gas-oil data
   real64 dOilRelPerm_go_dOilVolFrac = 0; // derivative w.r.t to So
 
-  // this function assumes that the oil phase can always be present (i.e., ip_oil > 0)
+  // this function assumes that the oil phase can always be present (i.e., ipOil > 0)
 
   // 1) Water and oil phase relative permeabilities using water-oil data
-  if( ip_water >= 0 )
+  if( ipWater >= 0 )
   {
+    using WOPT = RelativePermeabilityBase::WaterOilPairPhaseType;
+
     // water rel perm
-    m_waterOilRelPermTableKernelWrappers[RelativePermeabilityBase::WaterOilPairPhaseType::WATER].compute( &(phaseVolFraction)[ip_water],
-                                                                                                          phaseRelPerm[ip_water],
-                                                                                                          &(dPhaseRelPerm_dPhaseVolFrac)[ip_water][ip_water] );
+    m_waterOilRelPermTableKernelWrappers[WOPT::WATER].compute( &(phaseVolFraction)[ipWater],
+                                                               phaseRelPerm[ipWater],
+                                                               &(dPhaseRelPerm_dPhaseVolFrac)[ipWater][ipWater] );
 
     // oil rel perm
-    m_waterOilRelPermTableKernelWrappers[RelativePermeabilityBase::WaterOilPairPhaseType::OIL].compute( &(phaseVolFraction)[ip_oil],
-                                                                                                        oilRelPerm_wo,
-                                                                                                        &dOilRelPerm_wo_dOilVolFrac );
+    m_waterOilRelPermTableKernelWrappers[WOPT::OIL].compute( &(phaseVolFraction)[ipOil],
+                                                             oilRelPerm_wo,
+                                                             &dOilRelPerm_wo_dOilVolFrac );
   }
 
 
   // 2) Gas and oil phase relative permeabilities using gas-oil data
-  if( ip_gas >= 0 )
+  if( ipGas >= 0 )
   {
+    using GOPT = RelativePermeabilityBase::GasOilPairPhaseType;
+
     // gas rel perm
-    m_gasOilRelPermTableKernelWrappers[RelativePermeabilityBase::GasOilPairPhaseType::GAS].compute( &(phaseVolFraction)[ip_gas],
-                                                                                                    phaseRelPerm[ip_gas],
-                                                                                                    &(dPhaseRelPerm_dPhaseVolFrac)[ip_gas][ip_gas] );
+    m_gasOilRelPermTableKernelWrappers[GOPT::GAS].compute( &(phaseVolFraction)[ipGas],
+                                                           phaseRelPerm[ipGas],
+                                                           &(dPhaseRelPerm_dPhaseVolFrac)[ipGas][ipGas] );
 
     // oil rel perm
-    m_gasOilRelPermTableKernelWrappers[RelativePermeabilityBase::GasOilPairPhaseType::OIL].compute( &(phaseVolFraction)[ip_oil],
-                                                                                                    oilRelPerm_go,
-                                                                                                    &dOilRelPerm_go_dOilVolFrac );
+    m_gasOilRelPermTableKernelWrappers[GOPT::OIL].compute( &(phaseVolFraction)[ipOil],
+                                                           oilRelPerm_go,
+                                                           &dOilRelPerm_go_dOilVolFrac );
   }
 
 
   // 3) Compute the "three-phase" oil relperm
 
   // if no gas, use water-oil data
-  if( ip_gas < 0 )
+  if( ipGas < 0 )
   {
-    phaseRelPerm[ip_oil] = oilRelPerm_wo;
-    dPhaseRelPerm_dPhaseVolFrac[ip_oil][ip_oil] = dOilRelPerm_wo_dOilVolFrac;
+    phaseRelPerm[ipOil] = oilRelPerm_wo;
+    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_wo_dOilVolFrac;
   }
   // if no water, use gas-oil data
-  else if( ip_water < 0 )
+  else if( ipWater < 0 )
   {
-    phaseRelPerm[ip_oil] = oilRelPerm_go;
-    dPhaseRelPerm_dPhaseVolFrac[ip_oil][ip_oil] = dOilRelPerm_go_dOilVolFrac;
+    phaseRelPerm[ipOil] = oilRelPerm_go;
+    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_go_dOilVolFrac;
   }
   // if water and oil and gas can be present, use saturation-weighted interpolation
   else
   {
-    real64 const shiftedWaterVolFrac = (phaseVolFraction[ip_water] - m_phaseMinVolumeFraction[ip_water]);
+    real64 const shiftedWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]);
 
     // TODO: add template to choose the interpolator from the XML file
     relpermInterpolators::Baker::compute( shiftedWaterVolFrac,
-                                          phaseVolFraction[ip_gas],
+                                          phaseVolFraction[ipGas],
                                           m_phaseOrder,
                                           oilRelPerm_wo,
                                           dOilRelPerm_wo_dOilVolFrac,
                                           oilRelPerm_go,
                                           dOilRelPerm_go_dOilVolFrac,
-                                          phaseRelPerm[ip_oil],
-                                          dPhaseRelPerm_dPhaseVolFrac[ip_oil] );
+                                          phaseRelPerm[ipOil],
+                                          dPhaseRelPerm_dPhaseVolFrac[ipOil] );
   }
 }
 
