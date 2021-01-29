@@ -428,35 +428,37 @@ public:
 
 
   /**
-   * @brief Perform a finite-difference check of the stiffness computation
+   * @brief Perform a finite-difference stiffness computation
    *
-   * This method uses several stress evaluations and finite differencing to
-   * approximate the 6x6 stiffness matrix, and then computes an error between
-   * the coded stiffness method and the finite difference version.
+   * This method uses stress evaluations and finite differencing to
+   * approximate the 6x6 stiffness matrix.
    *
    * @note This method only works for models providing the smallStrainUpdate
-   * method returning a 6x6 stiffness.  A similar method would need to be
-   * implemented to check compressed stiffness or finite-strain versions.
+   * method returning a 6x6 stiffness, as it will primarily be used to check
+   * the hand coded tangent against a finite difference reference.
+   * A similar method would need to be implemented to check compressed stiffness,
+   * stress-only, or finite-strain interfaces.
    *
    * @param k the element number
    * @param q the quadrature index
    * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
+   * @param stiffnessFD finite different stiffness approximation
    */
   GEOSX_HOST_DEVICE
-  bool checkSmallStrainStiffness( localIndex k,
-                                  localIndex q,
-                                  real64 ( & strainIncrement )[6],
-                                  bool print = false ) const
+  void computeSmallStrainFiniteDifferenceStiffness( localIndex k,
+                                                    localIndex q,
+                                                    real64 const ( &strainIncrement )[6],
+                                                    real64 ( & stiffnessFD )[6][6] ) const
   {
-    real64 stiffness[6][6];     // coded stiffness
-    real64 stiffnessFD[6][6];   // finite difference approximation
+    real64 stiffness[6][6];      // coded stiffness
+    real64 stress[6];            // original stress
+    real64 stressFD[6];          // perturbed stress
+    real64 strainIncrementFD[6]; // perturbed strain
+    real64 norm = 0;             // norm for scaling (note: method is fragile w.r.t. scaling)
 
-    real64 stress[6];           // original stress
-    real64 stressFD[6];         // perturbed stress
-
-    real64 norm = 0;
     for( localIndex i=0; i<6; ++i )
     {
+      strainIncrementFD[i] = strainIncrement[i];
       norm += fabs( strainIncrement[i] );
     }
 
@@ -466,14 +468,14 @@ public:
 
     for( localIndex i=0; i<6; ++i )
     {
-      strainIncrement[i] += eps;
+      strainIncrementFD[i] += eps;
 
       if( i>0 )
       {
-        strainIncrement[i-1] -= eps;
+        strainIncrementFD[i-1] -= eps;
       }
 
-      smallStrainUpdate( k, q, strainIncrement, stressFD, stiffnessFD );
+      smallStrainUpdate( k, q, strainIncrementFD, stressFD, stiffnessFD );
 
       for( localIndex j=0; j<6; ++j )
       {
@@ -481,10 +483,40 @@ public:
       }
     }
 
+    return;
+  }
+
+  /**
+   * @brief Perform a finite-difference check of the stiffness computation
+   *
+   * This method uses several stress evaluations and finite differencing to
+   * approximate the 6x6 stiffness matrix, and then computes an error between
+   * the coded stiffness method and the finite difference version.
+   *
+   * @note This method only works for models providing the smallStrainUpdate
+   * method returning a 6x6 stiffness.
+   *
+   * @param k the element number
+   * @param q the quadrature index
+   * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
+   */
+  GEOSX_HOST_DEVICE
+  bool checkSmallStrainStiffness( localIndex k,
+                                  localIndex q,
+                                  real64 const ( &strainIncrement )[6],
+                                  bool print = false ) const
+  {
+    real64 stiffness[6][6];     // coded stiffness
+    real64 stiffnessFD[6][6];   // finite difference approximation
+    real64 stress[6];           // original stress
+
+    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    computeSmallStrainFiniteDifferenceStiffness( k, q, strainIncrement, stiffnessFD );
+
     // compute relative error between two versions
 
     real64 error = 0;
-    norm = 0;
+    real64 norm = 0;
 
     for( localIndex i=0; i<6; ++i )
     {

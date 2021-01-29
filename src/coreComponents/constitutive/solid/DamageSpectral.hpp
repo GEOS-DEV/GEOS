@@ -26,6 +26,8 @@
 #include "SolidBase.hpp"
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 
+#define QUADRATIC_DISSIPATION 0
+
 using namespace LvArray;
 
 namespace geosx
@@ -62,9 +64,56 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
+  using DamageUpdates< UPDATE_BASE >::m_damage;
 
-  using UPDATE_BASE::m_bulkModulus;  // model below strongly assumes iso elasticity
+  using UPDATE_BASE::computeSmallStrainFiniteDifferenceStiffness;
+  using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity
   using UPDATE_BASE::m_shearModulus;
+
+  // Lorentz type degradation functions
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 getDegradationValue( localIndex const k,
+                                      localIndex const q ) const override
+  {
+    #if QUADRATIC_DISSIPATION
+    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    #else
+    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    #endif
+    real64 p = 1;
+    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+  }
+
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 getDegradationDerivative( real64 const d ) const override
+  {
+    #if QUADRATIC_DISSIPATION
+    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    #else
+    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    #endif
+    real64 p = 1;
+    return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
+  }
+
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 getDegradationSecondDerivative( real64 const d ) const override
+  {
+    #if QUADRATIC_DISSIPATION
+    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    #else
+    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    #endif
+    real64 p = 1;
+    return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
+  }
+
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -135,6 +184,11 @@ public:
     LvArray::tensorOps::copy< 6 >( stress, negativeStress );
     LvArray::tensorOps::scaledAdd< 6 >( stress, positiveStress, damageFactor );
 
+    // TODO: the following linearization has a bug somewhere, so we skip and use a
+    // finite difference tangent below.
+
+    return;
+
     // stiffness
 
     real64 IxITensor[6][6] = {};
@@ -184,6 +238,8 @@ public:
                                   DiscretizationOps & stiffness ) const final
   {
     smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+    computeSmallStrainFiniteDifferenceStiffness( k, q, strainIncrement, stiffness.m_c ); //TODO: temp fix until analytical stiffness is
+                                                                                         // correct
   }
 
 

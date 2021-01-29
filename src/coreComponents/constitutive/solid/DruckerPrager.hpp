@@ -386,6 +386,29 @@ public:
                                  m_oldStress );
   }
 
+  /**
+   * @brief Construct an update kernel for a derived type.
+   * @tparam UPDATE_KERNEL The type of update kernel from the derived type.
+   * @tparam PARAMS The parameter pack to hold the constructor parameters for the derived update kernel.
+   * @param constructorParams The constructor parameter for the derived type.
+   * @return An @p UPDATE_KERNEL object.
+   */
+  template< typename UPDATE_KERNEL, typename ... PARAMS >
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  {
+    return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_friction,
+                          m_dilation,
+                          m_hardening,
+                          m_newCohesion,
+                          m_oldCohesion,
+                          m_bulkModulus,
+                          m_shearModulus,
+                          m_newStress,
+                          m_oldStress );
+  }
+
+
 protected:
   virtual void postProcessInput() override;
 

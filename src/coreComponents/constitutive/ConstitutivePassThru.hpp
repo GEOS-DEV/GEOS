@@ -155,7 +155,15 @@ struct ConstitutivePassThru< PoroElasticBase >
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
 
-    if( dynamic_cast< PoroElastic< ElasticIsotropic > * >( constitutiveRelation ) )
+    if( dynamic_cast< PoroElastic< DruckerPragerExtended > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< PoroElastic< DruckerPragerExtended > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< PoroElastic< DruckerPrager > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< PoroElastic< DruckerPrager > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< PoroElastic< ElasticIsotropic > * >( constitutiveRelation ) )
     {
       lambda( static_cast< PoroElastic< ElasticIsotropic > * >( constitutiveRelation) );
     }

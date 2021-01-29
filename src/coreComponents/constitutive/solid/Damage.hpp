@@ -42,12 +42,6 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 
-// TODO: switch is placed here for different dissipation functions, etc.
-//       if different damage models will use different functions, perhaps
-//       should explicitly name them rather than use macros.
-
-#define QUADRATIC_DISSIPATION 0
-#define LORENTZ 0
 #include "constitutive/solid/SolidBase.hpp"
 
 namespace geosx
@@ -95,53 +89,7 @@ public:
   using UPDATE_BASE::hyperUpdate;
   using UPDATE_BASE::hyperUpdate_StressOnly;
 
-  //Quasi-Quadratic Lorentz Degradation Function
-  #if LORENTZ
-
-  //Lorentz type Degradation Function
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 getDegradationValue( localIndex const k,
-                                      localIndex const q ) const override
-  {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 getDegradationDerivative( real64 const d ) const override
-  {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
-    return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 getDegradationSecondDerivative( real64 const d ) const override
-  {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
-    return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
-  }
-
-  #else
-  //Standard Quadratic Degradation Function
+  //Standard quadratic degradation functions
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
@@ -151,12 +99,14 @@ public:
     return (1 - m_damage( k, q ))*(1 - m_damage( k, q ));
   }
 
+
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
   {
     return -2*(1 - d);
   }
+
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
@@ -165,7 +115,7 @@ public:
     GEOSX_UNUSED_VAR( d )
     return 2.0;
   }
-  #endif
+
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,

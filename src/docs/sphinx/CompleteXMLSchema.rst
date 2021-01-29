@@ -463,6 +463,13 @@ Element: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
 
 
+.. _XML_PoroDruckerPrager:
+
+Element: PoroDruckerPrager
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroDruckerPrager.rst
+
+
 .. _XML_PoroElasticIsotropic:
 
 Element: PoroElasticIsotropic
@@ -475,6 +482,13 @@ Element: PoroElasticIsotropic
 Element: PoroElasticTransverseIsotropic
 =======================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticTransverseIsotropic.rst
+
+
+.. _XML_PoroExtendedDruckerPrager:
+
+Element: PoroExtendedDruckerPrager
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroExtendedDruckerPrager.rst
 
 
 .. _XML_Poroelastic:
@@ -1195,6 +1209,13 @@ Datastructure: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
 
 
+.. _DATASTRUCTURE_PoroDruckerPrager:
+
+Datastructure: PoroDruckerPrager
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroDruckerPrager_other.rst
+
+
 .. _DATASTRUCTURE_PoroElasticIsotropic:
 
 Datastructure: PoroElasticIsotropic
@@ -1207,6 +1228,13 @@ Datastructure: PoroElasticIsotropic
 Datastructure: PoroElasticTransverseIsotropic
 =============================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticTransverseIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroExtendedDruckerPrager:
+
+Datastructure: PoroExtendedDruckerPrager
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroExtendedDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_Poroelastic:

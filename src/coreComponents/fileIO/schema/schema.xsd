@@ -1536,8 +1536,10 @@ the relative residual norm satisfies:
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
+			<xsd:element name="PoroDruckerPrager" type="PoroDruckerPragerType" />
 			<xsd:element name="PoroElasticIsotropic" type="PoroElasticIsotropicType" />
 			<xsd:element name="PoroElasticTransverseIsotropic" type="PoroElasticTransverseIsotropicType" />
+			<xsd:element name="PoroExtendedDruckerPrager" type="PoroExtendedDruckerPragerType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
@@ -1887,6 +1889,34 @@ the relative residual norm satisfies:
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PoroDruckerPragerType">
+		<!--BiotCoefficient => Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
+		<!--compressibility => Pore volume compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultCohesion => Initial cohesion-->
+		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultDilationAngle => Dilation angle (degrees)-->
+		<xsd:attribute name="defaultDilationAngle" type="real64" default="30" />
+		<!--defaultFrictionAngle => Friction angle (degrees)-->
+		<xsd:attribute name="defaultFrictionAngle" type="real64" default="30" />
+		<!--defaultHardeningRate => Cohesion hardening/softening rate-->
+		<xsd:attribute name="defaultHardeningRate" type="real64" default="0" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PoroElasticIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
@@ -1924,6 +1954,36 @@ the relative residual norm satisfies:
 		<xsd:attribute name="defaultYoungsModulusAxial" type="real64" default="-1" />
 		<!--defaultYoungsModulusTransverse => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultYoungsModulusTransverse" type="real64" default="-1" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroExtendedDruckerPragerType">
+		<!--BiotCoefficient => Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
+		<!--compressibility => Pore volume compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultCohesion => Initial cohesion-->
+		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultDilationRatio => Dilation ratio [0,1] (ratio = tan dilationAngle / tan frictionAngle)-->
+		<xsd:attribute name="defaultDilationRatio" type="real64" default="1" />
+		<!--defaultHardening => Hardening parameter (hardening rate is faster for smaller values)-->
+		<xsd:attribute name="defaultHardening" type="real64" default="1e+06" />
+		<!--defaultInitialFrictionAngle => Initial friction angle (degrees)-->
+		<xsd:attribute name="defaultInitialFrictionAngle" type="real64" default="30" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultResidualFrictionAngle => Residual friction angle (degrees)-->
+		<xsd:attribute name="defaultResidualFrictionAngle" type="real64" default="30" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
 		<!--referencePressure => ReferencePressure-->
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
