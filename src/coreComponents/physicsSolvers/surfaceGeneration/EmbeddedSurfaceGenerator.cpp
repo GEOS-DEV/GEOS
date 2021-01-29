@@ -166,7 +166,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
   embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
 
   dataRepository::Wrapper< SortedArray< localIndex > > * setWrapper =
-    embeddedSurfaceSubRegion->GetGroup( ObjectManagerBase::groupKeyStruct::setsString )->
+    embeddedSurfaceSubRegion->getGroup( ObjectManagerBase::groupKeyStruct::setsString )->
       getWrapper< SortedArray< localIndex > >( "all" );
 
   SortedArray< localIndex > & targetSet = setWrapper->reference();

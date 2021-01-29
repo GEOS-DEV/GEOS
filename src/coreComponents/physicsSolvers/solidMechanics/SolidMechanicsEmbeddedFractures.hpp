@@ -148,9 +148,9 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const problemManager ) override final;
 
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 
