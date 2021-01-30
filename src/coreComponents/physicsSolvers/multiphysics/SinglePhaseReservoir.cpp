@@ -26,7 +26,7 @@
 #include "common/TimingMacros.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
-
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 
 namespace geosx
 {
@@ -41,6 +41,29 @@ SinglePhaseReservoir::SinglePhaseReservoir( const string & name,
 
 SinglePhaseReservoir::~SinglePhaseReservoir()
 {}
+
+void SinglePhaseReservoir::setupSystem( DomainPartition & domain,
+                                        DofManager & dofManager,
+                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                        array1d< real64 > & localRhs,
+                                        array1d< real64 > & localSolution,
+                                        bool const setSparsity )
+{
+  ReservoirSolverBase::setupSystem( domain,
+                                    dofManager,
+                                    localMatrix,
+                                    localRhs,
+                                    localSolution,
+                                    setSparsity );
+
+  // we need to set the dR_dAper CRS matrix in SinglePhaseFVM to handle the presence of fractures
+  if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( m_flowSolver ) )
+  {
+    SinglePhaseFVM< SinglePhaseBase > * fvmSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( m_flowSolver );
+    fvmSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+  }
+}
+
 
 void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
                                                        DofManager const & dofManager,
