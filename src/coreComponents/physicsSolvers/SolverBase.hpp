@@ -26,7 +26,7 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 
-#include <string>
+
 #include <limits>
 
 namespace geosx
@@ -38,7 +38,7 @@ class SolverBase : public ExecutableGroup
 {
 public:
 
-  explicit SolverBase( std::string const & name,
+  explicit SolverBase( string const & name,
                        Group * const parent );
 
   SolverBase( SolverBase && ) = default;
@@ -515,7 +515,7 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, string const &, Group * const >;
   static CatalogInterface::CatalogType & getCatalog();
 
   struct viewKeyStruct

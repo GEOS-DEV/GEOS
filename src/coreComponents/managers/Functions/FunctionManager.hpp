@@ -33,8 +33,8 @@ namespace geosx
 class FunctionManager : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  FunctionManager( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  FunctionManager( const string & name,
                    dataRepository::Group * const parent );
 
   /**

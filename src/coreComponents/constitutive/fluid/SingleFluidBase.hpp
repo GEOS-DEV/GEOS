@@ -154,7 +154,7 @@ public:
    * @param name name of the group
    * @param parent pointer to parent group
    */
-  SingleFluidBase( std::string const & name, Group * const parent );
+  SingleFluidBase( string const & name, Group * const parent );
 
   /**
    * @brief Destructor.

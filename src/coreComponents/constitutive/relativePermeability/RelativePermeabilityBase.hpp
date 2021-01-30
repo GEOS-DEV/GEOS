@@ -122,7 +122,7 @@ public:
     static constexpr integer OIL   = 1; // second oil phase property
   };
 
-  RelativePermeabilityBase( std::string const & name, dataRepository::Group * const parent );
+  RelativePermeabilityBase( string const & name, dataRepository::Group * const parent );
 
   virtual ~RelativePermeabilityBase() override;
 

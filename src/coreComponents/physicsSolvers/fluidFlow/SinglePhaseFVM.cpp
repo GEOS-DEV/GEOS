@@ -41,7 +41,7 @@ using namespace SinglePhaseBaseKernels;
 using namespace SinglePhaseFVMKernels;
 
 template< typename BASE >
-SinglePhaseFVM< BASE >::SinglePhaseFVM( const std::string & name,
+SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
 {
@@ -405,7 +405,7 @@ namespace
 {
 typedef SinglePhaseFVM< SinglePhaseBase > NoProppant;
 typedef SinglePhaseFVM< SinglePhaseProppantBase > Proppant;
-REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, std::string const &, Group * const )
-REGISTER_CATALOG_ENTRY( SolverBase, Proppant, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, Proppant, string const &, Group * const )
 }
 } /* namespace geosx */

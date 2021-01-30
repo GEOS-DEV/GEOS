@@ -25,7 +25,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-HaltEvent::HaltEvent( const std::string & name,
+HaltEvent::HaltEvent( const string & name,
                       Group * const parent ):
   EventBase( name, parent ),
   m_externalStartTime( 0.0 ),
@@ -80,5 +80,5 @@ void HaltEvent::estimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
 }
 
 
-REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, string const &, Group * const )
 } /* namespace geosx */

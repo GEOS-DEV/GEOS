@@ -162,7 +162,7 @@ void SeparateComponentFilter( MATRIX const & src,
 template< typename VECTOR >
 void ComputeRigidBodyModes( MeshLevel const & mesh,
                             DofManager const & dofManager,
-                            std::vector< std::string > const & selection,
+                            std::vector< string > const & selection,
                             array1d< VECTOR > & rigidBodyModes )
 {
   NodeManager const & nodeManager = *mesh.getNodeManager();

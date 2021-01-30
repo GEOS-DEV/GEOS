@@ -29,7 +29,7 @@ namespace constitutive
 {
 
 
-VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( std::string const & name,
+VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( string const & name,
                                                                               Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
@@ -157,7 +157,7 @@ VanGenuchtenBakerRelativePermeability::KernelWrapper VanGenuchtenBakerRelativePe
                         m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

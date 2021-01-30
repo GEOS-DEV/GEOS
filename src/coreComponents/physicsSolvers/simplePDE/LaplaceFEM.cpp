@@ -80,7 +80,7 @@ using namespace dataRepository;
  */
 
 //START_SPHINX_INCLUDE_01
-LaplaceFEM::LaplaceFEM( const std::string & name,
+LaplaceFEM::LaplaceFEM( const string & name,
                         Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),
@@ -368,6 +368,6 @@ void LaplaceFEM::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PAR
 {}
 
 //START_SPHINX_INCLUDE_00
-REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_00
 } /* namespace ANST */
