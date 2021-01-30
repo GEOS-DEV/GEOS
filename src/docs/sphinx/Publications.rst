@@ -14,12 +14,17 @@ Preprints and Early-Views
    * - | **Multigrid reduction preconditioning framework for coupled processes in porous and fractured media**
        | QM Bui, FP Hamon, N Castelletto, D Osei-Kuffuor, RR Settgast, JA White
        | arXiv preprint
-       | `TBD <TBD>`_
+       | `arXiv:2101.11649 <https://arxiv.org/abs/2101.11649>`_
 
    * - | **Hybrid mimetic finite-difference and virtual element formulation for coupled poromechanics**
        | A Borio, FP Hamon, N Castelletto, JA White, RR Settgast
        | arXiv preprint
        | `arXiv:2010.15470 <https://arxiv.org/abs/2010.15470>`_
+       
+   * - | **Preconditioners for multiphase poromechanics with strong capillarity**
+       | JT Camargo, JA White, N Castelletto, RI Borja
+       | International Journal for Numerical and Analytical Methods in Geomechanics 
+       | `doi.org:10.1002/nag.3192 <https://doi.org/10.1002/nag.3192>`_
 
    * - | **An anisotropic viscoplasticity model for shale based on layered microstructure homogenization**
        | J Choo, SJ Semnani, JA White
