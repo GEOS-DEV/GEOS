@@ -55,7 +55,7 @@ PartitionBase::PartitionBase( const unsigned int numPartitions, const unsigned i
 PartitionBase::~PartitionBase()
 {}
 
-void PartitionBase::SetDomain( DomainPartition * domain )
+void PartitionBase::setDomain( DomainPartition * domain )
 {
   // set the const pointer "m_domain" by casting away the the const
   // on the address of the pointer, and modifying what the address of

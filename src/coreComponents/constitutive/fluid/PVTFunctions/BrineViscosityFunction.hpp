@@ -39,23 +39,23 @@ public:
   {}
 
   static constexpr auto m_catalogName = "BrineViscosity";
-  static string CatalogName()                    { return m_catalogName; }
-  virtual string getCatalogName() const override final { return CatalogName(); }
+  static string catalogName()                    { return m_catalogName; }
+  virtual string getCatalogName() const override final { return catalogName(); }
 
-  virtual PVTFuncType FunctionType() const override
+  virtual PVTFuncType functionType() const override
   {
     return PVTFuncType::VISCOSITY;
 
   }
 
-  virtual void Evaluation( EvalVarArgs const & pressure,
+  virtual void evaluation( EvalVarArgs const & pressure,
                            EvalVarArgs const & temperature,
                            arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value, bool useMass = 0 ) const override;
 
 private:
 
-  void MakeCoef( string_array const & inputPara );
+  void makeCoef( string_array const & inputPara );
 
   real64 m_coef0;
   real64 m_coef1;

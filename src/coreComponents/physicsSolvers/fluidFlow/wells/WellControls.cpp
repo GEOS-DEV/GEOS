@@ -65,7 +65,7 @@ WellControls::~WellControls()
 {}
 
 
-void WellControls::SetControl( Control control,
+void WellControls::setControl( Control control,
                                real64 const & val )
 {
   m_currentControl = control;
@@ -80,7 +80,7 @@ void WellControls::SetControl( Control control,
 }
 
 
-void WellControls::PostProcessInput()
+void WellControls::postProcessInput()
 {
   // 3.a) check target BHP
   if( m_targetBHP < 0 )
@@ -110,17 +110,17 @@ void WellControls::PostProcessInput()
 }
 
 
-void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
+void WellControls::initializePostInitialConditionsPreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
-  if( GetType() == Type::PRODUCER && m_targetRate > 0.0 )
+  if( getType() == Type::PRODUCER && m_targetRate > 0.0 )
   {
     m_targetRate *= -1;
   }
 }
 
 
-void WellControls::Debug() const
+void WellControls::debug() const
 {
   std::cout << "Name = " << getName() << std::endl;
   std::cout << "Type = " << static_cast< integer >(m_type) << std::endl;

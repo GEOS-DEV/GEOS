@@ -71,16 +71,16 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-    elemManager.ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
+    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
-    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
+    elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
-    elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
@@ -88,7 +88,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   SortedArray< localIndex > regionFilter;
   for( string const & regionName : m_targetRegions )
   {
-    regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
+    regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
 
   stencil.reserve( faceManager.size() );
@@ -212,13 +212,13 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ElementRegionManager * const elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager->ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
+    elemManager->constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
-    elemManager->ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager->constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-    elemManager->ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
+    elemManager->constructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   arrayView1d< real64 const > faceArea   = faceManager->faceArea();
   arrayView2d< real64 const > faceCenter = faceManager->faceCenter();
@@ -234,10 +234,10 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   cellStencil.move( LvArray::MemorySpace::CPU );
 
 
-  SurfaceElementRegion * const fractureRegion = elemManager->GetRegion< SurfaceElementRegion >( faceElementRegionName );
+  SurfaceElementRegion * const fractureRegion = elemManager->getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
 
-  FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+  FaceElementSubRegion * const fractureSubRegion = fractureRegion->getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges =
@@ -643,7 +643,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
   arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coeffTensor =
-      elemManager.ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
+      elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
   arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
@@ -809,9 +809,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencilProjection( MeshLevel 
   fractureStencil.move( LvArray::MemorySpace::CPU );
   cellStencil.move( LvArray::MemorySpace::CPU );
 
-  SurfaceElementRegion & fractureRegion = *( elemManager.GetRegion<
+  SurfaceElementRegion & fractureRegion = *( elemManager.getRegion<
                                                SurfaceElementRegion >( embeddedSurfaceRegionName ) );
-  EmbeddedSurfaceSubRegion & fractureSubRegion = *( fractureRegion.GetSubRegion<
+  EmbeddedSurfaceSubRegion & fractureSubRegion = *( fractureRegion.getSubRegion<
                                                       EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" ) );
 
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
@@ -835,10 +835,10 @@ void TwoPointFluxApproximation::addEDFracToFractureStencilStandard( MeshLevel & 
   fractureStencil.move( LvArray::MemorySpace::CPU );
   cellStencil.move( LvArray::MemorySpace::CPU );
 
-  SurfaceElementRegion & fractureRegion = *( elemManager.GetRegion<
+  SurfaceElementRegion & fractureRegion = *( elemManager.getRegion<
                                                SurfaceElementRegion >( embeddedSurfaceRegionName ) );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
-  EmbeddedSurfaceSubRegion & fractureSubRegion = *( fractureRegion.GetSubRegion<
+  EmbeddedSurfaceSubRegion & fractureSubRegion = *( fractureRegion.getSubRegion<
                                                       EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" ) );
 
   arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter();
@@ -920,7 +920,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencilStandard( MeshLevel & 
   arrayView1d< real64 const > const connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coeffTensor =
-    elemManager.ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
+    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   // start from last connectorIndex from cell-To-cell connections
   connectorIndex = cellStencil.size();
@@ -992,13 +992,13 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
-    elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-    elemManager.ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
+    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
@@ -1006,7 +1006,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   SortedArray< localIndex > regionFilter;
   for( string const & regionName : m_targetRegions )
   {
-    regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
+    regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
 
   constexpr localIndex numPts = BoundaryStencil::NUM_POINT_IN_FLUX;

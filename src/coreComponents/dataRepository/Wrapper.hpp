@@ -207,7 +207,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual const std::type_info & get_typeid() const noexcept override
+  virtual const std::type_info & getTypeId() const noexcept override
   {
     return typeid(T);
   }
@@ -293,9 +293,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::Pack
+  /// @copydoc geosx::WrapperBase::pack
   virtual
-  localIndex Pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
+  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
@@ -318,9 +318,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackByIndex
+  /// @copydoc geosx::WrapperBase::packByIndex
   virtual
-  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
+  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
@@ -346,9 +346,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackSize
+  /// @copydoc geosx::WrapperBase::packSize
   virtual
-  localIndex PackSize( bool withMetadata, bool onDevice ) const override final
+  localIndex packSize( bool withMetadata, bool onDevice ) const override final
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
@@ -372,9 +372,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackByIndexSize
+  /// @copydoc geosx::WrapperBase::packByIndexSize
   virtual
-  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
+  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     buffer_unit_type * buffer = nullptr;
@@ -401,9 +401,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::Unpack
+  /// @copydoc geosx::WrapperBase::unpack
   virtual
-  localIndex Unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
+  localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
     if( withMetadata )
@@ -431,9 +431,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::UnpackByIndex
+  /// @copydoc geosx::WrapperBase::unpackByIndex
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) override final
+  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
@@ -714,7 +714,7 @@ public:
   virtual std::string getDefaultValueString() const override
   {
     // Find the dimensionality of the wrapper value
-    std::string wrapper_type = rtTypes::typeNames( std::type_index( get_typeid()));
+    std::string wrapper_type = rtTypes::typeNames( std::type_index( getTypeId()));
     integer value_dim = 0;
     if( wrapper_type.find( "array3d" ) != std::string::npos )
     {
@@ -754,7 +754,7 @@ public:
     {
       if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
       {
-        bool const readSuccess = xmlWrapper::ReadAttributeAsType( reference(),
+        bool const readSuccess = xmlWrapper::readAttributeAsType( reference(),
                                                                   getName(),
                                                                   targetNode,
                                                                   inputFlag == InputFlags::REQUIRED );
@@ -768,7 +768,7 @@ public:
       }
       else
       {
-        xmlWrapper::ReadAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
+        xmlWrapper::readAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
       }
 
       return true;

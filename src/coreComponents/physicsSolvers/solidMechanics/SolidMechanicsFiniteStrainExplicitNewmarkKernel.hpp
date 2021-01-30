@@ -185,13 +185,13 @@ public:
     real64 Dadt[ 6 ];
     HughesWinget( Rot, Dadt, Ldt );
 
-    m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
+    m_constitutiveUpdate.hypoElastic( k, q, Dadt, Rot );
 
     real64 P[ 3 ][ 3 ];
     LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
-    FE_TYPE::plus_gradNajAij( dNdX, P, stack.fLocal );
+    FE_TYPE::plusGradNajAij( dNdX, P, stack.fLocal );
 
   }
 

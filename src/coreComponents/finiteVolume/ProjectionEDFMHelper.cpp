@@ -19,8 +19,8 @@ ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
       m_facesToSubRegions( m_faceManager->elementSubRegionList() ),
       m_facesToNodes( m_faceManager->nodeList().toViewConst() ),
       m_nodeReferencePosition( m_nodeManager->referencePosition() ),
-      m_cellCenters( m_elementManager->ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString ) ),
-      m_permTensor( m_elementManager->ConstructArrayViewAccessor< real64, 2 >( coeffName ) ),
+      m_cellCenters( m_elementManager->constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString ) ),
+      m_permTensor( m_elementManager->constructArrayViewAccessor< real64, 2 >( coeffName ) ),
       m_stencil( stencil )
 {}
 
@@ -40,8 +40,8 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
       CellID cellID( hostCellRegionIdx, hostCellSubRegionIdx, hostCellIdx );
 
       // get host cell faces
-      CellElementRegion const * cellRegion = m_elementManager->GetRegion< CellElementRegion >( hostCellRegionIdx );
-      CellElementSubRegion const * cellSubRegion = cellRegion->GetSubRegion< CellElementSubRegion >(hostCellSubRegionIdx);
+      CellElementRegion const * cellRegion = m_elementManager->getRegion< CellElementRegion >( hostCellRegionIdx );
+      CellElementSubRegion const * cellSubRegion = cellRegion->getSubRegion< CellElementSubRegion >(hostCellSubRegionIdx);
 
       // pick faces for non-neighboring pEDFM connections
       auto const faces = selectFaces(cellSubRegion->faceList(), cellID, fracElement, fractureSubRegion);
@@ -175,9 +175,9 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
   // get fracture normal and origin in the neighbor cells:
   // they might be different than those in the host cell
   CellElementRegion const * neighborRegion =
-      m_elementManager->GetRegion< CellElementRegion >( neighborCellID.region );
+      m_elementManager->getRegion< CellElementRegion >( neighborCellID.region );
   CellElementSubRegion const * neighborSubRegion =
-      neighborRegion->GetSubRegion< CellElementSubRegion >( neighborCellID.subRegion );
+      neighborRegion->getSubRegion< CellElementSubRegion >( neighborCellID.subRegion );
   auto const & efracSurfaces = neighborSubRegion->embeddedSurfacesList();
 
   // embedded fracture elements hosted in the neighbor cell

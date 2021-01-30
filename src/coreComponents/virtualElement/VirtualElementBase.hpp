@@ -38,7 +38,7 @@ public:
   virtual ~VirtualElementBase() = default;
 
   /// @brief Compute VEM projectors on the geometry.
-  virtual void ComputeProjectors( MeshLevel const &, localIndex const &,
+  virtual void computeProjectors( MeshLevel const &, localIndex const &,
                                   localIndex const &, localIndex const & ) = 0;
 
   /**
