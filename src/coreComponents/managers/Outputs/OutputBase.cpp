@@ -25,7 +25,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-OutputBase::OutputBase( std::string const & name,
+OutputBase::OutputBase( string const & name,
                         Group * const parent ):
   ExecutableGroup( name, parent ),
   m_childDirectory(),

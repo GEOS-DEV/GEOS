@@ -210,7 +210,7 @@ class MultiPhaseMultiComponentFluid : public MultiFluidBase
 {
 public:
 
-  MultiPhaseMultiComponentFluid( std::string const & name, Group * const parent );
+  MultiPhaseMultiComponentFluid( string const & name, Group * const parent );
 
   virtual ~MultiPhaseMultiComponentFluid() override;
 
@@ -219,7 +219,7 @@ public:
                 Group * const parent ) const override;
 
 
-  static std::string catalogName() { return dataRepository::keys::multiPhaseMultiComponentFluid; }
+  static string catalogName() { return dataRepository::keys::multiPhaseMultiComponentFluid; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

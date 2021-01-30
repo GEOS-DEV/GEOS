@@ -27,7 +27,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Cylinder::Cylinder( const std::string & name, Group * const parent ):
+Cylinder::Cylinder( const string & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_point1{ 0.0, 0.0, 0.0 },
   m_point2{ 0.0, 0.0, 0.0 },
@@ -76,6 +76,6 @@ bool Cylinder::isCoordInObject( real64 const ( &coord ) [3] ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Cylinder, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Cylinder, string const &, Group * const )
 
 } /* namespace geosx */

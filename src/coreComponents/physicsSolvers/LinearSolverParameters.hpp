@@ -45,7 +45,7 @@ public:
   LinearSolverParametersInput() = delete;
 
   /// Constructor
-  LinearSolverParametersInput( std::string const & name, Group * const parent );
+  LinearSolverParametersInput( string const & name, Group * const parent );
 
   /// Copy constructor
   LinearSolverParametersInput( LinearSolverParametersInput && ) = default;

@@ -38,7 +38,7 @@ public:
     LiveOil
   };
 
-  BlackOilFluid( std::string const & name, Group * const parent );
+  BlackOilFluid( string const & name, Group * const parent );
 
   virtual ~BlackOilFluid() override;
 
@@ -46,7 +46,7 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static std::string catalogName() { return "BlackOilFluid"; }
+  static string catalogName() { return "BlackOilFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

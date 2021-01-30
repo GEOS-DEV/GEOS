@@ -25,7 +25,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
+PhysicsSolverManager::PhysicsSolverManager( string const & name,
                                             Group * const parent ):
   Group( name, parent ),
   m_gravityVector( { 0.0, 0.0, -9.81 } )

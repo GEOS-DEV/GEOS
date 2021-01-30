@@ -34,7 +34,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
+SinglePhaseReservoir::SinglePhaseReservoir( const string & name,
                                             Group * const parent ):
   ReservoirSolverBase( name, parent )
 {}
@@ -231,6 +231,6 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoir, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoir, string const &, Group * const )
 
 } /* namespace geosx */

@@ -36,7 +36,7 @@ conduit::Node & conduitNodeFromParent( string const & name, Group * const parent
   }
 }
 
-Group::Group( std::string const & name,
+Group::Group( string const & name,
               Group * const parent ):
   m_parent( parent ),
   m_sizedFromParent( 0 ),
@@ -133,7 +133,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   for( xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
-    std::string childName = childNode.attribute( "name" ).value();
+    string childName = childNode.attribute( "name" ).value();
     if( childName.empty())
     {
       childName = childNode.name();
@@ -159,7 +159,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
 {
 
   std::set< string > processedXmlNodes;
-  for( std::pair< std::string const, WrapperBase * > & pair : m_wrappers )
+  for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {
     if( pair.second->processInputFile( targetNode ) )
     {
@@ -241,7 +241,7 @@ string Group::dumpInputOptions() const
   return rval;
 }
 
-void Group::deregisterGroup( std::string const & name )
+void Group::deregisterGroup( string const & name )
 {
   GEOSX_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
   m_subGroups.erase( name );

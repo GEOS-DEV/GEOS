@@ -101,7 +101,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseFVM( const std::string & name,
+  SinglePhaseFVM( const string & name,
                   dataRepository::Group * const parent );
 
 

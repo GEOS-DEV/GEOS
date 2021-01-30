@@ -98,7 +98,7 @@ void ElementRegionManager::expandObjectCatalogs()
        ++iter )
   {
     string const key = iter->first;
-    if( key.find( "ElementRegion" ) != std::string::npos )
+    if( key.find( "ElementRegion" ) != string::npos )
     {
       this->createChild( key, key );
     }

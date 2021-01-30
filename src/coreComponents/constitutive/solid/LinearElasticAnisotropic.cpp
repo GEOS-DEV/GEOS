@@ -26,7 +26,7 @@ namespace constitutive
 
 
 
-LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Group * const parent ):
+LinearElasticAnisotropic::LinearElasticAnisotropic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultStiffness( 6, 6 )
 {
@@ -88,6 +88,6 @@ void LinearElasticAnisotropic::setDefaultStiffness( real64 const c[6][6] )
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticAnisotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticAnisotropic, string const &, Group * const )
 }
 } /* namespace geosx */

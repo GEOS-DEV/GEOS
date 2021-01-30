@@ -43,7 +43,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  Box( const std::string & name,
+  Box( const string & name,
        Group * const parent );
 
   /**

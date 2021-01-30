@@ -163,7 +163,7 @@ public:
    * @brief Return a string representing the default value.
    * @return A string representing the default value.
    */
-  virtual std::string getDefaultValueString() const = 0;
+  virtual string getDefaultValueString() const = 0;
 
   /**
    * @brief Initialize the wrapper from the input xml node.
@@ -181,9 +181,9 @@ public:
    * @note This wrapper must hold an LvArray::Array.
    */
   virtual void addBlueprintField( conduit::Node & fields,
-                                  std::string const & name,
-                                  std::string const & topology,
-                                  std::vector< std::string > const & componentNames = {} ) const = 0;
+                                  string const & name,
+                                  string const & topology,
+                                  std::vector< string > const & componentNames = {} ) const = 0;
 
   /**
    * @brief Push the data in the wrapper into a Conduit Blueprint mcarray.
@@ -191,7 +191,7 @@ public:
    * @param componentNames The names of the components, if not specified they are auto generated.
    * @note This wrapper must hold an LvArray::Array.
    */
-  virtual void populateMCArray( conduit::Node & node, std::vector< std::string > const & componentNames = {} ) const = 0;
+  virtual void populateMCArray( conduit::Node & node, std::vector< string > const & componentNames = {} ) const = 0;
 
   /**
    * @brief Create a new Wrapper with values averaged over the second dimension.
@@ -201,7 +201,7 @@ public:
    * @note This Wrapper must hold an LvArray::Array of dimension 2 or greater.
    * @note The new Wrapper is not registered with @p group.
    */
-  virtual std::unique_ptr< WrapperBase > averageOverSecondDim( std::string const & name, Group & group ) const = 0;
+  virtual std::unique_ptr< WrapperBase > averageOverSecondDim( string const & name, Group & group ) const = 0;
 
   /**
    * @name Restart output methods

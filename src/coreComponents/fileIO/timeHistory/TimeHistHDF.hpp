@@ -28,7 +28,7 @@
 #include "managers/TimeHistory/HistoryIO.hpp"
 #include <hdf5.h>
 
-#include <string>
+
 
 namespace geosx
 {

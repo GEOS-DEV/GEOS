@@ -43,7 +43,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  Cylinder( const std::string & name,
+  Cylinder( const string & name,
             Group * const parent );
 
   /**

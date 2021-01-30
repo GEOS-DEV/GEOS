@@ -87,7 +87,7 @@ public:
    * @param[in] name the name of the EdgeManager object in the repository
    * @param[in] parent the parent group of the EdgeManager object being constructed
    */
-  EdgeManager( std::string const & name,
+  EdgeManager( string const & name,
                Group * const parent );
 
   /**

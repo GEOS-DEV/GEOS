@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-MeshManager::MeshManager( std::string const & name,
+MeshManager::MeshManager( string const & name,
                           Group * const parent ):
   Group( name, parent )
 {
@@ -68,7 +68,7 @@ void MeshManager::generateMeshLevels( DomainPartition * const domain )
     string meshName = meshGen.getName();
 
     // THIS IS A HACK
-    if( meshName.find( "well" ) == std::string::npos )
+    if( meshName.find( "well" ) == string::npos )
     {
       domain->getMeshBodies()->registerGroup< MeshBody >( meshName )->createMeshLevel( 0 );
     }

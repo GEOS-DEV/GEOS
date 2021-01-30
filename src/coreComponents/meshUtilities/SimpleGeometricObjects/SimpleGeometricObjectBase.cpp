@@ -21,7 +21,7 @@
 namespace geosx
 {
 
-SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
+SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
                                                       Group * const parent ):
   Group( name, parent )
 {

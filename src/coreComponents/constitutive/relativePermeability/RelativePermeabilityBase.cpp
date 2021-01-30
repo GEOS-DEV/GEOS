@@ -43,7 +43,7 @@ std::unordered_map< string, integer > const phaseDict =
 }
 
 
-RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Group * const parent )
+RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames )->

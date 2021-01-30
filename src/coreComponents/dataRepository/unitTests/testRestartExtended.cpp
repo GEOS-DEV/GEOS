@@ -229,7 +229,7 @@ TEST( testRestartExtended, testRestartExtended )
   int sfp = 55;
 
   /* Create a new Group directly below the conduit root. */
-  Group * root = new Group( std::string( "data" ), nullptr );
+  Group * root = new Group( string( "data" ), nullptr );
   root->resize( group_size );
 
   /* Create a new globalIndex_array Wrapper. */
@@ -418,7 +418,7 @@ TEST( testRestartExtended, testRestartExtended )
 
   /* Restore the conduit tree */
   loadTree( path );
-  root = new Group( std::string( "data" ), nullptr );
+  root = new Group( string( "data" ), nullptr );
 
   /* Create dual GEOS tree. Groups automatically register with the associated conduit::Node. */
   Wrapper< globalIndex_array > * view_globalIndex_new = root->registerWrapper< globalIndex_array >( view_globalIndex_name );

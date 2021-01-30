@@ -34,7 +34,7 @@ using namespace dataRepository;
 using namespace finiteElement;
 
 
-FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, Group * const parent ):
+FiniteElementDiscretization::FiniteElementDiscretization( string const & name, Group * const parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -104,6 +104,6 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, string const &, Group * const )
 
 } /* namespace geosx */

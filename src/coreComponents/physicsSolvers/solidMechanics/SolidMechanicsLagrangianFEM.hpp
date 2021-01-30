@@ -56,7 +56,7 @@ public:
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
    */
-  SolidMechanicsLagrangianFEM( const std::string & name,
+  SolidMechanicsLagrangianFEM( const string & name,
                                Group * const parent );
 
 

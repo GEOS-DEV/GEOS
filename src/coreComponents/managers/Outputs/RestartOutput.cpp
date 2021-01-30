@@ -29,7 +29,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-RestartOutput::RestartOutput( std::string const & name,
+RestartOutput::RestartOutput( string const & name,
                               Group * const parent ):
   OutputBase( name, parent )
 {}
@@ -64,5 +64,5 @@ void RestartOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, RestartOutput, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, RestartOutput, string const &, Group * const )
 } /* namespace geosx */

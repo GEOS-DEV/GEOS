@@ -30,7 +30,7 @@ class CompositionalMultiphaseFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
-  CompositionalMultiphaseFluid( std::string const & name, Group * const parent );
+  CompositionalMultiphaseFluid( string const & name, Group * const parent );
 
   virtual ~CompositionalMultiphaseFluid() override;
 
@@ -38,7 +38,7 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static std::string catalogName() { return "CompositionalMultiphaseFluid"; }
+  static string catalogName() { return "CompositionalMultiphaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

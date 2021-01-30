@@ -43,7 +43,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ConstitutiveBase::ConstitutiveBase( std::string const & name,
+ConstitutiveBase::ConstitutiveBase( string const & name,
                                     Group * const parent ):
   Group( name, parent ),
   m_numQuadraturePoints( 1 ),

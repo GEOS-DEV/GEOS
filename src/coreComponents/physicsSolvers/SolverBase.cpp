@@ -25,7 +25,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-SolverBase::SolverBase( std::string const & name,
+SolverBase::SolverBase( string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),

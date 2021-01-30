@@ -150,7 +150,7 @@ public:
     return m_dims[dim];
   }
 private:
-  std::string m_name;
+  string m_name;
   localIndex m_rank;
   std::vector< localIndex > m_dims;
   std::type_index m_type;

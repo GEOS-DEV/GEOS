@@ -45,8 +45,8 @@ string const inputVarNames( "inputVarNames" );
 class FunctionBase : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  FunctionBase( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  FunctionBase( const string & name,
                 dataRepository::Group * const parent );
 
   /**
@@ -94,7 +94,7 @@ public:
   virtual real64 evaluate( real64 const * const input ) const = 0;
 
   /// Alias for the catalog interface
-  using CatalogInterface = dataRepository::CatalogInterface< FunctionBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< FunctionBase, string const &, Group * const >;
 
   /**
    * @brief return the catalog entry for the function

@@ -47,7 +47,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace ProppantTransportKernels;
 
-ProppantTransport::ProppantTransport( const std::string & name,
+ProppantTransport::ProppantTransport( const string & name,
                                       Group * const parent ):
   FlowSolverBase( name, parent )
 {
@@ -1407,5 +1407,5 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, ProppantTransport, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, ProppantTransport, string const &, Group * const )
 } /* namespace geosx */

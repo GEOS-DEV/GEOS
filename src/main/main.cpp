@@ -48,7 +48,7 @@ int main( int argc, char *argv[] )
   gettimeofday( &tim, nullptr );
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  std::string restartFileName;
+  string restartFileName;
   bool restart = ProblemManager::parseRestart( restartFileName );
   if( restart )
   {

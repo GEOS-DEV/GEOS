@@ -28,7 +28,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-SiloOutput::SiloOutput( std::string const & name,
+SiloOutput::SiloOutput( string const & name,
                         Group * const parent ):
   OutputBase( name, parent ),
   m_plotFileRoot( "plot" ),
@@ -109,5 +109,5 @@ void SiloOutput::execute( real64 const time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, SiloOutput, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, SiloOutput, string const &, Group * const )
 } /* namespace geosx */

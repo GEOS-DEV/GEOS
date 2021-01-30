@@ -170,7 +170,7 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
   /**
    * @brief @return Regex for validating enumeration inputs for @p ENUM type.
    */
-  static std::string get()
+  static string get()
   {
     return EnumStrings< ENUM >::concat( "|" );
   }

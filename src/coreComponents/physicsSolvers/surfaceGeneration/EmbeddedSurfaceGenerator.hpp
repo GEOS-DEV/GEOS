@@ -55,7 +55,7 @@ class ElementRegionBase;
 class EmbeddedSurfaceGenerator : public SolverBase
 {
 public:
-  EmbeddedSurfaceGenerator( const std::string & name,
+  EmbeddedSurfaceGenerator( const string & name,
                             Group * const parent );
   ~EmbeddedSurfaceGenerator() override;
 

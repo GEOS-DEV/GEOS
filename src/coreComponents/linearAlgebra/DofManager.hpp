@@ -100,7 +100,7 @@ public:
   struct CouplingDescription
   {
     Connector connector = Connector::None;  //!< geometric object defining dof connections
-    std::vector< std::string > regions; //!< list of region names
+    std::vector< string > regions; //!< list of region names
     FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 

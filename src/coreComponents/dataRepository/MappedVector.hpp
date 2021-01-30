@@ -43,7 +43,7 @@ namespace geosx
  */
 template< typename T,
           typename T_PTR=T *,
-          typename KEY_TYPE=std::string,
+          typename KEY_TYPE=string,
           typename INDEX_TYPE = int >
 class MappedVector
 {

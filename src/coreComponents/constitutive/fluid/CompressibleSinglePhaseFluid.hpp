@@ -113,11 +113,11 @@ class CompressibleSinglePhaseFluid : public SingleFluidBase
 {
 public:
 
-  CompressibleSinglePhaseFluid( std::string const & name, Group * const parent );
+  CompressibleSinglePhaseFluid( string const & name, Group * const parent );
 
   virtual ~CompressibleSinglePhaseFluid() override;
 
-  static std::string catalogName() { return "CompressibleSinglePhaseFluid"; }
+  static string catalogName() { return "CompressibleSinglePhaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

@@ -43,7 +43,7 @@ public:
    * @param[in] name the name of the EventManager
    * @param[in] parent group this EventManager
    */
-  EventManager( std::string const & name,
+  EventManager( string const & name,
                 Group * const parent );
 
   /**
@@ -102,7 +102,7 @@ public:
   ///@}
 
   /// Alias to access the object catalog for EventBase derived types.
-  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, string const &, Group * const >;
 
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
