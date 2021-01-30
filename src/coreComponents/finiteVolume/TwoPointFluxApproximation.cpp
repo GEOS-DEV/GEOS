@@ -832,6 +832,8 @@ void TwoPointFluxApproximation::addEDFracToFractureStencilStandard( MeshLevel & 
 
   FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
+  fractureStencil.move( LvArray::MemorySpace::CPU );
+  cellStencil.move( LvArray::MemorySpace::CPU );
 
   SurfaceElementRegion & fractureRegion = *( elemManager.GetRegion<
                                                SurfaceElementRegion >( embeddedSurfaceRegionName ) );
@@ -839,7 +841,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencilStandard( MeshLevel & 
   EmbeddedSurfaceSubRegion & fractureSubRegion = *( fractureRegion.GetSubRegion<
                                                       EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" ) );
 
-  arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter().toViewConst();
+  arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.embSurfNodesPosition();
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();

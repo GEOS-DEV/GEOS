@@ -51,17 +51,14 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
         real64 transFM = fractureMatrixTransmissilibility( neighborCell, fracElement,
                                                            fractureSubRegion, faceIdx );
 
-
         addNonNeighboringConnection(fracElement, neighborCell, transFM, fractureSubRegion);
-        // I assume that the m-m connection id is equal to the face id
+
+        // zero out matrix-matrix connections that are replaced by fracture-matrix connections
+        // I assume that the m-m connection index is equal to the face id
         m_stencil.zero( faceIdx );
       }
-
-      // exit(0);
     }
-
   }
-
 }
 
 std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation const & subRegionFaces,
@@ -70,7 +67,6 @@ std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation
                                                           EmbeddedSurfaceSubRegion const & fractureSubRegion) const
 {
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector(fracElement);
-  // arraySlice1d< real64 const> const o = fractureSubRegion.getOrigin(fracElement);
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
   real64 origin[3];
   LvArray::tensorOps::copy< 3 >( origin, centers[ fracElement ] );
@@ -84,9 +80,9 @@ std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation
   {
     if (isBoundaryFace(iface)) continue;
     // face intersected by frac and non-branching
-    if ( intersection( ref(origin), ref(n), iface, tmp ) && neighborOnSameSide( iface, distToFrac,
-                                                                                hostCellID,
-                                                                                fractureSubRegion) )
+    if ( intersection( ref(origin), ref(n), iface, ref(tmp) ) && neighborOnSameSide( iface, distToFrac,
+                                                                                     ref(hostCellID),
+                                                                                     ref(fractureSubRegion)) )
     {
       faces.push_back( iface );
       continue;
@@ -131,6 +127,7 @@ bool ProjectionEDFMHelper::onLargerSide( localIndex faceIdx,
                                          real64 (&fracOrigin)[3],
                                          arraySlice1d< real64 const > const & fracNormal ) const noexcept
 {
+  /* Check If face is on the same side of the fracture as the mass center of the cell. */
   real64 const areaTolerance = 10.f * std::numeric_limits<real64>::epsilon();
   real64 faceCenter[ 3 ], faceNormal[ 3 ];
   // compute face center
@@ -186,7 +183,6 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
   // embedded fracture elements hosted in the neighbor cell
   // (there could be more than one)
   auto const & efracElements = efracSurfaces[neighborCellID.index];
-  // TODO: there could also be zero
   if (efracElements.size() == 0)
     return false;
   if (efracElements.size() > 1)
@@ -293,7 +289,7 @@ fractureMatrixTransmissilibility( CellID const & neighborCell,
   LvArray::tensorOps::scaledAdd< 3 >( projectionPoint, fracCenter, t );
 
   // fracture projected permeability: equal to one for now
-  real64 const directionalPermFracutre = 1.f;
+  real64 const directionalPermFracutre = 0.f;
   // matrix permeability
   // auto const & neighborPerm =  m_permTensor[neighborCell.region][neighborCell.subRegion][neighborCell.index];
   arraySlice1d<real64 const> neighborPerm =  m_permTensor[neighborCell.region][neighborCell.subRegion][neighborCell.index];
