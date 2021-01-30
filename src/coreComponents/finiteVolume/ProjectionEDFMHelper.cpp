@@ -215,14 +215,13 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
   stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
   stackArray1d< real64, maxElems > stencilWeights( numElems );
 
+  // cell data
   stencilCellsRegionIndex[0] = cell.region;
   stencilCellsSubRegionIndex[0] = cell.subRegion;
   stencilCellsIndex[0] = cell.index;
   stencilWeights[0] =  transmissibility;
 
-  /* auto * fractureRegion = fractureSubRegion.getParent(); */
-  /* localIndex const fractureRegionIndex = fractureRegion->getIndexInParent(); */
-
+  // frac data
   stencilCellsRegionIndex[1] = fractureSubRegion.getParent()->getIndexInParent();
   stencilCellsSubRegionIndex[1] = fractureSubRegion.getIndexInParent();
   stencilCellsIndex[1] = fracElement;
@@ -246,7 +245,6 @@ fractureMatrixTransmissilibility( CellID const & neighborCell,
   // TODO: should I really compute the real projection, or assuming the whole face is occupied by the projection?
   // std::string const & fractureName = fractureSubRegion.getFractureName(fracElement);
   // const BoundedPlane & plane = m_geometricObjManager->getReference< BoundedPlane >( fractureName );
-  // array2d< real64 > & boundingPoints = plane
 
   // compute face center and normal
   real64 const areaTolerance = 10.f * std::numeric_limits<real64>::epsilon();
@@ -261,13 +259,14 @@ fractureMatrixTransmissilibility( CellID const & neighborCell,
                                 [ neighborCell.subRegion ]
                                 [ neighborCell.index ]);
 
+  // get frac  center
   real64 fracCenter[ 3 ];
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
   LvArray::tensorOps::copy< 3 >( fracCenter, centers[ fracElement ] );
 
 
-  // projection point
-  // const double t =  (cf - c1).dot(n) / (c2 - c1).dot(n);
+  // Compute projection point: a point  on the face that resides  on a  line
+  // connecting edfm element and a neighbor cell
   real64 tmp[3];
   LvArray::tensorOps::copy< 3 >( tmp, faceCenter );
   LvArray::tensorOps::subtract< 3 >( tmp, fracCenter );
@@ -277,44 +276,34 @@ fractureMatrixTransmissilibility( CellID const & neighborCell,
   real64 const denom = LvArray::tensorOps::AiBi< 3 >( tmp, faceNormal );
   real64 t = numerator / denom;
 
-  /* const auto &c1 = frac.center; */
-  /* const auto &c2 = cell.center; */
-  /* const auto &cf = con.center; */
-  /* const auto &n = con.normal; */
-  /* const auto cp = c1 + t*(c2 - c1); */
   LvArray::tensorOps::copy< 3 >( tmp, cellCenter );
   LvArray::tensorOps::subtract< 3 >( tmp, fracCenter );
   real64 projectionPoint[3];
   LvArray::tensorOps::copy< 3 >( tmp, fracCenter );
   LvArray::tensorOps::scaledAdd< 3 >( projectionPoint, fracCenter, t );
 
-  // fracture projected permeability: equal to one for now
+  // get directional permeabilities
+  // TODO: use real fracture permeability
   real64 const directionalPermFracutre = 0.f;
+
   // matrix permeability
-  // auto const & neighborPerm =  m_permTensor[neighborCell.region][neighborCell.subRegion][neighborCell.index];
   arraySlice1d<real64 const> neighborPerm =  m_permTensor[neighborCell.region][neighborCell.subRegion][neighborCell.index];
-  /* const double Kp2 = (K2 * (c2 - cp).normalize()).norm(); */
   real64 direction[3];
   LvArray::tensorOps::copy< 3 >( direction, cellCenter );
   LvArray::tensorOps::subtract< 3 >( direction, projectionPoint );
   LvArray::tensorOps::normalize< 3 >(direction);
-  // std::cout << "perm neighbor size " << neighborPerm.size(0) << std::endl;
-  // std::cout << "perm neighbor size 1 = " << neighborPerm.size(1) << std::endl;
-  // LvArray::tensorOps::Ri_eq_symAijBj< 3 >( tmp, neighborPerm, direction );
-  // real64 const directionalPermCell = LvArray::tensorOps::l2Norm< 3 >( tmp );
   real64 const directionalPermCell = LvArray::tensorOps::AiBi< 3 > ( neighborPerm, direction );
 
   // part trasmissibilities
-  /* const double T1 = face_area * Kp1 / (c1 - cp).norm(); */
   LvArray::tensorOps::copy< 3 >( tmp, fracCenter );
   LvArray::tensorOps::subtract< 3 >( tmp, projectionPoint );
   real64 const t1 = faceArea * directionalPermFracutre * LvArray::tensorOps::l2Norm< 3 >( tmp );
 
-  /* const double T2 = face_area * Kp2 / (c2 - cp).norm(); */
   LvArray::tensorOps::copy< 3 >( tmp, cellCenter );
   LvArray::tensorOps::subtract< 3 >( tmp, projectionPoint );
   real64 const t2 = faceArea * directionalPermCell * LvArray::tensorOps::l2Norm< 3 >( tmp );
 
+  // finally compute absolute transmissibility
   real64 trans = 0.f;
   if (std::isnormal( t1 + t2 ))
     trans = t1 * t2 / ( t1 + t2 );
