@@ -33,7 +33,7 @@ class TasksManager : public dataRepository::Group
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group
-  TasksManager( std::string const & name, Group * const parent );
+  TasksManager( string const & name, Group * const parent );
   /// Destructor
   virtual ~TasksManager() override;
 

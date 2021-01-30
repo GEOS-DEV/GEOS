@@ -51,10 +51,10 @@ static constexpr bool HasMemberFunction_move = LvArray::bufferManipulation::HasM
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_setName< @p CLASS >
- *        that is true iff the method @p CLASS ::setName( std::string ) exists.
+ *        that is true iff the method @p CLASS ::setName( string ) exists.
  * @tparam CLASS The type to test.
  */
-HAS_MEMBER_FUNCTION_NO_RTYPE( setName, std::string() );
+HAS_MEMBER_FUNCTION_NO_RTYPE( setName, string() );
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_size< @p CLASS >
@@ -142,9 +142,9 @@ using ViewType = LvArray::typeManipulation::ViewType< T >;
 template< typename T >
 using ViewTypeConst = LvArray::typeManipulation::ViewTypeConst< T >;
 
-/// True if T is or inherits from std::string.
+/// True if T is or inherits from string.
 template< typename T >
-constexpr bool is_string = std::is_base_of< std::string, T >::value;
+constexpr bool is_string = std::is_base_of< string, T >::value;
 
 /// True if T is an instantiation of LvArray::Array.
 template< typename T >

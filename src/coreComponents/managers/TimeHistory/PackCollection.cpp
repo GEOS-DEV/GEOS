@@ -185,5 +185,5 @@ void PackCollection::collect( DomainPartition & domain,
 
 }
 
-REGISTER_CATALOG_ENTRY( TaskBase, PackCollection, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, PackCollection, string const &, Group * const )
 }

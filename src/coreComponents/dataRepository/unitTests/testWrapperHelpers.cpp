@@ -108,7 +108,7 @@ TEST( wrapperHelpers, size )
   checkNoSizeMethod( double() );
   checkNoSizeMethod( R1Tensor() );
 
-  checkSizeMethod( std::string( "hello" ) );
+  checkSizeMethod( string( "hello" ) );
   checkSizeMethod( std::set< int > { 1, 2, 3 } );
   checkSizeMethod( std::vector< int > { 1, 2, 3 } );
   checkSizeMethod( std::array< int, 5 > {} );

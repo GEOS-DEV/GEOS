@@ -95,11 +95,11 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition * const domain )
 {
   GEOSX_LOG_RANK_0( "Writing into the GEOSX mesh data structure" );
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
-  Group * const meshBodies = domain->getGroup( std::string( "MeshBodies" ));
+  Group * const meshBodies = domain->getGroup( string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
+  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( string( "Level0" ));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
   CellBlockManager * cellBlockManager = domain->getGroup< CellBlockManager >( keys::cellManager );
 
@@ -114,7 +114,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition * const domain )
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
   Group & nodeSets = nodeManager->sets();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )->reference();
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) )->reference();
 
   real64 xMax[3] = { std::numeric_limits< real64 >::min() };
   real64 xMin[3] = { std::numeric_limits< real64 >::max() };
@@ -360,7 +360,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition * const domain )
     auto const surfacePtr = polygonPart.second;
 
     string surfaceName = DecodePAMELALabels::retrieveSurfaceOrRegionName( surfacePtr->Label );
-    SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( surfaceName ) )->reference();
+    SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( surfaceName ) )->reference();
     for( auto const & subPart : surfacePtr->SubParts )
     {
       auto const cellBlockPAMELA = subPart.second;
@@ -384,12 +384,12 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition * const domain )
 
 }
 
-void PAMELAMeshGenerator::getElemToNodesRelationInBox( const std::string & GEOSX_UNUSED_PARAM( elementType ),
+void PAMELAMeshGenerator::getElemToNodesRelationInBox( const string & GEOSX_UNUSED_PARAM( elementType ),
                                                        const int GEOSX_UNUSED_PARAM( index )[],
                                                        const int & GEOSX_UNUSED_PARAM( iEle ),
                                                        int GEOSX_UNUSED_PARAM( nodeIDInBox )[],
                                                        const int GEOSX_UNUSED_PARAM( node_size ) )
 {}
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, string const &, Group * const )
 }

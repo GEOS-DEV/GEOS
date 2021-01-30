@@ -91,7 +91,7 @@ public:
    * @param [in] name the name of this instantiation of NodeManager
    * @param [in] parent the parent group of this instantiation of NodeManager
    */
-  NodeManager( std::string const & name,
+  NodeManager( string const & name,
                dataRepository::Group * const parent );
 
   /**

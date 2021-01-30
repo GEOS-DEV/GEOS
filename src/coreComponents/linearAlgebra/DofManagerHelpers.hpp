@@ -452,7 +452,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
-                     std::vector< std::string > const & regions,
+                     std::vector< string > const & regions,
                      LAMBDA lambda )
   {
     // derive some useful type aliases
@@ -529,7 +529,7 @@ struct MeshLoopHelper
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
-                     std::vector< std::string > const & regions,
+                     std::vector< string > const & regions,
                      LAMBDA lambda )
   {
     // derive some useful type aliases
@@ -571,7 +571,7 @@ struct MeshLoopHelper< LOC, DofManager::Location::Elem, VISIT_GHOSTS >
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
-                     std::vector< std::string > const & regions,
+                     std::vector< string > const & regions,
                      LAMBDA lambda )
   {
     // derive some useful type aliases
@@ -624,7 +624,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
-                     std::vector< std::string > const & regions,
+                     std::vector< string > const & regions,
                      LAMBDA lambda )
   {
     meshLevel->getElemManager()->
@@ -669,7 +669,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, V
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
-                     std::vector< std::string > const & regions,
+                     std::vector< string > const & regions,
                      LAMBDA && lambda )
   {
     meshLevel->getElemManager()->
@@ -719,7 +719,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, V
 template< DofManager::Location LOC, DofManager::Location CONN_LOC, bool VISIT_GHOSTS,
           typename ... SUBREGIONTYPES, typename LAMBDA >
 void forMeshLocation( MeshLevel * const mesh,
-                      std::vector< std::string > const & regions,
+                      std::vector< string > const & regions,
                       LAMBDA && lambda )
 {
   MeshLoopHelper< LOC, CONN_LOC, VISIT_GHOSTS >::template visit< SUBREGIONTYPES... >( mesh,
@@ -733,7 +733,7 @@ void forMeshLocation( MeshLevel * const mesh,
 template< DofManager::Location LOC, bool VISIT_GHOSTS,
           typename ... SUBREGIONTYPES, typename LAMBDA >
 void forMeshLocation( MeshLevel * const mesh,
-                      std::vector< std::string > const & regions,
+                      std::vector< string > const & regions,
                       LAMBDA && lambda )
 {
   forMeshLocation< LOC, LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh,
@@ -757,7 +757,7 @@ void forMeshLocation( MeshLevel * const mesh,
  */
 template< DofManager::Location LOC, bool VISIT_GHOSTS, typename ... SUBREGIONTYPES >
 localIndex countMeshObjects( MeshLevel * const mesh,
-                             std::vector< std::string > const & regions )
+                             std::vector< string > const & regions )
 {
   localIndex count = 0;
   forMeshLocation< LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh, regions,
@@ -787,7 +787,7 @@ struct IndexArrayHelper
   create( Mesh * const mesh,
           string const & key,
           string const & description,
-          std::vector< std::string > const & GEOSX_UNUSED_PARAM( regions ) )
+          std::vector< string > const & GEOSX_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase & baseManager = getObjectManager< LOC >( mesh );
     baseManager.registerWrapper< ArrayType >( key )->
@@ -816,7 +816,7 @@ struct IndexArrayHelper
   static void
   remove( Mesh * const mesh,
           string const & key,
-          std::vector< std::string > const & GEOSX_UNUSED_PARAM( regions ) )
+          std::vector< string > const & GEOSX_UNUSED_PARAM( regions ) )
   {
     getObjectManager< LOC >( mesh ).deregisterWrapper( key );
   }
@@ -839,7 +839,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
   create( Mesh * const mesh,
           string const & key,
           string const & description,
-          std::vector< std::string > const & regions )
+          std::vector< string > const & regions )
   {
     mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions,
                                                                                 [&]( localIndex const,
@@ -878,7 +878,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
   static void
   remove( Mesh * const mesh,
           string const & key,
-          std::vector< std::string > const & regions )
+          std::vector< string > const & regions )
   {
     mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions,
                                                                                 [&]( localIndex const,

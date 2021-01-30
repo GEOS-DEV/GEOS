@@ -42,7 +42,7 @@ class DomainPartition;
 class PhaseFieldDamageFEM : public SolverBase
 {
 public:
-  PhaseFieldDamageFEM( const std::string & name, Group * const parent );
+  PhaseFieldDamageFEM( const string & name, Group * const parent );
 
   virtual ~PhaseFieldDamageFEM() override;
 

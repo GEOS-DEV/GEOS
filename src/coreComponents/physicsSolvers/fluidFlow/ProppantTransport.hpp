@@ -47,7 +47,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  ProppantTransport( const std::string & name,
+  ProppantTransport( const string & name,
                      Group * const parent );
 
 

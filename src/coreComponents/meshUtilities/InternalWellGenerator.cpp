@@ -89,7 +89,7 @@ InternalWellGenerator::~InternalWellGenerator()
 
 void InternalWellGenerator::postProcessInput()
 {
-  GEOSX_ERROR_IF( getName().find( "well" ) == std::string::npos,
+  GEOSX_ERROR_IF( getName().find( "well" ) == string::npos,
                   "Currently, the well generator must contain the word well in its name " );
 
   GEOSX_ERROR_IF( m_polyNodeCoords.size( 1 ) != m_nDims,
@@ -563,5 +563,5 @@ void InternalWellGenerator::debugWellGeometry() const
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, string const &, Group * const )
 }

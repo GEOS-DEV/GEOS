@@ -25,7 +25,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-GeometricObjectManager::GeometricObjectManager( std::string const & name,
+GeometricObjectManager::GeometricObjectManager( string const & name,
                                                 Group * const parent ):
   Group( name, parent )
 {

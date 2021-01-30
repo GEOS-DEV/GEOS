@@ -37,7 +37,7 @@ public:
    * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
-  static std::string catalogName() { return "TwoPointFluxApproximation"; }
+  static string catalogName() { return "TwoPointFluxApproximation"; }
 
   TwoPointFluxApproximation() = delete;
 
@@ -46,7 +46,7 @@ public:
    * @param name the name of the TwoPointFluxApproximation in the data repository
    * @param parent the parent group of this group.
    */
-  TwoPointFluxApproximation( std::string const & name, dataRepository::Group * const parent );
+  TwoPointFluxApproximation( string const & name, dataRepository::Group * const parent );
 
 protected:
 

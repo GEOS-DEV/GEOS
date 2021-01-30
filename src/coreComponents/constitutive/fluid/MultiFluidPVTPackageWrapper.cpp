@@ -28,7 +28,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( std::string const & name,
+MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( string const & name,
                                                           Group * const parent )
   :
   MultiFluidBase( name, parent ),

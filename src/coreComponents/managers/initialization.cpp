@@ -68,7 +68,7 @@ void addUmpireHighWaterMarks()
   umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
 
   // Get a list of all the allocators and sort it so that it's in the same order on each rank.
-  std::vector< std::string > allocatorNames = rm.getAllocatorNames();
+  std::vector< string > allocatorNames = rm.getAllocatorNames();
   std::sort( allocatorNames.begin(), allocatorNames.end() );
 
   // If each rank doesn't have the same number of allocators you can't aggregate them.
@@ -141,7 +141,7 @@ void setupCaliper()
   GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
   GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
 
-  std::string xmlDir, xmlName;
+  string xmlDir, xmlName;
   splitPath( s_commandLineOptions.inputFileName, xmlDir, xmlName );
   adiak::value( "XML File", xmlName );
   adiak::value( "Problem name", s_commandLineOptions.problemName );
@@ -416,7 +416,7 @@ void parseCommandLineOptions( int argc, char * * argv )
 
   if( s_commandLineOptions.problemName == "" )
   {
-    std::string & inputFileName = s_commandLineOptions.inputFileName;
+    string & inputFileName = s_commandLineOptions.inputFileName;
     if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
     {
       string::size_type start = inputFileName.find_last_of( '/' ) + 1;
@@ -458,7 +458,7 @@ CommandLineOptions const & getCommandLineOptions()
 { return internal::s_commandLineOptions; }
 
 ///////////////////////////////////////////////////////////////////////////////
-void overrideInputFileName( std::string const & inputFileName )
+void overrideInputFileName( string const & inputFileName )
 { internal::s_commandLineOptions.inputFileName = inputFileName; }
 
 ///////////////////////////////////////////////////////////////////////////////

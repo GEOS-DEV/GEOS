@@ -27,7 +27,7 @@ NullModel::NullModel( string const & name,
 NullModel::~NullModel()
 {}
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, NullModel, std::string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, NullModel, string const &, dataRepository::Group * const )
 
 } // constitutive
 } /* namespace geosx */

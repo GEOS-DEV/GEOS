@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
+MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
   m_useMass( false )
 {

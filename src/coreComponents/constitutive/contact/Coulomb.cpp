@@ -24,7 +24,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-Coulomb::Coulomb( std::string const & name, Group * const parent ):
+Coulomb::Coulomb( string const & name, Group * const parent ):
   ContactRelationBase( name, parent ),
   m_postProcessed( false ),
   m_cohesion(),
@@ -105,6 +105,6 @@ void Coulomb::postProcessInput()
   m_postProcessed = true;
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, string const &, Group * const )
 }
 } /* namespace geosx */

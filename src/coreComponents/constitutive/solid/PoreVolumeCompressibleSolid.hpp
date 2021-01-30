@@ -32,7 +32,7 @@ namespace constitutive
 class PoreVolumeCompressibleSolid : public ConstitutiveBase
 {
 public:
-  PoreVolumeCompressibleSolid( std::string const & name, Group * const parent );
+  PoreVolumeCompressibleSolid( string const & name, Group * const parent );
 
   virtual ~PoreVolumeCompressibleSolid() override;
 
@@ -43,7 +43,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  static std::string catalogName() { return "PoreVolumeCompressibleSolid"; }
+  static string catalogName() { return "PoreVolumeCompressibleSolid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

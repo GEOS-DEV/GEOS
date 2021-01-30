@@ -19,7 +19,7 @@
 #ifndef GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_
 #define GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_
 
-#include <string>
+
 #include <ostream>
 
 /**

@@ -33,8 +33,8 @@ namespace geosx
 class OutputBase : public ExecutableGroup
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  explicit OutputBase( std::string const & name, Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  explicit OutputBase( string const & name, Group * const parent );
 
   /// Destructor
   virtual ~OutputBase() override;
@@ -50,7 +50,7 @@ public:
 
   // Catalog interface
   /// @cond DO_NOT_DOCUMENT
-  using CatalogInterface = dataRepository::CatalogInterface< OutputBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< OutputBase, string const &, Group * const >;
   static CatalogInterface::CatalogType & getCatalog();
 
   // Catalog view keys

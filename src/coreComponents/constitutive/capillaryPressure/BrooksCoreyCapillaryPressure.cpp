@@ -29,7 +29,7 @@ namespace constitutive
 {
 
 
-BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( std::string const & name,
+BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( string const & name,
                                                             Group * const parent )
   : CapillaryPressureBase( name, parent )
 {
@@ -121,7 +121,7 @@ BrooksCoreyCapillaryPressure::KernelWrapper BrooksCoreyCapillaryPressure::create
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

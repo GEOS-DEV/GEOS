@@ -56,7 +56,7 @@ public:
    * @param[in] name Name of this object manager
    * @param[in] parent Parent Group
    */
-  DomainPartition( std::string const & name,
+  DomainPartition( string const & name,
                    Group * const parent );
 
   /**

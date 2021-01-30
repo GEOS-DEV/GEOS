@@ -27,7 +27,7 @@ namespace constitutive
 {
 
 
-PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, Group * const parent ):
+PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
@@ -112,6 +112,6 @@ void PoreVolumeCompressibleSolid::stateUpdateBatchPressure( arrayView1d< real64 
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, string const &, Group * const )
 }
 } /* namespace geosx */

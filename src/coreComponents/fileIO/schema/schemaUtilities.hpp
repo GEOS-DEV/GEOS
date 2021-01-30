@@ -24,7 +24,7 @@
 #include "dataRepository/DefaultValue.hpp"
 #include <iostream>
 #include <sstream>
-#include <string>
+
 
 namespace geosx
 {
@@ -45,7 +45,7 @@ namespace schemaUtilities
  * @param group group passed in from which the schema information is extracted
  * @param documentationType type of XML schema generated
  */
-void ConvertDocumentationToSchema( std::string const & fname, dataRepository::Group * const group, integer documentationType );
+void ConvertDocumentationToSchema( string const & fname, dataRepository::Group * const group, integer documentationType );
 
 /**
  * @brief Generates the simple schema types.

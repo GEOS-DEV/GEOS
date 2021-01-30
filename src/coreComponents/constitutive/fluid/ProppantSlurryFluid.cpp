@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, Group * const parent ):
+ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const parent ):
   SlurryFluidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
@@ -128,7 +128,7 @@ ProppantSlurryFluid::createKernelWrapper()
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSlurryFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSlurryFluid, string const &, Group * const )
 
 } /* namespace constitutive */
 

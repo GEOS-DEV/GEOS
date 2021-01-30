@@ -572,7 +572,7 @@ void FaceManager::buildFaces( NodeManager * const nodeManager, ElementRegionMana
   for( localIndex i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
-    std::string const & setName = setWrapper->getName();
+    string const & setName = setWrapper->getName();
     createSet( setName );
   }
 
@@ -580,7 +580,7 @@ void FaceManager::buildFaces( NodeManager * const nodeManager, ElementRegionMana
   forAll< parallelHostPolicy >( nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
-    std::string const & setName = setWrapper->getName();
+    string const & setName = setWrapper->getName();
     SortedArrayView< localIndex const > const & targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
     constructSetFromSetAndMap( targetSet, m_nodeList.toViewConst(), setName );
   } );
@@ -1010,6 +1010,6 @@ void FaceManager::depopulateUpMaps( std::set< localIndex > const & receivedFaces
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, string const &, Group * const )
 
 }

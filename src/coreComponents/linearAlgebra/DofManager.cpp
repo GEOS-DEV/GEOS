@@ -414,7 +414,7 @@ struct ConnLocPatternBuilder
 {
   static void build( MeshLevel * const mesh,
                      DofManager::FieldDescription const & field,
-                     std::vector< std::string > const & regions,
+                     std::vector< string > const & regions,
                      localIndex const rowOffset,
                      SparsityPattern< globalIndex > & connLocPattern )
   {
@@ -461,7 +461,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
 {
   static void build( MeshLevel * const mesh,
                      DofManager::FieldDescription const & field,
-                     std::vector< std::string > const & regions,
+                     std::vector< string > const & regions,
                      localIndex const rowOffset,
                      SparsityPattern< globalIndex > & connLocPattern )
   {
@@ -503,7 +503,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
 template< DofManager::Location LOC, DofManager::Location CONN >
 void makeConnLocPattern( MeshLevel * const mesh,
                          DofManager::FieldDescription const & field,
-                         std::vector< std::string > const & regions,
+                         std::vector< string > const & regions,
                          SparsityPattern< globalIndex > & connLocPattern )
 {
   using Loc = DofManager::Location;
@@ -1648,9 +1648,9 @@ void DofManager::addCoupling( string const & rowFieldName,
   }
 
   // get row/col field regions
-  std::vector< std::string > const & rowRegions = m_fields[rowFieldIndex].regions;
-  std::vector< std::string > const & colRegions = m_fields[colFieldIndex].regions;
-  std::vector< std::string > & regionList = m_coupling[rowFieldIndex][colFieldIndex].regions;
+  std::vector< string > const & rowRegions = m_fields[rowFieldIndex].regions;
+  std::vector< string > const & colRegions = m_fields[colFieldIndex].regions;
+  std::vector< string > & regionList = m_coupling[rowFieldIndex][colFieldIndex].regions;
 
   if( regions.empty() )
   {

@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & name, Group * const parent ):
+CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   SingleFluidBase( name, parent ),
   m_densityModelType( ExponentApproximationType::Linear ),
   m_viscosityModelType( ExponentApproximationType::Linear )
@@ -123,7 +123,7 @@ CompressibleSinglePhaseFluid::createKernelWrapper()
                         m_dViscosity_dPressure );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, string const &, Group * const )
 
 } /* namespace constitutive */
 

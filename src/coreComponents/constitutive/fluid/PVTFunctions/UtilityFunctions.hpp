@@ -437,7 +437,7 @@ class XYTable : public TableFunctionBase
 {
 public:
 
-  XYTable( std::string const & tableName, real64_array const & x, real64_array const & y, real64_array2d const & value ): m_tableName( tableName ), m_x( x ),
+  XYTable( string const & tableName, real64_array const & x, real64_array const & y, real64_array2d const & value ): m_tableName( tableName ), m_x( x ),
     m_y( y ), m_value( value ) {}
 
   ~XYTable(){}
@@ -481,7 +481,7 @@ public:
 
 private:
 
-  std::string m_tableName;
+  string m_tableName;
   real64_array m_x;
   real64_array m_y;
   real64_array2d m_value;

@@ -46,7 +46,7 @@ public:
     return catalog;
   }
 
-  virtual std::string getCatalogName() = 0;
+  virtual string getCatalogName() = 0;
 };
 //STOP_SPHINX
 
@@ -64,8 +64,8 @@ public:
   {
     GEOSX_LOG( "calling Derived1 destructor" );
   }
-  static std::string catalogName() { return "derived1"; }
-  std::string getCatalogName() { return catalogName(); }
+  static string catalogName() { return "derived1"; }
+  string getCatalogName() { return catalogName(); }
 
 };
 REGISTER_CATALOG_ENTRY( Base, Derived1, int &, double const & )
@@ -85,8 +85,8 @@ public:
   {
     GEOSX_LOG( "calling Derived2 destructor" );
   }
-  static std::string catalogName() { return "derived2"; }
-  std::string getCatalogName() { return catalogName(); }
+  static string catalogName() { return "derived2"; }
+  string getCatalogName() { return catalogName(); }
 
 };
 REGISTER_CATALOG_ENTRY( Base, Derived2, int &, double const & )

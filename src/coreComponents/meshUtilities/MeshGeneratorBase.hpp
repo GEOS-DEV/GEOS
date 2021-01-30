@@ -46,7 +46,7 @@ public:
    * @param[in] name of the MeshGenerator object
    * @param[in] parent the parent Group pointer for the MeshGenerator object
    */
-  explicit MeshGeneratorBase( std::string const & name,
+  explicit MeshGeneratorBase( string const & name,
                               Group * const parent );
 
   /**
@@ -85,7 +85,7 @@ public:
  * @param[in] size the number of node on the element
  *
  */
-  virtual void getElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( const string & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],
@@ -101,7 +101,7 @@ public:
   int m_delayMeshDeformation = 0;
 
   /// using alias for templated Catalog meshGenerator type
-  using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
 
 /**
  * @brief Accessor for the singleton Catalog object

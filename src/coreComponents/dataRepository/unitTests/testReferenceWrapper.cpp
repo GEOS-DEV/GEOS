@@ -19,7 +19,7 @@
 #include "Array.hpp"
 
 #include <functional>
-#include <string>
+
 #include <typeindex>
 #include <vector>
 

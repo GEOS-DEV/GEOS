@@ -39,7 +39,7 @@ using namespace dataRepository;
 class HistoryCollection : public TaskBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
   HistoryCollection( string const & name, Group * parent ):
     TaskBase( name, parent ),
     m_collectionCount( 1 ),

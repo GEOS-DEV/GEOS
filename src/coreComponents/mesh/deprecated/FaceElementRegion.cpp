@@ -196,6 +196,6 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceElementRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceElementRegion, string const &, Group * const )
 
 } /* namespace geosx */

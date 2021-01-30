@@ -280,7 +280,7 @@ void CO2SolubilityFunction::makeTable( string_array const & inputPara )
   catch( const std::invalid_argument & e )
   {
 
-    GEOSX_ERROR( "Invalid CO2Solubility argument:" + std::string( e.what()));
+    GEOSX_ERROR( "Invalid CO2Solubility argument:" + string( e.what()));
 
   }
 

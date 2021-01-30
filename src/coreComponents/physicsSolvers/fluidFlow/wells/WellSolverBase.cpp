@@ -30,7 +30,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-WellSolverBase::WellSolverBase( std::string const & name,
+WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),

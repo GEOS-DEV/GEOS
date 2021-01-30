@@ -26,14 +26,14 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const variableNames = "variableNames";
-std::string const expression = "expression";
+string const variableNames = "variableNames";
+string const expression = "expression";
 }
 }
 
 using namespace dataRepository;
 
-SymbolicFunction::SymbolicFunction( const std::string & name,
+SymbolicFunction::SymbolicFunction( const string & name,
                                     Group * const parent ):
   FunctionBase( name, parent ),
   parserContext(),
@@ -69,6 +69,6 @@ void SymbolicFunction::initializeFunction()
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, string const &, Group * const )
 
 } /* namespace ANST */

@@ -39,7 +39,7 @@ public:
    * @param[in] name the name of the MeshManager object in the repository
    * @param[in] parent the parent group of the MeshManager object being constructed
    */
-  MeshManager( std::string const & name,
+  MeshManager( string const & name,
                Group * const parent );
 
   virtual ~MeshManager() override;

@@ -34,11 +34,11 @@ void fill( R1Tensor & val, localIndex )
   }
 }
 
-void fill( std::string & val, localIndex )
+void fill( string & val, localIndex )
 {
   int const num = rand( -100, 100 );
   val = std::to_string( num ) +
-        std::string( " The rest of this is to avoid any small string optimizations. " ) +
+        string( " The rest of this is to avoid any small string optimizations. " ) +
         std::to_string( 2 * num );
 }
 

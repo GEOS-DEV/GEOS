@@ -42,7 +42,7 @@ public:
    * @param name The name of the BlueprintObject in the data repository.
    * @param parent The parent Group.
    */
-  BlueprintOutput( std::string const & name,
+  BlueprintOutput( string const & name,
                    Group * const parent );
 
   /**
@@ -115,12 +115,12 @@ private:
    */
   void writeOutWrappersAsFields( Group const & group,
                                  conduit::Node & fields,
-                                 std::string const & topology,
-                                 std::string const & prefix="" );
+                                 string const & topology,
+                                 string const & prefix="" );
 
   void writeOutConstitutiveData( dataRepository::Group const & constitutiveModel,
                                  conduit::Node & fields,
-                                 std::string const & topology,
+                                 string const & topology,
                                  dataRepository::Group & averagedElementData );
 
   /// Used to determine which fields to write out.

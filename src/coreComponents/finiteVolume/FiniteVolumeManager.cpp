@@ -71,22 +71,22 @@ void FiniteVolumeManager::expandObjectCatalogs()
 }
 
 
-FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation( std::string const & name ) const
+FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation( string const & name ) const
 {
   return getGroupReference< FluxApproximationBase >( name );
 }
 
-FluxApproximationBase & FiniteVolumeManager::getFluxApproximation( std::string const & name )
+FluxApproximationBase & FiniteVolumeManager::getFluxApproximation( string const & name )
 {
   return getGroupReference< FluxApproximationBase >( name );
 }
 
-HybridMimeticDiscretization const & FiniteVolumeManager::getHybridMimeticDiscretization( std::string const & name ) const
+HybridMimeticDiscretization const & FiniteVolumeManager::getHybridMimeticDiscretization( string const & name ) const
 {
   return getGroupReference< HybridMimeticDiscretization >( name );
 }
 
-HybridMimeticDiscretization & FiniteVolumeManager::getHybridMimeticDiscretization( std::string const & name )
+HybridMimeticDiscretization & FiniteVolumeManager::getHybridMimeticDiscretization( string const & name )
 {
   return getGroupReference< HybridMimeticDiscretization >( name );
 }
