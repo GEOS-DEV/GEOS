@@ -48,10 +48,10 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
       for (localIndex const faceIdx : faces)
       {
         CellID neighborCell = otherCell(faceIdx, cellID);
-        real64 transFM = fractureMatrixTransmissilibility( neighborCell, fracElement,
-                                                           fractureSubRegion, faceIdx );
+        real64 transFM = fractureMatrixTransmissilibility( ref(neighborCell), fracElement,
+                                                           ref(fractureSubRegion), faceIdx );
 
-        addNonNeighboringConnection(fracElement, neighborCell, transFM, fractureSubRegion);
+        addNonNeighboringConnection(fracElement, std::ref(neighborCell), transFM, ref(fractureSubRegion));
 
         // zero out matrix-matrix connections that are replaced by fracture-matrix connections
         // I assume that the m-m connection index is equal to the face id
@@ -263,7 +263,6 @@ fractureMatrixTransmissilibility( CellID const & neighborCell,
   real64 fracCenter[ 3 ];
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
   LvArray::tensorOps::copy< 3 >( fracCenter, centers[ fracElement ] );
-
 
   // Compute projection point: a point  on the face that resides  on a  line
   // connecting edfm element and a neighbor cell

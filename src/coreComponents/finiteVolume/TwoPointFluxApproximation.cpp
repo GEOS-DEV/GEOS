@@ -810,8 +810,8 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   bool const projection = true;
   if ( projection )
   {
-    ProjectionEDFMHelper pedfm(mesh, geometricObjManager, m_coeffName, cellStencil);
-    pedfm.addNonNeighboringConnections(fractureSubRegion);
+    ProjectionEDFMHelper pedfm(std::ref(mesh), geometricObjManager, ref(m_coeffName), std::ref(cellStencil));
+    pedfm.addNonNeighboringConnections(std::ref(fractureSubRegion));
   }
 }
 
