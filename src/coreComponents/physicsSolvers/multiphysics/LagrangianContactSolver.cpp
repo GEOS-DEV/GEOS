@@ -59,7 +59,7 @@ constexpr integer LagrangianContactSolver::FractureState::SLIP;
 constexpr integer LagrangianContactSolver::FractureState::NEW_SLIP;
 constexpr integer LagrangianContactSolver::FractureState::OPEN;
 
-LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
+LagrangianContactSolver::LagrangianContactSolver( const string & name,
                                                   Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
@@ -1125,7 +1125,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
   if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
   {
     // TODO: move among inputs (xml)
-    std::string const leadingBlockApproximation = "blockJacobi";
+    string const leadingBlockApproximation = "blockJacobi";
 
     LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
     // Because of boundary conditions
@@ -2443,5 +2443,5 @@ void LagrangianContactSolver::setNextDt( real64 const & currentDt,
   nextDt = currentDt;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )
 } /* namespace geosx */

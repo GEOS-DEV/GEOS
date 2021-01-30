@@ -285,12 +285,12 @@ class ProppantSlurryFluid : public SlurryFluidBase
 {
 public:
 
-  ProppantSlurryFluid( std::string const & name, Group * const parent );
+  ProppantSlurryFluid( string const & name, Group * const parent );
 
   virtual ~ProppantSlurryFluid() override;
 
   // *** ConstitutiveBase interface
-  static std::string catalogName() { return "ProppantSlurryFluid"; }
+  static string catalogName() { return "ProppantSlurryFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

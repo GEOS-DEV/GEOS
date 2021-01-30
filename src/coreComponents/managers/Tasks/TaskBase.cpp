@@ -23,7 +23,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-TaskBase::TaskBase( std::string const & name,
+TaskBase::TaskBase( string const & name,
                     Group * const parent ):
   ExecutableGroup( name, parent )
 {

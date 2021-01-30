@@ -13,7 +13,7 @@
  */
 
 
-#include <string>
+
 #include <iostream>
 
 #include "common/Logger.hpp"

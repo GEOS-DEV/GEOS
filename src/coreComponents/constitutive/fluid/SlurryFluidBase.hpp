@@ -242,7 +242,7 @@ class SlurryFluidBase : public ConstitutiveBase
 {
 public:
 
-  SlurryFluidBase( std::string const & name, Group * const parent );
+  SlurryFluidBase( string const & name, Group * const parent );
 
   virtual ~SlurryFluidBase() override;
 

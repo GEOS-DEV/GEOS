@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-EventManager::EventManager( std::string const & name,
+EventManager::EventManager( string const & name,
                             Group * const parent ):
   Group( name, parent ),
   m_maxTime(),

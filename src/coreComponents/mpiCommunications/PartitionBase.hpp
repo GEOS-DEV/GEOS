@@ -126,11 +126,11 @@ public:
 //  template< typename T >
 //  void SendReceive( const array1d< array1d< T > > & sendArray, array1d< array1d< T > > & recvArray );
 
-//  void SynchronizeFields( const std::map<std::string, string_array >& fieldNames,
+//  void SynchronizeFields( const std::map<string, string_array >& fieldNames,
 //                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
-//  void SetOwnedByRank( const std::map< std::string, globalIndex_array > & localBoundaryGlobalIndices,
-//                       std::map< std::string, std::map< globalIndex, int > > & boundaryOwnership );
+//  void SetOwnedByRank( const std::map< string, globalIndex_array > & localBoundaryGlobalIndices,
+//                       std::map< string, std::map< globalIndex, int > > & boundaryOwnership );
 
 //  void SetGhostArrays( DomainPartition * domain );
 
@@ -246,13 +246,13 @@ public:
   /// Unused parameter
   bool m_hasLocalGhosts;
   /// Unused parameter
-  std::map< std::string, localIndex_array > m_localGhosts;
+  std::map< string, localIndex_array > m_localGhosts;
   /// Unused parameter
-  std::map< std::string, localIndex_array > m_elementRegionsLocalGhosts;
+  std::map< string, localIndex_array > m_elementRegionsLocalGhosts;
   /// Unused parameter
-  std::map< std::string, localIndex_array > m_localGhostSources;
+  std::map< string, localIndex_array > m_localGhostSources;
   /// Unused parameter
-  std::map< std::string, localIndex_array > m_elementRegionsLocalGhostSources;
+  std::map< string, localIndex_array > m_elementRegionsLocalGhostSources;
   /// Unused parameter
   int m_ghostDepth;
 

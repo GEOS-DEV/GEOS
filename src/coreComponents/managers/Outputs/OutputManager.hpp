@@ -38,8 +38,8 @@ namespace keys
 class OutputManager : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  OutputManager( std::string const & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  OutputManager( string const & name,
                  Group * const parent );
 
   /// Destructor

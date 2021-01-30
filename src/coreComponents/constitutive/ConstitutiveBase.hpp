@@ -76,7 +76,7 @@ public:
   ///@{
 
   /// @typedef An alias for the ConstitutiveBase catalog
-  using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, string const &, Group * const >;
 
   /**
    * @brief Singleton accessor for catalog
