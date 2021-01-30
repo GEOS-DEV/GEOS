@@ -182,6 +182,6 @@ void CellElementRegion::generateAggregates( FaceManager const * const faceManage
   aggregateSubRegion->createFromFineToCoarseMap( nbAggregates, partsGEOS, aggregateBarycenters );
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, string const &, Group * const )
 
 } /* namespace geosx */

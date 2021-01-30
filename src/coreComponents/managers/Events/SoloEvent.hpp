@@ -33,8 +33,8 @@ class SoloEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  SoloEvent( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  SoloEvent( const string & name,
              Group * const parent );
 
   /// Destructor

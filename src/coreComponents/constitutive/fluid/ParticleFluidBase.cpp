@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ParticleFluidBase::ParticleFluidBase( std::string const & name, Group * const parent )
+ParticleFluidBase::ParticleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
 

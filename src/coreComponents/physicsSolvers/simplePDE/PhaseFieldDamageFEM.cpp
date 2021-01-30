@@ -52,7 +52,7 @@ namespace keys
 using namespace dataRepository;
 using namespace constitutive;
 
-PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
+PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),
@@ -593,6 +593,6 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
   fsManager.applyFieldValue< serialPolicy >( time, &domain, "ElementRegions", viewKeyStruct::coeffName );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, std::string const &,
+REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )
 } // namespace geosx
