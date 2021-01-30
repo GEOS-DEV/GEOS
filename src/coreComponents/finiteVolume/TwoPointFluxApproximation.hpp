@@ -71,14 +71,6 @@ protected:
                                            string const & embeddedSurfaceRegionName,
                                            GeometricObjectManager const * geometricObjManager ) const override;
 
-  void addEDFracToFractureStencilStandard( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const;
-
-  /* New stuff */
-  void addEDFracToFractureStencilProjection( MeshLevel & mesh,
-                                             string const & embeddedSurfaceRegionName,
-                                             GeometricObjectManager const * geometricObjManager ) const;
-
   void addFractureFractureConnections( MeshLevel & mesh,
                                        EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                        localIndex const fractureRegionIndex ) const;
