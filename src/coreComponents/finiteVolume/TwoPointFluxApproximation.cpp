@@ -675,7 +675,6 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
 
       real64 const ht = connectivityIndex[kes] * avPerm;   // Using matrix perm coz assuming fracture is highly permeable for now.
 
-      //
       stencilCellsRegionIndex[0] = er;
       stencilCellsSubRegionIndex[0] = esr;
       stencilCellsIndex[0] = ei;
