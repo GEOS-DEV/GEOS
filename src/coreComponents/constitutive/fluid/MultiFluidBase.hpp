@@ -213,7 +213,7 @@ class MultiFluidBase : public ConstitutiveBase
 {
 public:
 
-  MultiFluidBase( std::string const & name, Group * const parent );
+  MultiFluidBase( string const & name, Group * const parent );
 
   virtual ~MultiFluidBase() override;
 

@@ -41,7 +41,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  ReservoirSolverBase( const std::string & name,
+  ReservoirSolverBase( const string & name,
                        Group * const parent );
 
   /**

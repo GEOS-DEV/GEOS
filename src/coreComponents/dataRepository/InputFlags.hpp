@@ -93,9 +93,9 @@ inline int InputFlagToInt( InputFlags const val )
  * @param[in] val The value of the input flag that will be converted to a string
  * @return The string equivalent of the input @p val.
  */
-inline std::string InputFlagToString( InputFlags const val )
+inline string InputFlagToString( InputFlags const val )
 {
-  std::string rval;
+  string rval;
   switch( val )
   {
     case InputFlags::INVALID:

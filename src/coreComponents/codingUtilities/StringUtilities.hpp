@@ -38,13 +38,13 @@ namespace stringutilities
 
 /// Overloaded function to check equality between strings and char arrays
 /// Mainly used to avoid char*==char* mistakes
-inline bool streq( std::string const & strA, std::string const & strB )
+inline bool streq( string const & strA, string const & strB )
 { return strA == strB; }
 
-inline bool streq( std::string const & strA, char const * const strB )
+inline bool streq( string const & strA, char const * const strB )
 { return strA == strB; }
 
-inline bool streq( char const * const strA, std::string const & strB )
+inline bool streq( char const * const strA, string const & strB )
 { return strA == strB; }
 
 inline bool streq( char const * const strA, char const * const strB )
@@ -52,7 +52,7 @@ inline bool streq( char const * const strA, char const * const strB )
 
 /**
  * @brief Join strings or other printable objects with a delimiter.
- * @tparam S    type of delimiter, usually char, char const * or std::string
+ * @tparam S    type of delimiter, usually char, char const * or string
  * @tparam IT   type of iterator into the range of objects to join
  * @param delim delimiter used to glue together strings
  * @param first iterator to start of the range
@@ -60,7 +60,7 @@ inline bool streq( char const * const strA, char const * const strB )
  * @return a new string containing input strings concatenated with a delimiter
  */
 template< typename IT, typename S = char >
-std::string strjoin( IT first, IT last, S const & delim = S() )
+string strjoin( IT first, IT last, S const & delim = S() )
 {
   std::ostringstream oss;
   if( first != last )
@@ -75,7 +75,7 @@ std::string strjoin( IT first, IT last, S const & delim = S() )
 }
 
 /// Subdivide string by delimiters
-string_array Tokenize( std::string const & str, std::string const & delimiters );
+string_array Tokenize( string const & str, string const & delimiters );
 
 /**
  * @brief Retuns a string containing a padded value

@@ -64,7 +64,7 @@ TEST( FieldSpecification, Recursive )
   auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
   auto meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( "body" );
-  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
+  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( string( "Level0" ));
 
   CellBlockManager * cellBlockManager = domain->getGroup< CellBlockManager >( keys::cellManager );
 
@@ -118,7 +118,7 @@ TEST( FieldSpecification, Recursive )
 
   SortedArray< localIndex > & set0hex = reg0->getSubRegion( "reg0hex" )
                                           ->getGroup( "sets" )
-                                          ->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )
+                                          ->registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           ->reference();
   for( localIndex i = 0; i < nbHexReg0; i++ )
   {
@@ -127,7 +127,7 @@ TEST( FieldSpecification, Recursive )
 
   SortedArray< localIndex > & set0tet = reg0->getSubRegion( "reg0tet" )
                                           ->getGroup( "sets" )
-                                          ->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )
+                                          ->registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           ->reference();
   for( localIndex i = 0; i < nbTetReg0; i++ )
   {
@@ -136,7 +136,7 @@ TEST( FieldSpecification, Recursive )
 
   SortedArray< localIndex > & set1hex = reg1->getSubRegion( "reg1hex" )
                                           ->getGroup( "sets" )
-                                          ->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )
+                                          ->registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           ->reference();
   for( localIndex i = 0; i < nbHexReg1; i++ )
   {
@@ -145,7 +145,7 @@ TEST( FieldSpecification, Recursive )
 
   SortedArray< localIndex > & set1tet = reg1->getSubRegion( "reg1tet" )
                                           ->getGroup( "sets" )
-                                          ->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )
+                                          ->registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           ->reference();
   for( localIndex i = 0; i < nbTetReg1; i++ )
   {

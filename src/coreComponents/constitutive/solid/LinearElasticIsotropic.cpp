@@ -24,7 +24,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group * const parent ):
+LinearElasticIsotropic::LinearElasticIsotropic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
@@ -160,6 +160,6 @@ void LinearElasticIsotropic::postProcessInput()
     setApplyDefaultValue( m_defaultShearModulus );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, string const &, Group * const )
 }
 } /* namespace geosx */

@@ -185,13 +185,13 @@ class ParticleFluid : public ParticleFluidBase
 {
 public:
 
-  ParticleFluid( std::string const & name, Group * const parent );
+  ParticleFluid( string const & name, Group * const parent );
 
   virtual ~ParticleFluid() override;
 
   // *** ConstitutiveBase interface
 
-  static std::string catalogName() { return "ParticleFluid"; }
+  static string catalogName() { return "ParticleFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

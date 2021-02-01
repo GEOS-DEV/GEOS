@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-PeriodicEvent::PeriodicEvent( const std::string & name,
+PeriodicEvent::PeriodicEvent( const string & name,
                               Group * const parent ):
   EventBase( name, parent ),
   m_functionTarget( nullptr ),
@@ -233,6 +233,6 @@ void PeriodicEvent::cleanup( real64 const time_n,
   }
 }
 
-REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, string const &, Group * const )
 
 } /* namespace geosx */

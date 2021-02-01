@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-FunctionManager::FunctionManager( const std::string & name,
+FunctionManager::FunctionManager( const string & name,
                                   Group * const parent ):
   Group( name, parent )
 {

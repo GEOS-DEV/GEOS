@@ -53,7 +53,7 @@ public:
    * @param name the name of this object manager
    * @param parent the parent Group
    */
-  explicit ProblemManager( const std::string & name,
+  explicit ProblemManager( const string & name,
                            Group * const parent );
 
   /**
@@ -95,7 +95,7 @@ public:
    * @param restartFileName the name of the restart file
    * @return flag indicating beginFromRestart status
    */
-  static bool parseRestart( std::string & restartFileName );
+  static bool parseRestart( string & restartFileName );
 
   /**
    * @brief Initializes a python interpreter within GEOSX

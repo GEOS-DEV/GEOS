@@ -128,6 +128,6 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, string const &, Group * const )
 
 } /* namespace geosx */

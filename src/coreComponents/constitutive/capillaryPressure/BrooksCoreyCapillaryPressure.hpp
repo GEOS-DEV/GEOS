@@ -105,12 +105,12 @@ class BrooksCoreyCapillaryPressure : public CapillaryPressureBase
 {
 public:
 
-  BrooksCoreyCapillaryPressure( std::string const & name,
+  BrooksCoreyCapillaryPressure( string const & name,
                                 dataRepository::Group * const parent );
 
   virtual ~BrooksCoreyCapillaryPressure() override;
 
-  static std::string catalogName() { return "BrooksCoreyCapillaryPressure"; }
+  static string catalogName() { return "BrooksCoreyCapillaryPressure"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

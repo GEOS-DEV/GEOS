@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-OutputManager::OutputManager( std::string const & name,
+OutputManager::OutputManager( string const & name,
                               Group * const parent ):
   Group( name, parent )
 {
