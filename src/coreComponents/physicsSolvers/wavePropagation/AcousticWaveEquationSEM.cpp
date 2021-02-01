@@ -28,12 +28,12 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 }
 
 
-void AcousticWaveEquationSEM::RegisterDataOnMesh( Group * const MeshBodies )
+void AcousticWaveEquationSEM::registerDataOnMesh( Group * const MeshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
 
-    MeshLevel & meshLevel = *(mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 ));
+    MeshLevel & meshLevel = *(mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ));
 
     NodeManager & nodes = *(meshLevel.getNodeManager());
 
@@ -58,11 +58,11 @@ void AcousticWaveEquationSEM::RegisterDataOnMesh( Group * const MeshBodies )
 }
 
 
-void AcousticWaveEquationSEM::InitializePreSubGroups( Group * const rootGroup )
+void AcousticWaveEquationSEM::initializePreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePreSubGroups( rootGroup );
+  SolverBase::initializePreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 
   NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
@@ -70,14 +70,14 @@ void AcousticWaveEquationSEM::InitializePreSubGroups( Group * const rootGroup )
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
   GEOSX_ERROR_IF( feDiscretization == nullptr, getName() << ": FE discretization not found: " << m_discretizationName );
 }
 
 
-void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
+void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group * const problemManager )
 {
-  DomainPartition * domain = problemManager->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * domain = problemManager->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NodeManager & nodeManager = *mesh.getNodeManager();
@@ -200,17 +200,17 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 }
 
 
-real64 AcousticWaveEquationSEM::SolverStep( real64 const & time_n,
+real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
                                             real64 const & dt,
                                             integer const cycleNumber,
                                             DomainPartition & domain )
 {
-  return ExplicitStep( time_n, dt, cycleNumber, domain );
+  return explicitStep( time_n, dt, cycleNumber, domain );
 }
 
 
 /// Returns the value of a Ricker at time t0 with central Fourier frequency f0
-real64 AcousticWaveEquationSEM::EvaluateRicker( real64 const & t0, real64 const & f0 )
+real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & t0, real64 const & f0 )
 {
   // Center time
   real64 T0 = 1.0/f0;
@@ -227,7 +227,7 @@ real64 AcousticWaveEquationSEM::EvaluateRicker( real64 const & t0, real64 const 
   return pulse;
 }
 /// Returns the value of the second derivative of a Ricker at time t0 with central Fourier frequency f0
-real64 AcousticWaveEquationSEM::EvaluateSecondDerivativeRicker( real64 const & t0, real64 const & f0 )
+real64 AcousticWaveEquationSEM::evaluateSecondDerivativeRicker( real64 const & t0, real64 const & f0 )
 {
 
 
@@ -244,7 +244,7 @@ real64 AcousticWaveEquationSEM::EvaluateSecondDerivativeRicker( real64 const & t
   return der_pulse;
 }
 
-real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
+real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
                                               DomainPartition & domain )
@@ -352,7 +352,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
             real64 fi =0.0;
             //if(time_n <=0.4)
             //{
-            fi = this->EvaluateRicker( time_n, frequency );
+            fi = this->evaluateRicker( time_n, frequency );
 
             std::cout << "Ricker at t = " << time_n << "s is fi = " << fi << std::endl;
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
