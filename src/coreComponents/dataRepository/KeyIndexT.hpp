@@ -19,7 +19,7 @@
 #ifndef GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_
 #define GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_
 
-#include <string>
+
 #include <ostream>
 
 /**
@@ -102,14 +102,14 @@ public:
    * @brief Access for the key.
    * @return a const reference of the key
    */
-  KEY_TYPE const & Key() const
+  KEY_TYPE const & key() const
   { return m_key; }
 
   /**
    * @brief Access for the index.
    * @return a const reference to the index
    */
-  INDEX_TYPE const & Index() const
+  INDEX_TYPE const & index() const
   { return m_index; }
 
   /**
@@ -150,7 +150,7 @@ private:
 template< typename KEY_TYPE, typename INDEX_TYPE, int INVALID_INDEX >
 std::ostream & operator<<( std::ostream & os, const KeyIndexT< KEY_TYPE, INDEX_TYPE, INVALID_INDEX > key )
 {
-  os << key.Key();
+  os << key.key();
   return os;
 }
 

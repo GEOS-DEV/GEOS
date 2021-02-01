@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & name, Group * const parent ):
+CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   SingleFluidBase( name, parent ),
   m_densityModelType( ExponentApproximationType::Linear ),
   m_viscosityModelType( ExponentApproximationType::Linear )
@@ -78,9 +78,9 @@ void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Gro
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
 }
 
-void CompressibleSinglePhaseFluid::PostProcessInput()
+void CompressibleSinglePhaseFluid::postProcessInput()
 {
-  SingleFluidBase::PostProcessInput();
+  SingleFluidBase::postProcessInput();
 
   GEOSX_ERROR_IF_LT_MSG( m_compressibility, 0.0,
                          getName() << ": invalid value of " << viewKeyStruct::compressibilityString );
@@ -107,7 +107,7 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
 
   real64 dRho_dP;
   real64 dVisc_dP;
-  createKernelWrapper().Compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
+  createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
   this->getWrapper< array2d< real64 > >( viewKeyStruct::dDens_dPresString )->setDefaultValue( dRho_dP );
   this->getWrapper< array2d< real64 > >( viewKeyStruct::dVisc_dPresString )->setDefaultValue( dVisc_dP );
 }
@@ -123,7 +123,7 @@ CompressibleSinglePhaseFluid::createKernelWrapper()
                         m_dViscosity_dPressure );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, string const &, Group * const )
 
 } /* namespace constitutive */
 

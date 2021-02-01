@@ -28,7 +28,7 @@ using namespace dataRepository;
 FaceElementRegion::FaceElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  this->GetGroup( viewKeyStruct::elementSubRegions )->RegisterGroup< FaceElementSubRegion >( "default" );
+  this->GetGroup( viewKeyStruct::elementSubRegions )->registerGroup< FaceElementSubRegion >( "default" );
 
   registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -41,7 +41,7 @@ FaceElementRegion::~FaceElementRegion()
 {}
 
 
-void FaceElementRegion::InitializePreSubGroups( Group * const )
+void FaceElementRegion::initializePreSubGroups( Group * const )
 {
   this->forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion & subRegion )
   {
@@ -196,6 +196,6 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceElementRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceElementRegion, string const &, Group * const )
 
 } /* namespace geosx */

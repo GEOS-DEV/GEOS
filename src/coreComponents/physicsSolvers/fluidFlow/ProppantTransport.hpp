@@ -47,7 +47,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  ProppantTransport( const std::string & name,
+  ProppantTransport( const string & name,
                      Group * const parent );
 
 
@@ -75,25 +75,25 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "ProppantTransport"; }
+  static string catalogName() { return "ProppantTransport"; }
 
   virtual void
-  InitializePreSubGroups( Group * const rootGroup ) override;
+  initializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void
-  RegisterDataOnMesh( Group * const MeshBodies ) override;
+  registerDataOnMesh( Group * const MeshBodies ) override;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  solverStep( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition & domain ) override;
 
-  void PreStepUpdate( real64 const & time_n,
+  void preStepUpdate( real64 const & time_n,
                       real64 const & dt,
                       DomainPartition & domain );
 
-  void PostStepUpdate( real64 const & time_n,
+  void postStepUpdate( real64 const & time_n,
                        real64 const & dt,
                        DomainPartition & domain );
 
@@ -105,16 +105,16 @@ public:
   /**@{*/
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
+  setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void
-  AssembleSystem( real64 const time,
+  assembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
@@ -122,7 +122,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time,
+  applyBoundaryConditions( real64 const time,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -130,27 +130,27 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  solveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
@@ -162,7 +162,7 @@ public:
    * @param dt time step
    */
 
-  void AssembleAccumulationTerms( real64 const dt,
+  void assembleAccumulationTerms( real64 const dt,
                                   DomainPartition const & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -175,7 +175,7 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleFluxTerms( real64 const time_n,
+  void assembleFluxTerms( real64 const time_n,
                           real64 const dt,
                           DomainPartition const & domain,
                           DofManager const & dofManager,
@@ -184,7 +184,7 @@ public:
 
   /**@}*/
 
-  void ResizeFractureFields( MeshLevel & mesh );
+  void resizeFractureFields( MeshLevel & mesh );
 
   arrayView1d< string const > const proppantModelNames() const { return m_proppantModelNames; }
 
@@ -239,47 +239,47 @@ public:
 
   static constexpr localIndex MAX_NUM_COMPONENTS = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
 
-  void UpdateProppantMobility( Group & dataGroup );
+  void updateProppantMobility( Group & dataGroup );
 
   /**
    * @brief Function to update proppant pack volume fraction
    */
-  void UpdateProppantPackVolume( real64 const time_n, real64 const dt, DomainPartition & domain );
+  void updateProppantPackVolume( real64 const time_n, real64 const dt, DomainPartition & domain );
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  void ResetViews( MeshLevel & mesh ) override;
+  void resetViews( MeshLevel & mesh ) override;
 
   /**
    * @brief Function to update fluid properties
    * @param domain the domain
    */
-  void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex );
+  void updateFluidModel( Group & dataGroup, localIndex const targetIndex );
 
-  void UpdateComponentDensity( Group & dataGroup, localIndex const targetIndex );
+  void updateComponentDensity( Group & dataGroup, localIndex const targetIndex );
 
-  void UpdateProppantModel( Group & dataGroup, localIndex const targetIndex );
+  void updateProppantModel( Group & dataGroup, localIndex const targetIndex );
 
   /**
    * @brief Function to update cell-based fluid flux
    */
-  void UpdateCellBasedFlux( real64 const time_n,
+  void updateCellBasedFlux( real64 const time_n,
                             DomainPartition & domain );
 
   /**
    * @brief Function to update fluid and proppant properties
    * @param domain the domain
    */
-  void UpdateState( Group & dataGroup, localIndex const targetIndex );
+  void updateState( Group & dataGroup, localIndex const targetIndex );
 
   /// views into primary variable fields
 

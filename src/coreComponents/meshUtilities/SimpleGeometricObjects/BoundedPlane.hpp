@@ -42,7 +42,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  BoundedPlane( const std::string & name,
+  BoundedPlane( const string & name,
                 Group * const parent );
 
   /**
@@ -61,11 +61,11 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "BoundedPlane"; }
+  static string catalogName() { return "BoundedPlane"; }
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
+  bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
   /**
    * @brief Find the bounds of the plane.
@@ -128,7 +128,7 @@ protected:
    * @brief This function provides the capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 
@@ -144,6 +144,8 @@ private:
   array1d< real64 > m_dimensions;
   /// Length and width of the bounded plane
   array2d< real64 > m_points;
+  /// tolerance to determine if a point sits on the plane or not
+  real64 m_tolerance;
 
   /// @cond DO_NOT_DOCUMENT
 
@@ -154,6 +156,7 @@ private:
     static constexpr auto dimensionsString    = "dimensions";
     static constexpr auto mLengthVectorString = "lengthVector";
     static constexpr auto mWidthVectorString  = "widthVector";
+    static constexpr auto toleranceString     = "tolerance";
   };
 
   /// @endcond

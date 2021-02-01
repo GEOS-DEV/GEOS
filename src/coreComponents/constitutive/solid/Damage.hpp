@@ -71,11 +71,11 @@ public:
 
 
   using UPDATE_BASE::setDiscretizationOps;
-  using UPDATE_BASE::GetStiffness;
-  using UPDATE_BASE::SmallStrainNoState;
-  using UPDATE_BASE::SmallStrain;
-  using UPDATE_BASE::HypoElastic;
-  using UPDATE_BASE::HyperElastic;
+  using UPDATE_BASE::getStiffness;
+  using UPDATE_BASE::smallStrainNoState;
+  using UPDATE_BASE::smallStrain;
+  using UPDATE_BASE::hypoElastic;
+  using UPDATE_BASE::hyperElastic;
 
   //Quasi-Quadratic Lorentz Degradation Function
   #if LORENTZ
@@ -127,7 +127,7 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationValue( localIndex const k,
+  virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
     return (1 - m_damage( k, q ))*(1 - m_damage( k, q ));
@@ -135,14 +135,14 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationDerivative( real64 const d ) const
+  virtual real64 getDegradationDerivative( real64 const d ) const
   {
     return -2*(1 - d);
   }
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationSecondDerivative( real64 const d ) const
+  virtual real64 getDegradationSecondDerivative( real64 const d ) const
   {
     GEOSX_UNUSED_VAR( d )
     return 2.0;
@@ -152,12 +152,12 @@ public:
   //the only modification here is to multiply all entries of c by g(d)
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual void GetStiffness( localIndex const k,
+  virtual void getStiffness( localIndex const k,
                              localIndex const q,
                              real64 (& c)[6][6] ) const override
   {
-    UPDATE_BASE::GetStiffness( k, q, c );
-    real64 const damageFactor = GetDegradationValue( k, q );
+    UPDATE_BASE::getStiffness( k, q, c );
+    real64 const damageFactor = getDegradationValue( k, q );
     for( localIndex i=0; i<6; ++i )
     {
       for( localIndex j=0; j<6; ++j )
@@ -202,7 +202,7 @@ public:
                           real64 (& stress)[6] ) const override
   {
     //no tension-compression assymmetry
-    real64 const damageFactor = GetDegradationValue( k, q );
+    real64 const damageFactor = getDegradationValue( k, q );
 
     stress[0] = this->m_stress( k, q, 0 ) * damageFactor;
     stress[1] = this->m_stress( k, q, 1 ) * damageFactor;
@@ -257,13 +257,13 @@ public:
   using KernelWrapper = DamageUpdates< typename BASE::KernelWrapper >;
 
   Damage( string const & name, dataRepository::Group * const parent );
-  virtual ~Damage() override;
+  virtual ~Damage() override = default;
 
 
-  static std::string CatalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return CatalogName(); }
+  static string catalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
+  virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;

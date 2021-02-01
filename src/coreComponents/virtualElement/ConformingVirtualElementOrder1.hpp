@@ -35,7 +35,7 @@ public:
   array2d< real64 > m_basisDerivativesIntegralMean;
   array2d< real64 > m_stabilizationMatrix;
 
-  void ComputeFaceIntegrals( MeshLevel const & mesh,
+  void computeFaceIntegrals( MeshLevel const & mesh,
                              localIndex const & faceId,
                              real64 const & invCellDiameter,
                              arraySlice1d< real64 const > const & cellCenter,
@@ -46,7 +46,7 @@ public:
   virtual ~ConformingVirtualElementOrder1() override
   {}
 
-  void ComputeProjectors( MeshLevel const & mesh,
+  void computeProjectors( MeshLevel const & mesh,
                           localIndex const & regionIndex,
                           localIndex const & subRegionIndex,
                           localIndex const & cellIndex ) override;

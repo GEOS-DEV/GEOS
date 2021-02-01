@@ -27,7 +27,7 @@ namespace constitutive
 {
 
 
-PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, Group * const parent ):
+PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
@@ -72,24 +72,24 @@ void PoreVolumeCompressibleSolid::allocateConstitutiveData( dataRepository::Grou
   m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
 }
 
-void PoreVolumeCompressibleSolid::PostProcessInput()
+void PoreVolumeCompressibleSolid::postProcessInput()
 {
   if( m_compressibility < 0.0 )
   {
     string const message = "An invalid value of fluid bulk modulus (" + std::to_string( m_compressibility ) + ") is specified";
     GEOSX_ERROR( message );
   }
-  m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
+  m_poreVolumeRelation.setCoefficients( m_referencePressure, 1.0, m_compressibility );
 }
 
-void PoreVolumeCompressibleSolid::StateUpdatePointPressure( real64 const & pres,
+void PoreVolumeCompressibleSolid::stateUpdatePointPressure( real64 const & pres,
                                                             localIndex const k,
                                                             localIndex const q )
 {
-  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
+  m_poreVolumeRelation.compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
 }
 
-void PoreVolumeCompressibleSolid::StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+void PoreVolumeCompressibleSolid::stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                                             arrayView1d< real64 const > const & dPres )
 {
   localIndex const numElems = m_poreVolumeMultiplier.size( 0 );
@@ -107,11 +107,11 @@ void PoreVolumeCompressibleSolid::StateUpdateBatchPressure( arrayView1d< real64 
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      relation.Compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
+      relation.compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
     }
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, string const &, Group * const )
 }
 } /* namespace geosx */

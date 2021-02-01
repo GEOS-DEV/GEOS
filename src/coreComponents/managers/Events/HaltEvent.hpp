@@ -38,7 +38,7 @@ public:
    * @param name The name of the object in the data repository.
    * @param parent The parent of this object in the data repository.
    **/
-  HaltEvent( const std::string & name,
+  HaltEvent( const string & name,
              Group * const parent );
 
   /// Destructor
@@ -48,15 +48,15 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "HaltEvent"; }
+  static string catalogName() { return "HaltEvent"; }
 
   /**
-   * @copydoc EventBase::EstimateEventTiming()
+   * @copydoc EventBase::estimateEventTiming()
    * @note This event is designed to look at the external clock. Currently,
    * if the event is triggered it will set a flag, which will
    * instruct the code to exit.  This is useful for managing walltime
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
                                     dataRepository::Group * domain ) override;

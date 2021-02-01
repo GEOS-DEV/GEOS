@@ -33,13 +33,13 @@ namespace geosx
 struct CommandLineOptions
 {
   /// The path to the input xml.
-  std::string inputFileName;
+  string inputFileName;
 
   /// True iff restarting from the middle of an existing run.
   bool beginFromRestart = false;
 
   /// The path to the restart file, if specified.
-  std::string restartFileName;
+  string restartFileName;
 
   /// The number of partitions in the x direction.
   integer xPartitionsOverride;
@@ -63,16 +63,16 @@ struct CommandLineOptions
   integer suppressPinned = false;
 
   /// The name of the schema.
-  std::string schemaName;
+  string schemaName;
 
   /// The name of the problem being run.
-  std::string problemName;
+  string problemName;
 
   /// The directory to put all output.
-  std::string outputDirectory = ".";
+  string outputDirectory = ".";
 
   /// The string used to initialize caliper.
-  std::string timerOutput = "";
+  string timerOutput = "";
 
   /// Suppress logging of host-device data migration.
   integer suppressMoveLogging = false;
@@ -95,7 +95,7 @@ CommandLineOptions const & getCommandLineOptions();
  * @brief Override the input file name, useful only for tests.
  * @param inputFileName new input file name
  */
-void overrideInputFileName( std::string const & inputFileName );
+void overrideInputFileName( string const & inputFileName );
 
 /**
  * @brief Perform the basic GEOSX cleanup.
@@ -148,14 +148,14 @@ void finalizeMPI();
  * @param value The value to compute the statistics of.
  */
 template< typename T >
-void pushStatsIntoAdiak( std::string const & name, T const value )
+void pushStatsIntoAdiak( string const & name, T const value )
 {
 #if defined( GEOSX_USE_CALIPER )
-  T const total = MpiWrapper::Sum( value );
+  T const total = MpiWrapper::sum( value );
   adiak::value( name + " sum", total );
-  adiak::value( name + " mean", double( total ) / MpiWrapper::Comm_size() );
-  adiak::value( name + " min", MpiWrapper::Min( value ) );
-  adiak::value( name + " max", MpiWrapper::Max( value ) );
+  adiak::value( name + " mean", double( total ) / MpiWrapper::commSize() );
+  adiak::value( name + " min", MpiWrapper::min( value ) );
+  adiak::value( name + " max", MpiWrapper::max( value ) );
 #else
   GEOSX_UNUSED_VAR( name );
   GEOSX_UNUSED_VAR( value );

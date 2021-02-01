@@ -27,6 +27,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 
 namespace geosx
 {
@@ -34,7 +35,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
+SinglePhaseReservoir::SinglePhaseReservoir( const string & name,
                                             Group * const parent ):
   ReservoirSolverBase( name, parent )
 {}
@@ -42,9 +43,9 @@ SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
 SinglePhaseReservoir::~SinglePhaseReservoir()
 {}
 
-void SinglePhaseReservoir::PostProcessInput()
+void SinglePhaseReservoir::postProcessInput()
 {
-  ReservoirSolverBase::PostProcessInput();
+  ReservoirSolverBase::postProcessInput();
   if( dynamic_cast< SinglePhaseHybridFVM const * >(m_flowSolver) )
   {
     m_linearSolverParameters.get().mgr.strategy = "SinglePhaseReservoirHybridFVM";
@@ -59,7 +60,30 @@ void SinglePhaseReservoir::PostProcessInput()
   }
 }
 
-void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition const & domain,
+void SinglePhaseReservoir::setupSystem( DomainPartition & domain,
+                                        DofManager & dofManager,
+                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                        array1d< real64 > & localRhs,
+                                        array1d< real64 > & localSolution,
+                                        bool const setSparsity )
+{
+  ReservoirSolverBase::setupSystem( domain,
+                                    dofManager,
+                                    localMatrix,
+                                    localRhs,
+                                    localSolution,
+                                    setSparsity );
+
+  // we need to set the dR_dAper CRS matrix in SinglePhaseFVM to handle the presence of fractures
+  if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( m_flowSolver ) )
+  {
+    SinglePhaseFVM< SinglePhaseBase > * fvmSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( m_flowSolver );
+    fvmSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+  }
+}
+
+
+void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        SparsityPatternView< globalIndex > const & pattern ) const
 {
@@ -68,24 +92,24 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition const & d
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
-  // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
+  // TODO: remove this and just call SolverBase::setupSystem when DofManager can handle the coupling
 
   // Populate off-diagonal sparsity between well and reservoir
 
-  string const resDofKey  = dofManager.getKey( m_wellSolver->ResElementDofName() );
-  string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
+  string const resDofKey  = dofManager.getKey( m_wellSolver->resElementDofName() );
+  string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
 
-  localIndex const wellNDOF = m_wellSolver->NumDofPerWellElement();
+  localIndex const wellNDOF = m_wellSolver->numDofPerWellElement();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
-    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
+    elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
   {
-    PerforationData const * const perforationData = subRegion.GetPerforationData();
+    PerforationData const * const perforationData = subRegion.getPerforationData();
 
     // get the well degrees of freedom and ghosting info
     arrayView1d< globalIndex const > const & wellElemDofNumber =
@@ -147,7 +171,7 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition const & d
   } );
 }
 
-void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
                                                   DomainPartition const & domain,
                                                   DofManager const & dofManager,
@@ -157,9 +181,9 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
-  string const resDofKey = dofManager.getKey( m_wellSolver->ResElementDofName() );
+  string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
-    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
+    elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
     resDofNumberAccessor.toNestedViewConst();
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -168,10 +192,10 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
   {
-    PerforationData const * const perforationData = subRegion.GetPerforationData();
+    PerforationData const * const perforationData = subRegion.getPerforationData();
 
     // get the degrees of freedom
-    string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
+    string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
     arrayView1d< globalIndex const > const wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -248,6 +272,6 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoir, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoir, string const &, Group * const )
 
 } /* namespace geosx */

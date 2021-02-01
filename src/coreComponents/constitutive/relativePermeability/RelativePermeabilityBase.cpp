@@ -43,7 +43,7 @@ std::unordered_map< string, integer > const phaseDict =
 }
 
 
-RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Group * const parent )
+RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames )->
@@ -64,9 +64,9 @@ RelativePermeabilityBase::~RelativePermeabilityBase()
 {}
 
 
-void RelativePermeabilityBase::PostProcessInput()
+void RelativePermeabilityBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 
@@ -91,10 +91,10 @@ void RelativePermeabilityBase::PostProcessInput()
   }
 
   // call to correctly set member array tertiary sizes on the 'main' material object
-  ResizeFields( 0, 0 );
+  resizeFields( 0, 0 );
 }
 
-void RelativePermeabilityBase::ResizeFields( localIndex const size, localIndex const numPts )
+void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex const numPts )
 {
   localIndex const NP = numFluidPhases();
 
@@ -106,7 +106,7 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group *
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+  resizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

@@ -33,8 +33,8 @@ class SoloEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  SoloEvent( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  SoloEvent( const string & name,
              Group * const parent );
 
   /// Destructor
@@ -44,20 +44,20 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "SoloEvent"; }
+  static string catalogName() { return "SoloEvent"; }
 
   /**
-   * @copydoc EventBase::EstimateEventTiming()
+   * @copydoc EventBase::estimateEventTiming()
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
                                     dataRepository::Group * domain ) override;
 
   /**
-   * @copydoc EventBase::GetEventTypeDtRequest()
+   * @copydoc EventBase::getEventTypeDtRequest()
    */
-  virtual real64 GetEventTypeDtRequest( real64 const time ) override;
+  virtual real64 getEventTypeDtRequest( real64 const time ) override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct

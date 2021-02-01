@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-EventBase::EventBase( const std::string & name,
+EventBase::EventBase( const string & name,
                       Group * const parent ):
   ExecutableGroup( name, parent ),
   m_lastTime( -1.0e100 ),
@@ -112,51 +112,51 @@ EventBase::~EventBase()
 {}
 
 
-EventBase::CatalogInterface::CatalogType & EventBase::GetCatalog()
+EventBase::CatalogInterface::CatalogType & EventBase::getCatalog()
 {
   static EventBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-Group * EventBase::CreateChild( string const & childKey, string const & childName )
+Group * EventBase::createChild( string const & childKey, string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
-  std::unique_ptr< EventBase > event = EventBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup< EventBase >( childName, std::move( event ) );
+  std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
+  return this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
 
-void EventBase::ExpandObjectCatalogs()
+void EventBase::expandObjectCatalogs()
 {
   // Only add children if the parent is of type EventManager
   // otherwise, this would fall into a loop
   if( strcmp( this->getParent()->getName().c_str(), "Events" ) == 0 )
   {
-    for( auto & catalogIter: EventBase::GetCatalog())
+    for( auto & catalogIter: EventBase::getCatalog())
     {
-      CreateChild( catalogIter.first, catalogIter.first );
+      createChild( catalogIter.first, catalogIter.first );
     }
   }
 }
 
 
-void EventBase::GetTargetReferences()
+void EventBase::getTargetReferences()
 {
   if( !m_eventTarget.empty())
   {
-    Group * tmp = this->GetGroupByPath( m_eventTarget );
-    m_target = Group::group_cast< ExecutableGroup * >( tmp );
+    Group * tmp = this->getGroupByPath( m_eventTarget );
+    m_target = Group::groupCast< ExecutableGroup * >( tmp );
     GEOSX_ERROR_IF( m_target == nullptr, "The event " << m_eventTarget << " does not exist or it is not executable." );
   }
 
   this->forSubGroups< EventBase >( []( EventBase & subEvent )
   {
-    subEvent.GetTargetReferences();
+    subEvent.getTargetReferences();
   } );
 }
 
 
-void EventBase::CheckEvents( real64 const time,
+void EventBase::checkEvents( real64 const time,
                              real64 const dt,
                              integer const cycle,
                              Group * domain )
@@ -179,38 +179,38 @@ void EventBase::CheckEvents( real64 const time,
   }
   else
   {
-    this->EstimateEventTiming( time, dt, cycle, domain );
+    this->estimateEventTiming( time, dt, cycle, domain );
 
     // Check sub-events
     this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
     {
-      subEvent.CheckEvents( time, dt, cycle, domain );
+      subEvent.checkEvents( time, dt, cycle, domain );
     } );
   }
 }
 
 
-void EventBase::SignalToPrepareForExecution( real64 const time,
+void EventBase::signalToPrepareForExecution( real64 const time,
                                              real64 const dt,
                                              integer const cycle,
                                              dataRepository::Group * domain )
 {
   if( m_target != nullptr )
   {
-    m_target->SignalToPrepareForExecution( time, dt, cycle, domain );
+    m_target->signalToPrepareForExecution( time, dt, cycle, domain );
   }
 
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
     if( subEvent.hasToPrepareForExec() )
     {
-      subEvent.SignalToPrepareForExecution( time, dt, cycle, domain );
+      subEvent.signalToPrepareForExecution( time, dt, cycle, domain );
     }
   } );
 }
 
 
-void EventBase::Execute( real64 const time_n,
+void EventBase::execute( real64 const time_n,
                          real64 const dt,
                          const integer cycleNumber,
                          integer const,
@@ -222,23 +222,23 @@ void EventBase::Execute( real64 const time_n,
   if((m_target != nullptr) && (m_targetExecFlag == 0))
   {
     m_targetExecFlag = 1;
-    m_target->Execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
+    m_target->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
   }
 
   // Iterate through the sub-event list using the managed integer m_currentSubEvent
   // This allows for  restart runs to pick up where they left off.
   for(; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent )
   {
-    EventBase * subEvent = static_cast< EventBase * >( this->GetSubGroups()[m_currentSubEvent] );
+    EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
     // Print debug information for logLevel >= 1
     GEOSX_LOG_LEVEL_RANK_0( 1,
-                            "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" <<
+                            "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
                             subEvent->getForecast() );
 
     if( subEvent->isReadyForExec() )
     {
-      subEvent->Execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
+      subEvent->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
     }
   }
 
@@ -250,7 +250,7 @@ void EventBase::Execute( real64 const time_n,
 }
 
 
-real64 EventBase::GetTimestepRequest( real64 const time )
+real64 EventBase::getTimestepRequest( real64 const time )
 {
   m_currentEventDtRequest = std::numeric_limits< real64 >::max() / 2.0;
 
@@ -271,18 +271,18 @@ real64 EventBase::GetTimestepRequest( real64 const time )
       }
 
       // Get the event-specific dt request
-      m_currentEventDtRequest = std::min( m_currentEventDtRequest, GetEventTypeDtRequest( time ));
+      m_currentEventDtRequest = std::min( m_currentEventDtRequest, getEventTypeDtRequest( time ));
 
       // Get the target's dt request if the event has the potential to execute this cycle
       if( ( !this->isIdle() ) && ( m_target != nullptr ) )
       {
-        m_currentEventDtRequest = std::min( m_currentEventDtRequest, m_target->GetTimestepRequest( time ));
+        m_currentEventDtRequest = std::min( m_currentEventDtRequest, m_target->getTimestepRequest( time ));
       }
 
       // Get the sub-event dt requests
       this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
       {
-        m_currentEventDtRequest = std::min( m_currentEventDtRequest, subEvent.GetTimestepRequest( time ));
+        m_currentEventDtRequest = std::min( m_currentEventDtRequest, subEvent.getTimestepRequest( time ));
       } );
     }
   }
@@ -312,11 +312,11 @@ real64 EventBase::GetTimestepRequest( real64 const time )
 }
 
 
-integer EventBase::GetExitFlag()
+integer EventBase::getExitFlag()
 {
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    m_exitFlag += subEvent.GetExitFlag();
+    m_exitFlag += subEvent.getExitFlag();
   } );
 
   return m_exitFlag;
@@ -324,7 +324,7 @@ integer EventBase::GetExitFlag()
 
 
 
-void EventBase::GetExecutionOrder( array1d< integer > & eventCounters )
+void EventBase::getExecutionOrder( array1d< integer > & eventCounters )
 {
   // The first entry counts all events, the second tracks solver events
   m_eventCount = eventCounters[0];
@@ -334,7 +334,7 @@ void EventBase::GetExecutionOrder( array1d< integer > & eventCounters )
   ++eventCounters[0];
   if( m_target != nullptr )
   {
-    if( m_target->GetTimestepBehavior() > 0 )
+    if( m_target->getTimestepBehavior() > 0 )
     {
       ++eventCounters[1];
     }
@@ -342,12 +342,12 @@ void EventBase::GetExecutionOrder( array1d< integer > & eventCounters )
 
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent.GetExecutionOrder( eventCounters );
+    subEvent.getExecutionOrder( eventCounters );
   } );
 }
 
 
-void EventBase::SetProgressIndicator( array1d< integer > & eventCounters )
+void EventBase::setProgressIndicator( array1d< integer > & eventCounters )
 {
   // Calculate the event progress indicator
   // This is defined as the percent completion through the executaion loop
@@ -360,7 +360,7 @@ void EventBase::SetProgressIndicator( array1d< integer > & eventCounters )
   // Do this for child events
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent.SetProgressIndicator( eventCounters );
+    subEvent.setProgressIndicator( eventCounters );
   } );
 }
 

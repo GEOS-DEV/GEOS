@@ -33,7 +33,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace mimeticInnerProduct;
 
-HybridMimeticDiscretization::HybridMimeticDiscretization( std::string const & name,
+HybridMimeticDiscretization::HybridMimeticDiscretization( string const & name,
                                                           Group * const parent )
   : Group( name, parent )
 {
@@ -51,9 +51,9 @@ HybridMimeticDiscretization::HybridMimeticDiscretization( std::string const & na
     setDescription( "Type of inner product used in the hybrid FVM solver" );
 }
 
-void HybridMimeticDiscretization::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void HybridMimeticDiscretization::initializePostInitialConditionsPreSubGroups( Group * const rootGroup )
 {
-  Group::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  Group::initializePostInitialConditionsPreSubGroups( rootGroup );
 
   std::unique_ptr< MimeticInnerProductBase > newMimeticIP = factory( m_innerProductType );
 
@@ -61,7 +61,7 @@ void HybridMimeticDiscretization::InitializePostInitialConditions_PreSubGroups( 
     setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
-void HybridMimeticDiscretization::RegisterDataOnMesh( Group * const meshBodies )
+void HybridMimeticDiscretization::registerDataOnMesh( Group * const meshBodies )
 {
   meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
@@ -79,7 +79,7 @@ void HybridMimeticDiscretization::RegisterDataOnMesh( Group * const meshBodies )
 }
 
 HybridMimeticDiscretization::CatalogInterface::CatalogType &
-HybridMimeticDiscretization::GetCatalog()
+HybridMimeticDiscretization::getCatalog()
 {
   static HybridMimeticDiscretization::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -116,6 +116,6 @@ HybridMimeticDiscretization::factory( string const & mimeticInnerProductType ) c
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( HybridMimeticDiscretization, HybridMimeticDiscretization, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( HybridMimeticDiscretization, HybridMimeticDiscretization, string const &, Group * const )
 
 }

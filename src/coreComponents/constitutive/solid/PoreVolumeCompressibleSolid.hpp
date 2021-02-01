@@ -32,7 +32,7 @@ namespace constitutive
 class PoreVolumeCompressibleSolid : public ConstitutiveBase
 {
 public:
-  PoreVolumeCompressibleSolid( std::string const & name, Group * const parent );
+  PoreVolumeCompressibleSolid( string const & name, Group * const parent );
 
   virtual ~PoreVolumeCompressibleSolid() override;
 
@@ -43,15 +43,15 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  static std::string CatalogName() { return "PoreVolumeCompressibleSolid"; }
+  static string catalogName() { return "PoreVolumeCompressibleSolid"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void StateUpdatePointPressure( real64 const & pres,
+  virtual void stateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
                                          localIndex const q ) override final;
 
-  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                          arrayView1d< real64 const > const & dPres ) override final;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -61,7 +61,7 @@ public:
   } viewKeys;
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 

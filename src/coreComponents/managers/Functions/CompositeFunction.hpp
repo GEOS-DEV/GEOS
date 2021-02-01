@@ -34,8 +34,8 @@ namespace geosx
 class CompositeFunction : public FunctionBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  CompositeFunction( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  CompositeFunction( const string & name,
                      dataRepository::Group * const parent );
 
   /**
@@ -47,12 +47,12 @@ public:
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "CompositeFunction"; }
+  static string catalogName() { return "CompositeFunction"; }
 
   /**
    * @brief Function initialization
    */
-  virtual void InitializeFunction() override;
+  virtual void initializeFunction() override;
 
   /**
    * @brief Method to evaluate a function on a target object
@@ -61,7 +61,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::Group const * const group,
+  virtual void evaluate( dataRepository::Group const * const group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const override final;
@@ -71,7 +71,7 @@ public:
    * @param input a scalar input
    * @return the function evaluation
    */
-  virtual real64 Evaluate( real64 const * const input ) const override final;
+  virtual real64 evaluate( real64 const * const input ) const override final;
 
 private:
 

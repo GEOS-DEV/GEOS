@@ -26,7 +26,7 @@ namespace constitutive
 
 
 
-LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Group * const parent ):
+LinearElasticAnisotropic::LinearElasticAnisotropic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultStiffness( 6, 6 )
 {
@@ -70,7 +70,7 @@ void LinearElasticAnisotropic::allocateConstitutiveData( dataRepository::Group *
 
 }
 
-void LinearElasticAnisotropic::PostProcessInput()
+void LinearElasticAnisotropic::postProcessInput()
 {
   // need to get this to work. Need 2d array default value for 3d array.
 //  getWrapper<array1d<real64>>(viewKeyStruct::stiffnessString)->setDefaultValue(m_defaultStiffness);
@@ -88,6 +88,6 @@ void LinearElasticAnisotropic::setDefaultStiffness( real64 const c[6][6] )
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticAnisotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticAnisotropic, string const &, Group * const )
 }
 } /* namespace geosx */
