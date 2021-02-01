@@ -33,8 +33,8 @@ class PeriodicEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  PeriodicEvent( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  PeriodicEvent( const string & name,
                  Group * const parent );
 
   /// Destructor
@@ -47,7 +47,7 @@ public:
   static string catalogName() { return "PeriodicEvent"; }
 
   /**
-   * @copydoc EventBase::EstimateEventTiming()
+   * @copydoc EventBase::estimateEventTiming()
    * @note Estimate the expected number of cycles until an event is expected to trigger.
    *       The event frequency can be specified in terms of:
    *        - time (timeFrequency > 0, units = seconds)
@@ -87,14 +87,14 @@ public:
                                        dataRepository::Group * domain );
 
   /**
-   * @copydoc EventBase::GetEventTypeDtRequest()
+   * @copydoc EventBase::getEventTypeDtRequest()
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the time frequency
    */
   virtual real64 getEventTypeDtRequest( real64 const time ) override;
 
   /**
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,

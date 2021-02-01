@@ -33,11 +33,11 @@ class TasksManager : public dataRepository::Group
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group
-  TasksManager( std::string const & name, Group * const parent );
+  TasksManager( string const & name, Group * const parent );
   /// Destructor
   virtual ~TasksManager() override;
 
-  /// @copydoc geosx::dataRepository::Group::CreateChild
+  /// @copydoc geosx::dataRepository::Group::createChild
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure

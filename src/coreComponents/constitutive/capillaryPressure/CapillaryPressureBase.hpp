@@ -111,7 +111,7 @@ public:
   // choose the reference pressure to be the oil pressure for all models
   static constexpr integer REFERENCE_PHASE = PhaseType::OIL;
 
-  CapillaryPressureBase( std::string const & name,
+  CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
   virtual ~CapillaryPressureBase() override;

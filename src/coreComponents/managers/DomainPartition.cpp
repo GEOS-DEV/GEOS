@@ -32,7 +32,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-DomainPartition::DomainPartition( std::string const & name,
+DomainPartition::DomainPartition( string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
@@ -122,7 +122,7 @@ void DomainPartition::generateSets()
 
     auto const & elemToNodeMap = subRegion.nodeList();
 
-    for( std::string const & setName : setNames )
+    for( string const & setName : setNames )
     {
       arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 

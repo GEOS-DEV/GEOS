@@ -42,7 +42,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-PoroelasticSolver::PoroelasticSolver( const std::string & name,
+PoroelasticSolver::PoroelasticSolver( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
@@ -634,6 +634,6 @@ real64 PoroelasticSolver::splitOperatorStep( real64 const & time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, PoroelasticSolver, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, PoroelasticSolver, string const &, Group * const )
 
 } /* namespace geosx */

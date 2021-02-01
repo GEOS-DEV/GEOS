@@ -93,84 +93,84 @@ public:
   ///@{
 
   /**
-   * @copydoc GetSubRegions() const
+   * @copydoc getSubRegions() const
    */
   subGroupMap & getSubRegions()
   {
     return getGroup( viewKeyStruct::elementSubRegions )->getSubGroups();
   }
 
-/**
- * @brief Get a collection of the subregions.
- * @return a collection of the subregions
- */
+  /**
+   * @brief Get a collection of the subregions.
+   * @return a collection of the subregions
+   */
   subGroupMap const & getSubRegions() const
   {
     return getGroup( viewKeyStruct::elementSubRegions )->getSubGroups();
   }
 
 
-/**
- * @brief Get a pointer to a subregion by specifying its name.
- * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
- * @param regionName the name of the subregion
- * @return a pointer to the subregion
- * @note
- */
+  /**
+   * @brief Get a pointer to a subregion by specifying its name.
+   * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
+   * @param regionName the name of the subregion
+   * @return a pointer to the subregion
+   * @note
+   */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * getSubRegion( string const & regionName ) const
   {
     return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
   }
 
-/**
- * @copydoc GetSubRegion( string const & regionName ) const
- */
+  /**
+   * @copydoc getSubRegion( string const & regionName ) const
+   */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE * getSubRegion( string const & regionName )
   {
     return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
   }
 
-/**
- * @brief Get a pointer to a subregion by specifying its index.
- * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
- * @param index the index of the subregion
- * @return a pointer to the subregion
- */
+  /**
+   * @brief Get a pointer to a subregion by specifying its index.
+   * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
+   * @param index the index of the subregion
+   * @return a pointer to the subregion
+   */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * getSubRegion( localIndex const & index ) const
   {
     return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( index );
   }
 
-/**
- * @copydoc GetSubRegion( localIndex const & index ) const
- */
+  /**
+   * @copydoc getSubRegion( localIndex const & index ) const
+   */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE * getSubRegion( localIndex const & index )
   {
     return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( index );
   }
 
-/**
- * @brief Get the number of subregions in the region.
- * @return the number of subregions  in the region
- */
+  /**
+   * @brief Get the number of subregions in the region.
+   * @return the number of subregions  in the region
+   */
   localIndex numSubRegions() const
   {
     return this->getGroup( viewKeyStruct::elementSubRegions )->getSubGroups().size();
   }
 
-/**
- * @brief Get the number of elements  in the region
- *        for specific subregion types provided as template arguments.
- * @tparam SUBREGIONTYPE  the first type that will be used in the attempted casting of the subregion
- * @tparam SUBREGIONTYPES a variadic list of types that will be used in the attempted casting of the subregion
- * @return the number of elements contained in the element region
- * @note This function requires that the subRegion types specified
- *       in the variadic template argument can be casted to ElementSubRegionBase
- */
+  /**
+   * @brief Get the number of elements  in the region
+   *        for specific subregion types provided as template arguments.
+   * @tparam SUBREGIONTYPE  the first type that will be used in the attempted casting of the subregion
+   * @tparam SUBREGIONTYPES a variadic list of types that will be used in the attempted casting of the subregion
+   * @return the number of elements contained in the element region
+   * @note This function requires that the subRegion types specified
+   *       in the variadic template argument can be casted to ElementSubRegionBase
+   */
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
   localIndex getNumberOfElements() const
   {

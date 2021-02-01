@@ -105,12 +105,12 @@ class VanGenuchtenCapillaryPressure : public CapillaryPressureBase
 {
 public:
 
-  VanGenuchtenCapillaryPressure( std::string const & name,
+  VanGenuchtenCapillaryPressure( string const & name,
                                  dataRepository::Group * const parent );
 
   virtual ~VanGenuchtenCapillaryPressure() override;
 
-  static std::string catalogName() { return "VanGenuchtenCapillaryPressure"; }
+  static string catalogName() { return "VanGenuchtenCapillaryPressure"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

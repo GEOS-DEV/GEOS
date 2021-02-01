@@ -170,7 +170,7 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
 }
 
 
-SurfaceGenerator::SurfaceGenerator( const std::string & name,
+SurfaceGenerator::SurfaceGenerator( const string & name,
                                     Group * const parent ):
   SolverBase( name, parent ),
   m_failCriterion( 1 ),
@@ -633,9 +633,9 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 #else
 
     GEOSX_UNUSED_VAR( neighbors );
-    AssignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
-    AssignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
-    AssignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );
+    assignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
+    assignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
+    assignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );
 
 #endif
 
@@ -4543,6 +4543,6 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
 
 REGISTER_CATALOG_ENTRY( SolverBase,
                         SurfaceGenerator,
-                        std::string const &, dataRepository::Group * const )
+                        string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

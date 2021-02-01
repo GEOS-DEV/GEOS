@@ -30,7 +30,7 @@ namespace constitutive
 
 //START_SPHINX_INCLUDE_00
 
-BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string const & name,
+BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const & name,
                                                                   Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
@@ -111,7 +111,7 @@ BrooksCoreyRelativePermeability::KernelWrapper BrooksCoreyRelativePermeability::
 }
 
 //START_SPHINX_INCLUDE_01
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, string const &, Group * const )
 
 } // namespace constitutive
 

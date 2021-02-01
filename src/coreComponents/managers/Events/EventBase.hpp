@@ -39,7 +39,7 @@ public:
    * @param name The name of the object in the data repository.
    * @param parent The parent of this object in the data repository.
    **/
-  explicit EventBase( std::string const & name,
+  explicit EventBase( string const & name,
                       Group * const parent );
 
   /// Destructor
@@ -87,7 +87,7 @@ public:
              dataRepository::Group * domain );
 
   /**
-   * @copydoc dataRepository::Group::CreateChild()
+   * @copydoc dataRepository::Group::createChild()
    *
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
    * e.g.:
@@ -209,7 +209,7 @@ public:
   /// @endcond
 
   /// Catalog interface
-  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, string const &, Group * const >;
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 

@@ -31,7 +31,7 @@ class LagrangianContactSolver : public SolverBase
 {
 public:
 
-  LagrangianContactSolver( const std::string & name,
+  LagrangianContactSolver( const string & name,
                            Group * const parent );
 
   ~LagrangianContactSolver() override;

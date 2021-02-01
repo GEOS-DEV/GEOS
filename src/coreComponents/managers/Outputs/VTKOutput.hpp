@@ -34,9 +34,9 @@ namespace geosx
 class VTKOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
 
-  VTKOutput( std::string const & name, Group * const parent );
+  VTKOutput( string const & name, Group * const parent );
 
   /// Destructor
   virtual ~VTKOutput() override;
@@ -60,7 +60,7 @@ public:
 
   /**
    * @brief Write one final set of vtk files as the code exits
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,

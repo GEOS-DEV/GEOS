@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-VTKOutput::VTKOutput( std::string const & name,
+VTKOutput::VTKOutput( string const & name,
                       Group * const parent ):
   OutputBase( name, parent ),
   m_plotFileRoot(),
@@ -78,5 +78,5 @@ void VTKOutput::execute( real64 const time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, string const &, Group * const )
 } /* namespace geosx */

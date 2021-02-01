@@ -33,8 +33,8 @@ namespace geosx
 class SiloOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  SiloOutput( std::string const & name,
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  SiloOutput( string const & name,
               Group * const parent );
 
   /// Destructor
@@ -59,7 +59,7 @@ public:
 
   /**
    * @brief Writes out a Silo plot file at the end of the simulation.
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,

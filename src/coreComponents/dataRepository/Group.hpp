@@ -89,7 +89,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  explicit Group( std::string const & name,
+  explicit Group( string const & name,
                   Group * const parent );
 
 
@@ -142,7 +142,7 @@ public:
   /**
    * @brief Type alias for catalog interface used by this class. See CatalogInterface.
    */
-  using CatalogInterface = dataRepository::CatalogInterface< Group, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< Group, string const &, Group * const >;
 
   /**
    * @brief Get the singleton catalog for this class.
@@ -206,10 +206,10 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group and takes ownership.
    */
   template< typename T = Group >
-  T * registerGroup( std::string const & name, std::unique_ptr< T > newObject );
+  T * registerGroup( string const & name, std::unique_ptr< T > newObject );
 
   /**
-   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name          The name of the group to use as a string key.
@@ -219,11 +219,11 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group but does not take ownership.
    */
   template< typename T = Group >
-  T * registerGroup( std::string const & name,
+  T * registerGroup( string const & name,
                      T * newObject );
 
   /**
-   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name The name of the group to use as a string key.
@@ -232,13 +232,13 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * registerGroup( std::string const & name )
+  T * registerGroup( string const & name )
   {
     return registerGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
   }
 
   /**
-   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in,out] keyIndex A KeyIndexT object that will be used to specify the name of
@@ -256,7 +256,7 @@ public:
   }
 
   /**
-   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @tparam TBASE The type whose type catalog will be used to look up the new sub-group type
@@ -267,7 +267,7 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group, typename TBASE = Group >
-  T * registerGroup( std::string const & name, std::string const & catalogName )
+  T * registerGroup( string const & name, string const & catalogName )
   {
     std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
     return registerGroup< T >( name, std::move( newGroup ) );
@@ -277,7 +277,7 @@ public:
    * @brief Removes a child group from this group.
    * @param name the name of the child group to remove from this group.
    */
-  void deregisterGroup( std::string const & name );
+  void deregisterGroup( string const & name );
 
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
@@ -377,7 +377,7 @@ public:
   }
 
   /**
-   * @copydoc GetGroup(localIndex)
+   * @copydoc getGroup(localIndex)
    */
   template< typename T = Group >
   T const * getGroup( localIndex index ) const
@@ -398,7 +398,7 @@ public:
   }
 
   /**
-   * @copydoc GetGroup(string const &)
+   * @copydoc getGroup(string const &)
    */
   template< typename T = Group >
   T const * getGroup( string const & name ) const
@@ -448,7 +448,7 @@ public:
   }
 
   /**
-   * @copydoc GetGroup(subGroupMap::KeyIndex const & key)
+   * @copydoc getGroup(subGroupMap::KeyIndex const & key)
    */
   template< typename T = Group >
   T const * getGroup( subGroupMap::KeyIndex const & key ) const
@@ -471,7 +471,7 @@ public:
   }
 
   /**
-   * @copydoc GetGroupByPath(string const &)
+   * @copydoc getGroupByPath(string const &)
    */
   template< typename T = Group >
   T const * getGroupByPath( string const & path ) const;
@@ -507,7 +507,7 @@ public:
    * @param name the name of sub-group to search for
    * @return @p true if sub-group exists, @p false otherwise
    */
-  bool hasGroup( std::string const & name ) const
+  bool hasGroup( string const & name ) const
   {
     return (m_subGroups[name] != nullptr);
   }
@@ -831,11 +831,11 @@ public:
    * @return     a pointer to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > * registerWrapper( std::string const & name,
+  Wrapper< TBASE > * registerWrapper( string const & name,
                                       wrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
   /**
-   * @copybrief registerWrapper(std::string const &,wrapperMap::KeyIndex::index_type * const)
+   * @copybrief registerWrapper(string const &,wrapperMap::KeyIndex::index_type * const)
    * @tparam     T the type of the wrapped object
    * @tparam TBASE the base type to cast the returned wrapper to
    * @param[in] viewKey The KeyIndex that contains the name of the new Wrapper.
@@ -852,7 +852,7 @@ public:
    * @return              a pointer to the newly registered/created Wrapper
    */
   template< typename T >
-  Wrapper< T > * registerWrapper( std::string const & name,
+  Wrapper< T > * registerWrapper( string const & name,
                                   std::unique_ptr< T > newObject );
 
   /**
@@ -863,7 +863,7 @@ public:
    * @return                  a pointer to the newly registered/created Wrapper
    */
   template< typename T >
-  Wrapper< T > * registerWrapper( std::string const & name,
+  Wrapper< T > * registerWrapper( string const & name,
                                   T * newObject );
 
   /**
@@ -896,7 +896,7 @@ public:
   void generateDataStructureSkeleton( integer const level )
   {
     expandObjectCatalogs();
-    std::string indent( level*2, ' ' );
+    string indent( level*2, ' ' );
 
     for( auto const & subGroupIter : m_subGroups )
     {
@@ -1069,13 +1069,13 @@ public:
    * @param[in] name a string lookup value used to search the collection of wrappers.
    * @return         a pointer to the WrapperBase that resulted from the lookup.
    */
-  WrapperBase const * getWrapperBase( std::string const & name ) const
+  WrapperBase const * getWrapperBase( string const & name ) const
   { return m_wrappers[name]; }
 
   /**
-   * @copydoc getWrapperBase(std::string const &) const
+   * @copydoc getWrapperBase(string const &) const
    */
-  WrapperBase * getWrapperBase( std::string const & name )
+  WrapperBase * getWrapperBase( string const & name )
   { return m_wrappers[name]; }
 
   /**
@@ -1097,7 +1097,7 @@ public:
    * @param name
    * @return
    */
-  indexType getWrapperIndex( std::string const & name ) const
+  indexType getWrapperIndex( string const & name ) const
   {
     return m_wrappers.getIndex( name );
   }
@@ -1547,7 +1547,7 @@ using ViewKey = Group::wrapperMap::KeyIndex;
 
 
 template< typename T >
-T * Group::registerGroup( std::string const & name,
+T * Group::registerGroup( string const & name,
                           std::unique_ptr< T > newObject )
 {
   newObject->m_parent = this;
@@ -1556,7 +1556,7 @@ T * Group::registerGroup( std::string const & name,
 
 
 template< typename T >
-T * Group::registerGroup( std::string const & name,
+T * Group::registerGroup( string const & name,
                           T * newObject )
 {
   return dynamicCast< T * >( m_subGroups.insert( name, newObject, false ) );
@@ -1565,7 +1565,7 @@ T * Group::registerGroup( std::string const & name,
 // Doxygen bug - sees this as a separate function
 /// @cond DO_NOT_DOCUMENT
 template< typename T, typename TBASE >
-Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
+Wrapper< TBASE > * Group::registerWrapper( string const & name,
                                            ViewKey::index_type * const rkey )
 {
   std::unique_ptr< TBASE > newObj = std::make_unique< T >();
@@ -1599,7 +1599,7 @@ Wrapper< TBASE > * Group::registerWrapper( ViewKey const & viewKey )
 
 
 template< typename T >
-Wrapper< T > * Group::registerWrapper( std::string const & name,
+Wrapper< T > * Group::registerWrapper( string const & name,
                                        std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
@@ -1617,7 +1617,7 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
 
 
 template< typename T >
-Wrapper< T > * Group::registerWrapper( std::string const & name,
+Wrapper< T > * Group::registerWrapper( string const & name,
                                        T * newObject )
 {
   m_wrappers.insert( name,
@@ -1643,7 +1643,7 @@ T const * Group::getGroupByPath( string const & path ) const
 
   size_t directoryMarker = path.find( '/' );
 
-  if( directoryMarker == std::string::npos )
+  if( directoryMarker == string::npos )
   {
     // Target should be a child of this group
     return this->getGroup< T >( path );

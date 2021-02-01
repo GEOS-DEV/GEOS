@@ -42,7 +42,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
+EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent )
 {
@@ -252,6 +252,6 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
 REGISTER_CATALOG_ENTRY( SolverBase,
                         EmbeddedSurfaceGenerator,
-                        std::string const &, dataRepository::Group * const )
+                        string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

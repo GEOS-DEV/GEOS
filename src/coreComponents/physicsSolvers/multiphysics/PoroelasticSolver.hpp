@@ -33,7 +33,7 @@ class FlowSolverBase;
 class PoroelasticSolver : public SolverBase
 {
 public:
-  PoroelasticSolver( const std::string & name,
+  PoroelasticSolver( const string & name,
                      Group * const parent );
   ~PoroelasticSolver() override;
 

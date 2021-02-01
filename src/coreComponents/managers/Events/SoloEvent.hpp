@@ -33,8 +33,8 @@ class SoloEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  SoloEvent( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  SoloEvent( const string & name,
              Group * const parent );
 
   /// Destructor
@@ -47,7 +47,7 @@ public:
   static string catalogName() { return "SoloEvent"; }
 
   /**
-   * @copydoc EventBase::EstimateEventTiming()
+   * @copydoc EventBase::estimateEventTiming()
    */
   virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
@@ -55,7 +55,7 @@ public:
                                     dataRepository::Group * domain ) override;
 
   /**
-   * @copydoc EventBase::GetEventTypeDtRequest()
+   * @copydoc EventBase::getEventTypeDtRequest()
    */
   virtual real64 getEventTypeDtRequest( real64 const time ) override;
 

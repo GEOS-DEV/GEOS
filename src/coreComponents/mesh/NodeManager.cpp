@@ -34,7 +34,7 @@ using namespace dataRepository;
  * @return
  */
 //START_SPHINX_REFPOS_REG
-NodeManager::NodeManager( std::string const & name,
+NodeManager::NodeManager( string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition( 0, 3 ),
@@ -422,6 +422,6 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, string const &, Group * const )
 
 }
