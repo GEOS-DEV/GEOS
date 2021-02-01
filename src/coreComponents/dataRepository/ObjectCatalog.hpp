@@ -194,7 +194,7 @@ public:
     CatalogInterface< BASETYPE, ARGS... > const * builder = getCatalog().at( objectTypeName ).get();
     if( builder == nullptr )
     {
-      const string errorMsg = "\"" + objectTypeName + "\" could be found. But the builder is null.\n";
+      const string errorMsg = "\"" + objectTypeName + "\" could be found. But the builder is invalid.\n";
       GEOSX_ERROR( errorMsg );
     }
 
