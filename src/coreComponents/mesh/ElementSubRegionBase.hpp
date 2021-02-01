@@ -73,7 +73,7 @@ public:
    * @param[in] faceManager the faceManager (for geometrical info and connectivity involving faces)
    *
    */
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) = 0;
 
   /**
@@ -87,11 +87,11 @@ public:
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
 
   /**
-   * @brief Call ObjectManagerBase::FixUpDownMaps for the connectivity maps needed by
+   * @brief Call ObjectManagerBase::fixUpDownMaps for the connectivity maps needed by
    *        the derived class (i.e., element-to-node map, element-to-face map, etc)
    * @param[in] clearIfUnmapped clearIfUnmapped
    */
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
 
   ///@}
 
@@ -193,13 +193,13 @@ public:
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
-  dataRepository::Group const * GetConstitutiveModels() const
+  dataRepository::Group const * getConstitutiveModels() const
   { return &m_constitutiveModels; }
 
   /**
-   * @copydoc GetConstitutiveModels() const
+   * @copydoc getConstitutiveModels() const
    */
-  dataRepository::Group * GetConstitutiveModels()
+  dataRepository::Group * getConstitutiveModels()
   { return &m_constitutiveModels; }
 
   /**
@@ -211,7 +211,7 @@ public:
   template< typename T = constitutive::ConstitutiveBase >
   T const * getConstitutiveModel( string const & name ) const
   {
-    return m_constitutiveModels.GetGroup< T >( name );
+    return m_constitutiveModels.getGroup< T >( name );
   }
 
   /**
@@ -220,7 +220,7 @@ public:
   template< typename T = constitutive::ConstitutiveBase >
   T * getConstitutiveModel( string const & name )
   {
-    return m_constitutiveModels.GetGroup< T >( name );
+    return m_constitutiveModels.getGroup< T >( name );
   }
 
 
@@ -230,13 +230,13 @@ public:
    *
    * See class FiniteElementBase for possible element type.
    */
-  virtual string GetElementTypeString() const { return m_elementTypeString; }
+  virtual string getElementTypeString() const { return m_elementTypeString; }
 
   /**
    * @brief Set the type of element in this subregion.
    * @param[in] elementType a string specifying the element type
    */
-  virtual void SetElementType( string const & elementType );
+  virtual void setElementType( string const & elementType );
 
   /**
    * @brief Get the VTK ordering for this subregion.

@@ -19,7 +19,7 @@
 #ifndef TASKBASE_HPP_
 #define TASKBASE_HPP_
 
-#include <string>
+
 #include <limits>
 
 #include "dataRepository/ExecutableGroup.hpp"
@@ -34,8 +34,8 @@ namespace geosx
 class TaskBase : public ExecutableGroup
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  explicit TaskBase( std::string const & name,
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  explicit TaskBase( string const & name,
                      Group * const parent );
   virtual ~TaskBase( ) override;
 
@@ -43,18 +43,18 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "TaskBase"; }
+  static string catalogName() { return "TaskBase"; }
 
   /// The catalog interface type for TaskBase
-  using CatalogInterface = dataRepository::CatalogInterface< TaskBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< TaskBase, string const &, Group * const >;
   /**
    * @brief Get the catalog interface for the TaskBase
    * @return the Catalog for TaskBase.
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
-  /// @copydoc geosx::ExecutableGroup::Execute
-  virtual void Execute( real64 const time_n,
+  /// @copydoc geosx::ExecutableGroup::execute
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -70,8 +70,8 @@ public:
     GEOSX_ERROR( "NOT IMPLEMENTED" );
   }
 
-  /// @copydoc geosx::dataRepository::Group::PostProcessInput( )
-  void PostProcessInput() override;
+  /// @copydoc geosx::dataRepository::Group::postProcessInput( )
+  void postProcessInput() override;
 };
 
 } /* namespace */

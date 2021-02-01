@@ -53,7 +53,7 @@ public:
    * @param name the name of this object manager
    * @param parent the parent Group
    */
-  explicit ProblemManager( const std::string & name,
+  explicit ProblemManager( const string & name,
                            Group * const parent );
 
   /**
@@ -71,7 +71,7 @@ public:
    * add entries to the schema, which are not used during normal code execution
    * (e.g.: Benchmark)
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+  virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 
@@ -83,33 +83,33 @@ public:
    *                  sub-Groups.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Parses command line input
    */
-  void ParseCommandLineInput();
+  void parseCommandLineInput();
 
   /**
    * @brief Parses a restart file
    * @param restartFileName the name of the restart file
    * @return flag indicating beginFromRestart status
    */
-  static bool ParseRestart( std::string & restartFileName );
+  static bool parseRestart( string & restartFileName );
 
   /**
    * @brief Initializes a python interpreter within GEOSX
    * @note This is not regularly used or tested, and may be removed in future versions.
    * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
    */
-  void InitializePythonInterpreter();
+  void initializePythonInterpreter();
 
   /**
    * @brief Closes the internal python interpreter
    * @note This is not regularly used or tested, and may be removed in future versions.
    * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
    */
-  void ClosePythonInterpreter();
+  void closePythonInterpreter();
 
   /**
    * @brief Generates the xml schema documentation
@@ -119,50 +119,50 @@ public:
    * ExpandObjectCatalogs method.)  Once ready, SchemaUtilities will recusively walk
    * through the database, generating the xml schema.
    */
-  void GenerateDocumentation();
+  void generateDocumentation();
 
   /**
    * @brief Parses the input xml file
    * @details The name of the input file is indicated via the -i option on the command line
    */
-  void ParseInputFile();
+  void parseInputFile();
 
   /**
    * @brief Generates numerical meshes used throughout the code
    */
-  void GenerateMesh();
+  void generateMesh();
 
   /**
    * @brief Allocates constitutive relations according to the discretizations
    *   on each subregion.
    */
-  void ApplyNumericalMethods();
+  void applyNumericalMethods();
 
   /**
    * @brief Defines the order in which objects should be initialized
    * @param order list defining ordering sequence
    */
-  void InitializationOrder( string_array & order ) override final;
+  void initializationOrder( string_array & order ) override final;
 
   /**
    * @brief Sets up the problem after the input has been read in
    */
-  void ProblemSetup();
+  void problemSetup();
 
   /**
    * @brief Run the events in the scheduler.
    */
-  void RunSimulation();
+  void runSimulation();
 
   /**
    * @brief After initialization, overwrites data using a restart file
    */
-  void ReadRestartOverwrite();
+  void readRestartOverwrite();
 
   /**
    * @brief Applies initial conditions indicated within the input file FieldSpecifications block
    */
-  void ApplyInitialConditions();
+  void applyInitialConditions();
 
   /**
    * @brief Returns a pointer to the DomainPartition
@@ -181,28 +181,28 @@ public:
    * @return The problem name
    */
   const string & getProblemName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
+  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
   const string & getInputFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
+  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
   const string & getRestartFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
+  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
   const string & getSchemaFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
+  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
 
   /// Input file xml document handle
   xmlWrapper::xmlDocument xmlDocument;
@@ -257,7 +257,7 @@ public:
    * @brief Returns the PhysicsSolverManager
    * @return Reference to the PhysicsSolverManager
    */
-  PhysicsSolverManager & GetPhysicsSolverManager()
+  PhysicsSolverManager & getPhysicsSolverManager()
   {
     return *m_physicsSolverManager;
   }
@@ -266,7 +266,7 @@ public:
    * @brief Returns the PhysicsSolverManager
    * @return Const reference to the PhysicsSolverManager
    */
-  PhysicsSolverManager const & GetPhysicsSolverManager() const
+  PhysicsSolverManager const & getPhysicsSolverManager() const
   {
     return *m_physicsSolverManager;
   }
@@ -275,7 +275,7 @@ protected:
   /**
    * @brief Post process the command line input
    */
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 

@@ -40,13 +40,13 @@ public:
   }
 
   using CatalogInterface = dataRepository::CatalogInterface< Base, int &, double const & >;
-  static CatalogInterface::CatalogType & GetCatalog()
+  static CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
   }
 
-  virtual std::string getCatalogName() = 0;
+  virtual string getCatalogName() = 0;
 };
 //STOP_SPHINX
 
@@ -64,8 +64,8 @@ public:
   {
     GEOSX_LOG( "calling Derived1 destructor" );
   }
-  static std::string CatalogName() { return "derived1"; }
-  std::string getCatalogName() { return CatalogName(); }
+  static string catalogName() { return "derived1"; }
+  string getCatalogName() { return catalogName(); }
 
 };
 REGISTER_CATALOG_ENTRY( Base, Derived1, int &, double const & )
@@ -85,8 +85,8 @@ public:
   {
     GEOSX_LOG( "calling Derived2 destructor" );
   }
-  static std::string CatalogName() { return "derived2"; }
-  std::string getCatalogName() { return CatalogName(); }
+  static string catalogName() { return "derived2"; }
+  string getCatalogName() { return catalogName(); }
 
 };
 REGISTER_CATALOG_ENTRY( Base, Derived2, int &, double const & )
@@ -101,17 +101,17 @@ TEST( testObjectCatalog, testRegistration )
 
   // allocate a new Derived1 object
   std::unique_ptr< Base >
-  derived1 = Base::CatalogInterface::Factory( "derived1", junk, junk2 );
+  derived1 = Base::CatalogInterface::factory( "derived1", junk, junk2 );
 
   // allocate a new Derived2 object
   std::unique_ptr< Base >
-  derived2 = Base::CatalogInterface::Factory( "derived2", junk, junk2 );
+  derived2 = Base::CatalogInterface::factory( "derived2", junk, junk2 );
 
   EXPECT_STREQ( derived1->getCatalogName().c_str(),
-                Derived1::CatalogName().c_str() );
+                Derived1::catalogName().c_str() );
 
   EXPECT_STREQ( derived2->getCatalogName().c_str(),
-                Derived2::CatalogName().c_str() );
+                Derived2::catalogName().c_str() );
   GEOSX_LOG( "EXITING MAIN" );
 }
 //STOP_SPHINX

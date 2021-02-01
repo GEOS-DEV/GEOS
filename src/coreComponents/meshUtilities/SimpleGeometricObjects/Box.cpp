@@ -27,7 +27,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Box::Box( const std::string & name, Group * const parent ):
+Box::Box( const string & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_min{ 0.0, 0.0, 0.0 },
   m_max{ 0.0, 0.0, 0.0 },
@@ -59,7 +59,7 @@ Box::~Box()
 
 
 
-void Box::PostProcessInput()
+void Box::postProcessInput()
 {
   LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
   LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );
@@ -77,7 +77,7 @@ void Box::PostProcessInput()
   }
 }
 
-bool Box::IsCoordInObject( real64 const ( &coord ) [3] ) const
+bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
 {
   real64 coord0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
   if( std::fabs( m_strikeAngle ) >= 1e-20 )
@@ -100,6 +100,6 @@ bool Box::IsCoordInObject( real64 const ( &coord ) [3] ) const
   return true;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, string const &, Group * const )
 
 } /* namespace geosx */

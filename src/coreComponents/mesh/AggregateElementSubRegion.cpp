@@ -28,7 +28,7 @@ AggregateElementSubRegion::AggregateElementSubRegion( string const & name,
 AggregateElementSubRegion::~AggregateElementSubRegion()
 {}
 
-void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregates,
+void AggregateElementSubRegion::createFromFineToCoarseMap( localIndex nbAggregates,
                                                            arrayView1d< localIndex const > const & fineToCoarse,
                                                            arrayView2d< real64 const > const & barycenters )
 {

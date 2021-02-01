@@ -25,7 +25,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-GeometricObjectManager::GeometricObjectManager( std::string const & name,
+GeometricObjectManager::GeometricObjectManager( string const & name,
                                                 Group * const parent ):
   Group( name, parent )
 {
@@ -35,19 +35,19 @@ GeometricObjectManager::GeometricObjectManager( std::string const & name,
 GeometricObjectManager::~GeometricObjectManager()
 {}
 
-Group * GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
+Group * GeometricObjectManager::createChild( string const & childKey, string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Geometric Object: " << childKey << ", " << childName );
-  std::unique_ptr< SimpleGeometricObjectBase > geometriObject = SimpleGeometricObjectBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup< SimpleGeometricObjectBase >( childName, std::move( geometriObject ) );
+  std::unique_ptr< SimpleGeometricObjectBase > geometriObject = SimpleGeometricObjectBase::CatalogInterface::factory( childKey, childName, this );
+  return this->registerGroup< SimpleGeometricObjectBase >( childName, std::move( geometriObject ) );
 }
 
-void GeometricObjectManager::ExpandObjectCatalogs()
+void GeometricObjectManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from SimpleGeometricObjectBase here
-  for( auto & catalogIter: SimpleGeometricObjectBase::GetCatalog())
+  for( auto & catalogIter: SimpleGeometricObjectBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 

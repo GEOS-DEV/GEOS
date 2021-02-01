@@ -43,23 +43,23 @@ SurfaceElementRegion::~SurfaceElementRegion()
 {}
 
 
-void SurfaceElementRegion::GenerateMesh( Group * const cellBlocks )
+void SurfaceElementRegion::generateMesh( Group * const cellBlocks )
 {
   GEOSX_UNUSED_VAR( cellBlocks );
 
-  Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+  Group * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
 
   if( m_subRegionType == SurfaceSubRegionType::embeddedElement )
   {
-    elementSubRegions->RegisterGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+    elementSubRegions->registerGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
-    elementSubRegions->RegisterGroup< FaceElementSubRegion >( "faceElementSubRegion" );
+    elementSubRegions->registerGroup< FaceElementSubRegion >( "faceElementSubRegion" );
   }
 }
 
-void SurfaceElementRegion::InitializePreSubGroups( Group * const )
+void SurfaceElementRegion::initializePreSubGroups( Group * const )
 {
   this->forElementSubRegions< SurfaceElementSubRegion >( [&] ( SurfaceElementSubRegion & subRegion )
   {
@@ -68,7 +68,7 @@ void SurfaceElementRegion::InitializePreSubGroups( Group * const )
   } );
 }
 
-localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
+localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
                                                     EdgeManager * const edgeManager,
                                                     FaceManager const * const faceManager,
                                                     ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
@@ -83,9 +83,9 @@ localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
   arrayView2d< localIndex const > const faceToElementIndex = faceManager->elementList();
 
-  Group * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+  Group * elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
 
-  FaceElementSubRegion * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( subRegionName );
+  FaceElementSubRegion * subRegion = elementSubRegions->getGroup< FaceElementSubRegion >( subRegionName );
   subRegion->resize( subRegion->size() + 1 );
   rval = subRegion->size() - 1;
 
@@ -212,6 +212,6 @@ localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, SurfaceElementRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, SurfaceElementRegion, string const &, Group * const )
 
 } /* namespace geosx */

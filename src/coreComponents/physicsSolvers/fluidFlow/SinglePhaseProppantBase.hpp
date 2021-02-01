@@ -32,7 +32,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseProppantBase( const std::string & name,
+  SinglePhaseProppantBase( const string & name,
                            Group * const parent );
 
   SinglePhaseProppantBase() = delete;
@@ -54,11 +54,11 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
-  virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const override;
+  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const override;
 
 protected:
 
-  virtual void ValidateFluidModels( DomainPartition const & domain ) const override;
+  virtual void validateFluidModels( DomainPartition const & domain ) const override;
 
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
 
@@ -66,7 +66,7 @@ protected:
 
 private:
 
-  virtual void ResetViewsPrivate( ElementRegionManager const & elemManager ) override;
+  virtual void resetViewsPrivate( ElementRegionManager const & elemManager ) override;
 
 };
 }

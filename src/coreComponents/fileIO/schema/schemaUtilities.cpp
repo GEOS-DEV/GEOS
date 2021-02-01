@@ -37,13 +37,13 @@ namespace schemaUtilities
 {
 
 
-void ConvertDocumentationToSchema( std::string const & fname,
+void ConvertDocumentationToSchema( string const & fname,
                                    Group * const group,
                                    integer documentationType )
 {
   GEOSX_LOG_RANK_0( "Generating XML Schema..." );
 
-  std::string schemaBase=
+  string schemaBase=
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
   <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\
   <xsd:annotation>\
@@ -74,7 +74,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
                        string const & name,
                        string const & regex )
 {
-  std::string const advanced_match_string = ".*[\\[\\]`$].*|";
+  string const advanced_match_string = ".*[\\[\\]`$].*|";
 
   xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
   newNode.append_attribute( "name" ) = name.c_str();
@@ -90,7 +90,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
   }
   else
   {
-    std::string const patternString = advanced_match_string + regex;
+    string const patternString = advanced_match_string + regex;
     patternNode.append_attribute( "value" ) = patternString.c_str();
   }
 }
@@ -160,7 +160,7 @@ void SchemaConstruction( Group * const group,
         // Note: this is necessary because the order that objects
         //       are registered to catalogs may vary by compiler
         std::set< string > subGroupNames;
-        for( auto & subGroupPair : group->GetSubGroups())
+        for( auto & subGroupPair : group->getSubGroups())
         {
           subGroupNames.insert( subGroupPair.first );
         }
@@ -168,13 +168,13 @@ void SchemaConstruction( Group * const group,
         // Add children of the group
         for( string subName : subGroupNames )
         {
-          Group * const subGroup = group->GetGroup( subName );
+          Group * const subGroup = group->getGroup( subName );
           SchemaConstruction( subGroup, schemaRoot, targetChoiceNode, documentationType );
         }
       }
 
       // Add schema deviations
-      group->SetSchemaDeviations( schemaRoot, targetTypeDefNode, documentationType );
+      group->setSchemaDeviations( schemaRoot, targetTypeDefNode, documentationType );
 
       // Add attributes
       // Note: wrappers that were added to this group by another group
@@ -226,8 +226,8 @@ void SchemaConstruction( Group * const group,
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
-            std::string const wrappedTypeName = rtTypes::typeNames( wrapper->get_typeid() );
-            std::string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
+            string const wrappedTypeName = rtTypes::typeNames( wrapper->getTypeId() );
+            string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
             GEOSX_LOG_VAR( wrappedTypeName );
             GEOSX_LOG_VAR( xmlSafeName );
             attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();

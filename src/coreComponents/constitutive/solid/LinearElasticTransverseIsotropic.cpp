@@ -26,7 +26,7 @@ namespace constitutive
 
 
 
-LinearElasticTransverseIsotropic::LinearElasticTransverseIsotropic( std::string const & name, Group * const parent ):
+LinearElasticTransverseIsotropic::LinearElasticTransverseIsotropic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultYoungsModulusTransverse(),
   m_defaultYoungsModulusAxial(),
@@ -93,7 +93,7 @@ LinearElasticTransverseIsotropic::~LinearElasticTransverseIsotropic()
 
 
 
-void LinearElasticTransverseIsotropic::PostProcessInput()
+void LinearElasticTransverseIsotropic::postProcessInput()
 {
   real64 const Et = m_defaultYoungsModulusTransverse;
   real64 const Ea = m_defaultYoungsModulusAxial;
@@ -127,6 +127,6 @@ void LinearElasticTransverseIsotropic::PostProcessInput()
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticTransverseIsotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticTransverseIsotropic, string const &, Group * const )
 }
 } /* namespace geosx */

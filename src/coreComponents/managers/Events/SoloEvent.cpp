@@ -24,7 +24,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-SoloEvent::SoloEvent( const std::string & name,
+SoloEvent::SoloEvent( const string & name,
                       Group * const parent ):
   EventBase( name, parent ),
   m_targetTime( -1.0 ),
@@ -53,7 +53,7 @@ SoloEvent::~SoloEvent()
 {}
 
 
-void SoloEvent::EstimateEventTiming( real64 const time,
+void SoloEvent::estimateEventTiming( real64 const time,
                                      real64 const dt,
                                      integer const cycle,
                                      Group * GEOSX_UNUSED_PARAM( domain ))
@@ -86,7 +86,7 @@ void SoloEvent::EstimateEventTiming( real64 const time,
 }
 
 
-real64 SoloEvent::GetEventTypeDtRequest( real64 const time )
+real64 SoloEvent::getEventTypeDtRequest( real64 const time )
 {
   real64 requestedDt = std::numeric_limits< real64 >::max();
 
@@ -107,5 +107,5 @@ real64 SoloEvent::GetEventTypeDtRequest( real64 const time )
 
 
 
-REGISTER_CATALOG_ENTRY( EventBase, SoloEvent, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( EventBase, SoloEvent, string const &, Group * const )
 } /* namespace geosx */

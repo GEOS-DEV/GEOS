@@ -140,7 +140,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const proppantConcentration,
@@ -148,13 +148,13 @@ public:
                        real64 const shearRate,
                        integer const isProppantBoundary ) const override
   {
-    UpdateFluidProperty( k,
+    updateFluidProperty( k,
                          q,
                          pressure,
                          componentConcentration,
                          shearRate );
 
-    Compute( proppantConcentration,
+    compute( proppantConcentration,
              m_fluidDensity[k][q],
              m_dFluidDens_dPres[k][q],
              m_dFluidDens_dCompConc[k][q],
@@ -174,14 +174,14 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void UpdateFluidProperty( localIndex const k,
+  virtual void updateFluidProperty( localIndex const k,
                                     localIndex const q,
                                     real64 const pressure,
                                     arraySlice1d< real64 const > const & componentConcentration,
                                     real64 const shearRate ) const override
   {
     GEOSX_UNUSED_VAR( shearRate )
-    ComputeFluidDensity( pressure,
+    computeFluidDensity( pressure,
                          componentConcentration,
                          m_componentDensity[k][q],
                          m_dCompDens_dPres[k][q],
@@ -190,7 +190,7 @@ public:
                          m_dFluidDens_dPres[k][q],
                          m_dFluidDens_dCompConc[k][q] );
 
-    ComputeFluidViscosity( m_componentDensity[k][q],
+    computeFluidViscosity( m_componentDensity[k][q],
                            m_dCompDens_dPres[k][q],
                            m_dCompDens_dCompConc[k][q],
                            m_fluidDensity[k][q],
@@ -203,12 +203,12 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void UpdateComponentDensity( localIndex const k,
+  virtual void updateComponentDensity( localIndex const k,
                                        localIndex const q,
                                        real64 const pressure,
                                        arraySlice1d< real64 const > const & componentConcentration ) const override
   {
-    ComputeComponentDensity( pressure,
+    computeComponentDensity( pressure,
                              componentConcentration,
                              m_componentDensity[k][q],
                              m_dCompDens_dPres[k][q],
@@ -219,7 +219,7 @@ private:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void ComputeFluidDensity( real64 const & pressure,
+  void computeFluidDensity( real64 const & pressure,
                             arraySlice1d< real64 const > const & componentConcentration,
                             arraySlice1d< real64 > const & componentDensity,
                             arraySlice1d< real64 > const & dComponentDensity_dPressure,
@@ -230,7 +230,7 @@ private:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void ComputeComponentDensity( real64 const pressure,
+  void computeComponentDensity( real64 const pressure,
                                 arraySlice1d< real64 const > const & componentConcentration,
                                 arraySlice1d< real64 > const & componentDensity,
                                 arraySlice1d< real64 > const & dComponentDensity_dPressure,
@@ -238,7 +238,7 @@ private:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void ComputeFluidViscosity( arraySlice1d< real64 const > const & componentDensity,
+  void computeFluidViscosity( arraySlice1d< real64 const > const & componentDensity,
                               arraySlice1d< real64 const > const & dComponentDensity_dPressure,
                               arraySlice2d< real64 const > const & dComponentDensity_dComponentConcentration,
                               real64 const fluidDensity,
@@ -250,7 +250,7 @@ private:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void Compute( real64 const & proppantConcentration,
+  void compute( real64 const & proppantConcentration,
                 real64 const & fluidDensity,
                 real64 const & dFluidDensity_dPressure,
                 arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
@@ -285,14 +285,14 @@ class ProppantSlurryFluid : public SlurryFluidBase
 {
 public:
 
-  ProppantSlurryFluid( std::string const & name, Group * const parent );
+  ProppantSlurryFluid( string const & name, Group * const parent );
 
   virtual ~ProppantSlurryFluid() override;
 
   // *** ConstitutiveBase interface
-  static std::string CatalogName() { return "ProppantSlurryFluid"; }
+  static string catalogName() { return "ProppantSlurryFluid"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -320,7 +320,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 
@@ -341,7 +341,7 @@ private:
 GEOSX_HOST_DEVICE
 void
 ProppantSlurryFluidUpdate::
-  ComputeFluidDensity( real64 const & pressure,
+  computeFluidDensity( real64 const & pressure,
                        arraySlice1d< real64 const > const & componentConcentration,
                        arraySlice1d< real64 > const & componentDensity,
                        arraySlice1d< real64 > const & dComponentDensity_dPressure,
@@ -390,7 +390,7 @@ ProppantSlurryFluidUpdate::
 GEOSX_HOST_DEVICE
 void
 ProppantSlurryFluidUpdate::
-  ComputeComponentDensity( real64 const pressure,
+  computeComponentDensity( real64 const pressure,
                            arraySlice1d< real64 const > const & componentConcentration,
                            arraySlice1d< real64 > const & componentDensity,
                            arraySlice1d< real64 > const & dComponentDensity_dPressure,
@@ -416,7 +416,7 @@ ProppantSlurryFluidUpdate::
 GEOSX_HOST_DEVICE
 void
 ProppantSlurryFluidUpdate::
-  ComputeFluidViscosity( arraySlice1d< real64 const > const & componentDensity,
+  computeFluidViscosity( arraySlice1d< real64 const > const & componentDensity,
                          arraySlice1d< real64 const > const & dComponentDensity_dPressure,
                          arraySlice2d< real64 const > const & GEOSX_UNUSED_PARAM( dComponentDensity_dComponentConcentration ),
                          real64 const fluidDensity,
@@ -448,7 +448,7 @@ ProppantSlurryFluidUpdate::
 
 void
 ProppantSlurryFluidUpdate::
-  Compute( real64 const & proppantConcentration,
+  compute( real64 const & proppantConcentration,
            real64 const & fluidDensity,
            real64 const & dFluidDensity_dPressure,
            arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),

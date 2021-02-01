@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, Group * const parent ):
+ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const parent ):
   SlurryFluidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
@@ -73,9 +73,9 @@ void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group * cons
 }
 
 
-void ProppantSlurryFluid::PostProcessInput()
+void ProppantSlurryFluid::postProcessInput()
 {
-  SlurryFluidBase::PostProcessInput();
+  SlurryFluidBase::postProcessInput();
 
   GEOSX_ERROR_IF_LT_MSG( m_compressibility, 0.0,
                          getName() << ": invalid value of " << viewKeyStruct::compressibilityString );
@@ -128,7 +128,7 @@ ProppantSlurryFluid::createKernelWrapper()
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSlurryFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSlurryFluid, string const &, Group * const )
 
 } /* namespace constitutive */
 

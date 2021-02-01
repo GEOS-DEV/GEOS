@@ -41,7 +41,7 @@ template<>
 struct ConstitutivePassThruHandler<>
 {
   template< typename BASE, typename LAMBDA >
-  static void Execute( BASE & relation, LAMBDA lambda )
+  static void execute( BASE & relation, LAMBDA lambda )
   {
     GEOSX_UNUSED_VAR( relation )
     GEOSX_UNUSED_VAR( lambda )
@@ -59,7 +59,7 @@ template< typename TYPE, typename ... TYPES >
 struct ConstitutivePassThruHandler< TYPE, TYPES... >
 {
   template< typename BASE, typename LAMBDA >
-  static void Execute( BASE & relation, LAMBDA && lambda )
+  static void execute( BASE & relation, LAMBDA && lambda )
   {
     using Derived = add_const_if_t< TYPE, std::is_const< BASE >::value >;
 
@@ -69,7 +69,7 @@ struct ConstitutivePassThruHandler< TYPE, TYPES... >
     }
     else
     {
-      ConstitutivePassThruHandler< TYPES... >::Execute( relation, std::forward< LAMBDA >( lambda ) );
+      ConstitutivePassThruHandler< TYPES... >::execute( relation, std::forward< LAMBDA >( lambda ) );
     }
   }
 };

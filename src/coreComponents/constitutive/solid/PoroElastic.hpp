@@ -42,11 +42,11 @@ public:
 
 
   using UPDATE_BASE::setDiscretizationOps;
-  using UPDATE_BASE::GetStiffness;
-  using UPDATE_BASE::SmallStrainNoState;
-  using UPDATE_BASE::SmallStrain;
-  using UPDATE_BASE::HypoElastic;
-  using UPDATE_BASE::HyperElastic;
+  using UPDATE_BASE::getStiffness;
+  using UPDATE_BASE::smallStrainNoState;
+  using UPDATE_BASE::smallStrain;
+  using UPDATE_BASE::hypoElastic;
+  using UPDATE_BASE::hyperElastic;
 
   GEOSX_HOST_DEVICE
   real64 getBiotCoefficient() const
@@ -75,10 +75,10 @@ public:
   virtual ~PoroElastic() override;
 
 
-  static std::string CatalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return CatalogName(); }
+  static string catalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
+  virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
@@ -88,14 +88,14 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   inline virtual void
-  StateUpdatePointPressure( real64 const & pres,
+  stateUpdatePointPressure( real64 const & pres,
                             localIndex const k,
                             localIndex const q ) override
   {
-    m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
+    m_poreVolumeRelation.compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
   }
 
-  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                          arrayView1d< real64 const > const & dPres ) override final;
 
   KernelWrapper createKernelUpdates()

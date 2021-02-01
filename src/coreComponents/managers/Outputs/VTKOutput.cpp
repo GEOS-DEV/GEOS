@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-VTKOutput::VTKOutput( std::string const & name,
+VTKOutput::VTKOutput( string const & name,
                       Group * const parent ):
   OutputBase( name, parent ),
   m_plotFileRoot(),
@@ -57,26 +57,26 @@ VTKOutput::~VTKOutput()
 
 
 
-void VTKOutput::Execute( real64 const time_n,
+void VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const cycleNumber,
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
                          real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
                          Group * domain )
 {
-  DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
+  DomainPartition * domainPartition = Group::groupCast< DomainPartition * >( domain );
   if( m_writeBinaryData )
   {
-    m_writer.SetOutputMode( vtk::VTKOutputMode::BINARY );
+    m_writer.setOutputMode( vtk::VTKOutputMode::BINARY );
   }
   else
   {
-    m_writer.SetOutputMode( vtk::VTKOutputMode::ASCII );
+    m_writer.setOutputMode( vtk::VTKOutputMode::ASCII );
   }
-  m_writer.SetPlotLevel( m_plotLevel );
-  m_writer.Write( time_n, cycleNumber, *domainPartition );
+  m_writer.setPlotLevel( m_plotLevel );
+  m_writer.write( time_n, cycleNumber, *domainPartition );
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, string const &, Group * const )
 } /* namespace geosx */

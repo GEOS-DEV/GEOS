@@ -30,11 +30,11 @@ public:
   AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM && ) = delete;
 
 
-  static string CatalogName() { return "AcousticSEM"; }
+  static string catalogName() { return "AcousticSEM"; }
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 
 
   /**
@@ -44,23 +44,22 @@ public:
    */
   /**@{*/
   virtual
-  real64 SolverStep( real64 const & time_n,
+  real64 solverStep( real64 const & time_n,
                      real64 const & dt,
                      integer const cycleNumber,
                      DomainPartition & domain ) override;
 
   virtual
-  real64 ExplicitStep( real64 const & time_n,
+  real64 explicitStep( real64 const & time_n,
                        real64 const & dt,
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
   /// Returns the value of a Ricker at time t0 with central Fourier frequency f0
-  virtual
-  real64 EvaluateRicker( real64 const & t0, real64 const & f0 );
+  real64 evaluateRicker( real64 const & t0, real64 const & f0 );
   /// Returns the value of the second derivative of a Ricker at time t0 with central Fourier frequency f0
   virtual
-  real64 EvaluateSecondDerivativeRicker( real64 const & t0, real64 const & f0 );
+  real64 evaluateSecondDerivativeRicker( real64 const & t0, real64 const & f0 );
 
 
 //  virtual void ApplyBoundaryConditions( real64 const time,
@@ -83,7 +82,7 @@ public:
 
 
 protected:
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 
   array1d< string > m_solidMaterialNames;

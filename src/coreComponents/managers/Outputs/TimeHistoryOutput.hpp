@@ -37,7 +37,7 @@ namespace geosx
 class TimeHistoryOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
   TimeHistoryOutput( string const & name,
                      Group * const parent );
 
@@ -49,7 +49,7 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "TimeHistory"; }
+  static string catalogName() { return "TimeHistory"; }
 
   /**
    * @brief Perform initalization after all subgroups have been initialized.
@@ -59,13 +59,13 @@ public:
    * @param group The problem manager cast to a group.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups( Group * const group ) override;
 
   /**
    * @brief Writes out a time history file.
-   * @copydoc EventBase::Execute()
+   * @copydoc EventBase::execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -73,9 +73,9 @@ public:
                         dataRepository::Group * domain ) override;
   /**
    * @brief Writes out a time history file at the end of the simulation.
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,

@@ -65,17 +65,17 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseCapPres,
                         arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const > const & phaseVolFraction ) const override
   {
-    Compute( phaseVolFraction,
+    compute( phaseVolFraction,
              m_phaseCapPressure[k][q],
              m_dPhaseCapPressure_dPhaseVolFrac[k][q] );
   }
@@ -85,7 +85,7 @@ private:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  EvaluateVanGenuchtenFunction( real64 const scaledWettingVolFrac,
+  evaluateVanGenuchtenFunction( real64 const scaledWettingVolFrac,
                                 real64 const dScaledWettingPhaseVolFrac_dVolFrac,
                                 real64 const exponentInv,
                                 real64 const multiplier,
@@ -105,14 +105,14 @@ class VanGenuchtenCapillaryPressure : public CapillaryPressureBase
 {
 public:
 
-  VanGenuchtenCapillaryPressure( std::string const & name,
+  VanGenuchtenCapillaryPressure( string const & name,
                                  dataRepository::Group * const parent );
 
   virtual ~VanGenuchtenCapillaryPressure() override;
 
-  static std::string CatalogName() { return "VanGenuchtenCapillaryPressure"; }
+  static string catalogName() { return "VanGenuchtenCapillaryPressure"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = VanGenuchtenCapillaryPressureUpdate;
@@ -135,7 +135,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   array1d< real64 > m_phaseMinVolumeFraction;
   array1d< real64 > m_phaseCapPressureExponentInv;
@@ -149,7 +149,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 VanGenuchtenCapillaryPressureUpdate::
-  Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  compute( arraySlice1d< real64 const > const & phaseVolFraction,
            arraySlice1d< real64 > const & phaseCapPres,
            arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
@@ -183,7 +183,7 @@ VanGenuchtenCapillaryPressureUpdate::
     real64 const scaledWettingVolFrac                = volFracScaled;
     real64 const dScaledWettingPhaseVolFrac_dVolFrac = volFracScaleInv;
 
-    EvaluateVanGenuchtenFunction( scaledWettingVolFrac,
+    evaluateVanGenuchtenFunction( scaledWettingVolFrac,
                                   dScaledWettingPhaseVolFrac_dVolFrac,
                                   exponentInv,
                                   multiplier,
@@ -207,7 +207,7 @@ VanGenuchtenCapillaryPressureUpdate::
     real64 const scaledWettingVolFrac                = 1-volFracScaled;
     real64 const dScaledWettingPhaseVolFrac_dVolFrac =  -volFracScaleInv;
 
-    EvaluateVanGenuchtenFunction( scaledWettingVolFrac,
+    evaluateVanGenuchtenFunction( scaledWettingVolFrac,
                                   dScaledWettingPhaseVolFrac_dVolFrac,
                                   exponentInv,
                                   multiplier,
@@ -221,7 +221,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 VanGenuchtenCapillaryPressureUpdate::
-  EvaluateVanGenuchtenFunction( real64 const scaledWettingVolFrac,
+  evaluateVanGenuchtenFunction( real64 const scaledWettingVolFrac,
                                 real64 const dScaledWettingPhaseVolFrac_dVolFrac,
                                 real64 const exponentInv,
                                 real64 const multiplier,

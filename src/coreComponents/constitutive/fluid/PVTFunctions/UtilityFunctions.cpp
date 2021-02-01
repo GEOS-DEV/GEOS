@@ -25,7 +25,7 @@ namespace geosx
 namespace PVTProps
 {
 
-EvalArgs2D XYTable::Value( EvalArgs2D const & x, EvalArgs2D const & y ) const
+EvalArgs2D XYTable::value( EvalArgs2D const & x, EvalArgs2D const & y ) const
 {
   localIndex_array xIndices( 2 ), yIndices( 2 );
 
@@ -90,7 +90,7 @@ EvalArgs2D XYTable::Value( EvalArgs2D const & x, EvalArgs2D const & y ) const
 
 
 template< class T >
-T XTable::GetValue( T const & x ) const
+T XTable::getValue( T const & x ) const
 {
 
   localIndex idx = 0;
