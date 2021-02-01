@@ -712,7 +712,6 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
   FaceManager const & faceManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
   NodeManager const & nodeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
 
-  //arrayView1d< real64 const > const faceArea  = faceManager.getReference< real64_array >( "faceArea" );
   arrayView1d< real64 const > const faceArea  = faceManager.faceArea();
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
