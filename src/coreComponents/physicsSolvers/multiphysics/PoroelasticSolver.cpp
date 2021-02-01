@@ -36,6 +36,10 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
+#include "SinglePhasePoroelasticKernel.hpp"
+
+
+
 namespace geosx
 {
 
@@ -333,11 +337,43 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
 //                                 localMatrix,
 //                                 localRhs );
 
-  m_solidSolver->assemblyLaunch< constitutive::PoroElasticBase,
-                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
-                                                                                               dofManager,
-                                                                                               localMatrix,
-                                                                                               localRhs );
+//  m_solidSolver->assemblyLaunch< constitutive::PoroElasticBase,
+//                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
+//                                                                                               dofManager,
+//                                                                                               localMatrix,
+//                                                                                               localRhs );
+
+  GEOSX_MARK_FUNCTION;
+  MeshLevel & mesh = *(domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+
+  NodeManager const & nodeManager = *(mesh.getNodeManager());
+
+  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+
+  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+  m_solidSolver->resetStressToBeginningOfStep( domain );
+
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+
+  m_solidSolver->getMaxForce() =
+      finiteElement::
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                    constitutive::PoroElasticBase,
+                                    CellElementSubRegion,
+                                    PoroelasticKernels::SinglePhase >( mesh,
+                                                                       targetRegionNames(),
+                                                                       this->getDiscretizationName(),
+                                                                       m_solidSolver->solidMaterialNames(),
+                                                                       dispDofNumber,
+                                                                       pDofKey,
+                                                                       dofManager.rankOffset(),
+                                                                       localMatrix,
+                                                                       localRhs,
+                                                                       gravityVectorData);
+
 
   // assemble J_FF
   m_flowSolver->assembleSystem( time_n, dt,
@@ -347,10 +383,10 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
                                 localRhs );
 
   // assemble J_SF
-  assembleCouplingTerms( domain,
-                         dofManager,
-                         localMatrix,
-                         localRhs );
+//  assembleCouplingTerms( domain,
+//                         dofManager,
+//                         localMatrix,
+//                         localRhs );
 
 }
 

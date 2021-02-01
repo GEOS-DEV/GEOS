@@ -440,6 +440,8 @@
 		<xsd:attribute name="normal" type="R1Tensor" use="required" />
 		<!--origin => Origin point (x,y,z) of the plane (basically, any point on the plane)-->
 		<xsd:attribute name="origin" type="R1Tensor" use="required" />
+		<!--tolerance => Tolerance to determine if a point sits on the plane or not. It is relative to the maximum dimension of the plane.-->
+		<xsd:attribute name="tolerance" type="real64" default="1e-05" />
 		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
 		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
