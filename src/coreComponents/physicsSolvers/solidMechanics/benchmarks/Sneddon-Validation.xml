@@ -3,6 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="0.0, 0.0, 0.0">
+    <!-- SPHINX_SNEDDON_SOLVER -->
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
       targetRegions="{ Domain, Fracture }"
@@ -36,18 +37,9 @@
       fractureRegion="Fracture"
       logLevel="1"/>
   </Solvers>
+  <!-- SPHINX_SNEDDON_SOLVER_END -->
 
   <Mesh>
-    <!--InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1001 }"
-      yCoords="{ 0, 1001 }"
-      zCoords="{ 0, 100 }"
-      nx="{ 101 }"
-      ny="{ 101 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/-->
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
@@ -61,26 +53,8 @@
       
   </Mesh>
 
+  <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
-    <Box
-      name="ytopCenter"
-      xMin=" 500.0, 1000.99, -0.01"
-      xMax=" 500.1, 1001.01, 100.01"/>
-    <Box
-      name="ybottomCenter"
-      xMin=" 999.0, -0.01, -0.01"
-      xMax=" 1000.01,  0.01, 100.01"/>
-      
-    <Box
-      name="xrightCenter"
-      xMin=" -999.01, 499.00, -0.01"
-      xMax=" 1000.01, 501.00, 100.01"/>
-      
-    <Box
-      name="xleftCenter"
-      xMin=" -0.01, 499.00, -0.01"
-      xMax=" 1.01, 501.00, 100.01"/>
-      
     <BoundedPlane
       name="FracturePlane"
       normal="0, 1, 0"
@@ -89,7 +63,9 @@
       widthVector="0, 0, 1"
       dimensions="{ 20, 100 }"/>
   </Geometry>
-
+  <!-- SPHINX_SNEDDON_GEOMETRY_END -->
+  
+  <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
     maxTime="10">
     <SoloEvent
@@ -100,7 +76,8 @@
       name="solverApplications"
       forceDt="10"
       target="/Solvers/mechSolve"/>
-
+ <!-- SPHINX_SNEDDON_EVENTS_END -->
+ 
     <PeriodicEvent
       name="outputs"
       cycleFrequency="10"
@@ -136,6 +113,7 @@
     </FiniteElements>
   </NumericalMethods>
 
+  <!-- SPHINX_SNEDDON_REGIONS-->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
@@ -148,7 +126,8 @@
       materialList="{ rock }"
       defaultAperture="1e-3"/>
   </ElementRegions>
-
+  <!-- SPHINX_SNEDDON_REGIONS_END -->
+  
   <Constitutive>
     <LinearElasticIsotropic
       name="rock"
@@ -166,6 +145,7 @@
     </Contact>
   </Constitutive>
 
+  <!-- SPHINX_SNEDDON_BC -->
   <FieldSpecifications>
     <FieldSpecification
       name="xnegconstraint"
@@ -199,8 +179,7 @@
       component="0"
       scale="-1.00e5"/>      
   </FieldSpecifications>
-
-  <Functions/>
+  <!-- SPHINX_SNEDDON_BC_END -->
   
   <Tasks>
     <PackCollection
