@@ -190,7 +190,6 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
 
   localIndex const fracElement = efracElements[0];
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector(fracElement);
-  // arraySlice1d< real64 const> const o = fractureSubRegion.getOrigin(fracElement);
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
   real64 origin[3];
   LvArray::tensorOps::copy< 3 >( origin, centers[ fracElement ] );
@@ -210,6 +209,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
 {
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
   localIndex constexpr numElems = 2;   // tpfa
+
   stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
   stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
   stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
@@ -222,12 +222,14 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
   stencilWeights[0] =  transmissibility;
 
   // frac data
-  stencilCellsRegionIndex[1] = fractureSubRegion.getParent()->getIndexInParent();
+  // subregion->parent is elementSubRegions (mind s in the end)
+  // subregion->parent->parent is Fracture
+  stencilCellsRegionIndex[1] = fractureSubRegion.getParent()->getParent()->getIndexInParent();
   stencilCellsSubRegionIndex[1] = fractureSubRegion.getIndexInParent();
   stencilCellsIndex[1] = fracElement;
   stencilWeights[1] = -transmissibility;
 
-  m_stencil.add(  2,
+  m_stencil.add(  numElems,
                   stencilCellsRegionIndex.data(),
                   stencilCellsSubRegionIndex.data(),
                   stencilCellsIndex.data(),

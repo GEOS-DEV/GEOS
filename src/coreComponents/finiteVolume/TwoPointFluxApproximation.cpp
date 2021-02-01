@@ -703,7 +703,6 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
                                                                 localIndex const fractureRegionIndex ) const
 {
   EdgeManager const & embSurfEdgeManager = mesh.getEmbdSurfEdgeManager();
-  // ElementRegionManager & elemManager = *( mesh.getElemManager() );
   NodeManager & nodeManager = *( mesh.getNodeManager() );
 
   // Get the stencils
@@ -717,7 +716,7 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
 
-  arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
+  // arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
   localIndex connectorIndex = 0;
@@ -809,8 +808,8 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   bool const projection = true;
   if ( projection )
   {
-    ProjectionEDFMHelper pedfm(std::ref(mesh), geometricObjManager, ref(m_coeffName), std::ref(cellStencil));
-    pedfm.addNonNeighboringConnections(std::ref(fractureSubRegion));
+    ProjectionEDFMHelper pedfm(std::cref(mesh), geometricObjManager, std::cref(m_coeffName), std::ref(cellStencil));
+    pedfm.addNonNeighboringConnections(std::cref(fractureSubRegion));
   }
 }
 
