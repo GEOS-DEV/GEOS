@@ -184,7 +184,7 @@ public:
       std::list< typename CatalogType::key_type > keys = getKeys();
       string const tmp = stringutilities::strjoin( keys.cbegin(), keys.cend(), ",\n" );
 
-      string errorMsg = "Could not find \"" + objectTypeName + "\" in this catalog. ";
+      string errorMsg = "Could not find keyword \"" + objectTypeName + "\" in this context. ";
       errorMsg += "Please be sure that all your keywords are properly spelled or that input file parameters have not changed.\n";
       errorMsg += "All available keys are: [\n" + tmp + "\n]";
       GEOSX_ERROR( errorMsg );
@@ -194,7 +194,7 @@ public:
     CatalogInterface< BASETYPE, ARGS... > const * builder = getCatalog().at( objectTypeName ).get();
     if( builder == nullptr )
     {
-      const string errorMsg = "\"" + objectTypeName + "\" found in the catalog. But the builder is null.\n";
+      const string errorMsg = "\"" + objectTypeName + "\" could be found. But the builder is null.\n";
       GEOSX_ERROR( errorMsg );
     }
 
