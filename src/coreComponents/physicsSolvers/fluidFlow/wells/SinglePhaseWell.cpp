@@ -71,10 +71,19 @@ void SinglePhaseWell::registerDataOnMesh( Group * const meshBodies )
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::connRateString )->setPlotLevel( PlotLevel::LEVEL_0 );
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaConnRateString );
 
-    PerforationData * const perforationData = subRegion.getPerforationData();
-    perforationData->registerWrapper< array1d< real64 > >( viewKeyStruct::perforationRateString );
-    perforationData->registerWrapper< array2d< real64 > >( viewKeyStruct::dPerforationRate_dPresString )->
+    PerforationData & perforationData = *subRegion.getPerforationData();
+    perforationData.registerWrapper< array1d< real64 > >( viewKeyStruct::perforationRateString );
+    perforationData.registerWrapper< array2d< real64 > >( viewKeyStruct::dPerforationRate_dPresString )->
       reference().resizeDimension< 1 >( 2 );
+
+    WellControls & wellControls = getWellControls( subRegion );
+    wellControls.registerWrapper< real64 >( viewKeyStruct::currentBHPString );
+    wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentBHP_dPresString );
+
+    wellControls.registerWrapper< real64 >( viewKeyStruct::currentVolRateString );
+    wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dPresString );
+    wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dRateString );
+
   } );
 }
 
@@ -87,6 +96,168 @@ void SinglePhaseWell::initializePreSubGroups( Group * const rootGroup )
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   validateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+  validateWellConstraints( meshLevel );
+}
+
+void SinglePhaseWell::validateWellConstraints( MeshLevel const & meshLevel ) const
+{
+  // now that we know we are single-phase, we can check a few things in the constraints
+  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                               WellElementSubRegion const & subRegion )
+  {
+    WellControls const & wellControls = getWellControls( subRegion );
+    WellControls::Control const currentControl = wellControls.getControl();
+    real64 const targetTotalRate = wellControls.getTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.getTargetPhaseRate();
+    GEOSX_ERROR_IF( currentControl == WellControls::Control::PHASEVOLRATE,
+                    "Phase rate control is not available for SinglePhaseWell" );
+    GEOSX_ERROR_IF( isZero( targetTotalRate ),
+                    "Target total rate cannot be equal to zero" );
+    GEOSX_ERROR_IF( !isZero( targetPhaseRate ),
+                    "Target phase rate cannot be used for SinglePhaseWell" );
+  } );
+}
+
+void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
+{
+  GEOSX_MARK_FUNCTION;
+
+  // the rank that owns the reference well element is responsible for the calculations below.
+  if( !subRegion.isLocallyOwned() )
+  {
+    return;
+  }
+
+  localIndex const iwelemRef = subRegion.getTopWellElementIndex();
+
+  // subRegion data
+
+  arrayView1d< real64 const > const pres =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+  arrayView1d< real64 const > const dPres =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+
+  arrayView1d< real64 const > const wellElemGravCoef =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+
+  // fluid data
+
+  SingleFluidBase & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+  arrayView2d< real64 const > const & dens = fluid.density();
+  arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
+
+  // control data
+
+  WellControls & wellControls = getWellControls( subRegion );
+
+  real64 const & refGravCoef = wellControls.getReferenceGravityCoef();
+
+  real64 & currentBHP =
+    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString );
+  real64 & dCurrentBHP_dPres =
+    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString );
+
+  // bring everything back to host, capture the scalars by reference
+  forAll< serialPolicy >( 1, [pres,
+                              dPres,
+                              dens,
+                              dDens_dPres,
+                              wellElemGravCoef,
+                              &currentBHP,
+                              &dCurrentBHP_dPres,
+                              &iwelemRef,
+                              &refGravCoef] ( localIndex const )
+  {
+    currentBHP = pres[iwelemRef] + dPres[iwelemRef] + dens[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
+    dCurrentBHP_dPres = 1.0 + dDens_dPres[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
+  } );
+}
+
+void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
+{
+  GEOSX_MARK_FUNCTION;
+
+  // the rank that owns the reference well element is responsible for the calculations below.
+  if( !subRegion.isLocallyOwned() )
+  {
+    return;
+  }
+
+  localIndex const iwelemRef = subRegion.getTopWellElementIndex();
+
+  // subRegion data
+
+  arrayView1d< real64 const > const pres =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+  arrayView1d< real64 const > const dPres =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+
+  arrayView1d< real64 const > const & connRate =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::connRateString );
+  arrayView1d< real64 const > const & dConnRate =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString );
+
+  // fluid data
+
+  SingleFluidBase & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+  arrayView2d< real64 const > const & dens = fluid.density();
+  arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
+
+  // control data
+
+  WellControls & wellControls = getWellControls( subRegion );
+
+  integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+  real64 const & surfacePres = wellControls.getSurfacePressure();
+
+  real64 & currentVolRate =
+    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString );
+  real64 & dCurrentVolRate_dPres =
+    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString );
+  real64 & dCurrentVolRate_dRate =
+    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString );
+
+  constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+  {
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+    // bring everything back to host, capture the scalars by reference
+    forAll< serialPolicy >( 1, [fluidWrapper,
+                                pres,
+                                dPres,
+                                connRate,
+                                dConnRate,
+                                dens,
+                                dDens_dPres,
+                                &useSurfaceConditions,
+                                &surfacePres,
+                                &currentVolRate,
+                                &dCurrentVolRate_dPres,
+                                &dCurrentVolRate_dRate,
+                                &iwelemRef] ( localIndex const )
+    {
+      //    We need to evaluate the density as follows:
+      //      - Surface conditions: using the surface pressure provided by the user
+      //      - Reservoir conditions: using the pressure in the top element
+
+      if( useSurfaceConditions )
+      {
+        // we need to compute the surface density
+        fluidWrapper.update( iwelemRef, 0, surfacePres );
+      }
+      else
+      {
+        real64 const refPres = pres[iwelemRef] + dPres[iwelemRef];
+        fluidWrapper.update( iwelemRef, 0, refPres );
+      }
+
+      real64 const densInv = 1.0 / dens[iwelemRef][0];
+      currentVolRate = ( connRate[iwelemRef] + dConnRate[iwelemRef] ) * densInv;
+      dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
+      dCurrentVolRate_dRate = densInv;
+
+    } );
+  } );
 }
 
 void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex ) const
@@ -107,8 +278,15 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion, localI
 
 void SinglePhaseWell::updateState( WellElementSubRegion & subRegion, localIndex const targetIndex )
 {
+  // update volumetric rates for the well constraints
+  // Warning! This must be called before updating the fluid model
+  updateVolRateForConstraint( subRegion, targetIndex );
+
   // update density in the well elements
   updateFluidModel( subRegion, targetIndex );
+
+  // update the current BHP
+  updateBHPForConstraint( subRegion, targetIndex );
 
   // update perforation rates
   computePerforationRates( subRegion, targetIndex );
@@ -150,8 +328,6 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
     // 3) Estimate the pressures in the well elements using the average density
     PresInitializationKernel::launch< parallelDevicePolicy<> >( perforationData.size(),
                                                                 subRegion.size(),
-                                                                subRegion.isLocallyOwned(),
-                                                                subRegion.getTopRank(),
                                                                 perforationData.getNumPerforationsGlobal(),
                                                                 wellControls,
                                                                 m_resPressure.toNestedViewConst(),
@@ -167,9 +343,13 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
     //       to better initialize the rates
     updateState( subRegion, targetIndex );
 
+    SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+    arrayView2d< real64 const > const & wellElemDens = fluid.density();
+
     // 5) Estimate the well rates
     RateInitializationKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
                                                                 wellControls,
+                                                                wellElemDens,
                                                                 connRate );
   } );
 }
@@ -182,6 +362,9 @@ void SinglePhaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
                                          arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
+
+  // saved current dt for residual normalization
+  m_currentDt = dt;
 
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -243,10 +426,6 @@ void SinglePhaseWell::formPressureRelations( DomainPartition const & domain,
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
     arrayView1d< real64 const > const & dWellElemPressure =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
-    arrayView1d< real64 const > const & connRate =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::connRateString );
-    arrayView1d< real64 const > const & dConnRate =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString );
 
     // get well constitutive data
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
@@ -258,12 +437,11 @@ void SinglePhaseWell::formPressureRelations( DomainPartition const & domain,
                                       parallelDeviceReduce >( subRegion.size(),
                                                               dofManager.rankOffset(),
                                                               subRegion.isLocallyOwned(),
+                                                              subRegion.getTopWellElementIndex(),
                                                               wellControls,
                                                               wellElemDofNumber,
                                                               wellElemGravCoef,
                                                               nextWellElemIndex,
-                                                              connRate,
-                                                              dConnRate,
                                                               wellElemPressure,
                                                               dWellElemPressure,
                                                               wellElemDensity,
@@ -273,18 +451,18 @@ void SinglePhaseWell::formPressureRelations( DomainPartition const & domain,
 
     if( controlHasSwitched == 1 )
     {
+      // Note: if BHP control is not viable, we switch to TOTALVOLRATE
+      //       if TOTALVOLRATE is not viable, we switch to BHP
+
       if( wellControls.getControl() == WellControls::Control::BHP )
       {
-        wellControls.setControl( WellControls::Control::LIQUIDRATE,
-                                 wellControls.getTargetRate() );
+        wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate() );
         GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
                                                               << " from BHP constraint to rate constraint" );
       }
       else
       {
-        wellControls.setControl( WellControls::Control::BHP,
-                                 wellControls.getTargetBHP() );
-
+        wellControls.switchToBHPControl( wellControls.getTargetBHP() );
         GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
                                                               << " from rate constraint to BHP constraint" );
       }
@@ -390,18 +568,22 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const & wellElemVolume = subRegion.getElementVolume();
 
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & wellElemDensity = fluid.density();
 
+    WellControls const & wellControls = getWellControls( subRegion );
+
     ResidualNormKernel::launch< parallelDevicePolicy<>,
                                 parallelDeviceReduce >( localRhs,
                                                         dofManager.rankOffset(),
+                                                        subRegion.isLocallyOwned(),
+                                                        subRegion.getTopWellElementIndex(),
+                                                        wellControls,
                                                         wellElemDofNumber,
                                                         wellElemGhostRank,
-                                                        wellElemVolume,
                                                         wellElemDensity,
+                                                        m_currentDt,
                                                         &localResidualNorm );
 
   } );
