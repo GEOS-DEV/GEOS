@@ -613,7 +613,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 &temp,
                                 &currentTotalVolRate,
                                 &dCurrentTotalVolRate_dPres,
-                                &dCurrentTotalVolRate_dCompDens,
+                                dCurrentTotalVolRate_dCompDens,
                                 &dCurrentTotalVolRate_dRate,
                                 currentPhaseVolRate,
                                 dCurrentPhaseVolRate_dPres,

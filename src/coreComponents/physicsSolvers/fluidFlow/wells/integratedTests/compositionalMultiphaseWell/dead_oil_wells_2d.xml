@@ -57,8 +57,8 @@
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="297.15"
-        targetBHP="2e6"
-        targetPhaseRate="1e-6"
+        targetBHP="3e6"
+        targetPhaseRate="1e-7"
         targetPhaseName="oil"/>
       <WellControls
         name="wellControls3"
@@ -68,7 +68,7 @@
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="297.15"     
-        targetBHP="4e7"
+        targetBHP="4.5e7"
         targetTotalRate="1e-5"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>

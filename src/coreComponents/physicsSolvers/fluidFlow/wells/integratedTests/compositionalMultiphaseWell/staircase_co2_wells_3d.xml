@@ -43,15 +43,15 @@
         name="wellControls1"
         type="producer"
         control="phaseVolRate"
-	referenceElevation="12"
+        referenceElevation="12"
         targetBHP="1e6"
         targetPhaseRate="1e-7"
-	targetPhaseName="water"/>
+        targetPhaseName="water"/>
       <WellControls
         name="wellControls2"
         type="injector"
         control="totalVolRate"
-	referenceElevation="12"	
+        referenceElevation="12" 
         targetBHP="5e7"
         targetTotalRate="7.5e-6"
         injectionStream="{ 0.995, 0.005 }"/>
