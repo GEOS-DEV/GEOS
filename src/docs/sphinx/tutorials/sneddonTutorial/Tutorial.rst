@@ -40,14 +40,6 @@ Description of the case
 We compute the displacement field induced by the presence of a pressurized fracture,
 of length :math:`L_f`, in a porous medium.
 
-.. _problemSketchFig:
-.. figure:: sneddon_sketch.svg
-   :align: center
-   :width: 500
-   :figclass: align-center
-
-   Sketch of the the setup for Terzaghi's problem.
-
 GEOSX will calculate the displacement field in the porous matrix and the displacement
 jump at the fracture surface.
 We will use the analytical solution for the fracture aperture, :math:`w_n` (normal component of the
@@ -68,62 +60,56 @@ Preparing the input files
 
 All inputs for this case are contained inside a single XML file.
 In this tutorial, we focus our attention on the ``Solvers`` tags,
-the ``ElementRegions`` tags.
+the ``ElementRegions`` tags and the Geometry tags.
 
 Solvers: setting up the embedded fractures mechanics solver
 -----------------------------------------------------------
+To define a mechanics solver capable of including embedded fractures, we will
+define two solvers:
 
-GEOSX is a multi-physics tool. Different combinations of
-physics solvers available in the code can be applied
-in different regions of the mesh at different moments of the simulation.
-The XML ``Solvers`` tag is used to list and parameterize these solvers.
-
-To specify a coupling between two solvers, as done here,
-we define and characterize each single-physics solver separately.
-Then, we define a *coupling solver* between these single-physics
-solvers as another, separate, solver.
-This approach allows for generality and flexibility in our multi-physics resolutions.
-The order in which these solver specifications is done is not important.
-It is important, though, to instantiate each single-physic solvers
-with meaningful names. The names given to these single-physics solver instances
-will be used to recognize them and create the coupling.
-
-To define a poroelastic coupling, we will effectively define three solvers:
-
- - the single-physics flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
- - the small-stress Lagrangian mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``LinearElasticitySolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
- - the coupling solver that will bind the two single-physics solvers above, an object of type ``Poroelastic`` called here ``PoroelasticitySolver`` (more information at :ref:`PoroelasticSolver`).
+ - a ``SolidMechanicsEmbeddedFractures`` solver, called ``mechSolve``
+ - a small-stress Lagrangian mechanics solver, of type ``SolidMechanicsLagrangianSSLE`` called here ``matrixSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`)
 
 Note that the ``name`` attribute of these solvers is
-chosen by the user and is not imposed by GEOSX.
+chosen by the user and is not imposed by GEOSX. It is important to make sure that the
+``solidSolverName`` specified in the embedded fractures solver corresponds to the
+small-stress Lagrangian solver used in the matrix.
 
 The two single-physics solvers are parameterized as explained
 in their respective documentation, each with their own tolerances,
 verbosity levels, target regions,
 and other solver-specific attributes.
 
-Let us focus our attention on the coupling solver.
-This solver (``PoroelasticitySolver``) uses a set of attributes that specifically describe the coupling for a poroelastic framework.
-For instance, we must point this solver to the correct fluid solver (here: ``SinglePhaseFlowSolver``), the correct solid solver (here: ``LinearElasticitySolver``).
-Now that these two solvers are tied together inside the coupling solver,
-we have a coupled multiphysics problem defined.
-More parameters are required to characterize a coupling.
-Here, we specify the coupling type (``FIM``, fully implicit method; a choice among several possible options),
-the discretization method (``FE1``, defined further in the input file),
-and the target regions (here, we only have one, ``Region1``).
+Additionally, we need to specify another solver of type, ``EmbeddedSurfaceGenerator``,
+which is used to discretize the fracture planes.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_SOLVER -->
   :end-before: <!-- SPHINX_SNEDDON_SOLVER_END -->
 
-  Setting up mesh, material properties and boundary conditions
-  --------------------------------------------------------------------
+Events
+-------------------------------------------------------------------
+For this problem we will add two events defining solver applications:
+
+- an event specifying the execution of the ``EmbeddedSurfaceGenerator`` to generate
+the fracture elements.
+- a periodic even specifying the exectution of the embeeded fractures solver.
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
+  :language: xml
+  :start-after: <!-- SPHINX_SNEDDON_EVENTS -->
+  :end-before: <!-- SPHINX_SNEDDON_EVENTS_END -->
+
+Setting up mesh, material properties and boundary conditions
+--------------------------------------------------------------------
 
   Last, let us take a closer look at the geometry of this simple problem.
-  We use the internal mesh generator to create a beam-like mesh,
-  with one single element along the Y and Z axes, and 21 elements along the X axis.
-  All the elements are hexahedral elements (C3D8) of the same dimension (1x1x1 meters).
+  We use the internal mesh generator to create a large domain
+  (:math:`1000\, m \, \times 1001 \,  m \, \times 1 \, m`), with one single element
+  along the Z axes, 420 elements along the X axis and 221 elements along the Y axis.
+  All the elements are hexahedral elements (C3D8) and that refinement is performed
+  around the fracture.
 
   .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
     :language: xml
@@ -141,7 +127,7 @@ and the target regions (here, we only have one, ``Region1``).
   +----------------+-----------------------+------------------+-------------------+
   | :math:`L_f`    | Fracture length       | [m]              |                   |
   +----------------+-----------------------+------------------+-------------------+
-  | :math:`p_f`    | fracture pressure     | [Pa]             | 10.0              |
+  | :math:`p_f`    | fracture pressure     | [Pa]             | 1.0*10\ :sup:`5`  |
   +----------------+-----------------------+------------------+-------------------+
 
   Material properties and boundary conditions are specified in the
@@ -150,18 +136,6 @@ and the target regions (here, we only have one, ``Region1``).
 Adding an embedded fracture
 ---------------------------------
 
-Numerical methods in multiphysics settings are similar to single physics numerical methods. All can be defined under the same ``NumericalMethods`` XML tag.
-In this problem, we use finite volume for flow and finite elements for solid mechanics.
-Both of these methods require additional parameterization attributes to be defined here.
-
-As we have seen before, the coupling solver and the solid mechanics solver require the specification of a discretization method called ``FE1``.
-This discretization method is defined here as a finite element method
-using linear basis functions and Gaussian quadrature rules.
-For more information on defining finite elements numerical schemes,
-please see the dedicated :ref:`FiniteElementDiscretization` section.
-
-The finite volume method requires the specification of a discretization scheme.
-Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolumeDiscretization`).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
   :language: xml
@@ -195,7 +169,6 @@ times with the numerical solution (markers).
    from mpmath import *
    import math
 
-
    class Sneddon:
 
        def __init__(self, mechanicalParameters, length, pressure):
@@ -223,6 +196,7 @@ times with the numerical solution (markers).
 
 
   def getFracturePressureFromXML( xmlFilePath ):
+
       tree = ElementTree.parse(xmlFilePath)
 
       param = tree.findall('FieldSpecifications/FieldSpecification')
@@ -238,6 +212,7 @@ times with the numerical solution (markers).
 
 
    def getFractureLengthFromXML(xmlFilePath):
+
        tree = ElementTree.parse(xmlFilePath)
        boundedPlane = tree.find('Geometry/BoundedPlane')
        dimensions = boundedPlane.get("dimensions")
@@ -248,8 +223,8 @@ times with the numerical solution (markers).
 
        return length, origin[0]
 
-
    def main():
+
        # File path
        hdf5File1Path = "displacemenJump_history.hdf5"
        hdf5File2Path = "cell_centers.hdf5"
@@ -303,7 +278,6 @@ times with the numerical solution (markers).
 
    if __name__ == "__main__":
        main()
-
 
 ------------------------------------------------------------------
 To go further
