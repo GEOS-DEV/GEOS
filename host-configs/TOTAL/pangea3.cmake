@@ -5,7 +5,7 @@ set(CONFIG_NAME "pangea3" CACHE PATH "")
 
 # Set up the tpls
 # Use your own location using -DGEOSX_TPL_DIR=... or by setting this variable here
-#set(GEOSX_TPL_DIR /work206/workrd/SCR/GEOSX/j0436735/pangea3/GEOSX/thirdPartyLibs/install-pangea3-release CACHE PATH "")
+set(GEOSX_TPL_DIR /work206/workrd/SCR/GEOSX/j0436735/pangea3/GEOSX/thirdPartyLibs/install-pangea3-release CACHE PATH "")
 
 set( HOST_COMPILER_PATH /data_local/sw/spack/0.14.1/opt/spack/linux-rhel7-power8le/gcc-4.8/gcc-8.3.0-cchkzjuh7q4ac2hnoawiyfy2bryfajkt/bin )
 
@@ -27,13 +27,6 @@ set(CMAKE_Fortran_COMPILER ${HOST_COMPILER_PATH}/gfortran CACHE PATH "")
 set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
 #set(FORTRAN_MANGLE_NO_UNDERSCORE ON CACHE BOOL "")
 
-
-
-
-
-
-
-
 # OpenMP options
 set(ENABLE_OPENMP ON CACHE BOOL "" FORCE)
 #set(OpenMP_Fortran_FLAGS "-qsmp=omp" CACHE STRING "")
@@ -41,7 +34,8 @@ set(ENABLE_OPENMP ON CACHE BOOL "" FORCE)
 
 # MPI options
 set(ENABLE_MPI ON CACHE BOOL "")
-set(MPI_ROOT /data_local/sw/spectrum_mpi/10.03.01.00rtm5-rh7_20191114 CACHE PATH "")
+#set(MPI_ROOT /data_local/sw/spectrum_mpi/10.03.01.00rtm5-rh7_20191114 CACHE PATH "")
+set(MPI_ROOT /data_local/sw/openmpi/4.0.3/toolchain/rhels-7.6/gcc-8.3+cuda-10.1 CACHE PATH "")
 set(MPI_C_COMPILER         ${MPI_ROOT}/bin/mpicc  CACHE PATH "")
 set(MPI_CXX_COMPILER       ${MPI_ROOT}/bin/mpicxx CACHE PATH "")
 set(MPI_Fortran_COMPILER   ${MPI_ROOT}/bin/mpifort CACHE PATH "")
@@ -116,5 +110,5 @@ set(ENABLE_PETSC OFF CACHE BOOL "")
 
 # Only for GEOSX, not the TPLs
 #set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
-#include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
 
