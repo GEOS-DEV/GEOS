@@ -440,6 +440,8 @@
 		<xsd:attribute name="normal" type="R1Tensor" use="required" />
 		<!--origin => Origin point (x,y,z) of the plane (basically, any point on the plane)-->
 		<xsd:attribute name="origin" type="R1Tensor" use="required" />
+		<!--tolerance => Tolerance to determine if a point sits on the plane or not. It is relative to the maximum dimension of the plane.-->
+		<xsd:attribute name="tolerance" type="real64" default="1e-05" />
 		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
 		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -935,6 +937,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations (recommended with rate control)-->
+		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
 		<!--relPermNames => Names of relative permeability constitutive models to use-->
 		<xsd:attribute name="relPermNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -949,27 +953,38 @@ the relative residual norm satisfies:
 	<xsd:complexType name="WellControlsType">
 		<!--control => Well control. Valid options:
 * BHP
-* gasRate
-* oilRate
-* waterRate
-* liquidRate-->
+* phaseVolRate
+* totalVolRate-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
 		<!--injectionStream => Global component densities for the injection stream-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
+		<!--referenceElevation => Reference elevation where BHP control is enforced-->
+		<xsd:attribute name="referenceElevation" type="real64" use="required" />
+		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used-->
+		<xsd:attribute name="surfacePressure" type="real64" default="0" />
+		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used-->
+		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
 		<!--targetBHP => Target bottom-hole pressure-->
 		<xsd:attribute name="targetBHP" type="real64" use="required" />
-		<!--targetRate => Target rate-->
-		<xsd:attribute name="targetRate" type="real64" use="required" />
+		<!--targetPhaseName => Name of the target phase-->
+		<xsd:attribute name="targetPhaseName" type="string" default="" />
+		<!--targetPhaseRate => Target phase volumetric rate-->
+		<xsd:attribute name="targetPhaseRate" type="real64" default="0" />
+		<!--targetTotalRate => Target total volumetric rate-->
+		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
 		<!--type => Well type. Valid options:
 * producer
 * injector-->
 		<xsd:attribute name="type" type="geosx_WellControls_Type" use="required" />
+		<!--useSurfaceConditions => Flag to specify whether rates are checked at surface or reservoir conditions.
+Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
+		<xsd:attribute name="useSurfaceConditions" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_WellControls_Control">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|BHP|gasRate|oilRate|waterRate|liquidRate" />
+			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_WellControls_Type">

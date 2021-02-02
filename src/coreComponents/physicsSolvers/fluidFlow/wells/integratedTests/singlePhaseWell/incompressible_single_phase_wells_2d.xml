@@ -33,20 +33,23 @@
         name="wellControls1"
         type="producer"
         control="BHP"
+        referenceElevation="0.5"        
         targetBHP="5e5"
-        targetRate="1e-1"/>
+        targetTotalRate="1e-4"/>
       <WellControls
         name="wellControls2"
         type="producer"
         control="BHP"
+        referenceElevation="0.5"        
         targetBHP="5e5"
-        targetRate="1e-1"/>
+        targetTotalRate="1e-4"/>
       <WellControls
         name="wellControls3"
         type="injector"
-        control="liquidRate"
-        targetBHP="1e8"
-        targetRate="1e-2"/>
+        control="totalVolRate"
+        referenceElevation="0.5"        
+        targetBHP="1e7"
+        targetTotalRate="1e-6"/>
     </SinglePhaseWell>
   </Solvers>
 
