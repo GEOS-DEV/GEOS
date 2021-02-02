@@ -19,22 +19,9 @@ class ProjectionEDFMHelper {
   virtual ~ProjectionEDFMHelper() = default;
 
  private:
-
-  /* This is a convenience struct to avoid passing too many argyuments (one object instead of three indices) */
-  struct CellID
-  {
-    CellID(localIndex r, localIndex sr, localIndex i)
-        : region(r), subRegion(sr), index(i)
-    {}
-
-    localIndex region;
-    localIndex subRegion;
-    localIndex index;
-  };
-
   // select cell faces that will host non-neighboring fracture-matrix connections
   std::vector<localIndex> selectFaces(FixedOneToManyRelation const & subRegionFaces,
-                                      CellID const & hostCellID,
+                                      CellDescriptor const & hostCellID,
                                       localIndex const fracElement,
                                       EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
 
@@ -54,7 +41,7 @@ class ProjectionEDFMHelper {
                      arraySlice1d< real64 const > const & fracNormal ) const noexcept;
 
   // compute the signed distance between the fracture and as cell center
-  real64 getSignedDistanceCellCenterToFracPlane( CellID const & hostCellID,
+  real64 getSignedDistanceCellCenterToFracPlane( CellDescriptor const & hostCellID,
                                                  arraySlice1d< real64 const > const & fracNormal,
                                                  real64 const (&fracOrigin)[3],
                                                  real64 (&tmp)[3] ) const noexcept;
@@ -63,21 +50,21 @@ class ProjectionEDFMHelper {
   // sign as signedDistanceCellCenterToFrac (computed in the host cell)
   bool neighborOnSameSide( localIndex faceIdx,
                            real64 signedDistanceCellCenterToFrac,
-                           CellID const & hostCellID,
+                           CellDescriptor const & hostCellID,
                            EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   // given a face and its neighboring cell, return the id of the other cell
-  CellID otherCell( localIndex faceIdx, CellID const & hostCellID ) const;
+  CellDescriptor otherCell( localIndex faceIdx, CellDescriptor const & hostCellID ) const;
 
   // compute the absolute transmissibility for non-neighboring F-M connection
-  real64 fractureMatrixTransmissilibility( CellID const & neighborCell,
+  real64 fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
                                            localIndex fracElement,
                                            EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                            localIndex faceIdx ) const;
 
   // add non-neighboring F-M connection with given transmissibility tothe cell stencil
   void addNonNeighboringConnection( localIndex fracElement,
-                                    CellID const & cell,
+                                    CellDescriptor const & cell,
                                     real64 transmissibility,
                                     EmbeddedSurfaceSubRegion const & fractureSubRegion );
 

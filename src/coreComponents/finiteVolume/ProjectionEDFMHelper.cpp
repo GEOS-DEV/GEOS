@@ -37,7 +37,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
       localIndex const hostCellRegionIdx  = surfaceElementsToCells.m_toElementRegion[fracElement][0];
       localIndex const hostCellSubRegionIdx = surfaceElementsToCells.m_toElementSubRegion[fracElement][0];
       localIndex const hostCellIdx = surfaceElementsToCells.m_toElementIndex[fracElement][0];
-      CellID cellID( hostCellRegionIdx, hostCellSubRegionIdx, hostCellIdx );
+      CellDescriptor cellID( hostCellRegionIdx, hostCellSubRegionIdx, hostCellIdx );
 
       // get host cell faces
       CellElementRegion const * cellRegion = m_elementManager->getRegion< CellElementRegion >( hostCellRegionIdx );
@@ -47,7 +47,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
       auto const faces = selectFaces(cellSubRegion->faceList(), cellID, fracElement, fractureSubRegion);
       for (localIndex const faceIdx : faces)
       {
-        CellID neighborCell = otherCell(faceIdx, cellID);
+        CellDescriptor neighborCell = otherCell(faceIdx, cellID);
         real64 transFM = fractureMatrixTransmissilibility( ref(neighborCell), fracElement,
                                                            ref(fractureSubRegion), faceIdx );
 
@@ -62,7 +62,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
 }
 
 std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation const & subRegionFaces,
-                                                          CellID const & hostCellID,
+                                                          CellDescriptor const & hostCellID,
                                                           localIndex fracElement,
                                                           EmbeddedSurfaceSubRegion const & fractureSubRegion) const
 {
@@ -137,7 +137,7 @@ bool ProjectionEDFMHelper::onLargerSide( localIndex faceIdx,
   return LvArray::tensorOps::AiBi< 3 >( faceCenter, fracNormal ) * signedDistanceCellCenterToFrac > 0 ;
 }
 
-real64 ProjectionEDFMHelper::getSignedDistanceCellCenterToFracPlane( CellID const & hostCellID,
+real64 ProjectionEDFMHelper::getSignedDistanceCellCenterToFracPlane( CellDescriptor const & hostCellID,
                                                                      arraySlice1d< real64 const > const & fracNormal,
                                                                      real64 const (&fracOrigin)[3],
                                                                      real64 (&tmp)[3] ) const noexcept
@@ -148,23 +148,22 @@ real64 ProjectionEDFMHelper::getSignedDistanceCellCenterToFracPlane( CellID cons
   return LvArray::tensorOps::AiBi< 3 >( tmp, fracNormal );
 }
 
-ProjectionEDFMHelper::CellID
-ProjectionEDFMHelper::otherCell( localIndex faceIdx, CellID const & hostCellID ) const
+CellDescriptor ProjectionEDFMHelper::otherCell( localIndex faceIdx, CellDescriptor const & hostCellID ) const
 {
   const auto& neighbors = m_facesToCells[faceIdx];
   localIndex const ineighbor = (neighbors[0] == hostCellID.index) ? 1 : 0;
-  return CellID ( m_facesToRegions[faceIdx][ineighbor],
-                  m_facesToSubRegions[faceIdx][ineighbor],
-                  m_facesToCells[faceIdx][ineighbor] );
+  return CellDescriptor ( m_facesToRegions[faceIdx][ineighbor],
+                          m_facesToSubRegions[faceIdx][ineighbor],
+                          m_facesToCells[faceIdx][ineighbor] );
 }
 
 bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
                                                real64 signedDistanceCellCenterToFrac,
-                                               CellID const & hostCellID,
+                                               CellDescriptor const & hostCellID,
                                                EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
   // find the identification of the neighbor cell
-  CellID neighborCellID = otherCell( faceIdx, hostCellID );
+  CellDescriptor neighborCellID = otherCell( faceIdx, hostCellID );
 
   // get cell center
   real64 cellCenter[ 3 ];
@@ -203,7 +202,7 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
 }
 
 void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
-                                                        CellID const & cell,
+                                                        CellDescriptor const & cell,
                                                         real64 transmissibility,
                                                         EmbeddedSurfaceSubRegion const & fractureSubRegion )
 {
@@ -238,7 +237,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
 }
 
 real64 ProjectionEDFMHelper::
-fractureMatrixTransmissilibility( CellID const & neighborCell,
+fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
                                   localIndex fracElement,
                                   EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                   localIndex faceIdx ) const

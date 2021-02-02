@@ -44,6 +44,16 @@ struct CellDescriptor
   localIndex index;
 
   /**
+   * @brief Constructor for the CellDescriptor struct
+   * @param[r] region index
+   * @param[sr] subregion index
+   * @param[i] cell index
+   */
+  CellDescriptor(localIndex r, localIndex sr, localIndex i)
+      : region(r), subRegion(sr), index(i)
+  {}
+
+  /**
    * @brief Comparison operator between two CellDescriptors.
    * @param[in] other the CellDescriptor to compare with
    * @return true if they represent the same mesh element
