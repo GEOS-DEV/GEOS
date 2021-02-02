@@ -730,7 +730,9 @@ void CompositionalMultiphaseFlow::assembleAccumulationTerms( DomainPartition con
 
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh,
+		                                                                [&]( localIndex const targetIndex,
+		                                                                     auto const & subRegion )
   {
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();

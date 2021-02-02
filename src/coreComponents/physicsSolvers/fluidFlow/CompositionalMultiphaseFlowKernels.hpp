@@ -336,7 +336,14 @@ struct CapillaryPressureUpdateKernel
 /**
  * @brief Functions to assemble accumulation term contributions to residual and Jacobian
  */
+
+
+template< typename REGIONTYPE >
 struct AccumulationKernel
+{};
+
+template<>
+struct AccumulationKernel< CellElementSubRegion >
 {
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -393,6 +400,57 @@ struct AccumulationKernel
           arrayView1d< real64 > const & localRhs );
 };
 
+template<>
+struct AccumulationKernel< SurfaceElementSubRegion >
+{
+  template< localIndex NC >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void
+    compute( localIndex const numPhases,
+             real64 const & volume,
+             arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+             arraySlice1d< real64 const > const & phaseVolFracOld,
+             arraySlice1d< real64 const > const & phaseVolFrac,
+             arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+             arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
+             arraySlice1d< real64 const > const & phaseDensOld,
+             arraySlice1d< real64 const > const & phaseDens,
+             arraySlice1d< real64 const > const & dPhaseDens_dPres,
+             arraySlice2d< real64 const > const & dPhaseDens_dComp,
+             arraySlice2d< real64 const > const & phaseCompFracOld,
+             arraySlice2d< real64 const > const & phaseCompFrac,
+             arraySlice2d< real64 const > const & dPhaseCompFrac_dPres,
+             arraySlice3d< real64 const > const & dPhaseCompFrac_dComp,
+             real64 ( &localAccum )[NC],
+             real64 ( &localAccumJacobian )[NC][NC+1] );
+
+  template< localIndex NC >
+  static void
+  launch( localIndex const numPhases,
+          localIndex const size,
+          globalIndex const rankOffset,
+          arrayView1d< globalIndex const > const & dofNumber,
+          arrayView1d< integer const > const & elemGhostRank,
+          arrayView1d< real64 const > const & volume,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView2d< real64 const > const & phaseVolFracOld,
+          arrayView2d< real64 const > const & phaseVolFrac,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
+          arrayView2d< real64 const > const & phaseDensOld,
+          arrayView3d< real64 const > const & phaseDens,
+          arrayView3d< real64 const > const & dPhaseDens_dPres,
+          arrayView4d< real64 const > const & dPhaseDens_dComp,
+          arrayView3d< real64 const > const & phaseCompFracOld,
+          arrayView4d< real64 const > const & phaseCompFrac,
+          arrayView4d< real64 const > const & dPhaseCompFrac_dPres,
+          arrayView5d< real64 const > const & dPhaseCompFrac_dComp,
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
+};
+
+
 /******************************** FluxKernel ********************************/
 
 /**
@@ -441,6 +499,38 @@ struct FluxKernel
            real64 const dt,
            arraySlice1d< real64 > const localFlux,
            arraySlice2d< real64 > const localFluxJacobian );
+
+  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void
+  computeFractures( localIndex const stencilSize,
+                    localIndex const numPhases,
+					arraySlice1d< localIndex const > const seri,
+					arraySlice1d< localIndex const > const sesri,
+					arraySlice1d< localIndex const > const sei,
+					arraySlice1d< real64 const > const stencilWeights,
+					ElementViewConst< arrayView1d< real64 const > > const & pres,
+					ElementViewConst< arrayView1d< real64 const > > const & dPres,
+					ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+					ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+					ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+					ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
+					ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
+					ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
+					ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+					ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+					ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+					ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
+					ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
+					ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
+					ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
+					ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
+					ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+					integer const capPressureFlag,
+					real64 const dt,
+					arraySlice1d< real64 > const localFlux,
+					arraySlice2d< real64 > const localFluxJacobian );
 
   template< localIndex NC, typename STENCIL_TYPE >
   static void
