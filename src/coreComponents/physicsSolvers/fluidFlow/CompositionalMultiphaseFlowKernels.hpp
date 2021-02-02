@@ -338,7 +338,7 @@ struct CapillaryPressureUpdateKernel
  */
 
 
-template< typename REGIONTYPE >
+template< typename SUBREGIONTYPE >
 struct AccumulationKernel
 {};
 

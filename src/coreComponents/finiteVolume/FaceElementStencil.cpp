@@ -91,5 +91,32 @@ void FaceElementStencil::add( localIndex const numPts,
   }
 }
 
+void FaceElementStencil::
+updateWeights( ElementViewConst< arrayView1d< real64 const > > const & coefficient,
+               ElementViewConst< arrayView1d< real64 const > > const & aperture )
+{
+	for(localIndex iconn = 0; iconn < size(); iconn++)
+	{
+		localIndex const er0  =  m_elementRegionIndices[iconn][0];
+		localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
+		localIndex const ei0  =  m_elementIndices[iconn][0];
+
+		localIndex const er1  =  m_elementRegionIndices[iconn][1];
+		localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+		localIndex const ei1  =  m_elementIndices[iconn][1];
+
+		real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0] * aperture[er0][esr0][ei0];
+		real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1] * aperture[er1][esr1][ei1];
+
+		real64 const harmonicWeight   = t0*t1 / (t0+t1);
+		real64 const arithmeticWeight = (t0+t1)/2;
+
+		real64 const weight = c * harmonicWeight + (1 - c) * arithmeticWeight;
+
+		m_weights[iconn][0] = weight;
+		m_weights[iconn][1] = weight;
+	}
+}
+
 
 } /* namespace geosx */

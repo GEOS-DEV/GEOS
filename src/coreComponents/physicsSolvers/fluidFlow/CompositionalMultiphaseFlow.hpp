@@ -231,13 +231,39 @@ public:
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
    */
   void assembleAccumulationTerms( DomainPartition const & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) const;
+
+  /**
+   * @brief interface to launche the accumulation kernel
+   * @param subRegion subRegion on which the kernel is launched
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the local system matrix
+   * @param localRhs the local system right-hand side vector
+   */
+  void accumulationLaunch( localIndex const targetIndex,
+		                   CellElementSubRegion const & subRegion,
+						   DofManager const & dofManager,
+						   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+						   arrayView1d< real64 > const & localRhs );
+
+  /**
+   * @brief interface to launche the accumulation kernel
+   * @param subRegion subRegion on which the kernel is launched
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the local system matrix
+   * @param localRhs the local system right-hand side vector
+   */
+  void accumulationLaunch( localIndex const targetIndex,
+  		                   SurfaceElementSubRegion const & subRegion,
+						   DofManager const & dofManager,
+						   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+						   arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the flux terms for all cells

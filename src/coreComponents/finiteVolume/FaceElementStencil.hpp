@@ -85,6 +85,9 @@ class FaceElementStencil : public StencilBase< FaceElementStencil_Traits, FaceEl
 {
 public:
 
+ template< typename VIEWTYPE >
+ using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
   /**
    * @brief Default constructor.
    */
@@ -108,6 +111,9 @@ public:
   void add( localIndex const numPts,
             R1Tensor const * const cellCenterToEdgeCenter,
             localIndex const connectorIndex );
+
+  void updateWeights( ElementViewConst< arrayView1d< real64 const > > const & permeability,
+		              ElementViewConst< arrayView1d< real64 const > > const & aperture );                                                                      );
 
   /**
    * @brief Return the stencil size.
