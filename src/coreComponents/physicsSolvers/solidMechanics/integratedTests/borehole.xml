@@ -156,7 +156,7 @@
       name="borehole stress"
       objectPath="faceManager"
       fieldName="Traction"
-      component="0"
+      component="-1"
       scale="-1.0e6"
       functionName="timeFunction"
       setNames="{ boreholeWall }"/>
