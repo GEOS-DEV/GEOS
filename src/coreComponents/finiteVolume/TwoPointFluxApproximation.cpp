@@ -46,6 +46,10 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
   registerWrapper< FaceElementStencil >( viewKeyStruct::fractureStencilString )->
     setRestartFlags( RestartFlags::NO_WRITE );
 
+  registerWrapper< integer >( viewKeyStruct::useProjectionEmbeddedFractureMethodString, &m_useProjectionEmbeddedFractureMethod )->
+    setInputFlag( dataRepository::InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 0 )->
+    setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
@@ -804,9 +808,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   addFractureFractureConnections( mesh, fractureSubRegion, fractureRegionIndex );
   addFractureMatrixConnections( mesh, fractureSubRegion, fractureRegionIndex );
 
-  // bool const projection = false;
-  bool const projection = true;
-  if ( projection )
+  if ( m_useProjectionEmbeddedFractureMethod )
   {
     ProjectionEDFMHelper pedfm(std::cref(mesh), geometricObjManager, std::cref(m_coeffName), std::ref(cellStencil));
     pedfm.addNonNeighboringConnections(std::cref(fractureSubRegion));

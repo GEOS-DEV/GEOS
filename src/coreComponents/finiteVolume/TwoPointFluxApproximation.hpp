@@ -78,6 +78,13 @@ protected:
   void addFractureMatrixConnections( MeshLevel & mesh,
                                      EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                      localIndex const fractureRegionIndex ) const;
+
+  struct viewKeyStruct : FluxApproximationBase::viewKeyStruct
+  {
+    constexpr static auto useProjectionEmbeddedFractureMethodString = "useProjectionEmbeddedFractureMethod";
+  };
+
+  int m_useProjectionEmbeddedFractureMethod;  // whether or not to do projection EDFM
 };
 
 }
