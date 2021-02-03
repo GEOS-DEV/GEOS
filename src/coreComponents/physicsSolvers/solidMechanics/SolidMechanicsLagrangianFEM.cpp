@@ -753,6 +753,11 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
         for( localIndex a=0; a<numNodes; ++a )
         {
+
+          // The flag component = 0, 1 and 2 are for the traction in the three orthogonal directions
+          // in the global cartesian coordinate system  
+          // The flag component = -1 is for the normal traction
+
           if( component != -1 )
           {
             localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
