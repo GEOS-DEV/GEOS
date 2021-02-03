@@ -94,6 +94,7 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups( Group * const roo
   {
     GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM" );
   }
+
 }
 
 
@@ -108,6 +109,14 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
+  MimeticInnerProductBase const & mimeticInnerProductBase =
+    hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString );
+  if( dynamicCast< QuasiRTInnerProduct const * >( &mimeticInnerProductBase )  ||
+      dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
+      dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
+  {
+    GEOSX_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
+  }
 
   m_lengthTolerance = domain.getMeshBody( 0 )->getGlobalLengthScale() * 1e-8;
   string const & coeffName = hmDiscretization.template getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
@@ -412,8 +421,8 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                                             ElementRegionBase const &,
                                                             auto const & subRegion )
   {
-    mimeticInnerProductDispatch( mimeticInnerProductBase,
-                                 [&] ( auto const mimeticInnerProduct )
+    mimeticInnerProductReducedDispatch( mimeticInnerProductBase,
+                                        [&] ( auto const mimeticInnerProduct )
     {
       using IP_TYPE = TYPEOFREF( mimeticInnerProduct );
       KernelLaunchSelector< FluxKernel,
