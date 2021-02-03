@@ -150,7 +150,7 @@ public:
 
   /// Defines a static constexpr bool canParseVariable that is true iff the template parameter T
   /// is a valid argument to StringToInputVariable.
-  IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), std::string() ) );
+  IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string() ) );
 
   /**
    * @name Attribute extraction from XML nodes.

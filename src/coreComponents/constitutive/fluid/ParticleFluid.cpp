@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
+ParticleFluid::ParticleFluid( string const & name, Group * const parent ):
   ParticleFluidBase( name, parent )
 {
 
@@ -125,7 +125,7 @@ ParticleFluid::createKernelWrapper() const
                         m_proppantPackPermeability );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, string const &, Group * const )
 
 } /* namespace constitutive */
 

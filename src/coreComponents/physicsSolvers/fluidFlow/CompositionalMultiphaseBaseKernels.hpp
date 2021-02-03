@@ -175,7 +175,7 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -229,7 +229,7 @@ struct RelativePermeabilityUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
       {
-        relPermWrapper.Update( k, q, phaseVolFrac[k] );
+        relPermWrapper.update( k, q, phaseVolFrac[k] );
       }
     } );
   }
@@ -265,7 +265,7 @@ struct CapillaryPressureUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
       {
-        capPresWrapper.Update( k, q, phaseVolFrac[k] );
+        capPresWrapper.update( k, q, phaseVolFrac[k] );
       }
     } );
   }

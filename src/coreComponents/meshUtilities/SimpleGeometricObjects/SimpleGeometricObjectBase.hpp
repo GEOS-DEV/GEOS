@@ -54,7 +54,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  explicit SimpleGeometricObjectBase( std::string const & name,
+  explicit SimpleGeometricObjectBase( string const & name,
                                       Group * const parent );
 
   /**
@@ -78,7 +78,7 @@ public:
   /**
    * @brief Type alias for catalog interface used by this class.
    */
-  using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, string const &, Group * const >;
 
   /**
    * @copydoc catalogName()

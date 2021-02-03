@@ -64,14 +64,17 @@ char const * xmlInput =
   "                                 useMass=\"0\">\n"
   "        <WellControls name=\"wellControls1\"\n"
   "                      type=\"producer\"\n"
+  "                      referenceElevation=\"1.25\"\n"
   "                      control=\"BHP\"\n"
-  "                      targetBHP=\"4e6\"\n"
-  "                      targetRate=\"1\"/>\n"
+  "                      targetBHP=\"2e6\"\n"
+  "                      targetPhaseRate=\"1\"\n"
+  "                      targetPhaseName=\"oil\"/>\n"
   "        <WellControls name=\"wellControls2\"\n"
   "                      type=\"injector\"\n"
-  "                      control=\"liquidRate\" \n"
-  "                      targetBHP=\"2e7\"\n"
-  "                      targetRate=\"1e-5\" \n"
+  "                      referenceElevation=\"1.25\"\n"
+  "                      control=\"totalVolRate\" \n"
+  "                      targetBHP=\"6e7\"\n"
+  "                      targetTotalRate=\"1e-5\" \n"
   "                      injectionStream=\"{0.1, 0.1, 0.1, 0.7}\"/>\n"
   "    </CompositionalMultiphaseWell>\n"
   "  </Solvers>\n"
@@ -420,7 +423,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         dWellElemCompDens.move( LvArray::MemorySpace::CPU, true );
         dWellElemCompDens[iwelem][jc] = dRho;
 
-        wellSolver.updateStateAll( domain );
+        wellSolver.updateState( subRegion, targetIndex );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
         jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -444,6 +447,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
         dConnRate.move( LvArray::MemorySpace::CPU, true );
         dConnRate[iwelem] = dRate;
+
+        wellSolver.updateState( subRegion, targetIndex );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
         jacobian.setValues< parallelDevicePolicy<> >( 0.0 );

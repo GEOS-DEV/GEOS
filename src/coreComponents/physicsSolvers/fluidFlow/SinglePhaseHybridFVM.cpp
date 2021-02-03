@@ -35,7 +35,7 @@ using namespace constitutive;
 using namespace SinglePhaseHybridFVMKernels;
 using namespace mimeticInnerProduct;
 
-SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string & name,
+SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
                                             Group * const parent ):
   SinglePhaseBase( name, parent ),
   m_faceDofKey( "" ),
@@ -548,5 +548,5 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
   dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, string const &, Group * const )
 } /* namespace geosx */

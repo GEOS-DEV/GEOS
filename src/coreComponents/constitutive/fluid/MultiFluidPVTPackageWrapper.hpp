@@ -203,7 +203,7 @@ class MultiFluidPVTPackageWrapper : public MultiFluidBase
 {
 public:
 
-  MultiFluidPVTPackageWrapper( std::string const & name, Group * const parent );
+  MultiFluidPVTPackageWrapper( string const & name, Group * const parent );
 
   virtual ~MultiFluidPVTPackageWrapper() override;
 

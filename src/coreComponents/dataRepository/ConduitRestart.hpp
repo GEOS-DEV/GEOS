@@ -27,7 +27,7 @@
 #include <conduit.hpp>
 
 // System includes
-#include <string>
+
 
 /// @cond DO_NOT_DOCUMENT
 
@@ -88,11 +88,11 @@ using conduitTypeInfo = internal::conduitTypeInfo< std::remove_const_t< std::rem
 
 extern conduit::Node rootConduitNode;
 
-std::string writeRootFile( conduit::Node & root, std::string const & rootPath );
+string writeRootFile( conduit::Node & root, string const & rootPath );
 
-void writeTree( std::string const & path );
+void writeTree( string const & path );
 
-void loadTree( std::string const & path );
+void loadTree( string const & path );
 
 } // namespace dataRepository
 } // namespace geosx

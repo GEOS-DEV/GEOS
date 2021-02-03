@@ -29,8 +29,8 @@ namespace geosx
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  SymbolicFunction( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  SymbolicFunction( const string & name,
                     dataRepository::Group * const parent );
 
   /**
