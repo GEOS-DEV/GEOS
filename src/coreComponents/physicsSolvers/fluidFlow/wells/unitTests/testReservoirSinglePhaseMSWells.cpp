@@ -57,14 +57,16 @@ char const * xmlInput =
   "                     targetRegions=\"{wellRegion1,wellRegion2}\">\n"
   "        <WellControls name=\"wellControls1\"\n"
   "                      type=\"producer\"\n"
+  "                      referenceElevation=\"2\"\n"
   "                      control=\"BHP\"\n"
   "                      targetBHP=\"5e5\"\n"
-  "                      targetRate=\"1e-3\"/>\n"
+  "                      targetTotalRate=\"1e-3\"/>\n"
   "        <WellControls name=\"wellControls2\"\n"
   "                      type=\"injector\"\n"
-  "                      control=\"liquidRate\" \n"
+  "                      referenceElevation=\"2\"\n"
+  "                      control=\"totalVolRate\" \n"
   "                      targetBHP=\"2e7\"\n"
-  "                      targetRate=\"1e-4\"/>\n"
+  "                      targetTotalRate=\"1e-4\"/>\n"
   "    </SinglePhaseWell>\n"
   "  </Solvers>\n"
   "  <Mesh>\n"
@@ -326,6 +328,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
         dConnRate.move( LvArray::MemorySpace::CPU, true );
         dConnRate[iwelem] = dRate;
+
+        // after perturbing, update the rate-dependent quantities in the well (well controls)
+        wellSolver.updateState( subRegion, targetIndex );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
         jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
