@@ -702,7 +702,7 @@ struct FluxKernel
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< localIndex NF, localIndex NC, localIndex NP, typename IP_TYPE >
   static void
   launch( localIndex er, localIndex esr,
           CellElementSubRegion const & subRegion,
@@ -976,7 +976,7 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
 } // namespace internal
 
-template< typename KERNELWRAPPER, typename ... ARGS >
+template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
 void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, localIndex numPhases, ARGS && ... args )
 {
   internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
@@ -985,19 +985,19 @@ void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, local
     {
       if( numComps == 2 )
       {
-        KERNELWRAPPER::template launch< NF(), 2, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< NF(), 2, 2, IP_TYPE >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 3 )
       {
-        KERNELWRAPPER::template launch< NF(), 3, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< NF(), 3, 2, IP_TYPE >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 4 )
       {
-        KERNELWRAPPER::template launch< NF(), 4, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< NF(), 4, 2, IP_TYPE >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 5 )
       {
-        KERNELWRAPPER::template launch< NF(), 5, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< NF(), 5, 2, IP_TYPE >( std::forward< ARGS >( args )... );
       }
       else
       {
@@ -1008,15 +1008,15 @@ void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, local
     {
       if( numComps == 2 )
       {
-        KERNELWRAPPER::template launch< NF(), 3, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< NF(), 3, 3, IP_TYPE >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 4 )
       {
-        KERNELWRAPPER::template launch< NF(), 4, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< NF(), 4, 3, IP_TYPE >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 5 )
       {
-        KERNELWRAPPER::template launch< NF(), 5, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template launch< NF(), 5, 3, IP_TYPE >( std::forward< ARGS >( args )... );
       }
       else
       {

@@ -18,8 +18,13 @@
 
 #include "CompositionalMultiphaseHybridFVMKernels.hpp"
 
+#include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
+
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 
 namespace geosx
@@ -1314,7 +1319,7 @@ INST_AssemblerKernel( 6, 5, 3 );
 
 /******************************** FluxKernel ********************************/
 
-template< localIndex NF, localIndex NC, localIndex NP >
+template< localIndex NF, localIndex NC, localIndex NP, typename IP_TYPE >
 void
 FluxKernel::
   launch( localIndex er, localIndex esr,
@@ -1389,15 +1394,15 @@ FluxKernel::
 
     // recompute the local transmissibility matrix at each iteration
     // we can decide later to precompute transMatrix if needed
-    mimeticInnerProduct::BdVLMInnerProduct::compute< NF >( nodePosition,
-                                                           transMultiplier,
-                                                           faceToNodes,
-                                                           elemToFaces[ei],
-                                                           elemCenter[ei],
-                                                           elemVolume[ei],
-                                                           perm,
-                                                           lengthTolerance,
-                                                           transMatrix );
+    IP_TYPE::template compute< NF >( nodePosition,
+                                     transMultiplier,
+                                     faceToNodes,
+                                     elemToFaces[ei],
+                                     elemCenter[ei],
+                                     elemVolume[ei],
+                                     perm,
+                                     lengthTolerance,
+                                     transMatrix );
 
     // currently the gravity term in the transport scheme is treated as in MRST, that is, always with TPFA
     // this is why below we have to recompute the TPFA transmissibility in addition to the transmissibility matrix above
@@ -1452,80 +1457,228 @@ FluxKernel::
   } );
 }
 
-#define INST_FluxKernel( NF, NC, NP ) \
+#define INST_FluxKernel( NF, NC, NP, IP_TYPE ) \
   template \
   void \
   FluxKernel:: \
-    launch< NF, NC, NP >( localIndex er, localIndex esr, \
-                          CellElementSubRegion const & subRegion, \
-                          SortedArrayView< localIndex const > const & regionFilter, \
-                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
-                          arrayView2d< localIndex const > const & elemRegionList, \
-                          arrayView2d< localIndex const > const & elemSubRegionList, \
-                          arrayView2d< localIndex const > const & elemList, \
-                          ArrayOfArraysView< localIndex const > const & faceToNodes, \
-                          arrayView1d< globalIndex const > const & faceDofNumber, \
-                          arrayView1d< integer const > const & faceGhostRank, \
-                          arrayView1d< real64 const > const & facePres, \
-                          arrayView1d< real64 const > const & dFacePres, \
-                          arrayView1d< real64 const > const & faceGravCoef, \
-                          arrayView1d< real64 const > const & mimFaceGravCoef, \
-                          arrayView1d< real64 const > const & transMultiplier, \
-                          ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
-                          ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
-                          ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac, \
-                          ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
-                          ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
-                          ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac, \
-                          ElementViewConst< arrayView2d< real64 const > > const & phaseMob, \
-                          ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres, \
-                          ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens, \
-                          ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens, \
-                          ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac, \
-                          ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres, \
-                          ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac, \
-                          ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber, \
-                          globalIndex const rankOffset, \
-                          real64 const lengthTolerance, \
-                          real64 const dt, \
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix, \
-                          arrayView1d< real64 > const & localRhs )
+    launch< NF, NC, NP, IP_TYPE >( localIndex er, localIndex esr, \
+                                   CellElementSubRegion const & subRegion, \
+                                   SortedArrayView< localIndex const > const & regionFilter, \
+                                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
+                                   arrayView2d< localIndex const > const & elemRegionList, \
+                                   arrayView2d< localIndex const > const & elemSubRegionList, \
+                                   arrayView2d< localIndex const > const & elemList, \
+                                   ArrayOfArraysView< localIndex const > const & faceToNodes, \
+                                   arrayView1d< globalIndex const > const & faceDofNumber, \
+                                   arrayView1d< integer const > const & faceGhostRank, \
+                                   arrayView1d< real64 const > const & facePres, \
+                                   arrayView1d< real64 const > const & dFacePres, \
+                                   arrayView1d< real64 const > const & faceGravCoef, \
+                                   arrayView1d< real64 const > const & mimFaceGravCoef, \
+                                   arrayView1d< real64 const > const & transMultiplier, \
+                                   ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
+                                   ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
+                                   ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac, \
+                                   ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
+                                   ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
+                                   ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac, \
+                                   ElementViewConst< arrayView2d< real64 const > > const & phaseMob, \
+                                   ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres, \
+                                   ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens, \
+                                   ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens, \
+                                   ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac, \
+                                   ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres, \
+                                   ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac, \
+                                   ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber, \
+                                   globalIndex const rankOffset, \
+                                   real64 const lengthTolerance, \
+                                   real64 const dt, \
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                                   arrayView1d< real64 > const & localRhs )
 
-INST_FluxKernel( 4, 1, 2 );
-INST_FluxKernel( 4, 2, 2 );
-INST_FluxKernel( 4, 3, 2 );
-INST_FluxKernel( 4, 4, 2 );
-INST_FluxKernel( 4, 5, 2 );
+INST_FluxKernel( 4, 1, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 4, 2, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 4, 3, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 4, 4, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 4, 5, 2, mimeticInnerProduct::TPFAInnerProduct const );
 
-INST_FluxKernel( 4, 1, 3 );
-INST_FluxKernel( 4, 2, 3 );
-INST_FluxKernel( 4, 3, 3 );
-INST_FluxKernel( 4, 4, 3 );
-INST_FluxKernel( 4, 5, 3 );
+INST_FluxKernel( 4, 1, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 4, 2, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 4, 3, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 4, 4, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 4, 5, 3, mimeticInnerProduct::TPFAInnerProduct const );
 
-INST_FluxKernel( 5, 1, 2 );
-INST_FluxKernel( 5, 2, 2 );
-INST_FluxKernel( 5, 3, 2 );
-INST_FluxKernel( 5, 4, 2 );
-INST_FluxKernel( 5, 5, 2 );
+INST_FluxKernel( 5, 1, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 5, 2, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 5, 3, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 5, 4, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 5, 5, 2, mimeticInnerProduct::TPFAInnerProduct const );
 
-INST_FluxKernel( 5, 1, 3 );
-INST_FluxKernel( 5, 2, 3 );
-INST_FluxKernel( 5, 3, 3 );
-INST_FluxKernel( 5, 4, 3 );
-INST_FluxKernel( 5, 5, 3 );
+INST_FluxKernel( 5, 1, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 5, 2, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 5, 3, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 5, 4, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 5, 5, 3, mimeticInnerProduct::TPFAInnerProduct const );
 
-INST_FluxKernel( 6, 1, 2 );
-INST_FluxKernel( 6, 2, 2 );
-INST_FluxKernel( 6, 3, 2 );
-INST_FluxKernel( 6, 4, 2 );
-INST_FluxKernel( 6, 5, 2 );
+INST_FluxKernel( 6, 1, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 6, 2, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 6, 3, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 6, 4, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 6, 5, 2, mimeticInnerProduct::TPFAInnerProduct const );
 
-INST_FluxKernel( 6, 1, 3 );
-INST_FluxKernel( 6, 2, 3 );
-INST_FluxKernel( 6, 3, 3 );
-INST_FluxKernel( 6, 4, 3 );
-INST_FluxKernel( 6, 5, 3 );
+INST_FluxKernel( 6, 1, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 6, 2, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 6, 3, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 6, 4, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::TPFAInnerProduct const );
+
+INST_FluxKernel( 4, 1, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 4, 2, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 4, 3, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 4, 4, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 4, 5, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+
+INST_FluxKernel( 4, 1, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 4, 2, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 4, 3, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 4, 4, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 4, 5, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+
+INST_FluxKernel( 5, 1, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 5, 2, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 5, 3, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 5, 4, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 5, 5, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+
+INST_FluxKernel( 5, 1, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 5, 2, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 5, 3, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 5, 4, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 5, 5, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+
+INST_FluxKernel( 6, 1, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 6, 2, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 6, 3, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 6, 4, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 6, 5, 2, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+
+INST_FluxKernel( 6, 1, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 6, 2, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 6, 3, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 6, 4, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::QuasiTPFAInnerProduct const );
+
+
+INST_FluxKernel( 4, 1, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 4, 2, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 4, 3, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 4, 4, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 4, 5, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+
+INST_FluxKernel( 4, 1, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 4, 2, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 4, 3, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 4, 4, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 4, 5, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+
+INST_FluxKernel( 5, 1, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 5, 2, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 5, 3, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 5, 4, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 5, 5, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+
+INST_FluxKernel( 5, 1, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 5, 2, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 5, 3, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 5, 4, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 5, 5, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+
+INST_FluxKernel( 6, 1, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 6, 2, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 6, 3, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 6, 4, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 6, 5, 2, mimeticInnerProduct::QuasiRTInnerProduct const );
+
+INST_FluxKernel( 6, 1, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 6, 2, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 6, 3, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 6, 4, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::QuasiRTInnerProduct const );
+
+
+INST_FluxKernel( 4, 1, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 4, 2, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 4, 3, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 4, 4, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 4, 5, 2, mimeticInnerProduct::SimpleInnerProduct const );
+
+INST_FluxKernel( 4, 1, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 4, 2, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 4, 3, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 4, 4, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 4, 5, 3, mimeticInnerProduct::SimpleInnerProduct const );
+
+INST_FluxKernel( 5, 1, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 5, 2, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 5, 3, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 5, 4, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 5, 5, 2, mimeticInnerProduct::SimpleInnerProduct const );
+
+INST_FluxKernel( 5, 1, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 5, 2, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 5, 3, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 5, 4, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 5, 5, 3, mimeticInnerProduct::SimpleInnerProduct const );
+
+INST_FluxKernel( 6, 1, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 6, 2, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 6, 3, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 6, 4, 2, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 6, 5, 2, mimeticInnerProduct::SimpleInnerProduct const );
+
+INST_FluxKernel( 6, 1, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 6, 2, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 6, 3, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 6, 4, 3, mimeticInnerProduct::SimpleInnerProduct const );
+INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::SimpleInnerProduct const );
+
+
+INST_FluxKernel( 4, 1, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 4, 2, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 4, 3, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 4, 4, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 4, 5, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 4, 1, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 4, 2, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 4, 3, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 4, 4, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 4, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 5, 1, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 5, 2, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 5, 3, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 5, 4, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 5, 5, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 5, 1, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 5, 2, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 5, 3, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 5, 4, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 5, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 6, 1, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 6, 2, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 6, 3, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 6, 4, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 6, 5, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 6, 1, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 6, 2, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 6, 3, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 6, 4, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+
 
 #undef INST_FluxKernel
 
