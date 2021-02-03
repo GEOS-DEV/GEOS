@@ -48,9 +48,10 @@
       <WellControls
         name="wellControls"
         type="injector"
-        control="liquidRate"
+        control="totalVolRate"
+	referenceElevation="7500"
         targetBHP="1e8"
-        targetRate="50"
+        targetTotalRate="5e-2"
         injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
