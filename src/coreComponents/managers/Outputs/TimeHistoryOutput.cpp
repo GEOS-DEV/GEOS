@@ -126,5 +126,5 @@ void TimeHistoryOutput::cleanup( real64 const time_n,
   }
 }
 
-REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, string const &, Group * const )
 }

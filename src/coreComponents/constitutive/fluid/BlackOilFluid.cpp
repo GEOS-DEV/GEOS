@@ -31,7 +31,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
+BlackOilFluid::BlackOilFluid( string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
@@ -93,7 +93,7 @@ void BlackOilFluid::postProcessInput()
 void BlackOilFluid::createFluid()
 {
   std::vector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
-  std::vector< std::string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
+  std::vector< string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
   std::vector< double > densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector< double > molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
 
@@ -116,7 +116,7 @@ void BlackOilFluid::createFluid()
   }
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

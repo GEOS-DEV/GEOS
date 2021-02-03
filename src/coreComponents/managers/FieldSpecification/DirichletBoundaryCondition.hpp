@@ -31,7 +31,7 @@ namespace geosx
 class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
   DirichletBoundaryCondition( string const & name, dataRepository::Group * const parent );
 
   /**

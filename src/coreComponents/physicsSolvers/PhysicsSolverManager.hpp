@@ -29,7 +29,7 @@ class SolverBase;
 class PhysicsSolverManager : public dataRepository::Group
 {
 public:
-  PhysicsSolverManager( std::string const & name,
+  PhysicsSolverManager( string const & name,
                         Group * const parent );
 
   virtual ~PhysicsSolverManager() override;

@@ -422,7 +422,7 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   return fluid;
 }
 
-void writeTableToFile( std::string const & filename, char const * str )
+void writeTableToFile( string const & filename, char const * str )
 {
   std::ofstream os( filename );
   ASSERT_TRUE( os.is_open() );
@@ -430,7 +430,7 @@ void writeTableToFile( std::string const & filename, char const * str )
   os.close();
 }
 
-void removeFile( std::string const & filename )
+void removeFile( string const & filename )
 {
   int const ret = std::remove( filename.c_str() );
   ASSERT_TRUE( ret == 0 );

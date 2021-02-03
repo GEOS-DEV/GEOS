@@ -122,11 +122,11 @@ class BrooksCoreyBakerRelativePermeability : public RelativePermeabilityBase
 {
 public:
 
-  BrooksCoreyBakerRelativePermeability( std::string const & name, dataRepository::Group * const parent );
+  BrooksCoreyBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
 
   virtual ~BrooksCoreyBakerRelativePermeability() override;
 
-  static std::string catalogName() { return "BrooksCoreyBakerRelativePermeability"; }
+  static string catalogName() { return "BrooksCoreyBakerRelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

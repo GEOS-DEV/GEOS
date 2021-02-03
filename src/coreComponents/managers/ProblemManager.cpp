@@ -56,7 +56,7 @@ class CellElementSubRegion;
 class FaceElementSubRegion;
 
 
-ProblemManager::ProblemManager( const std::string & name,
+ProblemManager::ProblemManager( const string & name,
                                 Group * const parent ):
   dataRepository::Group( name, parent ),
   m_physicsSolverManager( nullptr ),
@@ -181,7 +181,7 @@ void ProblemManager::parseCommandLineInput()
 
   CommandLineOptions const & opts = getCommandLineOptions();
 
-  commandLine->getReference< std::string >( viewKeys.restartFileName ) = opts.restartFileName;
+  commandLine->getReference< string >( viewKeys.restartFileName ) = opts.restartFileName;
   commandLine->getReference< integer >( viewKeys.beginFromRestart ) = opts.beginFromRestart;
   commandLine->getReference< integer >( viewKeys.xPartitionsOverride ) = opts.xPartitionsOverride;
   commandLine->getReference< integer >( viewKeys.yPartitionsOverride ) = opts.yPartitionsOverride;
@@ -190,16 +190,16 @@ void ProblemManager::parseCommandLineInput()
   commandLine->getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
   commandLine->getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
 
-  std::string & inputFileName = commandLine->getReference< std::string >( viewKeys.inputFileName );
+  string & inputFileName = commandLine->getReference< string >( viewKeys.inputFileName );
   inputFileName = opts.inputFileName;
 
-  std::string & schemaName = commandLine->getReference< std::string >( viewKeys.schemaFileName );
+  string & schemaName = commandLine->getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
 
-  std::string & problemName = commandLine->getReference< std::string >( viewKeys.problemName );
+  string & problemName = commandLine->getReference< string >( viewKeys.problemName );
   problemName = opts.problemName;
 
-  std::string & outputDirectory = commandLine->getReference< std::string >( viewKeys.outputDirectory );
+  string & outputDirectory = commandLine->getReference< string >( viewKeys.outputDirectory );
   outputDirectory = opts.outputDirectory;
 
   if( schemaName.empty())
@@ -227,7 +227,7 @@ void ProblemManager::parseCommandLineInput()
 }
 
 
-bool ProblemManager::parseRestart( std::string & restartFileName )
+bool ProblemManager::parseRestart( string & restartFileName )
 {
   CommandLineOptions const & opts = getCommandLineOptions();
   bool const beginFromRestart = opts.beginFromRestart;
@@ -235,21 +235,21 @@ bool ProblemManager::parseRestart( std::string & restartFileName )
 
   if( beginFromRestart == 1 )
   {
-    std::string dirname;
-    std::string basename;
+    string dirname;
+    string basename;
     splitPath( restartFileName, dirname, basename );
 
-    std::vector< std::string > dir_contents;
+    std::vector< string > dir_contents;
     readDirectory( dirname, dir_contents );
 
     GEOSX_ERROR_IF( dir_contents.size() == 0, "Directory gotten from " << restartFileName << " " << dirname << " is empty." );
 
     std::regex basename_regex( basename );
 
-    std::string min_str( "" );
-    std::string & max_match = min_str;
+    string min_str( "" );
+    string & max_match = min_str;
     bool match_found = false;
-    for( std::string & s : dir_contents )
+    for( string & s : dir_contents )
     {
       if( std::regex_match( s, basename_regex ))
       {
@@ -311,7 +311,7 @@ void ProblemManager::generateDocumentation()
   // Documentation output
   std::cout << "Trying to generate schema..." << std::endl;
   Group * commandLine = getGroup< Group >( groupKeys.commandLine );
-  std::string const & schemaName = commandLine->getReference< std::string >( viewKeys.schemaFileName );
+  string const & schemaName = commandLine->getReference< string >( viewKeys.schemaFileName );
 
   if( !schemaName.empty() )
   {
@@ -389,7 +389,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   Group * benchmarks = this->registerGroup< Group >( "Benchmarks" );
   benchmarks->setInputFlags( InputFlags::OPTIONAL );
 
-  for( std::string const & machineName : {"quartz", "lassen"} )
+  for( string const & machineName : {"quartz", "lassen"} )
   {
     Group * machine = benchmarks->registerGroup< Group >( machineName );
     machine->setInputFlags( InputFlags::OPTIONAL );
@@ -397,7 +397,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     Group * run = machine->registerGroup< Group >( "Run" );
     run->setInputFlags( InputFlags::OPTIONAL );
 
-    run->registerWrapper< std::string >( "name" )->setInputFlag( InputFlags::REQUIRED )->
+    run->registerWrapper< string >( "name" )->setInputFlag( InputFlags::REQUIRED )->
       setDescription( "The name of this benchmark." );
 
     run->registerWrapper< int >( "nodes" )->setInputFlag( InputFlags::REQUIRED )->
@@ -412,10 +412,10 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     run->registerWrapper< int >( "timeLimit" )->setInputFlag( InputFlags::OPTIONAL )->
       setDescription( "The time limit of the benchmark." );
 
-    run->registerWrapper< std::string >( "args" )->setInputFlag( InputFlags::OPTIONAL )->
+    run->registerWrapper< string >( "args" )->setInputFlag( InputFlags::OPTIONAL )->
       setDescription( "Any extra command line arguments to pass to GEOSX." );
 
-    run->registerWrapper< std::string >( "autoPartition" )->setInputFlag( InputFlags::OPTIONAL )->
+    run->registerWrapper< string >( "autoPartition" )->setInputFlag( InputFlags::OPTIONAL )->
       setDescription( "May be 'Off' or 'On', if 'On' partitioning arguments are created automatically. Default is Off." );
 
     run->registerWrapper< array1d< int > >( "strongScaling" )->setInputFlag( InputFlags::OPTIONAL )->
@@ -431,7 +431,7 @@ void ProblemManager::parseInputFile()
   DomainPartition * domain  = getDomainPartition();
 
   Group * commandLine = getGroup< Group >( groupKeys.commandLine );
-  std::string const & inputFileName = commandLine->getReference< std::string >( viewKeys.inputFileName );
+  string const & inputFileName = commandLine->getReference< string >( viewKeys.inputFileName );
 
 
 #ifdef GEOSX_USE_PYTHON

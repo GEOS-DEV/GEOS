@@ -123,11 +123,11 @@ class VanGenuchtenBakerRelativePermeability : public RelativePermeabilityBase
 {
 public:
 
-  VanGenuchtenBakerRelativePermeability( std::string const & name, dataRepository::Group * const parent );
+  VanGenuchtenBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
 
   virtual ~VanGenuchtenBakerRelativePermeability() override;
 
-  static std::string catalogName() { return "VanGenuchtenBakerRelativePermeability"; }
+  static string catalogName() { return "VanGenuchtenBakerRelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

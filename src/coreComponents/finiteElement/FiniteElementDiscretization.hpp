@@ -54,7 +54,7 @@ public:
 
   FiniteElementDiscretization() = delete;
 
-  explicit FiniteElementDiscretization( std::string const & name, Group * const parent );
+  explicit FiniteElementDiscretization( string const & name, Group * const parent );
 
   ~FiniteElementDiscretization() override;
 

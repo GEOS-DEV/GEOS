@@ -89,12 +89,12 @@ class BrooksCoreyRelativePermeability : public RelativePermeabilityBase
 {
 public:
 
-  BrooksCoreyRelativePermeability( std::string const & name, dataRepository::Group * const parent );
+  BrooksCoreyRelativePermeability( string const & name, dataRepository::Group * const parent );
 
   virtual ~BrooksCoreyRelativePermeability() override;
 
 //START_SPHINX_INCLUDE_00
-  static std::string catalogName() { return "BrooksCoreyRelativePermeability"; }
+  static string catalogName() { return "BrooksCoreyRelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
