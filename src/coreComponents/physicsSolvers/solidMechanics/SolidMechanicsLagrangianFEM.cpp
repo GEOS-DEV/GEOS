@@ -736,7 +736,6 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
     globalIndex_array nodeDOF;
     real64_array nodeRHS;
 
-
     // The flag component = 0, 1 and 2 are for the traction in the three orthogonal directions
     // in the global cartesian coordinate system  
     // The flag component = -1 is for the normal traction
