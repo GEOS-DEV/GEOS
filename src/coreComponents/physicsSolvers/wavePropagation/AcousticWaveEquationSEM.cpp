@@ -9,6 +9,7 @@
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 
 namespace geosx
@@ -281,10 +282,10 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
       /// get the barycenter of the element
-      arrayView2d< real64 const > const & elemCenterLocation = elementSubRegion.getElementCenter();
+      //arrayView2d< real64 const > const & elemCenterLocation = elementSubRegion.getElementCenter();
       /// The source location
-      real64 sourceLocation[3]={0};
-      localIndex sourceInElemIndex=0;
+      //real64 sourceLocation[3]={0};
+      //localIndex sourceInElemIndex=0;
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -340,15 +341,20 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
             }
           }
 
+  	  /*
           ///Try to get an element in the center of the domain
-          if( std::abs( elemCenterLocation[k][0]- 505.0 ) <=1.0 && (std::abs( elemCenterLocation[k][1]- 505.0 ) <=1.0 && std::abs( elemCenterLocation[k][2]- 505.0 ) <=1.0))
+	  //if( std::abs( elemCenterLocation[k][0]- 505.0 ) <=1.0 && (std::abs( elemCenterLocation[k][1]- 505.0 ) <=1.0 && std::abs( elemCenterLocation[k][2]- 505.0 ) <=1.0)) // 1KM WITH 100 POINTS
+          
+          //if( std::abs( elemCenterLocation[k][0]- 1515.0 ) <=1.0 && (std::abs( elemCenterLocation[k][1]- 1515.0 ) <=1.0 && std::abs( elemCenterLocation[k][2]- 1515.0 ) <=1.0)) //3KM WITH 100 POINTS
+	  if( std::abs( elemCenterLocation[k][0]- 1010.0 ) <=1.0 && (std::abs( elemCenterLocation[k][1]- 1010.0 ) <=1.0 && std::abs( elemCenterLocation[k][2]- 1010.0 ) <=1.0)) // 2KM WITH 100 POINTS
+          
           {
             sourceInElemIndex = k;
             sourceLocation[0] = elemCenterLocation[k][0];
             sourceLocation[1] = elemCenterLocation[k][1];
             sourceLocation[2] = elemCenterLocation[k][2];
-
-            real64 frequency = 1.0;
+	    std::cout << sourceLocation[0] << "   " << sourceLocation[1] << "   " << sourceLocation[2] << std::endl;
+            real64 frequency = 5.0;
             real64 fi =0.0;
             //if(time_n <=0.4)
             //{
@@ -361,14 +367,19 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
               real64 const detJ = finiteElement.template getGradN< FE_TYPE >( sourceInElemIndex, q, xLocal, gradN );
 
               rhs[elemsToNodes[k][q]] +=  fi* detJ * N[q];
-              ///std::cout << "For index " << elemsToNodes[k][q] << " rhs = " << rhs[elemsToNodes[k][q]] << std::endl;
+              //std::cout << "For index " << elemsToNodes[k][q] << " rhs = " << rhs[elemsToNodes[k][q]] << std::endl;
             }
           }
+  	  */
+	  
         }
       } );
     } );
   } );
 
+  // apply the source before marching ahead in time
+  applyRickerSource( time_n, domain );
+  
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
   for( localIndex a=0; a<nodes.size(); ++a )
@@ -386,18 +397,110 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   return dt;
 }
 
+void AcousticWaveEquationSEM::applyRickerSource( real64 const time,
+                                                 DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FunctionManager const & functionManager = FunctionManager::instance();
 
-//void WaveEquation::ApplyBoundaryConditions( real64 const time,
-//                                            real64 const dt,
-//                                            DomainPartition & domain,
-//                                            DofManager const & dofManager,
-//                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-//                                            arrayView1d< real64 > const & localRhs )
-//{
-//
-//}
+  // get the nodeManager to access the rhs
+  NodeManager & nodes = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
+  // get the rhs vector that we want to fill in this function
+  arrayView1d< real64 > const rhs = nodes.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
+  rhs.setValues< serialPolicy >( 0.0 );
+  // get the position of the nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodes.referencePosition().toViewConst();
+  
+  fsManager.apply( time,
+                   &domain,
+                   "ElementRegions",
+                   string( "Ricker" ),
+                   [&]( FieldSpecificationBase const * const fs,
+                        string const &,
+                        SortedArrayView< localIndex const > const & targetElemSet,
+                        Group * const group,
+                        string const & )
+  {
+    // get the name of the function specified in the XML file 
+    string const & functionName = fs->getFunctionName();
 
+    // get the elemsToNodes map for this subRegion
+    CellElementSubRegion * subRegion = group->groupCast< CellElementSubRegion * >();
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion->nodeList();
 
+    // at this point, "value" should contain the value of the Ricker
+    // we have to multiply it by N[a] * detJ. This is done below.
+
+    finiteElement::FiniteElementBase const &
+      fe = subRegion->getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+    finiteElement::dispatch3D( fe,
+                               [&]
+                               ( auto const finiteElement )
+    {
+      using FE_TYPE = TYPEOFREF( finiteElement );
+
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+      
+      real64 N[numNodesPerElem]{};
+      real64 gradN[numNodesPerElem][3] = {{ 0.0 }};
+      real64 xLocal[numNodesPerElem][3] = {{ 0.0 }};      
+      
+      if( functionName.empty() || functionManager.getGroupReference< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
+      {
+	// we can uncomment this and use the data from the table
+        /*
+        real64 value = fs->getScale(); // this is the "scale" of the XML file (by default, scale=1)
+
+        // if no table is specified, then the source is constant, equal to the value of "scale"
+        if( !functionName.empty() )
+        {
+          // if a table is specified, then interpolate in the table
+          FunctionBase const & function = functionManager.getGroupReference< FunctionBase >( functionName );
+          value *= function.evaluate( &time );
+        }
+        */
+
+	/// For now we call the Ricker function to compute value
+        real64 const frequency = 5.0;
+        real64 const value = evaluateRicker( time, frequency );
+
+        // we check that the targetElemSet only contain one element
+        GEOSX_ERROR_IF( targetElemSet.size() > 1, "the target set of applyRickerSource contains more than one element. For now, the box for the source must contain only one element" );
+
+	// we check that the targetElemSet only contain at least one element
+        GEOSX_ERROR_IF( targetElemSet.size() < 1, "the target set of applyRickerSource does not contain any element of the mesh. Please Specify a correct box coordinate for the source in the xml file." );
+        
+        // apply source here
+        for( localIndex i = 0; i < targetElemSet.size(); ++i )
+        {
+          localIndex const k = targetElemSet[ i ];
+          for( localIndex a=0; a< numNodesPerElem; ++a )
+          {
+            for( localIndex inode=0; inode<3; ++inode )
+            {
+              xLocal[a][inode] = X( elemsToNodes( k, a ), inode );
+            }
+          }
+
+          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+          {
+            FE_TYPE::calcN( q, N );
+            real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+            rhs[elemsToNodes[k][q]] += value * detJ * N[q];
+          }
+        }
+      }
+      else
+      {
+        // we can discuss this later, but for now let's not use this option
+        GEOSX_ERROR( "This option is not supported yet" );
+      }
+    } );
+  } );
+}
+  
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

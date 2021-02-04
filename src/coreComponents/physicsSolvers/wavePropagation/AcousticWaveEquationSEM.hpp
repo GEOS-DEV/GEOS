@@ -56,13 +56,17 @@ public:
                        DomainPartition & domain ) override;
 
   /// Returns the value of a Ricker at time t0 with central Fourier frequency f0
+  virtual
   real64 evaluateRicker( real64 const & t0, real64 const & f0 );
   /// Returns the value of the second derivative of a Ricker at time t0 with central Fourier frequency f0
   virtual
   real64 evaluateSecondDerivativeRicker( real64 const & t0, real64 const & f0 );
 
-
-//  virtual void ApplyBoundaryConditions( real64 const time,
+  /// Apply the time source Ricker at the location specified in the xml 
+  virtual
+  void applyRickerSource( real64 const time, DomainPartition & domain );
+  
+//  virtual void applyBoundaryConditions( real64 const time,
 //                                        real64 const dt,
 //                                        DomainPartition & domain,
 //                                        DofManager const & dofManager,
@@ -97,7 +101,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Pressure_nm1,
                            "pressure_nm1",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Scalar pressure at time n-1." );
 
@@ -105,7 +109,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Pressure_n,
                            "pressure_n",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Scalar pressure at time n." );
 
@@ -121,7 +125,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
                            "rhs",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "RHS" );
 
@@ -129,7 +133,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            "massVector",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Diagonal Mass Matrix." );
 
@@ -137,7 +141,7 @@ EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
                            "dampingVector",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Diagonal Damping Matrix." );
 
@@ -145,7 +149,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
                            "mediumVelocity",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Medium velocity of the cell" );
 
@@ -153,7 +157,7 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector,
                            "stiffnessVector",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Stiffness vector contains R_h*Pressure_n." );
 
