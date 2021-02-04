@@ -404,7 +404,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
     for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
     {
       localIndex const cellIndex = fracturedElements[ei];
-      localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
+      localIndex const k = cellsToEmbeddedSurfaces[cellIndex][0];
 
       // working arrays
       stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( numDispDof );
