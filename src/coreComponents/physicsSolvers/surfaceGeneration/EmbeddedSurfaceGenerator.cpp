@@ -138,7 +138,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
         } // end loop over nodes
         if( isPositive * isNegative == 1 )
         {
-          std::cout << "found 1 element" << std::endl;
           bool added = embeddedSurfaceSubRegion->addNewEmbeddedSurface( cellIndex,
                                                                         esr,
                                                                         er,
