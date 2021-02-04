@@ -5,21 +5,12 @@
 Tutorial X: Pressurized fracture in an infinite medium
 #######################################################
 
-
-**Context**
-
-In this tutorial, we use a coupled solver to solve a poroelastic Terzaghi-type
-problem, a classic benchmark in poroelasticity.
-We do so by coupling a single phase flow solver with a small-strain Lagrangian mechanics solver.
-
-
 **Objectives**
 
 At the end of this tutorial you will know:
 
   - how to define embedded fractures in the porous domain,
-  - how to use the SolidMechanicsEmbeddedFractures solver to solve mechanics problems with
-  embedded fractures.
+  - how to use the SolidMechanicsEmbeddedFractures solver to solve mechanics problems with embedded fractures.
 
 
 **Input file**
@@ -92,8 +83,7 @@ Events
 -------------------------------------------------------------------
 For this problem we will add two events defining solver applications:
 
-- an event specifying the execution of the ``EmbeddedSurfaceGenerator`` to generate
-the fracture elements.
+- an event specifying the execution of the ``EmbeddedSurfaceGenerator`` to generate the fracture elements.
 - a periodic even specifying the exectution of the embeeded fractures solver.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
@@ -104,19 +94,19 @@ the fracture elements.
 Setting up mesh, material properties and boundary conditions
 --------------------------------------------------------------------
 
-  Last, let us take a closer look at the geometry of this simple problem.
-  We use the internal mesh generator to create a large domain
-  (:math:`1000\, m \, \times 1001 \,  m \, \times 1 \, m`), with one single element
-  along the Z axes, 420 elements along the X axis and 221 elements along the Y axis.
-  All the elements are hexahedral elements (C3D8) and that refinement is performed
-  around the fracture.
+Last, let us take a closer look at the geometry of this simple problem.
+We use the internal mesh generator to create a large domain
+(:math:`1000\, m \, \times 1001 \,  m \, \times 1 \, m`), with one single element
+along the Z axes, 420 elements along the X axis and 221 elements along the Y axis.
+All the elements are hexahedral elements (C3D8) and that refinement is performed
+around the fracture.
 
-  .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
     :language: xml
     :start-after: <!-- SPHINX_POROELASTIC_MESH -->
     :end-before: <!-- SPHINX_POROELASTIC_MESH_END -->
 
-  The parameters used in the simulation are summarized in the following table.
+The parameters used in the simulation are summarized in the following table.
 
   +----------------+-----------------------+------------------+-------------------+
   | Symbol         | Parameter             | Units            | Value             |
@@ -125,13 +115,13 @@ Setting up mesh, material properties and boundary conditions
   +----------------+-----------------------+------------------+-------------------+
   | :math:`\nu`    | Poisson's ration      | [-]              | 0.2               |
   +----------------+-----------------------+------------------+-------------------+
-  | :math:`L_f`    | Fracture length       | [m]              |                   |
+  | :math:`L_f`    | Fracture length       | [m]              | 20                |
   +----------------+-----------------------+------------------+-------------------+
   | :math:`p_f`    | fracture pressure     | [Pa]             | 1.0*10\ :sup:`5`  |
   +----------------+-----------------------+------------------+-------------------+
 
-  Material properties and boundary conditions are specified in the
-  ``Constitutive`` and ``FieldSpecifications`` sections.
+Material properties and boundary conditions are specified in the
+``Constitutive`` and ``FieldSpecifications`` sections.
 
 Adding an embedded fracture
 ---------------------------------
@@ -169,6 +159,7 @@ times with the numerical solution (markers).
    from mpmath import *
    import math
 
+
    class Sneddon:
 
        def __init__(self, mechanicalParameters, length, pressure):
@@ -184,36 +175,35 @@ times with the numerical solution (markers).
            return self.scaling * ( self.halfLength**2  - x**2 )**0.5;
 
 
-       def getMechanicalParametersFromXML( xmlFilePath ):
+   def getMechanicalParametersFromXML( xmlFilePath ):
+       tree = ElementTree.parse(xmlFilePath)
 
-           tree = ElementTree.parse(xmlFilePath)
-           param = tree.find('Constitutive/LinearElasticIsotropic')
+       param = tree.find('Constitutive/LinearElasticIsotropic')
 
-           mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus"])
-           mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
-           mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
-           return mechanicalParameters
+       mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus"])
+       mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
+       mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
+       return mechanicalParameters
 
 
-  def getFracturePressureFromXML( xmlFilePath ):
+   def getFracturePressureFromXML( xmlFilePath ):
+       tree = ElementTree.parse(xmlFilePath)
 
-      tree = ElementTree.parse(xmlFilePath)
+       param = tree.findall('FieldSpecifications/FieldSpecification')
 
-      param = tree.findall('FieldSpecifications/FieldSpecification')
+       found_traction = False
+       for elem in param:
+           if elem.get("fieldName") == "fractureTraction" and elem.get("component") == "0":
+               pressure = float(elem.get("scale"))*(-1)
+               found_traction = True
+           if found_traction: break
 
-      found_traction = False
-      for elem in param:
-          if elem.get("fieldName") == "fractureTraction" and elem.get("component") == "0":
-              pressure = float(elem.get("scale"))*(-1)
-              found_traction = True
-          if found_traction: break
-
-      return pressure
+       return pressure
 
 
    def getFractureLengthFromXML(xmlFilePath):
-
        tree = ElementTree.parse(xmlFilePath)
+
        boundedPlane = tree.find('Geometry/BoundedPlane')
        dimensions = boundedPlane.get("dimensions")
        dimensions = [float(i) for i in dimensions[1:-1].split(",")]
@@ -223,10 +213,10 @@ times with the numerical solution (markers).
 
        return length, origin[0]
 
-   def main():
 
+   def main():
        # File path
-       hdf5File1Path = "displacemenJump_history.hdf5"
+       hdf5File1Path = "displacementJump_history.hdf5"
        hdf5File2Path = "cell_centers.hdf5"
        xmlFilePath = "../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml"
 
@@ -247,34 +237,34 @@ times with the numerical solution (markers).
          aperture = aperture[0:lastValue]
          x = x[0:lastValue]
 
-      # Extract info from XML
-      mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath)
-      appliedPressure = getFracturePressureFromXML(xmlFilePath)
+       # Extract info from XML
+       mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath)
+       appliedPressure = getFracturePressureFromXML(xmlFilePath)
 
-      # Get length of the fracture
-      length, origin = getFractureLengthFromXML(xmlFilePath)
+       # Get length of the fracture
+       length, origin = getFractureLengthFromXML(xmlFilePath)
 
-      x = x - origin
-      # Initialize Sneddon's analytical solution
-      sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length, appliedPressure)
+       x = x - origin
+       # Initialize Sneddon's analytical solution
+       sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length, appliedPressure)
 
-      # Plot analytical (continuous line) and numerical (markers) aperture solution
-      x_analytical = np.linspace(-length, length, 101, endpoint=True)
-      aperture_analytical = np.empty(len(x_analytical))
+       # Plot analytical (continuous line) and numerical (markers) aperture solution
+       x_analytical = np.linspace(-length, length, 101, endpoint=True)
+       aperture_analytical = np.empty(len(x_analytical))
 
-      cmap = plt.get_cmap("tab10")
-      i=0
-      for xCell in x_analytical:
-         aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture( xCell )
-         i += 1
-      plt.plot(x_analytical, aperture_analytical, color=cmap(-1), label='analytical solution')
-      plt.plot(x, aperture, 'o', color=cmap(2), label='numerical solution')
+       cmap = plt.get_cmap("tab10")
+       i=0
+       for xCell in x_analytical:
+           aperture_analytical[i] = sneddonAnalyticalSolution.computeAperture( xCell )
+           i += 1
+       plt.plot(x_analytical, aperture_analytical, color=cmap(-1), label='analytical solution')
+       plt.plot(x, aperture, 'o', color=cmap(2), label='numerical solution')
 
-      plt.grid()
-      plt.xlabel('length [m]')
-      plt.ylabel('aperture [m]')
-      plt.legend(bbox_to_anchor=(0.5, 0.2), loc='center', borderaxespad=0.)
-      plt.show()
+       plt.grid()
+       plt.xlabel('length [m]')
+       plt.ylabel('aperture [m]')
+       plt.legend(bbox_to_anchor=(0.5, 0.2), loc='center', borderaxespad=0.)
+       plt.show()
 
    if __name__ == "__main__":
        main()
