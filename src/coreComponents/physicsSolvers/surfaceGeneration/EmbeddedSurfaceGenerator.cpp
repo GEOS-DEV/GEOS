@@ -94,6 +94,14 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
   EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion =
     embeddedSurfaceRegion->getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
+//  dataRepository::Wrapper< SortedArray< localIndex > > * setWrapper =
+//            embeddedSurfaceSubRegion->getGroup( ObjectManagerBase::groupKeyStruct::setsString )->
+//              getWrapper< SortedArray< localIndex > >( "all" );
+//
+//  SortedArray< localIndex > & targetSet = setWrapper->reference();
+
+  localIndex localNum         = 0;
+
   // Loop over all the fracture planes
   geometricObjManager->forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
   {
@@ -110,6 +118,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
     integer isPositive, isNegative;
     real64 distVec[ 3 ];
 
+    localIndex countEmbElements = 0;
+
     elemManager->forElementSubRegionsComplete< CellElementSubRegion >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
     {
@@ -117,6 +127,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
       FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+
       for( localIndex cellIndex = 0; cellIndex < subRegion.size(); cellIndex++ )
       {
         isPositive = 0;
@@ -145,13 +156,20 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
                                                                         *edgeManager,
                                                                         cellToEdges,
                                                                         &fracture );
+
           if( added )
           {
             GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+
+            //targetSet.insert( countEmbElements );
+
             // Add the information to the CellElementSubRegion
-            if( ghostRank[cellIndex] < 0 )
+            subRegion.addFracturedElement( cellIndex, countEmbElements );
+
+            countEmbElements++;
+            if ( ghostRank[cellIndex] < 0 )
             {
-              subRegion.addFracturedElement( cellIndex, embeddedSurfaceSubRegion->size()-1 );
+              localNum++;
             }
           }
         }
@@ -165,7 +183,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
   embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
 
   dataRepository::Wrapper< SortedArray< localIndex > > * setWrapper =
-    embeddedSurfaceSubRegion->getGroup( ObjectManagerBase::groupKeyStruct::setsString )->
+      embeddedSurfaceSubRegion->getGroup( ObjectManagerBase::groupKeyStruct::setsString )->
       getWrapper< SortedArray< localIndex > >( "all" );
 
   SortedArray< localIndex > & targetSet = setWrapper->reference();
@@ -175,8 +193,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
   }
 
   // Sum across all ranks
-  localIndex localNum = embeddedSurfaceSubRegion->size();
   localIndex totalNum = 0;
+  // int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   MpiWrapper::allReduce( &localNum,
                          &totalNum,
                          1,

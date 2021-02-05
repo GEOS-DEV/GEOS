@@ -219,6 +219,9 @@ private:
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
 
   /// Map of unmapped global indices in the element-to-face map
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInEdgelist;
+
+  /// Map of unmapped global indices in the element-to-face map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
 
   /// List of fractured elements

@@ -343,6 +343,8 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
       {
         localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
         localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
+        if( localRow < 0 || localRow >= rowLengths.size() )
+          continue;
         for( localIndex i=0; i<3; ++i )
         {
           rowLengths[localRow + i] += numDispDof;
@@ -412,12 +414,15 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
       stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( numDispDof );
       stackArray1d< globalIndex, 3 > dofColIndicesJump( 3 );
 
+      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+
+      std::cout << "rank: " << rank << " - jumpDofNumber " << jumpDofNumber[k] << std::endl;
+
       for( localIndex idof = 0; idof < 3; ++idof )
       {
         eqnRowIndicesJump[idof] = jumpDofNumber[k] + idof - rankOffset;
         dofColIndicesJump[idof] = jumpDofNumber[k] + idof;
       }
-      ;
 
       for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
       {
