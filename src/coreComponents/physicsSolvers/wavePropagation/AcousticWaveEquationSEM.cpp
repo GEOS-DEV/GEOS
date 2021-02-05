@@ -104,7 +104,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
                                                                        CellElementSubRegion & elementSubRegion )
     {
 
-      arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
+      //arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
       /// get the map element to faces
@@ -128,22 +128,48 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
         constexpr localIndex numNodesPerFace = 4; // FE_TYPE::numNodes;
 
         real64 N[numNodesPerElem];
+	real64 gradN[ numNodesPerElem ][ 3 ];
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
           real64 const invC2 = 1.0 / ( c[k] * c[k] );
-
+	  real64 xLocal[numNodesPerElem][3];
+	  for( localIndex a=0; a< numNodesPerElem; ++a )
+	    {
+	      for( localIndex i=0; i<3; ++i )
+		{
+                  xLocal[a][i] = X( elemsToNodes( k, a ), i );
+                }
+	    }
+             
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             FE_TYPE::calcN( q, N );
+	    real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
               /// update mass matrix
-              mass[elemsToNodes[k][a]] +=  invC2 * detJ[k][q] * N[a];
+	      mass[elemsToNodes[k][a]] +=  invC2 * detJ * N[a];
+              //mass[elemsToNodes[k][a]] +=  invC2 * detJ[k][q] * N[a];
             }
           }
         }
 
+	  real64 sumMass = 0.0;
+	  for( localIndex a=0; a<nodeManager.size(); ++a )
+	    {
+	      sumMass +=mass[a];
+	    }
+	  
+	  /* Unit test 
+	  // Test for mass matrix sumTerm*c2 should be volume of the domaine
+	  // assuming MediumVelocity c = 1500
+	  sumMass *=1500*1500;
+	  std::cout << "Sum mass terms time C2 = " << sumMass << std::endl;
+
+	  GEOSX_ERROR_IF( true, " Stop test Mass Ok" );
+	  */
+	  
         /// update damping matrix
         for( localIndex k=0; k < elemsToFaces.size( 0 ); ++k )
         {
@@ -165,6 +191,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
               for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
               {
                 FE_TYPE::calcN( q, N );
+		real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
                 ///Compute invJ = DF^{-1}
                 real64 invJ[3][3]={{0}};
@@ -187,7 +214,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
 
                   localIndex numFaceGl = elemsToFaces[k][kfe];
                   localIndex numNodeGl = facesToNodes[numFaceGl][a];
-                  damping[numNodeGl] += alpha*detJ[k][q]*ds*N[a];
+		  damping[numNodeGl] += alpha*detJ*ds*N[a];
+                  //damping[numNodeGl] += alpha*detJ[k][q]*ds*N[a];
                 }
               }
             }
@@ -301,46 +329,56 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
         real64 N[numNodesPerElem];
         real64 gradN[ numNodesPerElem ][ 3 ];
 
+	
+	/* Unit test 
+	// For unit test, intialize p_n with x-coordinate of mesh vertices {(x,y,z), x,y,z \in R}
+	for( localIndex a=0; a<nodes.size(); ++a )
+	  {
+	    p_n[a] =  X(a,0); //1.0; // X(a,0);
+	  }
+	*/
+	
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
           real64 xLocal[numNodesPerElem][3];
           /// Local stiffness matrix for the element k
-          real64 Rh_k[numNodesPerElem][numNodesPerElem];
+          real64 Rh_k[numNodesPerElem][numNodesPerElem] = {{0}};
 
           for( localIndex a=0; a< numNodesPerElem; ++a )
-          {
-            for( localIndex i=0; i<3; ++i )
-            {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
-            }
-          }
+	    {
+	      for( localIndex i=0; i<3; ++i )
+		{
+		  xLocal[a][i] = X( elemsToNodes( k, a ), i );
+		}
+	    }
 
-
+	  
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-          {
-            ///Calculate the basis function N at the node q
-            FE_TYPE::calcN( q, N );
-            ///Compute gradN = invJ*\hat{\nabla}N at the node q and return the determinant of the transformation matrix J
-            real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+	    {
+	      ///Calculate the basis function N at the node q
+	      FE_TYPE::calcN( q, N );
+	      ///Compute gradN = invJ*\hat{\nabla}N at the node q and return the determinant of the transformation matrix J
+	      real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+	      //Rh_k = {{0}};
+	      
+	      for( localIndex i=0; i<numNodesPerElem; ++i )
+		{
+		  for( localIndex j=0; j<numNodesPerElem; ++j )
+		    {
+		      Rh_k[i][j] = 0.0;
+		      for( localIndex a=0; a < 3; ++a )
+			{
+			  Rh_k[i][j] +=  detJ * gradN[i][a]*gradN[j][a];
+			}
+		      
+		      ///Compute local Rh_k*p_n and save in the global vector
+		      stiffnessVector[elemsToNodes[k][i]] += Rh_k[i][j]*p_n[elemsToNodes[k][j]];
+		    }
 
-            for( localIndex i=0; i<numNodesPerElem; ++i )
-            {
-              for( localIndex j=0; j<numNodesPerElem; ++j )
-              {
-                Rh_k[i][j] = 0.0;
-                for( localIndex a=0; a < 3; ++a )
-                {
-                  Rh_k[i][j] +=  detJ * gradN[i][a]*gradN[j][a];
-                }
-              }
-            }
-            ///Compute local Rh_k*p_n and save in the global vector
-            for( localIndex l=0; l< numNodesPerElem; ++l )
-            {
-              stiffnessVector[elemsToNodes[k][q]] += Rh_k[q][l]*p_n[elemsToNodes[k][l]];
-            }
-          }
+		}
 
+	    }
+	  
   	  /*
           ///Try to get an element in the center of the domain
 	  //if( std::abs( elemCenterLocation[k][0]- 505.0 ) <=1.0 && (std::abs( elemCenterLocation[k][1]- 505.0 ) <=1.0 && std::abs( elemCenterLocation[k][2]- 505.0 ) <=1.0)) // 1KM WITH 100 POINTS
@@ -373,6 +411,16 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   	  */
 	  
         }
+	/* Unit test 
+	// compute <\nabla p, \nabla p> = <p, Rh p>
+	real64 prodScalar = 0.0;
+	for( localIndex a=0; a<nodes.size(); ++a )
+	  {
+	    prodScalar +=stiffnessVector[a]*p_n[a];
+	  }
+	std::cout << " Scalar product p_n and stiffnessVector = " << prodScalar << std::endl;
+	GEOSX_ERROR_IF( true, " Stop test Stiffness matrix Ok" );
+	*/
       } );
     } );
   } );
