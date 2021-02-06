@@ -56,6 +56,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   m_solidSolverName(),
   m_flowSolverName(),
   m_surfaceGeneratorName(),
+  m_regimeTypeOption(),
   m_couplingTypeOption( CouplingTypeOption::FIM ),
   m_solidSolver( nullptr ),
   m_flowSolver( nullptr ),
@@ -74,6 +75,10 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   registerWrapper( viewKeyStruct::surfaceGeneratorSolverNameString, &m_surfaceGeneratorName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the surface generator solver to use in the hydrofracture solver" );
+
+  registerWrapper( viewKeyStruct::regimeTypeOptionString, &m_regimeTypeOption)->
+    setInputFlag( InputFlags::REQUIRED)->
+    setDescription( "Propagation regime. Valid options:\n* " + EnumStrings< RegimeTypeOption >::concat( "\n* " ));
 
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOption )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -339,7 +344,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     real64 const Eprime = E/(1.0-nu*nu);
     real64 const PI = 2 * acos(0.0);
     real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
-    std::cout << Eprime << PI << Kprime << std::endl;
 
     std::cout << subRegion.getName() << ": " << subRegion.size() << std::endl;
     FaceElementSubRegion::FaceMapType const & faceElmtToFacesRelation = subRegion.faceList();
@@ -409,7 +413,16 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 	  // assume a linear relationship between node opening and signed distance
 	  // negative distance for nodes that have been split
-	  signedNodeDistance[parentNode] = -std::abs( -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[parentFace] ) );
+          if (m_regimeTypeOption == RegimeTypeOption::ToughnessDominated)
+          {
+            signedNodeDistance[parentNode] = -pow(-LvArray::tensorOps::AiBi< 3 >(temp, faceNormal[parentFace])
+                                                  *Eprime/Kprime, 2);
+          }
+          else if (m_regimeTypeOption == RegimeTypeOption::ViscosityDominated)
+          {
+            GEOSX_ERROR("Viscosity dominated case not implemented yet.");
+          }
+
 	  signedNodeDistance[childNode] = signedNodeDistance[parentNode];
 	  std::cout << "Parent node " << parentNode
 		    << ": coords = " << referencePosition(parentNode, 0) << ", "
@@ -446,7 +459,12 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       std::cout << std::endl;
     }
 
+    // call the Eikonal Equation solver to solve the signed distance fields
+    // at nodes of partially opened face elements
     EikonalEquationSolver(domain, subRegion, partiallyOpenFaceElmts);
+    // calculate the geometric quantities of partially opened face elements,
+    // include fluid volume, partially opened area and its center
+    CalculatePartiallyOpenElmtQuantities(domain, subRegion, partiallyOpenFaceElmts, Eprime, Kprime);
 
   } );
 
@@ -583,6 +601,312 @@ real64 HydrofractureSolver::CalculateSignedDistance1stOrder(localIndex const nod
   }
 }
 
+real64 CalculatePartiallyOpenElmtArea(real64 const cornerNodeSignedDistance,
+                                      real64 const alpha,
+                                      real64 const deltaX,
+                                      real64 const deltaY)
+{
+  real64 const PI = 2 * acos(0.0);
+  real64 const tol = 1.0e-9;
+
+  real64 const maxLength = deltaX*cos(alpha) + deltaY*sin(alpha);
+  real64 dist = std::abs(cornerNodeSignedDistance);
+  real64 xi0;
+  real64 m, area;
+
+  if ( (alpha > tol) && (alpha < (PI/2.0 - tol)) )
+  {
+    if (tan(alpha) <= deltaX/deltaY)
+    {
+      xi0 = deltaY*sin(alpha);
+    }
+    else
+    {
+      xi0 = deltaX*cos(alpha);
+    }
+
+    m = 1.0/(sin(alpha)*cos(alpha));
+
+    if ( dist <= xi0 ) // triangle
+    {
+      area = m * dist*dist/2.0;
+    }
+    else if ( (dist > xi0) && (dist <= (maxLength - xi0)) ) // quadrilateral
+    {
+      area = m * (dist*dist - (dist-xi0)*(dist-xi0))/2.0;
+    }
+    else if ( (dist > (maxLength - xi0)) && (dist <= maxLength) ) // pentagon
+    {
+      area = m * (   dist*dist
+                  - (dist-xi0)*(dist-xi0)
+                  - (dist+xi0-maxLength)*(dist+xi0-maxLength)
+                 )/2.0;
+    }
+    else
+    {
+      area = m * (   dist*dist
+                  - (dist-xi0)*(dist-xi0)
+                  - (dist+xi0-maxLength)*(dist+xi0-maxLength)
+                  + (dist-maxLength)*(dist-maxLength)
+                 )/2.0;
+    }
+  }
+  else
+  {
+    if (std::abs(alpha) <= tol)
+    {
+      if (dist <= deltaX)
+      {
+        area = deltaY*dist;
+      }
+      else
+      {
+        area = deltaY*dist - deltaY*(dist-deltaX);
+      }
+    }
+    else if (std::abs(alpha - PI/2.0) <= tol)
+    {
+      if (dist <= deltaY)
+      {
+        area = deltaX*dist;
+      }
+      else
+      {
+        area = deltaX*dist - deltaX*(dist-deltaY);
+      }
+    }
+    else
+    {
+      area = -1.0;
+    }
+  }
+
+  GEOSX_ERROR_IF_LE(area, 0.0);
+  GEOSX_ERROR_IF_GT(area, 1.000001*deltaX*deltaY);
+
+  return area;
+}
+
+real64 CalculatePartiallyOpenElmtFuildVolToughnessDominated(real64 const cornerNodeSignedDistance,
+                                                            real64 const alpha,
+                                                            real64 const deltaX,
+                                                            real64 const deltaY,
+                                                            real64 const Eprime,
+                                                            real64 const Kprime)
+{
+  real64 const PI = 2 * acos(0.0);
+  real64 const tol = 1.0e-9;
+
+  real64 const maxLength = deltaX*cos(alpha) + deltaY*sin(alpha);
+  real64 const dist = std::abs(cornerNodeSignedDistance);
+
+  real64 const coeff1 = 4.0/15.0 * Kprime/Eprime;
+  real64 const coeff2 = 2.0/3.0  * Kprime/Eprime;
+
+  real64 xi0;
+  real64 m, vol;
+
+  if ( (alpha > tol) && (alpha < (PI/2.0 - tol)) )
+  {
+    if (tan(alpha) <= deltaX/deltaY)
+    {
+      xi0 = deltaY*sin(alpha);
+    }
+    else
+    {
+      xi0 = deltaX*cos(alpha);
+    }
+
+    m = 1.0/(sin(alpha)*cos(alpha));
+
+    if ( dist <= xi0 ) // triangle
+    {
+      vol = m * coeff1 * pow(dist, 5.0/2.0);
+    }
+    else if ( (dist > xi0) && (dist <= (maxLength - xi0)) ) // quadrilateral
+    {
+      vol = m * coeff1 * ( pow(dist, 5.0/2.0) - pow(dist-xi0, 5.0/2.0) );
+    }
+    else if ( (dist > (maxLength - xi0)) && (dist <= maxLength) ) // pentagon
+    {
+      vol = m * coeff1 * ( pow(dist, 5.0/2.0)
+                         - pow(dist-xi0, 5.0/2.0)
+                         - pow(dist+xi0-maxLength, 5.0/2.0)
+                         );
+    }
+    else
+    {
+      vol = m * coeff1 * ( pow(dist, 5.0/2.0)
+                         - pow(dist-xi0, 5.0/2.0)
+                         - pow(dist+xi0-maxLength, 5.0/2.0)
+                         + pow(dist-maxLength, 5.0/2.0)
+                         );
+    }
+  }
+  else
+  {
+    if (std::abs(alpha) <= tol)
+    {
+      if (dist <= deltaX)
+      {
+        vol = deltaY * coeff2 * pow(dist, 3.0/2.0);
+      }
+      else
+      {
+        vol = deltaY * coeff2 * ( pow(dist, 3.0/2.0) - pow(dist-deltaX, 3.0/2.0) );
+      }
+    }
+    else if (std::abs(alpha - PI/2.0) <= tol)
+    {
+      if (dist <= deltaY)
+      {
+        vol = deltaX * coeff2 * pow(dist, 3.0/2.0);
+      }
+      else
+      {
+        vol = deltaX * coeff2 * ( pow(dist, 3.0/2.0) - pow(dist-deltaY, 3.0/2.0) );
+      }
+    }
+    else
+    {
+      vol = -1.0;
+    }
+  }
+
+  GEOSX_ERROR_IF_LE(vol, 0.0);
+
+  return vol;
+}
+
+void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition & domain,
+                                                               FaceElementSubRegion & subRegion,
+                                                               std::unordered_set<localIndex> const & partiallyOpenFaceElmts,
+                                                               real64 const Eprime,
+                                                               real64 const Kprime)
+{
+  MeshLevel * const meshLevel = domain.getMeshBody(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
+  FaceManager::NodeMapType const & faceToNodes = faceManager->nodeList();
+  FaceManager::EdgeMapType const & faceToEdges = faceManager->edgeList();
+  EdgeManager::NodeMapType const & edgeToNodes = edgeManager->nodeList();
+  array1d<real64> & signedNodeDistance = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
+  array1d<localIndex> const & childFaceIndices = faceManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  array1d<real64> & partiallyOpenFaceElmtFluidVol = subRegion.getExtrinsicData< extrinsicMeshData::PartiallyOpenFaceElmtFluidVol >();
+  array1d<real64> & partiallyOpenFaceElmtArea = subRegion.getExtrinsicData< extrinsicMeshData::PartiallyOpenFaceElmtArea >();
+  FaceElementSubRegion::FaceMapType const & faceElmtToFacesRelation = subRegion.faceList();
+
+  array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
+
+  real64 const PI = 2 * acos(0.0);
+  real64 const tol = 1.0e-9;
+
+  // initialize the fluid volume in all the face element
+  for (int i=0; i<subRegion.size(); i++)
+  {
+    partiallyOpenFaceElmtFluidVol[i] = 0.0;
+    partiallyOpenFaceElmtArea[i] = 0.0;
+  }
+
+  // an unordered map to store the parent face of each face element
+  // key: face element number
+  // value: the face number that is the parent face
+  std::unordered_map<localIndex, localIndex> parentFaceOfFaceElmt;
+
+  // loop over all the partially open face elements to calculate
+  // the fluid volume in these elements
+  for (localIndex const faceElmt : partiallyOpenFaceElmts)
+  {
+    // the angle that determinates the fluid volume in the partially opened elmt
+    real64 alpha;
+    localIndex const kf0 = faceElmtToFacesRelation[faceElmt][0];
+    localIndex const kf1 = faceElmtToFacesRelation[faceElmt][1];
+    localIndex const childFaceOfFace0 = childFaceIndices[kf0];
+    localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+    parentFaceOfFaceElmt[faceElmt] = parentFace;
+
+    localIndex cornerNodeIndex = 0;
+    real64 cornerNodeSignedDistance = 0.0;
+    for (localIndex const parentNode : faceToNodes[parentFace] )
+    {
+      if (signedNodeDistance[parentNode] < cornerNodeSignedDistance)
+      {
+        cornerNodeSignedDistance = signedNodeDistance[parentNode];
+        cornerNodeIndex = parentNode;
+      }
+    }
+    std::cout << "corner node " << cornerNodeIndex << " => " << cornerNodeSignedDistance << std::endl;
+
+    std::vector<localIndex> cornerNodeNeighbors;
+    for (localIndex const edge : faceToEdges[parentFace])
+    {
+      if (edgeManager->hasNode(edge, cornerNodeIndex))
+      {
+        localIndex const node0 = edgeToNodes[edge][0];
+        localIndex const node1 = edgeToNodes[edge][1];
+        localIndex neighborNode = (cornerNodeIndex == node0) ? node1 : node0;
+        cornerNodeNeighbors.push_back(neighborNode);
+      }
+    }
+    std::cout << "corner node neighbor size = " << cornerNodeNeighbors.size()
+              << " : " << cornerNodeNeighbors[0]
+              << " , " << cornerNodeNeighbors[1] << std::endl;
+
+    real64 const dist0 = signedNodeDistance[cornerNodeNeighbors[0]];
+    real64 const dist1 = signedNodeDistance[cornerNodeNeighbors[1]];
+
+    real64 temp0[3] = {0.0, 0.0, 0.0};
+    LvArray::tensorOps::add< 3 >( temp0, referencePosition[cornerNodeIndex] );
+    LvArray::tensorOps::subtract< 3 >( temp0, referencePosition[cornerNodeNeighbors[0]] );
+    real64 delta0 = LvArray::tensorOps::l2Norm< 3 >( temp0 );
+
+    real64 temp1[3] = {0.0, 0.0, 0.0};
+    LvArray::tensorOps::add< 3 >( temp1, referencePosition[cornerNodeIndex] );
+    LvArray::tensorOps::subtract< 3 >( temp1, referencePosition[cornerNodeNeighbors[1]] );
+    real64 delta1 = LvArray::tensorOps::l2Norm< 3 >( temp1 );
+
+    real64 const theta = atan(delta1/delta0);
+    real64 const diag = sqrt( delta0*delta0 + delta1*delta1 );
+
+    if (std::abs(cornerNodeSignedDistance - dist0) < tol)
+    {
+      alpha = PI/2.0;
+    }
+    else if (std::abs(cornerNodeSignedDistance - dist1) < tol)
+    {
+      alpha = 0.0;
+    }
+    else
+    {
+      alpha = PI/2.0 - theta - asin( (dist0 - dist1)/diag );
+    }
+    std::cout << alpha << std::endl;
+
+    partiallyOpenFaceElmtArea[faceElmt] = CalculatePartiallyOpenElmtArea(cornerNodeSignedDistance,
+                                                                         alpha,
+                                                                         delta0,
+                                                                         delta1);
+    if (m_regimeTypeOption == RegimeTypeOption::ToughnessDominated)
+    {
+      partiallyOpenFaceElmtFluidVol[faceElmt] = CalculatePartiallyOpenElmtFuildVolToughnessDominated(cornerNodeSignedDistance,
+                                                                                                     alpha,
+                                                                                                     delta0,
+                                                                                                     delta1,
+                                                                                                     Eprime,
+                                                                                                     Kprime);
+    }
+    else if (m_regimeTypeOption == RegimeTypeOption::ViscosityDominated)
+    {
+      GEOSX_ERROR("Viscosity-dominated case has not been implemented yet.");
+    }
+
+    std::cout << "Face elmt " << faceElmt << " partial fluid vol = "
+              << partiallyOpenFaceElmtFluidVol[faceElmt] << ", "
+              << partiallyOpenFaceElmtArea[faceElmt]<< std::endl;
+  }
+
+}
 
 void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
 						FaceElementSubRegion & subRegion,

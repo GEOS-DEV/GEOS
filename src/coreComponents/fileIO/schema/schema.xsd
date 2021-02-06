@@ -1029,6 +1029,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--regimeTypeOption => Propagation regime. Valid options:
+* ToughnessDominated
+* ViscosityDominated-->
+		<xsd:attribute name="regimeTypeOption" type="geosx_HydrofractureSolver_RegimeTypeOption" use="required" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the hydrofracture solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--surfaceGeneratorName => Name of the surface generator solver to use in the hydrofracture solver-->
@@ -1041,6 +1045,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geosx_HydrofractureSolver_CouplingTypeOption">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|FIM|SIM_FixedStress" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_HydrofractureSolver_RegimeTypeOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|ToughnessDominated|ViscosityDominated" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="LagrangianContactType">

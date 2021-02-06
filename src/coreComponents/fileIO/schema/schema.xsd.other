@@ -1265,6 +1265,8 @@
 		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
 		<!--SIFNode => Calculated Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
+		<!--SignedNodeDistance => Signed distance at each node (positive means node has not been split; negative means node has been split). => SurfaceGenerator-->
+		<xsd:attribute name="SignedNodeDistance" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="real64_array2d" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->

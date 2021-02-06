@@ -81,6 +81,12 @@ public:
                                           std::unordered_map<localIndex, int> & nodeStatus,
                                           NodeManager * const nodeManager);
 
+  void CalculatePartiallyOpenElmtQuantities( DomainPartition & domain,
+                                             FaceElementSubRegion & subRegion,
+                                             std::unordered_set<localIndex> const & partiallyOpenFaceElmts,
+                                             real64 const Eprime,
+                                             real64 const Kprime);
+
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -155,6 +161,12 @@ public:
     SIM_FixedStress
   };
 
+  enum class RegimeTypeOption : integer
+  {
+    ToughnessDominated,
+    ViscosityDominated
+  };
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto couplingTypeOptionString = "couplingTypeOptionEnum";
@@ -166,6 +178,7 @@ public:
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
     constexpr static auto surfaceGeneratorSolverNameString = "surfaceGeneratorName";
+    constexpr static auto regimeTypeOptionString = "regimeTypeOption";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
     constexpr static auto maxNumResolvesString = "maxNumResolves";
@@ -211,6 +224,8 @@ private:
   string m_contactRelationName;
   //TJ: name of the surfaceGenerator solver
   string m_surfaceGeneratorName;
+  //TJ: ToughnessDominated or ViscosityDominated
+  RegimeTypeOption m_regimeTypeOption;
 
   CouplingTypeOption m_couplingTypeOption;
 
@@ -227,6 +242,7 @@ private:
 };
 
 ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
+ENUM_STRINGS( HydrofractureSolver::RegimeTypeOption, "ToughnessDominated", "ViscosityDominated" )
 
 } /* namespace geosx */
 

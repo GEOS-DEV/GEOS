@@ -306,6 +306,24 @@ EXTRINSIC_MESH_DATA_TRAIT( SignedNodeDistance,
                            "Signed distance at each node (positive means "
                            "node has not been split; negative means node has been split)." );
 
+EXTRINSIC_MESH_DATA_TRAIT( PartiallyOpenFaceElmtFluidVol,
+                           "PartiallyOpenFaceElmtFluidVol",
+                           array1d< real64 >,
+                           0.0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Fluid volume in partially open face element, for fully open face element, "
+                           "this value equals to the default value 0.0." );
+
+EXTRINSIC_MESH_DATA_TRAIT( PartiallyOpenFaceElmtArea,
+                           "PartiallyOpenFaceElmtArea",
+                           array1d< real64 >,
+                           0.0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Area in partially open face element, for fully open face element, "
+                           "this value equals to the default value 0.0." );
+
 
 } // namespace extrinsicMeshData
 } // namespace geosx
