@@ -40,14 +40,7 @@ void ConformingVirtualElementOrder1::
   localIndex const numCellPoints = cellToNodeMap[cellIndex].size();
   m_numSupportPoints = numCellPoints;
 
-  // Compute other geometrical properties.
-  //  - compute map used to locate local point position by global id (used in the computation of
-  //    basis functions boundary integrals.
-  map< localIndex, localIndex > cellPointsPosition;
-  for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
-    cellPointsPosition.insert( std::pair< localIndex, localIndex >
-                                 ( cellToNodeMap( cellIndex, numVertex ), numVertex ));
-  // - compute cell diameter.
+  // Compute cell diameter.
   real64 cellDiameter = ComputeDiameter< 3,
                                          arrayView2d< real64 const,
                                                       nodes::REFERENCE_POSITION_USD >
@@ -114,8 +107,11 @@ void ConformingVirtualElementOrder1::
     for( localIndex numFaceBasisFunction = 0; numFaceBasisFunction < faceToNodes.size();
          ++numFaceBasisFunction )
     {
-      localIndex basisFunctionIndex = cellPointsPosition
-                                        .find( faceToNodes[numFaceBasisFunction] )->second;
+      localIndex basisFunctionIndex = 0;
+      // find the position of the current face vertex within cell vertices
+      while( cellToNodeMap[cellIndex][basisFunctionIndex] != faceToNodes[numFaceBasisFunction] )
+        ++basisFunctionIndex;
+
       basisBoundaryIntegrals[basisFunctionIndex] += faceBasisIntegrals[numFaceBasisFunction];
       for( localIndex pos = 0; pos < 3; ++pos )
       {
@@ -341,7 +337,8 @@ ConformingVirtualElementOrder1::
   // Compute boundary quadrature weights (also equal to the integrals of basis functions on the
   // boundary).
   array1d< real64 > boundaryQuadratureWeights( numFaceVertices );
-  boundaryQuadratureWeights.setValues< serialPolicy >( 0.0 );
+  for( localIndex numWeight = 0; numWeight < numFaceVertices; ++numWeight )
+    boundaryQuadratureWeights[numWeight] = 0.0;
   for( localIndex numEdge = 0; numEdge < numFaceVertices; ++numEdge )
   {
     boundaryQuadratureWeights[localEdgeToNodes( numEdge, 0 )] += 0.5*edgeLengths[numEdge];
