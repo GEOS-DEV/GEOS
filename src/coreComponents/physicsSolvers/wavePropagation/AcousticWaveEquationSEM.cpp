@@ -9,6 +9,7 @@
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+#include "finiteElement/elementFormulations/LagrangeBasis1.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 
@@ -21,13 +22,54 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
                                                   Group * const parent ):
   SolverBase( name,
               parent )
-{}
+{
+
+  registerWrapper( viewKeyStruct::sourceCoordinatesString, &m_sourceCoordinates )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setSizedFromParent( 0 )->
+    setDescription( "Coordinates (x,y,z) of the sources" );
+
+  registerWrapper( viewKeyStruct::sourceNodeIdsString, &m_sourceNodeIds )->
+    setInputFlag( InputFlags::FALSE )->
+    setSizedFromParent( 0 )->
+    setDescription( "Indices of the nodes (in the right order) for each source point" );
+
+  registerWrapper( viewKeyStruct::sourceConstantsString, &m_sourceConstants )->
+    setInputFlag( InputFlags::FALSE )->
+    setSizedFromParent( 0 )->
+    setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
+  
+  registerWrapper( viewKeyStruct::sourceIsLocalString, &m_sourceIsLocal )->
+    setInputFlag( InputFlags::FALSE )->
+    setSizedFromParent( 0 )->
+    setDescription( "Flag that indicates whether the source is local to this MPI rank" );
+
+
+  registerWrapper( viewKeyStruct::timeSourceFrequencyString, &m_timeSourceFrequency )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Central frequency for the time source" );
+
+}
 
 AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 {
   // TODO Auto-generated destructor stub
 }
 
+void AcousticWaveEquationSEM::postProcessInput()
+{
+  
+  // here we check that the correct number of dimensions has been provided
+  GEOSX_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
+                  "Invalid number of physical coordinates for the sources" );
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  localIndex const numNodesPerElem = 8;
+  m_sourceNodeIds.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstants.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
+  m_sourceIsLocal.resizeDimension< 0 >( numSourcesGlobal );
+  
+}
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group * const MeshBodies )
 {
@@ -58,7 +100,192 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group * const MeshBodies )
   }
 }
 
+void AcousticWaveEquationSEM::precomputeSourceTerm( MeshLevel & mesh )
+{
+  NodeManager & nodeManager = *(mesh.getNodeManager());
 
+  // get the position of the nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+  // get the source information
+  arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
+  arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();   
+  arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
+  arrayView1d< localIndex > const sourceIsLocal = m_sourceIsLocal.toView();  
+  sourceNodeIds.setValues< serialPolicy >( -1 );
+  sourceConstants.setValues< serialPolicy >( -1 );  
+  sourceIsLocal.setValues< serialPolicy >( 0 );
+                                           
+  forTargetRegionsComplete( mesh, [&]( localIndex const,
+                                       localIndex const,
+                                       ElementRegionBase & elemRegion )
+  {
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
+                                                                       CellElementSubRegion & elementSubRegion )
+    {
+
+      // get the face/node information 
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();    
+
+      finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+      finiteElement::dispatch3D( fe,
+                                 [&]
+                                 ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF( finiteElement );
+
+        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
+        localIndex constexpr numNodesPerElem = FE_TYPE::numNodes;
+        array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
+        
+        // loop over all the elements in the subRegion
+        // this will potentially become a RAJA loop
+        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+        {      
+      
+          // collect the faces for this element
+          for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
+          { 
+            elementSubRegion.getFaceNodes( k, kf, faceNodes[kf] );
+          }
+	  
+          // loop over all the sources that haven't been found yet
+          // If we don't care about having multiple sources, we can remove this loop 
+          for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++ isrc )
+          {
+            // if the source has not been found yet 
+            if( sourceIsLocal[isrc] == 0 )
+            {
+              // get the coordinates of the source
+              real64 const coords[3] = { sourceCoordinates[isrc][0],
+                                         sourceCoordinates[isrc][1],
+                                         sourceCoordinates[isrc][2] };  
+
+              // if the point is in the element, we can compute the constant part of the source term
+              // The search can be optimized a lot 
+              if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
+              {
+                sourceIsLocal[isrc] = 1;
+                std::cout << "I found the source in element " << k << " at location ("
+                          << coords[0] << ", " << coords[1] << ", " << coords[2] << ")" << std::endl;
+	       
+		/// Get all the node of element k containing the source point
+		real64 xLocal[numNodesPerElem][3];
+		for( localIndex a=0; a< numNodesPerElem; ++a )
+		  {
+		    std::cout << " For node " << a ;  
+		    for( localIndex i=0; i<3; ++i )
+		      {
+			xLocal[a][i] = X( elemsToNodes( k, a ), i );
+			std::cout << " x_"<< i << " = " << xLocal[a][i] ;
+		      }
+		    std::cout << " " << std::endl;
+		  }
+		std::cout << "xLocal Ok "<< std::endl;
+		
+		/// Transformation of the source coordinate to unit reference element coordinate
+		/// coordsOnRefElem = invJ*(coords-coordsNode_0)
+		// Init at (-1,-1,-1) as the origin of the referential elem
+		real64 coordsOnRefElem[3]; // 3D coord of the source in Ref element
+		//real64 valsOnRefElem = 0.0; // Value of the basis function evaluated at coordsOnRefElem
+		localIndex q=0; // index of node 0 in the element
+
+		///
+		//real64 N[ numNodesPerElem ];
+		real64 gradN[ numNodesPerElem ][ 3 ];
+		//FE_TYPE::calcN( q, N );
+		real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+		
+		///Compute invJ = DF^{-1}
+		real64 invJ[3][3]={{0}};
+		FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
+		std::cout << "invJ Ok "<< std::endl;
+		
+		/// compute (coords - coordsNode_0) 
+		real64 coordsRef[3]={0};
+		for( localIndex i=0; i<3; ++i )
+		  {
+		    coordsRef[i] = coords[i] - xLocal[q][i];
+		  }
+		
+		/// Compute coordsOnRefElem = invJ*coordsRef
+		for( localIndex i=0; i<3; ++i )
+		  {
+		    // Init at (-1,-1,-1) as the origin of the referential elem
+		    coordsOnRefElem[i] =-1.0;
+		    for( localIndex j=0; j<3; ++j )
+		      {
+			coordsOnRefElem[i] += invJ[i][j]*coordsRef[j];
+		      }
+		  }
+
+		/* std::cout << " V1 coordsOnRefElem " << coordsOnRefElem[0] << " " << coordsOnRefElem[1] << " " << coordsOnRefElem[2] << std::endl;
+		
+		if(numNodesPerElem ==8)
+		  {
+		    /// V2 to compute coords On ref Elem
+		    coordsOnRefElem[0] = -1.0 + 2.0*(coords[0]-xLocal[0][0])/(xLocal[1][0] - xLocal[0][0]);
+		    coordsOnRefElem[1] = -1.0 + 2.0*(coords[1]-xLocal[0][1])/(xLocal[2][1] - xLocal[0][1]);
+		    coordsOnRefElem[2] = -1.0 + 2.0*(coords[2]-xLocal[0][2])/(xLocal[4][2] - xLocal[0][2]);
+       
+		    std::cout << " V2 coordsOnRefElem " << coordsOnRefElem[0] << " " << coordsOnRefElem[1] << " " << coordsOnRefElem[2] << std::endl;
+		  }
+		*/
+		
+		/// Evaluate basis functions at coord source on unit ref element
+		real64 Ntest[8];
+		finiteElement::LagrangeBasis1::TensorProduct3D::value(coordsOnRefElem,Ntest);
+
+		std::cout << "Ntest Ok "<< std::endl;
+		
+                // save all the node indices and constant part of source term here 
+                for( localIndex a=0; a< numNodesPerElem; ++a )
+		  {
+		    
+		    sourceNodeIds[isrc][a] = elemsToNodes[k][a];		     
+		    sourceConstants[isrc][a] = detJ*Ntest[a]; // precompute detJ x N[position of source] here
+
+		    std::cout << "For source #" << isrc << " I save node #" << sourceNodeIds[isrc][a] << " and constant value = " << sourceConstants[isrc][a] << std::endl;
+		    
+		  }
+              }
+            }
+          }
+        }
+      } );
+    } );
+  } );
+  ///GEOSX_ERROR_IF( true, "Stop test " );
+}
+
+void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs )
+{
+  // get the precomputed source information
+  arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();   
+  arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
+  arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();  
+
+  // for now, let's assume that the time-dependent term is the same for all the sources
+  // it is not the case, that will be easy to fix
+  // real64 const frequency = 1.0;
+  real64 const fi = evaluateRicker( time, this->m_timeSourceFrequency );
+  
+  // loop over all the sources
+  for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
+  {
+    if( sourceIsLocal[isrc] == 1 ) // check if the source is on this MPI rank
+    {
+      // for all the nodes
+      for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
+      {
+	// multiply the precomputed part by the ricker
+        rhs[sourceNodeIds[isrc][inode]] += sourceConstants[isrc][inode] * fi; 
+      }
+    }
+  }
+}
+  
 void AcousticWaveEquationSEM::initializePreSubGroups( Group * const rootGroup )
 {
   SolverBase::initializePreSubGroups( rootGroup );
@@ -81,6 +308,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
   DomainPartition * domain = problemManager->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
+  precomputeSourceTerm( mesh );
+  
   NodeManager & nodeManager = *mesh.getNodeManager();
   FaceManager & faceManager = *mesh.getFaceManager();
 
@@ -255,23 +484,6 @@ real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & t0, real64 const 
 
   return pulse;
 }
-/// Returns the value of the second derivative of a Ricker at time t0 with central Fourier frequency f0
-real64 AcousticWaveEquationSEM::evaluateSecondDerivativeRicker( real64 const & t0, real64 const & f0 )
-{
-
-
-  // derivative of the Ricker
-  real64 der_pulse = 0.0;
-  real64 T0 = 1.0/f0;
-  if((t0 <= -0.9*T0) || (t0 >= 2.9*T0))
-    return der_pulse;
-
-  real64 pi=3.14;
-  real64 tmp = f0*t0-1.0;
-  real64 f0tm1_2 = (tmp*pi)*(tmp*pi);
-  der_pulse = 2*pi*pi*f0*tmp*(3.0 - 2.0*f0tm1_2)*exp( -f0tm1_2 );
-  return der_pulse;
-}
 
 real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               real64 const & dt,
@@ -426,8 +638,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   } );
 
   // apply the source before marching ahead in time
-  applyRickerSource( time_n, domain );
+  // applyRickerSource( time_n, domain );
+ 
+  /// Add source term to rhs
+  addSourceToRightHandSide( time_n, rhs );
   
+
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
   for( localIndex a=0; a<nodes.size(); ++a )

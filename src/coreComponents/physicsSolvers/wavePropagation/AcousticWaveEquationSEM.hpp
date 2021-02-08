@@ -11,6 +11,7 @@
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
+
 namespace geosx
 {
 
@@ -58,27 +59,25 @@ public:
   /// Returns the value of a Ricker at time t0 with central Fourier frequency f0
   virtual
   real64 evaluateRicker( real64 const & t0, real64 const & f0 );
-  /// Returns the value of the second derivative of a Ricker at time t0 with central Fourier frequency f0
-  virtual
-  real64 evaluateSecondDerivativeRicker( real64 const & t0, real64 const & f0 );
-
+  
   /// Apply the time source Ricker at the location specified in the xml 
   virtual
   void applyRickerSource( real64 const time, DomainPartition & domain );
   
-//  virtual void applyBoundaryConditions( real64 const time,
-//                                        real64 const dt,
-//                                        DomainPartition & domain,
-//                                        DofManager const & dofManager,
-//                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-//                                        arrayView1d< real64 > const & localRhs ) override;
-
   /**@}*/
 
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr auto varName = "varName";
+
+    static constexpr auto sourceCoordinatesString = "sourceCoordinates";
+    static constexpr auto sourceNodeIdsString     = "sourceNodeIds";
+    static constexpr auto sourceConstantsString   = "sourceConstants";           
+    static constexpr auto sourceIsLocalString     = "sourceIsLocal";
+
+    static constexpr auto timeSourceFrequencyString = "timeSourceFrequency";
+    
   } waveEquationViewKeys;
 
 
@@ -86,12 +85,36 @@ public:
 
 
 protected:
+
+  virtual void postProcessInput() override final;
+  
   virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
 
+  array1d < string const > m_solidMaterialNames;
+  
+private:
 
-  array1d< string > m_solidMaterialNames;
+  /// Locates the source term and precomputes the constant part of the source term
+  void precomputeSourceTerm( MeshLevel & mesh );
 
+  /// Multiply the precomputed term by the ricker and add to the right-hand side
+  void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs );
+  
+  /// Coordinates of the sources in the mesh
+  array2d< real64 > m_sourceCoordinates;
 
+  /// Indices of the nodes (in the right order) for each source point
+  array2d< localIndex > m_sourceNodeIds;
+
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  array2d< real64 > m_sourceConstants;
+  
+  /// Flag that indicates whether the source is local or not
+  array1d< localIndex > m_sourceIsLocal;
+
+  /// Central frequency for the Ricker time source
+  real64 m_timeSourceFrequency;
+  
 };
 
 namespace extrinsicMeshData

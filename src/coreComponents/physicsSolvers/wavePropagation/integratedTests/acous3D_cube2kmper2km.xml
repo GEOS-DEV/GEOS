@@ -9,7 +9,9 @@
       name="acousticSolver"
       cflFactor="0.25"
       discretization="FE1"
-      targetRegions="{ Region }"/>
+      targetRegions="{ Region }"
+      sourceCoordinates="{ { 1010.0, 1010.0, 1010.0 } }"
+      timeSourceFrequency="5.0"/>
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
