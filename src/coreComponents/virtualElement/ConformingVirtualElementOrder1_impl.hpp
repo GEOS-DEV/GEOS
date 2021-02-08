@@ -15,26 +15,39 @@
  * @file ConformingVirtualElementOrder1.cpp
  */
 
-#include "ConformingVirtualElementOrder1.hpp"
-
 namespace geosx
 {
 namespace virtualElement
 {
-void ConformingVirtualElementOrder1::
-  ComputeProjectors( localIndex const & cellIndex,
-                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                     CellBlock::NodeMapType const & cellToNodeMap,
-                     CellBlock::FaceMapType const & elementToFaceMap,
-                     FaceManager::NodeMapType const & faceToNodeMap,
-                     FaceManager::EdgeMapType const & faceToEdgeMap,
-                     EdgeManager::NodeMapType const & edgeToNodeMap,
-                     arrayView2d< real64 const > const faceCenters,
-                     arrayView2d< real64 const > const faceNormals,
-                     arrayView1d< real64 const > const faceAreas,
-                     arraySlice1d< real64 const > const & cellCenter,
-                     real64 const & cellVolume
-                     )
+
+template< localIndex MAXCELLNODES >
+localIndex ConformingVirtualElementOrder1< MAXCELLNODES >::m_numQuadraturePoints;
+template< localIndex MAXCELLNODES >
+localIndex ConformingVirtualElementOrder1< MAXCELLNODES >::m_numSupportPoints;
+template< localIndex MAXCELLNODES >
+array1d< real64 > ConformingVirtualElementOrder1< MAXCELLNODES >::m_quadratureWeights;
+template< localIndex MAXCELLNODES >
+array1d< real64 > ConformingVirtualElementOrder1< MAXCELLNODES >::m_basisFunctionsIntegralMean;
+template< localIndex MAXCELLNODES >
+array2d< real64 > ConformingVirtualElementOrder1< MAXCELLNODES >::m_stabilizationMatrix;
+template< localIndex MAXCELLNODES >
+array2d< real64 > ConformingVirtualElementOrder1< MAXCELLNODES >::m_basisDerivativesIntegralMean;
+
+template< localIndex MAXCELLNODES >
+void ConformingVirtualElementOrder1< MAXCELLNODES >::
+ComputeProjectors( localIndex const & cellIndex,
+                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                   CellBlock::NodeMapType const & cellToNodeMap,
+                   CellBlock::FaceMapType const & elementToFaceMap,
+                   FaceManager::NodeMapType const & faceToNodeMap,
+                   FaceManager::EdgeMapType const & faceToEdgeMap,
+                   EdgeManager::NodeMapType const & edgeToNodeMap,
+                   arrayView2d< real64 const > const faceCenters,
+                   arrayView2d< real64 const > const faceNormals,
+                   arrayView1d< real64 const > const faceAreas,
+                   arraySlice1d< real64 const > const & cellCenter,
+                   real64 const & cellVolume
+                   )
 {
   localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
   localIndex const numCellPoints = cellToNodeMap[cellIndex].size();
@@ -133,7 +146,7 @@ void ConformingVirtualElementOrder1::
     m_numQuadraturePoints += faceToNodes.size();
   }
   m_quadratureWeights.resize( m_numQuadraturePoints );
-  localIndex quadratureWeightPos = 0;   // index used to fill m_quadratureWeights.
+  localIndex quadratureWeightPos = 0;       // index used to fill m_quadratureWeights.
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
   {
     localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
@@ -185,7 +198,7 @@ void ConformingVirtualElementOrder1::
   // m_stabilizationMatrix).
   real64 const invCellVolume = 1.0/cellVolume;
   real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
-  m_basisFunctionsIntegralMean.resize( numCellPoints );
+  m_basisFunctionsIntegralMean.resize( MAXCELLNODES );
   m_basisDerivativesIntegralMean = basisTimesNormalBoundaryInt;
   array2d< real64 > piNablaVemDofsMinusIdentity( numCellPoints, numCellPoints );
   // - compute values of scaled monomials at the vertices (used for piNablaVemDofs)
@@ -244,22 +257,23 @@ void ConformingVirtualElementOrder1::
   }
 }
 
+template< localIndex MAXCELLNODES >
 void
-ConformingVirtualElementOrder1::
-  ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                        arraySlice1d< localIndex const > const & faceToNodes,
-                        arraySlice1d< localIndex const > const & faceToEdges,
-                        real64 const & faceArea,
-                        arraySlice1d< real64 const > const & faceCenter,
-                        arraySlice1d< real64 const > const & faceNormal,
-                        EdgeManager::NodeMapType const & edgeToNodes,
-                        real64 const & invCellDiameter,
-                        arraySlice1d< real64 const > const & cellCenter,
-                        array1d< real64 > & basisIntegrals,
-                        real64 * threeDMonomialIntegrals )
+ConformingVirtualElementOrder1< MAXCELLNODES >::
+ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                      arraySlice1d< localIndex const > const & faceToNodes,
+                      arraySlice1d< localIndex const > const & faceToEdges,
+                      real64 const & faceArea,
+                      arraySlice1d< real64 const > const & faceCenter,
+                      arraySlice1d< real64 const > const & faceNormal,
+                      EdgeManager::NodeMapType const & edgeToNodes,
+                      real64 const & invCellDiameter,
+                      arraySlice1d< real64 const > const & cellCenter,
+                      array1d< real64 > & basisIntegrals,
+                      real64 * threeDMonomialIntegrals )
 {
   // Get pre-computed geometrical properties.
-  localIndex const numFaceVertices = faceToNodes.size(); // also equal to n. face's edges.
+  localIndex const numFaceVertices = faceToNodes.size();     // also equal to n. face's edges.
 
   // Compute other geometrical properties.
   //  - compute rotation matrix.
@@ -381,7 +395,7 @@ ConformingVirtualElementOrder1::
                                   cellCenter[i] ) * invCellDiameter;
     // compute quadrature weight associated to the quadrature point (the area of the
     // sub-triangle).
-    real64 edgesTangents[2][2];     // used to compute the area of the sub-triangle
+    real64 edgesTangents[2][2];         // used to compute the area of the sub-triangle
     for( localIndex i = 0; i < 2; ++i )
       edgesTangents[0][i] = faceRotatedVertices[numSubTriangle][i] - faceRotatedCentroid[i];
     for( localIndex i = 0; i < 2; ++i )

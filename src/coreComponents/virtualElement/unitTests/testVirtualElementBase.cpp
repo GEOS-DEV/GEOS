@@ -26,7 +26,8 @@
 using namespace geosx;
 using namespace virtualElement;
 
-static void checkIntegralMeanConsistency( ConformingVirtualElementOrder1 const & vemElement )
+template< localIndex MAXCELLNODES >
+static void checkIntegralMeanConsistency( ConformingVirtualElementOrder1< MAXCELLNODES > const & vemElement )
 {
   arrayView1d< real64 const > basisFunctionsIntegralMean;
   vemElement.getN( 0, basisFunctionsIntegralMean );
@@ -40,8 +41,9 @@ static void checkIntegralMeanConsistency( ConformingVirtualElementOrder1 const &
     << "The computed integral means are " << basisFunctionsIntegralMean;
 }
 
+template< localIndex MAXCELLNODES >
 static void
-checkIntegralMeanDerivativesConsistency( ConformingVirtualElementOrder1 const & vemElement )
+checkIntegralMeanDerivativesConsistency( ConformingVirtualElementOrder1< MAXCELLNODES > const & vemElement )
 {
   for( localIndex q = 0; q < vemElement.getNumQuadraturePoints(); ++q )
   {
@@ -66,13 +68,14 @@ checkIntegralMeanDerivativesConsistency( ConformingVirtualElementOrder1 const & 
   }
 }
 
+template< localIndex MAXCELLNODES >
 static void
 checkStabilizationMatrixConsistency
   ( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
   localIndex const & cellIndex,
   CellElementSubRegion::NodeMapType const & cellToNodes,
   arrayView2d< real64 const > const & cellCenters,
-  ConformingVirtualElementOrder1 const & vemElement )
+  ConformingVirtualElementOrder1< MAXCELLNODES > const & vemElement )
 {
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
@@ -136,7 +139,8 @@ checkStabilizationMatrixConsistency
   }
 }
 
-static void checkSumOfQuadratureWeights( ConformingVirtualElementOrder1 const & vemElement, real64 const & cellVolume )
+template< localIndex MAXCELLNODES >
+static void checkSumOfQuadratureWeights( ConformingVirtualElementOrder1< MAXCELLNODES > const & vemElement, real64 const & cellVolume )
 {
   real64 sum = 0.0;
   for( localIndex q = 0; q < vemElement.getNumQuadraturePoints(); ++q )
@@ -176,7 +180,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
   // Construct element
-  ConformingVirtualElementOrder1 vemElement;
+  ConformingVirtualElementOrder1< 10 > vemElement;
 
   // Loop over cells.
   localIndex const numCells = cellSubRegion.getElementVolume().size();
