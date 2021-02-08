@@ -27,12 +27,13 @@ using namespace geosx;
 using namespace virtualElement;
 
 template< localIndex MAXCELLNODES >
-static void checkIntegralMeanConsistency( ConformingVirtualElementOrder1< MAXCELLNODES > const & vemElement )
+static void checkIntegralMeanConsistency()
 {
   arrayView1d< real64 const > basisFunctionsIntegralMean;
-  vemElement.getN( 0, basisFunctionsIntegralMean );
+  ConformingVirtualElementOrder1< MAXCELLNODES >::getN( 0, basisFunctionsIntegralMean );
   real64 sum = 0;
-  for( localIndex iBasisFun = 0; iBasisFun <  vemElement.getNumSupportPoints(); ++iBasisFun )
+  for( localIndex iBasisFun = 0; iBasisFun <
+       ConformingVirtualElementOrder1< MAXCELLNODES >::getNumSupportPoints(); ++iBasisFun )
   {
     sum += basisFunctionsIntegralMean( iBasisFun );
   }
@@ -43,14 +44,16 @@ static void checkIntegralMeanConsistency( ConformingVirtualElementOrder1< MAXCEL
 
 template< localIndex MAXCELLNODES >
 static void
-checkIntegralMeanDerivativesConsistency( ConformingVirtualElementOrder1< MAXCELLNODES > const & vemElement )
+checkIntegralMeanDerivativesConsistency()
 {
-  for( localIndex q = 0; q < vemElement.getNumQuadraturePoints(); ++q )
+  for( localIndex q = 0; q <
+       ConformingVirtualElementOrder1< MAXCELLNODES >::getNumQuadraturePoints(); ++q )
   {
     arrayView2d< real64 const > basisDerivativesIntegralMean;
-    vemElement.getGradN( 0, basisDerivativesIntegralMean );
+    ConformingVirtualElementOrder1< MAXCELLNODES >::getGradN( 0, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
-    for( localIndex iBasisFun = 0; iBasisFun <  vemElement.getNumSupportPoints(); ++iBasisFun )
+    for( localIndex iBasisFun = 0; iBasisFun <
+         ConformingVirtualElementOrder1< MAXCELLNODES >::getNumSupportPoints(); ++iBasisFun )
     {
       sumX += basisDerivativesIntegralMean[iBasisFun][0];
       sumY += basisDerivativesIntegralMean[iBasisFun][1];
@@ -74,8 +77,7 @@ checkStabilizationMatrixConsistency
   ( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
   localIndex const & cellIndex,
   CellElementSubRegion::NodeMapType const & cellToNodes,
-  arrayView2d< real64 const > const & cellCenters,
-  ConformingVirtualElementOrder1< MAXCELLNODES > const & vemElement )
+  arrayView2d< real64 const > const & cellCenters )
 {
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
@@ -113,7 +115,8 @@ checkStabilizationMatrixConsistency
     stabTimeMonomialDofsNorm = 0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs( i ) += vemElement.getStabilizationValue( i, j );
+      stabTimeMonomialDofs( i ) +=
+        ConformingVirtualElementOrder1< MAXCELLNODES >::getStabilizationValue( i, j );
     }
     stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
   }
@@ -128,8 +131,9 @@ checkStabilizationMatrixConsistency
       stabTimeMonomialDofs( i ) = 0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs( i ) += vemElement.getStabilizationValue( i, j ) *
-                                     monomialVemDofs( monomInd, j );
+        stabTimeMonomialDofs( i ) +=
+          ConformingVirtualElementOrder1< MAXCELLNODES >::getStabilizationValue( i, j ) *
+          monomialVemDofs( monomInd, j );
       }
       stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
     }
@@ -140,12 +144,14 @@ checkStabilizationMatrixConsistency
 }
 
 template< localIndex MAXCELLNODES >
-static void checkSumOfQuadratureWeights( ConformingVirtualElementOrder1< MAXCELLNODES > const & vemElement, real64 const & cellVolume )
+static void checkSumOfQuadratureWeights( real64 const & cellVolume )
 {
   real64 sum = 0.0;
-  for( localIndex q = 0; q < vemElement.getNumQuadraturePoints(); ++q )
+  for( localIndex q = 0; q <
+       ConformingVirtualElementOrder1< MAXCELLNODES >::getNumQuadraturePoints(); ++q )
   {
-    real64 weight = vemElement.transformedQuadratureWeight( q );
+    real64 weight =
+      ConformingVirtualElementOrder1< MAXCELLNODES >::transformedQuadratureWeight( q );
     sum += weight;
   }
   EXPECT_TRUE( abs( sum - cellVolume ) < 1e-15 )
@@ -153,6 +159,7 @@ static void checkSumOfQuadratureWeights( ConformingVirtualElementOrder1< MAXCELL
     << ". Cell volume is " << cellVolume;
 }
 
+template< localIndex MAXCELLNODES >
 static void testCellsInMeshLevel( MeshLevel const & mesh )
 {
   // Get managers.
@@ -179,32 +186,29 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
-  // Construct element
-  ConformingVirtualElementOrder1< 10 > vemElement;
-
   // Loop over cells.
   localIndex const numCells = cellSubRegion.getElementVolume().size();
   for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
-    vemElement.ComputeProjectors( cellIndex,
-                                  nodesCoords,
-                                  cellToNodeMap,
-                                  elementToFaceMap,
-                                  faceToNodeMap,
-                                  faceToEdgeMap,
-                                  edgeToNodeMap,
-                                  faceCenters,
-                                  faceNormals,
-                                  faceAreas,
-                                  cellCenters[cellIndex],
-                                  cellVolumes[cellIndex]
-                                  );
+    ConformingVirtualElementOrder1< MAXCELLNODES >::ComputeProjectors( cellIndex,
+                                                                       nodesCoords,
+                                                                       cellToNodeMap,
+                                                                       elementToFaceMap,
+                                                                       faceToNodeMap,
+                                                                       faceToEdgeMap,
+                                                                       edgeToNodeMap,
+                                                                       faceCenters,
+                                                                       faceNormals,
+                                                                       faceAreas,
+                                                                       cellCenters[cellIndex],
+                                                                       cellVolumes[cellIndex]
+                                                                       );
 
-    checkIntegralMeanConsistency( vemElement );
-    checkIntegralMeanDerivativesConsistency( vemElement );
-    checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodeMap, cellCenters,
-                                         vemElement );
-    checkSumOfQuadratureWeights( vemElement, cellVolumes[cellIndex] );
+    checkIntegralMeanConsistency< MAXCELLNODES >();
+    checkIntegralMeanDerivativesConsistency< MAXCELLNODES >();
+    checkStabilizationMatrixConsistency< MAXCELLNODES >( nodesCoords, cellIndex,
+                                                         cellToNodeMap, cellCenters );
+    checkSumOfQuadratureWeights< MAXCELLNODES >( cellVolumes[cellIndex] );
   }
 }
 
@@ -257,7 +261,7 @@ TEST( VirtualElementBase, unitCube )
   problemManager->ProblemSetup();
 
   // Test computed projectors for all cells in MeshLevel
-  testCellsInMeshLevel( mesh );
+  testCellsInMeshLevel< 10 >( mesh );
 
   delete problemManager;
 }
@@ -311,7 +315,7 @@ TEST( VirtualElementBase, wedges )
   problemManager->ProblemSetup();
 
   // Test computed projectors for all cells in MeshLevel
-  testCellsInMeshLevel( mesh );
+  testCellsInMeshLevel< 8 >( mesh );
 
   delete problemManager;
 }

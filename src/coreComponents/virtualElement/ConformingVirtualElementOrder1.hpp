@@ -113,21 +113,21 @@ public:
                      );
 
   GEOSX_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return m_numQuadraturePoints;
   }
 
   GEOSX_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return m_numSupportPoints;
   }
 
   GEOSX_HOST_DEVICE
-  real64 getStabilizationValue( localIndex const iBasisFunction,
-                                localIndex const jBasisFunction
-                                ) const override
+  static real64 getStabilizationValue( localIndex const iBasisFunction,
+                                       localIndex const jBasisFunction
+                                       )
   { return m_stabilizationMatrix[iBasisFunction][jBasisFunction]; }
 
   /**
@@ -138,8 +138,8 @@ public:
    * getNumSupportPoints() x 3.
    */
   GEOSX_HOST_DEVICE
-  void getGradN( localIndex const q,
-                 arrayView2d< real64 const > & gradN ) const override
+  static void getGradN( localIndex const q,
+                        arrayView2d< real64 const > & gradN )
   {
     GEOSX_UNUSED_VAR( q );
     gradN = m_basisDerivativesIntegralMean;
@@ -152,15 +152,15 @@ public:
    * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
    */
   GEOSX_HOST_DEVICE
-  void getN( localIndex const q,
-             arrayView1d< real64 const > & N ) const override
+  static void getN( localIndex const q,
+                    arrayView1d< real64 const > & N )
   {
     GEOSX_UNUSED_VAR( q );
     N = m_basisFunctionsIntegralMean;
   }
 
   GEOSX_HOST_DEVICE
-  virtual real64 transformedQuadratureWeight( localIndex const q ) const
+  static real64 transformedQuadratureWeight( localIndex const q )
   {
     return m_quadratureWeights[q];
   }
