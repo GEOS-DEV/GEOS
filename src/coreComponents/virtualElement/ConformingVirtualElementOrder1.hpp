@@ -25,9 +25,12 @@ namespace geosx
 {
 namespace virtualElement
 {
-template< localIndex MAXCELLNODES >
+template< localIndex MAXCELLNODES, localIndex MAXCELLFACES, localIndex MAXFACENODES >
 class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
+public:
+  static constexpr localIndex maxSupportPoints = MAXCELLNODES;
+
 private:
   GEOSX_HOST_DEVICE
   static void
@@ -40,57 +43,15 @@ private:
                         EdgeManager::NodeMapType const & edgeToNodes,
                         real64 const & invCellDiameter,
                         arraySlice1d< real64 const > const & cellCenter,
-                        array1d< real64 > & basisIntegrals,
-                        real64 * threeDMonomialIntegrals );
+                        real64 basisIntegrals[MAXFACENODES],
+                        real64 threeDMonomialIntegrals[3] );
 
   static localIndex m_numQuadraturePoints;
   static localIndex m_numSupportPoints;
   static array1d< real64 > m_quadratureWeights;
-  static array1d< real64 > m_basisFunctionsIntegralMean;
-  static array2d< real64 > m_stabilizationMatrix;
-  static array2d< real64 > m_basisDerivativesIntegralMean;
-
-public:
-
-  GEOSX_HOST_DEVICE
-  template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
-  static real64 ComputeDiameter( POINT_COORDS_TYPE points,
-                                 localIndex const & numPoints )
-  {
-    array1d< localIndex > selectAllPoints( numPoints );
-    for( localIndex i = 0; i < numPoints; ++i )
-      selectAllPoints[i] = i;
-    return ComputeDiameter< DIMENSION, POINT_COORDS_TYPE,
-                            array1d< localIndex > const & >( points,
-                                                             selectAllPoints,
-                                                             numPoints );
-  }
-
-  GEOSX_HOST_DEVICE
-  template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
-  static real64 ComputeDiameter( POINT_COORDS_TYPE points,
-                                 POINT_SELECTION_TYPE selectedPoints,
-                                 localIndex const & numSelectedPoints )
-  {
-    real64 diameter = 0;
-    for( localIndex numPoint = 0; numPoint < numSelectedPoints; ++numPoint )
-    {
-      for( localIndex numOthPoint = 0; numOthPoint < numPoint; ++numOthPoint )
-      {
-        real64 candidateDiameter = 0.0;
-        for( localIndex i = 0; i < DIMENSION; ++i )
-        {
-          real64 coordDiff = points[selectedPoints[numPoint]][i] -
-                             points[selectedPoints[numOthPoint]][i];
-          candidateDiameter += coordDiff * coordDiff;
-        }
-        if( diameter < candidateDiameter )
-          diameter = candidateDiameter;
-      }
-      diameter = LvArray::math::sqrt< real64 >( diameter );
-    }
-    return diameter;
-  }
+  static real64 m_basisFunctionsIntegralMean[maxSupportPoints];
+  static real64 m_stabilizationMatrix[maxSupportPoints][maxSupportPoints];
+  static real64 m_basisDerivativesIntegralMean[maxSupportPoints][3];
 
 public:
   virtual ~ConformingVirtualElementOrder1() override
@@ -137,12 +98,31 @@ public:
    * @param gradN Return array of the shape function projected derivatives. Size will be @ref
    * getNumSupportPoints() x 3.
    */
+  template< typename LEAF >
   GEOSX_HOST_DEVICE
-  static void getGradN( localIndex const q,
-                        arrayView2d< real64 const > & gradN )
+  static real64 getGradN( localIndex const q,
+                          real64 ( & gradN )[LEAF::maxSupportPoints][3] )
+  {
+    return LEAF::calcGradN( q, gradN );
+  }
+
+  GEOSX_HOST_DEVICE
+  static real64 calcGradN( localIndex const q,
+                           real64 ( & gradN )[maxSupportPoints][3] )
+  {
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+      for( localIndex j = 0; j < 3; ++j )
+        gradN[i][j] = m_basisDerivativesIntegralMean[i][j];
+    return transformedQuadratureWeight( q );
+  }
+
+  GEOSX_HOST_DEVICE
+  static void calcN( localIndex const q,
+                     real64 ( & N )[maxSupportPoints] )
   {
     GEOSX_UNUSED_VAR( q );
-    gradN = m_basisDerivativesIntegralMean;
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+      N[i] = m_basisFunctionsIntegralMean[i];
   }
 
   /**
@@ -153,10 +133,9 @@ public:
    */
   GEOSX_HOST_DEVICE
   static void getN( localIndex const q,
-                    arrayView1d< real64 const > & N )
+                    real64 ( & N )[maxSupportPoints] )
   {
-    GEOSX_UNUSED_VAR( q );
-    N = m_basisFunctionsIntegralMean;
+    return calcN( q, N );
   }
 
   GEOSX_HOST_DEVICE
@@ -164,6 +143,50 @@ public:
   {
     return m_quadratureWeights[q];
   }
+
+
+public:
+
+  GEOSX_HOST_DEVICE
+  template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
+  static real64 ComputeDiameter( POINT_COORDS_TYPE points,
+                                 localIndex const & numPoints )
+  {
+    array1d< localIndex > selectAllPoints( numPoints );
+    for( localIndex i = 0; i < numPoints; ++i )
+      selectAllPoints[i] = i;
+    return ComputeDiameter< DIMENSION, POINT_COORDS_TYPE,
+                            array1d< localIndex > const & >( points,
+                                                             selectAllPoints,
+                                                             numPoints );
+  }
+
+  GEOSX_HOST_DEVICE
+  template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
+  static real64 ComputeDiameter( POINT_COORDS_TYPE points,
+                                 POINT_SELECTION_TYPE selectedPoints,
+                                 localIndex const & numSelectedPoints )
+  {
+    real64 diameter = 0;
+    for( localIndex numPoint = 0; numPoint < numSelectedPoints; ++numPoint )
+    {
+      for( localIndex numOthPoint = 0; numOthPoint < numPoint; ++numOthPoint )
+      {
+        real64 candidateDiameter = 0.0;
+        for( localIndex i = 0; i < DIMENSION; ++i )
+        {
+          real64 coordDiff = points[selectedPoints[numPoint]][i] -
+                             points[selectedPoints[numOthPoint]][i];
+          candidateDiameter += coordDiff * coordDiff;
+        }
+        if( diameter < candidateDiameter )
+          diameter = candidateDiameter;
+      }
+      diameter = LvArray::math::sqrt< real64 >( diameter );
+    }
+    return diameter;
+  }
+
 
 };
 }
