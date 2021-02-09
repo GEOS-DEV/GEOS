@@ -87,6 +87,7 @@ public:
   LaplaceFEMKernel( NodeManager const & nodeManager,
                     EdgeManager const & edgeManager,
                     FaceManager const & faceManager,
+                    localIndex const targetRegionIndex,
                     SUBREGION_TYPE const & elementSubRegion,
                     FE_TYPE const & finiteElementSpace,
                     CONSTITUTIVE_TYPE * const inputConstitutiveType,
@@ -107,7 +108,9 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition() ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName ))
-  {}
+  {
+    GEOSX_UNUSED_VAR( targetRegionIndex );
+  }
 
   //***************************************************************************
   /**

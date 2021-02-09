@@ -357,6 +357,13 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
+//  GEOSX_LOG_RANK_VAR( m_flowSolver->fluidModelNames() );
+//  GEOSX_LOG_RANK_VAR( m_flowSolver->targetRegionNames() );
+//  GEOSX_LOG_RANK_VAR( m_flowSolver->targetRegionNames()[0] );
+//  localIndex regionIndex = m_flowSolver->targetRegionIndex( m_flowSolver->targetRegionNames()[0] );
+//  GEOSX_LOG_RANK_VAR( regionIndex );
+//  GEOSX_ERROR( "fluid names " );
+
   m_solidSolver->getMaxForce() =
       finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
@@ -371,7 +378,8 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
                                                                        dofManager.rankOffset(),
                                                                        localMatrix,
                                                                        localRhs,
-                                                                       gravityVectorData ) ;
+                                                                       gravityVectorData,
+                                                                       m_flowSolver->fluidModelNames() ) ;
 
 
   // assemble J_FF

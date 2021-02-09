@@ -91,6 +91,7 @@ public:
   SinglePhase( NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
+               localIndex const targetRegionIndex,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
@@ -99,7 +100,8 @@ public:
                globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
-               real64 const (&inputGravityVector)[3] ):
+               real64 const (&inputGravityVector)[3],
+               arrayView1d< string const > const & fluidModelNames):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -115,7 +117,7 @@ public:
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_solidDensity( inputConstitutiveType->getDensity() ),
-    m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( "fluid" )->density() ), //*** TODO
+    m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] )->density() ),
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString ) ),
