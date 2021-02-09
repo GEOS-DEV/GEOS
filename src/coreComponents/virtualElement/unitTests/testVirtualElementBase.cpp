@@ -26,10 +26,10 @@
 using namespace geosx;
 using namespace virtualElement;
 
-template< localIndex MAXCELLNODES, localIndex MAXCELLFACES, localIndex MAXFACENODES >
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void checkIntegralMeanConsistency()
 {
-  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >;
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   real64 basisFunctionsIntegralMean[VEM::maxSupportPoints];
   VEM::calcN( 0, basisFunctionsIntegralMean );
   real64 sum = 0;
@@ -43,16 +43,16 @@ static void checkIntegralMeanConsistency()
     << "The computed integral means are " << basisFunctionsIntegralMean;
 }
 
-template< localIndex MAXCELLNODES, localIndex MAXCELLFACES, localIndex MAXFACENODES >
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void
 checkIntegralMeanDerivativesConsistency()
 {
-  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >;
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   for( localIndex q = 0; q <
        VEM::getNumQuadraturePoints(); ++q )
   {
     // arrayView2d< real64 const > basisDerivativesIntegralMean;
-    // ConformingVirtualElementOrder1< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >::getGradN( 0, basisDerivativesIntegralMean );
+    // ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >::getGradN( 0, basisDerivativesIntegralMean );
     real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
     VEM::calcGradN( q, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
@@ -75,7 +75,7 @@ checkIntegralMeanDerivativesConsistency()
   }
 }
 
-template< localIndex MAXCELLNODES, localIndex MAXCELLFACES, localIndex MAXFACENODES >
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void
 checkStabilizationMatrixConsistency
   ( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
@@ -83,7 +83,7 @@ checkStabilizationMatrixConsistency
   CellElementSubRegion::NodeMapType const & cellToNodes,
   arrayView2d< real64 const > const & cellCenters )
 {
-  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >;
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
@@ -148,10 +148,10 @@ checkStabilizationMatrixConsistency
   }
 }
 
-template< localIndex MAXCELLNODES, localIndex MAXCELLFACES, localIndex MAXFACENODES >
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void checkSumOfQuadratureWeights( real64 const & cellVolume )
 {
-  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >;
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   real64 sum = 0.0;
   for( localIndex q = 0; q <
        VEM::getNumQuadraturePoints(); ++q )
@@ -165,7 +165,7 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume )
     << ". Cell volume is " << cellVolume;
 }
 
-template< localIndex MAXCELLNODES, localIndex MAXCELLFACES, localIndex MAXFACENODES >
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void testCellsInMeshLevel( MeshLevel const & mesh )
 {
   // Get managers.
@@ -196,25 +196,25 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   localIndex const numCells = cellSubRegion.getElementVolume().size();
   for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
-    ConformingVirtualElementOrder1< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >::ComputeProjectors( cellIndex,
-                                                                                                   nodesCoords,
-                                                                                                   cellToNodeMap,
-                                                                                                   elementToFaceMap,
-                                                                                                   faceToNodeMap,
-                                                                                                   faceToEdgeMap,
-                                                                                                   edgeToNodeMap,
-                                                                                                   faceCenters,
-                                                                                                   faceNormals,
-                                                                                                   faceAreas,
-                                                                                                   cellCenters[cellIndex],
-                                                                                                   cellVolumes[cellIndex]
-                                                                                                   );
+    ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >::ComputeProjectors( cellIndex,
+                                                                                     nodesCoords,
+                                                                                     cellToNodeMap,
+                                                                                     elementToFaceMap,
+                                                                                     faceToNodeMap,
+                                                                                     faceToEdgeMap,
+                                                                                     edgeToNodeMap,
+                                                                                     faceCenters,
+                                                                                     faceNormals,
+                                                                                     faceAreas,
+                                                                                     cellCenters[cellIndex],
+                                                                                     cellVolumes[cellIndex]
+                                                                                     );
 
-    checkIntegralMeanConsistency< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >();
-    checkIntegralMeanDerivativesConsistency< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >();
-    checkStabilizationMatrixConsistency< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >( nodesCoords, cellIndex,
-                                                                                     cellToNodeMap, cellCenters );
-    checkSumOfQuadratureWeights< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >( cellVolumes[cellIndex] );
+    checkIntegralMeanConsistency< MAXCELLNODES, MAXFACENODES >();
+    checkIntegralMeanDerivativesConsistency< MAXCELLNODES, MAXFACENODES >();
+    checkStabilizationMatrixConsistency< MAXCELLNODES, MAXFACENODES >( nodesCoords, cellIndex,
+                                                                       cellToNodeMap, cellCenters );
+    checkSumOfQuadratureWeights< MAXCELLNODES, MAXFACENODES >( cellVolumes[cellIndex] );
   }
 }
 
@@ -267,7 +267,7 @@ TEST( VirtualElementBase, unitCube )
   problemManager->ProblemSetup();
 
   // Test computed projectors for all cells in MeshLevel
-  testCellsInMeshLevel< 10, 8, 6 >( mesh );
+  testCellsInMeshLevel< 10, 6 >( mesh );
 
   delete problemManager;
 }
@@ -321,7 +321,7 @@ TEST( VirtualElementBase, wedges )
   problemManager->ProblemSetup();
 
   // Test computed projectors for all cells in MeshLevel
-  testCellsInMeshLevel< 8, 10, 9 >( mesh );
+  testCellsInMeshLevel< 8, 9 >( mesh );
 
   delete problemManager;
 }

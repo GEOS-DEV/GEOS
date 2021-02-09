@@ -25,7 +25,7 @@ namespace geosx
 {
 namespace virtualElement
 {
-template< localIndex MAXCELLNODES, localIndex MAXCELLFACES, localIndex MAXFACENODES >
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
 public:

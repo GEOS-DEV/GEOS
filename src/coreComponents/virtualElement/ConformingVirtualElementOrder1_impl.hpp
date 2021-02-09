@@ -19,30 +19,30 @@ namespace geosx
 {
 namespace virtualElement
 {
-template< localIndex MCN, localIndex MCF, localIndex MFN >
-localIndex ConformingVirtualElementOrder1< MCN, MCF, MFN >::m_numQuadraturePoints;
+template< localIndex MCN, localIndex MFN >
+localIndex ConformingVirtualElementOrder1< MCN, MFN >::m_numQuadraturePoints;
 
-template< localIndex MCN, localIndex MCF, localIndex MFN >
-localIndex ConformingVirtualElementOrder1< MCN, MCF, MFN >::m_numSupportPoints;
+template< localIndex MCN, localIndex MFN >
+localIndex ConformingVirtualElementOrder1< MCN, MFN >::m_numSupportPoints;
 
-template< localIndex MCN, localIndex MCF, localIndex MFN >
-array1d< real64 > ConformingVirtualElementOrder1< MCN, MCF, MFN >::m_quadratureWeights;
+template< localIndex MCN, localIndex MFN >
+array1d< real64 > ConformingVirtualElementOrder1< MCN, MFN >::m_quadratureWeights;
 
-template< localIndex MCN, localIndex MCF, localIndex MFN >
-real64 ConformingVirtualElementOrder1< MCN, MCF, MFN >::
-m_basisFunctionsIntegralMean[ConformingVirtualElementOrder1< MCN, MCF, MFN >::maxSupportPoints];
+template< localIndex MCN, localIndex MFN >
+real64 ConformingVirtualElementOrder1< MCN, MFN >::
+m_basisFunctionsIntegralMean[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints];
 
-template< localIndex MCN, localIndex MCF, localIndex MFN >
-real64 ConformingVirtualElementOrder1< MCN, MCF, MFN >::
-m_stabilizationMatrix[ConformingVirtualElementOrder1< MCN, MCF, MFN >::maxSupportPoints]
-[ConformingVirtualElementOrder1< MCN, MCF, MFN >::maxSupportPoints];
+template< localIndex MCN, localIndex MFN >
+real64 ConformingVirtualElementOrder1< MCN, MFN >::
+m_stabilizationMatrix[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints]
+[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints];
 
-template< localIndex MCN, localIndex MCF, localIndex MFN >
-real64 ConformingVirtualElementOrder1< MCN, MCF, MFN >::
-m_basisDerivativesIntegralMean[ConformingVirtualElementOrder1< MCN, MCF, MFN >::maxSupportPoints][3];
+template< localIndex MCN, localIndex MFN >
+real64 ConformingVirtualElementOrder1< MCN, MFN >::
+m_basisDerivativesIntegralMean[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints][3];
 
-template< localIndex MCN, localIndex MCF, localIndex MFN >
-void ConformingVirtualElementOrder1< MCN, MCF, MFN >::
+template< localIndex MCN, localIndex MFN >
+void ConformingVirtualElementOrder1< MCN, MFN >::
 ComputeProjectors( localIndex const & cellIndex,
                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                    CellBlock::NodeMapType const & cellToNodeMap,
@@ -262,8 +262,8 @@ ComputeProjectors( localIndex const & cellIndex,
   }
 }
 
-template< localIndex MCN, localIndex MCF, localIndex MFN >
-void ConformingVirtualElementOrder1< MCN, MCF, MFN >::
+template< localIndex MCN, localIndex MFN >
+void ConformingVirtualElementOrder1< MCN, MFN >::
 ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                       arraySlice1d< localIndex const > const & faceToNodes,
                       arraySlice1d< localIndex const > const & faceToEdges,
