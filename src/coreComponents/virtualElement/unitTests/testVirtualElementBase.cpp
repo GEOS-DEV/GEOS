@@ -31,7 +31,7 @@ static void checkIntegralMeanConsistency()
 {
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXCELLFACES, MAXFACENODES >;
   real64 basisFunctionsIntegralMean[VEM::maxSupportPoints];
-  VEM::getN( 0, basisFunctionsIntegralMean );
+  VEM::calcN( 0, basisFunctionsIntegralMean );
   real64 sum = 0;
   for( localIndex iBasisFun = 0; iBasisFun <
        VEM::getNumSupportPoints(); ++iBasisFun )
@@ -121,7 +121,7 @@ checkStabilizationMatrixConsistency
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
       stabTimeMonomialDofs( i ) +=
-        VEM::getStabilizationValue( i, j );
+        VEM::calcStabilizationValue( i, j );
     }
     stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
   }
@@ -137,7 +137,7 @@ checkStabilizationMatrixConsistency
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
         stabTimeMonomialDofs( i ) +=
-          VEM::getStabilizationValue( i, j ) *
+          VEM::calcStabilizationValue( i, j ) *
           monomialVemDofs( monomInd, j );
       }
       stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );

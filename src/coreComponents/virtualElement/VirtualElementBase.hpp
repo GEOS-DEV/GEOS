@@ -40,6 +40,60 @@ public:
   /// Default destructor.
   virtual ~VirtualElementBase() = default;
 
+  /**
+   * @brief Get the shape function projected derivatives at a given quadrature point.
+   * @details The output contains the integral mean of derivatives.
+   * @param q The quadrature point index.
+   * @param gradN Return array of the shape function projected derivatives. Size will be @ref
+   * getNumSupportPoints() x 3.
+   */
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  static real64 getGradN( localIndex const q,
+                          real64 ( & gradN )[LEAF::maxSupportPoints][3] )
+  {
+    return LEAF::calcGradN( q, gradN );
+  }
+
+  /**
+   * @brief Get a value of the stabilization matrix.
+   * @param iBasisFunction The row index.
+   * @param jBasisFunction The column index.
+   * @return The requested value.
+   */
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  static real64 getStabilizationValue( localIndex const iBasisFunction,
+                                       localIndex const jBasisFunction
+                                       )
+  { return LEAF::calcStabilizationValues( iBasisFunction, jBasisFunction ); }
+
+  /**
+   * @brief Get the shape function projections at a given quadrature point.
+   * @details The output contains the integral mean of functions
+   * @param q The quadrature point index.
+   * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
+   */
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  void getN( localIndex const q,
+             real64 ( & N )[LEAF::maxSupportPoints] )
+  {
+    return LEAF::calcN( q, N );
+  }
+
+  /**
+   * @brief Get the integration weight for a quadrature point.
+   * @param q Index of the quadrature point.
+   * @return The weight.
+   */
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  real64 getTransformedQuadratureWeight( localIndex const q ) const
+  {
+    return LEAF::getTransformedQuadratureWeight( q );
+  }
+
   // /**
   //  * @brief Virtual getter for the number of quadrature points per element.
   //  * @return The number of quadrature points per element.
@@ -51,40 +105,6 @@ public:
   //  * @return The number of support points per element.
   //  */
   // virtual localIndex getNumSupportPoints() const = 0;
-
-  /**
-   * @brief Virtual getter for a value of the stabilization matrix.
-   * @param iBasisFunction The row index.
-   * @param jBasisFunction The column index.
-   * @return The requested value.
-   */
-  // virtual real64 getStabilizationValue( localIndex const iBasisFunction,
-  //                                       localIndex const jBasisFunction
-  //                                       ) const = 0;
-
-  /**
-   * @brief Get the shape function projected derivatives at a given quadrature point.
-   * @param q The quadrature point index.
-   * @param gradN Return array of the shape function projected derivatives. Size will be @ref
-   * getNumSupportPoints() x 3.
-   * @note See documentation of derived classes to know the projection used.
-   */
-  // virtual void getGradN( localIndex const q, arrayView2d< real64 const > & gradN ) const = 0;
-
-  /**
-   * @brief Get the shape function projections at a given quadrature point.
-   * @param q The quadrature point index.
-   * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
-   * @note See documentation of derived classes to know the projection used.
-   */
-  // virtual void getN( localIndex const q, arrayView1d< real64 const > & N ) const = 0;
-
-  /**
-   * @brief Get the integration weight for a quadrature point.
-   * @param q Index of the quadrature point.
-   * @return The weight.
-   */
-  // virtual real64 transformedQuadratureWeight( localIndex const q ) const = 0;
 };
 }
 }

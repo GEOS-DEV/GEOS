@@ -12,7 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 /**
- * @file ConformingVirtualElementOrder1.cpp
+ * @file ConformingVirtualElementOrder1_impl.hpp
  */
 
 namespace geosx

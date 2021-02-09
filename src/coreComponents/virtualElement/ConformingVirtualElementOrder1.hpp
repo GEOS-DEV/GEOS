@@ -86,25 +86,10 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  static real64 getStabilizationValue( localIndex const iBasisFunction,
-                                       localIndex const jBasisFunction
-                                       )
+  static real64 calcStabilizationValue( localIndex const iBasisFunction,
+                                        localIndex const jBasisFunction
+                                        )
   { return m_stabilizationMatrix[iBasisFunction][jBasisFunction]; }
-
-  /**
-   * @brief Get the shape function projected derivatives at a given quadrature point.
-   * @details The output contains the integral mean of derivatives.
-   * @param q The quadrature point index.
-   * @param gradN Return array of the shape function projected derivatives. Size will be @ref
-   * getNumSupportPoints() x 3.
-   */
-  template< typename LEAF >
-  GEOSX_HOST_DEVICE
-  static real64 getGradN( localIndex const q,
-                          real64 ( & gradN )[LEAF::maxSupportPoints][3] )
-  {
-    return LEAF::calcGradN( q, gradN );
-  }
 
   GEOSX_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
@@ -123,19 +108,6 @@ public:
     GEOSX_UNUSED_VAR( q );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
       N[i] = m_basisFunctionsIntegralMean[i];
-  }
-
-  /**
-   * @brief Get the shape function projections at a given quadrature point.
-   * @details The output contains the integral mean of functions
-   * @param q The quadrature point index.
-   * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
-   */
-  GEOSX_HOST_DEVICE
-  static void getN( localIndex const q,
-                    real64 ( & N )[maxSupportPoints] )
-  {
-    return calcN( q, N );
   }
 
   GEOSX_HOST_DEVICE
