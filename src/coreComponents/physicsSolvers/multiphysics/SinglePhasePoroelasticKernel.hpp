@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 namespace geosx
 {
@@ -116,10 +117,10 @@ public:
     m_solidDensity( inputConstitutiveType->getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( "fluid" )->density() ), //*** TODO
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( "pressure" ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( "deltaPressure" ) )
+    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString ) ),
+    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString ) ),
+    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString ) )
   {}
-
 
   //*****************************************************************************
   /**
@@ -238,10 +239,16 @@ public:
     stress[1] -= pressure;
     stress[2] -= pressure;
 
+    // Compute mixture density (using reference porosity)
+    real64 mixtureDensity = (1.0 - m_poroRef( k ) ) * m_solidDensity( k, q )
+                            + m_poroRef( k ) * m_fluidDensity( k, 0 ); //TODO check gauss point
 
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_solidDensity( k, q )* detJ,
-                                     m_gravityVector[1] * m_solidDensity( k, q )* detJ,
-                                     m_gravityVector[2] * m_solidDensity( k, q )* detJ };
+//    real64 const gravityForce[3] = { m_gravityVector[0] * m_solidDensity( k, q )* detJ,
+//                                     m_gravityVector[1] * m_solidDensity( k, q )* detJ,
+//                                     m_gravityVector[2] * m_solidDensity( k, q )* detJ };
+    real64 const gravityForce[3] = { m_gravityVector[0] * mixtureDensity * detJ,
+                                     m_gravityVector[1] * mixtureDensity * detJ,
+                                     m_gravityVector[2] * mixtureDensity * detJ };
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -269,16 +276,11 @@ public:
       stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, 0 ) * biotCoefficient * dNdX[a][0] * detJ;
       stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, 0 ) * biotCoefficient * dNdX[a][1] * detJ;
       stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, 0 ) * biotCoefficient * dNdX[a][2] * detJ;
-//      stack.localFlowDispJacobian[ 0][a * 3 + 0] += 1.0 * biotCoefficient * dNdX[a][0] * detJ;
-//      stack.localFlowDispJacobian[ 0][a * 3 + 1] += 1.0 * biotCoefficient * dNdX[a][1] * detJ;
-//      stack.localFlowDispJacobian[ 0][a * 3 + 2] += 1.0 * biotCoefficient * dNdX[a][2] * detJ;
-
 
       real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
                       + dNdX[a][1] * stack.uhat_local[a][1]
                       + dNdX[a][2] * stack.uhat_local[a][2];
       Rf_tmp *= m_fluidDensity( k, 0 ) * biotCoefficient * detJ; //TODO same as above
-      //Rf_tmp *= 1.0 * biotCoefficient * detJ;
       stack.localFlowResidual[0] += Rf_tmp;
     }
 
@@ -367,6 +369,9 @@ protected:
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > const m_deltaFluidPressure;
+
+  /// The rank-global reference porosity array
+  arrayView1d< real64 const > const m_poroRef;
 
 
 };
