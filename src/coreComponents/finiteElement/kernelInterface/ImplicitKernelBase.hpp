@@ -82,6 +82,7 @@ public:
   ImplicitKernelBase( NodeManager const & nodeManager,
                       EdgeManager const & edgeManager,
                       FaceManager const & faceManager,
+                      localIndex const targetRegionIndex,
                       SUBREGION_TYPE const & elementSubRegion,
                       FE_TYPE const & finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
@@ -100,6 +101,7 @@ public:
     GEOSX_UNUSED_VAR( nodeManager );
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
   }
 
 

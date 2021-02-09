@@ -99,6 +99,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,

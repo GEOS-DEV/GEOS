@@ -105,6 +105,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -147,7 +148,7 @@ public:
                                        uhat_local(),
                                        localFlowResidual{ 0.0 },
                                        localDispFlowJacobian{ {0.0} },
-                                       localFlowDispJacobian{ 0.0 },
+                                       localFlowDispJacobian{ {0.0} },
                                        localFlowDofIndex{ 0 }
     {}
 
