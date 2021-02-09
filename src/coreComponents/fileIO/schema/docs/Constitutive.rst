@@ -14,6 +14,7 @@ Coulomb                               node         :ref:`XML_Coulomb`
 DamageLinearElasticIsotropic          node         :ref:`XML_DamageLinearElasticIsotropic`          
 DamageSpectralLinearElasticIsotropic  node         :ref:`XML_DamageSpectralLinearElasticIsotropic`  
 DamageVolDevLinearElasticIsotropic    node         :ref:`XML_DamageVolDevLinearElasticIsotropic`    
+DeadOilFluid                          node         :ref:`XML_DeadOilFluid`                          
 LinearElasticAnisotropic              node         :ref:`XML_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node         :ref:`XML_LinearElasticIsotropic`                
 LinearElasticTransverseIsotropic      node         :ref:`XML_LinearElasticTransverseIsotropic`      

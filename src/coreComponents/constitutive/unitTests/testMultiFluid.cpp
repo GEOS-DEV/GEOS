@@ -422,6 +422,117 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   return fluid;
 }
 
+MultiFluidBase * makeNativeDeadOilFluid( string const & name, Group * parent )
+{
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
+
+  // 1) First, define the tables (PVDO, PVDG)
+
+  // 1D table with linear interpolation
+  localIndex const NaxisPVDO = 7;
+  localIndex const NaxisPVDG = 13;
+
+  array1d< real64_array > coordinatesPVDO;
+  real64_array valuesPVDO_Bo( NaxisPVDO );
+  real64_array valuesPVDO_visc( NaxisPVDO );
+  coordinatesPVDO.resize( 1 );
+  coordinatesPVDO[0].resize( NaxisPVDO );
+  coordinatesPVDO[0][0] =  2000000; valuesPVDO_Bo[0] = 1.02; valuesPVDO_visc[0] = 0.000975;
+  coordinatesPVDO[0][1] =  5000000; valuesPVDO_Bo[1] = 1.03; valuesPVDO_visc[1] = 0.00091;
+  coordinatesPVDO[0][2] = 10000000; valuesPVDO_Bo[2] = 1.04; valuesPVDO_visc[2] = 0.00083;
+  coordinatesPVDO[0][3] = 20000000; valuesPVDO_Bo[3] = 1.05; valuesPVDO_visc[3] = 0.000695;
+  coordinatesPVDO[0][4] = 30000000; valuesPVDO_Bo[4] = 1.07; valuesPVDO_visc[4] = 0.000594;
+  coordinatesPVDO[0][5] = 40000000; valuesPVDO_Bo[5] = 1.08; valuesPVDO_visc[5] = 0.00051;
+  coordinatesPVDO[0][6] = 50000000; valuesPVDO_Bo[6] = 1.09; valuesPVDO_visc[6] = 0.000449;
+
+  array1d< real64_array > coordinatesPVDG;
+  real64_array valuesPVDG_Bg( NaxisPVDG );
+  real64_array valuesPVDG_visc( NaxisPVDG );
+  coordinatesPVDG.resize( 1 );
+  coordinatesPVDG[0].resize( NaxisPVDG );
+  coordinatesPVDG[0][0]  =  3000000; valuesPVDG_Bg[0]  = 0.04234;  valuesPVDG_visc[0] = 0.00001344;
+  coordinatesPVDG[0][1]  =  6000000; valuesPVDG_Bg[1]  = 0.02046;  valuesPVDG_visc[1] = 0.0000142;
+  coordinatesPVDG[0][2]  =  9000000; valuesPVDG_Bg[2]  = 0.01328;  valuesPVDG_visc[2] = 0.00001526;
+  coordinatesPVDG[0][3]  = 12000000; valuesPVDG_Bg[3]  = 0.00977;  valuesPVDG_visc[3] = 0.0000166;
+  coordinatesPVDG[0][4]  = 15000000; valuesPVDG_Bg[4]  = 0.00773;  valuesPVDG_visc[4] = 0.00001818;
+  coordinatesPVDG[0][5]  = 18000000; valuesPVDG_Bg[5]  = 0.006426; valuesPVDG_visc[5] = 0.00001994;
+  coordinatesPVDG[0][6]  = 21000000; valuesPVDG_Bg[6]  = 0.005541; valuesPVDG_visc[6] = 0.00002181;
+  coordinatesPVDG[0][7]  = 24000000; valuesPVDG_Bg[7]  = 0.004919; valuesPVDG_visc[7] = 0.0000237;
+  coordinatesPVDG[0][8]  = 27000000; valuesPVDG_Bg[8]  = 0.004471; valuesPVDG_visc[8] = 0.00002559;
+  coordinatesPVDG[0][9]  = 29500000; valuesPVDG_Bg[9]  = 0.004194; valuesPVDG_visc[9] = 0.00002714;
+  coordinatesPVDG[0][10] = 31000000; valuesPVDG_Bg[10] = 0.004031; valuesPVDG_visc[10] = 0.00002806;
+  coordinatesPVDG[0][11] = 33000000; valuesPVDG_Bg[11] = 0.00391;  valuesPVDG_visc[11] = 0.00002832;
+  coordinatesPVDG[0][12] = 53000000; valuesPVDG_Bg[12] = 0.003868; valuesPVDG_visc[12] = 0.00002935;
+
+  TableFunction * tablePVDO_Bo = functionManager->createChild( "TableFunction", "PVDO_Bo" )->groupCast< TableFunction * >();
+  tablePVDO_Bo->setTableCoordinates( coordinatesPVDO );
+  tablePVDO_Bo->setTableValues( valuesPVDO_Bo );
+  tablePVDO_Bo->reInitializeFunction();
+
+  tablePVDO_Bo->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  TableFunction * tablePVDO_visc = functionManager->createChild( "TableFunction", "PVDO_visc" )->groupCast< TableFunction * >();
+  tablePVDO_visc->setTableCoordinates( coordinatesPVDO );
+  tablePVDO_visc->setTableValues( valuesPVDO_visc );
+  tablePVDO_visc->reInitializeFunction();
+
+  tablePVDO_visc->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  TableFunction * tablePVDG_Bg = functionManager->createChild( "TableFunction", "PVDG_Bg" )->groupCast< TableFunction * >();
+  tablePVDG_Bg->setTableCoordinates( coordinatesPVDG );
+  tablePVDG_Bg->setTableValues( valuesPVDG_Bg );
+  tablePVDG_Bg->reInitializeFunction();
+
+  tablePVDG_Bg->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  TableFunction * tablePVDG_visc = functionManager->createChild( "TableFunction", "PVDG_visc" )->groupCast< TableFunction * >();
+  tablePVDG_visc->setTableCoordinates( coordinatesPVDG );
+  tablePVDG_visc->setTableValues( valuesPVDG_visc );
+  tablePVDG_visc->reInitializeFunction();
+
+  tablePVDG_visc->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  // 2) Then, define the Dead-Oil constitutive model
+
+  auto fluid = parent->registerGroup< DeadOilFluid >( name );
+
+  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  compNames.resize( 3 );
+  compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
+
+  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  molarWgt.resize( 3 );
+  molarWgt[0] = 114e-3; molarWgt[1] = 16e-3; molarWgt[2] = 18e-3;
+
+  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  phaseNames.resize( 3 );
+  phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
+
+  auto & surfaceDens = fluid->getReference< array1d< real64 > >( DeadOilFluid::viewKeyStruct::surfacePhaseMassDensitiesString );
+  surfaceDens.resize( 3 );
+  surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
+
+  auto & FVFTableNames = fluid->getReference< string_array >( DeadOilFluid::viewKeyStruct::formationVolumeFactorTableNamesString );
+  FVFTableNames.resize( 2 );
+  FVFTableNames[0] = "PVDO_Bo"; FVFTableNames[1] = "PVDG_Bg";
+
+  auto & viscosityTableNames = fluid->getReference< string_array >( DeadOilFluid::viewKeyStruct::viscosityTableNamesString );
+  viscosityTableNames.resize( 2 );
+  viscosityTableNames[0] = "PVDO_visc"; viscosityTableNames[1] = "PVDG_visc";
+
+  auto & waterRefPressure = fluid->getReference< real64 >( DeadOilFluid::viewKeyStruct::waterRefPressureString );
+  waterRefPressure = 30600000.1;
+  auto & waterFormationVolumeFactor = fluid->getReference< real64 >( DeadOilFluid::viewKeyStruct::waterFormationVolumeFactorString );
+  waterFormationVolumeFactor = 1.03;
+  auto & waterCompressibility = fluid->getReference< real64 >( DeadOilFluid::viewKeyStruct::waterCompressibilityString );
+  waterCompressibility = 0.00000000041;
+  auto & waterViscosity = fluid->getReference< real64 >( DeadOilFluid::viewKeyStruct::waterViscosityString );
+  waterViscosity = 0.0003;
+
+  fluid->postProcessInputRecursive();
+  return fluid;
+}
+
 void writeTableToFile( string const & filename, char const * str )
 {
   std::ofstream os( filename );
@@ -559,6 +670,66 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
 
   testNumericalDerivatives( *fluid, P, T, comp, eps, relTol, absTol );
 }
+
+class NativeDeadOilFluidTest : public ::testing::Test
+{
+protected:
+
+  virtual void SetUp() override
+  {
+    parent = std::make_unique< Group >( "parent", nullptr );
+    parent->resize( 1 );
+    fluid = makeNativeDeadOilFluid( "fluid", parent.get());
+
+    parent->initialize( parent.get() );
+    parent->initializePostInitialConditions( parent.get() );
+  }
+
+  std::unique_ptr< Group > parent;
+  MultiFluidBase * fluid;
+};
+
+TEST_F( NativeDeadOilFluidTest, numericalDerivativesMolar )
+{
+  fluid->setMassFlag( false );
+
+  // TODO test over a range of values
+  real64 const P1 = 5.4e6;
+  real64 const P2 = 1.24e7;
+  real64 const P3 = 3.21e7;
+  real64 const T = 297.15;
+  array1d< real64 > comp( 3 );
+  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-4;
+
+  testNumericalDerivatives( *fluid, P1, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, P2, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, P3, T, comp, eps, relTol );
+}
+
+TEST_F( NativeDeadOilFluidTest, numericalDerivativesMass )
+{
+  fluid->setMassFlag( true );
+
+  // TODO test over a range of values
+  real64 const P1 = 5.4e6;
+  real64 const P2 = 1.24e7;
+  real64 const P3 = 3.21e7;
+  real64 const T = 297.15;
+  array1d< real64 > comp( 3 );
+  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-4;
+  real64 const absTol = 1e-14;
+
+  testNumericalDerivatives( *fluid, P1, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, P2, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, P3, T, comp, eps, relTol, absTol );
+}
+
 
 int main( int argc, char * * argv )
 {

@@ -1543,6 +1543,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="DamageLinearElasticIsotropic" type="DamageLinearElasticIsotropicType" />
 			<xsd:element name="DamageSpectralLinearElasticIsotropic" type="DamageSpectralLinearElasticIsotropicType" />
 			<xsd:element name="DamageVolDevLinearElasticIsotropic" type="DamageVolDevLinearElasticIsotropicType" />
+			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
@@ -1763,6 +1764,32 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
 		<!--lengthScale => lenght scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="DeadOilFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--hydrocarbonFormationVolFactorTableNames => Names of the formation volume factor tables (one per hydrocarbon phase, in the order provided in "phaseNames"). 
+For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
+		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="string_array" use="required" />
+		<!--hydrocarbonViscosityTableNames => Names of the viscosity tables (one per hydrocarbon phase, in the order provided in "phaseNames") 
+For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
+		<xsd:attribute name="hydrocarbonViscosityTableNames" type="string_array" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--surfacePhaseMassDensities => List of surface mass densities for each phase-->
+		<xsd:attribute name="surfacePhaseMassDensities" type="real64_array" use="required" />
+		<!--waterCompressibility => Water compressibility-->
+		<xsd:attribute name="waterCompressibility" type="real64" default="0" />
+		<!--waterFormationVolumeFactor => Water formation volume factor-->
+		<xsd:attribute name="waterFormationVolumeFactor" type="real64" default="0" />
+		<!--waterReferencePressure => Water reference pressure-->
+		<xsd:attribute name="waterReferencePressure" type="real64" default="0" />
+		<!--waterViscosity => Water viscosity-->
+		<xsd:attribute name="waterViscosity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
