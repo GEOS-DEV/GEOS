@@ -105,6 +105,65 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
+  real64 yield( localIndex const k,
+                localIndex const GEOSX_UNUSED_PARAM( q ),
+                real64 const invP,
+                real64 const invQ,
+                real64 const cohesion ) const
+  {
+    return invQ + m_friction[k] * invP - cohesion;
+  }
+
+  void yieldDerivatives( localIndex const k,
+                         localIndex const GEOSX_UNUSED_PARAM( q ),
+                         real64 const GEOSX_UNUSED_PARAM( invP ),
+                         real64 const GEOSX_UNUSED_PARAM( invQ ),
+                         real64 (& dF)[3] ) const
+  {
+
+    // The yield function is: F = Q + friction * P - cohesion
+
+    real64 dF_dP = m_friction[k];
+    real64 dF_dQ = 1.0;
+    real64 dF_dCohesion = -1.0;
+
+    dF[0] = dF_dP;
+    dF[1] = dF_dQ;
+    dF[2] = dF_dCohesion;
+  }
+
+  void potentialDetivatives( localIndex const k,
+                             localIndex const GEOSX_UNUSED_PARAM( q ),
+                             real64 const GEOSX_UNUSED_PARAM( invP ),
+                             real64 const GEOSX_UNUSED_PARAM( invQ ),
+                             real64 (& dG)[8] ) const
+  {
+
+    // The plastic potential function is: G = invQ + invP * dilation
+
+    real64 dG_dP = m_dilation[k];
+    real64 dG_dQ = 1.0;
+
+    real64 dG_dP_dP = 0.0;
+    real64 dG_dP_dQ = 0.0;
+    real64 dG_dP_dH = 0.0;
+
+    real64 dG_dQ_dP = 0.0;
+    real64 dG_dQ_dQ = 0.0;
+    real64 dG_dQ_dH = 0.0;
+
+    dG[0] = dG_dP;
+    dG[1] = dG_dQ;
+
+    dG[2] = dG_dP_dP;
+    dG[3] = dG_dP_dQ;
+    dG[4] = dG_dP_dH;
+
+    dG[5] = dG_dQ_dP;
+    dG[6] = dG_dQ_dQ;
+    dG[7] = dG_dQ_dH;
+  }
+
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
   arrayView1d< real64 const > const m_friction;
@@ -149,9 +208,9 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   // check yield function F <= 0, using old hardening variable state
 
-  real64 yield = trialQ + m_friction[k] * trialP - m_oldCohesion[k][q];
+  //real64 yield = trialQ + m_friction[k] * trialP - m_oldCohesion[k][q];
 
-  if( yield < 1e-9 ) // elasticity
+  if( yield( k, q, trialP, trialQ, m_oldCohesion[k][q] ) < 1e-9 ) // elasticity
   {
     return;
   }
@@ -180,22 +239,30 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     // then check for complete cohesion loss
 
     m_newCohesion[k][q] = m_oldCohesion[k][q] + solution[2] * m_hardening[k];
-    real64 cohesionDeriv = m_hardening[k];
+    real64 dH_dLambda = m_hardening[k]; // H is the hardening parameter
 
     if( m_newCohesion[k][q] < 0 )
     {
       m_newCohesion[k][q] = 0;
-      cohesionDeriv = 0;
+      dH_dLambda = 0;
     }
+
+    // plastic potential derivatives
+    // dG_dP = dG[0], dG_dQ = dG[1]
+    // dG_dP_dP = dG[2], dG_dP_dQ = dG[3], dG_dP_dCohesion = dG[4] 
+    // dG_dQ_dP = dG[5], dG_dQ_dQ = dG[6], dG_dQ_dCohesion = dG[7]
+
+    real64 dG[8];
+    potentialDetivatives( k, q, solution[0], solution[1], dG );
 
     // assemble residual system
     // resid1 = P - trialP + dlambda*bulkMod*dG/dP = 0
     // resid2 = Q - trialQ + dlambda*3*shearMod*dG/dQ = 0
     // resid3 = F = 0
 
-    residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * m_dilation[k];
-    residual[1] = solution[1] - trialQ + solution[2] * 3 * m_shearModulus[k];
-    residual[2] = solution[1] + m_friction[k] * solution[0] - m_newCohesion[k][q];
+    residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * dG[0];
+    residual[1] = solution[1] - trialQ + solution[2] * 3.0 * m_shearModulus[k] * dG[1];
+    residual[2] = yield( k, q, solution[0], solution[1],  m_newCohesion[k][q] );
 
     // check for convergence
 
@@ -211,15 +278,23 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
       break;
     }
 
+    // yield derivatives
+    // dF_dP = dF[0], dF_dQ = dF[1], dF_dCohesion = dF[2]
+
+    real64 dF[3];
+    yieldDerivatives( k, q, solution[0], solution[1], dF );
+
     // solve Newton system
 
-    jacobian[0][0] = 1;
-    jacobian[0][2] = m_bulkModulus[k] * m_dilation[k];
-    jacobian[1][1] = 1;
-    jacobian[1][2] = 3 * m_shearModulus[k];
-    jacobian[2][0] = m_friction[k];
-    jacobian[2][1] = 1;
-    jacobian[2][2] = cohesionDeriv;
+    jacobian[0][0] = 1.0 + solution[2] * m_bulkModulus[k] * dG[2];
+    jacobian[0][1] = solution[2] * m_bulkModulus[k] * dG[3];
+    jacobian[0][2] = m_bulkModulus[k] * dG[0] + solution[2] * m_bulkModulus[k] * dG[4] * dH_dLambda;
+    jacobian[1][0] = solution[2] * 3.0 * m_shearModulus[k] * dG[5];
+    jacobian[1][1] = 1.0 + solution[2] * 3.0 * m_shearModulus[k] * dG[6];
+    jacobian[1][2] = 3.0 * m_shearModulus[k] * dG[1] + solution[2] * 3.0 * m_shearModulus[k] * dG[7] * dH_dLambda;
+    jacobian[2][0] = dF[0];
+    jacobian[2][1] = dF[1];
+    jacobian[2][2] = dF[2] * dH_dLambda;
 
     LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
