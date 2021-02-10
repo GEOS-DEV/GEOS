@@ -85,15 +85,13 @@ void PoroelasticSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Gro
     MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
     {
-      elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
+      region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
       {
-        region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
-        {
-          subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
-        } );
+        subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
       } );
-    }
+    } );
   }
 }
 
