@@ -266,11 +266,13 @@ void EmbeddedSurfaceGenerator::setGlobalIndixes( ElementRegionManager & elemMana
 
   for( localIndex ei = 0; ei < embeddedSurfaceSubRegion.size(); ei++ )
   {
-    localToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex();
+    localToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex() + 1;
     embeddedSurfaceSubRegion.updateGlobalToLocalMap( ei );
   }
 
-  elemManager.SetMaxGlobalIndex();
+  embeddedSurfaceSubRegion.setMaxGlobalIndex();
+
+  elemManager.setMaxGlobalIndex();
 }
 
 void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager const & elemManager,
@@ -283,12 +285,9 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
   dataRepository::Group * setGroupEmbSurf =
     embeddedSurfaceSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString );
 
-  elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
-    [&]( localIndex const er, localIndex const esr, ElementRegionBase const &, CellElementSubRegion const & subRegion )
+  elemManager.forElementSubRegions< CellElementSubRegion >(
+    [&]( CellElementSubRegion const & subRegion )
   {
-    GEOSX_UNUSED_VAR( er );
-    GEOSX_UNUSED_VAR( esr )
-
     dataRepository::Group const * setGroupCell =
       subRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString );
 

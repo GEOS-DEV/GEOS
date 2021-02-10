@@ -409,7 +409,7 @@ CommunicationTools::
     }
   }
 
-  elementManager.SetMaxGlobalIndex();
+  elementManager.setMaxGlobalIndex();
 }
 
 void

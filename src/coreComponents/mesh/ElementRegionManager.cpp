@@ -63,7 +63,7 @@ void ElementRegionManager::resize( integer_array const & numElements,
   }
 }
 
-void ElementRegionManager::SetMaxGlobalIndex()
+void ElementRegionManager::setMaxGlobalIndex()
 {
   forElementSubRegions< ElementSubRegionBase >( [this] ( ElementSubRegionBase const & subRegion )
   {

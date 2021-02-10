@@ -616,7 +616,11 @@ void ProblemManager::generateMesh()
         subRegion.setupRelatedObjectsInRelations( meshLevel );
         subRegion.calculateElementGeometricQuantities( *nodeManager,
                                                        *faceManager );
+
+        subRegion.setMaxGlobalIndex();
       } );
+
+      elemManager->setMaxGlobalIndex();
 
       elemManager->generateCellToEdgeMaps( faceManager );
 
