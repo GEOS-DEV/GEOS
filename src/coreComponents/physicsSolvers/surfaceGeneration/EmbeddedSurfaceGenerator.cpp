@@ -277,8 +277,8 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
                                                           EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
 {
   // We want to create the sets for the embeddedSurfaceSubRegion which was empty when they
-  // were created for the other subRegions. This way, for example, if there is the parent cell belongs to the set "source"
-  // the embedded element will belong to the same set
+  // were created for the other subRegions. This way, for example, if the parent cell belongs to the set "source"
+  // the embedded element will belong to the same set.
 
   dataRepository::Group * setGroupEmbSurf =
     embeddedSurfaceSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString );
