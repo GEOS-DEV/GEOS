@@ -102,9 +102,9 @@ public:
 
   /**
    * @brief Constructor.
+   * @param numBlocks number of blocks
    * @param shapeOption preconditioner block shape
-   * @param schurOption type of Schur complement approximation to use
-   * @param scalingOption type of scaling to apply to blocks
+   * @param schurOption vector of types of Schur complement approximation to use
    */
   explicit BlockPreconditionerGeneral( localIndex const numBlocks,
                                        BlockShapeOption const shapeOption,
@@ -120,7 +120,6 @@ public:
    * @param blockIndex index of the block to set up
    * @param blockDofs choice of DoF components (from a monolithic system)
    * @param solver instance of the inner preconditioner for the block
-   * @param scaling user-provided row scaling coefficient for this block
    *
    * @note While not strictly required, it is generally expected that @p blockDofs
    *       of the two blocks are non-overlapping and their union includes all
@@ -137,9 +136,21 @@ public:
 
   using PreconditionerBase< LAI >::compute;
 
+  /**
+   * @brief Compute the preconditioner from a matrix
+   * @param mat the matrix to precondition
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
+   */
   virtual void compute( Matrix const & mat,
                         DofManager const & dofManager ) override;
 
+  /**
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
+   *
+   * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
+   */
   virtual void apply( Vector const & src, Vector & dst ) const override;
 
   virtual void clear() override;
@@ -162,21 +173,17 @@ private:
   void reinitialize( Matrix const & mat, DofManager const & dofManager, localIndex const iBlock );
 
   /**
-   * @brief Apply block scaling to system blocks (which must be already extracted).
-   */
-  void applyBlockScaling( localIndex const iBlock );
-
-  /**
    * @brief Compute and apply the Schur complement to (1,1)-block.
    */
   void computeSchurComplement( localIndex const iBlock );
 
+  /// Number of blocks
   localIndex m_numBlocks;
 
   /// Shape of the block preconditioner
   BlockShapeOption m_shapeOption;
 
-  /// Type of Schur complement to construct
+  /// Types of Schur complement to construct
   std::array< SchurComplementOption, DofManager::MAX_FIELDS > m_schurOption;
 
   /// Description of dof components making up each of the two main blocks
