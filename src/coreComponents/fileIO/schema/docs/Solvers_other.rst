@@ -10,6 +10,7 @@ EmbeddedSurfaceGenerator         node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerat
 FlowProppantTransport            node :ref:`DATASTRUCTURE_FlowProppantTransport`            
 Hydrofracture                    node :ref:`DATASTRUCTURE_Hydrofracture`                    
 LagrangianContact                node :ref:`DATASTRUCTURE_LagrangianContact`                
+LagrangianContactWithFlow        node :ref:`DATASTRUCTURE_LagrangianContactWithFlow`        
 LaplaceFEM                       node :ref:`DATASTRUCTURE_LaplaceFEM`                       
 PhaseFieldDamageFEM              node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node :ref:`DATASTRUCTURE_PhaseFieldFracture`               
@@ -23,7 +24,6 @@ SinglePhaseWell                  node :ref:`DATASTRUCTURE_SinglePhaseWell`
 SolidMechanicsEmbeddedFractures  node :ref:`DATASTRUCTURE_SolidMechanicsEmbeddedFractures`  
 SolidMechanicsLagrangianSSLE     node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`     
 SolidMechanics_LagrangianFEM     node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`     
-SolverBase                       node :ref:`DATASTRUCTURE_SolverBase`                       
 SurfaceGenerator                 node :ref:`DATASTRUCTURE_SurfaceGenerator`                 
 ================================ ==== ===================================================== 
 

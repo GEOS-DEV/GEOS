@@ -1,0 +1,206 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file BlockPreconditionerGeneral.hpp
+ */
+
+#ifndef GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER3_HPP_
+#define GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER3_HPP_
+
+#include "linearAlgebra/DofManager.hpp"
+#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/utilities/BlockOperator.hpp"
+#include "linearAlgebra/utilities/BlockVector.hpp"
+
+namespace geosx
+{
+
+/**
+ * @brief Type of Schur complement approximation used
+ *
+ * @todo Need more descriptive names for options
+ */
+enum class SchurComplementOption
+{
+  None,                  //!< No Schur complement - just block-GS/block-Jacobi preconditioner
+  Diagonal,              //!< Approximate first block with its diagonal
+  RowsumDiagonalProbing, //!< Rowsum-preserving diagonal approximation constructed with probing
+  UserDefined            //!< User defined preconditioner for the first block
+};
+
+/**
+ * @brief Shape of the block preconditioner
+ */
+enum class BlockShapeOption
+{
+  Diagonal,            //!< (D)^{-1}
+  UpperTriangular,     //!< (DU)^{-1}
+  LowerUpperTriangular //!< (LDU)^{-1}
+};
+
+/*
+ * Since formulas in Doxygen are broken with 1.8.13 and certain versions of ghostscript,
+ * keeping this documentation in a separate comment block for now. Should be moved into
+ * documentation of BlockPreconditioner class.
+ *
+ * This class implements a 2x2 block preconditioner of the form:
+ * @f$
+ * M^{-1} =
+ * \begin{bmatrix}
+ * I_{1} & -M_{1}^{-1}A_{12} \\
+ *       &  I_{2}
+ * \end{bmatrix}
+ * \begin{bmatrix}
+ * M_{1}^{-1} &            \\
+ *            & M_{2}^{-1}
+ * \end{bmatrix}
+ * \begin{bmatrix}
+ *  I_{1}            &       \\
+ * -A_{21}M_{1}^{-1} & I_{2}
+ * \end{bmatrix}
+ * @f$
+ * with
+ * @f$ M_1^{-1} ~= A_{11}^{-1} @f$, @f$ M_2^{-1} ~= S_{22}^{-1} @f$, and
+ * @f$ S_{22} ~= A_{22} - A_{21} A_{11}^{-1} A_{12} @f$ being the (optional) approximate Schur complement.
+ *
+ * The first step (predictor solve with @f$ M_{1} @f$) is optional. Enabling it results in a more powerful
+ * preconditioner, but involves two applications of @f$ M_{1}^{-1} @f$ instead of just one on each solve.
+ *
+ * The user provides individual block solvers @f$ M_{1} @f$ and @f$ M_{2} @f$ as well as
+ * a description of the block split of monolithic matrix in terms of DOF components.
+ */
+
+/**
+ * @brief General 2x2 block preconditioner.
+ * @tparam LAI type of linear algebra interface providing matrix/vector types
+ */
+template< typename LAI >
+class BlockPreconditionerGeneral : public PreconditionerBase< LAI >
+{
+public:
+
+  /// Alias for the base type
+  using Base = PreconditionerBase< LAI >;
+
+  /// Alias for the vector type
+  using Vector = typename Base::Vector;
+
+  /// Alias for the matrix type
+  using Matrix = typename Base::Matrix;
+
+  /**
+   * @brief Constructor.
+   * @param shapeOption preconditioner block shape
+   * @param schurOption type of Schur complement approximation to use
+   * @param scalingOption type of scaling to apply to blocks
+   */
+  explicit BlockPreconditionerGeneral( localIndex const numBlocks,
+                                       BlockShapeOption const shapeOption,
+                                       std::vector< SchurComplementOption > const & schurOption );
+
+  /**
+   * @brief Destructor.
+   */
+  virtual ~BlockPreconditionerGeneral() override;
+
+  /**
+   * @brief Setup data for one of the two blocks.
+   * @param blockIndex index of the block to set up
+   * @param blockDofs choice of DoF components (from a monolithic system)
+   * @param solver instance of the inner preconditioner for the block
+   * @param scaling user-provided row scaling coefficient for this block
+   *
+   * @note While not strictly required, it is generally expected that @p blockDofs
+   *       of the two blocks are non-overlapping and their union includes all
+   *       DoF components in the monolithic system.
+   */
+  void setupBlock( localIndex const blockIndex,
+                   std::vector< DofManager::SubComponent > blockDofs,
+                   std::unique_ptr< PreconditionerBase< LAI > > solver );
+
+  /**
+   * @name PreconditionerBase interface methods
+   */
+  ///@{
+
+  using PreconditionerBase< LAI >::compute;
+
+  virtual void compute( Matrix const & mat,
+                        DofManager const & dofManager ) override;
+
+  virtual void apply( Vector const & src, Vector & dst ) const override;
+
+  virtual void clear() override;
+
+  ///@}
+
+private:
+
+  struct moveOperator
+  {
+    Matrix current;
+    Matrix next;
+  };
+
+  /**
+   * @brief Initialize/resize internal data structures for a new linear system.
+   * @param mat the new system matrix
+   * @param dofManager the new dof manager
+   */
+  void reinitialize( Matrix const & mat, DofManager const & dofManager, localIndex const iBlock );
+
+  /**
+   * @brief Apply block scaling to system blocks (which must be already extracted).
+   */
+  void applyBlockScaling( localIndex const iBlock );
+
+  /**
+   * @brief Compute and apply the Schur complement to (1,1)-block.
+   */
+  void computeSchurComplement( localIndex const iBlock );
+
+  localIndex m_numBlocks;
+
+  /// Shape of the block preconditioner
+  BlockShapeOption m_shapeOption;
+
+  /// Type of Schur complement to construct
+  std::array< SchurComplementOption, DofManager::MAX_FIELDS > m_schurOption;
+
+  /// Description of dof components making up each of the two main blocks
+  std::array< std::vector< DofManager::SubComponent >, DofManager::MAX_FIELDS > m_blockDofs;
+
+  /// Restriction operators for each sub-block
+  std::array< moveOperator, DofManager::MAX_FIELDS > m_restrictors;
+
+  /// Prolongation operators for each sub-block
+  std::array< moveOperator, DofManager::MAX_FIELDS > m_prolongators;
+
+  /// Matrix blocks
+  BlockOperator< Vector, Matrix > m_matBlocks;
+
+  /// Individual block preconditioners
+  std::array< std::unique_ptr< PreconditionerBase< LAI > >, DofManager::MAX_FIELDS > m_solvers;
+
+  /// Internal vector of block residuals
+  mutable BlockVector< Vector > m_rhs;
+
+  /// Internal vector of block solutions
+  mutable BlockVector< Vector > m_sol;
+};
+
+} //namespace geosx
+
+#endif //GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER3_HPP_

@@ -14,6 +14,7 @@ set( linearAlgebra_headers
      interfaces/direct/Arnoldi.hpp
      solvers/BiCGSTABsolver.hpp
      solvers/BlockPreconditioner.hpp
+     solvers/BlockPreconditionerGeneral.hpp
      solvers/CGsolver.hpp
      solvers/GMRESsolver.hpp
      solvers/KrylovSolver.hpp
@@ -42,6 +43,7 @@ set( linearAlgebra_sources
      interfaces/BlasLapackLA.cpp
      solvers/BiCGSTABsolver.cpp
      solvers/BlockPreconditioner.cpp
+     solvers/BlockPreconditionerGeneral.cpp
      solvers/CGsolver.cpp
      solvers/GMRESsolver.cpp
      solvers/KrylovSolver.cpp

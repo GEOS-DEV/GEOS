@@ -1769,7 +1769,7 @@ DofManager::filterDofs( std::vector< SubComponent > const & excluded ) const
       SubComponent const & sc = *it;
       GEOSX_ASSERT( sc.loComp == 0 || sc.hiComp == field.numComponents );
       loComp = (sc.loComp == 0) ? sc.hiComp : 0;
-      hiComp = (sc.hiComp == field.numComponents) ? sc.loComp : field.numComponents;
+      hiComp = (sc.hiComp == field.numComponents) ? sc.hiComp : field.numComponents;
     }
     GEOSX_ASSERT_GE( hiComp, loComp );
     if( hiComp > loComp )

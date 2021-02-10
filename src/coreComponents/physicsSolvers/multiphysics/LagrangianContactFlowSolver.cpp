@@ -23,15 +23,12 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "finiteElement/Kinematics.h"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/multiphysics/LagrangianContactSolver.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
@@ -39,6 +36,10 @@
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
+#include "linearAlgebra/solvers/PreconditionerBlockJacobi.hpp"
+#include "linearAlgebra/solvers/BlockPreconditionerGeneral.hpp"
+#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "math/interpolation/Interpolation.hpp"
 
 namespace geosx
@@ -73,6 +74,14 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   registerWrapper( viewKeyStruct::defaultConductivityString, &m_defaultConductivity )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Value of the default conductivity C_{f,0} for the fracture" );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
+
+  m_linearSolverParameters.get().mgr.strategy = "LagrangianContactMechanicsFlow";
+  m_linearSolverParameters.get().mgr.separateComponents = true;
+  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
 void LagrangianContactFlowSolver::registerDataOnMesh( dataRepository::Group * const )
@@ -89,6 +98,26 @@ void LagrangianContactFlowSolver::implicitStepSetup( real64 const & time_n,
 {
   m_contactSolver->implicitStepSetup( time_n, dt, domain );
   m_flowSolver->implicitStepSetup( time_n, dt, domain );
+}
+
+void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
+                                               DofManager & dofManager,
+                                               CRSMatrix< real64, globalIndex > & localMatrix,
+                                               array1d< real64 > & localRhs,
+                                               array1d< real64 > & localSolution,
+                                               bool const setSparsity )
+{
+  if( m_precond )
+  {
+    m_precond->clear();
+  }
+
+  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+
+  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
+  {
+    createPreconditioner( domain );
+  }
 }
 
 void LagrangianContactFlowSolver::implicitStepComplete( real64 const & time_n,
@@ -228,7 +257,7 @@ real64 LagrangianContactFlowSolver::explicitStep( real64 const & GEOSX_UNUSED_PA
                                                   DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_MARK_FUNCTION;
-  GEOSX_ERROR( "explicitStep non available for LagrangianContactFlowSolver!" );
+  GEOSX_ERROR( "ExplicitStep non available for LagrangianContactFlowSolver!" );
   return dt;
 }
 
@@ -351,7 +380,6 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
           isNewtonConverged = true;
           break;
         }
-
 
         // if using adaptive Krylov tolerance scheme, update tolerance.
         LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
@@ -824,6 +852,89 @@ real64 LagrangianContactFlowSolver::calculateResidualNorm( DomainPartition const
   return globalResidualNorm[3];
 }
 
+void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & domain )
+{
+  if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
+  {
+    // TODO: move among inputs (xml)
+    string const leadingBlockApproximation = "blockJacobi";
+    //string const leadingBlockApproximation = "jacobi";
+
+    LinearSolverParameters mechParams = m_contactSolver->getSolidSolver()->getLinearSolverParameters();
+    // Because of boundary conditions
+    mechParams.isSymmetric = false;
+
+    std::vector< SchurComplementOption > schurOptions( 2 );
+    std::unique_ptr< BlockPreconditionerGeneral< LAInterface > > precond;
+    std::unique_ptr< PreconditionerBase< LAInterface > > tracPrecond;
+    std::unique_ptr< PreconditionerBase< LAInterface > > flowPrecond;
+
+    if( leadingBlockApproximation == "jacobi" )
+    {
+      schurOptions[0] = SchurComplementOption::Diagonal;
+
+      // Using LAI implementation of Jacobi preconditioner
+      LinearSolverParameters tracParams;
+      tracParams.preconditionerType = LinearSolverParameters::PreconditionerType::jacobi;
+      tracPrecond = LAInterface::createPreconditioner( tracParams );
+    }
+    else if( leadingBlockApproximation == "blockJacobi" )
+    {
+      schurOptions[0] = SchurComplementOption::UserDefined;
+
+      tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( mechParams.dofsPerNode );
+    }
+    else
+    {
+      GEOSX_ERROR( "LagrangianContactSolver::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+    }
+
+    // Flow + Jacobi: using LAI implementation of Jacobi preconditioner
+    schurOptions[1] = SchurComplementOption::Diagonal;
+
+    LinearSolverParameters flowParams;
+    flowParams.preconditionerType = LinearSolverParameters::PreconditionerType::jacobi;
+    flowPrecond = LAInterface::createPreconditioner( flowParams );
+
+    precond = std::make_unique< BlockPreconditionerGeneral< LAInterface > >( 3,
+                                                                             BlockShapeOption::LowerUpperTriangular,
+                                                                             schurOptions );
+
+    precond->setupBlock( 0,
+                         { { m_tractionKey, 0, 3 } },
+                         std::move( tracPrecond ) );
+
+    precond->setupBlock( 1,
+                         { { m_pressureKey, 0, 1 } },
+                         std::move( flowPrecond ) );
+
+    if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
+    {
+      if( m_contactSolver->getSolidSolver()->getRigidBodyModes().empty() )
+      {
+        MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+        LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+                                                   m_dofManager,
+                                                   { keys::TotalDisplacement },
+                                                   m_contactSolver->getSolidSolver()->getRigidBodyModes() );
+      }
+    }
+
+    // Preconditioner for the Schur complement: mechPrecond
+    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_contactSolver->getSolidSolver()->getRigidBodyModes() );
+    precond->setupBlock( 2,
+                         { { keys::TotalDisplacement, 0, 3 } },
+                         std::move( mechPrecond ) );
+
+    m_precond = std::move( precond );
+  }
+  else
+  {
+    //TODO: Revisit this part such that is coherent across physics solver
+    //m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+  }
+}
+
 void LagrangianContactFlowSolver::
   assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                               DofManager const & dofManager,
@@ -1094,7 +1205,7 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
   SurfaceElementRegion const * const fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator->getFractureRegionName() );
   FaceElementSubRegion const * const fractureSubRegion = fractureRegion->getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_pressureKey ), "The fracture subregion must contain pressure field." );
-  arrayView2d< localIndex const > const faceMap = fractureSubRegion->faceList().toViewConst();
+  arrayView2d< localIndex const > const faceMap = fractureSubRegion->faceList();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
   // Get the pressures
@@ -1444,5 +1555,6 @@ void LagrangianContactFlowSolver::setNextDt( real64 const & currentDt,
   nextDt = currentDt;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactFlowSolver, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactFlowSolver, string const &, Group * const )
+
 } /* namespace geosx */

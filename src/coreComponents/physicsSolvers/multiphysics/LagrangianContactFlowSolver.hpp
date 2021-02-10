@@ -42,10 +42,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName()
-  {
-    return "LagrangianContactWithFlow";
-  }
+  static string catalogName() { return "LagrangianContactWithFlow"; }
 
   virtual void
   initializePreSubGroups( Group * const rootGroup ) override;
@@ -56,6 +53,14 @@ public:
   virtual void
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
+
+  virtual void
+  setupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = true ) override;
 
   virtual void
   implicitStepSetup( real64 const & time_n,
@@ -199,6 +204,8 @@ private:
   real64 m_initialResidual[4] = {0.0, 0.0, 0.0, 0.0};
 
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
+
+  void createPreconditioner( DomainPartition const & domain );
 
 };
 
