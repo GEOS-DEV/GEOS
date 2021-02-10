@@ -138,8 +138,25 @@ public:
   virtual localIndex numFluidPhases() const override { return 1; }
 
   /**
+   * @brief Recompute the volumetric rate that are used in the well constraints
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion,
+                                           localIndex const targetIndex );
+
+  /**
+   * @brief Recompute the BHP pressure that is used in the well constraints
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  virtual void updateBHPForConstraint( WellElementSubRegion & subRegion,
+                                       localIndex const targetIndex );
+
+  /**
    * @brief Update fluid constitutive model state
    * @param dataGroup group that contains the fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   virtual void updateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
 
@@ -147,6 +164,7 @@ public:
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   virtual void updateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
@@ -207,6 +225,15 @@ public:
     // perforation rates
     static constexpr auto perforationRateString        = "perforationRate";
     static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
+
+    // control data
+    static constexpr auto currentBHPString = "currentBHP";
+    static constexpr auto dCurrentBHP_dPresString = "dCurrentBHP_dPres";
+
+    static constexpr auto currentVolRateString = "currentVolumetricRate";
+    static constexpr auto dCurrentVolRate_dPresString = "dCurrentVolumetricRate_dPres";
+    static constexpr auto dCurrentVolRate_dRateString = "dCurrentVolumetricRate_dRate";
+
   } viewKeysSinglePhaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -217,7 +244,6 @@ protected:
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups( Group * const rootGroup ) override;
-
 
 private:
 
@@ -238,6 +264,12 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void initializeWells( DomainPartition & domain ) override;
+
+  /**
+   * @brief Make sure that the well constraints are compatible
+   * @param meshLevel the mesh level object (to loop over wells)
+   */
+  void validateWellConstraints( MeshLevel const & meshLevel ) const;
 
 private:
 
