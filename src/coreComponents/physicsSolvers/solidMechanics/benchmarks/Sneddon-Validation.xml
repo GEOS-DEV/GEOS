@@ -186,13 +186,13 @@
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="displacementJump"
-      minSetSize="100"/>
+      minSetSize="120"/>
       
     <PackCollection
       name="cellCentersCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="elementCenter"
-      minSetSize="100"/>      
+      minSetSize="120"/>      
   </Tasks>
 
   <Outputs>
@@ -200,7 +200,7 @@
       name="vtkOutput"
       plotFileRoot="Sneddon"
       plotLevel="3"
-      writeBinaryData="0"/>
+      writeBinaryData="1"/>
       
     <TimeHistory
       name="timeHistoryOutput"

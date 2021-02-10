@@ -311,9 +311,6 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
           targetSetEmbSurf.insert( embSurfIndex );
         }
       } );
-
-      for( localIndex wi = 0; wi < setGroupCell->size(); wi++ )
-      {}
     }
   } );
 }
