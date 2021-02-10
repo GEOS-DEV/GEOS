@@ -24,7 +24,8 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-DruckerPragerExtended::DruckerPragerExtended( std::string const & name, Group * const parent ):
+DruckerPragerExtended::DruckerPragerExtended( string const & name, 
+                                              Group * const parent ):
   ElasticIsotropic( name, parent ),
   m_defaultInitialFrictionAngle(),
   m_defaultResidualFrictionAngle(),
@@ -169,6 +170,6 @@ void DruckerPragerExtended::saveConvergedState() const
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, string const &, Group * const )
 }
 } /* namespace geosx */

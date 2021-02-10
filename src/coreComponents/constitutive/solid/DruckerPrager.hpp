@@ -166,12 +166,12 @@ public:
 
   real64 hardening( localIndex const k,
                     localIndex const q,
-                    real64 const lambda ) const
+                    real64 const state ) const
   {
 
-    // The hardening function is: cohesion = m_cohesion[k][q] + plasticMultiplier * hardeningRate
+    // The hardening function is: cohesion = m_cohesion[k][q] + state * hardeningRate
 
-    return m_cohesion[k][q] + lambda * m_hardening[k];
+    return m_cohesion[k][q] + state * m_hardening[k];
   }
 
   real64 getHardeningParameter( localIndex const k,
@@ -260,7 +260,6 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
 
   // check yield function F <= 0, using old hardening variable state
-
   
   hardeningParam = getHardeningParameter( k, q );
 
@@ -305,9 +304,9 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
     // Hardening parameter and its derivative to the plastic multiplier
      
-    hardeningParam = hardening( k, q, solution[2] );
-
     stateVariable = state( k, q, solution[0], solution[1], solution[2] );
+
+    hardeningParam = hardening( k, q, stateVariable );
 
     dHardeningParam_dLambda = hardeningDerivatives( k, q, stateVariable, solution[2] );
 

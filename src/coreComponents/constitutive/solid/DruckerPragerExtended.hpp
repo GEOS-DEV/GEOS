@@ -102,11 +102,67 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
+  real64 yield( localIndex const k,
+                localIndex const GEOSX_UNUSED_PARAM( q ),
+                real64 const invP,
+                real64 const invQ,
+                real64 const friction ) const
+  {
+    return  invQ + friction * ( invP - m_pressureIntercept[k] );
+  }
+
+  real64 hardening( localIndex const k,
+                    localIndex const GEOSX_UNUSED_PARAM( q ),
+                    real64 const state ) const
+  {
+    if( state<1e-9 )
+    {
+      return m_initialFriction[k];
+    }
+    else
+    {
+      return m_initialFriction[k] + ( m_residualFriction[k] - m_initialFriction[k] ) * state / ( m_hardening[k] + state );
+    }
+  }
+
+  real64 hardeningDerivatives( localIndex const k,
+                               localIndex const GEOSX_UNUSED_PARAM( q ),
+                               real64 const state ) const
+  {
+    if( state<1e-9 )
+    {
+      return 0.0;
+    }
+    else
+    {
+      return ( m_residualFriction[k] - m_initialFriction[k] ) * m_hardening[k] / ( m_hardening[k] + state ) / ( m_hardening[k] + state );
+    }
+  }
+
+  real64 state( localIndex const k,
+                localIndex const q,
+                real64 const GEOSX_UNUSED_PARAM( invP ),
+                real64 const GEOSX_UNUSED_PARAM( invQ ),
+                real64 const plasticMultiplier ) const
+  {
+
+    // For extended DP model: state += plasticMultiplier
+
+    return m_newState[k][q] + plasticMultiplier;
+  }
+
+  real64 getStateVariable( localIndex const k,
+                           localIndex const q ) const
+  {
+    return m_newState[k][q];
+  }
+
 private:
-  /// A reference to the ArrayView holding the initial friction angle for each element.
+
+  /// A reference to the ArrayView holding the initial friction coefficient for each element.
   arrayView1d< real64 const > const m_initialFriction;
 
-  /// A reference to the ArrayView holding the residual friction angle for each element.
+  /// A reference to the ArrayView holding the residual friction coefficient for each element.
   arrayView1d< real64 const > const m_residualFriction;
 
   /// A reference to the ArrayView holding the dilation ratio for each element.
@@ -133,7 +189,7 @@ private:
                         real64 & y,
                         real64 & dy_dx ) const
   {
-    if( x<0 )
+    if( x<1e-9 )
     {
       y = y1;
       dy_dx = 0;
@@ -143,7 +199,7 @@ private:
       y = y1 + (y2-y1)*x/(m+x);
       dy_dx = (y2-y1)*m/((m+x)*(m+x));
     }
-  };
+  }
 
 };
 
@@ -171,20 +227,17 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
                                      trialQ,
                                      deviator );
 
+  // Plastic functions and their derivatives
+
+  real64 hardeningParam, stateVariable, dHardeningParam_dLambda;
+
   // check yield function F <= 0, using old state
 
-  real64 friction, dfriction_dstate;
+  stateVariable = getStateVariable( k, q );
 
-  hyperbolicModel( m_initialFriction[k],
-                   m_residualFriction[k],
-                   m_hardening[k],
-                   m_oldState[k][q],
-                   friction,
-                   dfriction_dstate );
+  hardeningParam = hardening( k, q, stateVariable );
 
-  real64 yield = trialQ + friction * (trialP - m_pressureIntercept[k]);
-
-  if( yield < 1e-9 ) // elasticity
+  if( yield( k, q, trialP, trialQ, hardeningParam ) < 1e-9 ) // elasticity
   {
     return;
   }
@@ -206,7 +259,16 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
   for( localIndex iter=0; iter<20; ++iter )
   {
     m_newState[k][q] = m_oldState[k][q] + solution[2];
+ 
+    // Hardening parameter and its derivative to the plastic multiplier
+     
+    stateVariable = state( k, q, solution[0], solution[1], solution[2] );
+   
+    hardeningParam = hardening( k, q, stateVariable );
 
+    dHardeningParam_dLambda = hardeningDerivatives( k, q, stateVariable );
+
+ real64 friction, dfriction_dstate;
     hyperbolicModel( m_initialFriction[k],
                      m_residualFriction[k],
                      m_hardening[k],
@@ -221,7 +283,7 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
 
     residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * m_dilationRatio[k] * friction;
     residual[1] = solution[1] - trialQ + solution[2] * 3 * m_shearModulus[k];
-    residual[2] = solution[1] + friction * (solution[0] - m_pressureIntercept[k]);
+    residual[2] = solution[1] + hardeningParam * (solution[0] - m_pressureIntercept[k]);
 
     // check for convergence
 
@@ -240,7 +302,7 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
     // solve Newton system
 
     jacobian[0][0] = 1;
-    jacobian[0][2] = m_bulkModulus[k] * m_dilationRatio[k] * friction + solution[2] * m_bulkModulus[k] * m_dilationRatio[k] * dfriction_dstate;
+    jacobian[0][2] = m_bulkModulus[k] * m_dilationRatio[k] * friction + solution[2] * m_bulkModulus[k] * m_dilationRatio[k] * dHardeningParam_dLambda;
     jacobian[1][1] = 1;
     jacobian[1][2] = 3 * m_shearModulus[k];
     jacobian[2][0] = friction;
