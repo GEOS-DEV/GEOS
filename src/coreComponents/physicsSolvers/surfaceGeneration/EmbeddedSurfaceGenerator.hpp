@@ -115,6 +115,12 @@ private:
 
   void addToFractureStencil( DomainPartition & domain );
 
+  void setGlobalIndixes( ElementRegionManager & elemManager,
+                         EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
+
+  void addEmbeddedElementsToSets( ElementRegionManager const & elemManager,
+                                  EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
+
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */

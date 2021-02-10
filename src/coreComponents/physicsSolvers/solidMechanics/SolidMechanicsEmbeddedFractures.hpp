@@ -134,11 +134,7 @@ public:
 
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
-  string & getContactRelationName() { return m_contactRelationName; };
-
   string const & getContactRelationName() const { return m_contactRelationName; };
-
-  string & getFractureRegionName() { return m_fractureRegionName; };
 
   string const & getFractureRegionName() const { return m_fractureRegionName; };
 

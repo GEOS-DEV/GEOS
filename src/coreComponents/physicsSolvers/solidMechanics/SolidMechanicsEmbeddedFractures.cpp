@@ -414,10 +414,6 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
       stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( numDispDof );
       stackArray1d< globalIndex, 3 > dofColIndicesJump( 3 );
 
-      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-
-      std::cout << "rank: " << rank << " - jumpDofNumber " << jumpDofNumber[k] << std::endl;
-
       for( localIndex idof = 0; idof < 3; ++idof )
       {
         eqnRowIndicesJump[idof] = jumpDofNumber[k] + idof - rankOffset;

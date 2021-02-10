@@ -125,8 +125,6 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
    * - Volume:
    */
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-
   bool addEmbeddedElem = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   arrayView2d< localIndex const > const edgeToNodes = edgeManager.nodeList();
