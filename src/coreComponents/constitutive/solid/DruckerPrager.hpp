@@ -189,12 +189,26 @@ public:
 
   real64 hardeningDerivatives( localIndex const k,
                                localIndex const GEOSX_UNUSED_PARAM( q ),
-                               real64 const GEOSX_UNUSED_PARAM( lambda ) ) const
+                               real64 const GEOSX_UNUSED_PARAM( state ),
+                               real64 const GEOSX_UNUSED_PARAM( plasticMultiplier ) ) const
   {
 
-    // The hardening function is: cohesion = m_cohesion[k][q] + plasticMultiplier * hardeningRate
+    // The hardening function is: cohesion = m_cohesion[k][q] + state * hardeningRate
+    // For DP model: state = plasticMultiplier
 
     return m_hardening[k]; 
+  }
+
+  real64 state( localIndex const GEOSX_UNUSED_PARAM( k ),
+                localIndex const GEOSX_UNUSED_PARAM( q ),
+                real64 const GEOSX_UNUSED_PARAM( invP ),
+                real64 const GEOSX_UNUSED_PARAM( invQ ),
+                real64 const plasticMultiplier ) const
+  {
+
+    // For DP model: state = plasticMultiplier
+
+    return plasticMultiplier; 
   }
 
 private:
@@ -242,15 +256,15 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   // Plastic functions and their derivatives
 
-  real64 dF[3], dG[8], H, dH;
+  real64 dF[3], dG[8], hardeningParam, stateVariable, dHardeningParam_dLambda;
 
 
   // check yield function F <= 0, using old hardening variable state
 
   
-  H = getHardeningParameter( k, q );
+  hardeningParam = getHardeningParameter( k, q );
 
-  if( yield( k, q, trialP, trialQ, H ) < 1e-9 ) // elasticity
+  if( yield( k, q, trialP, trialQ, hardeningParam ) < 1e-9 ) // elasticity
   {
     ElasticIsotropicUpdates::getElasticStiffness( k, stiffness ); // Only needed for the elastic branch
     return;
@@ -278,21 +292,24 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   {
     
     // Derivatives of the yield function
-    // dF_dP = dF[0], dF_dQ = dF[1], dF_dHardeningParameter = dF[2]
+    // dF_dP = dF[0], dF_dQ = dF[1], dF_dHardeningParam = dF[2]
 
     yieldDerivatives( k, q, solution[0], solution[1], dF );
 
     // Derivatives of the plastic potential function
     // dG_dP = dG[0], dG_dQ = dG[1]
-    // dG_dP_dP = dG[2], dG_dP_dQ = dG[3], dG_dP_dHardeningParameter = dG[4] 
-    // dG_dQ_dP = dG[5], dG_dQ_dQ = dG[6], dG_dQ_dHardeningParameter = dG[7]
+    // dG_dP_dP = dG[2], dG_dP_dQ = dG[3], dG_dP_dHardeningParam = dG[4] 
+    // dG_dQ_dP = dG[5], dG_dQ_dQ = dG[6], dG_dQ_dHardeningParam = dG[7]
 
     potentialDerivatives( k, q, solution[0], solution[1], dG );
 
     // Hardening parameter and its derivative to the plastic multiplier
      
-    H = hardening( k, q, solution[2] );
-    dH = hardeningDerivatives( k, q, solution[2] );
+    hardeningParam = hardening( k, q, solution[2] );
+
+    stateVariable = state( k, q, solution[0], solution[1], solution[2] );
+
+    dHardeningParam_dLambda = hardeningDerivatives( k, q, stateVariable, solution[2] );
 
     // assemble residual system
     // resid1 = P - trialP + dlambda*bulkMod*dG/dP = 0
@@ -301,7 +318,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
     residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * dG[0];
     residual[1] = solution[1] - trialQ + solution[2] * 3.0 * m_shearModulus[k] * dG[1];
-    residual[2] = yield( k, q, solution[0], solution[1], H );
+    residual[2] = yield( k, q, solution[0], solution[1], hardeningParam );
 
     // check for convergence
 
@@ -321,13 +338,13 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
     jacobian[0][0] = 1.0 + solution[2] * m_bulkModulus[k] * dG[2];
     jacobian[0][1] = solution[2] * m_bulkModulus[k] * dG[3];
-    jacobian[0][2] = m_bulkModulus[k] *dG[0] + solution[2] * m_bulkModulus[k] * dG[4] * dH;
+    jacobian[0][2] = m_bulkModulus[k] *dG[0] + solution[2] * m_bulkModulus[k] * dG[4] * dHardeningParam_dLambda;
     jacobian[1][0] = solution[2] * 3.0 * m_shearModulus[k] * dG[5];
     jacobian[1][1] = 1.0 + solution[2] * 3.0 * m_shearModulus[k] * dG[6];
-    jacobian[1][2] = 3.0 * m_shearModulus[k] * dG[1] + solution[2] * 3.0 * m_shearModulus[k] * dG[7] * dH;
+    jacobian[1][2] = 3.0 * m_shearModulus[k] * dG[1] + solution[2] * 3.0 * m_shearModulus[k] * dG[7] * dHardeningParam_dLambda;
     jacobian[2][0] = dF[0];
     jacobian[2][1] = dF[1];
-    jacobian[2][2] = dF[2] * dH;
+    jacobian[2][2] = dF[2] * dHardeningParam_dLambda;
 
     LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
@@ -380,7 +397,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   // save and return
 
-  saveHardeningParameter( k, q, H );
+  saveHardeningParameter( k, q, hardeningParam );
   saveStress( k, q, stress );
   return;
 }

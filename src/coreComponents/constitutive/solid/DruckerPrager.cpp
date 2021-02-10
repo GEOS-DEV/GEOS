@@ -24,7 +24,8 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
+DruckerPrager::DruckerPrager( string const & name, 
+                              Group * const parent ):
   ElasticIsotropic( name, parent ),
   m_defaultFrictionAngle(),
   m_defaultDilationAngle(),
@@ -73,7 +74,7 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::cohesionString, &m_cohesion )->
     setApplyDefaultValue( -1 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 )->
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "Current cohesion" );
 }
 
@@ -87,7 +88,6 @@ void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const pare
 
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
-
 
 void DruckerPrager::postProcessInput()
 {
@@ -121,7 +121,7 @@ void DruckerPrager::postProcessInput()
     setApplyDefaultValue( m_defaultHardening );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, string const &, Group * const )
 }
 } /* namespace geosx */
 
