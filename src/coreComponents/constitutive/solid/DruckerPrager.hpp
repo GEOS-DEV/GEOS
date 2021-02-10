@@ -16,8 +16,8 @@
  *  @file DruckerPrager.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
+#ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -46,8 +46,7 @@ public:
    * @param[in] friction The ArrayView holding the friction data for each element.
    * @param[in] dilation The ArrayView holding the dilation data for each element.
    * @param[in] hardening The ArrayView holding the hardening data for each element.
-   * @param[in] newCohesion The ArrayView holding the new cohesion data for each element.
-   * @param[in] oldCohesion The ArrayView holding the old cohesion data for each element.
+   * @param[in] cohesion The ArrayView holding the cohesion data for each element.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
@@ -56,18 +55,19 @@ public:
   DruckerPragerUpdates( arrayView1d< real64 const > const & friction,
                         arrayView1d< real64 const > const & dilation,
                         arrayView1d< real64 const > const & hardening,
-                        arrayView2d< real64 > const & newCohesion,
-                        arrayView2d< real64 > const & oldCohesion,
+                        arrayView2d< real64 > const & cohesion,
                         arrayView1d< real64 const > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                        arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
+                        arrayView3d< real64, solid::STRESS_USD > const & oldStress ):// TODO tmp stress[6] can be considered 
+                                                                                     // in the Elasto-Plastic Newton loops
+                                                                                     // to avoid holding both new and old stress 
+                                                                                     // on the system
     ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress ),
     m_friction( friction ),
     m_dilation( dilation ),
     m_hardening( hardening ),
-    m_newCohesion( newCohesion ),
-    m_oldCohesion( oldCohesion )
+    m_cohesion( cohesion )
   {}
 
   /// Default copy constructor
@@ -86,7 +86,7 @@ public:
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; 
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
@@ -111,7 +111,7 @@ public:
                 real64 const invQ,
                 real64 const cohesion ) const
   {
-    return invQ + m_friction[k] * invP - cohesion;
+    return  invQ + m_friction[k] * invP - cohesion;
   }
 
   void yieldDerivatives( localIndex const k,
@@ -132,7 +132,7 @@ public:
     dF[2] = dF_dCohesion;
   }
 
-  void potentialDetivatives( localIndex const k,
+  void potentialDerivatives( localIndex const k,
                              localIndex const GEOSX_UNUSED_PARAM( q ),
                              real64 const GEOSX_UNUSED_PARAM( invP ),
                              real64 const GEOSX_UNUSED_PARAM( invQ ),
@@ -164,6 +164,39 @@ public:
     dG[7] = dG_dQ_dH;
   }
 
+  real64 hardening( localIndex const k,
+                    localIndex const q,
+                    real64 const lambda ) const
+  {
+
+    // The hardening function is: cohesion = m_cohesion[k][q] + plasticMultiplier * hardeningRate
+
+    return m_cohesion[k][q] + lambda * m_hardening[k];
+  }
+
+  real64 getHardeningParameter( localIndex const k,
+                                localIndex const q ) const
+  {
+    return m_cohesion[k][q];
+  }
+
+  void saveHardeningParameter( localIndex const k,
+                               localIndex const q,
+                               real64 const H ) const
+  {
+    m_cohesion[k][q] = H;
+  }
+
+  real64 hardeningDerivatives( localIndex const k,
+                               localIndex const GEOSX_UNUSED_PARAM( q ),
+                               real64 const GEOSX_UNUSED_PARAM( lambda ) ) const
+  {
+
+    // The hardening function is: cohesion = m_cohesion[k][q] + plasticMultiplier * hardeningRate
+
+    return m_hardening[k]; 
+  }
+
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
   arrayView1d< real64 const > const m_friction;
@@ -174,12 +207,8 @@ private:
   /// A reference to the ArrayView holding the hardening rate for each element.
   arrayView1d< real64 const > const m_hardening;
 
-  /// A reference to the ArrayView holding the new cohesion for each integration point
-  arrayView2d< real64 > const m_newCohesion;
-
-  /// A reference to the ArrayView holding the old cohesion for each integration point
-  arrayView2d< real64 > const m_oldCohesion;
-
+  /// A reference to the ArrayView holding the cohesion for each integration point
+  arrayView2d< real64 > const m_cohesion;
 };
 
 
@@ -193,7 +222,12 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 {
   // elastic predictor (assume strainIncrement is all elastic)
 
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  // ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness ); // Computing stiffness here is redundant 
+                                                                                          // in the case of plasticity
+                                                                                          // we should compute only the stress here
+                                                                                          // the elastic stiffness update should be moved
+                                                                                          // to the elastic branch
+  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
 
   // decompose into mean (P) and von mises (Q) stress invariants
 
@@ -206,12 +240,19 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                      trialQ,
                                      deviator );
 
+  // Plastic functions and their derivatives
+
+  real64 dF[3], dG[8], H, dH;
+
+
   // check yield function F <= 0, using old hardening variable state
 
-  //real64 yield = trialQ + m_friction[k] * trialP - m_oldCohesion[k][q];
+  
+  H = getHardeningParameter( k, q );
 
-  if( yield( k, q, trialP, trialQ, m_oldCohesion[k][q] ) < 1e-9 ) // elasticity
+  if( yield( k, q, trialP, trialQ, H ) < 1e-9 ) // elasticity
   {
+    ElasticIsotropicUpdates::getElasticStiffness( k, stiffness ); // Only needed for the elastic branch
     return;
   }
 
@@ -235,25 +276,23 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-    // apply a linear cohesion decay model,
-    // then check for complete cohesion loss
+    
+    // Derivatives of the yield function
+    // dF_dP = dF[0], dF_dQ = dF[1], dF_dHardeningParameter = dF[2]
 
-    m_newCohesion[k][q] = m_oldCohesion[k][q] + solution[2] * m_hardening[k];
-    real64 dH_dLambda = m_hardening[k]; // H is the hardening parameter
+    yieldDerivatives( k, q, solution[0], solution[1], dF );
 
-    if( m_newCohesion[k][q] < 0 )
-    {
-      m_newCohesion[k][q] = 0;
-      dH_dLambda = 0;
-    }
-
-    // plastic potential derivatives
+    // Derivatives of the plastic potential function
     // dG_dP = dG[0], dG_dQ = dG[1]
-    // dG_dP_dP = dG[2], dG_dP_dQ = dG[3], dG_dP_dCohesion = dG[4] 
-    // dG_dQ_dP = dG[5], dG_dQ_dQ = dG[6], dG_dQ_dCohesion = dG[7]
+    // dG_dP_dP = dG[2], dG_dP_dQ = dG[3], dG_dP_dHardeningParameter = dG[4] 
+    // dG_dQ_dP = dG[5], dG_dQ_dQ = dG[6], dG_dQ_dHardeningParameter = dG[7]
 
-    real64 dG[8];
-    potentialDetivatives( k, q, solution[0], solution[1], dG );
+    potentialDerivatives( k, q, solution[0], solution[1], dG );
+
+    // Hardening parameter and its derivative to the plastic multiplier
+     
+    H = hardening( k, q, solution[2] );
+    dH = hardeningDerivatives( k, q, solution[2] );
 
     // assemble residual system
     // resid1 = P - trialP + dlambda*bulkMod*dG/dP = 0
@@ -262,7 +301,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
     residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * dG[0];
     residual[1] = solution[1] - trialQ + solution[2] * 3.0 * m_shearModulus[k] * dG[1];
-    residual[2] = yield( k, q, solution[0], solution[1],  m_newCohesion[k][q] );
+    residual[2] = yield( k, q, solution[0], solution[1], H );
 
     // check for convergence
 
@@ -278,23 +317,17 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
       break;
     }
 
-    // yield derivatives
-    // dF_dP = dF[0], dF_dQ = dF[1], dF_dCohesion = dF[2]
-
-    real64 dF[3];
-    yieldDerivatives( k, q, solution[0], solution[1], dF );
-
     // solve Newton system
 
     jacobian[0][0] = 1.0 + solution[2] * m_bulkModulus[k] * dG[2];
     jacobian[0][1] = solution[2] * m_bulkModulus[k] * dG[3];
-    jacobian[0][2] = m_bulkModulus[k] * dG[0] + solution[2] * m_bulkModulus[k] * dG[4] * dH_dLambda;
+    jacobian[0][2] = m_bulkModulus[k] *dG[0] + solution[2] * m_bulkModulus[k] * dG[4] * dH;
     jacobian[1][0] = solution[2] * 3.0 * m_shearModulus[k] * dG[5];
     jacobian[1][1] = 1.0 + solution[2] * 3.0 * m_shearModulus[k] * dG[6];
-    jacobian[1][2] = 3.0 * m_shearModulus[k] * dG[1] + solution[2] * 3.0 * m_shearModulus[k] * dG[7] * dH_dLambda;
+    jacobian[1][2] = 3.0 * m_shearModulus[k] * dG[1] + solution[2] * 3.0 * m_shearModulus[k] * dG[7] * dH;
     jacobian[2][0] = dF[0];
     jacobian[2][1] = dF[1];
-    jacobian[2][2] = dF[2] * dH_dLambda;
+    jacobian[2][2] = dF[2] * dH;
 
     LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
@@ -345,7 +378,9 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     }
   }
 
-  // save new stress and return
+  // save and return
+
+  saveHardeningParameter( k, q, H );
   saveStress( k, q, stress );
   return;
 }
@@ -392,8 +427,6 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void saveConvergedState() const override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -438,10 +471,7 @@ public:
     static constexpr auto hardeningString  = "hardening";
 
     /// string/key for cohesion
-    static constexpr auto newCohesionString  = "cohesion";
-
-    /// string/key for cohesion
-    static constexpr auto oldCohesionString  = "oldCohesion";
+    static constexpr auto cohesionString  = "cohesion";
   };
 
   /**
@@ -453,8 +483,7 @@ public:
     return DruckerPragerUpdates( m_friction,
                                  m_dilation,
                                  m_hardening,
-                                 m_newCohesion,
-                                 m_oldCohesion,
+                                 m_cohesion,
                                  m_bulkModulus,
                                  m_shearModulus,
                                  m_newStress,
@@ -486,10 +515,7 @@ protected:
   array1d< real64 > m_hardening;
 
   /// State variable: The current cohesion parameter for each quadrature point
-  array2d< real64 > m_newCohesion;
-
-  /// State variable: The previous cohesion parameter for each quadrature point
-  array2d< real64 > m_oldCohesion;
+  array2d< real64 > m_cohesion;
 };
 
 } /* namespace constitutive */

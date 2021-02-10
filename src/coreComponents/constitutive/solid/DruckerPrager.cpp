@@ -33,8 +33,7 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   m_friction(),
   m_dilation(),
   m_hardening(),
-  m_newCohesion(),
-  m_oldCohesion()
+  m_cohesion()
 {
   // register default values
 
@@ -72,26 +71,19 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
     setApplyDefaultValue( -1 )->
     setDescription( "Hardening rate" );
 
-  registerWrapper( viewKeyStruct::newCohesionString, &m_newCohesion )->
+  registerWrapper( viewKeyStruct::cohesionString, &m_cohesion )->
     setApplyDefaultValue( -1 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_3 )->
-    setDescription( "New cohesion state" );
-
-  registerWrapper( viewKeyStruct::oldCohesionString, &m_oldCohesion )->
-    setApplyDefaultValue( -1 )->
-    setDescription( "Old cohesion state" );
+    setDescription( "Current cohesion" );
 }
-
 
 DruckerPrager::~DruckerPrager()
 {}
 
-
 void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const parent,
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_newCohesion.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldCohesion.resize( 0, numConstitutivePointsPerParentIndex );
+  m_cohesion.resize( 0, numConstitutivePointsPerParentIndex );
 
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
@@ -119,9 +111,7 @@ void DruckerPrager::postProcessInput()
 
   // set results as array default values
 
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString )->
-    setApplyDefaultValue( C );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString )->
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::cohesionString )->
     setApplyDefaultValue( C );
   this->getWrapper< array1d< real64 > >( viewKeyStruct::dilationString )->
     setApplyDefaultValue( D );
@@ -131,26 +121,7 @@ void DruckerPrager::postProcessInput()
     setApplyDefaultValue( m_defaultHardening );
 }
 
-
-void DruckerPrager::saveConvergedState() const
-{
-  SolidBase::saveConvergedState(); // TODO: not ideal, as we have separate loops for base and derived data
-
-  localIndex const numE = numElem();
-  localIndex const numQ = numQuad();
-
-  arrayView2d< real64 const > newCohesion = m_newCohesion;
-  arrayView2d< real64 > oldCohesion = m_oldCohesion;
-
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      oldCohesion( k, q ) = newCohesion( k, q );
-    }
-  } );
-}
-
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )
 }
 } /* namespace geosx */
+
