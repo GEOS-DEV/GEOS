@@ -242,13 +242,19 @@ public:
     stress[1] -= pressure;
     stress[2] -= pressure;
 
-    // Compute mixture density (using reference porosity)
-    real64 mixtureDensity = (1.0 - m_poroRef( k ) ) * m_solidDensity( k, q )
-                            + m_poroRef( k ) * m_fluidDensity( k, 0 ); //TODO check gauss point
+    // Compute porosity assuming a linear model
+    //
+    // phi_n = phi_0 + biot * div (u_n,k - u_0)) + 1/N (p_n,k - p_0)
+    //
+    // for the moment assume incompressible grains => b = 1.0, 1/N = 0
+    //
 
-//    real64 const gravityForce[3] = { m_gravityVector[0] * m_solidDensity( k, q )* detJ,
-//                                     m_gravityVector[1] * m_solidDensity( k, q )* detJ,
-//                                     m_gravityVector[2] * m_solidDensity( k, q )* detJ };
+    real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
+
+    real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
+
+    real64 mixtureDensity = (1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidDensity( k, q );
+
     real64 const gravityForce[3] = { m_gravityVector[0] * mixtureDensity * detJ,
                                      m_gravityVector[1] * mixtureDensity * detJ,
                                      m_gravityVector[2] * mixtureDensity * detJ };
@@ -272,18 +278,15 @@ public:
       stack.localDispFlowJacobian[ a * 3 + 0][0] += biotCoefficient * dNdX[a][0] * detJ;
       stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJ;
       stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJ;
-      // TODO check if fluid density is evaluated at the Gauss points
-      //
-//      GEOSX_LOG_RANK_VAR( m_fluidDensity );
-      //
-      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, 0 ) * biotCoefficient * dNdX[a][0] * detJ;
-      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, 0 ) * biotCoefficient * dNdX[a][1] * detJ;
-      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, 0 ) * biotCoefficient * dNdX[a][2] * detJ;
+
+      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][0] * detJ;
+      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][1] * detJ;
+      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][2] * detJ;
 
       real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
                       + dNdX[a][1] * stack.uhat_local[a][1]
                       + dNdX[a][2] * stack.uhat_local[a][2];
-      Rf_tmp *= m_fluidDensity( k, 0 ) * biotCoefficient * detJ; //TODO same as above
+      Rf_tmp *= m_fluidDensity( k, q ) * biotCoefficient * detJ;
       stack.localFlowResidual[0] += Rf_tmp;
     }
 

@@ -109,9 +109,7 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition() ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName ))
-  {
-    GEOSX_UNUSED_VAR( targetRegionIndex );
-  }
+  {}
 
   //***************************************************************************
   /**
