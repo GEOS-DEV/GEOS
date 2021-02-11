@@ -9,14 +9,7 @@
       name="acousticSolver"
       cflFactor="0.25"
       discretization="FE1"
-      targetRegions="{ Region }"
-      sourceCoordinates="{ { 505, 505, 505 },
-			   { 400, 300, 100 },
-			   { 100, 100, 104 } }"
-      timeSourceFrequency="5.0"
-      receiverCoordinates="{ { 505, 505, 505 },
-			     { 400, 300, 100 },
-			     { 100, 100, 104 } }"/>
+      targetRegions="{ Region }"/>
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
@@ -25,9 +18,9 @@
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1001 }"
-      yCoords="{ 0, 1001 }"
-      zCoords="{ 0, 1001 }"
+      xCoords="{ 0, 3001 }"
+      yCoords="{ 0, 3001 }"
+      zCoords="{ 0, 3001 }"
       nx="{ 100 }"
       ny="{ 100 }"
       nz="{ 100 }"
@@ -40,8 +33,8 @@
   <Geometry>
     <Box
       name="source"
-      xMin="500.4, 500.4, 500.4"
-      xMax="510.6, 510.6, 510.6"/>
+      xMin="-0.1, -0.1, -0.1"
+      xMax="1.1, 1.1, 1.1"/>
   </Geometry>
   
   <Events
@@ -51,12 +44,12 @@
     <!-- (there are other ways to control the time step size) -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.005"
+      forceDt="0.002"
       target="/Solvers/acousticSolver"/>
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.05"
+      timeFrequency="0.02"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
     
@@ -64,12 +57,12 @@
 
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="0.005"
+      timeFrequency="0.002"
       targetExactTimestep="1"
       target="/Tasks/pressureCollection"/>
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="0.05"
+      timeFrequency="0.02"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>    
 
@@ -102,14 +95,7 @@
     <!-- here use FieldSpecification to define: -->
 
     <!-- 1) The source term -->
-    <FieldSpecification
-      name="source"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
-      fieldName="Ricker"
-      scale="1.0"
-      setNames="{ source }"/>
 
-    
     <!-- 2) The initial pressure field -->
     <FieldSpecification
       name="initialPressure"
@@ -135,7 +121,9 @@
       objectPath="ElementRegions/Region/elementSubRegions/cb"
       fieldName="mediumVelocity"
       scale="1500"
-      setNames="{ all }"/>    
+      setNames="{ all }"/>
+
+    
 
   </FieldSpecifications>
 
@@ -155,7 +143,7 @@
 
     <VTK
       name="vtkOutput"
-      plotLevel="3"/>
+      plotLevel="0"/>
 
     <!-- output the pressure values to a file named pressure_history.hdf5  -->
 

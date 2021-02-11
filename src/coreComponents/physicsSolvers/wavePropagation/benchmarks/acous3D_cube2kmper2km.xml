@@ -4,14 +4,19 @@
   <Solvers>
     <!-- define the solver -->
     <!-- we'll have to discuss the cflFactor with Randy -->
-    
+    <!-- define the source coordinates -->
+    <!-- define the time source frequency -->
+    <!-- define the receiver coordinates -->
     <AcousticSEM
       name="acousticSolver"
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
       sourceCoordinates="{ { 1010.0, 1010.0, 1010.0 } }"
-      timeSourceFrequency="5.0"/>
+      timeSourceFrequency="5.0"
+      receiverCoordinates="{ { 100, 100, 150 },
+			     { 100, 950, 150 },
+			     { 100, 1850, 150 } }"/>
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
@@ -29,16 +34,7 @@
       cellBlockNames="{ cb }"/>
   </Mesh>
 
-  <!-- define the location of the source -->
-  <!-- the actual value at the source is defined in FieldSpecification -->
-
-  <Geometry>
-    <Box
-      name="source"
-      xMin="980, 980, 980.0"
-      xMax="1020, 1020, 1020"/>
-  </Geometry>
-  
+   
   <Events
     maxTime="3">
     <!-- trigger the application of the solver -->
@@ -96,14 +92,7 @@
     
     <!-- here use FieldSpecification to define: -->
 
-    <!-- 1) The source term -->
-    <FieldSpecification
-      name="source"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
-      fieldName="Ricker"
-      scale="1.0"
-      setNames="{ source }"/>
-
+   
     <!-- 2) The initial pressure field -->
     <FieldSpecification
       name="initialPressure"

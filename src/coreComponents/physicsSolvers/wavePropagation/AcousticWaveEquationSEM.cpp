@@ -47,7 +47,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Central frequency for the time source" );
 
-  
+
   registerWrapper( viewKeyStruct::receiverCoordinatesString, &m_receiverCoordinates )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
@@ -62,7 +62,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setInputFlag( InputFlags::FALSE )->
     setSizedFromParent( 0 )->
     setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
-  
+
   registerWrapper( viewKeyStruct::receiverIsLocalString, &m_receiverIsLocal )->
     setInputFlag( InputFlags::FALSE )->
     setSizedFromParent( 0 )->
@@ -73,7 +73,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 )->
     setDescription( "Pressure value at each receiver for each timestep" );
 
-  
+
 }
 
 AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
@@ -92,9 +92,9 @@ void AcousticWaveEquationSEM::postProcessInput()
                   "Invalid number of physical coordinates for the sources" );
 
   localIndex const numNodesPerElem = 8;
-  
+
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  
+
   m_sourceNodeIds.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
   m_sourceConstants.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
   m_sourceIsLocal.resizeDimension< 0 >( numSourcesGlobal );
@@ -105,7 +105,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   m_receiverIsLocal.resizeDimension< 0 >( numReceiversGlobal );
 
   localIndex n_timestep = 600;
-  m_pressureNp1AtReceivers.resizeDimension< 0, 1 >( numReceiversGlobal, n_timestep);
+  m_pressureNp1AtReceivers.resizeDimension< 0, 1 >( numReceiversGlobal, n_timestep );
 
 }
 
@@ -405,7 +405,7 @@ void AcousticWaveEquationSEM::precomputeBasisFunctionForEachReceiver( MeshLevel 
                   }
                   std::cout << " " << std::endl;
                 }
-                                
+
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
                 real64 coordsOnRefElem[3]; // 3D coord of the source in Ref element
                 localIndex q=0; // index of node 0 in the element
@@ -487,7 +487,7 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
   arrayView2d< real64 > const pressureNp1AtReceivers   = m_pressureNp1AtReceivers.toView();
-   
+
   // loop over all the sources
   for( localIndex ircv = 0; ircv < receiverConstants.size( 0 ); ++ircv )
   {
@@ -560,7 +560,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
 
       arrayView1d< real64 > const c = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
-      
+
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::dispatch3D( fe,
@@ -835,7 +835,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   /// Compute the sismo trace for all receivers
   computeSismoTrace( cycleNumber, p_np1 );
 
-  
+
   return dt;
 }
 

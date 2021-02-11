@@ -103,7 +103,7 @@ private:
   /// Locate receivers and pre_evaluate the basis functions at each receiver coordinate
   void precomputeBasisFunctionForEachReceiver( MeshLevel & mesh );
 
-  /// Compute the pressure at each receiver coordinate in one time step 
+  /// Compute the pressure at each receiver coordinate in one time step
   void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const pressure_np1 );
 
   /// Coordinates of the sources in the mesh
@@ -132,12 +132,12 @@ private:
 
   /// Flag that indicates whether the receiver is local or not to the MPI rank
   array1d< localIndex > m_receiverIsLocal;
-  
+
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_pressureNp1AtReceivers;
-  
 
-  
+
+
 };
 
 namespace extrinsicMeshData
