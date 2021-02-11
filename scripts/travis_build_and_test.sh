@@ -23,15 +23,11 @@ or_die cd $(dirname $0)/..
 # to run the unit tests.
 GEOSX_BUILD_DIR=/tmp/build
 or_die python scripts/config-build.py \
-              -hc host-configs/environment.cmake \
+              -hc host-configs/TOTAL/pecan.cmake \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
-              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root \
-              -DENABLE_CUDA:BOOL=${ENABLE_CUDA:-OFF} \
-              -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\" \
-              -DCUDA_TOOLKIT_ROOT_DIR:PATH=${CUDA_TOOLKIT_ROOT_DIR:-/usr/local/cuda} \
-              -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70}
+              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root
 
 or_die cd ${GEOSX_BUILD_DIR}
 
