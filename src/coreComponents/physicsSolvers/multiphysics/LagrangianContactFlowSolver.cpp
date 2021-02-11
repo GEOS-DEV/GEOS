@@ -1546,7 +1546,7 @@ void LagrangianContactFlowSolver::solveSystem( DofManager const & dofManager,
   //     GEOSX_ERROR( "STOP" );
   //   }
   // }
-  // MpiWrapper::Barrier( MPI_COMM_GEOSX );
+  // MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
 void LagrangianContactFlowSolver::setNextDt( real64 const & currentDt,

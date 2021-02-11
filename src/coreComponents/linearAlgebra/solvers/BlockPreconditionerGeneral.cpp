@@ -173,10 +173,10 @@ void BlockPreconditionerGeneral< LAI >::compute( Matrix const & mat,
   mat.multiplyRAP( m_restrictors[0].current, m_prolongators[0].next, m_matBlocks( 0, 1 ) );
   mat.multiplyRAP( m_restrictors[0].next, m_prolongators[0].current, m_matBlocks( 1, 0 ) );
 
-  //applyBlockScaling( 0 );
   m_solvers[0]->compute( m_matBlocks( 0, 0 ), dofManager );
   computeSchurComplement( 0 );
 
+  // Compute all Schur complements
   for( localIndex iBlock = 1; iBlock < m_numBlocks-1; ++iBlock )
   {
     // If the matrix size/structure has changed, need to resize internal LA objects and recompute restrictors.
@@ -195,6 +195,7 @@ void BlockPreconditionerGeneral< LAI >::compute( Matrix const & mat,
     computeSchurComplement( iBlock );
   }
 
+  // Last Schur complement
   if( newSize )
   {
     reinitialize( mat, dofManager, m_numBlocks-1 );
@@ -216,14 +217,13 @@ void BlockPreconditionerGeneral< LAI >::apply( Vector const & src,
     m_matBlocks( 1, 0 ).residual( m_sol( 0 ), m_rhs( 1 ), m_rhs( 1 ) );
   }
 
-  // Solve the (1,1) block modified via Schur complement
-  //m_solvers[1]->apply( m_rhs( 1 ), m_sol( 1 ) );
+  // Solve U^{-1} for all blocks
   for( localIndex iBlock = 1; iBlock < m_numBlocks-1; ++iBlock )
   {
     m_restrictors[iBlock].current.apply( m_rhs( 2*iBlock-1 ), m_rhs( 2*iBlock ) );
     m_restrictors[iBlock].next.apply( m_rhs( 2*iBlock-1 ), m_rhs( 2*iBlock+1 ) );
 
-    // Perform a predictor step by solving (0,0) block and subtracting from 1-block rhs
+    // Perform a predictor step by solving (i,i) block and subtracting from (i+1)-th block rhs
     if( m_shapeOption == BlockShapeOption::LowerUpperTriangular )
     {
       m_solvers[iBlock]->apply( m_rhs( 2*iBlock ), m_sol( 2*iBlock ) );
@@ -231,11 +231,13 @@ void BlockPreconditionerGeneral< LAI >::apply( Vector const & src,
     }
   }
 
+  // Last Schur complement
   m_solvers[m_numBlocks-1]->apply( m_rhs( 2*(m_numBlocks-1)-1 ), m_sol( 2*(m_numBlocks-1)-1 ) );
 
+  // Solve L^{-1} for all blocks
   for( localIndex iBlock = m_numBlocks-2; iBlock > 0; --iBlock )
   {
-    // Update the 0-block rhs
+    // Update the i-th block rhs
     if( m_shapeOption != BlockShapeOption::Diagonal )
     {
       m_matBlocks( iBlock, iBlock+1 ).residual( m_sol( 2*iBlock+1 ), m_rhs( 2*iBlock ), m_rhs( 2*iBlock ) );
