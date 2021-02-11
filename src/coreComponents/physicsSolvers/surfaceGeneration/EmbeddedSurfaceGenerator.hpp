@@ -115,7 +115,7 @@ private:
 
   void addToFractureStencil( DomainPartition & domain );
 
-  void setGlobalIndixes( ElementRegionManager & elemManager,
+  void setGlobalIndices( ElementRegionManager & elemManager,
                          EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
 
   void addEmbeddedElementsToSets( ElementRegionManager const & elemManager,
