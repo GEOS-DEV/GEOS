@@ -176,8 +176,7 @@ public:
    * @param[in] geometricObjManager the geometric object manager that contains the geometric shapes of embedded fractures
    */
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName,
-                                           GeometricObjectManager const * geometricObjManager ) const = 0;
+                                           string const & embeddedSurfaceRegionName ) const = 0;
 
   /**
    * @brief View keys.

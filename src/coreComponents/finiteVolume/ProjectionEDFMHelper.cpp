@@ -44,7 +44,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
       CellElementSubRegion const * cellSubRegion = cellRegion->getSubRegion< CellElementSubRegion >(hostCellSubRegionIdx);
 
       // pick faces for non-neighboring pEDFM connections
-      auto const faces = selectFaces(cellSubRegion->faceList(), cellID, fracElement, fractureSubRegion);
+      std::list<localIndex> const faces = selectFaces(cellSubRegion->faceList(), cellID, fracElement, fractureSubRegion);
       for (localIndex const faceIdx : faces)
       {
         CellDescriptor neighborCell = otherCell(faceIdx, cellID);
@@ -61,10 +61,10 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
   }
 }
 
-std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation const & subRegionFaces,
-                                                          CellDescriptor const & hostCellID,
-                                                          localIndex fracElement,
-                                                          EmbeddedSurfaceSubRegion const & fractureSubRegion) const
+std::list<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation const & subRegionFaces,
+                                                        CellDescriptor const & hostCellID,
+                                                        localIndex fracElement,
+                                                        EmbeddedSurfaceSubRegion const & fractureSubRegion) const
 {
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector(fracElement);
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
@@ -75,7 +75,7 @@ std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation
   real64 const distToFrac = getSignedDistanceCellCenterToFracPlane( hostCellID, n, origin, tmp );
 
   // pick faces that intersect the fracture
-  std::vector<localIndex> faces;
+  std::list<localIndex> faces;
   for (localIndex const iface : subRegionFaces[hostCellID.index])
   {
     if (isBoundaryFace(iface)) continue;

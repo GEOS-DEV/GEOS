@@ -212,8 +212,6 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( 
 
 void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 {
-  GeometricObjectManager * geometricObjManager = domain.getParent()->getGroup< GeometricObjectManager >( "Geometry" );
-
   // Add embedded elements to the fracture Stencil
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -228,9 +226,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
       FluxApproximationBase * const fluxApprox = fvManager.getGroup< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addEDFracToFractureStencil( *meshLevel,
-                                                this->m_fractureRegionName,
-                                                geometricObjManager );
+        fluxApprox->addEDFracToFractureStencil( *meshLevel, this->m_fractureRegionName );
       }
     }
   }

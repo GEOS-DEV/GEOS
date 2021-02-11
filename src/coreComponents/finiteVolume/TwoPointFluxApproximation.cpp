@@ -18,6 +18,8 @@
  */
 #include "TwoPointFluxApproximation.hpp"
 
+#include "managers/ProblemManager.hpp"
+
 #include "codingUtilities/Utilities.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
@@ -38,7 +40,7 @@ using namespace dataRepository;
 
 TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
                                                       Group * const parent )
-  : FluxApproximationBase( name, parent )
+  : FluxApproximationBase( name, parent ), m_pedfmHelper(nullptr)
 {
   registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString )->
     setRestartFlags( RestartFlags::NO_WRITE );
@@ -51,6 +53,28 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
     setApplyDefaultValue( 0 )->
     setRestartFlags( RestartFlags::NO_WRITE );
 }
+
+void TwoPointFluxApproximation::initializePreSubGroups( Group * const group )
+{
+  if ( m_useProjectionEmbeddedFractureMethod )
+  {
+    ProblemManager *problemManager = Group::groupCast<ProblemManager *>(group);
+    DomainPartition *domain =
+        problemManager->getGroup<DomainPartition>(dataRepository::keys::domain);
+    Group *const meshBodies = domain->getMeshBodies();
+    MeshBody *const meshBody = meshBodies->getGroup<MeshBody>(0);
+    MeshLevel *const meshLevel = meshBody->getGroup<MeshLevel>(0);
+    GeometricObjectManager *geometricObjManager = problemManager->getGroup<GeometricObjectManager>("Geometry");
+    CellElementStencilTPFA &cellStencil = getStencil<CellElementStencilTPFA>( *meshLevel, viewKeyStruct::cellStencilString );
+
+    // ProjectionEDFMHelper pedfm(std::cref(*meshLevel), geometricObjManager, std::cref(m_coeffName), std::ref(cellStencil));
+    m_pedfmHelper = std::make_unique<ProjectionEDFMHelper>( std::cref(*meshLevel), geometricObjManager,
+                                                            std::cref(m_coeffName), std::ref(cellStencil) );
+  }
+
+
+}
+
 
 void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
 {
@@ -789,8 +813,7 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
 }
 
 void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
-                                                            string const & embeddedSurfaceRegionName,
-                                                            GeometricObjectManager const * geometricObjManager ) const
+                                                            string const & embeddedSurfaceRegionName ) const
 {
   ElementRegionManager & elemManager = *( mesh.getElemManager() );
   FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
@@ -810,8 +833,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   if ( m_useProjectionEmbeddedFractureMethod )
   {
-    ProjectionEDFMHelper pedfm(std::cref(mesh), geometricObjManager, std::cref(m_coeffName), std::ref(cellStencil));
-    pedfm.addNonNeighboringConnections(std::cref(fractureSubRegion));
+    m_pedfmHelper->addNonNeighboringConnections(std::cref(fractureSubRegion));
   }
 }
 
