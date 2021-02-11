@@ -103,7 +103,7 @@ void BrineCO2DensityFunction::makeTable( string_array const & inputPara )
   catch( const std::invalid_argument & e )
   {
 
-    GEOSX_ERROR( "Invalid BrineCO2Density argument:" + std::string( e.what()));
+    GEOSX_ERROR( "Invalid BrineCO2Density argument:" + string( e.what()));
 
   }
 

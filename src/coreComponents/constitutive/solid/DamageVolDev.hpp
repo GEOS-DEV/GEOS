@@ -150,7 +150,7 @@ public:
   virtual ~DamageVolDev() override;
 
 
-  static std::string catalogName() { return string( "DamageVolDev" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "DamageVolDev" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return catalogName(); }
 
 

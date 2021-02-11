@@ -38,7 +38,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  SinglePhaseReservoir( const std::string & name,
+  SinglePhaseReservoir( const string & name,
                         Group * const parent );
 
   /**
@@ -70,6 +70,14 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
+
+  virtual void
+  setupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = true ) override;
 
   /**@}*/
 

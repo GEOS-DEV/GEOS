@@ -25,7 +25,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ElasticTransverseIsotropic::ElasticTransverseIsotropic( std::string const & name, Group * const parent ):
+ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultYoungsModulusTransverse(),
   m_defaultYoungsModulusAxial(),
@@ -126,6 +126,6 @@ void ElasticTransverseIsotropic::postProcessInput()
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticTransverseIsotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticTransverseIsotropic, string const &, Group * const )
 }
 } /* namespace geosx */

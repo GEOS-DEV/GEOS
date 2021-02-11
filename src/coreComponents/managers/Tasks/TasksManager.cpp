@@ -25,7 +25,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace LvArray;
 
-TasksManager::TasksManager( std::string const & name,
+TasksManager::TasksManager( string const & name,
                             Group * const parent ):
   Group( name, parent )
 {

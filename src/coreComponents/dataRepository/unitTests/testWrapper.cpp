@@ -89,7 +89,7 @@ public:
     }
   }
 
-  void testDescription( std::string const & value )
+  void testDescription( string const & value )
   {
     {
       Wrapper< T > * rval = m_wrapper.setDescription( value );

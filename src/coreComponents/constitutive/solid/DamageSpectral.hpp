@@ -130,7 +130,7 @@ public:
 
     real64 strain[6];
     UPDATE_BASE::getElasticStrain( k, q, strain );
- 
+
     strain[3] = strain[3]/2; // eigen-decomposition below does not use engineering strains
     strain[4] = strain[3]/2;
     strain[5] = strain[5]/2;
@@ -268,7 +268,7 @@ public:
   virtual ~DamageSpectral() override;
 
 
-  static std::string catalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return catalogName(); }
 
 

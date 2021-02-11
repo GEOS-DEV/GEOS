@@ -45,7 +45,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & name,
+SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
                                                           Group * const parent ):
   SolverBase( name, parent ),
   m_newmarkGamma( 0.5 ),

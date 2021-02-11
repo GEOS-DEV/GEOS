@@ -29,7 +29,7 @@ namespace geosx
 class PhaseFieldFractureSolver : public SolverBase
 {
 public:
-  PhaseFieldFractureSolver( const std::string & name,
+  PhaseFieldFractureSolver( const string & name,
                             Group * const parent );
   ~PhaseFieldFractureSolver() override;
 

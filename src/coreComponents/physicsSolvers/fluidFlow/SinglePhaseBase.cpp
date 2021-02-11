@@ -35,7 +35,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace SinglePhaseBaseKernels;
 
-SinglePhaseBase::SinglePhaseBase( const std::string & name,
+SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
   FlowSolverBase( name, parent )
 {

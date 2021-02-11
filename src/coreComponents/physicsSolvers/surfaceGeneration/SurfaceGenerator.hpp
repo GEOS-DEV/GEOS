@@ -60,7 +60,7 @@ class ElementRegionBase;
 class SurfaceGenerator : public SolverBase
 {
 public:
-  SurfaceGenerator( const std::string & name,
+  SurfaceGenerator( const string & name,
                     Group * const parent );
   ~SurfaceGenerator() override;
 

@@ -87,9 +87,9 @@ public:
   }
 
 private:
-  std::string const m_groupName = "root";
-  std::string const m_wrapperName = "wrapper";
-  std::string const m_fileName = "testRestartBasic_SingleWrapperTest";
+  string const m_groupName = "root";
+  string const m_wrapperName = "wrapper";
+  string const m_fileName = "testRestartBasic_SingleWrapperTest";
 
   Group * m_group;
   int m_groupSize;
@@ -102,26 +102,26 @@ using TestTypes = ::testing::Types< int,
                                     R1Tensor,
                                     std::pair< int, R1Tensor >, // This should be passed to conduit via an external
                                                                 // pointer but currently we're packing it.
-                                    std::pair< std::string, double >,
-                                    std::string,
+                                    std::pair< string, double >,
+                                    string,
                                     std::vector< int >,
-                                    // std::vector< std::string > bufferOps currently can't pack this
+                                    // std::vector< string > bufferOps currently can't pack this
                                     array1d< double >,
-                                    array1d< std::string >,
+                                    array1d< string >,
                                     array1d< array1d< double > >,
-                                    array1d< array1d< std::string > >,
+                                    array1d< array1d< string > >,
                                     array2d< double >,
-                                    array2d< std::string >,
+                                    array2d< string >,
                                     array2d< double, RAJA::PERM_JI >,
-                                    array2d< std::string, RAJA::PERM_JI >,
+                                    array2d< string, RAJA::PERM_JI >,
                                     array3d< double >,
-                                    array3d< std::string >,
+                                    array3d< string >,
                                     array3d< double, RAJA::PERM_KJI >,
-                                    array3d< std::string, RAJA::PERM_IKJ >,
+                                    array3d< string, RAJA::PERM_IKJ >,
                                     SortedArray< int >,
-                                    SortedArray< std::string >,
-                                    map< std::string, int >,
-                                    unordered_map< std::string, int >,
+                                    SortedArray< string >,
+                                    map< string, int >,
+                                    unordered_map< string, int >,
                                     map< long, int >,
                                     unordered_map< long, int >
                                     >;

@@ -111,7 +111,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static std::string catalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
 
   /**
    * @brief Get catalog name

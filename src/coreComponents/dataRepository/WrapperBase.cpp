@@ -26,7 +26,7 @@ namespace dataRepository
 {
 
 
-WrapperBase::WrapperBase( std::string const & name,
+WrapperBase::WrapperBase( string const & name,
                           Group * const parent ):
   m_name( name ),
   m_parent( parent ),

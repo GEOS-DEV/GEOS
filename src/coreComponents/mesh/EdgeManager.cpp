@@ -29,7 +29,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-EdgeManager::EdgeManager( std::string const & name,
+EdgeManager::EdgeManager( string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_edgesToFractureConnectorsEdges(),
@@ -435,7 +435,7 @@ void EdgeManager::buildEdges( FaceManager * const faceManager, NodeManager * con
   for( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
-    std::string const & setName = setWrapper->getName();
+    string const & setName = setWrapper->getName();
     createSet( setName );
   }
 
@@ -443,7 +443,7 @@ void EdgeManager::buildEdges( FaceManager * const faceManager, NodeManager * con
   forAll< parallelHostPolicy >( nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
-    std::string const & setName = setWrapper->getName();
+    string const & setName = setWrapper->getName();
     SortedArrayView< localIndex const > const targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
     constructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );

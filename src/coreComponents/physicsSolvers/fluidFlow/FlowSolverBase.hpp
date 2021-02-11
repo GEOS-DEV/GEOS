@@ -45,7 +45,7 @@ public:
  * @param name the name of this instantiation of Group in the repository
  * @param parent the parent group of this instantiation of Group
  */
-  FlowSolverBase( const std::string & name,
+  FlowSolverBase( const string & name,
                   Group * const parent );
 
 
