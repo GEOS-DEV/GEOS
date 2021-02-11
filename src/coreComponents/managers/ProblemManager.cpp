@@ -57,8 +57,8 @@ class CellElementSubRegion;
 class FaceElementSubRegion;
 
 
-ProblemManager::ProblemManager( string const & name, conduit::Node & root ):
-  dataRepository::Group( name, root ),
+ProblemManager::ProblemManager( conduit::Node & root ):
+  dataRepository::Group( "Problem", root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
@@ -219,7 +219,9 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
     std::vector< string > dir_contents;
     readDirectory( dirname, dir_contents );
 
-    GEOSX_ERROR_IF( dir_contents.size() == 0, "Directory gotten from " << restartFileName << " " << dirname << " is empty." );
+    GEOSX_THROW_IF( dir_contents.size() == 0,
+                    "Directory gotten from " << restartFileName << " " << dirname << " is empty.",
+                    InputError );
 
     std::regex basename_regex( basename );
 
@@ -235,7 +237,9 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
       }
     }
 
-    GEOSX_ERROR_IF( !match_found, "No matches found for pattern " << basename << " in directory " << dirname << "." );
+    GEOSX_THROW_IF( !match_found,
+                    "No matches found for pattern " << basename << " in directory " << dirname << ".",
+                    InputError );
 
     restartFileName = dirname + "/" + max_match;
     getAbsolutePath( restartFileName, restartFileName );
@@ -372,7 +376,7 @@ void ProblemManager::parseInputFile()
   string const & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
 
   // Load preprocessed xml file and check for errors
-  xmlResult = xmlDocument.load_file( inputFileName.c_str());
+  xmlResult = xmlDocument.load_file( inputFileName.c_str() );
   if( !xmlResult )
   {
     GEOSX_LOG_RANK_0( "XML parsed with errors!" );
@@ -536,10 +540,10 @@ void ProblemManager::generateMesh()
     }
   }
 
-  GEOSX_ERROR_IF_NE( meshBodies->numSubGroups(), 1 );
+  GEOSX_THROW_IF_NE( meshBodies->numSubGroups(), 1, InputError );
   MeshBody & meshBody = meshBodies->getGroup< MeshBody >( 0 );
 
-  GEOSX_ERROR_IF_NE( meshBody.numSubGroups(), 1 );
+  GEOSX_THROW_IF_NE( meshBody.numSubGroups(), 1, InputError );
   MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
 
   FaceManager * const faceManager = meshLevel.getFaceManager();
@@ -685,7 +689,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
         }
         else
         {
-          GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<") does not have a discretization associated with it." );
+          GEOSX_LOG_RANK_0( "\t" << regionName << "/" << subRegionName << " does not have a discretization associated with it." );
         }
       } );
     }

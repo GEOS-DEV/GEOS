@@ -326,7 +326,7 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    GEOSX_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return dynamicCast< T & >( *child );
   }
 
@@ -337,7 +337,7 @@ public:
   T const & getGroup( KEY const & key ) const
   {
     Group const * const child = m_subGroups[ key ];
-    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    GEOSX_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return dynamicCast< T const & >( *child );
   }
 
@@ -944,6 +944,7 @@ public:
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
+    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << "doesn't have a child" << key, std::domain_error );
     return *wrapper;
   }
 
@@ -954,6 +955,7 @@ public:
   WrapperBase & getWrapperBase( KEY const & key )
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
+    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << "doesn't have a child" << key, std::domain_error );
     return *wrapper;
   }
 
@@ -1141,8 +1143,7 @@ public:
    * @brief Return the path of this Group in the data repository.
    * @return The path of this group in the data repository.
    */
-  inline string const getPath() const
-  { return getConduitNode().path(); }
+  string getPath() const;
 
   /**
    * @brief Access the group's parent.

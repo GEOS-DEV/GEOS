@@ -704,13 +704,12 @@ public:
                                                                   getName(),
                                                                   targetNode,
                                                                   inputFlag == InputFlags::REQUIRED );
-        GEOSX_ERROR_IF( !readSuccess,
-                        "Input variable " + getName() + " is required in " + targetNode.path()
-                        + ". Available options are: \n"+ dumpInputOptions( true )
-                        + "\nFor more details, please refer to documentation at: \n"
-                        + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
-
-
+        GEOSX_THROW_IF( !readSuccess,
+                        "Input variable " << getName() << " is required in " << targetNode.path() <<
+                        ". Available options are: \n" << dumpInputOptions( true ) <<
+                        "\nFor more details, please refer to documentation at: \n" <<
+                        "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n",
+                        InputError );
       }
       else
       {

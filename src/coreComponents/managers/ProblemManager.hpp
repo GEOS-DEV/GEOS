@@ -46,11 +46,9 @@ public:
 
   /**
    * @brief Create a new ProblemManager, it must be created from the root conduit node.
-   * @param name The name of the ProblemManager.
    * @param root The root conduit node.
    */
-  explicit ProblemManager( const string & name,
-                           conduit::Node & root );
+  explicit ProblemManager( conduit::Node & root );
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group

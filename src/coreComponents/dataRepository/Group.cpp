@@ -119,6 +119,14 @@ void Group::reserve( indexType const newSize )
   m_capacity = newSize;
 }
 
+string Group::getPath() const
+{
+  // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
+  // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
+  string const noProblem = getConduitNode().path().substr( sizeof( "Problem" ) -1 );
+  return noProblem == "" ? "/" : noProblem;
+}
+
 void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
   xmlWrapper::addIncludedXML( targetNode );
@@ -166,12 +174,13 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
     string const childName = attribute.name();
     if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation" )
     {
-      GEOSX_ERROR_IF( processedXmlNodes.count( childName )==0,
+      GEOSX_THROW_IF( processedXmlNodes.count( childName )==0,
                       "XML Node ("<<targetNode.name()<<") with attribute name=("<<
                       targetNode.attribute( "name" ).value()<<") contains child node named ("<<
                       childName<<") that is not read. Valid options are: \n" << dumpInputOptions()
                       + "\nFor more details, please refer to documentation at: \n"
-                      + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
+                      + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n",
+                      InputError );
     }
   }
 }
