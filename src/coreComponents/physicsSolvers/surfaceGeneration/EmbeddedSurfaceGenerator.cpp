@@ -241,7 +241,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
 }
 
-void EmbeddedSurfaceGenerator::setGlobalIndixes( ElementRegionManager & elemManager,
+void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemManager,
                                                  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
 {
   // Add new globalIndices
