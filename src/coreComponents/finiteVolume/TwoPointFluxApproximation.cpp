@@ -56,7 +56,7 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
 
 void TwoPointFluxApproximation::initializePreSubGroups( Group * const group )
 {
-  if ( m_useProjectionEmbeddedFractureMethod )
+  if ( m_useProjectionEmbeddedFractureMethod )  // initialize Projection Embedded Fracture Helper if necessary
   {
     ProblemManager *problemManager = Group::groupCast<ProblemManager *>( group );
     DomainPartition * domain = problemManager->getGroup<DomainPartition>( dataRepository::keys::domain );

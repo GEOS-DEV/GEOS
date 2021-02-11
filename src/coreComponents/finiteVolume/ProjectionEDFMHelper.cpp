@@ -283,16 +283,9 @@ fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
   LvArray::tensorOps::scaledAdd< 3 >( projectionPoint, fracCenter, t );
 
   // get directional permeabilities
-  // TODO: use real fracture permeability
+  // I use these constants in order to preserve the equation sequence
   real64 const directionalPermFracutre = 0.f;
-
-  // matrix permeability
-  arraySlice1d<real64 const> neighborPerm =  m_permTensor[neighborCell.region][neighborCell.subRegion][neighborCell.index];
-  real64 direction[3];
-  LvArray::tensorOps::copy< 3 >( direction, cellCenter );
-  LvArray::tensorOps::subtract< 3 >( direction, projectionPoint );
-  LvArray::tensorOps::normalize< 3 >(direction);
-  real64 const directionalPermCell = LvArray::tensorOps::AiBi< 3 > ( neighborPerm, direction );
+  real64 const directionalPermCell = 1.f;
 
   // part trasmissibilities
   LvArray::tensorOps::copy< 3 >( tmp, fracCenter );
