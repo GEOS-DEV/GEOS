@@ -16,8 +16,8 @@
  *  @file DruckerPragerExtended.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP
+#ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP_
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -42,6 +42,12 @@ public:
 
   /**
    * @brief Constructor
+   * @param[in] initialFriction The ArrayView holding the initial friction data for each element.
+   * @param[in] residualFriction The ArrayView holding the residual friction data for each element.
+   * @param[in] dilationRatio The ArrayView holding the ratio between dilation and friction data for each element.
+   * @param[in] pressureIntercept The ArrayView holding the pressure intercept for each element.
+   * @param[in] hardening The ArrayView holding the hardening data for each element.
+   * @param[in] state The ArrayView holding the state data for each element.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
@@ -51,8 +57,7 @@ public:
                                 arrayView1d< real64 const > const & dilationRatio,
                                 arrayView1d< real64 const > const & pressureIntercept,
                                 arrayView1d< real64 const > const & hardening,
-                                arrayView2d< real64 > const & newState,
-                                arrayView2d< real64 > const & oldState,
+                                arrayView2d< real64 > const & state,
                                 arrayView1d< real64 const > const & bulkModulus,
                                 arrayView1d< real64 const > const & shearModulus,
                                 arrayView3d< real64, solid::STRESS_USD > const & newStress,
@@ -63,8 +68,7 @@ public:
     m_dilationRatio( dilationRatio ),
     m_pressureIntercept( pressureIntercept ),
     m_hardening( hardening ),
-    m_newState( newState ),
-    m_oldState( oldState )
+    m_state( state )
   {}
 
   /// Default copy constructor
@@ -83,7 +87,7 @@ public:
   DruckerPragerExtendedUpdates & operator=( DruckerPragerExtendedUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; 
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
@@ -109,6 +113,58 @@ public:
                 real64 const friction ) const
   {
     return  invQ + friction * ( invP - m_pressureIntercept[k] );
+  }
+
+  void yieldDerivatives( localIndex const k,
+                         localIndex const GEOSX_UNUSED_PARAM( q ),
+                         real64 const invP,
+                         real64 const GEOSX_UNUSED_PARAM( invQ ),
+                         real64 const friction,
+                         real64 (& dF)[3] ) const
+  {
+
+    // The yield function is: invQ + friction * ( invP - m_pressureIntercept[k] )
+
+    real64 dF_dP = friction;
+    real64 dF_dQ = 1.0;
+    real64 dF_dFriction = invP - m_pressureIntercept[k];
+
+    dF[0] = dF_dP;
+    dF[1] = dF_dQ;
+    dF[2] = dF_dFriction;
+  }
+
+  void potentialDerivatives( localIndex const k,
+                             localIndex const GEOSX_UNUSED_PARAM( q ),
+                             real64 const GEOSX_UNUSED_PARAM( invP ),
+                             real64 const GEOSX_UNUSED_PARAM( invQ ),
+                             real64 const friction,
+                             real64 (& dG)[8] ) const
+  {
+
+    // The plastic potential function is: G = invQ + invP * m_dilationRatio[k] * friction
+
+    real64 dG_dP = m_dilationRatio[k] * friction;
+    real64 dG_dQ = 1.0;
+
+    real64 dG_dP_dP = 0.0;
+    real64 dG_dP_dQ = 0.0;
+    real64 dG_dP_dH = m_dilationRatio[k];
+
+    real64 dG_dQ_dP = 0.0;
+    real64 dG_dQ_dQ = 0.0;
+    real64 dG_dQ_dH = 0.0;
+
+    dG[0] = dG_dP;
+    dG[1] = dG_dQ;
+
+    dG[2] = dG_dP_dP;
+    dG[3] = dG_dP_dQ;
+    dG[4] = dG_dP_dH;
+
+    dG[5] = dG_dQ_dP;
+    dG[6] = dG_dQ_dQ;
+    dG[7] = dG_dQ_dH;
   }
 
   real64 hardening( localIndex const k,
@@ -139,22 +195,39 @@ public:
     }
   }
 
-  real64 state( localIndex const k,
-                localIndex const q,
-                real64 const GEOSX_UNUSED_PARAM( invP ),
-                real64 const GEOSX_UNUSED_PARAM( invQ ),
-                real64 const plasticMultiplier ) const
+  real64 tmpState( localIndex const k,
+                   localIndex const q,
+                   real64 const GEOSX_UNUSED_PARAM( invP ),
+                   real64 const GEOSX_UNUSED_PARAM( invQ ),
+                   real64 const plasticMultiplier ) const
   {
 
-    // For extended DP model: state += plasticMultiplier
+    // The temporal state variable is updated inside the Newton loops by: state += plasticMultiplier
+    // starting from the previous saved state
 
-    return m_newState[k][q] + plasticMultiplier;
+    return m_state[k][q] + plasticMultiplier;
+  }
+
+  real64 stateDerivatives( localIndex const GEOSX_UNUSED_PARAM( k ),
+                           localIndex const GEOSX_UNUSED_PARAM( q ),
+                           real64 const GEOSX_UNUSED_PARAM( invP ),
+                           real64 const GEOSX_UNUSED_PARAM( invQ ),
+                           real64 const GEOSX_UNUSED_PARAM( plasticMultiplier ) ) const
+  {
+    return 1.0;
   }
 
   real64 getStateVariable( localIndex const k,
                            localIndex const q ) const
   {
-    return m_newState[k][q];
+    return m_state[k][q];
+  }
+
+ void saveStateVariable( localIndex const k,
+                         localIndex const q,
+                         real64 const state ) const
+  {
+    m_state[k][q] = state;
   }
 
 private:
@@ -174,33 +247,8 @@ private:
   /// A reference to the ArrayView holding the hardening parameter for each element.
   arrayView1d< real64 const > const m_hardening;
 
-  /// A reference to the ArrayView holding the new state variable for each integration point
-  arrayView2d< real64 > const m_newState;
-
-  /// A reference to the ArrayView holding the old state variable for each integration point
-  arrayView2d< real64 > const m_oldState;
-
-  /// Hyperbolic model for friction hardening
-  GEOSX_HOST_DEVICE
-  void hyperbolicModel( real64 const y1,
-                        real64 const y2,
-                        real64 const m,
-                        real64 const x,
-                        real64 & y,
-                        real64 & dy_dx ) const
-  {
-    if( x<1e-9 )
-    {
-      y = y1;
-      dy_dx = 0;
-    }
-    else
-    {
-      y = y1 + (y2-y1)*x/(m+x);
-      dy_dx = (y2-y1)*m/((m+x)*(m+x));
-    }
-  }
-
+  /// A reference to the ArrayView holding the state variable for each integration point
+  arrayView2d< real64 > const m_state;
 };
 
 
@@ -229,7 +277,7 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
 
   // Plastic functions and their derivatives
 
-  real64 hardeningParam, stateVariable, dHardeningParam_dLambda;
+  real64 dF[3], dG[8], hardeningParam, stateVariable, dHardeningParam_dLambda;
 
   // check yield function F <= 0, using old state
 
@@ -258,32 +306,36 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-    m_newState[k][q] = m_oldState[k][q] + solution[2];
+
+    // Derivatives of the yield function
+    // dF_dP = dF[0], dF_dQ = dF[1], dF_dHardeningParam = dF[2]
+
+    yieldDerivatives( k, q, solution[0], solution[1], hardeningParam, dF );
+
+    // Derivatives of the plastic potential function
+    // dG_dP = dG[0], dG_dQ = dG[1]
+    // dG_dP_dP = dG[2], dG_dP_dQ = dG[3], dG_dP_dHardeningParam = dG[4] 
+    // dG_dQ_dP = dG[5], dG_dQ_dQ = dG[6], dG_dQ_dHardeningParam = dG[7]
+
+    potentialDerivatives( k, q, solution[0], solution[1], hardeningParam, dG );
  
     // Hardening parameter and its derivative to the plastic multiplier
      
-    stateVariable = state( k, q, solution[0], solution[1], solution[2] );
+    stateVariable = tmpState( k, q, solution[0], solution[1], solution[2] );
    
     hardeningParam = hardening( k, q, stateVariable );
 
-    dHardeningParam_dLambda = hardeningDerivatives( k, q, stateVariable );
-
- real64 friction, dfriction_dstate;
-    hyperbolicModel( m_initialFriction[k],
-                     m_residualFriction[k],
-                     m_hardening[k],
-                     m_newState[k][q],
-                     friction,
-                     dfriction_dstate );
+    dHardeningParam_dLambda  = hardeningDerivatives( k, q, stateVariable );
+    dHardeningParam_dLambda *= stateDerivatives( k, q, solution[0], solution[1], solution[2] );
 
     // assemble residual system
     // resid1 = P - trialP + dlambda*bulkMod*dG/dP = 0
     // resid2 = Q - trialQ + dlambda*3*shearMod*dG/dQ = 0
     // resid3 = F = 0
 
-    residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * m_dilationRatio[k] * friction;
-    residual[1] = solution[1] - trialQ + solution[2] * 3 * m_shearModulus[k];
-    residual[2] = solution[1] + hardeningParam * (solution[0] - m_pressureIntercept[k]);
+    residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * dG[0];
+    residual[1] = solution[1] - trialQ + solution[2] * 3.0 * m_shearModulus[k] * dG[1];
+    residual[2] = yield( k, q, solution[0], solution[1], hardeningParam );
 
     // check for convergence
 
@@ -301,13 +353,15 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
 
     // solve Newton system
 
-    jacobian[0][0] = 1;
-    jacobian[0][2] = m_bulkModulus[k] * m_dilationRatio[k] * friction + solution[2] * m_bulkModulus[k] * m_dilationRatio[k] * dHardeningParam_dLambda;
-    jacobian[1][1] = 1;
-    jacobian[1][2] = 3 * m_shearModulus[k];
-    jacobian[2][0] = friction;
-    jacobian[2][1] = 1;
-    jacobian[2][2] = dfriction_dstate * (solution[0]-m_pressureIntercept[k]);
+    jacobian[0][0] = 1.0 + solution[2] * m_bulkModulus[k] * dG[2];
+    jacobian[0][1] = solution[2] * m_bulkModulus[k] * dG[3];
+    jacobian[0][2] = m_bulkModulus[k] *dG[0] + solution[2] * m_bulkModulus[k] * dG[4] * dHardeningParam_dLambda;
+    jacobian[1][0] = solution[2] * 3.0 * m_shearModulus[k] * dG[5];
+    jacobian[1][1] = 1.0 + solution[2] * 3.0 * m_shearModulus[k] * dG[6];
+    jacobian[1][2] = 3.0 * m_shearModulus[k] * dG[1] + solution[2] * 3.0 * m_shearModulus[k] * dG[7] * dHardeningParam_dLambda;
+    jacobian[2][0] = dF[0];
+    jacobian[2][1] = dF[1];
+    jacobian[2][2] = dF[2] * dHardeningParam_dLambda;
 
     LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
@@ -358,7 +412,8 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
     }
   }
 
-  // save new stress and return
+  // save stress, state and return
+  saveStateVariable( k, q, stateVariable );
   saveStress( k, q, stress );
   return;
 }
@@ -405,15 +460,13 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void saveConvergedState() const override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
   /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ExtendedDruckerPrager";
+  static constexpr auto m_catalogNameString = "DruckerPragerExtended";
 
   /**
    * @return A string that is used to register/lookup this class in the registry
@@ -460,10 +513,7 @@ public:
     static constexpr auto hardeningString  = "hardening";
 
     /// string/key for state variable
-    static constexpr auto newStateString  = "stateVariable";
-
-    /// string/key for state variable
-    static constexpr auto oldStateString  = "oldStateVariable";
+    static constexpr auto stateString  = "stateVariable";
   };
 
   /**
@@ -477,8 +527,7 @@ public:
                                          m_dilationRatio,
                                          m_pressureIntercept,
                                          m_hardening,
-                                         m_newState,
-                                         m_oldState,
+                                         m_state,
                                          m_bulkModulus,
                                          m_shearModulus,
                                          m_newStress,
@@ -519,10 +568,7 @@ protected:
   array1d< real64 > m_hardening;
 
   /// State variable: The current equivalent plastic shear strain for each quadrature point
-  array2d< real64 > m_newState;
-
-  /// State variable: The previous equivalent plastic shear strain for each quadrature point
-  array2d< real64 > m_oldState;
+  array2d< real64 > m_state;
 };
 
 } /* namespace constitutive */
@@ -530,3 +576,4 @@ protected:
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGEREXTENDED_HPP_ */
+

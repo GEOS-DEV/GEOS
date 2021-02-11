@@ -37,8 +37,7 @@ DruckerPragerExtended::DruckerPragerExtended( string const & name,
   m_dilationRatio(),
   m_pressureIntercept(),
   m_hardening(),
-  m_newState(),
-  m_oldState()
+  m_state()
 {
   // register default values
 
@@ -89,30 +88,22 @@ DruckerPragerExtended::DruckerPragerExtended( string const & name,
     setApplyDefaultValue( -1 )->
     setDescription( "Hardening parameter" );
 
-  registerWrapper( viewKeyStruct::newStateString, &m_newState )->
+  registerWrapper( viewKeyStruct::stateString, &m_state )->
     setApplyDefaultValue( 0.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 )->
-    setDescription( "New equivalent plastic shear strain" );
-
-  registerWrapper( viewKeyStruct::oldStateString, &m_oldState )->
-    setApplyDefaultValue( 0.0 )->
-    setDescription( "Old equivalent plastic shear strain" );
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
+    setDescription( "Equivalent plastic shear strain" );
 }
-
 
 DruckerPragerExtended::~DruckerPragerExtended()
 {}
 
-
 void DruckerPragerExtended::allocateConstitutiveData( dataRepository::Group * const parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_newState.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldState.resize( 0, numConstitutivePointsPerParentIndex );
+  m_state.resize( 0, numConstitutivePointsPerParentIndex );
 
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
-
 
 void DruckerPragerExtended::postProcessInput()
 {
@@ -148,26 +139,6 @@ void DruckerPragerExtended::postProcessInput()
     setApplyDefaultValue( m_defaultDilationRatio );
   this->getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString )->
     setApplyDefaultValue( m_defaultHardening );
-}
-
-
-void DruckerPragerExtended::saveConvergedState() const
-{
-  SolidBase::saveConvergedState(); // TODO: not ideal, as we have separate loops for base and derived data
-
-  localIndex const numE = numElem();
-  localIndex const numQ = numQuad();
-
-  arrayView2d< real64 const > newState = m_newState;
-  arrayView2d< real64 > oldState = m_oldState;
-
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      oldState( k, q ) = newState( k, q );
-    }
-  } );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, string const &, Group * const )
