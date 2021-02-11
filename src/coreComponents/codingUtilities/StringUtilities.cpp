@@ -26,6 +26,15 @@ namespace geosx
 namespace stringutilities
 {
 
+string toLower( string const & input )
+{
+  string output;
+  output.resize( input.size() );
+  auto const toLowerCase = []( unsigned char c ) { return std::tolower( c ); };
+  std::transform( input.cbegin(), input.cend(), output.begin(), toLowerCase );
+  return output;
+}
+
 /**
  * String tokenizing function
  **/
