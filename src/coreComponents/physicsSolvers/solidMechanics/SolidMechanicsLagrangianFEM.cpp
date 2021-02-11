@@ -647,6 +647,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::synchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+  //CommunicationTools::asyncPack( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+  //CommunicationTools::asyncSendRecv( fieldNames, &mesh, domain.getNeigbors(), m_iComm, true );
 
   explicitKernelDispatch( mesh,
                           targetRegionNames(),
@@ -661,6 +663,20 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::synchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
+  // while( ! CommunicationTools::asyncUnpack( &mesh, domain.getNeighbors(), m_iComm, true ) ) {}
+  // CommunicationTools::finalizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true ) );
+
+  // probably a better layout:
+  // bool unpackDone = false;
+  // asyncRun( otherWork );
+  // while( otherWorkRunning )
+  // {
+  //   if ( ! unpackDone )
+  //   {
+  //     unpackDone = CommunicationTools::asyncUnpack( &mesh, domain.getNeighbors(), m_iComm, true ) )
+  //   }
+  // }
+  // CommunicationTools::finalizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
 
   return dt;
 }

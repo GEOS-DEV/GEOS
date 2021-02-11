@@ -84,10 +84,32 @@ public:
                                        MPI_iCommData & icomm,
                                        bool on_device = false );
 
+  static void asyncPack( const std::map< string, string_array > & fieldNames,
+                         MeshLevel * const mesh,
+                         std::vector< NeighborCommunicator > & neighbors,
+                         MPI_iCommData & icomm,
+                         bool on_device );
+
+  static void asyncSendRecv( const std::map< string, string_array > & fieldNames,
+                             MeshLevel * const mesh,
+                             std::vector< NeighborCommunicator > & neighbors,
+                             MPI_iCommData & icomm,
+                             bool on_device );
+
   static void synchronizeUnpack( MeshLevel * const mesh,
                                  std::vector< NeighborCommunicator > & neighbors,
                                  MPI_iCommData & icomm,
                                  bool on_device = false );
+
+  static bool asyncUnpack( MeshLevel * const mesh,
+                           std::vector< NeighborCommunicator > & neighbors,
+                           MPI_iCommData & icomm,
+                           bool on_device = false );
+
+  static void finalizeUnpack( MeshLevel * const mesh,
+                              std::vector< NeighborCommunicator > & neighbors,
+                              MPI_iCommData & icomm,
+                              bool on_device = false );
 
 
 };

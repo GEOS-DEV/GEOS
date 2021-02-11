@@ -164,6 +164,24 @@ int MpiWrapper::test( MPI_Request * request, int * flag, MPI_Status * status )
   return 0;
 }
 
+int MpiWrapper::testany( int count,  MPI_Request array_of_requests[], int * idx, int * flag, MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Testany( count, array_of_requests, idx, flag, array_of_statuses );
+#endif
+  *flag = 0;
+  return 0;
+}
+
+int MpiWrapper::testall( int count,  MPI_Request array_of_requests[], int * flag, MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Testall( count, array_of_requests, flag, array_of_statuses );
+#endif
+  *flag = 0;
+  return 0;
+}
+
 int MpiWrapper::wait( MPI_Request * request, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI
@@ -172,10 +190,10 @@ int MpiWrapper::wait( MPI_Request * request, MPI_Status * status )
   return 0;
 }
 
-int MpiWrapper::waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status * status )
+int MpiWrapper::waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status array_of_statuses[] )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Waitany( count, array_of_requests, indx, status );
+  return MPI_Waitany( count, array_of_requests, indx, array_of_statuses );
 #endif
   return 0;
 }

@@ -76,7 +76,8 @@ PackDataDevice( buffer_unit_type * & buffer,
 {
   if( DO_PACKING )
   {
-    forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
+    parallelDeviceStream stream;
+    parallelDeviceEvent packEvent = forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOSX_DEVICE ( localIndex ii )
     {
       reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
     } );
@@ -105,7 +106,8 @@ typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var )
 {
-  forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
+  parallelDeviceStream stream;
+  parallelDeviceEvent unpackEvent = forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOSX_DEVICE ( localIndex ii )
   {
     var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
   } );
@@ -143,7 +145,8 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
   buffer_unit_type * const devBuffer = buffer;
   if( DO_PACKING )
   {
-    forAll< parallelDevicePolicy<> >( numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
+    parallelDeviceStream stream;
+    parallelDeviceEvent packEvent = forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
     {
       buffer_unit_type * threadBuffer = devBuffer + ii * unitSize;
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T const & value )
@@ -179,7 +182,8 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   localIndex numIndices = indices.size();
   buffer_unit_type const * devBuffer = buffer;
   localIndex unitSize = var.size() / var.size( 0 ) * sizeof(T);
-  forAll< parallelDevicePolicy<> >( numIndices, [=] GEOSX_DEVICE ( localIndex const i )
+  parallelDeviceStream stream;
+  parallelDeviceEvent packEvent = forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const i )
   {
     buffer_unit_type const * threadBuffer = devBuffer + i * unitSize;
     LvArray::forValuesInSlice( var[ indices[ i ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
