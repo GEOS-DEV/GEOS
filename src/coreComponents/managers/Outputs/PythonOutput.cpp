@@ -17,6 +17,6 @@
 namespace geosx
 {
 
-REGISTER_CATALOG_ENTRY( OutputBase, PythonOutput, std::string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, PythonOutput, string const &, dataRepository::Group * const )
 
 } // namespace geosx

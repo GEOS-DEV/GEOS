@@ -72,7 +72,7 @@ private:
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::string durationToString( std::chrono::system_clock::duration const duration )
+string durationToString( std::chrono::system_clock::duration const duration )
 {
   double const seconds = std::chrono::duration_cast< std::chrono::milliseconds >( duration ).count() / 1000.0;
 
@@ -124,7 +124,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
   setupCaliper( *m_caliperManager, getCommandLineOptions() );
 #endif
 
-  std::string restartFileName;
+  string restartFileName;
   if( ProblemManager::parseRestart( restartFileName, getCommandLineOptions() ) )
   {
     GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );

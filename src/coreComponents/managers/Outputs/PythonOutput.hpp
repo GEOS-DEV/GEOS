@@ -37,7 +37,7 @@ public:
    * @param name The name of this PythonOutput in the data repository.
    * @param parent The parent group.
    */
-  PythonOutput( std::string const & name,
+  PythonOutput( string const & name,
                 Group * const parent ):
     OutputBase( name, parent )
   {}

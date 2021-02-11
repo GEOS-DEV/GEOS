@@ -24,7 +24,7 @@ namespace geosx
 namespace dataRepository
 {
 
-Group::Group( std::string const & name,
+Group::Group( string const & name,
               Group * const parent ):
   Group( name, parent->getConduitNode() )
 {
@@ -32,7 +32,7 @@ Group::Group( std::string const & name,
   m_parent = parent;
 }
 
-Group::Group( std::string const & name,
+Group::Group( string const & name,
               conduit::Node & rootNode ):
   m_parent( nullptr ),
   m_sizedFromParent( 0 ),

@@ -57,7 +57,7 @@ class CellElementSubRegion;
 class FaceElementSubRegion;
 
 
-ProblemManager::ProblemManager( std::string const & name, conduit::Node & root ):
+ProblemManager::ProblemManager( string const & name, conduit::Node & root ):
   dataRepository::Group( name, root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
@@ -205,7 +205,7 @@ void ProblemManager::parseCommandLineInput()
 }
 
 
-bool ProblemManager::parseRestart( std::string & restartFileName, CommandLineOptions const & options )
+bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions const & options )
 {
   bool const beginFromRestart = options.beginFromRestart;
   restartFileName = options.restartFileName;

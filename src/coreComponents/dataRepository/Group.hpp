@@ -96,7 +96,7 @@ public:
    * @param rootNode The root node of the data repository.
    * @note This Group will not have a parent group.
    */
-  explicit Group( std::string const & name,
+  explicit Group( string const & name,
                   conduit::Node & rootNode );
 
   /**

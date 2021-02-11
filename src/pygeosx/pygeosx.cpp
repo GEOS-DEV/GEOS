@@ -75,7 +75,7 @@ static PyObject * initialize( PyObject * self, PyObject * args )
     return nullptr;
   }
 
-  std::vector< std::string > stringArgs;
+  std::vector< string > stringArgs;
   for( LvArray::python::PyObjectRef<> item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
   {
     LvArray::python::PyObjectRef<> ascii { PyUnicode_AsASCIIString( item ) };
@@ -147,7 +147,7 @@ static PyObject * reinit( PyObject * self, PyObject * args )
     return nullptr;
   }
 
-  std::vector< std::string > stringArgs;
+  std::vector< string > stringArgs;
   for( LvArray::python::PyObjectRef<> item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
   {
     LvArray::python::PyObjectRef<> ascii { PyUnicode_AsASCIIString( item ) };

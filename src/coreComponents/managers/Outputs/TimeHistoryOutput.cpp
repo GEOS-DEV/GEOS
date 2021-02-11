@@ -53,9 +53,9 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
 {
   bool const freshInit = ( m_recordCount == 0 );
 
-  std::string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
+  string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
   makeDirsForPath( outputDirectory );
-  std::string const outputFile = outputDirectory + "/" + m_filename;
+  string const outputFile = outputDirectory + "/" + m_filename;
 
   // rank == 0 do time output for the collector
   for( localIndex ii = 0; ii < collector->getCollectionCount( ); ++ii )
@@ -104,9 +104,9 @@ void TimeHistoryOutput::initializePostSubGroups( Group * const group )
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    std::string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
+    string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
     makeDirsForPath( outputDirectory );
-    std::string const outputFile = outputDirectory + "/" + m_filename;
+    string const outputFile = outputDirectory + "/" + m_filename;
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
   ProblemManager & pm = dynamicCast< ProblemManager & >( *group );

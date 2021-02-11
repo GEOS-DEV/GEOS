@@ -59,9 +59,9 @@ static PyObject * PyGroup_repr( PyObject * const obj )
 
   VERIFY_INITIALIZED( pyGroup );
 
-  std::string const path = pyGroup->group->getPath();
-  std::string const type = LvArray::system::demangle( typeid( *(pyGroup->group) ).name() );
-  std::string const repr = path + " ( " + type + " )";
+  string const path = pyGroup->group->getPath();
+  string const type = LvArray::system::demangle( typeid( *(pyGroup->group) ).name() );
+  string const repr = path + " ( " + type + " )";
   return PyUnicode_FromString( repr.c_str() );
 }
 
@@ -239,7 +239,7 @@ static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const arg
     return nullptr;
   }
 
-  std::string groupPath, wrapperName;
+  string groupPath, wrapperName;
   splitPath( path, groupPath, wrapperName );
 
   dataRepository::Group * const group = self->group->getGroupByPath( groupPath );

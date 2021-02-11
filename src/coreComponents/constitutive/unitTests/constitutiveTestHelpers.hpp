@@ -36,7 +36,7 @@ void testNumericalDerivatives( dataRepository::Group & parent,
                                arraySlice1d< real64 const > const saturation,
                                real64 const perturbParameter,
                                real64 const relTol,
-                               std::string const & varName,
+                               string const & varName,
                                VAR && varAccessor,
                                D_VAR_D_SAT && dVar_dSat_accessor )
 {

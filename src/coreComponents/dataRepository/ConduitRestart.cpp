@@ -32,11 +32,11 @@ namespace geosx
 namespace dataRepository
 {
 
-std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
+string writeRootFile( conduit::Node & root, string const & rootPath )
 {
-  std::string const completeRootPath = getGlobalState().getCommandLineOptions().outputDirectory + "/" + rootPath;
+  string const completeRootPath = getGlobalState().getCommandLineOptions().outputDirectory + "/" + rootPath;
 
-  std::string rootDirName, rootFileName;
+  string rootDirName, rootFileName;
   splitPath( completeRootPath, rootDirName, rootFileName );
 
   if( MpiWrapper::commRank() == 0 )
@@ -90,17 +90,17 @@ string readRootNode( string const & rootPath )
   return buffer;
 }
 
-void writeTree( std::string const & path, conduit::Node & root )
+void writeTree( string const & path, conduit::Node & root )
 {
   GEOSX_MARK_FUNCTION;
 
   conduit::Node rootFileNode;
-  std::string const filePathForRank = writeRootFile( rootFileNode, path );
+  string const filePathForRank = writeRootFile( rootFileNode, path );
   GEOSX_LOG_RANK( "Writing out restart file at " << filePathForRank );
   conduit::relay::io::save( root, filePathForRank, "hdf5" );
 }
 
-void loadTree( std::string const & path, conduit::Node & root )
+void loadTree( string const & path, conduit::Node & root )
 {
   GEOSX_MARK_FUNCTION;
   string const filePathForRank = readRootNode( path );

@@ -231,7 +231,7 @@ TEST( testRestartExtended, testRestartExtended )
 
   /* Create a new Group directly below the conduit root. */
   std::unique_ptr< conduit::Node > node = std::make_unique< conduit::Node >();
-  std::unique_ptr< Group > root = std::make_unique< Group >( std::string( "data" ), *node );
+  std::unique_ptr< Group > root = std::make_unique< Group >( string( "data" ), *node );
   root->resize( group_size );
 
   /* Create a new globalIndex_array Wrapper. */
@@ -420,7 +420,7 @@ TEST( testRestartExtended, testRestartExtended )
 
   /* Restore the conduit tree */
   loadTree( path, *node );
-  root = std::make_unique< Group >( std::string( "data" ), *node );
+  root = std::make_unique< Group >( string( "data" ), *node );
 
   /* Create dual GEOS tree. Groups automatically register with the associated conduit::Node. */
   Wrapper< globalIndex_array > * view_globalIndex_new = root->registerWrapper< globalIndex_array >( view_globalIndex_name );

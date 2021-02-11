@@ -62,7 +62,7 @@ struct CommandLineOptions;
  * @param duration The duration to convert to a string.
  * @return A string representing @c duration in seconds.
  */
-std::string durationToString( std::chrono::system_clock::duration const duration );
+string durationToString( std::chrono::system_clock::duration const duration );
 
 /**
  * @enum State

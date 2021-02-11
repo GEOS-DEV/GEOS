@@ -54,9 +54,9 @@ static PyObject * PyWrapper_repr( PyObject * const obj )
 
   VERIFY_INITIALIZED( self );
 
-  std::string const path = self->wrapper->getPath();
-  std::string const type = LvArray::system::demangle( typeid( *(self->wrapper) ).name() );
-  std::string const repr = path + " ( " + type + " )";
+  string const path = self->wrapper->getPath();
+  string const type = LvArray::system::demangle( typeid( *(self->wrapper) ).name() );
+  string const repr = path + " ( " + type + " )";
   return PyUnicode_FromString( repr.c_str() );
 }
 
@@ -74,9 +74,9 @@ static constexpr char const * PyWrapper_valueDocString =
   "    If the wrapped type is a numeric constant. The returned array is a shallow copy and "
   "has a single entry.\n"
   "str\n"
-  "    If the wrapped type is a std::string this returns a copy of the string.\n"
+  "    If the wrapped type is a string this returns a copy of the string.\n"
   "list of str\n"
-  "    If the wrapped type is a `LvArray::Array< std::string, 1, ... > or a `std::vector< std::string >`. "
+  "    If the wrapped type is a `LvArray::Array< string, 1, ... > or a `std::vector< string >`. "
   "This is a copy.\n"
   "None\n"
   "    If the wrapped type is not covered by any of the above.";

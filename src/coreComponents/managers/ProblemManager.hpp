@@ -49,7 +49,7 @@ public:
    * @param name The name of the ProblemManager.
    * @param root The root conduit node.
    */
-  explicit ProblemManager( const std::string & name,
+  explicit ProblemManager( const string & name,
                            conduit::Node & root );
 
   /**
@@ -92,7 +92,7 @@ public:
    * @param options The command line options.
    * @return Flag indicating beginFromRestart status
    */
-  static bool parseRestart( std::string & restartFileName, CommandLineOptions const & options );
+  static bool parseRestart( string & restartFileName, CommandLineOptions const & options );
 
   /**
    * @brief Generates the xml schema documentation

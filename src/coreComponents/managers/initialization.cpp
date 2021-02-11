@@ -311,7 +311,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 
   if( commandLineOptions->problemName == "" )
   {
-    std::string & inputFileName = commandLineOptions->inputFileName;
+    string & inputFileName = commandLineOptions->inputFileName;
     if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
     {
       string::size_type start = inputFileName.find_last_of( '/' ) + 1;
@@ -456,7 +456,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
   GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
 
-  std::string xmlDir, xmlName;
+  string xmlDir, xmlName;
   splitPath( commandLineOptions.inputFileName, xmlDir, xmlName );
   adiak::value( "XML File", xmlName );
   adiak::value( "Problem name", commandLineOptions.problemName );
