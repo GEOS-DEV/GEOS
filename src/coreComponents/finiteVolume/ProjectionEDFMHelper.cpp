@@ -24,7 +24,7 @@ ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
       m_stencil( stencil )
 {}
 
-void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion)
+void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion) const
 {
   arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
@@ -204,7 +204,7 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
 void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
                                                         CellDescriptor const & cell,
                                                         real64 transmissibility,
-                                                        EmbeddedSurfaceSubRegion const & fractureSubRegion )
+                                                        EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
   localIndex constexpr numElems = 2;   // tpfa

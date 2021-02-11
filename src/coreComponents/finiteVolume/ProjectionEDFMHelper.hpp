@@ -14,7 +14,7 @@ class ProjectionEDFMHelper {
                         CellElementStencilTPFA & stencil );
 
   // add Fracture-matrix connections to the cell stencil
-  void addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion);
+  void addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
 
   virtual ~ProjectionEDFMHelper() = default;
 
@@ -66,7 +66,7 @@ class ProjectionEDFMHelper {
   void addNonNeighboringConnection( localIndex fracElement,
                                     CellDescriptor const & cell,
                                     real64 transmissibility,
-                                    EmbeddedSurfaceSubRegion const & fractureSubRegion );
+                                    EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   // Private variables
   MeshLevel const & m_mesh;
