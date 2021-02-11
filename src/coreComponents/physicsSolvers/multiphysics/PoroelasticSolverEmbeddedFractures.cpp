@@ -61,7 +61,6 @@ PoroelasticSolverEmbeddedFractures::PoroelasticSolverEmbeddedFractures( const st
 
 PoroelasticSolverEmbeddedFractures::~PoroelasticSolverEmbeddedFractures()
 {
-  // TODO Auto-generated destructor stub
 }
 
 void PoroelasticSolverEmbeddedFractures::postProcessInput()
