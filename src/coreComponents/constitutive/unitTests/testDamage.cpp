@@ -86,8 +86,6 @@ TEST( DamageTests, testDamageSpectral )
 
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
-
-  // TODO: enforcement of test disabled for now
-  cmw.checkSmallStrainStiffness( 0, 0, strainIncrement, true );
-  //EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, strainIncrement ) );
+  //cmw.checkSmallStrainStiffness( 0, 0, strainIncrement, true );
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, strainIncrement ) );
 }

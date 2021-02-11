@@ -130,6 +130,11 @@ public:
 
     real64 strain[6];
     UPDATE_BASE::getElasticStrain( k, q, strain );
+ 
+    strain[3] = strain[3]/2; // eigen-decomposition below does not use engineering strains
+    strain[4] = strain[3]/2;
+    strain[5] = strain[5]/2;
+
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
 
     real64 mu = m_shearModulus[k];
@@ -184,11 +189,6 @@ public:
     LvArray::tensorOps::copy< 6 >( stress, negativeStress );
     LvArray::tensorOps::scaledAdd< 6 >( stress, positiveStress, damageFactor );
 
-    // TODO: the following linearization has a bug somewhere, so we skip and use a
-    // finite difference tangent below.
-
-    return;
-
     // stiffness
 
     real64 IxITensor[6][6] = {};
@@ -238,8 +238,6 @@ public:
                                   DiscretizationOps & stiffness ) const final
   {
     smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
-    computeSmallStrainFiniteDifferenceStiffness( k, q, strainIncrement, stiffness.m_c ); //TODO: temp fix until analytical stiffness is
-                                                                                         // correct
   }
 
 
