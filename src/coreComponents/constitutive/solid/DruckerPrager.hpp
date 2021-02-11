@@ -181,12 +181,10 @@ public:
 
   real64 hardeningDerivatives( localIndex const k,
                                localIndex const GEOSX_UNUSED_PARAM( q ),
-                               real64 const GEOSX_UNUSED_PARAM( state ),
-                               real64 const GEOSX_UNUSED_PARAM( plasticMultiplier ) ) const
+                               real64 const GEOSX_UNUSED_PARAM( state ) ) const
   {
 
     // The hardening function is: cohesion = m_cohesion[k][q] + state * hardeningRate
-    // For DP model: state = plasticMultiplier
 
     return m_hardening[k]; 
   }
@@ -243,23 +241,17 @@ private:
   arrayView2d< real64 > const m_state;
 };
 
-
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
-                                              localIndex const q,
-                                              real64 const ( &strainIncrement )[6],
-                                              real64 ( & stress )[6],
-                                              real64 ( & stiffness )[6][6] ) const
+                                                      localIndex const q,
+                                                      real64 const ( &strainIncrement )[6],
+                                                      real64 ( & stress )[6],
+                                                      real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
 
-  // ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness ); // Computing stiffness here is redundant 
-                                                                                          // in the case of plasticity
-                                                                                          // we should compute only the stress here
-                                                                                          // the elastic stiffness update should be moved
-                                                                                          // to the elastic branch
-  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
   // decompose into mean (P) and von mises (Q) stress invariants
 
@@ -276,8 +268,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   real64 dF[3], dG[8], hardeningParam, stateVariable, dHardeningParam_dLambda;
 
-
-  // check yield function F <= 0, using old hardening variable state
+  // check yield function F <= 0, using old state
 
   stateVariable = getStateVariable( k, q );
 
@@ -285,16 +276,11 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   if( yield( k, q, trialP, trialQ, hardeningParam ) < 1e-9 ) // elasticity
   {
-    ElasticIsotropicUpdates::getElasticStiffness( k, stiffness ); // Only needed for the elastic branch
     return;
   }
 
   // else, plasticity (trial stress point lies outside yield surface)
-
   // the return mapping can in general be written as a newton iteration.
-  // here we have a linear problem, so the algorithm will converge in one
-  // iteration, but this is a template for more general models with either
-  // nonlinear hardening or yield surfaces.
 
   real64 solution[3], residual[3], delta[3];
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
@@ -309,7 +295,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-    
+
     // Derivatives of the yield function
     // dF_dP = dF[0], dF_dQ = dF[1], dF_dHardeningParam = dF[2]
 
@@ -321,14 +307,14 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     // dG_dQ_dP = dG[5], dG_dQ_dQ = dG[6], dG_dQ_dHardeningParam = dG[7]
 
     potentialDerivatives( k, q, solution[0], solution[1], hardeningParam, dG );
-
+ 
     // Hardening parameter and its derivative to the plastic multiplier
      
     stateVariable = tmpState( k, q, solution[0], solution[1], solution[2] );
-
+   
     hardeningParam = hardening( k, q, stateVariable );
 
-    dHardeningParam_dLambda = hardeningDerivatives( k, q, stateVariable, solution[2] );
+    dHardeningParam_dLambda  = hardeningDerivatives( k, q, stateVariable );
     dHardeningParam_dLambda *= stateDerivatives( k, q, solution[0], solution[1], solution[2] );
 
     // assemble residual system
@@ -415,12 +401,12 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     }
   }
 
-  // save and return
-
+  // save stress, state and return
   saveStateVariable( k, q, stateVariable );
   saveStress( k, q, stress );
   return;
 }
+
 
 
 GEOSX_HOST_DEVICE
