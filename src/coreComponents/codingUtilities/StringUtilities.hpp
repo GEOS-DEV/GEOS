@@ -19,13 +19,13 @@
 #ifndef GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 #define GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 
-#include <cxxabi.h>
+#include <algorithm>
 #include <cstring>
+#include <cxxabi.h>
+#include <iomanip>
+#include <map>
 #include <memory>
 #include <sstream>
- #include <iomanip>
-#include <algorithm>
-#include <map>
 
 
 #include "common/DataTypes.hpp"
@@ -49,6 +49,13 @@ inline bool streq( char const * const strA, string const & strB )
 
 inline bool streq( char const * const strA, char const * const strB )
 { return !strcmp( strA, strB ); }
+
+/**
+ * @brief Return a copy of the string in lower case.
+ * @param input The input string which is not modified.
+ * @return A new string instance.
+ */
+string toLower( string const & input );
 
 /**
  * @brief Join strings or other printable objects with a delimiter.
