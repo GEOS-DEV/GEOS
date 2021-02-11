@@ -47,4 +47,5 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
                   CACHE STRING "")
 
 #set(GEOSX_TPL_DIR "/data/gpfs/Users/j0436735/deployments/TPL-GPU" CACHE PATH "" FORCE)
+set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
