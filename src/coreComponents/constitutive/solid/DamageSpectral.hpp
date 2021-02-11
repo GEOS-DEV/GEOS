@@ -132,7 +132,7 @@ public:
     UPDATE_BASE::getElasticStrain( k, q, strain );
 
     strain[3] = strain[3]/2; // eigen-decomposition below does not use engineering strains
-    strain[4] = strain[3]/2;
+    strain[4] = strain[4]/2;
     strain[5] = strain[5]/2;
 
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
