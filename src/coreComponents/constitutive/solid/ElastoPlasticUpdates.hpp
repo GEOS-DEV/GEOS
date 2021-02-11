@@ -42,19 +42,22 @@ public:
 
   /**
    * @brief Constructor
+   * @param[in] state The ArrayView holding the state data for each element.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
-  ElastoPlasticUpdates( arrayView1d< real64 const > const & bulkModulus,
+  ElastoPlasticUpdates( arrayView2d< real64 > const & state,
+                        arrayView1d< real64 const > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress ):// TODO tmp stress[6] can be considered 
                                                                                      // in the Elasto-Plastic Newton loops
                                                                                      // to avoid holding both new and old stress 
                                                                                      // on the system
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress )
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress ),
+    m_state( state )
   {}
 
   /// Default copy constructor
@@ -93,6 +96,9 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
 private:
+
+  /// A reference to the ArrayView holding the state variable for each integration point
+  arrayView2d< real64 > const m_state;
 
   // The yield function that defines the elastic-plastic limit.
 
@@ -211,10 +217,7 @@ private:
   virtual real64 getStateVariable( localIndex const k,
                                    localIndex const q ) const
   {
-    GEOSX_UNUSED_VAR( k );  
-    GEOSX_UNUSED_VAR( q );  
-
-    return 0;
+    return m_state[k][q];
   }
 
   // Save the converged state variable after the elasto-plastic Newton loops.
@@ -223,11 +226,8 @@ private:
                                   localIndex const q,
                                   real64 const state ) const
   {
-    GEOSX_UNUSED_VAR( k );  
-    GEOSX_UNUSED_VAR( q );  
-    GEOSX_UNUSED_VAR( state );  
+    m_state[k][q] = state;
   }
-
 };
 
 GEOSX_HOST_DEVICE

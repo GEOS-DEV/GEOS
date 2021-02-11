@@ -66,7 +66,7 @@ public:
                                                                                      // in the Elasto-Plastic Newton loops
                                                                                      // to avoid holding both new and old stress 
                                                                                      // on the system
-    ElastoPlasticUpdates( bulkModulus, shearModulus, newStress, oldStress ),
+    ElastoPlasticUpdates( state, bulkModulus, shearModulus, newStress, oldStress ),
     m_friction( friction ),
     m_dilation( dilation ),
     m_hardening( hardening ),
@@ -90,6 +90,21 @@ public:
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
 private:
+
+  /// A reference to the ArrayView holding the friction angle for each element.
+  arrayView1d< real64 const > const m_friction;
+
+  /// A reference to the ArrayView holding the dilation angle for each element.
+  arrayView1d< real64 const > const m_dilation;
+
+  /// A reference to the ArrayView holding the hardening rate for each element.
+  arrayView1d< real64 const > const m_hardening;
+
+  /// A reference to the ArrayView holding the cohesion for each integration point
+  arrayView2d< real64 > const m_cohesion;
+
+  /// A reference to the ArrayView holding the state variable for each integration point
+  arrayView2d< real64 > const m_state;
 
   virtual real64 yield( localIndex const k,
                         localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -194,35 +209,6 @@ private:
   {
     return 1.0;
   }
-
-  virtual real64 getStateVariable( localIndex const k,
-                                   localIndex const q ) const override final
-  {
-    return m_state[k][q];
-  }
-
-  virtual void saveStateVariable( localIndex const k,
-                                  localIndex const q,
-                                  real64 const state ) const override final
-  {
-    m_state[k][q] = state;
-  }
-
-  /// A reference to the ArrayView holding the friction angle for each element.
-  arrayView1d< real64 const > const m_friction;
-
-  /// A reference to the ArrayView holding the dilation angle for each element.
-  arrayView1d< real64 const > const m_dilation;
-
-  /// A reference to the ArrayView holding the hardening rate for each element.
-  arrayView1d< real64 const > const m_hardening;
-
-  /// A reference to the ArrayView holding the cohesion for each integration point
-  arrayView2d< real64 > const m_cohesion;
-
-  /// A reference to the ArrayView holding the state variable for each integration point
-  arrayView2d< real64 > const m_state;
-
 };
 
 /**

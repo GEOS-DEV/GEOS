@@ -63,7 +63,7 @@ public:
                                 arrayView1d< real64 const > const & shearModulus,
                                 arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                 arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    ElastoPlasticUpdates( bulkModulus, shearModulus, newStress, oldStress ),
+    ElastoPlasticUpdates( state, bulkModulus, shearModulus, newStress, oldStress ),
     m_initialFriction( initialFriction ),
     m_residualFriction( residualFriction ),
     m_dilationRatio( dilationRatio ),
@@ -88,6 +88,24 @@ public:
   DruckerPragerExtendedUpdates & operator=( DruckerPragerExtendedUpdates && ) =  delete;
 
 private:
+
+  /// A reference to the ArrayView holding the initial friction coefficient for each element.
+  arrayView1d< real64 const > const m_initialFriction;
+
+  /// A reference to the ArrayView holding the residual friction coefficient for each element.
+  arrayView1d< real64 const > const m_residualFriction;
+
+  /// A reference to the ArrayView holding the dilation ratio for each element.
+  arrayView1d< real64 const > const m_dilationRatio;
+
+  /// A reference to the ArrayView holding the pressure intercept for each element.
+  arrayView1d< real64 const > const m_pressureIntercept;
+
+  /// A reference to the ArrayView holding the hardening parameter for each element.
+  arrayView1d< real64 const > const m_hardening;
+
+  /// A reference to the ArrayView holding the state variable for each integration point
+  arrayView2d< real64 > const m_state;
 
   virtual real64 yield( localIndex const k,
                         localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -199,37 +217,6 @@ private:
   {
     return 1.0;
   }
-
-  virtual real64 getStateVariable( localIndex const k,
-                                   localIndex const q ) const override final
-  {
-    return m_state[k][q];
-  }
-
-  virtual void saveStateVariable( localIndex const k,
-                                  localIndex const q,
-                                  real64 const state ) const override final
-  {
-    m_state[k][q] = state;
-  }
-
-  /// A reference to the ArrayView holding the initial friction coefficient for each element.
-  arrayView1d< real64 const > const m_initialFriction;
-
-  /// A reference to the ArrayView holding the residual friction coefficient for each element.
-  arrayView1d< real64 const > const m_residualFriction;
-
-  /// A reference to the ArrayView holding the dilation ratio for each element.
-  arrayView1d< real64 const > const m_dilationRatio;
-
-  /// A reference to the ArrayView holding the pressure intercept for each element.
-  arrayView1d< real64 const > const m_pressureIntercept;
-
-  /// A reference to the ArrayView holding the hardening parameter for each element.
-  arrayView1d< real64 const > const m_hardening;
-
-  /// A reference to the ArrayView holding the state variable for each integration point
-  arrayView2d< real64 > const m_state;
 };
 
 /**
