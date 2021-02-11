@@ -58,16 +58,14 @@ void TwoPointFluxApproximation::initializePreSubGroups( Group * const group )
 {
   if ( m_useProjectionEmbeddedFractureMethod )
   {
-    ProblemManager *problemManager = Group::groupCast<ProblemManager *>(group);
-    DomainPartition *domain =
-        problemManager->getGroup<DomainPartition>(dataRepository::keys::domain);
+    ProblemManager *problemManager = Group::groupCast<ProblemManager *>( group );
+    DomainPartition * domain = problemManager->getGroup<DomainPartition>( dataRepository::keys::domain );
     Group *const meshBodies = domain->getMeshBodies();
     MeshBody *const meshBody = meshBodies->getGroup<MeshBody>(0);
     MeshLevel *const meshLevel = meshBody->getGroup<MeshLevel>(0);
-    GeometricObjectManager *geometricObjManager = problemManager->getGroup<GeometricObjectManager>("Geometry");
+    GeometricObjectManager const * const geometricObjManager = problemManager->getGeometricObjectManager();
     CellElementStencilTPFA &cellStencil = getStencil<CellElementStencilTPFA>( *meshLevel, viewKeyStruct::cellStencilString );
 
-    // ProjectionEDFMHelper pedfm(std::cref(*meshLevel), geometricObjManager, std::cref(m_coeffName), std::ref(cellStencil));
     m_pedfmHelper = std::make_unique<ProjectionEDFMHelper>( std::cref(*meshLevel), geometricObjManager,
                                                             std::cref(m_coeffName), std::ref(cellStencil) );
   }

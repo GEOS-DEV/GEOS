@@ -37,6 +37,7 @@ namespace geosx
 
 class PhysicsSolverManager;
 class DomainPartition;
+class GeometricObjectManager;
 namespace constitutive
 {
 class ConstitutiveManager;
@@ -175,6 +176,12 @@ public:
    * @return Const pointer to the DomainPartition
    */
   DomainPartition const * getDomainPartition() const;
+
+  /**
+   * @brief Returns a pointer to the GeometricObjectManager
+   * @return Const pointer to the GeometricObjectManager
+   */
+  GeometricObjectManager const * getGeometricObjectManager() const;
 
   /**
    * @brief Returns the problem name

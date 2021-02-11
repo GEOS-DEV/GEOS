@@ -801,6 +801,11 @@ DomainPartition const * ProblemManager::getDomainPartition() const
   return getGroup< DomainPartition >( keys::domain );
 }
 
+GeometricObjectManager const * ProblemManager::getGeometricObjectManager() const
+{
+  return getGroup< GeometricObjectManager >( keys::domain );
+}
+
 void ProblemManager::applyInitialConditions()
 {
   DomainPartition * domain = getGroup< DomainPartition >( keys::domain );
