@@ -11,9 +11,12 @@
       discretization="FE1"
       targetRegions="{ Region }"
       sourceCoordinates="{ { 505, 505, 505 },
-			    { 400, 300, 100 },
-			    { 100, 100, 104 } }"
-      timeSourceFrequency="5.0"/>
+			   { 400, 300, 100 },
+			   { 100, 100, 104 } }"
+      timeSourceFrequency="5.0"
+      receiverCoordinates="{ { 505, 505, 505 },
+			     { 400, 300, 100 },
+			     { 100, 100, 104 } }"/>
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->

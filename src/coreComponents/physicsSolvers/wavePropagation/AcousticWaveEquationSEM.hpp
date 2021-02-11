@@ -74,6 +74,14 @@ public:
 
     static constexpr auto timeSourceFrequencyString = "timeSourceFrequency";
 
+    static constexpr auto receiverCoordinatesString = "receiverCoordinates";
+    static constexpr auto receiverNodeIdsString     = "receiverNodeIds";
+    static constexpr auto receiverConstantsString   = "receiverConstants";
+    static constexpr auto receiverIsLocalString     = "receiverIsLocal";
+
+    static constexpr auto pressureNp1AtReceiversString   = "pressureNp1AtReceivers";
+
+
   } waveEquationViewKeys;
 
 
@@ -91,6 +99,13 @@ private:
   /// Multiply the precomputed term by the ricker and add to the right-hand side
   void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs );
 
+
+  /// Locate receivers and pre_evaluate the basis functions at each receiver coordinate
+  void precomputeBasisFunctionForEachReceiver( MeshLevel & mesh );
+
+  /// Compute the pressure at each receiver coordinate in one time step 
+  void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const pressure_np1 );
+
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
 
@@ -100,12 +115,29 @@ private:
   /// Constant part of the source for the nodes listed in m_sourceNodeIds
   array2d< real64 > m_sourceConstants;
 
-  /// Flag that indicates whether the source is local or not
+  /// Flag that indicates whether the source is local or not to the MPI rank
   array1d< localIndex > m_sourceIsLocal;
 
   /// Central frequency for the Ricker time source
   real64 m_timeSourceFrequency;
 
+  /// Coordinates of the receivers in the mesh
+  array2d< real64 > m_receiverCoordinates;
+
+  /// Indices of the element nodes (in the right order) for each receiver point
+  array2d< localIndex > m_receiverNodeIds;
+
+  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
+  array2d< real64 > m_receiverConstants;
+
+  /// Flag that indicates whether the receiver is local or not to the MPI rank
+  array1d< localIndex > m_receiverIsLocal;
+  
+  /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real64 > m_pressureNp1AtReceivers;
+  
+
+  
 };
 
 namespace extrinsicMeshData
