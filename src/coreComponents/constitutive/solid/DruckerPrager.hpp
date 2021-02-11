@@ -47,6 +47,7 @@ public:
    * @param[in] dilation The ArrayView holding the dilation data for each element.
    * @param[in] hardening The ArrayView holding the hardening data for each element.
    * @param[in] cohesion The ArrayView holding the cohesion data for each element.
+   * @param[in] state The ArrayView holding the state data for each element.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
@@ -56,6 +57,7 @@ public:
                         arrayView1d< real64 const > const & dilation,
                         arrayView1d< real64 const > const & hardening,
                         arrayView2d< real64 > const & cohesion,
+                        arrayView2d< real64 > const & state,
                         arrayView1d< real64 const > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
@@ -67,7 +69,8 @@ public:
     m_friction( friction ),
     m_dilation( dilation ),
     m_hardening( hardening ),
-    m_cohesion( cohesion )
+    m_cohesion( cohesion ),
+    m_state( state )
   {}
 
   /// Default copy constructor
@@ -118,6 +121,7 @@ public:
                          localIndex const GEOSX_UNUSED_PARAM( q ),
                          real64 const GEOSX_UNUSED_PARAM( invP ),
                          real64 const GEOSX_UNUSED_PARAM( invQ ),
+                         real64 const GEOSX_UNUSED_PARAM( cohesion ),
                          real64 (& dF)[3] ) const
   {
 
@@ -136,6 +140,7 @@ public:
                              localIndex const GEOSX_UNUSED_PARAM( q ),
                              real64 const GEOSX_UNUSED_PARAM( invP ),
                              real64 const GEOSX_UNUSED_PARAM( invQ ),
+                             real64 const GEOSX_UNUSED_PARAM( cohesion ),
                              real64 (& dG)[8] ) const
   {
 
@@ -174,19 +179,6 @@ public:
     return m_cohesion[k][q] + state * m_hardening[k];
   }
 
-  real64 getHardeningParameter( localIndex const k,
-                                localIndex const q ) const
-  {
-    return m_cohesion[k][q];
-  }
-
-  void saveHardeningParameter( localIndex const k,
-                               localIndex const q,
-                               real64 const H ) const
-  {
-    m_cohesion[k][q] = H;
-  }
-
   real64 hardeningDerivatives( localIndex const k,
                                localIndex const GEOSX_UNUSED_PARAM( q ),
                                real64 const GEOSX_UNUSED_PARAM( state ),
@@ -199,17 +191,40 @@ public:
     return m_hardening[k]; 
   }
 
-  real64 state( localIndex const GEOSX_UNUSED_PARAM( k ),
-                localIndex const GEOSX_UNUSED_PARAM( q ),
-                real64 const GEOSX_UNUSED_PARAM( invP ),
-                real64 const GEOSX_UNUSED_PARAM( invQ ),
-                real64 const plasticMultiplier ) const
+  real64 tmpState( localIndex const GEOSX_UNUSED_PARAM( k ),
+                   localIndex const GEOSX_UNUSED_PARAM( q ),
+                   real64 const GEOSX_UNUSED_PARAM( invP ),
+                   real64 const GEOSX_UNUSED_PARAM( invQ ),
+                   real64 const plasticMultiplier ) const
   {
-
-    // For DP model: state = plasticMultiplier
+    // The temporal state variable is updated inside the Newton loops by: state += plasticMultiplier
+    // starting from the previous saved state
 
     return plasticMultiplier; 
   }
+
+  real64 stateDerivatives( localIndex const GEOSX_UNUSED_PARAM( k ),
+                           localIndex const GEOSX_UNUSED_PARAM( q ),
+                           real64 const GEOSX_UNUSED_PARAM( invP ),
+                           real64 const GEOSX_UNUSED_PARAM( invQ ),
+                           real64 const GEOSX_UNUSED_PARAM( plasticMultiplier ) ) const
+  {
+    return 1.0;
+  }
+
+  real64 getStateVariable( localIndex const k,
+                           localIndex const q ) const
+  {
+    return m_state[k][q];
+  }
+
+ void saveStateVariable( localIndex const k,
+                         localIndex const q,
+                         real64 const state ) const
+  {
+    m_state[k][q] = state;
+  }
+
 
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
@@ -223,6 +238,9 @@ private:
 
   /// A reference to the ArrayView holding the cohesion for each integration point
   arrayView2d< real64 > const m_cohesion;
+
+  /// A reference to the ArrayView holding the state variable for each integration point
+  arrayView2d< real64 > const m_state;
 };
 
 
@@ -260,8 +278,10 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
 
   // check yield function F <= 0, using old hardening variable state
-  
-  hardeningParam = getHardeningParameter( k, q );
+
+  stateVariable = getStateVariable( k, q );
+
+  hardeningParam = hardening( k, q, stateVariable );
 
   if( yield( k, q, trialP, trialQ, hardeningParam ) < 1e-9 ) // elasticity
   {
@@ -293,22 +313,23 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     // Derivatives of the yield function
     // dF_dP = dF[0], dF_dQ = dF[1], dF_dHardeningParam = dF[2]
 
-    yieldDerivatives( k, q, solution[0], solution[1], dF );
+    yieldDerivatives( k, q, solution[0], solution[1], hardeningParam, dF );
 
     // Derivatives of the plastic potential function
     // dG_dP = dG[0], dG_dQ = dG[1]
     // dG_dP_dP = dG[2], dG_dP_dQ = dG[3], dG_dP_dHardeningParam = dG[4] 
     // dG_dQ_dP = dG[5], dG_dQ_dQ = dG[6], dG_dQ_dHardeningParam = dG[7]
 
-    potentialDerivatives( k, q, solution[0], solution[1], dG );
+    potentialDerivatives( k, q, solution[0], solution[1], hardeningParam, dG );
 
     // Hardening parameter and its derivative to the plastic multiplier
      
-    stateVariable = state( k, q, solution[0], solution[1], solution[2] );
+    stateVariable = tmpState( k, q, solution[0], solution[1], solution[2] );
 
     hardeningParam = hardening( k, q, stateVariable );
 
     dHardeningParam_dLambda = hardeningDerivatives( k, q, stateVariable, solution[2] );
+    dHardeningParam_dLambda *= stateDerivatives( k, q, solution[0], solution[1], solution[2] );
 
     // assemble residual system
     // resid1 = P - trialP + dlambda*bulkMod*dG/dP = 0
@@ -396,7 +417,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   // save and return
 
-  saveHardeningParameter( k, q, hardeningParam );
+  saveStateVariable( k, q, stateVariable );
   saveStress( k, q, stress );
   return;
 }
@@ -488,6 +509,9 @@ public:
 
     /// string/key for cohesion
     static constexpr auto cohesionString  = "cohesion";
+
+    /// string/key for state variable
+    static constexpr auto stateString  = "stateVariable";
   };
 
   /**
@@ -500,6 +524,7 @@ public:
                                  m_dilation,
                                  m_hardening,
                                  m_cohesion,
+                                 m_state,
                                  m_bulkModulus,
                                  m_shearModulus,
                                  m_newStress,
@@ -532,6 +557,9 @@ protected:
 
   /// State variable: The current cohesion parameter for each quadrature point
   array2d< real64 > m_cohesion;
+
+  /// State variable: The current equivalent plastic multiplier for each quadrature point
+  array2d< real64 > m_state;
 };
 
 } /* namespace constitutive */

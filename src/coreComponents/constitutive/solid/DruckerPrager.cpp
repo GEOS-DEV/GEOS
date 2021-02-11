@@ -34,7 +34,8 @@ DruckerPrager::DruckerPrager( string const & name,
   m_friction(),
   m_dilation(),
   m_hardening(),
-  m_cohesion()
+  m_cohesion(),
+  m_state()
 {
   // register default values
 
@@ -76,6 +77,12 @@ DruckerPrager::DruckerPrager( string const & name,
     setApplyDefaultValue( -1 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "Current cohesion" );
+
+
+  registerWrapper( viewKeyStruct::stateString, &m_state )->
+    setApplyDefaultValue( 0.0 )->
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
+    setDescription( "Equivalent plastic multiplier" );
 }
 
 DruckerPrager::~DruckerPrager()
@@ -85,7 +92,7 @@ void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const pare
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
   m_cohesion.resize( 0, numConstitutivePointsPerParentIndex );
-
+  m_state.resize( 0, numConstitutivePointsPerParentIndex );
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
