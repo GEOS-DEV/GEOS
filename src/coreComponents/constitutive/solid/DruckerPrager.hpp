@@ -91,8 +91,6 @@ public:
 
 private:
 
-  // The yield function that defines the elastic-plastic limit.
-
   virtual real64 yield( localIndex const k,
                         localIndex const GEOSX_UNUSED_PARAM( q ),
                         real64 const invP,
@@ -101,8 +99,6 @@ private:
   {
     return  invQ + m_friction[k] * invP - cohesion;
   }
-
-  // Derivatives of the yield function to the stress invariants and the hardening parameter.
 
   virtual void yieldDerivatives( localIndex const k,
                                  localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -126,11 +122,11 @@ private:
   // Derivatives of the plastic potential function to the stress invariants and the hardening parameter.
 
   virtual void potentialDerivatives( localIndex const k,
-                             localIndex const GEOSX_UNUSED_PARAM( q ),
-                             real64 const GEOSX_UNUSED_PARAM( invP ),
-                             real64 const GEOSX_UNUSED_PARAM( invQ ),
-                             real64 const GEOSX_UNUSED_PARAM( cohesion ),
-                             real64 (& dG)[8] ) const override final
+                                     localIndex const GEOSX_UNUSED_PARAM( q ),
+                                     real64 const GEOSX_UNUSED_PARAM( invP ),
+                                     real64 const GEOSX_UNUSED_PARAM( invQ ),
+                                     real64 const GEOSX_UNUSED_PARAM( cohesion ),
+                                     real64 (& dG)[8] ) const override final
   {
 
     // The plastic potential function is: G = invQ + invP * dilation
@@ -159,8 +155,8 @@ private:
   }
 
   virtual real64 hardening( localIndex const k,
-                    localIndex const q,
-                    real64 const state ) const override final
+                            localIndex const q,
+                            real64 const state ) const override final
   {
 
     // The hardening function is: cohesion = m_cohesion[k][q] + state * hardeningRate
@@ -169,8 +165,8 @@ private:
   }
 
   virtual real64 hardeningDerivatives( localIndex const k,
-                               localIndex const GEOSX_UNUSED_PARAM( q ),
-                               real64 const GEOSX_UNUSED_PARAM( state ) ) const override final
+                                       localIndex const GEOSX_UNUSED_PARAM( q ),
+                                       real64 const GEOSX_UNUSED_PARAM( state ) ) const override final
   {
 
     // The hardening function is: cohesion = m_cohesion[k][q] + state * hardeningRate
@@ -179,10 +175,10 @@ private:
   }
 
   virtual real64 tmpState( localIndex const GEOSX_UNUSED_PARAM( k ),
-                   localIndex const GEOSX_UNUSED_PARAM( q ),
-                   real64 const GEOSX_UNUSED_PARAM( invP ),
-                   real64 const GEOSX_UNUSED_PARAM( invQ ),
-                   real64 const plasticMultiplier ) const override final
+                           localIndex const GEOSX_UNUSED_PARAM( q ),
+                           real64 const GEOSX_UNUSED_PARAM( invP ),
+                           real64 const GEOSX_UNUSED_PARAM( invQ ),
+                           real64 const plasticMultiplier ) const override final
   {
     // The temporal state variable is updated inside the Newton loops by: state += plasticMultiplier
     // starting from the previous saved state
@@ -191,23 +187,23 @@ private:
   }
 
   virtual real64 stateDerivatives( localIndex const GEOSX_UNUSED_PARAM( k ),
-                           localIndex const GEOSX_UNUSED_PARAM( q ),
-                           real64 const GEOSX_UNUSED_PARAM( invP ),
-                           real64 const GEOSX_UNUSED_PARAM( invQ ),
-                           real64 const GEOSX_UNUSED_PARAM( plasticMultiplier ) ) const override final
+                                   localIndex const GEOSX_UNUSED_PARAM( q ),
+                                   real64 const GEOSX_UNUSED_PARAM( invP ),
+                                   real64 const GEOSX_UNUSED_PARAM( invQ ),
+                                   real64 const GEOSX_UNUSED_PARAM( plasticMultiplier ) ) const override final
   {
     return 1.0;
   }
 
   virtual real64 getStateVariable( localIndex const k,
-                           localIndex const q ) const override final
+                                   localIndex const q ) const override final
   {
     return m_state[k][q];
   }
 
   virtual void saveStateVariable( localIndex const k,
-                         localIndex const q,
-                         real64 const state ) const override final
+                                  localIndex const q,
+                                  real64 const state ) const override final
   {
     m_state[k][q] = state;
   }

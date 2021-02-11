@@ -100,13 +100,13 @@ private:
                         localIndex const q,
                         real64 const invP,
                         real64 const invQ,
-                        real64 const cohesion ) const
+                        real64 const hardeningParam ) const
   {
     GEOSX_UNUSED_VAR( k );  
     GEOSX_UNUSED_VAR( q );  
     GEOSX_UNUSED_VAR( invP );  
     GEOSX_UNUSED_VAR( invQ );  
-    GEOSX_UNUSED_VAR( cohesion );  
+    GEOSX_UNUSED_VAR( hardeningParam );  
 
     return 0;
   }
@@ -117,36 +117,36 @@ private:
                                  localIndex const q,
                                  real64 const invP,
                                  real64 const invQ,
-                                 real64 const cohesion,
+                                 real64 const hardeningParam,
                                  real64 (& dF)[3] ) const
   {
     GEOSX_UNUSED_VAR( k );  
     GEOSX_UNUSED_VAR( q );  
     GEOSX_UNUSED_VAR( invP );  
     GEOSX_UNUSED_VAR( invQ );  
-    GEOSX_UNUSED_VAR( cohesion );  
+    GEOSX_UNUSED_VAR( hardeningParam );  
     GEOSX_UNUSED_VAR( dF );  
   }
 
-  // Derivatives of the plastic potential function to the stress invariants and the hardening parameter.
+  // Derivatives of the plastic potential to the stress invariants and the hardening parameter.
 
   virtual void potentialDerivatives( localIndex const k,
-                                   localIndex const q,
-                                   real64 const invP,
-                                   real64 const invQ,
-                                   real64 const cohesion,
-                                   real64 (& dG)[8] ) const
+                                     localIndex const q,
+                                     real64 const invP,
+                                     real64 const invQ,
+                                     real64 const hardeningParam,
+                                     real64 (& dG)[8] ) const
   {
     GEOSX_UNUSED_VAR( k );  
     GEOSX_UNUSED_VAR( q );  
     GEOSX_UNUSED_VAR( invP );  
     GEOSX_UNUSED_VAR( invQ );  
-    GEOSX_UNUSED_VAR( cohesion );  
+    GEOSX_UNUSED_VAR( hardeningParam );  
     GEOSX_UNUSED_VAR( dG );  
   }
 
   // The hardening function that defines the relationship between the hardening parameter
-  // and the state variable (ex. bulk or shear plastic strain).
+  // and the state variable (ex. volumetric and/or deviatoric plastic strain).
 
   virtual real64 hardening( localIndex const k,
                             localIndex const q,
@@ -172,7 +172,7 @@ private:
     return 0;
   }
 
-  // A function to update temperaly the state variable within the elasto-plastic Newton loops.
+  // A function to update temporally the state variable in the elasto-plastic Newton loops.
 
   virtual real64 tmpState( localIndex const k,
                            localIndex const q,
@@ -206,7 +206,7 @@ private:
     return 0; 
   }
 
-  // Get the state variable saved from the previous update.
+  // Get the state variable that was saved from the previous elasto-plastic update.
 
   virtual real64 getStateVariable( localIndex const k,
                                    localIndex const q ) const
@@ -217,11 +217,11 @@ private:
     return 0;
   }
 
-  // Save the converged state varable after the elasto-plastic Newton loops.
+  // Save the converged state variable after the elasto-plastic Newton loops.
  
   virtual void saveStateVariable( localIndex const k,
-                                 localIndex const q,
-                                 real64 const state ) const
+                                  localIndex const q,
+                                  real64 const state ) const
   {
     GEOSX_UNUSED_VAR( k );  
     GEOSX_UNUSED_VAR( q );  
