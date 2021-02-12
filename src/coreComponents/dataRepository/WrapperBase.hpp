@@ -24,6 +24,10 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "LvArray/src/python/python.hpp"
+#endif
+
 #include <string>
 #include <memory>
 #include <set>
@@ -387,6 +391,12 @@ public:
   }
 
   /**
+   * @brief Return the path to this Wrapper in the data repository.
+   * @return The path to this Wrapper in the data repository.
+   */
+  string getPath() const;
+
+  /**
    * @brief Set the InputFlag of the wrapper.
    * @param input the new InputFlags value
    * @return a pointer to this wrapper
@@ -519,6 +529,14 @@ public:
    */
   virtual int setTotalviewDisplay() const;
 //  static int TV_ttf_display_type( const WrapperBase * wrapper);
+#endif
+
+#if defined(GEOSX_USE_PYGEOSX)
+  /**
+   * @brief Return a Python object representing the wrapped object.
+   * @return A Python object representing the wrapped object.
+   */
+  virtual PyObject * createPythonObject( ) = 0;
 #endif
 
 protected:

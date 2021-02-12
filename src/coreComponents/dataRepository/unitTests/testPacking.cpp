@@ -45,14 +45,14 @@ using namespace geosx;
 #define SKIP_TEST_IN_SERIAL( REASON ) \
   do \
   { \
-    int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX ); \
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
     SKIP_TEST_IF( mpiSize == 1, REASON ); \
   } while( 0 )
 
 #define SKIP_TEST_IN_PARALLEL( REASON ) \
   do \
   { \
-    int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX ); \
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
     SKIP_TEST_IF( mpiSize != 1, REASON ); \
   } while( 0 )
 

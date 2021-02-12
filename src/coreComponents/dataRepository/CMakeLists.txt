@@ -55,6 +55,14 @@ endif()
 
 set( dependencyList ${dependencyList} common conduit )
 
+if( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pylvarray )
+endif()
+
+if( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
+endif()
+
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}

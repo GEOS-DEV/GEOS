@@ -68,7 +68,7 @@ ChomboIO::~ChomboIO()
   m_coupler = nullptr;
 }
 
-void ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+bool ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -86,7 +86,7 @@ void ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
   if( cycleNumber < m_beginCycle )
   {
-    return;
+    return false;
   }
 
   m_coupler->write( dt );
@@ -95,6 +95,8 @@ void ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   {
     m_coupler->read( m_useChomboPressures );
   }
+
+  return false;
 }
 
 REGISTER_CATALOG_ENTRY( OutputBase, ChomboIO, string const &, Group * const )

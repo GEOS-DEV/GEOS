@@ -18,7 +18,7 @@ if(EXISTS ${GEOSX_TPL_DIR}/hdf5)
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/conduit)
-set(CONDUIT_DIR ${GEOSX_TPL_DIR}/conduit CACHE PATH "" FORCE)
+  set(CONDUIT_DIR ${GEOSX_TPL_DIR}/conduit CACHE PATH "" FORCE)
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/silo)

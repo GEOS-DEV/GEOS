@@ -124,6 +124,17 @@ localIndex SolverBase::targetRegionIndex( string const & regionName ) const
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
+bool SolverBase::registerCallback( void * func, const std::type_info & funcType )
+{
+  if( std::type_index( funcType ) == std::type_index( typeid( std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > ) ) )
+  {
+    m_assemblyCallback = *reinterpret_cast< std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > * >( func );
+    return true;
+  }
+
+  return false;
+}
+
 real64 SolverBase::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                real64 const & GEOSX_UNUSED_PARAM( dt ),
                                const integer GEOSX_UNUSED_PARAM( cycleNumber ),
@@ -132,7 +143,7 @@ real64 SolverBase::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
   return 0;
 }
 
-void SolverBase::execute( real64 const time_n,
+bool SolverBase::execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -177,6 +188,8 @@ void SolverBase::execute( real64 const time_n,
 
   // Decide what to do with the next Dt for the event running the solver.
   setNextDt( nextDt, m_nextDt );
+
+  return false;
 }
 
 void SolverBase::setNextDt( real64 const & currentDt,
@@ -238,6 +251,11 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
                            m_dofManager,
                            m_localMatrix.toViewConstSizes(),
                            m_localRhs.toView() );
+
+  if( m_assemblyCallback )
+  {
+    m_assemblyCallback( m_localMatrix, m_localRhs );
+  }
 
   // Compose parallel LA matrix/rhs out of local LA matrix/rhs
   m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
@@ -460,6 +478,11 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
                                m_dofManager,
                                m_localMatrix.toViewConstSizes(),
                                m_localRhs.toView() );
+
+      if( m_assemblyCallback )
+      {
+        m_assemblyCallback( m_localMatrix, m_localRhs );
+      }
 
       // TODO: maybe add scale function here?
       // Scale()

@@ -187,7 +187,6 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-  problemManager.initializePythonInterpreter();
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   DomainPartition & domain  = *problemManager.getDomainPartition();
@@ -204,6 +203,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   elementManager.processInputFileRecursive( topLevelNode );
 
   problemManager.problemSetup();
+  problemManager.applyInitialConditions();
 }
 
 } // namespace testing

@@ -26,7 +26,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
    
 * In the GEOSX repository, the ``keyType`` is specified to be a ``string`` for all  collection objects, 
   while the ``indexType`` is specified to be a ``localIndex``.
-  The types are set in the ``common/DataTypes.hpp`` file, but are typically a ``std::string`` and a 
+  The types are set in the ``common/DataTypes.hpp`` file, but are typically a ``string`` and a 
   ``std::ptrdiff_t`` respectively.
   
 .. literalinclude:: ../Group.hpp

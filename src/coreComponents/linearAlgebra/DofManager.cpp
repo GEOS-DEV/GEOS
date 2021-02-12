@@ -279,7 +279,7 @@ void DofManager::createIndexArray( FieldDescription & field )
     std::map< string, string_array > fieldNames;
     fieldNames[ MeshHelper< LOC >::syncObjName ].emplace_back( field.key );
 
-    CommunicationTools::
+    getGlobalState().getCommunicationTools().
       synchronizeFields( fieldNames, m_mesh,
                          m_domain->getNeighbors() );
   } );
@@ -1745,7 +1745,7 @@ void DofManager::reorderByRank()
   }
 
   // synchronize index arrays for all fields across ranks
-  CommunicationTools::
+  getGlobalState().getCommunicationTools().
     synchronizeFields( fieldToSync, m_mesh,
                        m_domain->getNeighbors() );
 

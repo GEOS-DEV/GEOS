@@ -50,7 +50,6 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-  problemManager->initializePythonInterpreter();
   problemManager->processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
@@ -64,6 +63,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   elementManager->postProcessInputRecursive();
 
   problemManager->problemSetup();
+  problemManager->applyInitialConditions();
 }
 
 /**
