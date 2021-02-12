@@ -19,7 +19,9 @@ set( finiteElement_headers
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
      elementFormulations/LagrangeBasis1.hpp
      elementFormulations/LagrangeBasis2.hpp
+     elementFormulations/LagrangeBasis3GL.hpp
      elementFormulations/LagrangeBasis5GL.hpp
+     elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp
      elementFormulations/Q5_Hexahedron_Lagrange_GaussLobatto.hpp
    )
 #
