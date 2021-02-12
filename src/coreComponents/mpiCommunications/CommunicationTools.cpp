@@ -815,21 +815,24 @@ void CommunicationTools::asyncSendRecv( const std::map< string, string_array > &
     parallelDeviceSync( );
   }
 
-    for( std::size_t count = 0; count < neighbors.size(); ++count )
-    {
-      int neighborIndex;
-      MpiWrapper::waitany( icomm.size,
-                           icomm.mpiSizeRecvBufferRequest.data(),
-                           &neighborIndex,
-                           icomm.mpiSizeRecvBufferStatus.data() );
+  // could swap this to test and make this function call async as well, only launch the sends/recvs for
+  // those we've already recv'd sizing for, go back to some usefule compute / launch some other compute, then
+  // check this again
+  for( std::size_t count = 0; count < neighbors.size(); ++count )
+  {
+    int neighborIndex;
+    MpiWrapper::waitany( icomm.size,
+                          icomm.mpiSizeRecvBufferRequest.data(),
+                          &neighborIndex,
+                          icomm.mpiSizeRecvBufferStatus.data() );
 
-      NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
-      neighbor.mpiISendReceiveBuffers( icomm.commID,
-                                      icomm.mpiSendBufferRequest[neighborIndex],
-                                      icomm.mpiRecvBufferRequest[neighborIndex],
-                                      MPI_COMM_GEOSX );
-    }
+    neighbor.mpiISendReceiveBuffers( icomm.commID,
+                                    icomm.mpiSendBufferRequest[neighborIndex],
+                                    icomm.mpiRecvBufferRequest[neighborIndex],
+                                    MPI_COMM_GEOSX );
+  }
 }
 
 void CommunicationTools::synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
@@ -875,18 +878,20 @@ bool CommunicationTools::asyncUnpack( MeshLevel * const mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-  int neighborIndex;
-  int flag;
+  int neighborIndex = -1;
+  int flag = 0;
+
   MpiWrapper::testany( icomm.size,
                        icomm.mpiRecvBufferRequest.data(),
                        &neighborIndex,
                        &flag,
                        icomm.mpiRecvBufferStatus.data() );
 
-  if ( flag )
+  // flag returns true for MPI_REQUEST_NULLs from previous calls, so we also need to check that neighborIndex has been set
+  if ( flag && neighborIndex >= 0)
   {
     // unpack the recvd buffer
-    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    NeighborCommunicator & neighbor = neighbors[ neighborIndex ];
     neighbor.unpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, on_device );
   }
 
