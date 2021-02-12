@@ -96,6 +96,8 @@ public:
     // misc inputs
     static constexpr auto fluidNamesString = "fluidNames";
     static constexpr auto solidNamesString = "solidNames";
+    static constexpr auto permeabilityNamesString = "permeabilityNames";
+
 
     static constexpr auto pressureString = "pressure";
     static constexpr auto deltaPressureString = "deltaPressure";
@@ -110,6 +112,12 @@ public:
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysFlowSolverBase;
+
+  void updatePermeabilityModel( CellElementSubRegion & subRegion,
+                                localIndex const targetIndex );
+
+  void updatePermeabilityModel( SurfaceElementSubRegion & subRegion,
+                                localIndex const targetIndex );
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -159,6 +167,9 @@ protected:
 
   /// name of the solid constitutive model
   array1d< string > m_solidModelNames;
+
+  /// name of the permeability constituive model
+  array1d< string > m_permeabilityModelNames;
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;

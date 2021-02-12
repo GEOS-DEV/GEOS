@@ -52,6 +52,9 @@ set( constitutive_headers
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/relativePermeabilitySelector.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
+     permeability/PermeabilityBase.hpp
+     permeability/FracturePermeability.hpp
+     permeability/permeabilitySelector.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
@@ -96,6 +99,8 @@ set( constitutive_sources
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
+     permeability/PermeabilityBase.cpp
+     permeability/FracturePermeability.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp

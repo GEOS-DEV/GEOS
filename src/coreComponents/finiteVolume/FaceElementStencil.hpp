@@ -20,6 +20,7 @@
 #define GEOSX_FINITEVOLUME_FACEELEMENTSTENCIL_HPP_
 
 #include "StencilBase.hpp"
+#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -85,8 +86,8 @@ class FaceElementStencil : public StencilBase< FaceElementStencil_Traits, FaceEl
 {
 public:
 
- template< typename VIEWTYPE >
- using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Default constructor.
@@ -112,8 +113,14 @@ public:
             R1Tensor const * const cellCenterToEdgeCenter,
             localIndex const connectorIndex );
 
-  void updateWeights( ElementViewConst< arrayView1d< real64 const > > const & permeability,
-		              ElementViewConst< arrayView1d< real64 const > > const & aperture );                                                                      );
+
+  /**
+   * @brief Add an entry to the stencil.
+   * @param[in] coefficient the coefficient (e.g., permeability contained in the stencil to be updated)
+   * @param[in] aperture elementViewAccessor to the aperture of the fracture elements.
+   */
+  void updateWeights( ElementViewConst< arrayView1d< real64 const > > const & coefficient,
+                      ElementViewConst< arrayView1d< real64 const > > const & aperture );
 
   /**
    * @brief Return the stencil size.

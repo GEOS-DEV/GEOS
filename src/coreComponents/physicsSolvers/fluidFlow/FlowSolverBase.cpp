@@ -22,12 +22,16 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
+#include "constitutive/permeability/permeabilitySelector.hpp"
+
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace FlowSolverBaseKernels;
 
 FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
@@ -60,6 +64,11 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Names of solid constitutive models for each region." );
+
+  this->registerWrapper( viewKeyStruct::permeabilityNamesString, &m_permeabilityModelNames )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setSizedFromParent( 0 )->
+    setDescription( "Names of permeability constitutive models for each region." );
 
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString, &m_fluxEstimate )->
     setApplyDefaultValue( 1.0 )->
@@ -216,6 +225,49 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh )
 }
 
 FlowSolverBase::~FlowSolverBase() = default;
+
+
+void FlowSolverBase::updatePermeabilityModel( CellElementSubRegion & subRegion,
+                                              localIndex const targetIndex )
+{
+  GEOSX_MARK_FUNCTION;
+
+  arrayView1d< real64 const > const porosity  =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+
+  PermeabilityBase & perm =
+    getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+
+  constitutive::constitutiveUpdatePassThru( perm, [&] ( auto & castedPerm )
+  {
+    typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
+
+    PermeabilityKernel< CellElementSubRegion >::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                                  permWrapper,
+                                                                                  porosity );
+  } );
+}
+
+void FlowSolverBase::updatePermeabilityModel( SurfaceElementSubRegion & subRegion,
+                                              localIndex const targetIndex )
+{
+  GEOSX_MARK_FUNCTION;
+
+  arrayView1d< real64 const > const effectiveAperture  =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString );
+
+  PermeabilityBase & perm =
+    getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+
+  constitutive::constitutiveUpdatePassThru( perm, [&] ( auto & castedPerm )
+  {
+    typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
+
+    PermeabilityKernel< SurfaceElementSubRegion >::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                                     permWrapper,
+                                                                                     effectiveAperture );
+  } );
+}
 
 void FlowSolverBase::resetViews( MeshLevel & mesh )
 {

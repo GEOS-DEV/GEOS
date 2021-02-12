@@ -247,10 +247,10 @@ public:
    * @param localRhs the local system right-hand side vector
    */
   void accumulationLaunch( localIndex const targetIndex,
-		                   CellElementSubRegion const & subRegion,
-						   DofManager const & dofManager,
-						   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-						   arrayView1d< real64 > const & localRhs );
+                           CellElementSubRegion const & subRegion,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief interface to launche the accumulation kernel
@@ -260,10 +260,10 @@ public:
    * @param localRhs the local system right-hand side vector
    */
   void accumulationLaunch( localIndex const targetIndex,
-  		                   SurfaceElementSubRegion const & subRegion,
-						   DofManager const & dofManager,
-						   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-						   arrayView1d< real64 > const & localRhs );
+                           SurfaceElementSubRegion const & subRegion,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the flux terms for all cells
