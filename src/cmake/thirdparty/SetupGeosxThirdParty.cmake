@@ -520,6 +520,29 @@ else()
 endif()
 
 ################################
+# Python
+################################
+if(ENABLE_PYGEOSX)
+    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
+    find_package(Python3 REQUIRED
+                 COMPONENTS Development NumPy)
+
+    message(STATUS "Python3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}")
+    message(STATUS "Python3_LIBRARY_DIRS = ${Python3_LIBRARY_DIRS}")
+    message(STATUS "Python3_NumPy_INCLUDE_DIRS = ${Python3_NumPy_INCLUDE_DIRS}")
+
+    if(DEFINED ENABLE_PYLVARRAY AND NOT ENABLE_PYLVARRAY)
+        message(FATAL_ERROR "Cannot build pygeosx without pylvarray")
+    else()
+        set(ENABLE_PYLVARRAY ON CACHE BOOL "" FORCE)
+    endif()
+
+    set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
+else()
+    message(STATUS "Not building pygeosx.")
+endif()
+
+################################
 # LAI
 ################################
 string(TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI)

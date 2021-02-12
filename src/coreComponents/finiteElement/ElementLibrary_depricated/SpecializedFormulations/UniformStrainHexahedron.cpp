@@ -252,8 +252,8 @@ void CalculateFBHourGlassModes( const array1d< R1Tensor > & xpos,
     {-1, 1, 1, -1, 1, -1, -1, 1}
   };
 
-  static R1Tensor temp;
-  static R1Tensor xGamma;
+  R1Tensor temp;
+  R1Tensor xGamma;
 
 
   // compute the hourglass modes

@@ -675,7 +675,7 @@ private:
 
   string m_restartFileRoot;
 
-  string const m_siloDirectory = "siloFiles";
+  string const m_siloDirectory;
 
   string const m_siloDataSubDirectory = "data";
 

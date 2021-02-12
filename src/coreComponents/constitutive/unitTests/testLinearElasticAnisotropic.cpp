@@ -25,12 +25,14 @@ using namespace ::geosx::constitutive;
 
 TEST( LinearElasticAnisotropicTests, testAllocation )
 {
-  LinearElasticAnisotropic cm( "model", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  LinearElasticAnisotropic cm( "model", &rootGroup );
 
   localIndex constexpr numElems = 2;
   localIndex constexpr numQuadraturePoints = 3;
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElems );
   cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
@@ -94,7 +96,9 @@ void stressCheck( real64 const stressV[6], real64 const stressV2[6] )
 
 TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 {
-  LinearElasticAnisotropic cm( "model", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  LinearElasticAnisotropic cm( "model", &rootGroup );
 
   real64 c[6][6] = {
     { 1.0e11, 0.1e10, 0.2e10, 0.3e10, 0.4e10, 0.5e10 },
@@ -107,7 +111,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
   cm.setDefaultStiffness( c );
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( 2 );
   cm.allocateConstitutiveData( &disc, 2 );
 
@@ -229,7 +233,9 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
 TEST( LinearElasticAnisotropicTests, testXML )
 {
-  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
 
   string const inputStream =
     "<Constitutive>"
@@ -257,7 +263,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   constitutiveManager.postProcessInputRecursive();
 
   LinearElasticAnisotropic * const model = constitutiveManager.getConstitutiveRelation< LinearElasticAnisotropic >( "granite" );
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( 1 );
   model->allocateConstitutiveData( &disc, 1 );
 
