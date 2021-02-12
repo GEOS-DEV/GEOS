@@ -134,7 +134,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
     # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
-    depends_on('hypre@2.20.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.21.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
  
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
@@ -143,10 +143,11 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Python
     #
-    depends_on('python +shared +pic ~sqlite3', when='+pygeosx')
+    depends_on('python +shared +pic', when='+pygeosx')
     depends_on('py-numpy@1.19: +blas +lapack +force-parallel-build', when='+pygeosx')
     depends_on('py-scipy@1.5.2: +force-parallel-build', when='+pygeosx')
     depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
+    depends_on('py-pip', when='+pygeosx')
 
     #
     # Dev tools
@@ -404,10 +405,10 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('# Python\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
             if '+pygeosx' in spec:
-                cfg.write(cmake_cache_option('ENABLE_PYTHON', True))
+                cfg.write(cmake_cache_option('ENABLE_PYGEOSX', True))
                 cfg.write(cmake_cache_entry('Python3_EXECUTABLE', os.path.join(spec['python'].prefix.bin, 'python3')))
             else:
-                cfg.write(cmake_cache_option('ENABLE_PYTHON', False))
+                cfg.write(cmake_cache_option('ENABLE_PYGEOSX', False))
 
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Documentation\n')
