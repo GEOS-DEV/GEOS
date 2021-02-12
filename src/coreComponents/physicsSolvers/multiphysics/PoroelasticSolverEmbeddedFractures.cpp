@@ -60,8 +60,7 @@ PoroelasticSolverEmbeddedFractures::PoroelasticSolverEmbeddedFractures( const st
 }
 
 PoroelasticSolverEmbeddedFractures::~PoroelasticSolverEmbeddedFractures()
-{
-}
+{}
 
 void PoroelasticSolverEmbeddedFractures::postProcessInput()
 {
