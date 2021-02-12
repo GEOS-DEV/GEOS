@@ -117,6 +117,9 @@ public:
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
+    m_gravityAcceleration( sqrt( inputGravityVector[0] * inputGravityVector[0] +
+                                 inputGravityVector[1] * inputGravityVector[1] +
+                                 inputGravityVector[2] * inputGravityVector[2] ) ),
     m_solidDensity( inputConstitutiveType->getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] )->density() ),
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
@@ -149,6 +152,7 @@ public:
                                        localFlowResidual{ 0.0 },
                                        localDispFlowJacobian{ {0.0} },
                                        localFlowDispJacobian{ {0.0} },
+                                       localStiff{ {0.0} },
                                        localFlowDofIndex{ 0 }
     {}
 
@@ -169,6 +173,7 @@ public:
     real64 localFlowResidual[1];
     real64 localDispFlowJacobian[numDispDofPerElem][1];
     real64 localFlowDispJacobian[1][numDispDofPerElem];
+    real64 localStiff[numDispDofPerElem][numDispDofPerElem]; //temporary
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localFlowDofIndex[1];
@@ -218,77 +223,113 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-
+    // For now we assume incompressible solid grains (biot's coefficient = 1)
     constexpr real64 biotCoefficient = 1.0;
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
+    // Get displacement basis functions (N), their derivatives (dNdX) and the determinant of the
+    // Jacobian transformation matrix times the quadrature weight (detJxW)
+    real64 N[numNodesPerElem];
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+
+    FE_TYPE::calcN( q, N );
+    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+
+    // Evaluate total stress tensor
+    real64 totalStress[6];
+
+    // --- Update effective stress tensor (stored in totalStress)
     real64 strainInc[6] = {0};
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
-
     m_constitutiveUpdate.smallStrain( k, q, strainInc );
+    m_constitutiveUpdate.getStress( k, q, totalStress );
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
-    m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
+    // --- Subtract pressure term
+    real64 const biotTimesPressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+    totalStress[0] -= biotTimesPressure;
+    totalStress[1] -= biotTimesPressure;
+    totalStress[2] -= biotTimesPressure;
 
-    stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
-
-    real64 stress[6];
-
-    m_constitutiveUpdate.getStress( k, q, stress );
-
-    real64 const pressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
-    stress[0] -= pressure;
-    stress[1] -= pressure;
-    stress[2] -= pressure;
-
-    // Compute porosity assuming a linear model
+    // Evaluate body force vector
+    // --- Compute Lagrangian porosity assuming linear model poroelastic infinitesimal deformation
+    //     phi_n = phi_0 + biot * div (u_n,k - u_0)) + 1/N (p_n,k - p_0)
     //
-    // phi_n = phi_0 + biot * div (u_n,k - u_0)) + 1/N (p_n,k - p_0)
-    //
-    // for the moment assume incompressible grains => b = 1.0, 1/N = 0
-    //
+    //     Note: since grains are assumed incompressible 1/N = 0
+    real64  bodyForce[3] = { 0.0 };
+    if( m_gravityAcceleration > 0.0 )
+    {
+      real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
+      real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
+      real64 mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidDensity( k, q );
+      mixtureDensity *= detJxW;
+      bodyForce[0] *= mixtureDensity;
+      bodyForce[1] *= mixtureDensity;
+      bodyForce[2] *= mixtureDensity;
+    }
 
-    real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
 
-    real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
-
-    real64 mixtureDensity = (1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidDensity( k, q );
-
-    real64 const gravityForce[3] = { m_gravityVector[0] * mixtureDensity * detJ,
-                                     m_gravityVector[1] * mixtureDensity * detJ,
-                                     m_gravityVector[2] * mixtureDensity * detJ };
+    // Compute local linear momentum residual
+    // \int ( - symgrad(N) : totalStress + \eta \cdot bodyForce )
 
     for( localIndex i=0; i<6; ++i )
     {
-      stress[i] *= -detJ;
+      totalStress[i] *= -detJxW;
     }
 
-    real64 N[numNodesPerElem];
-    FE_TYPE::calcN( q, N );
     FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
-                                     stress,
+                                     totalStress,
                                      N,
-                                     gravityForce,
+                                     bodyForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
+    // Assemble local jacobian
+
+    // ---
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
+    m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
+    stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+
+    if( m_gravityAcceleration > 0.0 )
+    {
+      // Considering this contribution yields nonsymmetry and requires fullBTDB
+#if 0
+      real64 dMixtureDens_dVolStrain = ( - m_solidDensity( k, q ) + m_fluidDensity( k, q ) ) * biotCoefficient;
+      dMixtureDens_dVolStrain *= detJxW;
+      for( integer a = 0; a < numNodesPerElem; ++a )
+      {
+        for( integer b = 0; b < numNodesPerElem; ++b )
+        {
+          stack.localJacobian[a * 3 + 0][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][0];
+          stack.localJacobian[a * 3 + 0][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][1];
+          stack.localJacobian[a * 3 + 0][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][2];
+          stack.localJacobian[a * 3 + 1][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][0];
+          stack.localJacobian[a * 3 + 1][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][1];
+          stack.localJacobian[a * 3 + 1][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][2];
+          stack.localJacobian[a * 3 + 2][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][0];
+          stack.localJacobian[a * 3 + 2][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][1];
+          stack.localJacobian[a * 3 + 2][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][2];
+        }
+      }
+#endif
+    }
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[ a * 3 + 0][0] += biotCoefficient * dNdX[a][0] * detJ;
-      stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJ;
-      stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJ;
+      stack.localDispFlowJacobian[ a * 3 + 0][0] += biotCoefficient * dNdX[a][0] * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJxW;
 
-      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][0] * detJ;
-      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][1] * detJ;
-      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][2] * detJ;
+      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][0] * detJxW;
+      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][1] * detJxW;
+      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][2] * detJxW;
 
       real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
                       + dNdX[a][1] * stack.uhat_local[a][1]
                       + dNdX[a][2] * stack.uhat_local[a][2];
-      Rf_tmp *= m_fluidDensity( k, q ) * biotCoefficient * detJ;
+      Rf_tmp *= m_fluidDensity( k, q ) * biotCoefficient * detJxW;
       stack.localFlowResidual[0] += Rf_tmp;
     }
+
+
 
   }
 
@@ -362,6 +403,7 @@ protected:
 
   /// The gravity vector.
   real64 const m_gravityVector[3];
+  real64 const m_gravityAcceleration;
 
   /// The rank global density
   arrayView2d< real64 const > const m_solidDensity;
