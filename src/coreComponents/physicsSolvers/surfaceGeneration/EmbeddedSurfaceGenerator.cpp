@@ -173,7 +173,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemMan
 
   embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
 
-  setGlobalIndixes( elemManager, embeddedSurfaceSubRegion );
+  setGlobalIndices( elemManager, embeddedSurfaceSubRegion );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 

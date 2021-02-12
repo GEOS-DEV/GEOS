@@ -840,7 +840,7 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
     arrayView1d< real64 const > const & deltaPressure =
       subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
 
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const k )
+    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const k )
     {
       aperture[k] = dispJump[k][0];   // the first component of the jump is the normal one.
 

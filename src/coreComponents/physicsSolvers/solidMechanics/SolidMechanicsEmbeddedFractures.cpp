@@ -614,7 +614,6 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                          true );
 
   updateState( domain );
-
 }
 
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
@@ -638,12 +637,12 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
     arrayView3d< real64 > const & dTraction_dJump =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString );
 
-    for( localIndex k=0; k< subRegion.size(); ++k )
+    forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const k )
     {
       contactRelation->computeTraction( jump[k], fractureTraction[k] );
 
       contactRelation->dTraction_dJump( jump[k], dTraction_dJump[k] );
-    }
+    } );
   } );
 }
 
