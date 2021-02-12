@@ -245,13 +245,14 @@ public:
     return m_strainEnergyDensity( k, q );
   }
 
+<<<<<<< HEAD
 
-  GEOSX_HOST_DEVICE
-  virtual real64 getEnergyThreshold() const override final
-  {
-    return m_criticalStrainEnergy;
-  }
-
+=======
+>>>>>>> 0401526b6 (add getEnergy function to Spectral)
+<<<<<<< HEAD
+=======
+  
+>>>>>>> 0401526b6 (add getEnergy function to Spectral)
 };
 
 
