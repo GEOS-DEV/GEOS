@@ -57,7 +57,7 @@ VTKOutput::~VTKOutput()
 
 
 
-void VTKOutput::execute( real64 const time_n,
+bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const cycleNumber,
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -75,6 +75,8 @@ void VTKOutput::execute( real64 const time_n,
   }
   m_writer.setPlotLevel( m_plotLevel );
   m_writer.write( time_n, cycleNumber, *domainPartition );
+
+  return false;
 }
 
 

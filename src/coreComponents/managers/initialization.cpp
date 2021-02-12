@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------------------------------------------
- * SPDX-License-Identifier: LGPL-2.1-only
+ * SPDX-LiCense-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
@@ -49,21 +49,12 @@
 
 namespace geosx
 {
-namespace internal
-{
-
-/// Struct containing the parsed command line options.
-CommandLineOptions s_commandLineOptions;
-
-#if defined( GEOSX_USE_CALIPER )
-cali::ConfigManager s_caliperManager;
-#endif
 
 /**
  * @brief For each Umpire::Allocator compute the total high water mark across all ranks
  *        and if using Adiak add statistics about the high water mark.
  */
-void addUmpireHighWaterMarks()
+static void addUmpireHighWaterMarks()
 {
   umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
 
@@ -118,100 +109,6 @@ void addUmpireHighWaterMarks()
 }
 
 /**
- * @brief Setup Caliper and Adiak.
- */
-void setupCaliper()
-{
-#if defined( GEOSX_USE_CALIPER )
-  s_caliperManager.add( s_commandLineOptions.timerOutput.c_str() );
-  GEOSX_ERROR_IF( s_caliperManager.error(), "Caliper config error: " << s_caliperManager.error_msg() );
-  s_caliperManager.start();
-
-#if defined( GEOSX_USE_MPI )
-  adiak::init( &MPI_COMM_GEOSX );
-#else
-  adiak::init( nullptr );
-#endif
-
-  GEOSX_WARNING_IF( !adiak::uid(), "Error getting the user info." );
-  GEOSX_WARNING_IF( !adiak::launchdate(), "Error getting the launch date info." );
-  GEOSX_WARNING_IF( !adiak::cmdline(), "Error getting the command line args." );
-  GEOSX_WARNING_IF( !adiak::clustername(), "Error getting the clustername." );
-  GEOSX_WARNING_IF( !adiak::walltime(), "Error getting the walltime." );
-  GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
-  GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
-
-  string xmlDir, xmlName;
-  splitPath( s_commandLineOptions.inputFileName, xmlDir, xmlName );
-  adiak::value( "XML File", xmlName );
-  adiak::value( "Problem name", s_commandLineOptions.problemName );
-
-  // MPI info
-#if defined( GEOSX_USE_MPI )
-  adiak::value( "MPI", "On" );
-  adiak::value( "mpi ranks", MpiWrapper::commSize() );
-#else
-  adiak::value( "MPI", "Off" );
-  adiak::value( "mpi ranks", 1 );
-#endif
-
-  // Build info
-#if defined( __clang_version__ )
-  adiak::value( "compiler", "clang" );
-  adiak::value( "compiler version", adiak::version( "clang" __clang_version__ ) );
-#elif defined( __INTEL_COMPILER )
-  adiak::value( "compiler", "intel" );
-  adiak::value( "compiler version", adiak::version( "intel" STRINGIZE( __INTEL_COMPILER ) ) );
-#elif defined( __GNUC__ )
-  adiak::value( "compiler", "gcc" );
-  adiak::value( "compiler version", adiak::version( "gcc" __VERSION__ ) );
-#else
-  adiak::value( "compiler", "unknown" );
-  adiak::value ( "compiler version", "unknown" );
-#endif
-
-  adiak::value( "build type", GEOSX_CMAKE_BUILD_TYPE );
-  adiak::value( "compilation date", __DATE__ );
-
-  // OpenMP info
-#if defined( GEOSX_USE_OPENMP )
-  std::int64_t const numThreads = omp_get_max_threads();
-  adiak::value( "OpenMP", "On" );
-#else
-  std::int64_t const numThreads = 1;
-  adiak::value( "OpenMP", "Off" );
-#endif
-  pushStatsIntoAdiak( "numThreads", static_cast< int >(numThreads) );
-
-  // CUDA info
-  int cudaRuntimeVersion = 0;
-  int cudaDriverVersion = 0;
-#if defined( GEOSX_USE_CUDA )
-  adiak::value( "CUDA", "On" );
-  GEOSX_ERROR_IF_NE( cudaSuccess, cudaRuntimeGetVersion( &cudaRuntimeVersion ) );
-  GEOSX_ERROR_IF_NE( cudaSuccess, cudaDriverGetVersion( &cudaDriverVersion ) );
-#else
-  adiak::value( "CUDA", "Off" );
-#endif
-  adiak::value( "CUDA runtime version", cudaRuntimeVersion );
-  adiak::value( "CUDA driver version", cudaDriverVersion );
-
-#endif // defined( GEOSX_USE_CALIPER )
-}
-
-/**
- * @brief Finalize Caliper and Adiak if @p mgr is not a nullptr.
- * @param mgr the Caliper manager to finalize.
- */
-void finalizeCaliper()
-{
-#ifdef GEOSX_USE_CALIPER
-  adiak::fini();
-  s_caliperManager.flush();
-#endif
-}
-
-/**
  * @class Arg a class inheriting from option::Arg that can parse a command line argument.
  */
 struct Arg : public option::Arg
@@ -262,13 +159,11 @@ struct Arg : public option::Arg
   }
 };
 
-/**
- * @brief Parse the command line options and populate s_commandLineOptions with the results.
- * @param argc The number of command line arguments.
- * @param argv The command line arguments.
- */
-void parseCommandLineOptions( int argc, char * * argv )
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * * argv )
 {
+  std::unique_ptr< CommandLineOptions > commandLineOptions = std::make_unique< CommandLineOptions >();
+
   // Set the options structs and parse
   enum optionIndex
   {
@@ -349,74 +244,74 @@ void parseCommandLineOptions( int argc, char * * argv )
       break;
       case INPUT:
       {
-        s_commandLineOptions.inputFileName = opt.arg;
+        commandLineOptions->inputFileName = opt.arg;
       }
       break;
       case RESTART:
       {
-        s_commandLineOptions.restartFileName = opt.arg;
-        s_commandLineOptions.beginFromRestart = 1;
+        commandLineOptions->restartFileName = opt.arg;
+        commandLineOptions->beginFromRestart = 1;
       }
       break;
       case XPAR:
       {
-        s_commandLineOptions.xPartitionsOverride = std::stoi( opt.arg );
-        s_commandLineOptions.overridePartitionNumbers = 1;
+        commandLineOptions->xPartitionsOverride = std::stoi( opt.arg );
+        commandLineOptions->overridePartitionNumbers = 1;
       }
       break;
       case YPAR:
       {
-        s_commandLineOptions.yPartitionsOverride = std::stoi( opt.arg );
-        s_commandLineOptions.overridePartitionNumbers = 1;
+        commandLineOptions->yPartitionsOverride = std::stoi( opt.arg );
+        commandLineOptions->overridePartitionNumbers = 1;
       }
       break;
       case ZPAR:
       {
-        s_commandLineOptions.zPartitionsOverride = std::stoi( opt.arg );
-        s_commandLineOptions.overridePartitionNumbers = 1;
+        commandLineOptions->zPartitionsOverride = std::stoi( opt.arg );
+        commandLineOptions->overridePartitionNumbers = 1;
       }
       break;
       case NONBLOCKING_MPI:
       {
-        s_commandLineOptions.useNonblockingMPI = true;
+        commandLineOptions->useNonblockingMPI = true;
       }
       break;
       case SUPPRESS_PINNED:
       {
-        s_commandLineOptions.suppressPinned = true;
+        commandLineOptions->suppressPinned = true;
       }
       break;
       case SCHEMA:
       {
-        s_commandLineOptions.schemaName = opt.arg;
+        commandLineOptions->schemaName = opt.arg;
       }
       break;
       case PROBLEMNAME:
       {
-        s_commandLineOptions.problemName = opt.arg;
+        commandLineOptions->problemName = opt.arg;
       }
       break;
       case OUTPUTDIR:
       {
-        s_commandLineOptions.outputDirectory = opt.arg;
+        commandLineOptions->outputDirectory = opt.arg;
       }
       break;
       case TIMERS:
       {
-        s_commandLineOptions.timerOutput = opt.arg;
+        commandLineOptions->timerOutput = opt.arg;
       }
       break;
       case SUPPRESS_MOVE_LOGGING:
       {
-        s_commandLineOptions.suppressMoveLogging = true;
+        commandLineOptions->suppressMoveLogging = true;
       }
       break;
     }
   }
 
-  if( s_commandLineOptions.problemName == "" )
+  if( commandLineOptions->problemName == "" )
   {
-    string & inputFileName = s_commandLineOptions.inputFileName;
+    string & inputFileName = commandLineOptions->inputFileName;
     if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
     {
       string::size_type start = inputFileName.find_last_of( '/' ) + 1;
@@ -424,55 +319,49 @@ void parseCommandLineOptions( int argc, char * * argv )
       {
         start = 0;
       }
-      s_commandLineOptions.problemName.assign( inputFileName, start, inputFileName.length() - 4 - start );
+      commandLineOptions->problemName.assign( inputFileName, start, inputFileName.length() - 4 - start );
     }
     else
     {
-      s_commandLineOptions.problemName.assign( inputFileName );
+      commandLineOptions->problemName.assign( inputFileName );
     }
   }
+
+  return commandLineOptions;
 }
 
-} // namespace internal
-
-///////////////////////////////////////////////////////////////////////////////
-void basicSetup( int argc, char * argv[], bool const parseCommandLine )
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine )
 {
   setupMPI( argc, argv );
   setupLogger();
-  setupCXXUtils();
+  setupLvArray();
   setupOpenMP();
   setupMKL();
   setupLAI( argc, argv );
 
   if( parseCommandLine )
   {
-    internal::parseCommandLineOptions( argc, argv );
+    return parseCommandLineOptions( argc, argv );
   }
-
-  internal::setupCaliper();
+  else
+  {
+    return std::make_unique< CommandLineOptions >();
+  }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-CommandLineOptions const & getCommandLineOptions()
-{ return internal::s_commandLineOptions; }
-
-///////////////////////////////////////////////////////////////////////////////
-void overrideInputFileName( string const & inputFileName )
-{ internal::s_commandLineOptions.inputFileName = inputFileName; }
-
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void basicCleanup()
 {
   LvArray::system::resetSignalHandling();
   finalizeLAI();
   finalizeLogger();
-  internal::addUmpireHighWaterMarks();
-  internal::finalizeCaliper();
+  addUmpireHighWaterMarks();
+  finalizeCaliper();
   finalizeMPI();
 }
 
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLogger()
 {
 #ifdef GEOSX_USE_MPI
@@ -482,14 +371,14 @@ void setupLogger()
 #endif
 }
 
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeLogger()
 {
   logger::FinalizeLogger();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-void setupCXXUtils()
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupLvArray()
 {
   LvArray::system::setErrorHandler( []()
   {
@@ -513,7 +402,7 @@ void setupCXXUtils()
 #endif
 }
 
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMKL()
 {
 #ifdef GEOSX_USE_MKL
@@ -521,7 +410,7 @@ void setupMKL()
 #endif
 }
 
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupOpenMP()
 {
 #ifdef GEOSX_USE_OPENMP
@@ -529,18 +418,106 @@ void setupOpenMP()
 #endif
 }
 
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMPI( int argc, char * argv[] )
 {
   MpiWrapper::init( &argc, &argv );
   MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
 }
 
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeMPI()
 {
   MpiWrapper::commFree( MPI_COMM_GEOSX );
   MpiWrapper::finalize();
 }
+
+#if defined( GEOSX_USE_CALIPER )
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupCaliper( cali::ConfigManager & caliperManager,
+                   CommandLineOptions const & commandLineOptions )
+{
+  caliperManager.add( commandLineOptions.timerOutput.c_str() );
+  GEOSX_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
+  caliperManager.start();
+
+#if defined( GEOSX_USE_MPI )
+  adiak::init( &MPI_COMM_GEOSX );
+#else
+  adiak::init( nullptr );
+#endif
+
+  GEOSX_WARNING_IF( !adiak::uid(), "Error getting the user info." );
+  GEOSX_WARNING_IF( !adiak::launchdate(), "Error getting the launch date info." );
+  GEOSX_WARNING_IF( !adiak::cmdline(), "Error getting the command line args." );
+  GEOSX_WARNING_IF( !adiak::clustername(), "Error getting the clustername." );
+  GEOSX_WARNING_IF( !adiak::walltime(), "Error getting the walltime." );
+  GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
+  GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
+
+  string xmlDir, xmlName;
+  splitPath( commandLineOptions.inputFileName, xmlDir, xmlName );
+  adiak::value( "XML File", xmlName );
+  adiak::value( "Problem name", commandLineOptions.problemName );
+
+  // MPI info
+#if defined( GEOSX_USE_MPI )
+  adiak::value( "MPI", "On" );
+  adiak::value( "mpi ranks", MpiWrapper::commSize() );
+#else
+  adiak::value( "MPI", "Off" );
+  adiak::value( "mpi ranks", 1 );
+#endif
+
+  // Build info
+#if defined( __clang_version__ )
+  adiak::value( "compiler", "clang" );
+  adiak::value( "compiler version", adiak::version( "clang" __clang_version__ ) );
+#elif defined( __INTEL_COMPILER )
+  adiak::value( "compiler", "intel" );
+  adiak::value( "compiler version", adiak::version( "intel" __INTEL_COMPILER ) );
+#elif defined( __GNUC__ )
+  adiak::value( "compiler", "gcc" );
+  adiak::value( "compiler version", adiak::version( "gcc" __VERSION__ ) );
+#else
+  adiak::value( "compiler", "unknown" );
+  adiak::value ( "compiler version", "unknown" );
+#endif
+
+  adiak::value( "build type", GEOSX_CMAKE_BUILD_TYPE );
+  adiak::value( "compilation date", __DATE__ );
+
+  // OpenMP info
+#if defined( GEOSX_USE_OPENMP )
+  std::int64_t const numThreads = omp_get_max_threads();
+  adiak::value( "OpenMP", "On" );
+#else
+  std::int64_t const numThreads = 1;
+  adiak::value( "OpenMP", "Off" );
+#endif
+  pushStatsIntoAdiak( "numThreads", numThreads );
+
+  // CUDA info
+  int cudaRuntimeVersion = 0;
+  int cudaDriverVersion = 0;
+#if defined( GEOSX_USE_CUDA )
+  adiak::value( "CUDA", "On" );
+  GEOSX_ERROR_IF_NE( cudaSuccess, cudaRuntimeGetVersion( &cudaRuntimeVersion ) );
+  GEOSX_ERROR_IF_NE( cudaSuccess, cudaDriverGetVersion( &cudaDriverVersion ) );
+#else
+  adiak::value( "CUDA", "Off" );
+#endif
+  adiak::value( "CUDA runtime version", cudaRuntimeVersion );
+  adiak::value( "CUDA driver version", cudaDriverVersion );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void finalizeCaliper()
+{
+  adiak::fini();
+}
+
+#endif // defined( GEOSX_USE_CALIPER )
 
 } // namespace geosx
