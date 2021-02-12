@@ -27,13 +27,6 @@ FieldSpecificationManager::FieldSpecificationManager( string const & name, Group
   setInputFlags( InputFlags::OPTIONAL );
 }
 
-
-FieldSpecificationManager & FieldSpecificationManager::get()
-{
-  static FieldSpecificationManager bcman( "FieldSpecifications", nullptr );
-  return bcman;
-}
-
 FieldSpecificationManager::~FieldSpecificationManager()
 {
   // TODO Auto-generated destructor stub

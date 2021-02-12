@@ -76,7 +76,7 @@ public:
    */
   /**@{*/
 
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -84,6 +84,7 @@ public:
                         dataRepository::Group * domain ) override
   {
     solverStep( time_n, dt, cycleNumber, *domain->groupCast< DomainPartition * >());
+    return false;
   }
 
   virtual real64 solverStep( real64 const & time_n,
