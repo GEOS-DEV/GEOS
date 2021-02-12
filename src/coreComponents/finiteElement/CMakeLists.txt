@@ -19,6 +19,8 @@ set( finiteElement_headers
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
      elementFormulations/LagrangeBasis1.hpp
      elementFormulations/LagrangeBasis2.hpp
+     elementFormulations/LagrangeBasis5GL.hpp
+     elementFormulations/Q5_Hexahedron_Lagrange_GaussLobatto.hpp
    )
 #
 # Specify all sources
@@ -48,7 +50,7 @@ blt_add_library( NAME                  finiteElement
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
-               
+
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks( PREFIX finiteElement )
