@@ -54,20 +54,17 @@ public:
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
-
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
   using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
-
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
   using DamageUpdates< UPDATE_BASE >::m_damage;
 
-  using UPDATE_BASE::computeSmallStrainFiniteDifferenceStiffness;
-  using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity
+  using UPDATE_BASE::m_bulkModulus;  // TODO: model below strongly assumes iso elasticity, templating not so useful
   using UPDATE_BASE::m_shearModulus;
 
   // Lorentz type degradation functions
@@ -246,6 +243,13 @@ public:
                                          localIndex const q ) const override final
   {
     return m_strainEnergyDensity( k, q );
+  }
+
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getEnergyThreshold() const override final
+  {
+    return m_criticalStrainEnergy;
   }
 
 };
