@@ -66,15 +66,16 @@ public:
 
   /**
    * @brief The main execution loop for the code.
+   * @param[in] domain the current DomainPartition on which the Event will be ran.
+   * @return True iff the simulation exited early, and needs to be run again to completion.
    * @details During each cycle, it will:
    *   - Calculate the event forecast (number of cycles until its expected execution)
    *   - Signal an event to prepare (forecast == 1)
    *   - Execute an event (forecast == 0)
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
-   * @param[in] domain the current DomainPartition on which the Event will be ran
    */
-  void run( dataRepository::Group * domain );
+  bool run( dataRepository::Group * domain );
 
   /**
    * @name viewKeyStruct/groupKeyStruct

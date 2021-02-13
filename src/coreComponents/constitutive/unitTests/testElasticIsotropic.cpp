@@ -12,25 +12,28 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
-
-#include "gtest/gtest.h"
-
+// Source includes
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
-
 #include "dataRepository/xmlWrapper.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
+#include <conduit.hpp>
+
 using namespace geosx;
 using namespace ::geosx::constitutive;
 
-TEST( LinearElasticIsotropicTests, testAllocation )
+TEST( ElasticIsotropicTests, testAllocation )
 {
-  ElasticIsotropic cm( "model", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  ElasticIsotropic cm( "model", &rootGroup );
 
   localIndex constexpr numElems = 2;
   localIndex constexpr numQuadraturePoints = 3;
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElems );
   cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
@@ -48,9 +51,11 @@ TEST( LinearElasticIsotropicTests, testAllocation )
   EXPECT_EQ( stress.size( 2 ), 6 );
 }
 
-TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
+TEST( ElasticIsotropicTests, testStateUpdatePoint )
 {
-  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
 
   real64 constexpr K = 2e10;
   real64 constexpr G = 1e10;
@@ -77,13 +82,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
   constitutiveManager.postProcessInputRecursive();
 
-  ///ElasticIsotropic cm( "model", nullptr );
-  //real64 constexpr K = 2e10;
-  //real64 constexpr G = 1e10;
-  ///cm.setDefaultBulkModulus( K );
-  //cm.setDefaultShearModulus( G );
-
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( 2 );
 
   ElasticIsotropic & cm = *(constitutiveManager.getConstitutiveRelation< ElasticIsotropic >( "granite" ));
@@ -209,3 +208,4 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 }
+
