@@ -208,4 +208,3 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 }
-
