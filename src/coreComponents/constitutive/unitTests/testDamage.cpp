@@ -27,7 +27,9 @@ TEST( DamageTests, testDamageSpectral )
 {
   // create a model and test xml input
 
-  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
 
   string const inputStream =
     "<Constitutive>"
@@ -59,7 +61,7 @@ TEST( DamageTests, testDamageSpectral )
   localIndex constexpr numElem = 2;
   localIndex constexpr numQuad = 4;
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElem );
 
   DamageSpectral< ElasticIsotropic > & cm = *(constitutiveManager.getConstitutiveRelation< DamageSpectral< ElasticIsotropic > >( "shale" ));

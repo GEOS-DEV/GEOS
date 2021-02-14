@@ -27,8 +27,9 @@ using namespace ::geosx::constitutive;
 TEST( DruckerPragerTests, testDruckerPrager )
 {
   // create a Drucker-Prager model, and test xml input
-
-  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
 
   real64 const friction = 30.0; // will use later in checks
 
@@ -62,7 +63,7 @@ TEST( DruckerPragerTests, testDruckerPrager )
   localIndex constexpr numElem = 2;
   localIndex constexpr numQuad = 4;
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElem );
 
   DruckerPrager & cm = *(constitutiveManager.getConstitutiveRelation< DruckerPrager >( "granite" ));
@@ -116,8 +117,9 @@ TEST( DruckerPragerTests, testDruckerPrager )
 TEST( DruckerPragerTests, testDruckerPragerExtended )
 {
   // create an Extended-Drucker-Prager model, and test xml input
-
-  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
 
   real64 const initialFriction = 15.27;   // will use later in checks
   real64 const residualFriction = 23.05;
@@ -156,7 +158,7 @@ TEST( DruckerPragerTests, testDruckerPragerExtended )
   localIndex constexpr numElem = 2;
   localIndex constexpr numQuad = 4;
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElem );
 
   DruckerPragerExtended & cm = *(constitutiveManager.getConstitutiveRelation< DruckerPragerExtended >( "granite" ));
