@@ -223,7 +223,6 @@ public:
     static constexpr auto maxNumResolvesString = "maxNumResolves";
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNamesString = "solidMaterialNames";
-    static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";

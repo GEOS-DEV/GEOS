@@ -222,13 +222,6 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
     elementRegionManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
     elementRegionManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n )->
-        setPlotLevel( PlotLevel::NOPLOT )->
-        setRestartFlags( RestartFlags::NO_WRITE )->
-        setRegisteringObjects( this->getName())->
-        setDescription( "Array to hold the beginning of step stress for implicit problem rewinds" )->
-        reference().resizeDimension< 2 >( 6 );
-
       subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes )->
         setPlotLevel( PlotLevel::NOPLOT )->
         setRestartFlags( RestartFlags::NO_WRITE );
@@ -898,30 +891,7 @@ SolidMechanicsLagrangianFEM::
   {
     SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
     constitutiveRelation.saveConvergedState();
-
-    //TODO: remove stress_n?
-    arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
-
-    array3d< real64, solid::STRESS_PERMUTATION > &
-    stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
-    // TODO: eliminate
-    stress_n.resize( stress.size( 0 ), stress.size( 1 ), 6 );
-
-    arrayView3d< real64, solid::STRESS_USD > const vstress_n = stress_n;
-
-    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex a=0; a<stress.size( 1 ); ++a )
-      {
-        for( localIndex i=0; i<6; ++i )
-        {
-          vstress_n( k, a, i ) = stress( k, a, i );
-        }
-      }
-    } );
   } );
-
-
 
 }
 
