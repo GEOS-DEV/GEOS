@@ -10,6 +10,7 @@
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -51,7 +52,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
   registerWrapper( viewKeyStruct::receiverCoordinatesString, &m_receiverCoordinates )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
-    setDescription( "Coordinates (x,y,z) of the sources" );
+    setDescription( "Coordinates (x,y,z) of the receivers" );
 
   registerWrapper( viewKeyStruct::receiverNodeIdsString, &m_receiverNodeIds )->
     setInputFlag( InputFlags::FALSE )->
@@ -104,8 +105,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   m_receiverConstants.resizeDimension< 0, 1 >( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resizeDimension< 0 >( numReceiversGlobal );
 
-  localIndex n_timestep = 600;
-  m_pressureNp1AtReceivers.resizeDimension< 0, 1 >( numReceiversGlobal, n_timestep );
+  m_pressureNp1AtReceivers.resizeDimension< 0 >( numReceiversGlobal );
 
 }
 
@@ -290,7 +290,7 @@ void AcousticWaveEquationSEM::precomputeSourceTerm( MeshLevel & mesh )
                 }
               }
             }
-          }
+          } // End loop over all source
         }
       } );
     } );
@@ -486,23 +486,43 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  arrayView2d< real64 > const pressureNp1AtReceivers   = m_pressureNp1AtReceivers.toView();
+  arrayView1d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
+
+
+  char filename[50];
 
   // loop over all the sources
   for( localIndex ircv = 0; ircv < receiverConstants.size( 0 ); ++ircv )
   {
     if( receiverIsLocal[ircv] == 1 ) // check if the receiver is on this MPI rank
     {
+      p_rcvs[ircv] = 0.0;
       // for all the nodes of the elem containing the receiver ircv
       for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
       {
         // multiply the precomputed part by the pressure
-        pressureNp1AtReceivers[ircv][isismo] += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
+        p_rcvs[ircv] += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
       }
 
-      std::cout << "Step #" << isismo << " rcv #" << ircv << " p = " << pressureNp1AtReceivers[ircv][isismo] << std::endl;
+      /// Define filename for sismo trace at receiver ircv
+      sprintf( filename, "sismoTraceReceiver%0ld.txt", ircv );
+      this->saveSismo( isismo, p_rcvs[ircv], filename );
+
+      //std::cout << "Step #" << isismo << " rcv #" << ircv << " p = " << p_rcvs[ircv][isismo] << std::endl;
+
     }
   }
+}
+
+
+void AcousticWaveEquationSEM::saveSismo( localIndex isismo, real64 val_pressure, char *filename )
+{
+  //arrayView1d< real64 const > const p_rcvs = m_pressureNp1AtReceivers.toViewConst();
+  //localIndex sizeVect = p_rcvs.size(0);
+
+  std::ofstream f( filename, std::ios::app );
+  f<< isismo << " " << val_pressure << std::endl;
+  f.close();
 }
 
 
@@ -824,13 +844,26 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   {
     // pressure update here
     p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
+  }
+
+  /// Synchronize pressure fields
+  std::map< string, string_array > fieldNames;
+  fieldNames["node"].emplace_back( "pressure_np1" );
+  CommunicationTools::synchronizeFields( fieldNames,
+                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                         domain.getNeighbors(),
+                                         true );
+
+  for( localIndex a=0; a<nodes.size(); ++a )
+  {
+    /// update p_n and p_nm1
     p_nm1[a]=p_n[a];
     p_n[a] = p_np1[a];
 
+    /// reinit vector
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
   }
-  //std::cout << "Pressure[505050] = " << p_n[505050] << std::endl;
 
   /// Compute the sismo trace for all receivers
   computeSismoTrace( cycleNumber, p_np1 );

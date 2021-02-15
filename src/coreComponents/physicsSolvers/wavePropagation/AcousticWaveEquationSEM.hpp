@@ -106,6 +106,9 @@ private:
   /// Compute the pressure at each receiver coordinate in one time step
   void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const pressure_np1 );
 
+  /// save the sismo trace in file
+  void saveSismo( localIndex isismo, real64 val_pressure, char *filename );
+
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
 
@@ -134,7 +137,7 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
-  array2d< real64 > m_pressureNp1AtReceivers;
+  array1d< real64 > m_pressureNp1AtReceivers;
 
 
 

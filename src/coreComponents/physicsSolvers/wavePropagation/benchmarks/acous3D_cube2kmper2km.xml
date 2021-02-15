@@ -16,7 +16,8 @@
       timeSourceFrequency="5.0"
       receiverCoordinates="{ { 100, 100, 150 },
 			     { 100, 950, 150 },
-			     { 100, 1850, 150 } }"/>
+			     { 100, 1850, 150 },
+			     { 1200,1010, 1200 } }"/>
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
@@ -36,7 +37,7 @@
 
    
   <Events
-    maxTime="3">
+    maxTime="1.25">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <!-- (there are other ways to control the time step size) -->
