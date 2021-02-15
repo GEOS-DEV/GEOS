@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-EventManager::EventManager( std::string const & name,
+EventManager::EventManager( string const & name,
                             Group * const parent ):
   Group( name, parent ),
   m_maxTime(),
@@ -77,25 +77,25 @@ EventManager::~EventManager()
 
 
 
-Group * EventManager::CreateChild( string const & childKey, string const & childName )
+Group * EventManager::createChild( string const & childKey, string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
-  std::unique_ptr< EventBase > event = EventBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup< EventBase >( childName, std::move( event ) );
+  std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
+  return this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
 
-void EventManager::ExpandObjectCatalogs()
+void EventManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from EventBase here
-  for( auto & catalogIter: EventBase::GetCatalog())
+  for( auto & catalogIter: EventBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 
 
-void EventManager::Run( dataRepository::Group * domain )
+bool EventManager::run( dataRepository::Group * domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -105,20 +105,20 @@ void EventManager::Run( dataRepository::Group * domain )
   array1d< integer > eventCounters( 2 );
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent.GetTargetReferences();
-    subEvent.GetExecutionOrder( eventCounters );
+    subEvent.getTargetReferences();
+    subEvent.getExecutionOrder( eventCounters );
   } );
 
   // Set the progress indicators
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent.SetProgressIndicator( eventCounters );
+    subEvent.setProgressIndicator( eventCounters );
   } );
 
   // Inform user if it appears this is a mid-loop restart
   if((m_currentSubEvent > 0))
   {
-    GEOSX_LOG_RANK_0( "The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point." );
+    GEOSX_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
   }
 
   // Run problem
@@ -134,8 +134,8 @@ void EventManager::Run( dataRepository::Group * domain )
       // Determine the dt requests for each event
       for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
       {
-        EventBase * subEvent = static_cast< EventBase * >( this->GetSubGroups()[m_currentSubEvent] );
-        m_dt = std::min( subEvent->GetTimestepRequest( m_time ), m_dt );
+        EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
+        m_dt = std::min( subEvent->getTimestepRequest( m_time ), m_dt );
       }
       m_currentSubEvent = 0;
 
@@ -152,30 +152,37 @@ void EventManager::Run( dataRepository::Group * domain )
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
     {
-      EventBase * subEvent = static_cast< EventBase * >( this->GetSubGroups()[m_currentSubEvent] );
+      EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
       // Calculate the event and sub-event forecasts
-      subEvent->CheckEvents( m_time, m_dt, m_cycle, domain );
+      subEvent->checkEvents( m_time, m_dt, m_cycle, domain );
 
       // Print debug information for logLevel >= 1
       GEOSX_LOG_LEVEL_RANK_0( 1,
-                              "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" <<
+                              "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
                               subEvent->getForecast() );
 
       // Execute, signal events
+      bool earlyReturn = false;
       if( subEvent->hasToPrepareForExec() )
       {
-        subEvent->SignalToPrepareForExecution( m_time, m_dt, m_cycle, domain );
+        subEvent->signalToPrepareForExecution( m_time, m_dt, m_cycle, domain );
       }
       else if( subEvent->isReadyForExec() )
       {
-        subEvent->Execute( m_time, m_dt, m_cycle, 0, 0, domain );
+        earlyReturn = subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
       }
 
       // Check the exit flag
       // Note: Currently, this is only being used by the HaltEvent
       //       If it starts being used elsewhere it may need to be synchronized
-      exitFlag += subEvent->GetExitFlag();
+      exitFlag += subEvent->getExitFlag();
+
+      if( earlyReturn )
+      {
+        ++m_currentSubEvent;
+        return true;
+      }
     }
 
     // Increment time/cycle, reset the subevent counter
@@ -189,8 +196,10 @@ void EventManager::Run( dataRepository::Group * domain )
 
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent.Cleanup( m_time, m_cycle, 0, 0, domain );
+    subEvent.cleanup( m_time, m_cycle, 0, 0, domain );
   } );
+
+  return false;
 }
 
 } /* namespace geosx */

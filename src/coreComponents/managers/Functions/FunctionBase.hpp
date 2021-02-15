@@ -45,8 +45,8 @@ string const inputVarNames( "inputVarNames" );
 class FunctionBase : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  FunctionBase( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  FunctionBase( const string & name,
                 dataRepository::Group * const parent );
 
   /**
@@ -58,12 +58,12 @@ public:
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "FunctionBase"; }
+  static string catalogName() { return "FunctionBase"; }
 
   /**
    * @brief Function initialization
    */
-  virtual void InitializeFunction(){}
+  virtual void initializeFunction(){}
 
   /**
    * @brief Test to see if the function is a 1D function of time
@@ -81,7 +81,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::Group const * const group,
+  virtual void evaluate( dataRepository::Group const * const group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const = 0;
@@ -91,16 +91,16 @@ public:
    * @param input a scalar input
    * @return the function evaluation
    */
-  virtual real64 Evaluate( real64 const * const input ) const = 0;
+  virtual real64 evaluate( real64 const * const input ) const = 0;
 
   /// Alias for the catalog interface
-  using CatalogInterface = dataRepository::CatalogInterface< FunctionBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< FunctionBase, string const &, Group * const >;
 
   /**
    * @brief return the catalog entry for the function
    * @return the catalog entry
    */
-  static CatalogInterface::CatalogType & GetCatalog()
+  static CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
@@ -113,7 +113,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @return An array holding the min, average, max values of the results
    */
-  real64_array EvaluateStats( dataRepository::Group const * const group,
+  real64_array evaluateStats( dataRepository::Group const * const group,
                               real64 const time,
                               SortedArray< localIndex > const & set ) const;
 
@@ -137,17 +137,17 @@ protected:
    * @param[out] result the results
    */
   template< typename LEAF >
-  void EvaluateT( dataRepository::Group const * const group,
+  void evaluateT( dataRepository::Group const * const group,
                   real64 const time,
                   SortedArrayView< localIndex const > const & set,
                   real64_array & result ) const;
 
-  virtual void PostProcessInput() override { InitializeFunction(); }
+  virtual void postProcessInput() override { initializeFunction(); }
 
 };
 
 template< typename LEAF >
-void FunctionBase::EvaluateT( dataRepository::Group const * const group,
+void FunctionBase::evaluateT( dataRepository::Group const * const group,
                               real64 const time,
                               SortedArrayView< localIndex const > const & set,
                               real64_array & result ) const
@@ -205,7 +205,7 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
     }
 
     // Note: we expect that result is the same size as the set
-    result[i] = static_cast< LEAF const * >(this)->Evaluate( input );
+    result[i] = static_cast< LEAF const * >(this)->evaluate( input );
   } );
 }
 } /* namespace geosx */

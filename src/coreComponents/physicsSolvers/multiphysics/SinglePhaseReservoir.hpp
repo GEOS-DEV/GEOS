@@ -38,7 +38,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  SinglePhaseReservoir( const std::string & name,
+  SinglePhaseReservoir( const string & name,
                         Group * const parent );
 
   /**
@@ -62,7 +62,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "SinglePhaseReservoir"; }
+  static string catalogName() { return "SinglePhaseReservoir"; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -71,13 +71,21 @@ public:
    */
   /**@{*/
 
+  virtual void
+  setupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = true ) override;
+
   /**@}*/
 
-  virtual void AddCouplingSparsityPattern( DomainPartition const & domain,
+  virtual void addCouplingSparsityPattern( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern ) const override;
 
-  virtual void AssembleCouplingTerms( real64 const time_n,
+  virtual void assembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,

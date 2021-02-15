@@ -26,7 +26,7 @@ namespace dataRepository
 {
 
 
-WrapperBase::WrapperBase( std::string const & name,
+WrapperBase::WrapperBase( string const & name,
                           Group * const parent ):
   m_name( name ),
   m_parent( parent ),
@@ -61,6 +61,10 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
   m_description = source.m_description;
 }
 
+string WrapperBase::getPath() const
+{
+  return m_conduitNode.path();
+}
 
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 {

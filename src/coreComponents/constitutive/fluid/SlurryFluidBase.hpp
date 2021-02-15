@@ -197,7 +197,7 @@ private:
    * @param[in] isProppantBoundary proppant boundary flag
    */
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const proppantConcentration,
@@ -214,7 +214,7 @@ private:
    * @param[in] shearRate shear rate for power-law fluid calculation
    */
   GEOSX_HOST_DEVICE
-  virtual void UpdateFluidProperty( localIndex const k,
+  virtual void updateFluidProperty( localIndex const k,
                                     localIndex const q,
                                     real64 const pressure,
                                     arraySlice1d< real64 const > const & componentConcentration,
@@ -228,7 +228,7 @@ private:
    * @param[in] componentconcentration fluid composition array
    */
   GEOSX_HOST_DEVICE
-  virtual void UpdateComponentDensity( localIndex const k,
+  virtual void updateComponentDensity( localIndex const k,
                                        localIndex const q,
                                        real64 const pressure,
                                        arraySlice1d< real64 const > const & componentConcentration ) const = 0;
@@ -242,7 +242,7 @@ class SlurryFluidBase : public ConstitutiveBase
 {
 public:
 
-  SlurryFluidBase( std::string const & name, Group * const parent );
+  SlurryFluidBase( string const & name, Group * const parent );
 
   virtual ~SlurryFluidBase() override;
 
@@ -254,7 +254,7 @@ public:
 
   localIndex numFluidComponents() const;
 
-  arrayView1d< real64 > KIndex() const { return m_Ks; }
+  arrayView1d< real64 > kIndex() const { return m_Ks; }
   arrayView1d< real64 const > nIndex() const { return m_nIndices; }
 
   arrayView2d< real64 > density() { return m_density; }
@@ -348,7 +348,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   string_array m_componentNames;
 

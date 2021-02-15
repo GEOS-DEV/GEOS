@@ -42,9 +42,9 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string CatalogName() { return m_catalogNameString; }
+  static string catalogName() { return m_catalogNameString; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /**
    * Empty struct to serve as a KernelWrapper for the constitutive model.

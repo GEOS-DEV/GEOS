@@ -22,7 +22,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-LinearSolverParametersInput::LinearSolverParametersInput( std::string const & name,
+LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                                                           Group * const parent )
   :
   Group( name, parent )
@@ -97,7 +97,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
                     "If the method converges, the iterative solution :math:`\\mathsf{x}_k` is such that\n"
                     "the relative residual norm satisfies:\n"
                     ":math:`\\left\\lVert \\mathsf{b} - \\mathsf{A} \\mathsf{x}_k \\right\\rVert_2` < ``" +
-                    std::string( viewKeyStruct::krylovTolString ) + "`` * :math:`\\left\\lVert\\mathsf{b}\\right\\rVert_2`" );
+                    string( viewKeyStruct::krylovTolString ) + "`` * :math:`\\left\\lVert\\mathsf{b}\\right\\rVert_2`" );
 
   registerWrapper( viewKeyStruct::krylovAdaptiveTolString, &m_parameters.krylov.useAdaptiveTol )->
     setApplyDefaultValue( m_parameters.krylov.useAdaptiveTol )->
@@ -147,7 +147,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setDescription( "ILU(T) threshold factor" );
 }
 
-void LinearSolverParametersInput::PostProcessInput()
+void LinearSolverParametersInput::postProcessInput()
 {
   m_parameters.logLevel = getLogLevel();
 
@@ -179,6 +179,6 @@ void LinearSolverParametersInput::PostProcessInput()
   // TODO input validation for other AMG parameters ?
 }
 
-REGISTER_CATALOG_ENTRY( Group, LinearSolverParametersInput, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( Group, LinearSolverParametersInput, string const &, Group * const )
 
 } // namespace geosx

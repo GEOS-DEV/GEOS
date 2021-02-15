@@ -41,7 +41,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::string & name,
+SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
@@ -70,12 +70,12 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
   // TODO Auto-generated destructor stub
 }
 
-void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group * const MeshBodies )
 {
 
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     {
@@ -96,46 +96,46 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
 }
 
 
-void SolidMechanicsEmbeddedFractures::ResetStateToBeginningOfStep( DomainPartition & domain )
+void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  m_solidSolver->ResetStateToBeginningOfStep( domain );
+  m_solidSolver->resetStateToBeginningOfStep( domain );
 }
 
-void SolidMechanicsEmbeddedFractures::ImplicitStepSetup( real64 const & time_n,
+void SolidMechanicsEmbeddedFractures::implicitStepSetup( real64 const & time_n,
                                                          real64 const & dt,
                                                          DomainPartition & domain )
 {
-  m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
-  m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
+  m_solidSolver->implicitStepSetup( time_n, dt, domain );
 }
 
-void SolidMechanicsEmbeddedFractures::ImplicitStepComplete( real64 const & time_n,
+void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_n,
                                                             real64 const & dt,
                                                             DomainPartition & domain )
 {
-  m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_solidSolver->implicitStepComplete( time_n, dt, domain );
 }
 
-real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
+real64 SolidMechanicsEmbeddedFractures::solverStep( real64 const & time_n,
                                                     real64 const & dt,
                                                     int const cycleNumber,
                                                     DomainPartition & domain )
 {
   real64 dtReturn = dt;
 
-  ImplicitStepSetup( time_n,
+  implicitStepSetup( time_n,
                      dt,
                      domain );
 
-  SetupSystem( domain,
+  setupSystem( domain,
                m_dofManager,
                m_localMatrix,
                m_localRhs,
                m_localSolution );
 
   // currently the only method is implicit time integration
-  dtReturn = this->NonlinearImplicitStep( time_n,
+  dtReturn = this->nonlinearImplicitStep( time_n,
                                           dt,
                                           cycleNumber,
                                           domain );
@@ -143,16 +143,16 @@ real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
   // m_solidSolver->updateStress( domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dtReturn, domain );
+  implicitStepComplete( time_n, dtReturn, domain );
 
   return dtReturn;
 }
 
-void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const & domain,
+void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                  DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->SetupDofs( domain, dofManager );
+  m_solidSolver->setupDofs( domain, dofManager );
 
   MeshLevel const & meshLevel              = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
@@ -173,7 +173,7 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const & domain,
                           regions );
 }
 
-void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
+void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                    DofManager & dofManager,
                                                    CRSMatrix< real64, globalIndex > & localMatrix,
                                                    array1d< real64 > & localRhs,
@@ -185,7 +185,7 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   GEOSX_UNUSED_VAR( setSparsity );
 
   dofManager.setMesh( domain, 0, 0 );
-  SetupDofs( domain, dofManager );
+  setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
   // Set the sparsity pattern without the Kwu and Kuw blocks.
@@ -200,7 +200,7 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   }
 
   // Add the number of nonzeros induced by coupling
-  AddCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+  addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
 
   // Create a new pattern with enough capacity for coupled matrix
   SparsityPattern< globalIndex > pattern;
@@ -214,7 +214,7 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   }
 
   // Add the nonzeros from coupling
-  AddCouplingSparsityPattern( domain, dofManager, pattern.toView() );
+  addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
   // Finally, steal the pattern into a CRS matrix
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
@@ -227,7 +227,7 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
 
 }
 
-void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
+void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                       real64 const dt,
                                                       DomainPartition & domain,
                                                       DofManager const & dofManager,
@@ -236,19 +236,19 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  m_solidSolver->AssembleSystem( time,
+  m_solidSolver->assembleSystem( time,
                                  dt,
                                  domain,
                                  dofManager,
                                  localMatrix,
                                  localRhs );
 
-  MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+  MeshLevel & mesh = *(domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
-  SurfaceElementRegion const & region = *(elemManager.GetRegion< SurfaceElementRegion >( m_fractureRegionName ));
-  EmbeddedSurfaceSubRegion const & subRegion = *(region.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+  SurfaceElementRegion const & region = *(elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName ));
+  EmbeddedSurfaceSubRegion const & subRegion = *(region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
 
   string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
@@ -280,7 +280,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   GEOSX_UNUSED_VAR( maxTraction );
 }
 
-void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & domain,
+void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
                                                               DofManager & dofManager,
                                                               arrayView1d< localIndex > const & rowLengths ) const
 {
@@ -310,9 +310,9 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
     {
       // Get rock matrix element subregion
       CellElementSubRegion const * const subRegion =
-        Group::group_cast< CellElementSubRegion const * const >
-          ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-            GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+        Group::groupCast< CellElementSubRegion const * const >
+          ( elemManager.getRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+            getSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -344,7 +344,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
   } );
 }
 
-void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartition const & domain,
+void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   SparsityPatternView< globalIndex > const & pattern ) const
 {
@@ -374,8 +374,8 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
     // This will fill K_wu, and K_uw
     for( localIndex k=0; k<embeddedSurfaceSubRegion.size(); ++k )
     {
-      CellBlock const * const elemSubRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-                                                                                              GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+      CellBlock const * const elemSubRegion = Group::groupCast< CellBlock const * const >( elemManager.getRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+                                                                                             getSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
@@ -430,7 +430,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
   } );
 }
 
-void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time,
+void SolidMechanicsEmbeddedFractures::applyBoundaryConditions( real64 const time,
                                                                real64 const dt,
                                                                DomainPartition & domain,
                                                                DofManager const & dofManager,
@@ -439,7 +439,7 @@ void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time
 {
   GEOSX_MARK_FUNCTION;
 
-  m_solidSolver->ApplyBoundaryConditions( time,
+  m_solidSolver->applyBoundaryConditions( time,
                                           dt,
                                           domain,
                                           dofManager,
@@ -447,14 +447,14 @@ void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time
                                           localRhs );
 }
 
-real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition const & domain,
+real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition const & domain,
                                                                DofManager const & dofManager,
                                                                arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
   // Matrix residual
-  real64 const solidResidualNorm = m_solidSolver->CalculateResidualNorm( domain,
+  real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( domain,
                                                                          dofManager,
                                                                          localRhs );
   // Fracture residual
@@ -495,8 +495,8 @@ real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition c
     real64 const localResidualNorm[2] = { localSum.get(), m_solidSolver->getMaxForce() };
 
 
-    int const rank     = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-    int const numRanks = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
     array1d< real64 > globalValues( numRanks * 2 );
 
     // Everything is done on rank 0
@@ -535,14 +535,14 @@ real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition c
   return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
 }
 
-void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & dofManager,
+void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
                                                            arrayView1d< real64 const > const & localSolution,
                                                            real64 const scalingFactor,
                                                            DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  m_solidSolver->ApplySystemSolution( dofManager,
+  m_solidSolver->applySystemSolution( dofManager,
                                       localSolution,
                                       scalingFactor,
                                       domain );
@@ -555,12 +555,12 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
   fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString ) );
 
-  CommunicationTools::SynchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
 } /* namespace geosx */

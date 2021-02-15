@@ -25,12 +25,14 @@ using namespace ::geosx::constitutive;
 
 TEST( LinearElasticAnisotropicTests, testAllocation )
 {
-  LinearElasticAnisotropic cm( "model", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  LinearElasticAnisotropic cm( "model", &rootGroup );
 
   localIndex constexpr numElems = 2;
   localIndex constexpr numQuadraturePoints = 3;
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElems );
   cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
@@ -94,7 +96,9 @@ void stressCheck( real64 const stressV[6], real64 const stressV2[6] )
 
 TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 {
-  LinearElasticAnisotropic cm( "model", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  LinearElasticAnisotropic cm( "model", &rootGroup );
 
   real64 c[6][6] = {
     { 1.0e11, 0.1e10, 0.2e10, 0.3e10, 0.4e10, 0.5e10 },
@@ -107,7 +111,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
   cm.setDefaultStiffness( c );
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( 2 );
   cm.allocateConstitutiveData( &disc, 2 );
 
@@ -129,21 +133,21 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
     stateStress.setValues< serialPolicy >( 0 );
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressSliceCheck( stateStress, stressV );
 
     voigtStrain( strainV, Ddt );
     stateStress.setValues< serialPolicy >( 0 );
-    cw.SmallStrain( 0, 0, strainV );
+    cw.smallStrain( 0, 0, strainV );
     stressSliceCheck( stateStress, stressV );
 
     stateStress.setValues< serialPolicy >( 0 );
-    cw.SmallStrainNoState( 0, strainV, stressV2 );
+    cw.smallStrainNoState( 0, strainV, stressV2 );
     stressCheck( stressV, stressV2 );
 
 
@@ -158,7 +162,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -173,7 +177,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -188,7 +192,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -203,7 +207,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -218,7 +222,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt, Rot );
+    cw.hypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -229,7 +233,9 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
 TEST( LinearElasticAnisotropicTests, testXML )
 {
-  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
 
   string const inputStream =
     "<Constitutive>"
@@ -253,11 +259,11 @@ TEST( LinearElasticAnisotropicTests, testXML )
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
-  constitutiveManager.PostProcessInputRecursive();
+  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  constitutiveManager.postProcessInputRecursive();
 
-  LinearElasticAnisotropic * const model = constitutiveManager.GetConstitutiveRelation< LinearElasticAnisotropic >( "granite" );
-  dataRepository::Group disc( "discretization", nullptr );
+  LinearElasticAnisotropic * const model = constitutiveManager.getConstitutiveRelation< LinearElasticAnisotropic >( "granite" );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( 1 );
   model->allocateConstitutiveData( &disc, 1 );
 
@@ -265,7 +271,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   LinearElasticAnisotropicUpdates kernelWrapper = model->createKernelUpdates();
 
   real64 stiffness[6][6];
-  kernelWrapper.GetStiffness( 0, 0, stiffness );
+  kernelWrapper.getStiffness( 0, 0, stiffness );
 
   real64 c[6][6] = {
     { 1.0e10, 1.1e9, 1.2e9, 1.3e9, 1.4e9, 1.5e9 },

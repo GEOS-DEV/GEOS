@@ -18,6 +18,7 @@
 #include "virtualElement/VirtualElementBase.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "meshUtilities/MeshManager.hpp"
 
 // TPL includes
@@ -25,6 +26,8 @@
 
 using namespace geosx;
 using namespace virtualElement;
+
+CommandLineOptions g_commandLineOptions;
 
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void checkIntegralMeanConsistency()
@@ -171,9 +174,9 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   // Get managers.
   ElementRegionManager const & elementManager = *mesh.getElemManager();
   CellElementRegion const & cellRegion =
-    *elementManager.GetRegion< CellElementRegion >( 0 );
+    *elementManager.getRegion< CellElementRegion >( 0 );
   CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion< CellElementSubRegion >( 0 );
+    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
   EdgeManager const & edgeManager = *mesh.getEdgeManager();
@@ -240,6 +243,7 @@ TEST( VirtualElementBase, unitCube )
     "                       materialList=\"{dummy_material}\" />"
     "  </ElementRegions>"
     "</Problem>";
+
   xmlWrapper::xmlDocument inputFile;
   xmlWrapper::xmlResult xmlResult = inputFile.load_buffer( inputStream.c_str(), inputStream.size());
   if( !xmlResult )
@@ -250,26 +254,24 @@ TEST( VirtualElementBase, unitCube )
   }
   xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
 
-  ProblemManager * problemManager = new ProblemManager( "Problem", nullptr );
-  problemManager->InitializePythonInterpreter();
-  problemManager->ProcessInputFileRecursive( xmlProblemNode );
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+
+  ProblemManager & problemManager = state.getProblemManager();
+  problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->GetGroup< MeshManager >
-                                ( problemManager->groupKeys.meshManager );
-  meshManager->GenerateMeshLevels( domain );
+  DomainPartition * domain  = problemManager.getDomainPartition();
+  MeshManager * meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager->generateMeshLevels( domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager & elementManager = *mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-  elementManager.ProcessInputFileRecursive( topLevelNode );
-  elementManager.PostProcessInputRecursive();
-  problemManager->ProblemSetup();
+  ElementRegionManager * elementManager = mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
+  elementManager->processInputFileRecursive( topLevelNode );
+  elementManager->postProcessInputRecursive();
+  problemManager.problemSetup();
 
   // Test computed projectors for all cells in MeshLevel
   testCellsInMeshLevel< 10, 6 >( mesh );
-
-  delete problemManager;
 }
 
 TEST( VirtualElementBase, wedges )
@@ -304,37 +306,32 @@ TEST( VirtualElementBase, wedges )
   }
   xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
 
-  ProblemManager * problemManager = new ProblemManager( "Problem", nullptr );
-  problemManager->InitializePythonInterpreter();
-  problemManager->ProcessInputFileRecursive( xmlProblemNode );
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+
+  ProblemManager & problemManager = state.getProblemManager();
+  problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->GetGroup< MeshManager >
-                                ( problemManager->groupKeys.meshManager );
-  meshManager->GenerateMeshLevels( domain );
+  DomainPartition * domain  = problemManager.getDomainPartition();
+  MeshManager * meshManager = problemManager.getGroup< MeshManager >
+                                ( problemManager.groupKeys.meshManager );
+  meshManager->generateMeshLevels( domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * elementManager = mesh.getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->ProcessInputFileRecursive( topLevelNode );
-  elementManager->PostProcessInputRecursive();
-  problemManager->ProblemSetup();
+  elementManager->processInputFileRecursive( topLevelNode );
+  elementManager->postProcessInputRecursive();
+  problemManager.problemSetup();
 
   // Test computed projectors for all cells in MeshLevel
   testCellsInMeshLevel< 8, 9 >( mesh );
-
-  delete problemManager;
 }
 
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-
-  geosx::basicSetup( argc, argv );
-
+  g_commandLineOptions = *geosx::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-
   geosx::basicCleanup();
-
   return result;
 }

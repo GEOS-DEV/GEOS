@@ -74,10 +74,10 @@ public:
 
 
   /**
-   * @copydoc SolidBase::GetStiffness
+   * @copydoc SolidBase::getStiffness
    */
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k,
+  virtual void getStiffness( localIndex const k,
                              localIndex const q,
                              real64 (& c)[6][6] ) const override
   {
@@ -120,28 +120,28 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState( localIndex const k,
+  virtual void smallStrainNoState( localIndex const k,
                                    real64 const ( &voigtStrain )[ 6 ],
                                    real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
+  virtual void smallStrain( localIndex const k,
                             localIndex const q,
                             real64 const ( &voigtStrainInc )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HypoElastic( localIndex const k,
+  virtual void hypoElastic( localIndex const k,
                             localIndex const q,
                             real64 const ( &Ddt )[ 6 ],
                             real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
+  virtual void hyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
                              real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
+  virtual void hyperElastic( localIndex const k,
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
 
@@ -173,7 +173,7 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::SmallStrainNoState( localIndex const k,
+void LinearElasticIsotropicUpdates::smallStrainNoState( localIndex const k,
                                                         real64 const ( &voigtStrain )[ 6 ],
                                                         real64 ( & stress )[ 6 ] ) const
 {
@@ -193,7 +193,7 @@ void LinearElasticIsotropicUpdates::SmallStrainNoState( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::SmallStrain( localIndex const k,
+void LinearElasticIsotropicUpdates::smallStrain( localIndex const k,
                                                  localIndex const q,
                                                  real64 const ( &voigtStrainInc )[ 6 ] ) const
 {
@@ -212,7 +212,7 @@ void LinearElasticIsotropicUpdates::SmallStrain( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::HypoElastic( localIndex const k,
+void LinearElasticIsotropicUpdates::hypoElastic( localIndex const k,
                                                  localIndex const q,
                                                  real64 const ( &Ddt )[ 6 ],
                                                  real64 const ( &Rot )[ 3 ][ 3 ] ) const
@@ -235,7 +235,7 @@ void LinearElasticIsotropicUpdates::HypoElastic( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
+void LinearElasticIsotropicUpdates::hyperElastic( localIndex const k,
                                                   real64 const (&FmI)[3][3],
                                                   real64 ( & stress )[ 6 ] ) const
 {
@@ -274,12 +274,12 @@ void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
+void LinearElasticIsotropicUpdates::hyperElastic( localIndex const k,
                                                   localIndex const q,
                                                   real64 const (&FmI)[3][3] ) const
 {
   real64 stress[ 6 ];
-  HyperElastic( k, FmI, stress );
+  hyperElastic( k, FmI, stress );
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], stress );
 }
 
@@ -355,9 +355,9 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string CatalogName() { return m_catalogNameString; }
+  static string catalogName() { return m_catalogNameString; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -462,7 +462,7 @@ public:
 
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 

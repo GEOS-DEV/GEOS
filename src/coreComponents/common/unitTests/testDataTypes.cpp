@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 
 #include "common/DataTypes.hpp"
-#include <string>
+
 #include <typeindex>
 
 using namespace geosx;

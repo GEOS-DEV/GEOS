@@ -26,12 +26,13 @@
  */
 
 #include "common/Logger.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "LvArray/src/system.hpp"
 
-#include <unordered_map>
-#include <string>
 #include <iostream>
+#include <list>
 #include <memory>
+#include <unordered_map>
 
 #ifndef OBJECTCATALOGVERBOSE
 /**
@@ -117,10 +118,10 @@ public:
    * @brief Get the catalog from that is stored in the target base class.
    * @return returns the catalog for this
    */
-  static CatalogType & GetCatalog()
+  static CatalogType & getCatalog()
   {
 #if BASEHOLDSCATALOG == 1
-    return BASETYPE::GetCatalog();
+    return BASETYPE::getCatalog();
 #else
     static CatalogType catalog;
     return catalog;
@@ -132,7 +133,7 @@ public:
    * @param args arguments to the constructor of the target type
    * @return a unique_ptr<BASETYPE> to the newly allocated class.
    */
-  virtual std::unique_ptr< BASETYPE > Allocate( ARGS... args ) const = 0;
+  virtual std::unique_ptr< BASETYPE > allocate( ARGS... args ) const = 0;
 
   /**
    * @brief Check if catalog contains a given key
@@ -141,20 +142,63 @@ public:
    */
   static bool hasKeyName( std::string const & objectTypeName )
   {
-    return GetCatalog().count( objectTypeName );
+    return getCatalog().count( objectTypeName );
+  }
+
+  /**
+   * @brief Returns the product keys of the catalog. Keys are sorted in alphabetical order, case insensitive.
+   * @return An STL container.
+   */
+  static std::list< typename CatalogType::key_type > getKeys()
+  {
+    std::list< typename CatalogType::key_type > keys;
+    for( typename CatalogType::value_type const & pair: getCatalog() )
+    {
+      keys.push_back( pair.first );
+    }
+    auto const cmp = []( string const & a,
+                         string const & b ) -> bool
+    {
+      return stringutilities::toLower( a ) < stringutilities::toLower( b );
+    };
+    keys.sort( cmp );
+
+    return keys;
   }
 
   /**
    * @brief Static method to create a new object that derives from BASETYPE
-   * @param[in] objectTypeName the key to the catalog entry that is able to create
-   * the correct type.
+   * @param[in] objectTypeName the key to the catalog entry that is able to create the correct type.
    * @param args these are the arguments to the constructor of the target type
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
+   *
+   * @note The simulation is killed if the builder is not found.
    */
   //START_SPHINX_2
-  static std::unique_ptr< BASETYPE > Factory( std::string const & objectTypeName, ARGS... args )
+  static std::unique_ptr< BASETYPE > factory( std::string const & objectTypeName,
+                                              ARGS... args )
   {
-    return GetCatalog().at( objectTypeName ).get()->Allocate( args ... );
+    // We stop the simulation if the product is not found
+    if( !hasKeyName( objectTypeName ) )
+    {
+      std::list< typename CatalogType::key_type > keys = getKeys();
+      string const tmp = stringutilities::strjoin( keys.cbegin(), keys.cend(), ",\n" );
+
+      string errorMsg = "Could not find keyword \"" + objectTypeName + "\" in this context. ";
+      errorMsg += "Please be sure that all your keywords are properly spelled or that input file parameters have not changed.\n";
+      errorMsg += "All available keys are: [\n" + tmp + "\n]";
+      GEOSX_ERROR( errorMsg );
+    }
+
+    // We also stop the simulation if the builder is not here.
+    CatalogInterface< BASETYPE, ARGS... > const * builder = getCatalog().at( objectTypeName ).get();
+    if( builder == nullptr )
+    {
+      const string errorMsg = "\"" + objectTypeName + "\" could be found. But the builder is invalid.\n";
+      GEOSX_ERROR( errorMsg );
+    }
+
+    return builder->allocate( args ... );
   }
   //STOP_SPHINX
 
@@ -169,9 +213,9 @@ public:
    * that have been assigned a different name (e.g. through XML "name" attribute).
    */
   template< typename TYPE >
-  static TYPE & catalog_cast( BASETYPE & object )
+  static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::CatalogName();
+    std::string castedName = TYPE::catalogName();
     std::string objectName = object.getName();
 
     if( castedName != objectName )
@@ -266,7 +310,7 @@ public:
    * @return a unique_ptr<BASETYPE> to the newly allocated class.
    */
   //START_SPHINX_4
-  virtual std::unique_ptr< BASETYPE > Allocate( ARGS... args ) const override
+  virtual std::unique_ptr< BASETYPE > allocate( ARGS... args ) const override
   {
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Creating type " << LvArray::system::demangle( typeid(TYPE).name())
@@ -294,7 +338,7 @@ class CatalogEntryConstructor
 public:
   /**
    * @brief Constructor creates a catalog entry using the key defined by
-   * TYPE::CatalogName(), and value of CatalogEntry<TYPE,BASETYPE,ARGS...>.
+   * TYPE::catalogName(), and value of CatalogEntry<TYPE,BASETYPE,ARGS...>.
    */
   CatalogEntryConstructor()
   {
@@ -304,7 +348,7 @@ public:
                                                                    << " , ... >" );
 #endif
 
-    std::string name = TYPE::CatalogName();
+    std::string name = TYPE::catalogName();
 #if ( __cplusplus >= 201402L )
     std::unique_ptr< CatalogEntry< BASETYPE, TYPE, ARGS... > > temp = std::make_unique< CatalogEntry< BASETYPE, TYPE, ARGS... > >();
 #else
@@ -312,14 +356,14 @@ public:
                                                                                                                                                     TYPE,
                                                                                                                                                     ARGS... >()  );
 #endif
-    ( CatalogInterface< BASETYPE, ARGS... >::GetCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
+    ( CatalogInterface< BASETYPE, ARGS... >::getCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Registered " << LvArray::system::demangle( typeid(BASETYPE).name())
                              << " catalog component of derived type "
                              << LvArray::system::demangle( typeid(TYPE).name())
                              << " where " << LvArray::system::demangle( typeid(TYPE).name())
-                             << "::CatalogName() = " << TYPE::CatalogName());
+                             << "::catalogName() = " << TYPE::catalogName());
 #endif
   }
 
@@ -420,10 +464,10 @@ public:
    * @brief Get the catalog from that is stored in the target base class.
    * @return returns the catalog for this
    */
-  static CatalogType & GetCatalog()
+  static CatalogType & getCatalog()
   {
 #if BASEHOLDSCATALOG == 1
-    return BASETYPE::GetCatalog();
+    return BASETYPE::getCatalog();
 #else
     static CatalogType catalog;
     return catalog;
@@ -434,17 +478,17 @@ public:
    * @brief Create a new object that derives from BASETYPE.
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
-  virtual std::unique_ptr< BASETYPE > Allocate(  ) const = 0;
+  virtual std::unique_ptr< BASETYPE > allocate(  ) const = 0;
 
   /**
    * @brief Create a new object that derives from BASETYPE.
    * @param objectTypeName The key to the catalog entry that is able to create the correct type.
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
-  static std::unique_ptr< BASETYPE > Factory( std::string const & objectTypeName )
+  static std::unique_ptr< BASETYPE > factory( std::string const & objectTypeName )
   {
-    CatalogInterface< BASETYPE > const * const entry = GetCatalog().at( objectTypeName ).get();
-    return entry->Allocate();
+    CatalogInterface< BASETYPE > const * const entry = getCatalog().at( objectTypeName ).get();
+    return entry->allocate();
   }
 
   /**
@@ -458,9 +502,9 @@ public:
    * that have been assigned a different name (e.g. through XML "name" attribute).
    */
   template< typename TYPE >
-  static TYPE & catalog_cast( BASETYPE & object )
+  static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::CatalogName();
+    std::string castedName = TYPE::catalogName();
     std::string objectName = object.getName();
 
     if( castedName != objectName )
@@ -550,7 +594,7 @@ public:
    * @brief Create a new instance of @p TYPE.
    * @return a unique_ptr<BASETYPE> that owns the new instance
    */
-  virtual std::unique_ptr< BASETYPE > Allocate(  ) const override
+  virtual std::unique_ptr< BASETYPE > allocate(  ) const override
   {
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Creating type " << LvArray::system::demangle( typeid(TYPE).name())
@@ -584,20 +628,20 @@ public:
                                                                    << " , ... >" );
 #endif
 
-    std::string name = TYPE::CatalogName();
+    std::string name = TYPE::catalogName();
 #if ( __cplusplus >= 201402L )
     std::unique_ptr< CatalogEntry< BASETYPE, TYPE > > temp = std::make_unique< CatalogEntry< BASETYPE, TYPE > >();
 #else
     std::unique_ptr< CatalogEntry< BASETYPE, TYPE > > temp = std::unique_ptr< CatalogEntry< BASETYPE, TYPE > >( new CatalogEntry< BASETYPE, TYPE >()  );
 #endif
-    ( CatalogInterface< BASETYPE >::GetCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
+    ( CatalogInterface< BASETYPE >::getCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Registered " << LvArray::system::demangle( typeid(BASETYPE).name())
                              << " catalog component of derived type "
                              << LvArray::system::demangle( typeid(TYPE).name())
                              << " where " << LvArray::system::demangle( typeid(TYPE).name())
-                             << "::CatalogName() = " << TYPE::CatalogName());
+                             << "::catalogName() = " << TYPE::catalogName());
 #endif
   }
 

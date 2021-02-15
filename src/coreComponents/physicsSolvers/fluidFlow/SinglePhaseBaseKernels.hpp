@@ -37,7 +37,7 @@ struct MobilityKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( real64 const & dens,
+  compute( real64 const & dens,
            real64 const & dDens_dPres,
            real64 const & visc,
            real64 const & dVisc_dPres,
@@ -51,7 +51,7 @@ struct MobilityKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( real64 const & dens,
+  compute( real64 const & dens,
            real64 const & visc,
            real64 & mob )
   {
@@ -59,7 +59,7 @@ struct MobilityKernel
   }
 
   template< typename POLICY >
-  static void Launch( localIndex const size,
+  static void launch( localIndex const size,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & dDens_dPres,
                       arrayView2d< real64 const > const & visc,
@@ -69,7 +69,7 @@ struct MobilityKernel
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      Compute( dens[a][0],
+      compute( dens[a][0],
                dDens_dPres[a][0],
                visc[a][0],
                dVisc_dPres[a][0],
@@ -79,7 +79,7 @@ struct MobilityKernel
   }
 
   template< typename POLICY >
-  static void Launch( SortedArrayView< localIndex const > targetSet,
+  static void launch( SortedArrayView< localIndex const > targetSet,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & dDens_dPres,
                       arrayView2d< real64 const > const & visc,
@@ -90,7 +90,7 @@ struct MobilityKernel
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
-      Compute( dens[a][0],
+      compute( dens[a][0],
                dDens_dPres[a][0],
                visc[a][0],
                dVisc_dPres[a][0],
@@ -100,21 +100,21 @@ struct MobilityKernel
   }
 
   template< typename POLICY >
-  static void Launch( localIndex const size,
+  static void launch( localIndex const size,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & visc,
                       arrayView1d< real64 > const & mob )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      Compute( dens[a][0],
+      compute( dens[a][0],
                visc[a][0],
                mob[a] );
     } );
   }
 
   template< typename POLICY >
-  static void Launch( SortedArrayView< localIndex const > targetSet,
+  static void launch( SortedArrayView< localIndex const > targetSet,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & visc,
                       arrayView1d< real64 > const & mob )
@@ -122,7 +122,7 @@ struct MobilityKernel
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
-      Compute( dens[a][0],
+      compute( dens[a][0],
                visc[a][0],
                mob[a] );
     } );
@@ -192,7 +192,7 @@ struct AccumulationKernel< CellElementSubRegion >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( real64 const & dPres,
+  compute( real64 const & dPres,
            real64 const & densNew,
            real64 const & densOld,
            real64 const & dDens_dPres,
@@ -234,7 +234,7 @@ struct AccumulationKernel< CellElementSubRegion >
   }
 
   template< bool COUPLED, typename POLICY >
-  static void Launch( localIndex const size,
+  static void launch( localIndex const size,
                       globalIndex const rankOffset,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & elemGhostRank,
@@ -262,7 +262,7 @@ struct AccumulationKernel< CellElementSubRegion >
       {
         real64 localAccum, localAccumJacobian;
 
-        Compute< COUPLED >( dPres[ei],
+        compute< COUPLED >( dPres[ei],
                             dens[ei][0],
                             densOld[ei],
                             dDens_dPres[ei][0],
@@ -298,7 +298,7 @@ struct AccumulationKernel< SurfaceElementSubRegion >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( real64 const & densNew,
+  compute( real64 const & densNew,
            real64 const & densOld,
            real64 const & dDens_dPres,
            real64 const & volume,
@@ -316,7 +316,7 @@ struct AccumulationKernel< SurfaceElementSubRegion >
   }
 
   template< bool COUPLED, typename POLICY >
-  static void Launch( localIndex const size,
+  static void launch( localIndex const size,
                       globalIndex const rankOffset,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & elemGhostRank,
@@ -340,7 +340,7 @@ struct AccumulationKernel< SurfaceElementSubRegion >
 
         real64 const effectiveVolume = volume[ei] * poroMultiplier[ei];
 
-        Compute( dens[ei][0],
+        compute( dens[ei][0],
                  densOld[ei],
                  dDens_dPres[ei][0],
                  effectiveVolume,
@@ -371,7 +371,7 @@ struct AccumulationKernel< SurfaceElementSubRegion >
 struct FluidUpdateKernel
 {
   template< typename FLUID_WRAPPER >
-  static void Launch( FLUID_WRAPPER const & fluidWrapper,
+  static void launch( FLUID_WRAPPER const & fluidWrapper,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & dPres )
   {
@@ -379,7 +379,7 @@ struct FluidUpdateKernel
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k] + dPres[k] );
+        fluidWrapper.update( k, q, pres[k] + dPres[k] );
       }
     } );
   }
@@ -390,7 +390,7 @@ struct FluidUpdateKernel
 struct ResidualNormKernel
 {
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
-  static void Launch( LOCAL_VECTOR const localResidual,
+  static void launch( LOCAL_VECTOR const localResidual,
                       globalIndex const rankOffset,
                       arrayView1d< globalIndex const > const & presDofNumber,
                       arrayView1d< integer const > const & ghostRank,
@@ -426,7 +426,7 @@ struct ResidualNormKernel
 struct SolutionCheckKernel
 {
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
-  static localIndex Launch( LOCAL_VECTOR const localSolution,
+  static localIndex launch( LOCAL_VECTOR const localSolution,
                             globalIndex const rankOffset,
                             arrayView1d< globalIndex const > const & presDofNumber,
                             arrayView1d< integer const > const & ghostRank,

@@ -17,8 +17,10 @@
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/FunctionBase.hpp"
 #include "managers/Functions/TableFunction.hpp"
+#include "managers/GeosxState.hpp"
+
 #ifdef GEOSX_USE_MATHPRESSO
-#include "managers/Functions/SymbolicFunction.hpp"
+  #include "managers/Functions/SymbolicFunction.hpp"
 #endif
 
 #include <random>
@@ -34,7 +36,7 @@ void evaluate1DFunction( FunctionBase * function,
   for( localIndex ii=0; ii<inputs.size(); ++ii )
   {
     real64 input = inputs[ii];
-    real64 predicted = function->Evaluate( &input );
+    real64 predicted = function->evaluate( &input );
     real64 expected = outputs[ii];
 
     ASSERT_NEAR( predicted, expected, 1e-10 );
@@ -45,7 +47,7 @@ void evaluate1DFunction( FunctionBase * function,
 
 TEST( FunctionTests, 1DTable )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // 1D table, various interpolation methods
   localIndex Naxis = 4;
@@ -66,7 +68,7 @@ TEST( FunctionTests, 1DTable )
   values[2] = -5.0;
   values[3] = 7.0;
 
-  TableFunction * table_a = functionManager->CreateChild( "TableFunction", "table_a" )->group_cast< TableFunction * >();
+  TableFunction * table_a = functionManager->createChild( "TableFunction", "table_a" )->groupCast< TableFunction * >();
   table_a->setTableCoordinates( coordinates );
   table_a->setTableValues( values );
   table_a->reInitializeFunction();
@@ -127,7 +129,7 @@ TEST( FunctionTests, 1DTable )
 
 TEST( FunctionTests, 2DTable )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // 2D table with linear interpolation
   // f(x, y) = 2*x - 3*y + 5
@@ -168,7 +170,7 @@ TEST( FunctionTests, 2DTable )
   inputVarNames[0] = inputName;
 
   // Initialize the table
-  TableFunction * table_b = functionManager->CreateChild( "TableFunction", "table_b" )->group_cast< TableFunction * >();
+  TableFunction * table_b = functionManager->createChild( "TableFunction", "table_b" )->groupCast< TableFunction * >();
   table_b->setTableCoordinates( coordinates );
   table_b->setTableValues( values );
   table_b->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -176,8 +178,8 @@ TEST( FunctionTests, 2DTable )
   table_b->reInitializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string groupName = "testGroup";
-  dataRepository::Group testGroup( groupName, nullptr );
+  conduit::Node node;
+  dataRepository::Group testGroup( "testGroup", node );
 
   real64_array2d testCoordinates;
   testGroup.registerWrapper( inputName, &testCoordinates )->
@@ -215,7 +217,7 @@ TEST( FunctionTests, 2DTable )
   }
 
   // Evaluate the function in batch mode
-  table_b->Evaluate( &(testGroup), 0.0, set.toView(), output );
+  table_b->evaluate( &(testGroup), 0.0, set.toView(), output );
 
   // Compare results
   for( localIndex ii=0; ii<Ntest; ++ii )
@@ -227,7 +229,7 @@ TEST( FunctionTests, 2DTable )
 
 TEST( FunctionTests, 4DTable_multipleInputs )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // 3D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y + 7*z + 11*t
@@ -290,7 +292,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   inputVarNames[1] = timeName;
 
   // Initialize the table
-  TableFunction * table_c = functionManager->CreateChild( "TableFunction", "table_c" )->group_cast< TableFunction * >();
+  TableFunction * table_c = functionManager->createChild( "TableFunction", "table_c" )->groupCast< TableFunction * >();
   table_c->setTableCoordinates( coordinates );
   table_c->setTableValues( values );
   table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -298,8 +300,8 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   table_c->reInitializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string groupName = "testGroup";
-  dataRepository::Group testGroup( groupName, nullptr );
+  conduit::Node node;
+  dataRepository::Group testGroup( "testGroup", node );
 
   real64_array2d testCoordinates;
   testGroup.registerWrapper( coordinatesName, &testCoordinates )->
@@ -341,7 +343,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
     }
 
     // Evaluate the function in batch mode
-    table_c->Evaluate( &(testGroup), t, set.toView(), output );
+    table_c->evaluate( &(testGroup), t, set.toView(), output );
 
     // Compare results
     for( localIndex jj=0; jj<Ntest; ++jj )
@@ -357,7 +359,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 
 TEST( FunctionTests, 4DTable_symbolic )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // Symbolic function with four inputs
   string expression = "1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d)";
@@ -375,15 +377,15 @@ TEST( FunctionTests, 4DTable_symbolic )
   inputVarNames[3] = nameD;
 
   // Initialize the table
-  SymbolicFunction * table_d = functionManager->CreateChild( "SymbolicFunction", "table_d" )->group_cast< SymbolicFunction * >();
+  SymbolicFunction * table_d = functionManager->createChild( "SymbolicFunction", "table_d" )->groupCast< SymbolicFunction * >();
   table_d->setSymbolicExpression( expression );
   table_d->setInputVarNames( inputVarNames );
   table_d->setSymbolicVariableNames( inputVarNames );
-  table_d->InitializeFunction();
+  table_d->initializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string groupName = "testGroup";
-  dataRepository::Group testGroup( groupName, nullptr );
+  conduit::Node node;
+  dataRepository::Group testGroup( "testGroup", node );
   real64_array inputA;
   real64_array inputB;
   real64_array inputC;
@@ -425,7 +427,7 @@ TEST( FunctionTests, 4DTable_symbolic )
   }
 
   // Evaluate the function in batch mode
-  table_d->Evaluate( &(testGroup), 0.0, set.toView(), output );
+  table_d->evaluate( &(testGroup), 0.0, set.toView(), output );
 
   // Compare results
   for( localIndex jj=0; jj<Ntest; ++jj )
@@ -439,13 +441,13 @@ TEST( FunctionTests, 4DTable_symbolic )
 
 int main( int argc, char * * argv )
 {
-  basicSetup( argc, argv );
+  testing::InitGoogleTest( &argc, argv );
 
-  ::testing::InitGoogleTest( &argc, argv );
+  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  basicCleanup();
+  geosx::basicCleanup();
 
   return result;
 }

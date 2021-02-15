@@ -18,7 +18,7 @@
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 
-#include <string>
+
 
 namespace geosx
 {
@@ -39,7 +39,7 @@ public:
    * @param inputPath filename The name of the file to read from.
    * @param mesh The mesh to communicate.
    */
-  ChomboCoupler( MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh );
+  ChomboCoupler( MPI_Comm const comm, const string & outputPath, const string & inputPath, MeshLevel & mesh );
 
   /**
    * @brief Write data to file.
@@ -65,9 +65,9 @@ private:
   /// The MPI communicator used to read and write the file.
   MPI_Comm const m_comm;
   /// The path to write the file to.
-  std::string const m_outputPath;
+  string const m_outputPath;
   /// The path to read from.
-  std::string const m_inputPath;
+  string const m_inputPath;
   /// The global face offset.
   std::int64_t m_face_offset;
   /// The local number of faces written.
