@@ -44,12 +44,12 @@ LinearElasticIsotropic::LinearElasticIsotropic( string const & name, Group * con
   registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Young's Modulus." );
+    setDescription( "Elastic Young's Modulus Parameter" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Poisson's ratio" );
+    setDescription( "Elastic Poisson's ratio Parameter" );
 
   registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
     setApplyDefaultValue( -1 )->
@@ -57,13 +57,11 @@ LinearElasticIsotropic::LinearElasticIsotropic( string const & name, Group * con
 
   registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Elastic Shear Modulus" );
+    setDescription( "Elastic Shear Modulus Field" );
 }
-
 
 LinearElasticIsotropic::~LinearElasticIsotropic()
 {}
-
 
 void LinearElasticIsotropic::setDefaultBulkModulus( real64 const bulkModulus )
 {
@@ -79,7 +77,6 @@ void LinearElasticIsotropic::setDefaultShearModulus( real64 const shearModulus )
     setApplyDefaultValue( m_defaultShearModulus );
 }
 
-
 void LinearElasticIsotropic::postProcessInput()
 {
 
@@ -90,24 +87,27 @@ void LinearElasticIsotropic::postProcessInput()
   real64 & K  = m_defaultBulkModulus;
   real64 & G  = m_defaultShearModulus;
 
+  // Poisson ratio range is: -0.5 < nu < 0.5
+  // Zero bulk, shear or Young modulus is not accepted to avoid devision to zero
+
   string errorCheck( "( " );
   int numConstantsSpecified = 0;
-  if( nu >= 0.0 )
+  if( nu > -0.5 && nu < 0.5 )
   {
     ++numConstantsSpecified;
     errorCheck += "nu, ";
   }
-  if( E >= 0.0 )
+  if( E > 0.0 )
   {
     ++numConstantsSpecified;
     errorCheck += "E, ";
   }
-  if( K >= 0.0 )
+  if( K > 0.0 )
   {
     ++numConstantsSpecified;
     errorCheck += "K, ";
   }
-  if( G >= 0.0 )
+  if( G > 0.0 )
   {
     ++numConstantsSpecified;
     errorCheck += "G, ";
@@ -115,42 +115,42 @@ void LinearElasticIsotropic::postProcessInput()
   errorCheck += ")";
 
   GEOSX_ERROR_IF( numConstantsSpecified != 2,
-                  "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
+                  "A specific pair of elastic constants is required. Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). "<<
                   "You have specified "<<errorCheck );
 
-  if( nu >= 0.0 && E >= 0.0 )
+  if( nu > -0.5 && nu < 0.5 && E > 0.0 )
   {
-    K = E / (3 * ( 1 - 2*nu ) );
-    G = E / (2 * ( 1 + nu ) );
+    K = E / 3.0 / ( 1.0 - 2.0 * nu );
+    G = E / 2.0 / ( 1.0 + nu );
   }
-  else if( nu >= 0.0 && G >= 0.0 )
+  else if( nu > -0.5 && nu < 0.5 && G > 0.0 )
   {
-    E = 2 * G * ( 1 + nu );
-    K = E / (3 * ( 1 - 2*nu ) );
+    E = 2.0 * G * ( 1.0 + nu );
+    K = E / 3.0 / ( 1.0 - 2.0 * nu );
   }
-  else if( nu >= 0 && K >= 0.0 )
+  else if( nu > -0.5 && nu < 0.5 && K > 0.0 )
   {
-    E = 3 * K * ( 1 - 2 * nu );
-    G = E / ( 2 * ( 1 + nu ) );
+    E = 3.0 * K * ( 1.0 - 2.0 * nu );
+    G = E / 2.0 / ( 1.0 + nu );
   }
-  else if( E >= 0.0 && K >=0 )
+  else if( E > 0.0 && K > 0.0 )
   {
-    nu = 0.5 * ( 1 - E /  ( 3 * K ) );
-    G = E / ( 2 * ( 1 + nu ) );
+    nu = 0.5 * ( 1.0 - E / 3.0 / K );
+    G = E / 2.0 / ( 1.0 + nu );
   }
-  else if( E >= 0.0 && G >= 0 )
+  else if( E > 0.0 && G > 0.0 )
   {
     nu = 0.5 * E / G - 1.0;
-    K = E / (3 * ( 1 - 2*nu ) );
+    K = E / 3.0 / ( 1.0 - 2.0 * nu );
   }
-  else if( K >= 0.0 && G >= 0.0 )
+  else if( K > 0.0 && G > 0.0 )
   {
-    E = 9 * K * G / ( 3 * K + G );
-    nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+    E = 9.0 * K * G / ( 3.0 * K + G );
+    nu = ( 3.0 * K - 2.0 * G ) / ( 6.0 * K + 2.0 * G );
   }
   else
   {
-    GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
+    GEOSX_ERROR( "Invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
   }
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
