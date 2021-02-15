@@ -40,7 +40,6 @@ namespace conduit
 class Node;
 }
 
-
 /**
  * namespace to encapsulate GEOSX
  */
@@ -85,13 +84,20 @@ public:
 
   /**
    * @brief Constructor
-   *
-   * @param[in] name the name of this object manager
-   * @param[in] parent the parent Group
+   * @param name The name of this Group.
+   * @param parent The parent Group.
    */
   explicit Group( string const & name,
                   Group * const parent );
 
+  /**
+   * @brief Constructor
+   * @param name The name of this Group.
+   * @param rootNode The root node of the data repository.
+   * @note This Group will not have a parent group.
+   */
+  explicit Group( string const & name,
+                  conduit::Node & rootNode );
 
   /**
    * @brief Move constructor
@@ -412,28 +418,44 @@ public:
    */
   template< typename T = Group >
   T & getGroupReference( string const & key )
-  { return dynamicCast< T & >( *m_subGroups[ key ] ); }
+  {
+    Group * const child = m_subGroups[ key ];
+    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    return dynamicCast< T & >( *child );
+  }
 
   /**
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
   T const & getGroupReference( string const & key ) const
-  { return dynamicCast< T const & >( *m_subGroups[ key ] ); }
+  {
+    Group const * const child = m_subGroups[ key ];
+    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    return dynamicCast< T const & >( *child );
+  }
 
   /**
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
   T & getGroupReference( subGroupMap::KeyIndex const & key )
-  { return dynamicCast< T & >( *m_subGroups[key] ); }
+  {
+    Group * const child = m_subGroups[ key ];
+    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    return dynamicCast< T & >( *child );
+  }
 
   /**
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
   T const & getGroupReference( subGroupMap::KeyIndex const & key ) const
-  { return dynamicCast< T const & >( *m_subGroups[key] ); }
+  {
+    Group const * const child = m_subGroups[ key ];
+    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    return dynamicCast< T const & >( *child );
+  }
 
   /**
    * @brief Retrieve a sub-group from the current Group using a KeyIndexT.
@@ -1119,6 +1141,15 @@ public:
     return m_wrappers;
   }
 
+  /**
+   * @brief Return the number of wrappers.
+   * @return The number of wrappers.
+   */
+  indexType numWrappers() const
+  {
+    return m_wrappers.size();
+  }
+
   ///@}
 
   /**
@@ -1320,6 +1351,15 @@ public:
   }
 
   /**
+   * @brief Return the path of this Group in the data repository.
+   * @return The path of this group in the data repository.
+   */
+  inline string const getPath() const
+  {
+    return getConduitNode().path();
+  }
+
+  /**
    * @brief Access the group's parent.
    * @return pointer to parent Group
    */
@@ -1385,15 +1425,34 @@ public:
   ///@}
 
   /**
+   * @brief Register a callback function on the group
+   * @param func the function to register
+   * @param funcType the type of the function to register
+   * @return true if successful, false else
+   */
+  virtual bool registerCallback( void * func, const std::type_info & funcType )
+  {
+    GEOSX_UNUSED_VAR( func );
+    GEOSX_UNUSED_VAR( funcType );
+    return false;
+  }
+
+  /**
    * @name Restart output methods
    */
   ///@{
 
   /**
-   * @brief Get the Conduit node object associated with this group
-   * @return reference to inner conduit::Node member
+   * @brief Return the Conduit node object associated with this group.
+   * @return The Conduit node object associated with this group.
    */
   conduit::Node & getConduitNode()
+  {
+    return m_conduitNode;
+  }
+
+  /// @copydoc getConduitNode()
+  conduit::Node const & getConduitNode() const
   {
     return m_conduitNode;
   }
@@ -1635,8 +1694,8 @@ Wrapper< T > * Group::registerWrapper( string const & name,
 template< typename T >
 T const * Group::getGroupByPath( string const & path ) const
 {
-  // needed for getting root correctly with GetGroupByPath("/");
-  if( path.empty())
+  // needed for getting root correctly with getGroupByPath("/");
+  if( path.empty() || path == "." )
   {
     return groupCast< T const * >( this );
   }
@@ -1678,7 +1737,7 @@ T const * Group::getGroupByPath( string const & path ) const
     }
     else
     {
-      return m_subGroups[child]->getGroupByPath< T >( subPath );
+      return getGroupReference<>( child ).getGroupByPath< T >( subPath );
     }
   }
 }

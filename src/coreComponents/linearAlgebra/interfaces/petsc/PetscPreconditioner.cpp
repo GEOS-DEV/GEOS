@@ -172,7 +172,7 @@ void CreatePetscAMG( LinearSolverParameters const & params,
 
       // Sanity checks
       GEOSX_LAI_ASSERT_EQ( n_local, 1 );
-      GEOSX_LAI_ASSERT_EQ( first_local, MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) );
+      GEOSX_LAI_ASSERT_EQ( first_local, MpiWrapper::commRank( MPI_COMM_GEOSX ) );
 
       // Set up local block ILU preconditioner
       PC prec_local;

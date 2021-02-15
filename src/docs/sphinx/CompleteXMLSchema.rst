@@ -512,6 +512,13 @@ Element: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
+.. _XML_Python:
+
+Element: Python
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/Python.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -1249,6 +1256,13 @@ Datastructure: ProppantSlurryFluid
 Datastructure: ProppantTransport
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
+
+
+.. _DATASTRUCTURE_Python:
+
+Datastructure: Python
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Python_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
