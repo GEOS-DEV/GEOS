@@ -18,6 +18,7 @@
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICTRANSVERSEISOTROPIC_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICTRANSVERSEISOTROPIC_HPP_
+
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
@@ -246,7 +247,6 @@ LinearElasticTransverseIsotropicUpdates::
 }
 
 
-
 /**
  * @class LinearElasticTransverseIsotropic
  *
@@ -292,20 +292,35 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for transverse youngs modulus
+    /// string/key for transverse Young's modulus
     static constexpr auto defaultYoungsModulusTransverse     = "defaultYoungsModulusTransverse";
 
     /// string/key for axial Young's modulus
     static constexpr auto defaultYoungsModulusAxial          = "defaultYoungsModulusAxial";
 
     /// string/key for transverse Poisson's Ratio
-    static constexpr auto defaultPoissonRatioTransverse      = "defaultPoissonRatioTransverse";
+    static constexpr auto defaultPoissonsRatioTransverse      = "defaultPoissonsRatioTransverse";
 
     /// string/key for axial Poisson's Ratio
-    static constexpr auto defaultPoissonRatioAxialTransverse = "defaultPoissonRatioAxialTransverse";
+    static constexpr auto defaultPoissonsRatioAxialTransverse = "defaultPoissonsRatioAxialTransverse";
 
     /// string/key for transverse shear modulus
     static constexpr auto defaultShearModulusAxialTransverse = "defaultShearModulusAxialTransverse";
+
+    /// string/key for default c11 component of Voigt stiffness tensor
+    static constexpr auto defaultC11 = "defaultC11";
+
+    /// string/key for default c13 component of Voigt stiffness tensor
+    static constexpr auto defaultC13 = "defaultC13";
+
+    /// string/key for default c33 component of Voigt stiffness tensor
+    static constexpr auto defaultC33 = "defaultC33";
+
+    /// string/key for default c44 component of Voigt stiffness tensor
+    static constexpr auto defaultC44 = "defaultC44";
+
+    /// string/key for default c66 component of Voigt stiffness tensor
+    static constexpr auto defaultC66 = "defaultC66";
 
     /// string/key for c11 component of Voigt stiffness tensor
     static constexpr auto c11 = "c11";
@@ -359,14 +374,13 @@ public:
     m_defaultYoungsModulusAxial = input;
   }
 
-
   /**
    * @brief Getter for default transverse Poisson's ratio
    * @return The value of the default transverse Poisson's ratio.
    */
   real64 getDefaultPoissonsRatioTransverse()
   {
-    return m_defaultPoissonTransverse;
+    return m_defaultPoissonsRatioTransverse;
   }
 
   /**
@@ -375,9 +389,8 @@ public:
    */
   void setDefaultPoissonsRatioTransverse( real64 const input )
   {
-    m_defaultPoissonTransverse = input;
+    m_defaultPoissonsRatioTransverse = input;
   }
-
 
   /**
    * @brief Getter for default axial Poisson's ratio
@@ -385,7 +398,7 @@ public:
    */
   real64 getDefaultPoissonsRatioAxialTransverse()
   {
-    return m_defaultPoissonAxialTransverse;
+    return m_defaultPoissonsRatioAxialTransverse;
   }
 
   /**
@@ -395,9 +408,8 @@ public:
    */
   void setDefaultPoissonsRatioAxialTransverse( real64 const input )
   {
-    m_defaultPoissonAxialTransverse = input;
+    m_defaultPoissonsRatioAxialTransverse = input;
   }
-
 
   /**
    * @brief Getter for default axial/transverse Shear modulus
@@ -428,7 +440,6 @@ public:
    * @return reference to mutable 11 component of Voigt stiffness tensor.
    */
   arrayView1d< real64 > getC11() { return m_c11; }
-
 
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
@@ -530,11 +541,11 @@ private:
 
   /// The default value of the transverse Poisson's ratio for any new
   /// allocations.
-  real64 m_defaultPoissonTransverse;
+  real64 m_defaultPoissonsRatioTransverse;
 
   /// The default value of the axial/transverse Poisson's ratio for any new
   /// allocations.
-  real64 m_defaultPoissonAxialTransverse;
+  real64 m_defaultPoissonsRatioAxialTransverse;
 
   /// The default value of the axial/transverse Shear modulus for any new
   /// allocations.
@@ -556,7 +567,8 @@ private:
   array1d< real64 > m_c66;
 
 };
-}
+
+} /* namespace constitutive */
 
 } /* namespace geosx */
 
