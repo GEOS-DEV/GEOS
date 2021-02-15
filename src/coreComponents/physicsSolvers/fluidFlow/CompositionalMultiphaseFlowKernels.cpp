@@ -784,8 +784,8 @@ Compute( localIndex const numPhases,
   localIndex const NP = numPhases;
 
   bool const is_ppu = false;
-  bool const is_pu = true;//!is_ppu
-  bool const is_hu = false;//!(is_pu || is_ppu);
+  bool const is_pu = false;//!is_ppu
+  bool const is_hu = true;//!(is_pu || is_ppu);
   real64 phase_eps = 0;
 
   real64 compFlux[NC]{};
@@ -895,9 +895,7 @@ Compute( localIndex const numPhases,
         localIndex ei_i_  = sei[j];
 
         real64 const mobility = phaseMob[er_i_][esr_i_][ei_i_][kp];
-        real64 const PD = phaseDens[er_i_][esr_i_][ei_i_][0][kp];
-        if( std::fabs(PD) < 1e-20)
-          continue;
+        real64 const PD = (phaseDens[er_i_][esr_i_][ei_i_][0][kp] > 1e-20) ? phaseDens[er_i_][esr_i_][ei_i_][0][kp] : 1e-20;
 
         mob[j] = mobility / PD;
 //        mob[j] = mobility;
@@ -1078,7 +1076,7 @@ Compute( localIndex const numPhases,
 
     // compute the phase flux and derivatives using upstream cell mobility
     phaseFlux = mob_unw[k_up] * potGrad;
-    phase_eps = (phase_eps > 0.01*std::fabs(phaseFlux)) ? phase_eps : 0.01*std::fabs(phaseFlux);
+//    phase_eps = (phase_eps > 0.01*std::fabs(phaseFlux)) ? phase_eps : 0.01*std::fabs(phaseFlux);
     //adding totflux for UT formulation
     totFlux_unw += phaseFlux;
 
@@ -1106,13 +1104,6 @@ Compute( localIndex const numPhases,
 
     //validating densMult helper
     densMult(phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, ip, k_up);
-
-//    totFlux += phaseFlux;
-
-//    std::cerr << " " << dPhaseFlux_dC[ip][0] << " " << dPhaseFlux_dC[ip][1] << " " << dPhaseFlux_dC[ip][2] << " ";
-//    std::cerr << " " << dPhaseFlux_dP[0] << " " << dPhaseFlux_dP[1] << " ";
-//    std::cerr << " " << phaseFlux <<  " ";
-
 
     if( !IS_UT_FORM ) // skip  if you intend to use fixed total valocity formulation
     {
@@ -1177,7 +1168,6 @@ Compute( localIndex const numPhases,
         real64 dMob_unw_dP[MAX_STENCIL] {};
         real64 dMob_unw_dC[MAX_STENCIL][NC] {};
 
-
         //reinit
         //fractional flow too low to let the upstream phase flow
         fflow = 0;
@@ -1235,6 +1225,7 @@ Compute( localIndex const numPhases,
 
     //finding the largest negPot to be compared against later
     real64 minGravHead = 0;
+    bool all_pos_ = true;
     if( is_pu || is_hu ){
       for( localIndex ip = 0; ip < NP; ++ip )
       {
@@ -1250,10 +1241,12 @@ Compute( localIndex const numPhases,
         if(is_pu)
           pot_ = totFlux_unw;
 
-        localIndex const k_up = ( pot_ >= phase_eps ) ? 0 : 1;
-        localIndex const k_dw = ( pot_ >= phase_eps ) ? 1 : 0;
+        localIndex const k_up = 0;
+          //( pot_ >= phase_eps ) ? 0 : 1;
+        localIndex const k_dw = 1;
+          //( pot_ >= phase_eps ) ? 1 : 0;
 
-//        std::cerr << ip << " : (" << pot_ << " ; ";
+        std::cerr << ip << " : (" << pot_ << " ; ";
         for( localIndex jp = 0; jp < NP; ++jp )
         {
 
@@ -1276,12 +1269,14 @@ Compute( localIndex const numPhases,
 
             pot_ += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead - gravHeadOther ) : mob_up * ( gravHead
                                                                                                            - gravHeadOther );
-            //          std::cerr << pot_ << "[ " << mob_dw << " ," << mob_up << "] ";
+                      std::cerr << pot_ << "[ " << mob_dw << " ," << mob_up << "] ";
 
           }
         }
 
-//        std::cerr << "  " << pot_ << "), " << gravHead << std::endl;
+        all_pos_ &= pot_>=0;
+
+        std::cerr << "  " << pot_ << "), " << gravHead << std::endl;
         if( pot_ < 0 && std::fabs(gravHead) >= std::fabs(minGravHead) ) // if neg pot and more dense
         {
           minGravHead = gravHead;
@@ -1289,7 +1284,7 @@ Compute( localIndex const numPhases,
       }
     }
 
-        auto getUpwindV = [&presGrad, &dGravHead_dX, &phase_eps, &minGravHead, &totFlux_unw] (bool is_ppu_, bool is_pu_, bool is_hu_, localIndex kp, real64 gravTerm = 0)
+        auto getUpwindV = [&presGrad, &dGravHead_dX, &phase_eps, &minGravHead, &totFlux_unw,&all_pos_] (bool is_ppu_, bool is_pu_, bool is_hu_, localIndex kp)
           {
             real64 gravHead{};
             real64 dGravHead_dP[NUM_ELEMS]{};
@@ -1306,21 +1301,22 @@ Compute( localIndex const numPhases,
             }
             else if( is_pu_ )
             {
-              k_up = ( totFlux_unw >= phase_eps ) ? 0 : 1;
-              if( std::fabs( gravHead ) <= std::fabs( minGravHead ) && std::fabs( minGravHead ) > 0 )
+              k_up = 0;
+              if( std::fabs( gravHead ) <= std::fabs( minGravHead ) && !(all_pos_) )
                 k_up = ( k_up == 1 ) ? 0 : 1;
             }
             else if( is_hu_ )
             {
-              /* nothing here yet */
-              k_up = ( totFlux_unw + gravTerm >= phase_eps ) ? 0 : 1;
+              // dummy use of gravTerm to preserve interface
+              k_up = ( totFlux_unw >= phase_eps ) ? 0 : 1;
             }
 
               return k_up;
           };
 
-        auto getUpwindG = [&presGrad, &dGravHead_dX, &phase_eps, &minGravHead, &totFlux_unw] (bool is_ppu_, bool is_pu_, bool is_hu_, localIndex kp, real64 gravTerm = 0)
+        auto getUpwindG = [&presGrad, &dGravHead_dX, &phase_eps, &minGravHead, &totFlux_unw, &all_pos_](bool is_ppu_, bool is_pu_, bool is_hu_, localIndex kp)
         {
+
           real64 gravHeadOther{};
           real64 dGravHeadOther_dP[NUM_ELEMS]{};
           real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
@@ -1334,25 +1330,19 @@ Compute( localIndex const numPhases,
           {
             k_up_g = ( presGrad - gravHeadOther >= 0 ) ? 0 : 1;
           }
-          else if( is_pu_ )
+          else if( is_pu_ || is_hu_ )
           {
-            k_up_g = ( totFlux_unw >= phase_eps ) ? 0 : 1;
-            if( std::fabs( gravHeadOther ) <= std::fabs( minGravHead ) && std::fabs( minGravHead ) > 0 )
+            k_up_g = 0;
+            if( std::fabs( gravHeadOther ) <= std::fabs( minGravHead )
+                && !(all_pos_) )
               k_up_g = ( k_up_g == 1 ) ? 0 : 1;
-          }
-          else if( is_hu_ )
-          {
-            //           k_up_g = ( std::fabs(gravHead) > std::fabs(minGravHead) ) ? 0 : 1;
-            k_up_g = ( gravTerm > 0 ) ? 0 : 1;
-            if( (std::fabs(gravHeadOther) <= std::fabs(minGravHead)) && std::fabs(minGravHead)>0 )
-              k_up_g = (k_up_g == 1) ? 0 : 1; // downwind
           }
 
           return k_up_g;
         };
 
         auto dTotMob_dX = [&NP, &dMob_dX, &stencilSize, &getUpwindV, &getUpwindG]
-        ( bool is_grav_ , bool is_ppu_, bool is_pu_, bool is_hu_, real64 gravTerm =0,
+        ( bool is_grav_ , bool is_ppu_, bool is_pu_, bool is_hu_,
                               real64& totMob_unw_, real64 dTotMob_unw_dP_[MAX_STENCIL], real64 dTotMob_unw_dC_[MAX_STENCIL][NC])
         {
 
@@ -1379,7 +1369,7 @@ Compute( localIndex const numPhases,
             if( ! is_grav_ )
               k_up = getUpwindV(is_ppu_, is_pu_, is_hu_, ip);
             else
-              k_up = getUpwindG(is_ppu_, is_pu_, is_hu_, ip, gravTerm);
+              k_up = getUpwindG(is_ppu_, is_pu_, is_hu_, ip);
 
             if( std::fabs( mob_unw[k_up] ) < 1e-20 )
               continue;
@@ -1463,10 +1453,10 @@ Compute( localIndex const numPhases,
 
       dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
       /* chosing upwind for viscous term */
-      localIndex k_up = getUpwindV(is_ppu,is_pu,is_hu,ip);
-      dTotMob_dX(false, is_ppu, is_pu, is_hu, 0.0, totMob_unw, dTotMob_unw_dP, dTotMob_unw_dC);
+      localIndex k_up = getUpwindV(is_ppu, is_pu, is_hu, ip);
+      std::cerr << " " << k_up << " ";
+      dTotMob_dX(false, is_ppu, is_pu, is_hu, totMob_unw, dTotMob_unw_dP, dTotMob_unw_dC);
 
-//      std::cerr << "" << k_up << " ";
 
       real64 mob_unw[MAX_STENCIL] {};
       real64 dMob_unw_dP[MAX_STENCIL] {};
@@ -1514,28 +1504,7 @@ Compute( localIndex const numPhases,
       }
 
       /***           GRAVITY TERM                ***/
-      //if HU compute gravTerm to get init direction
-      real64 gravTerm {};
-      for( localIndex jp = 0; jp < NP; ++jp )
-      {
-        if( ip != jp )
-        {
-          real64 gravHeadOther{};
-          real64 dGravHeadOther_dP[NUM_ELEMS]{};
-          real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
-          real64 dPropOther_dC[NC]{};
-
-          dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
-
-          gravTerm -= gravHead - gravHeadOther;
-        }
-      }
-
-      dTotMob_dX(true, is_ppu, is_pu, is_hu, gravTerm, totMob_unw, dTotMob_unw_dP, dTotMob_unw_dC);
-      localIndex k_up_g = getUpwindG(is_ppu, is_pu, is_hu, ip, gravTerm);
-      dFrac_dX(fflow, dFflow_dP, dFflow_dC, ip, k_up_g);
-      densMult(fflow, dFflow_dP, dFflow_dC, ip, k_up_g);
-      for( localIndex jp = 0; jp < NP; ++jp )
+     for( localIndex jp = 0; jp < NP; ++jp )
       {
         if( ip != jp )
         {
@@ -1550,32 +1519,22 @@ Compute( localIndex const numPhases,
 
           dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
 
-         //mobOther is upwinded as PPU for consistency with totMob in fractional flow fflow
-          real64 gravTermOther {};
-          for( localIndex kp = 0; kp < NP; ++kp )
-          {
-            if( kp != jp )
-            {
-              real64 gravHeadAlt{};
-              real64 dGravHeadAlt_dP[NUM_ELEMS]{};
-              real64 dGravHeadAlt_dC[NUM_ELEMS][NC]{};
-              real64 dPropAlt_dC[NC]{};
+          dTotMob_dX(true, is_ppu, is_pu, is_hu, totMob_unw, dTotMob_unw_dP, dTotMob_unw_dC);
+          localIndex k_up_g = getUpwindG(is_ppu, is_pu, is_hu, ip);
+          localIndex k_up_og = getUpwindG(is_ppu, is_pu, is_hu, jp);
+//      std::cerr << " " << k_up_g << " ";
+          std::cerr << " " << k_up_og << " ";
 
-              dGravHead_dX( gravHeadAlt, dGravHeadAlt_dP, dGravHeadAlt_dC, dPropAlt_dC, kp );
-
-              gravTermOther -= gravHeadOther - gravHeadAlt;
-            }
-          }
-         localIndex k_up_og = getUpwindG(is_ppu, is_pu, is_hu, jp, gravTermOther);
-//          std::cerr << " " << k_up_g << " ";
+          dFrac_dX(fflow, dFflow_dP, dFflow_dC, ip, k_up_g);
+          densMult(fflow, dFflow_dP, dFflow_dC, ip, k_up_g);
 
           real64 mob_other_unw[MAX_STENCIL] {};
           real64 dMob_other_unw_dP[MAX_STENCIL] {};
           real64 dMob_other_unw_dC[MAX_STENCIL][NC] {};
-
           dMob_dX(mob_other_unw, dMob_other_unw_dP, dMob_other_unw_dC, jp);
           if( std::fabs(mob_other_unw[k_up_og]) < 1e-20 )
             continue;
+
           phaseFluxG -= fflow * mob_other_unw[k_up_og] * ( gravHead - gravHeadOther );
 
           dPhaseFluxG_dP[k_up_og] -= fflow * dMob_other_unw_dP[k_up_og] * ( gravHead - gravHeadOther );
@@ -1635,11 +1594,11 @@ Compute( localIndex const numPhases,
       /*update phaseComp from viscous part */
       dPhaseComp_dX(phaseFluxV, dPhaseFluxV_dP, dPhaseFluxV_dC, compFlux, dCompFlux_dP, dCompFlux_dC, ip, k_up);
 
+      std::cerr << std::endl;
     }
+    std::cerr << std::endl;
 
   }//end If UT_FORM
-
-
 
   // populate local flux vector and derivatives
   for( localIndex ic = 0; ic < NC; ++ic )
@@ -1718,6 +1677,8 @@ FluxKernel::
 
     stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
     stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
+
+    std::cerr << " iconn :" << iconn <<std::endl;
 
     FluxKernel::Compute< NC, NUM_ELEMS, MAX_STENCIL, IS_UT_FORM >( numPhases,
                                                        stencilSize,
