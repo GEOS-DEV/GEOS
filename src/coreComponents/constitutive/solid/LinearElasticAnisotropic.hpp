@@ -18,6 +18,7 @@
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICANISOTROPIC_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICANISOTROPIC_HPP_
+
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
@@ -25,11 +26,8 @@
 
 namespace geosx
 {
-
-
 namespace constitutive
 {
-
 
 /**
  * @class LinearElasticAnisotropicUpdates
@@ -340,8 +338,7 @@ private:
 
 };
 
-
-}
+} /* namespace constitutive */
 
 } /* namespace geosx */
 
