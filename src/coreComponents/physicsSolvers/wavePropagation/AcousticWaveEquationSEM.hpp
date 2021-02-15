@@ -93,15 +93,26 @@ protected:
 
 private:
 
+  /**
+   * @brief Convert a mesh element point coordinate into a coorinate on the reference element
+   * @param coords coordinate of the point
+   * @param coordsOnRefElem to contain the coordinate computed in the reference element
+   * @param numElem index of the element containing the coords
+   * @param numNodesPerElem number of nodes per element
+   * @param elemsToNodes map obtain node global index from element index
+   */
+  //void computeCoordinateOnReferenceElement( array1d< real64 const > const & coords,
+  //array1d< real64 > & coordsOnRefElem,
+  //					     localIndex const & indexElem,
+  //					     localIndex const & numNodesPerElem,
+  //					     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes);
+
   /// Locates the source term and precomputes the constant part of the source term
-  void precomputeSourceTerm( MeshLevel & mesh );
+  /// And locate receivers and pre_evaluate the basis functions at each receiver coordinate
+  void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
   /// Multiply the precomputed term by the ricker and add to the right-hand side
   void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs );
-
-
-  /// Locate receivers and pre_evaluate the basis functions at each receiver coordinate
-  void precomputeBasisFunctionForEachReceiver( MeshLevel & mesh );
 
   /// Compute the pressure at each receiver coordinate in one time step
   void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const pressure_np1 );

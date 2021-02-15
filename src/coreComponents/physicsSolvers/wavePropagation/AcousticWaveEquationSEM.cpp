@@ -138,7 +138,8 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void AcousticWaveEquationSEM::precomputeSourceTerm( MeshLevel & mesh )
+
+void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 {
   NodeManager & nodeManager = *(mesh.getNodeManager());
 
@@ -153,6 +154,15 @@ void AcousticWaveEquationSEM::precomputeSourceTerm( MeshLevel & mesh )
   sourceNodeIds.setValues< serialPolicy >( -1 );
   sourceConstants.setValues< serialPolicy >( -1 );
   sourceIsLocal.setValues< serialPolicy >( 0 );
+
+  // get the receiver information
+  arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
+  arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
+  arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
+  arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
+  receiverNodeIds.setValues< serialPolicy >( -1 );
+  receiverConstants.setValues< serialPolicy >( -1 );
+  receiverIsLocal.setValues< serialPolicy >( 0 );
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -207,7 +217,6 @@ void AcousticWaveEquationSEM::precomputeSourceTerm( MeshLevel & mesh )
                 sourceIsLocal[isrc] = 1;
                 std::cout << "I found the source in element " << k << " at location ("
                           << coords[0] << ", " << coords[1] << ", " << coords[2] << ")" << std::endl;
-
                 /// Get all the node of element k containing the source point
                 real64 xLocal[numNodesPerElem][3];
                 for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -220,15 +229,11 @@ void AcousticWaveEquationSEM::precomputeSourceTerm( MeshLevel & mesh )
                   }
                   std::cout << " " << std::endl;
                 }
-                std::cout << "xLocal Ok "<< std::endl;
 
-                /// Transformation of the source coordinate to unit reference element coordinate
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
                 real64 coordsOnRefElem[3]; // 3D coord of the source in Ref element
-                //real64 valsOnRefElem = 0.0; // Value of the basis function evaluated at coordsOnRefElem
                 localIndex q=0; // index of node 0 in the element
 
-                ///
                 //real64 N[ numNodesPerElem ];
                 real64 gradN[ numNodesPerElem ][ 3 ];
                 //FE_TYPE::calcN( q, N );
@@ -291,88 +296,7 @@ void AcousticWaveEquationSEM::precomputeSourceTerm( MeshLevel & mesh )
               }
             }
           } // End loop over all source
-        }
-      } );
-    } );
-  } );
-  ///GEOSX_ERROR_IF( true, "Stop test " );
-}
 
-
-void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs )
-{
-  // get the precomputed source information
-  arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
-  arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
-  arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
-
-  real64 const fi = evaluateRicker( time, this->m_timeSourceFrequency );
-
-  // loop over all the sources
-  for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
-  {
-    if( sourceIsLocal[isrc] == 1 ) // check if the source is on this MPI rank
-    {
-      // for all the nodes
-      for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
-      {
-        // multiply the precomputed part by the ricker
-        rhs[sourceNodeIds[isrc][inode]] += sourceConstants[isrc][inode] * fi;
-      }
-    }
-  }
-}
-
-
-void AcousticWaveEquationSEM::precomputeBasisFunctionForEachReceiver( MeshLevel & mesh )
-{
-  NodeManager & nodeManager = *(mesh.getNodeManager());
-
-  // get the position of the nodes
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-
-  // get the source information
-  arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
-  arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
-  arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
-  arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  receiverNodeIds.setValues< serialPolicy >( -1 );
-  receiverConstants.setValues< serialPolicy >( -1 );
-  receiverIsLocal.setValues< serialPolicy >( 0 );
-
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elemRegion )
-  {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
-                                                                       CellElementSubRegion & elementSubRegion )
-    {
-
-      // get the face/node information
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
-      {
-        using FE_TYPE = TYPEOFREF( finiteElement );
-
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex constexpr numNodesPerElem = FE_TYPE::numNodes;
-        array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
-
-        // loop over all the elements in the subRegion
-        // this will potentially become a RAJA loop
-        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
-        {
-
-          // collect the faces for this element
-          for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
-          {
-            elementSubRegion.getFaceNodes( k, kf, faceNodes[kf] );
-          }
 
           // loop over all the receiver that haven't been found yet
           for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
@@ -471,12 +395,38 @@ void AcousticWaveEquationSEM::precomputeBasisFunctionForEachReceiver( MeshLevel 
                 }
               }
             }
-          }
-        }
+          } // End loop over reciever
+
+        } // End loop over elements
       } );
     } );
   } );
   ///GEOSX_ERROR_IF( true, "Stop test " );
+}
+
+
+void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs )
+{
+  // get the precomputed source information
+  arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
+  arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
+  arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
+
+  real64 const fi = evaluateRicker( time, this->m_timeSourceFrequency );
+
+  // loop over all the sources
+  for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
+  {
+    if( sourceIsLocal[isrc] == 1 ) // check if the source is on this MPI rank
+    {
+      // for all the nodes
+      for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
+      {
+        // multiply the precomputed part by the ricker
+        rhs[sourceNodeIds[isrc][inode]] += sourceConstants[isrc][inode] * fi;
+      }
+    }
+  }
 }
 
 
@@ -548,8 +498,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
   DomainPartition * domain = problemManager->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  precomputeSourceTerm( mesh );
-  precomputeBasisFunctionForEachReceiver( mesh );
+  precomputeSourceAndReceiverTerm( mesh );
 
   NodeManager & nodeManager = *mesh.getNodeManager();
   FaceManager & faceManager = *mesh.getFaceManager();
