@@ -256,13 +256,50 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  arrayView1d< real64 > const & localRhs )
 {
   MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-
+  ElementRegionManager * const elementManager = mesh->getElemManager();
   NodeManager & nodeManager = *(mesh->getNodeManager());
+  FaceManager const & faceManager = *mesh->getFaceManager();
+  EdgeManager const & edgeManager = *mesh->getEdgeManager();
 
+  // Get geometric properties to be passed as inputs.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
+    nodeManager.referencePosition();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager.nodeList();
+  FaceManager::EdgeMapType const & faceToEdgeMap = faceManager.edgeList();
+  EdgeManager::NodeMapType const & edgeToNodeMap = edgeManager.nodeList();
+  arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
+  arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
   arrayView1d< globalIndex const > const &
-  dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
+  // remove warnings as errors
+  GEOSX_UNUSED_VAR(nodesCoords);
+  GEOSX_UNUSED_VAR(faceToNodeMap);
+  GEOSX_UNUSED_VAR(faceToEdgeMap);
+  GEOSX_UNUSED_VAR(edgeToNodeMap);
+  GEOSX_UNUSED_VAR(faceCenters);
+  GEOSX_UNUSED_VAR(faceNormals);
+  GEOSX_UNUSED_VAR(faceAreas);
 
+  // begin region loop
+  for( localIndex er=0; er<elementManager->numRegions(); ++er )
+  {
+    CellElementRegion * const elementRegion = elementManager->getRegion< CellElementRegion >( er );
+    GEOSX_UNUSED_VAR(elementRegion);
+    elementRegion->forElementSubRegions< CellElementSubRegion >
+      ( [&]( CellElementSubRegion const & cellSubRegion )
+        {
+          CellBlock::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
+          CellBlock::FaceMapType const & elementToFaceMap = cellSubRegion.faceList();
+          arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
+          arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
+          GEOSX_UNUSED_VAR(cellToNodeMap);
+          GEOSX_UNUSED_VAR(elementToFaceMap);
+          GEOSX_UNUSED_VAR(cellCenters);
+          GEOSX_UNUSED_VAR(cellVolumes);
+        } );
+  }
   finiteElement::
     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                   constitutive::NullModel,
