@@ -26,11 +26,16 @@ namespace constitutive
 
 ElasticOrthotropic::ElasticOrthotropic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
-  m_defaultYoungsModulusTransverse(),
-  m_defaultYoungsModulusAxial(),
-  m_defaultPoissonTransverse(),
-  m_defaultPoissonAxialTransverse(),
-  m_defaultShearModulusAxialTransverse(),
+  m_defaultE1(),
+  m_defaultE2(),
+  m_defaultE3(),
+  m_defaultNu12(),
+  m_defaultNu13(),
+  m_defaultNu23(),
+  m_defaultG12(),
+  m_defaultG13(),
+  m_defaultG23(),
+/**
   m_defaultC11(),
   m_defaultC12(),
   m_defaultC13(),
@@ -40,6 +45,7 @@ ElasticOrthotropic::ElasticOrthotropic( string const & name, Group * const paren
   m_defaultC44(),
   m_defaultC55(),
   m_defaultC66(),
+*/
   m_c11(),
   m_c12(),
   m_c13(),
@@ -50,72 +56,92 @@ ElasticOrthotropic::ElasticOrthotropic( string const & name, Group * const paren
   m_c55(),
   m_c66()
 {
-  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverse, &m_defaultYoungsModulusTransverse )->
+  registerWrapper( viewKeyStruct::defaultE1, &m_defaultE1 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Bulk Modulus Parameter" );
+    setDescription( "Elastic Young's Modulus Parameter E1" );
 
-  registerWrapper( viewKeyStruct::defaultYoungsModulusAxial, &m_defaultYoungsModulusAxial )->
+  registerWrapper( viewKeyStruct::defaultE2, &m_defaultE2 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Shear Modulus Parameter" );
+    setDescription( "Elastic Young's Modulus Parameter E2" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverse, &m_defaultPoissonTransverse )->
+  registerWrapper( viewKeyStruct::defaultE3, &m_defaultE3 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Shear Modulus Parameter" );
+    setDescription( "Elastic Young's Modulus Parameter E3" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverse, &m_defaultPoissonAxialTransverse )->
+  registerWrapper( viewKeyStruct::defaultNu12, &m_defaultNu12 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Shear Modulus Parameter" );
+    setDescription( "Elastic Poission's Ratio Parameter Nu12" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverse, &m_defaultShearModulusAxialTransverse )->
+  registerWrapper( viewKeyStruct::defaultNu13, &m_defaultNu13 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Shear Modulus Parameter" );
+    setDescription( "Elastic Poission's Ratio Parameter Nu13" );
 
-  registerWrapper( viewKeyStruct::defaultC11, &m_defaultC11 )->
+  registerWrapper( viewKeyStruct::defaultNu23, &m_defaultNu23 )->
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Elastic Poission's Ratio Parameter Nu23" );
+
+  registerWrapper( viewKeyStruct::defaultG12, &m_defaultG12 )->
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Elastic Shear Modulus Parameter G12" );
+
+  registerWrapper( viewKeyStruct::defaultG13, &m_defaultG13 )->
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Elastic Shear Modulus Parameter G13" );
+
+  registerWrapper( viewKeyStruct::defaultG23, &m_defaultG23 )->
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Elastic Shear Modulus Parameter G23" );
+
+  registerWrapper< real64 >( viewKeyStruct::defaultC11 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C11 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::defaultC12, &m_defaultC12 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC12 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C12 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::defaultC13, &m_defaultC13 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC13 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C13 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::defaultC22, &m_defaultC22 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC22 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C22 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::defaultC23, &m_defaultC23 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC23 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C23 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::defaultC33, &m_defaultC33 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC33 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C33 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::defaultC44, &m_defaultC44 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC44 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C44 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::defaultC55, &m_defaultC55 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC55 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C55 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::defaultC66, &m_defaultC66 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC66 )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default C66 Component of Voigt Stiffness Tensor" );
@@ -173,21 +199,48 @@ void ElasticOrthotropic::postProcessInput()
   real64 & c55 = getReference< real64 >( viewKeyStruct::defaultC55 );
   real64 & c66 = getReference< real64 >( viewKeyStruct::defaultC66 );
 
-/**
-  real64 const Et = m_defaultYoungsModulusTransverse;
-  real64 const Ea = m_defaultYoungsModulusAxial;
-  real64 const Nut = m_defaultPoissonTransverse;
-  real64 const Nuat = m_defaultPoissonAxialTransverse;
-  real64 const Gat = m_defaultShearModulusAxialTransverse;
-  real64 const Nuta = Nuat * ( Et/Ea );
+  real64 const E1   = m_defaultE1;
+  real64 const E2   = m_defaultE2;
+  real64 const E3   = m_defaultE3;
+  real64 const Nu12 = m_defaultNu12;
+  real64 const Nu13 = m_defaultNu13;
+  real64 const Nu23 = m_defaultNu23;
+  real64 const G12  = m_defaultG12;
+  real64 const G13  = m_defaultG13;
+  real64 const G23  = m_defaultG23;
 
-  real64 const delta = ( 1 + Nut ) * ( 1 - Nut - 2 * Nuta * Nuat ) / ( Et * Et * Ea );
-  real64 const c11Default = ( 1.0 - Nuta * Nuat ) / ( Ea * Et * delta );
-  real64 const c13Default = Nuat * ( 1.0 + Nut ) / ( Ea * Et * delta );
-  real64 const c33Default = ( 1 - Nut * Nut ) / ( Et * Et * delta );
-  real64 const c44Default = Gat;
-  real64 const c66Default = 0.5 * Et / ( 1 + Nut );
-*/
+  if( E1 > 0.0 && E2 > 0.0 && E3 > 0.0 && G12 > 0.0 && G13 > 0.0 && G23 > 0.0 )
+  {
+    real64 const Nu21 = Nu12 * E2 / E1;
+    real64 const Nu31 = Nu13 * E3 / E1;
+    real64 const Nu32 = Nu23 * E3 / E2;
+
+    real64 const delta = 1.0 - Nu12 * Nu21 - Nu13 * Nu31 - Nu23 * Nu32 - 2.0 * Nu12 * Nu23 * Nu31;
+    
+    if( delta > 0.0 && Nu23 * Nu32 < 1.0 && Nu31 * Nu13 < 1.0 && Nu12 * Nu21 < 1.0 )
+    {
+      c11 = ( 1.0 - Nu23 * Nu32 )  * E1 / delta;
+      c12 = ( Nu21 + Nu31 * Nu23 ) * E1 / delta;
+      c13 = ( Nu31 + Nu21 * Nu32 ) * E1 / delta;
+
+      c22 = ( 1.0 - Nu31 * Nu13 )  * E2 / delta;
+      c23 = ( Nu32 + Nu31 * Nu12 ) * E2 / delta;
+
+      c33 = ( 1.0 - Nu12 * Nu21 )  * E3 / delta;
+
+      c44 = G23;
+      c55 = G13;
+      c66 = G12;
+    }
+    else
+    {
+      GEOSX_ERROR( "Invalid specification for default elastic constants." );
+    }
+  }
+  else if( c11 <= 0.0 || c22 <= 0.0 || c33 <= 0.0 || c44 <= 0.0 || c55 <= 0.0 || c66 <= 0.0 )
+  {
+    GEOSX_ERROR( "Invalid specification for default elastic stiffnesses." );
+  }
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::c11 )->
     setApplyDefaultValue( c11 );
@@ -217,7 +270,9 @@ void ElasticOrthotropic::postProcessInput()
     setApplyDefaultValue( c66 );
 }
 
-
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticOrthotropic, string const &, Group * const )
-}
+
 } /* namespace geosx */
+
+} /* namespace geosx */
+
