@@ -198,7 +198,10 @@ protected:
   void logProgress( localIndex const iter, real64 const rnorm ) const
   {
     m_residualNorms[iter] = rnorm;
-    GEOSX_LOG_LEVEL_RANK_0( 2, methodName() << " iteration " << iter << ": residual = " << rnorm );
+
+    char output[43] = {0};
+    sprintf( output, " iteration %3i: residual = %15.6e", LvArray::integerConversion< int >( iter ), rnorm );
+    GEOSX_LOG_LEVEL_RANK_0( 2, methodName() << output );
   }
 
   /**
