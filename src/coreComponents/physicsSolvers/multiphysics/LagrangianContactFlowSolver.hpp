@@ -181,6 +181,28 @@ protected:
   virtual void
   initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
 
+  /**
+   * @Brief add the nnz induced by the flux-aperture coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLenghts the nnz in each row
+   */
+  void
+  addTransmissibilityCouplingNNZ( DomainPartition const & domain,
+                                  DofManager const & dofManager,
+                                  arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the flux-aperture coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void
+  addTransmissibilityCouplingPattern( DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      SparsityPatternView< globalIndex > const & pattern ) const;
+
 private:
 
   string m_contactSolverName;

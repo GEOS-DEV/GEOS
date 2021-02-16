@@ -107,12 +107,61 @@ void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
                                                array1d< real64 > & localSolution,
                                                bool const setSparsity )
 {
+
+  GEOSX_UNUSED_VAR( setSparsity );
+
   if( m_precond )
   {
     m_precond->clear();
   }
 
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  m_flowSolver->resetViews( mesh );
+
+  dofManager.setMesh( domain, 0, 0 );
+
+  setupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  localIndex const numLocalRows = dofManager.numLocalDofs();
+
+  SparsityPattern< globalIndex > patternOriginal;
+  dofManager.setSparsityPattern( patternOriginal );
+
+  // Get the original row lengths (diagonal blocks only)
+  array1d< localIndex > rowLengths( patternOriginal.numRows() );
+  for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
+  {
+    rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
+  }
+
+  // Add the number of nonzeros induced by coupling
+  addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView() );
+
+  // Create a new pattern with enough capacity for coupled matrix
+  SparsityPattern< globalIndex > pattern;
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternOriginal.numRows(),
+                                                         patternOriginal.numColumns(),
+                                                         rowLengths.data() );
+
+  // Copy the original nonzeros
+  for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
+  {
+    globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
+    pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ) );
+  }
+
+  // Add the nonzeros from coupling
+  addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
+
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+
+  localRhs.resize( numLocalRows );
+  localSolution.resize( numLocalRows );
+
+  localMatrix.setName( this->getName() + "/localMatrix" );
+  localRhs.setName( this->getName() + "/localRhs" );
+  localSolution.setName( this->getName() + "/localSolution" );
 
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -936,6 +985,148 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
 }
 
 void LagrangianContactFlowSolver::
+  addTransmissibilityCouplingNNZ( DomainPartition const & domain,
+                                  DofManager const & dofManager,
+                                  arrayView1d< localIndex > const & rowLengths ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
+
+  string const presDofKey = dofManager.getKey( m_pressureKey );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
+
+  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  {
+    for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+      typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      FaceElementSubRegion const & elementSubRegion =
+        *elemManager.getRegion( seri[iconn][0] )->getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
+
+      ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
+
+      arrayView1d< globalIndex const > const faceElementDofNumber =
+        elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
+
+      for( localIndex k0=0; k0<numFluxElems; ++k0 )
+      {
+        globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
+        globalIndex const rowNumber = activeFlowDOF - rankOffset;
+
+        if( rowNumber >= 0 && rowNumber < rowLengths.size() )
+        {
+          for( localIndex k1=0; k1<numFluxElems; ++k1 )
+          {
+            // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
+            // so we only add the coupling with the nodal displacements of the neighbours.
+            if( k1 != k0 )
+            {
+              localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+              rowLengths[rowNumber] += 3*numNodesPerElement;
+            }
+          }
+        }
+      }
+    }
+  } );
+}
+
+void LagrangianContactFlowSolver::
+  addTransmissibilityCouplingPattern( DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      SparsityPatternView< globalIndex > const & pattern ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  FaceManager const & faceManager = *mesh.getFaceManager();
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
+
+  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const presDofKey = dofManager.getKey( m_pressureKey );
+
+  arrayView1d< globalIndex const > const &
+  dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+
+  // Get the finite volume method used to compute the stabilization
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
+
+  // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
+  SurfaceGenerator const * const
+  surfaceGenerator = this->getParent()->getGroup< SolverBase >( "SurfaceGen" )->groupCast< SurfaceGenerator const * >();
+  SurfaceElementRegion const * const fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator->getFractureRegionName() );
+  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+  GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_pressureKey ), "The fracture subregion must contain pressure field." );
+  arrayView2d< localIndex const > const faceMap = fractureSubRegion->faceList();
+  GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
+
+  arrayView1d< globalIndex const > const &
+  presDofNumber = fractureSubRegion->getReference< globalIndex_array >( presDofKey );
+
+  arrayView2d< localIndex const > const & elemsToFaces = fractureSubRegion->faceList();
+
+  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  {
+    forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+
+      // A fracture connector has to be an edge shared by two faces
+      if( numFluxElems == 2 )
+      {
+        typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+        // First index: face element. Second index: node
+        for( localIndex kf = 0; kf < 2; ++kf )
+        {
+          // Set row DOF index
+          globalIndex const rowIndex = presDofNumber[sei[iconn][1-kf]];
+
+          // Get fracture, face and region/subregion/element indices (for elements on both sides)
+          localIndex fractureIndex = sei[iconn][kf];
+
+          // Get the number of nodes
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[fractureIndex][0] );
+
+          // Loop over the two sides of each fracture element
+          for( localIndex kf1 = 0; kf1 < 2; ++kf1 )
+          {
+            localIndex faceIndex = faceMap[fractureIndex][kf1];
+
+            // Save the list of DOF associated with nodes
+            for( localIndex a=0; a<numNodesPerFace; ++a )
+            {
+              for( localIndex i = 0; i < 3; ++i )
+              {
+                globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+                pattern.insertNonZero( rowIndex, colIndex );
+              }
+            }
+          }
+        }
+      }
+    } );
+  } );
+}
+
+void LagrangianContactFlowSolver::
   assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1082,6 +1273,7 @@ void LagrangianContactFlowSolver::
       arrayView1d< globalIndex const > const &
       presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
@@ -1110,11 +1302,11 @@ void LagrangianContactFlowSolver::
             for( localIndex a=0; a<numNodesPerFace; ++a )
             {
               real64 const dAccumulationResidualdAperture = density[kfe][0] * nodalArea[a];
-              for( int i=0; i<3; ++i )
+              for( localIndex i=0; i<3; ++i )
               {
-                nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
-                                                         + LvArray::integerConversion< globalIndex >( i );
-                real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
+                                                          + LvArray::integerConversion< globalIndex >( i );
+                real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
                 dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
               }
             }
@@ -1145,13 +1337,17 @@ void LagrangianContactFlowSolver::
 
           for( localIndex kf=0; kf<2; ++kf )
           {
+            // Compute local area contribution for each node
+            array1d< real64 > nodalArea;
+            m_contactSolver->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
+
             for( localIndex a=0; a<numNodesPerFace; ++a )
             {
-              for( int i=0; i<3; ++i )
+              for( localIndex i=0; i<3; ++i )
               {
                 nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
                                                           + LvArray::integerConversion< globalIndex >( i );
-                real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
                 dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
               }
             }

@@ -116,7 +116,7 @@ void BlockPreconditionerGeneral< LAI >::computeSchurComplement( localIndex const
       m_matBlocks( iBlock, iBlock+1 ).leftScale( m_rhs( 2*iBlock ) );
       Matrix mat11;
       m_matBlocks( iBlock+1, iBlock ).multiply( m_matBlocks( iBlock, iBlock+1 ), mat11 );
-      m_matBlocks( iBlock+1, iBlock+1 ).addEntries( mat11, -1.0 );
+      m_matBlocks( iBlock+1, iBlock+1 ).addEntries( mat11, -1.0, false );
       // Restore original scaling
       m_rhs( 2*iBlock ).reciprocal();
       m_matBlocks( iBlock, iBlock+1 ).leftScale( m_rhs( 2*iBlock ) );
