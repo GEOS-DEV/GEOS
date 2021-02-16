@@ -97,14 +97,14 @@ Setting up mesh, material properties and boundary conditions
 Last, let us take a closer look at the geometry of this simple problem.
 We use the internal mesh generator to create a large domain
 (:math:`1000\, m \, \times 1001 \,  m \, \times 1 \, m`), with one single element
-along the Z axes, 420 elements along the X axis and 221 elements along the Y axis.
+along the Z axes, 420 elements along the X axis and 121 elements along the Y axis.
 All the elements are hexahedral elements (C3D8) and that refinement is performed
 around the fracture.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
     :language: xml
-    :start-after: <!-- SPHINX_POROELASTIC_MESH -->
-    :end-before: <!-- SPHINX_POROELASTIC_MESH_END -->
+    :start-after: <!-- SPHINX_SNEDDON_MESH -->
+    :end-before: <!-- SPHINX_SNEDDON_MESH_END -->
 
 The parameters used in the simulation are summarized in the following table.
 

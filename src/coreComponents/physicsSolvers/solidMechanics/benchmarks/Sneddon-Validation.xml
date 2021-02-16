@@ -39,6 +39,7 @@
   </Solvers>
   <!-- SPHINX_SNEDDON_SOLVER_END -->
 
+<!-- SPHINX_SNEDDON_MESH -->
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -52,6 +53,7 @@
       cellBlockNames="{ cb1 }"/>
       
   </Mesh>
+<!-- SPHINX_SNEDDON_MESH_END -->
 
   <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
