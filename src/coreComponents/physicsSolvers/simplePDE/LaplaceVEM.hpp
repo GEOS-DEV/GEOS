@@ -157,6 +157,9 @@ private:
   string m_fieldName;  // User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
   TimeIntegrationOption m_timeIntegrationOption;  // Choice of transient treatment (SteadyState, ImplicitTransient or ExplicitTransient)
 
+  static constexpr localIndex m_maxCellNodes = 10;
+  static constexpr localIndex m_maxFaceNodes = 10;
+
 };
 
 

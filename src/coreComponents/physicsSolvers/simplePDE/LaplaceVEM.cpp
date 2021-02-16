@@ -18,12 +18,11 @@
 
 // Source includes
 #include "LaplaceVEM.hpp"
-#include "LaplaceFEMKernels.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/DataTypes.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "virtualElement/ConformingVirtualElementOrder1.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/GeosxState.hpp"
@@ -230,7 +229,6 @@ void LaplaceVEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain )
 
 // }
 
-
 /*
    ASSEMBLE SYSTEM
    This is the most important method to assemble the matrices needed before sending them to our solver.
@@ -255,13 +253,15 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
 {
+  using VEM = virtualElement::ConformingVirtualElementOrder1< m_maxCellNodes, m_maxFaceNodes >;
+
   MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elementManager = mesh->getElemManager();
   NodeManager & nodeManager = *(mesh->getNodeManager());
   FaceManager const & faceManager = *mesh->getFaceManager();
   EdgeManager const & edgeManager = *mesh->getEdgeManager();
 
-  // Get geometric properties to be passed as inputs.
+  // Get geometric properties used to compute projectors.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   FaceManager::NodeMapType const & faceToNodeMap = faceManager.nodeList();
@@ -270,49 +270,86 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
   arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
   arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
-  arrayView1d< globalIndex const > const &
-    dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+  arrayView1d< globalIndex const > const & dofIndex =
+    nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
-  // remove warnings as errors
-  GEOSX_UNUSED_VAR(nodesCoords);
-  GEOSX_UNUSED_VAR(faceToNodeMap);
-  GEOSX_UNUSED_VAR(faceToEdgeMap);
-  GEOSX_UNUSED_VAR(edgeToNodeMap);
-  GEOSX_UNUSED_VAR(faceCenters);
-  GEOSX_UNUSED_VAR(faceNormals);
-  GEOSX_UNUSED_VAR(faceAreas);
+  real64 const diffusion = 1.0;
 
   // begin region loop
   for( localIndex er=0; er<elementManager->numRegions(); ++er )
   {
     CellElementRegion * const elementRegion = elementManager->getRegion< CellElementRegion >( er );
-    GEOSX_UNUSED_VAR(elementRegion);
     elementRegion->forElementSubRegions< CellElementSubRegion >
-      ( [&]( CellElementSubRegion const & cellSubRegion )
+      ( [&]( CellElementSubRegion const & elemSubRegion )
+    {
+      CellBlock::NodeMapType const & elemToNodeMap = elemSubRegion.nodeList();
+      CellBlock::FaceMapType const & elementToFaceMap = elemSubRegion.faceList();
+      arrayView2d< real64 const > elemCenters = elemSubRegion.getElementCenter();
+      arrayView1d< real64 const > elemVolumes = elemSubRegion.getElementVolume();
+      arrayView1d< integer const > const & elemGhostRank = elemSubRegion.ghostRank();
+      real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
+      globalIndex elemDofIndex[VEM::maxSupportPoints];
+      real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints];
+      localIndex const numCells = elemSubRegion.size();
+      for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
+      {
+        if( elemGhostRank[cellIndex] < 0 )
         {
-          CellBlock::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
-          CellBlock::FaceMapType const & elementToFaceMap = cellSubRegion.faceList();
-          arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
-          arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
-          GEOSX_UNUSED_VAR(cellToNodeMap);
-          GEOSX_UNUSED_VAR(elementToFaceMap);
-          GEOSX_UNUSED_VAR(cellCenters);
-          GEOSX_UNUSED_VAR(cellVolumes);
-        } );
+          VEM::ComputeProjectors( cellIndex, nodesCoords, elemToNodeMap, elementToFaceMap,
+                                  faceToNodeMap, faceToEdgeMap, edgeToNodeMap,
+                                  faceCenters, faceNormals, faceAreas,
+                                  elemCenters[cellIndex], elemVolumes[cellIndex] );
+          localIndex const numSupportPoints = VEM::getNumSupportPoints();
+          for( localIndex a = 0; a < numSupportPoints; ++a )
+          {
+            elemDofIndex[a] = dofIndex[ elemToNodeMap( cellIndex, a ) ];
+            for( localIndex b = 0; b < numSupportPoints; ++b )
+            {
+              element_matrix[a][b] = VEM::calcStabilizationValue( a, b );
+            }
+            localRhs[a] = 0.0;
+          }
+          for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
+          {
+            VEM::calcGradN( q, basisDerivativesIntegralMean );
+            for( localIndex a = 0; a < numSupportPoints; ++a )
+            {
+              for( localIndex b = 0; b < numSupportPoints; ++b )
+              {
+                element_matrix[a][b] += diffusion * VEM::transformedQuadratureWeight( q ) *
+                                        (basisDerivativesIntegralMean[a][0] * basisDerivativesIntegralMean[b][0] +
+                                         basisDerivativesIntegralMean[a][1] * basisDerivativesIntegralMean[b][1] +
+                                         basisDerivativesIntegralMean[a][2] * basisDerivativesIntegralMean[b][2] );
+              }
+            }
+          }
+          for( localIndex a = 0; a < numSupportPoints; ++a )
+          {
+            localIndex const dof = LvArray::integerConversion< localIndex >
+                                     ( elemDofIndex[a] - dofManager.rankOffset() );
+            if( dof < 0 || dof >= localMatrix.numRows() )
+              continue;
+            localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+              ( dof, elemDofIndex, element_matrix[ a ], numSupportPoints );
+          }
+        }
+      }
+    } );
   }
-  finiteElement::
-    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion,
-                                  LaplaceFEMKernel >( *mesh,
-                                                      targetRegionNames(),
-                                                      this->getDiscretizationName(),
-                                                      arrayView1d< string const >(),
-                                                      dofIndex,
-                                                      dofManager.rankOffset(),
-                                                      localMatrix,
-                                                      localRhs,
-                                                      m_fieldName );
+
+  // finiteElement::
+  //   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+  //                                 constitutive::NullModel,
+  //                                 CellElementSubRegion,
+  //                                 LaplaceFEMKernel >( *mesh,
+  //                                                     targetRegionNames(),
+  //                                                     this->getDiscretizationName(),
+  //                                                     arrayView1d< string const >(),
+  //                                                     dofIndex,
+  //                                                     dofManager.rankOffset(),
+  //                                                     localMatrix,
+  //                                                     localRhs,
+  //                                                     m_fieldName );
 
 
 
