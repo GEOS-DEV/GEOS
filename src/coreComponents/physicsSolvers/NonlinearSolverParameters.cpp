@@ -19,7 +19,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-NonlinearSolverParameters::NonlinearSolverParameters( std::string const & name,
+NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
                                                       Group * const parent ):
   Group( name, parent )
 {
@@ -103,7 +103,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( std::string const & name,
 
 }
 
-void NonlinearSolverParameters::PostProcessInput()
+void NonlinearSolverParameters::postProcessInput()
 {
   if( m_dtCutIterLimit <= m_dtIncIterLimit )
   {
@@ -113,6 +113,6 @@ void NonlinearSolverParameters::PostProcessInput()
 
 
 
-REGISTER_CATALOG_ENTRY( Group, NonlinearSolverParameters, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( Group, NonlinearSolverParameters, string const &, Group * const )
 
 } /* namespace geosx */

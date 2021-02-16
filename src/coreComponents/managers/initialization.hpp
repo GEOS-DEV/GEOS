@@ -21,7 +21,13 @@
 
 // TPL includes
 #ifdef GEOSX_USE_CALIPER
-#include <adiak.hpp>
+  #include <adiak.hpp>
+
+//Forward declaration of cali::ConfigManager.
+namespace cali
+{
+class ConfigManager;
+}
 #endif
 
 namespace geosx
@@ -33,13 +39,13 @@ namespace geosx
 struct CommandLineOptions
 {
   /// The path to the input xml.
-  std::string inputFileName;
+  string inputFileName;
 
   /// True iff restarting from the middle of an existing run.
   bool beginFromRestart = false;
 
   /// The path to the restart file, if specified.
-  std::string restartFileName;
+  string restartFileName;
 
   /// The number of partitions in the x direction.
   integer xPartitionsOverride;
@@ -63,39 +69,38 @@ struct CommandLineOptions
   integer suppressPinned = false;
 
   /// The name of the schema.
-  std::string schemaName;
+  string schemaName;
 
   /// The name of the problem being run.
-  std::string problemName;
+  string problemName;
 
   /// The directory to put all output.
-  std::string outputDirectory = ".";
+  string outputDirectory = ".";
 
   /// The string used to initialize caliper.
-  std::string timerOutput = "";
+  string timerOutput = "";
 
   /// Suppress logging of host-device data migration.
   integer suppressMoveLogging = false;
 };
 
 /**
+ * @brief Parse the command line options and populate @p commandLineOptions with the results.
+ * @param argc The number of command line arguments.
+ * @param argv The command line arguments.
+ * @return The command line options.
+ */
+std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * * argv );
+
+/**
  * @brief Perform the basic GEOSX initialization and optionally parse the command line input.
  * @param [in] argc The number of command line arguments.
  * @param [in,out] argv The command line arguments.
  * @param [in] parseCommandLine True iff the command line options should be parsed.
+ * @return The command line options, if @c parseCommandLine is @c false then the returned value
+ *   is default constructed (empty).
  */
-void basicSetup( int argc, char * argv[], bool const parseCommandLine=false );
-
-/**
- * @brief @return a struct containing all the parsed command line options.
- */
-CommandLineOptions const & getCommandLineOptions();
-
-/**
- * @brief Override the input file name, useful only for tests.
- * @param inputFileName new input file name
- */
-void overrideInputFileName( std::string const & inputFileName );
+std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine=false );
 
 /**
  * @brief Perform the basic GEOSX cleanup.
@@ -116,7 +121,7 @@ void finalizeLogger();
  * @brief Setup the LvArray library. This initializes signal handling
  *        and the floating point environment.
  */
-void setupCXXUtils();
+void setupLvArray();
 
 /**
  * @brief Setup MKL if in use.
@@ -140,6 +145,23 @@ void setupMPI( int argc, char * argv[] );
  */
 void finalizeMPI();
 
+#if defined( GEOSX_USE_CALIPER )
+
+/**
+ * @brief Setup Caliper and Adiak.
+ * @param caliperManager The Caliper ConfigManager to initialize.
+ * @param commandLineOptions The command line options.
+ */
+void setupCaliper( cali::ConfigManager & caliperManager,
+                   CommandLineOptions const & commandLineOptions );
+
+/**
+ * @brief Finalize Caliper and Adiak.
+ */
+void finalizeCaliper();
+
+#endif
+
 /**
  * @brief Compute the sum, mean, min, and max of @p value across ranks and push
  *        them into Adiak using @p name.
@@ -148,14 +170,15 @@ void finalizeMPI();
  * @param value The value to compute the statistics of.
  */
 template< typename T >
-void pushStatsIntoAdiak( std::string const & name, T const value )
+void pushStatsIntoAdiak( string const & name, T const value )
 {
-#if defined( GEOSX_USE_CALIPER )
-  T const total = MpiWrapper::Sum( value );
+#if defined( GEOSX_USE_CALIPER ) && !defined(__APPLE__)
+  // Apple clang doesn't like adiak.
+  T const total = MpiWrapper::sum( value );
   adiak::value( name + " sum", total );
-  adiak::value( name + " mean", double( total ) / MpiWrapper::Comm_size() );
-  adiak::value( name + " min", MpiWrapper::Min( value ) );
-  adiak::value( name + " max", MpiWrapper::Max( value ) );
+  adiak::value( name + " mean", double( total ) / MpiWrapper::commSize() );
+  adiak::value( name + " min", MpiWrapper::min( value ) );
+  adiak::value( name + " max", MpiWrapper::max( value ) );
 #else
   GEOSX_UNUSED_VAR( name );
   GEOSX_UNUSED_VAR( value );

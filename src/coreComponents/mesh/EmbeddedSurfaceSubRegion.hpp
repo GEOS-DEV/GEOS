@@ -51,7 +51,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EmbeddedSurfaceSubRegion"; }
 
   /**
@@ -60,7 +60,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return EmbeddedSurfaceSubRegion::CatalogName();
+    return EmbeddedSurfaceSubRegion::catalogName();
   }
 
   ///@}
@@ -88,7 +88,7 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
   /**
@@ -110,7 +110,7 @@ public:
    * @param fracture pointer to the bounded plane which is defining the embedded surface element
    * @return boolean defining whether the embedded element was added or not
    */
-  bool AddNewEmbeddedSurface( localIndex const cellIndex,
+  bool addNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
                               NodeManager & nodeManager,
@@ -130,7 +130,7 @@ public:
    * @param k embedded surface cell index
    * @return value of the Heaviside
    */
-  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
+  real64 computeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k ) const;
 
 
@@ -154,11 +154,26 @@ public:
 
     /// Connectivity index string
     static constexpr auto connectivityIndexString     = "connectivityIndex";
-  };
+
+    /// Displacement jump string
+    static constexpr auto dispJumpString             = "displacementJump";
+
+    /// Delta displacement jump string
+    static constexpr auto deltaDispJumpString        = "deltaDisplacementJump";
+
+    /// Displacement jump key
+    dataRepository::ViewKey dispJump                  = {dispJumpString};
+
+    /// Delta displacement jump key
+    dataRepository::ViewKey deltaDispJump             = {deltaDispJumpString};
+
+  }
+  /// viewKey struct for the EmbeddedSurfaceSubRegion class
+  viewKeys;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
-  virtual string GetElementTypeString() const override final { return "Embedded"; }
+  virtual string getElementTypeString() const override final { return "Embedded"; }
 
   /**
    * @name Properties Getters
@@ -259,8 +274,40 @@ public:
    */
   array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
 
-  ///@}
 
+  /**
+   * @brief Get a mutable total displacement array.
+   * @return the total displacement array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the displacement jump does not exist
+   */
+  array2d< real64 > & displacementJump()
+  { return getReference< array2d< real64 > >( viewKeys.dispJump ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the total displacement array.
+   * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the displacement jump does not exist
+   */
+  arrayView2d< real64 const > displacementJump() const
+  {return getReference< array2d< real64 > >( viewKeys.dispJump ); }
+
+  /**
+   * @brief Get a mutable incremental displacement array.
+   * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the incremental displacement jump does not exist
+   */
+  array2d< real64 > & incrementalDisplacementJump()
+  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the incremental displacement jump array.
+   * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the incremental displacement jump does not exist
+   */
+  arrayView2d< real64 const > incrementalDisplacementJump() const
+  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
+
+  ///@}
 
 private:
 

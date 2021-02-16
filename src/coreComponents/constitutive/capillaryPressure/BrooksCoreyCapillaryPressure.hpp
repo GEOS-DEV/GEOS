@@ -65,17 +65,17 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseCapPres,
                         arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const > const & phaseVolFraction ) const override
   {
-    Compute( phaseVolFraction,
+    compute( phaseVolFraction,
              m_phaseCapPressure[k][q],
              m_dPhaseCapPressure_dPhaseVolFrac[k][q] );
   }
@@ -85,7 +85,7 @@ private:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  EvaluateBrooksCoreyFunction( real64 const scaledWettingVolFrac,
+  evaluateBrooksCoreyFunction( real64 const scaledWettingVolFrac,
                                real64 const dScaledWettingPhaseVolFrac_dVolFrac,
                                real64 const exponentInv,
                                real64 const entryPressure,
@@ -105,14 +105,14 @@ class BrooksCoreyCapillaryPressure : public CapillaryPressureBase
 {
 public:
 
-  BrooksCoreyCapillaryPressure( std::string const & name,
+  BrooksCoreyCapillaryPressure( string const & name,
                                 dataRepository::Group * const parent );
 
   virtual ~BrooksCoreyCapillaryPressure() override;
 
-  static std::string CatalogName() { return "BrooksCoreyCapillaryPressure"; }
+  static string catalogName() { return "BrooksCoreyCapillaryPressure"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyCapillaryPressureUpdate;
@@ -134,7 +134,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   array1d< real64 > m_phaseMinVolumeFraction;
   array1d< real64 > m_phaseCapPressureExponentInv;
@@ -149,7 +149,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 BrooksCoreyCapillaryPressureUpdate::
-  Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  compute( arraySlice1d< real64 const > const & phaseVolFraction,
            arraySlice1d< real64 > const & phaseCapPres,
            arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
@@ -182,7 +182,7 @@ BrooksCoreyCapillaryPressureUpdate::
     real64 const wettingVolFracScaled           = volFracScaled;
     real64 const dWettingVolFracScaled_dVolFrac = volFracScaleInv;
 
-    EvaluateBrooksCoreyFunction( wettingVolFracScaled,
+    evaluateBrooksCoreyFunction( wettingVolFracScaled,
                                  dWettingVolFracScaled_dVolFrac,
                                  exponentInv,
                                  entryPressure,
@@ -205,7 +205,7 @@ BrooksCoreyCapillaryPressureUpdate::
     real64 const wettingVolFracScaled           = 1-volFracScaled;
     real64 const dWettingVolFracScaled_dVolFrac =  -volFracScaleInv;
 
-    EvaluateBrooksCoreyFunction( wettingVolFracScaled,
+    evaluateBrooksCoreyFunction( wettingVolFracScaled,
                                  dWettingVolFracScaled_dVolFrac,
                                  exponentInv,
                                  entryPressure,
@@ -219,7 +219,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 BrooksCoreyCapillaryPressureUpdate::
-  EvaluateBrooksCoreyFunction( real64 const scaledWettingVolFrac,
+  evaluateBrooksCoreyFunction( real64 const scaledWettingVolFrac,
                                real64 const dScaledWettingPhaseVolFrac_dVolFrac,
                                real64 const exponentInv,
                                real64 const entryPressure,

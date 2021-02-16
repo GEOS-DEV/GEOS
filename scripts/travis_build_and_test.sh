@@ -27,8 +27,6 @@ or_die python scripts/config-build.py \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
-              -DGEOSX_TPL_DIR=${GEOSX_TPL_DIR} \
-              -DENABLE_GEOSX_PTP:BOOL=ON \
               -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root \
               -DENABLE_CUDA:BOOL=${ENABLE_CUDA:-OFF} \
               -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\" \
@@ -49,8 +47,13 @@ if [[ "$*" == *--test-documentation* ]]; then
   exit 0
 fi
 
-or_die make -j $(nproc) VERBOSE=1
-or_die make install VERBOSE=1
+# "Make" target check (builds geosx executable target only if true)
+if [[ "$*" == *--build-exe-only* ]]; then
+  or_die make -j $(nproc) geosx VERBOSE=1
+else
+  or_die make -j $(nproc) VERBOSE=1
+  or_die make install VERBOSE=1
+fi
 
 # Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then

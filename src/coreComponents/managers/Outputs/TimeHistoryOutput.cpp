@@ -1,4 +1,21 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
 #include "TimeHistoryOutput.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
+
 namespace geosx
 {
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
@@ -34,20 +51,25 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
 void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryCollection * collector )
 {
-  bool freshInit = ( m_recordCount == 0 );
+  bool const freshInit = ( m_recordCount == 0 );
+
+  string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
+  makeDirsForPath( outputDirectory );
+  string const outputFile = outputDirectory + "/" + m_filename;
+
   // rank == 0 do time output for the collector
   for( localIndex ii = 0; ii < collector->getCollectionCount( ); ++ii )
   {
     HistoryMetadata metadata = collector->getMetadata( pm, ii );
-    m_io.emplace_back( std::make_unique< HDFHistIO >( m_filename, metadata, m_recordCount ) );
+    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
     collector->registerBufferCall( ii, [this, ii]() { return m_io[ii]->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
   }
-  int rnk = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  if( rnk == 0 )
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
     HistoryMetadata timeMetadata = collector->getTimeMetadata( );
-    m_io.emplace_back( std::make_unique< HDFHistIO >( m_filename, timeMetadata, m_recordCount, 2, 2, MPI_COMM_SELF ) );
+    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 2, 2, MPI_COMM_SELF ) );
     collector->registerTimeBufferCall( [this]() { return m_io.back()->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
   }
@@ -64,38 +86,41 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
       {
         HistoryMetadata metaMetadata = metaCollector->getMetadata( pm, ii );
         metaMetadata.setName( collector->getTargetName() + " " + metaMetadata.getName( ) );
-        metaIOs[ii] = std::make_unique< HDFHistIO >( m_filename, metaMetadata, 0, 1 );
+        metaIOs[ii] = std::make_unique< HDFHistIO >( outputFile, metaMetadata, 0, 1 );
         metaCollector->registerBufferCall( ii, [&metaIOs, ii] () { return metaIOs[ii]->getBufferHead( ); } );
         metaIOs[ii]->init( false );
       }
-      metaCollector->Execute( 0.0, 0.0, 0, 0, 0, domainGroup );
+      metaCollector->execute( 0.0, 0.0, 0, 0, 0, domainGroup );
       for( localIndex ii = 0; ii < metaCollector->getCollectionCount( ); ++ii )
       {
         metaIOs[ii]->write( );
       }
     }
   }
-  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
-void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
+void TimeHistoryOutput::initializePostSubGroups( Group * const group )
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    HDFFile( m_filename, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
+    makeDirsForPath( outputDirectory );
+    string const outputFile = outputDirectory + "/" + m_filename;
+    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
   ProblemManager & pm = dynamicCast< ProblemManager & >( *group );
   for( auto collector_path : m_collectorPaths )
   {
-    Group * tmp = this->GetGroupByPath( collector_path );
-    HistoryCollection * collector = Group::group_cast< HistoryCollection * >( tmp );
+    Group * tmp = this->getGroupByPath( collector_path );
+    HistoryCollection * collector = Group::groupCast< HistoryCollection * >( tmp );
     GEOSX_ERROR_IF( collector == nullptr, "The target of a time history output event must be a collector! " << collector_path );
-    collector->InitializePostSubGroups( group );
+    collector->initializePostSubGroups( group );
     initCollectorParallel( pm, collector );
   }
 }
 
-void TimeHistoryOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                  integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -110,15 +135,17 @@ void TimeHistoryOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
     th_io->write( );
   }
   m_recordCount += newBuffered;
+
+  return false;
 }
 
-void TimeHistoryOutput::Cleanup( real64 const time_n,
+void TimeHistoryOutput::cleanup( real64 const time_n,
                                  integer const cycleNumber,
                                  integer const eventCounter,
                                  real64 const eventProgress,
                                  dataRepository::Group * domain )
 {
-  Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+  execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
   // remove any unused trailing space reserved to write additional histories
   for( auto & th_io : m_io )
   {
@@ -126,5 +153,5 @@ void TimeHistoryOutput::Cleanup( real64 const time_n,
   }
 }
 
-REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, string const &, Group * const )
 }

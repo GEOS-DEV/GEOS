@@ -43,7 +43,7 @@ if( ENABLE_VTK )
                vtk/VTKPolyDataWriterInterface.cpp )
 
 
-  list( APPEND dependencyList vtk )
+  list( APPEND dependencyList VTK::CommonCore VTK::CommonSystem VTK::CommonMisc VTK::IOCore VTK::IOXML VTK::expat VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::loguru )
 endif()
 
 if( ENABLE_OPENMP )
@@ -52,6 +52,10 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
 endif()
 
 blt_add_library( NAME                  fileIO

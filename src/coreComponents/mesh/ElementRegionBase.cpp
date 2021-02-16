@@ -31,7 +31,7 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  this->RegisterGroup( viewKeyStruct::elementSubRegions );
+  this->registerGroup( viewKeyStruct::elementSubRegions );
 
   registerWrapper( viewKeyStruct::materialListString, &m_materialList )->
     setInputFlag( InputFlags::REQUIRED )->

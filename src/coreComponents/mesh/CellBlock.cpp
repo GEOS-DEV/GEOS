@@ -43,7 +43,7 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
 CellBlock::~CellBlock()
 {}
 
-localIndex CellBlock::GetNumFaceNodes( localIndex const GEOSX_UNUSED_PARAM( elementIndex ),
+localIndex CellBlock::getNumFaceNodes( localIndex const GEOSX_UNUSED_PARAM( elementIndex ),
                                        localIndex const localFaceIndex ) const
 {
   if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
@@ -81,7 +81,7 @@ localIndex CellBlock::GetNumFaceNodes( localIndex const GEOSX_UNUSED_PARAM( elem
   return -1;
 }
 
-localIndex CellBlock::GetFaceNodes( localIndex const elementIndex,
+localIndex CellBlock::getFaceNodes( localIndex const elementIndex,
                                     localIndex const localFaceIndex,
                                     localIndex * const nodeIndicies ) const
 {
@@ -245,17 +245,17 @@ localIndex CellBlock::GetFaceNodes( localIndex const elementIndex,
   return -1;
 }
 
-void CellBlock::GetFaceNodes( localIndex const elementIndex,
+void CellBlock::getFaceNodes( localIndex const elementIndex,
                               localIndex const localFaceIndex,
                               localIndex_array & nodeIndicies ) const
 {
-  nodeIndicies.resize( GetNumFaceNodes( elementIndex, localFaceIndex ) );
-  localIndex const numNodes = GetFaceNodes( elementIndex, localFaceIndex, nodeIndicies.data() );
+  nodeIndicies.resize( getNumFaceNodes( elementIndex, localFaceIndex ) );
+  localIndex const numNodes = getFaceNodes( elementIndex, localFaceIndex, nodeIndicies.data() );
   GEOSX_DEBUG_VAR( numNodes );
   GEOSX_ASSERT_EQ( numNodes, nodeIndicies.size() );
 }
 
-void CellBlock::SetElementType( string const & elementType )
+void CellBlock::setElementType( string const & elementType )
 {
   m_elementTypeString = elementType;
 
@@ -304,22 +304,22 @@ void CellBlock::SetElementType( string const & elementType )
 
 void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
-  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
-  this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
+  this->m_toNodesRelation.setRelatedObject( mesh->getNodeManager() );
+  this->m_toFacesRelation.setRelatedObject( mesh->getFaceManager() );
 }
 
-void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+void CellBlock::calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                      FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
   {
-    CalculateCellVolumesKernel( k, X );
+    calculateCellVolumesKernel( k, X );
   } );
 }
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, string const &, Group * const )
 
 }

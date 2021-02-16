@@ -23,7 +23,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-TaskBase::TaskBase( std::string const & name,
+TaskBase::TaskBase( string const & name,
                     Group * const parent ):
   ExecutableGroup( name, parent )
 {
@@ -33,13 +33,13 @@ TaskBase::TaskBase( std::string const & name,
 TaskBase::~TaskBase()
 { }
 
-TaskBase::CatalogInterface::CatalogType & TaskBase::GetCatalog()
+TaskBase::CatalogInterface::CatalogType & TaskBase::getCatalog()
 {
   static TaskBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-void TaskBase::PostProcessInput()
+void TaskBase::postProcessInput()
 { }
 
 } /* namespace */

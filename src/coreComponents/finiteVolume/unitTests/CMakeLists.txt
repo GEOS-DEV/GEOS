@@ -4,7 +4,7 @@
 
 set( gtest_geosx_tests
      testStencilCollection.cpp
-     testHybridFVMInnerProducts.cpp
+     testMimeticInnerProducts.cpp
    )
 
 if( BUILD_OBJ_LIBS )

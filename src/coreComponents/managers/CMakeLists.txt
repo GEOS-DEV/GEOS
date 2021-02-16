@@ -20,6 +20,7 @@ set(managers_headers
     TimeHistory/HistoryIO.hpp
     TimeHistory/HistoryDataSpec.hpp
     Outputs/BlueprintOutput.hpp
+    Outputs/PythonOutput.hpp
     Functions/FunctionBase.hpp
     Functions/TableFunction.hpp
     Functions/FunctionManager.hpp
@@ -31,6 +32,7 @@ set(managers_headers
     FieldSpecification/DirichletBoundaryCondition.hpp
     FieldSpecification/SourceFluxBoundaryCondition.hpp
     initialization.hpp
+    GeosxState.hpp
    )
 
 
@@ -54,6 +56,7 @@ set(managers_sources
     Tasks/TaskBase.cpp
     Tasks/TasksManager.cpp
     TimeHistory/PackCollection.cpp
+    Outputs/PythonOutput.cpp
     Functions/FunctionBase.cpp
     Functions/TableFunction.cpp
     Functions/FunctionManager.cpp
@@ -65,6 +68,7 @@ set(managers_sources
     FieldSpecification/DirichletBoundaryCondition.cpp
     FieldSpecification/SourceFluxBoundaryCondition.cpp
     initialization.cpp
+    GeosxState.cpp
    )
 
 if( ENABLE_MATHPRESSO )
@@ -87,9 +91,9 @@ if( ENABLE_VTK )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit conduit_relay conduit_blueprint )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit conduit_relay conduit_blueprint )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit )
 endif()
 
 if( ENABLE_MATHPRESSO )
@@ -106,6 +110,10 @@ endif()
 
 if ( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper adiak )
+endif()
+
+if ( ENABLE_MKL )
+  set( dependencyList ${dependencyList} mkl )
 endif()
 
 blt_add_library( NAME                  managers

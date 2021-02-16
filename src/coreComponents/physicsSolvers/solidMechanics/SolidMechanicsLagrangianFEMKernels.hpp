@@ -84,7 +84,7 @@ struct ExplicitKernel
 {
 
   static inline real64
-  CalculateSingleNodalForce( localIndex const k,
+  calculateSingleNodalForce( localIndex const k,
                              localIndex const targetNode,
                              localIndex const numQuadraturePoints,
                              arrayView4d< real64 const > const & dNdX,

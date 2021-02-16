@@ -38,7 +38,7 @@ public:
    * @param[in] name The name of the new instantiation of this Group.
    * @param[in] parent A pointer to the parent of this Group.
    */
-  NonlinearSolverParameters( std::string const & name,
+  NonlinearSolverParameters( string const & name,
                              Group * const parent );
 
   /**
@@ -57,11 +57,11 @@ public:
    * @return A string containing the name of this object in the catalog.
    * The CatalogName is the string that will result in the creation of a new
    * NonlinearSolverParameters object when calling
-   * Group::GetCatalog()::Allocate().
+   * Group::getCatalog()::Allocate().
    */
-  static string CatalogName() { return "NonlinearSolverParameters"; }
+  static string catalogName() { return "NonlinearSolverParameters"; }
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   struct viewKeysStruct
   {

@@ -21,13 +21,17 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "finiteVolume/HybridFVMInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
+#include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geosx
 {
-
 namespace SinglePhaseHybridFVMKernels
 {
 
@@ -54,7 +58,7 @@ struct AssemblerKernelHelper
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
-   * @param[in] elemGravDepth the depth at this element's center
+   * @param[in] elemGravCoef the depth at this element's center
    * @param[in] elemDens the density at this elenent's center
    * @param[in] dElemDens_dp the derivative of the density at this element's center
    * @param[in] transMatrix the transmissibility matrix in this element
@@ -65,19 +69,62 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-    ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
-                              arrayView1d< real64 const > const & dFacePres,
-                              arrayView1d< real64 const > const & faceGravCoef,
-                              arraySlice1d< localIndex const > const & elemToFaces,
-                              real64 const & elemPres,
-                              real64 const & dElemPres,
-                              real64 const & elemGravDepth,
-                              real64 const & elemDens,
-                              real64 const & dElemDens_dp,
-                              arraySlice2d< real64 const > const & transMatrix,
-                              real64 ( &oneSidedVolFlux )[ NF ],
-                              real64 ( &dOneSidedVolFlux_dp )[ NF ],
-                              real64 ( &dOneSidedVolFlux_dfp )[ NF ][ NF ] );
+  computeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
+                            arrayView1d< real64 const > const & dFacePres,
+                            arrayView1d< real64 const > const & faceGravCoef,
+                            arraySlice1d< localIndex const > const & elemToFaces,
+                            real64 const & elemPres,
+                            real64 const & dElemPres,
+                            real64 const & elemGravCoef,
+                            real64 const & elemDens,
+                            real64 const & dElemDens_dp,
+                            arraySlice2d< real64 const > const & transMatrix,
+                            real64 ( & oneSidedVolFlux )[ NF ],
+                            real64 ( & dOneSidedVolFlux_dp )[ NF ],
+                            real64 ( & dOneSidedVolFlux_dfp )[ NF ][ NF ] )
+  {
+    for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+    {
+      // now in the following nested loop,
+      // we compute the contribution of face jfaceLoc to the one sided total volumetric flux at face iface
+      for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+      {
+        // 1) compute the potential diff between the cell center and the face center
+        real64 const ccPres = elemPres + dElemPres;
+        real64 const fPres  = facePres[elemToFaces[jfaceLoc]] + dFacePres[elemToFaces[jfaceLoc]];
+
+        real64 const ccGravCoef = elemGravCoef;
+        real64 const fGravCoef  = faceGravCoef[elemToFaces[jfaceLoc]];
+
+        real64 const ccDens     = elemDens;
+        real64 const dCcDens_dp = dElemDens_dp;
+        // no density evaluated at the face center
+
+        // pressure difference
+        real64 const presDif      = ccPres - fPres;
+        real64 const dPresDif_dp  =  1;
+        real64 const dPresDif_dfp = -1;
+
+        // gravity term
+        real64 const gravCoefDif  = ccGravCoef - fGravCoef;
+        real64 const gravTerm     = ccDens     * gravCoefDif;
+        real64 const dGravTerm_dp = dCcDens_dp * gravCoefDif;
+
+        // potential difference
+        real64 const potDif      = presDif     - gravTerm;
+        real64 const dPotDif_dp  = dPresDif_dp - dGravTerm_dp;
+        real64 const dPotDif_dfp = dPresDif_dfp;
+
+        // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
+        oneSidedVolFlux[ifaceLoc]                = oneSidedVolFlux[ifaceLoc]
+                                                   + transMatrix[ifaceLoc][jfaceLoc] * potDif;
+        dOneSidedVolFlux_dp[ifaceLoc]            = dOneSidedVolFlux_dp[ifaceLoc]
+                                                   + transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dp;
+        dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc] = dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc]
+                                                   + transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dfp;
+      }
+    }
+  }
 
   /**
    * @brief In a given element, collect the upwinded mobilities at this element's faces
@@ -89,12 +136,12 @@ struct AssemblerKernelHelper
    * @param[in] elemList face-to-elemIds map
    * @param[in] regionFilter set containing the indices of the target regions
    * @param[in] elemToFaces elem-to-faces maps
-   * @param[in] mobility the mobilities in the domain (non-local)
-   * @param[in] dMobility_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] mob the mobilities in the domain (non-local)
+   * @param[in] dMob_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
    * @param[in] elemDofNumber the dof numbers of all the cell centered pressures (non-local)
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
-   * @param[inout] upwMobility the upwinded mobilities at this element's faces
-   * @param[inout] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or
+   * @param[inout] upwMob the upwinded mobilities at this element's faces
+   * @param[inout] dUpwMob_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or
    * neighbor)
    * @param[inout] upwDofNumber the dof number of the upwind pressure
    *
@@ -103,21 +150,68 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-    UpdateUpwindedCoefficients( localIndex const er,
-                                localIndex const esr,
-                                localIndex const ei,
-                                arrayView2d< localIndex const > const & elemRegionList,
-                                arrayView2d< localIndex const > const & elemSubRegionList,
-                                arrayView2d< localIndex const > const & elemList,
-                                SortedArrayView< localIndex const > const & regionFilter,
-                                arraySlice1d< localIndex const > const & elemToFaces,
-                                ElementViewConst< arrayView1d< real64 const > > const & mobility,
-                                ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
-                                ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-                                real64 const (&oneSidedVolFlux)[ NF ],
-                                real64 ( &upwMobility )[ NF ],
-                                real64 ( &dUpwMobility_dp )[ NF ],
-                                globalIndex ( &upwDofNumber )[ NF ] );
+  updateUpwindedCoefficients( localIndex const er,
+                              localIndex const esr,
+                              localIndex const ei,
+                              arrayView2d< localIndex const > const & elemRegionList,
+                              arrayView2d< localIndex const > const & elemSubRegionList,
+                              arrayView2d< localIndex const > const & elemList,
+                              SortedArrayView< localIndex const > const & regionFilter,
+                              arraySlice1d< localIndex const > const & elemToFaces,
+                              ElementViewConst< arrayView1d< real64 const > > const & mob,
+                              ElementViewConst< arrayView1d< real64 const > > const & dMob_dp,
+                              ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
+                              real64 const (&oneSidedVolFlux)[ NF ],
+                              real64 (& upwMob)[ NF ],
+                              real64 (& dUpwMob_dp)[ NF ],
+                              globalIndex (& upwDofNumber)[ NF ] )
+  {
+    // for this element, loop over the local (one-sided) faces
+    for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+    {
+
+      // we initialize these upw quantities with the values of the local elem
+      upwMob[ifaceLoc]       = mob[er][esr][ei];
+      dUpwMob_dp[ifaceLoc]   = dMob_dp[er][esr][ei];
+      upwDofNumber[ifaceLoc] = elemDofNumber[er][esr][ei];
+
+      // if the local elem if upstream, we are done, we can proceed to the next one-sided face
+      // otherwise, we have to access the properties of the neighbor element
+      // this is done on the fly below
+      if( oneSidedVolFlux[ifaceLoc] < 0 )
+      {
+
+        // the face has at most two adjacent elements
+        // one of these two elements is the current element indexed by er, esr, ei
+        // but here we are interested in the indices of the other element
+        // this other element is "the neighbor" for this one-sided face
+        for( localIndex k=0; k<elemRegionList.size( 1 ); ++k )
+        {
+
+          localIndex const erNeighbor  = elemRegionList[elemToFaces[ifaceLoc]][k];
+          localIndex const esrNeighbor = elemSubRegionList[elemToFaces[ifaceLoc]][k];
+          localIndex const eiNeighbor  = elemList[elemToFaces[ifaceLoc]][k];
+
+          // this element is not the current element
+          // we have found the neighbor or we are at the boundary
+          if( erNeighbor != er || esrNeighbor != esr || eiNeighbor != ei )
+          {
+            bool const onBoundary       = (erNeighbor == -1 || esrNeighbor == -1 || eiNeighbor == -1);
+            bool const neighborInTarget = regionFilter.contains( erNeighbor );
+
+            // if not on boundary, save the mobility and the upwDofNumber
+            if( !onBoundary && neighborInTarget )
+            {
+              upwMob[ifaceLoc]       = mob[erNeighbor][esrNeighbor][eiNeighbor];
+              dUpwMob_dp[ifaceLoc]   = dMob_dp[erNeighbor][esrNeighbor][eiNeighbor];
+              upwDofNumber[ifaceLoc] = elemDofNumber[erNeighbor][esrNeighbor][eiNeighbor];
+            }
+            // if the face is on the boundary, use the properties of the local elem
+          }
+        }
+      }
+    }
+  }
 
   /**
    * @brief In a given element, assemble the mass conservation equation
@@ -128,8 +222,8 @@ struct AssemblerKernelHelper
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
    * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure
    * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
-   * @param[in] upwMobility the upwinded mobilities at this element's faces
-   * @param[in] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or
+   * @param[in] upwMob the upwinded mobilities at this element's faces
+   * @param[in] dUpwMob_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or
    * neighbor)
    * @param[in] upwDofNumber  the dof number of the upwind pressure
    * @param[inout] matrix the jacobian matrix
@@ -138,19 +232,70 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  AssembleOneSidedMassFluxes( arrayView1d< globalIndex const > const & faceDofNumber,
+  assembleOneSidedMassFluxes( arrayView1d< globalIndex const > const & faceDofNumber,
                               arraySlice1d< localIndex const > const & elemToFaces,
                               globalIndex const elemDofNumber,
                               globalIndex const rankOffset,
                               real64 const (&oneSidedVolFlux)[ NF ],
                               real64 const (&dOneSidedVolFlux_dp)[ NF ],
                               real64 const (&dOneSidedVolFlux_dfp)[ NF ][ NF ],
-                              real64 const (&upwMobility)[ NF ],
-                              real64 const (&dUpwMobility_dp)[ NF ],
+                              real64 const (&upwMob)[ NF ],
+                              real64 const (&dUpwMob_dp)[ NF ],
                               globalIndex const (&upwDofNumber)[ NF ],
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs );
+                              arrayView1d< real64 > const & localRhs )
+  {
+    // fluxes
+    real64 sumLocalMassFluxes = 0;
+    real64 dSumLocalMassFluxes_dElemVars[ NF+1 ] = { 0.0 };
+    real64 dSumLocalMassFluxes_dFaceVars[ NF ] = { 0.0 };
+
+    // dof numbers
+    globalIndex const eqnRowLocalIndex = elemDofNumber - rankOffset;
+    globalIndex elemDofColIndices[ NF+1 ] = { 0 };
+    globalIndex faceDofColIndices[ NF ] = { 0 };
+    elemDofColIndices[0] = elemDofNumber;
+
+    // for each element, loop over the one-sided faces
+    for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+    {
+
+      real64 const dt_upwMob = dt * upwMob[ifaceLoc];
+      // compute the mass flux at the one-sided face plus its derivatives
+      // add the newly computed flux to the sum
+      sumLocalMassFluxes                        = sumLocalMassFluxes + dt_upwMob * oneSidedVolFlux[ifaceLoc];
+      dSumLocalMassFluxes_dElemVars[0]          = dSumLocalMassFluxes_dElemVars[0] + dt * upwMob[ifaceLoc] * dOneSidedVolFlux_dp[ifaceLoc];
+      dSumLocalMassFluxes_dElemVars[ifaceLoc+1] = dt * dUpwMob_dp[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
+      for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+      {
+        dSumLocalMassFluxes_dFaceVars[jfaceLoc] = dSumLocalMassFluxes_dFaceVars[jfaceLoc]
+                                                  + dt_upwMob * dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc];
+      }
+
+      // collect the relevant dof numbers
+      elemDofColIndices[ifaceLoc+1] = upwDofNumber[ifaceLoc]; // if upwDofNumber == elemDofNumber, the derivative is zero
+      faceDofColIndices[ifaceLoc] = faceDofNumber[elemToFaces[ifaceLoc]];
+    }
+
+    // we are ready to assemble the local flux and its derivatives
+    // no need for atomic adds - each row is assembled by a single thread
+
+    // residual
+    localRhs[eqnRowLocalIndex] = localRhs[eqnRowLocalIndex] + sumLocalMassFluxes;
+
+    // jacobian -- derivative wrt elem centered vars
+    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
+                                                              &elemDofColIndices[0],
+                                                              &dSumLocalMassFluxes_dElemVars[0],
+                                                              NF+1 );
+
+    // jacobian -- derivatives wrt face centered vars
+    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
+                                                              &faceDofColIndices[0],
+                                                              &dSumLocalMassFluxes_dFaceVars[0],
+                                                              NF );
+  }
 
 
   /**
@@ -168,7 +313,7 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
+  assembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                        arrayView1d< integer const > const & faceGhostRank,
                        arraySlice1d< localIndex const > const & elemToFaces,
                        globalIndex const elemDofNumber,
@@ -177,7 +322,49 @@ struct AssemblerKernelHelper
                        real64 const (&dOneSidedVolFlux_dp)[ NF ],
                        real64 const (&dOneSidedVolFlux_dfp)[ NF ][ NF ],
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                       arrayView1d< real64 > const & localRhs );
+                       arrayView1d< real64 > const & localRhs )
+  {
+    // fluxes
+    real64 dFlux_dfp[ NF ] = { 0.0 };
+
+    // dof numbers
+    globalIndex dofColIndicesFacePres[ NF ] = { 0 };
+    globalIndex const dofColIndexElemPres = elemDofNumber;    // fluxes
+
+    // for each element, loop over the local (one-sided) faces
+    for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+    {
+      if( faceGhostRank[elemToFaces[ifaceLoc]] >= 0 )
+      {
+        continue;
+      }
+
+      // flux at this face
+      real64 const flux      = oneSidedVolFlux[ifaceLoc];
+      real64 const dFlux_dp  = dOneSidedVolFlux_dp[ifaceLoc];
+
+      // dof number of this face constraint
+      localIndex const eqnLocalRowIndex = LvArray::integerConversion< localIndex >( faceDofNumber[elemToFaces[ifaceLoc]] - rankOffset );
+
+      for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+      {
+        dFlux_dfp[jfaceLoc] = dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc];
+        dofColIndicesFacePres[jfaceLoc] = faceDofNumber[elemToFaces[jfaceLoc]];
+      }
+
+      // residual
+      atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
+
+      // jacobian -- derivative wrt local cell centered pressure term
+      localMatrix.addToRow< parallelDeviceAtomic >( eqnLocalRowIndex, &dofColIndexElemPres, &dFlux_dp, 1 );
+
+      // jacobian -- derivatives wrt face pressure terms
+      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,
+                                                                        &dofColIndicesFacePres[0],
+                                                                        &dFlux_dfp[0],
+                                                                        NF );
+    }
+  }
 
 };
 
@@ -217,8 +404,8 @@ struct AssemblerKernel
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] elemDens the density at this elenent's center
    * @param[in] dElemDens_dp the derivative of the density at this element's center
-   * @param[in] mobility the mobilities in the domain (non-local)
-   * @param[in] dMobility_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] mob the mobilities in the domain (non-local)
+   * @param[in] dMob_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
    * @param[in] elemDofNumber the dof numbers of the cells in the domain (non-local)
    * @param[in] elemGhostRank the ghost rank of the cell
    * @param[in] rankOffset the offset of this rank
@@ -230,7 +417,7 @@ struct AssemblerKernel
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  Compute( localIndex const er,
+  compute( localIndex const er,
            localIndex const esr,
            localIndex const ei,
            SortedArrayView< localIndex const > const & regionFilter,
@@ -248,15 +435,106 @@ struct AssemblerKernel
            real64 const & elemGravCoef,
            real64 const & elemDens,
            real64 const & dElemDens_dp,
-           ElementViewConst< arrayView1d< real64 const > > const & mobility,
-           ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
+           ElementViewConst< arrayView1d< real64 const > > const & mob,
+           ElementViewConst< arrayView1d< real64 const > > const & dMob_dp,
            ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
            integer const elemGhostRank,
            globalIndex const rankOffset,
            real64 const & dt,
            arraySlice2d< real64 const > const & transMatrix,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-           arrayView1d< real64 > const & localRhs );
+           arrayView1d< real64 > const & localRhs )
+  {
+    // one sided flux
+    real64 oneSidedVolFlux[ NF ] = { 0.0 };
+    real64 dOneSidedVolFlux_dp[ NF ] = { 0.0 };
+    real64 dOneSidedVolFlux_dfp[ NF ][ NF ] = {{ 0.0 }};
+
+    // upwinded mobility
+    real64 upwMob[ NF ] = { 0.0 };
+    real64 dUpwMob_dp[ NF ] = { 0.0 };
+    globalIndex upwDofNumber[ NF ] = { 0 };
+
+    /*
+     * compute auxiliary quantities at the one sided faces of this element:
+     * 1) One-sided volumetric fluxes
+     * 2) Upwinded mobilities
+     */
+
+    // for each one-sided face of the elem,
+    // compute the volumetric flux using transMatrix
+    AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
+                                                           dFacePres,
+                                                           faceGravCoef,
+                                                           elemToFaces,
+                                                           elemPres,
+                                                           dElemPres,
+                                                           elemGravCoef,
+                                                           elemDens,
+                                                           dElemDens_dp,
+                                                           transMatrix,
+                                                           oneSidedVolFlux,
+                                                           dOneSidedVolFlux_dp,
+                                                           dOneSidedVolFlux_dfp );
+
+    // at this point, we know the local flow direction in the element
+    // so we can upwind the transport coefficients (mobilities) at the one sided faces
+    // ** this function needs non-local information **
+    if( elemGhostRank < 0 )
+    {
+      // This functions is really not necessary
+      // TODO: remove this function and don't store the upwinded mobilities like in CompositionalMultiphaseHybrid
+      AssemblerKernelHelper::updateUpwindedCoefficients< NF >( er, esr, ei,
+                                                               elemRegionList,
+                                                               elemSubRegionList,
+                                                               elemList,
+                                                               regionFilter,
+                                                               elemToFaces,
+                                                               mob,
+                                                               dMob_dp,
+                                                               elemDofNumber,
+                                                               oneSidedVolFlux,
+                                                               upwMob,
+                                                               dUpwMob_dp,
+                                                               upwDofNumber );
+
+      /*
+       * perform assembly in this element in two steps:
+       * 1) mass conservation equations
+       * 2) face constraints
+       */
+
+      // use the computed one sided vol fluxes and the upwinded mobilities
+      // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
+      AssemblerKernelHelper::assembleOneSidedMassFluxes< NF >( faceDofNumber,
+                                                               elemToFaces,
+                                                               elemDofNumber[er][esr][ei],
+                                                               rankOffset,
+                                                               oneSidedVolFlux,
+                                                               dOneSidedVolFlux_dp,
+                                                               dOneSidedVolFlux_dfp,
+                                                               upwMob,
+                                                               dUpwMob_dp,
+                                                               upwDofNumber,
+                                                               dt,
+                                                               localMatrix,
+                                                               localRhs );
+    }
+
+    // use the computed one sided vol fluxes to assemble the constraints
+    // enforcing flux continuity at this element's faces
+    AssemblerKernelHelper::assembleConstraints< NF >( faceDofNumber,
+                                                      faceGhostRank,
+                                                      elemToFaces,
+                                                      elemDofNumber[er][esr][ei],
+                                                      rankOffset,
+                                                      oneSidedVolFlux,
+                                                      dOneSidedVolFlux_dp,
+                                                      dOneSidedVolFlux_dfp,
+                                                      localMatrix,
+                                                      localRhs );
+  }
+
 
 };
 
@@ -292,17 +570,17 @@ struct FluxKernel
    * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravCoef the depth at the mesh faces
    * @param[in] transMultiplier the transmissibility multiplier at the mesh faces
-   * @param[in] mobility the mobilities in the domain (non-local)
-   * @param[in] dMobility_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] mob the mobilities in the domain (non-local)
+   * @param[in] dMob_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
    * @param[in] elemDofNumber the dof numbers of the cells in the domain (non-local)
    * @param[in] rankOffset the offset of this rank
    * @param[in] dt time step size
    * @param[inout] localMatrix the local Jacobian matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< localIndex NF >
+  template< typename IP_TYPE, localIndex NF >
   static void
-  Launch( localIndex er,
+  launch( localIndex er,
           localIndex esr,
           CellElementSubRegion const & subRegion,
           constitutive::SingleFluidBase const & fluid,
@@ -318,14 +596,96 @@ struct FluxKernel
           arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
-          ElementViewConst< arrayView1d< real64 const > > const & mobility,
-          ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
+          ElementViewConst< arrayView1d< real64 const > > const & mob,
+          ElementViewConst< arrayView1d< real64 const > > const & dMob_dp,
           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
           localIndex const rankOffset,
           real64 const lengthTolerance,
           real64 const dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs );
+          arrayView1d< real64 > const & localRhs )
+  {
+    // get the cell-centered DOF numbers and ghost rank for the assembly
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+
+    // get the map from elem to faces
+    arrayView2d< localIndex const > const elemToFaces = subRegion.faceList().toViewConst();
+
+    // get the cell-centered pressures
+    arrayView1d< real64 const > const elemPres  =
+      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString );
+    arrayView1d< real64 const > const dElemPres =
+      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString );
+
+    // get the element data needed for transmissibility computation
+    arrayView2d< real64 const > const elemCenter =
+      subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
+    arrayView1d< real64 const > const elemVolume =
+      subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+    arrayView2d< real64 const > const elemPerm =
+      subRegion.getReference< array2d< real64 > >( SinglePhaseBase::viewKeyStruct::permeabilityString );
+
+    // get the cell-centered depth
+    arrayView1d< real64 const > const elemGravCoef =
+      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::gravityCoefString );
+
+    // get the fluid data
+    arrayView2d< real64 const > const elemDens = fluid.density();
+    arrayView2d< real64 const > const dElemDens_dp = fluid.dDensity_dPressure();
+
+    // assemble the residual and Jacobian element by element
+    // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
+    using KERNEL_POLICY = parallelDevicePolicy< 32 >;
+    forAll< KERNEL_POLICY >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
+    {
+
+      // transmissibility matrix
+      stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+
+      real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
+
+      // recompute the local transmissibility matrix at each iteration
+      // we can decide later to precompute transMatrix if needed
+      IP_TYPE::template compute< NF >( nodePosition,
+                                       transMultiplier,
+                                       faceToNodes,
+                                       elemToFaces[ei],
+                                       elemCenter[ei],
+                                       elemVolume[ei],
+                                       perm,
+                                       lengthTolerance,
+                                       transMatrix );
+
+      // perform flux assembly in this element
+      SinglePhaseHybridFVMKernels::AssemblerKernel::compute< NF >( er, esr, ei,
+                                                                   regionFilter,
+                                                                   elemRegionList,
+                                                                   elemSubRegionList,
+                                                                   elemList,
+                                                                   faceDofNumber,
+                                                                   faceGhostRank,
+                                                                   facePres,
+                                                                   dFacePres,
+                                                                   faceGravCoef,
+                                                                   elemToFaces[ei],
+                                                                   elemPres[ei],
+                                                                   dElemPres[ei],
+                                                                   elemGravCoef[ei],
+                                                                   elemDens[ei][0],
+                                                                   dElemDens_dp[ei][0],
+                                                                   mob,
+                                                                   dMob_dp,
+                                                                   elemDofNumber,
+                                                                   elemGhostRank[ei],
+                                                                   rankOffset,
+                                                                   dt,
+                                                                   transMatrix,
+                                                                   localMatrix,
+                                                                   localRhs );
+
+    } );
+  }
+
 
 };
 
@@ -338,7 +698,7 @@ struct ResidualNormKernel
 
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
   static void
-  Launch( LOCAL_VECTOR const localResidual,
+  launch( LOCAL_VECTOR const localResidual,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & facePresDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
@@ -412,12 +772,12 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
 } // namespace helpers
 
-template< typename KERNELWRAPPER, typename ... ARGS >
+template< typename IP_TYPE, typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 {
   helpers::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
   {
-    KERNELWRAPPER::template Launch< NF() >( std::forward< ARGS >( args )... );
+    KERNELWRAPPER::template launch< IP_TYPE, NF() >( std::forward< ARGS >( args )... );
   } );
 }
 

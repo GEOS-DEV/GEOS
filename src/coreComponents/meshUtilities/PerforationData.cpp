@@ -110,14 +110,14 @@ void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
 
 }
 
-void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
+void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                                                    WellElementSubRegion const * const wellElemSubRegion,
                                                    string const & permeabilityKey )
 {
 
   // get the permeability in the domain
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
-    mesh.getElemManager()->ConstructArrayViewAccessor< real64, 2 >( permeabilityKey );
+    mesh.getElemManager()->constructArrayViewAccessor< real64, 2 >( permeabilityKey );
 
   arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion->getElementCenter();
 
@@ -143,7 +143,7 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 
     // get an approximate dx, dy, dz for the reservoir element
     // this is done by computing a bounding box
-    GetReservoirElementDimensions( mesh, er, esr, ei, dx, dy, dz );
+    getReservoirElementDimensions( mesh, er, esr, ei, dx, dy, dz );
 
     real64 d1 = 0;
     real64 d2 = 0;
@@ -196,14 +196,14 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 }
 
 
-void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
+void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
                                                      localIndex const er, localIndex const esr, localIndex const ei,
                                                      real64 & dx, real64 & dy, real64 & dz ) const
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
   NodeManager const * const nodeManager          = mesh.getNodeManager();
-  CellElementRegion const * const region    = Group::group_cast< CellElementRegion const * >( elemManager->GetRegion( er ));
-  CellBlock const * const subRegion = Group::group_cast< CellElementSubRegion const * >( region->GetSubRegion( esr ));
+  CellElementRegion const * const region    = Group::groupCast< CellElementRegion const * >( elemManager->getRegion( er ));
+  CellBlock const * const subRegion = Group::groupCast< CellElementSubRegion const * >( region->getSubRegion( esr ));
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];
@@ -225,89 +225,11 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
 
 }
 
-
-void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
-                                             InternalWellGenerator const & wellGeometry )
-{
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
-  NodeManager const * const nodeManager = mesh.getNodeManager();
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > elemCenter =
-    elemManager->ConstructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
-
-  arrayView2d< real64 const > const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  arrayView1d< real64 const > const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
-
-  resize( perfCoordsGlobal.size( 0 ) );
-  localIndex iperfLocal = 0;
-
-  // loop over all the perforations
-  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
-  {
-    R1Tensor const coord = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
-
-    // TODO actually trace coords
-    // TODO what if a fracture element is located
-
-    // find the closest reservoir element
-    auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
-                                                   localIndex const esr,
-                                                   localIndex const ei ) -> real64
-    {
-      R1Tensor v = coord;
-      LvArray::tensorOps::subtract< 3 >( v, elemCenter[er][esr][ei] );
-      return LvArray::tensorOps::l2Norm< 3 >( v );
-    } );
-
-    // save the region, subregion and index
-    localIndex const er  = std::get< 0 >( ret.second );
-    localIndex const esr = std::get< 1 >( ret.second );
-    localIndex const ei  = std::get< 2 >( ret.second );
-
-    // a ghostRank check may be inserted if needed
-    // (not needed in the current implementation)
-
-    // check if perforation location is indeed inside the element
-    CellBlock const * const cellBlock = elemManager->GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
-    array1d< array1d< localIndex > > faceNodes( cellBlock->numFacesPerElement() );
-
-    for( localIndex kf = 0; kf < cellBlock->numFacesPerElement(); ++kf )
-    {
-      cellBlock->GetFaceNodes( ei, kf, faceNodes[kf] );
-    }
-
-    if( !computationalGeometry::IsPointInsidePolyhedron( nodeManager->referencePosition(), faceNodes, coord ))
-    {
-      continue;
-    }
-
-    // TODO: what happens when the boundary is at the boundary of the MPI domain??
-
-    // now construct the local data
-
-    // store the indices of the mesh element
-    m_toMeshElements.m_toElementRegion   [iperfLocal] = er;
-    m_toMeshElements.m_toElementSubRegion[iperfLocal] = esr;
-    m_toMeshElements.m_toElementIndex    [iperfLocal] = ei;
-
-    // construct the local transmissibility and location maps
-    m_wellTransmissibility[iperfLocal] = perfTransGlobal[iperfGlobal];
-    LvArray::tensorOps::copy< 3 >( m_location[iperfLocal], coord );
-    m_localToGlobalMap[iperfLocal++] = iperfGlobal;
-  }
-
-  // set the size based on the number of perforations matched with local reservoir elements
-  resize( iperfLocal );
-  ConstructGlobalToLocalMap();
-
-}
-
-
-void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellGeometry,
+void PerforationData::connectToWellElements( InternalWellGenerator const & wellGeometry,
                                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElemMap,
                                              globalIndex elemOffsetGlobal )
 {
-  arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.getPerfElemIndex();
 
   for( localIndex iperfLocal = 0; iperfLocal < size(); ++iperfLocal )
   {
@@ -317,46 +239,6 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
     m_wellElementIndex[iperfLocal] = globalToLocalWellElemMap.at( ielemGlobal );
   }
 
-  //DebugLocalPerforations();
-}
-
-void PerforationData::DebugLocalPerforations() const
-{
-  if( size() == 0 )
-  {
-    return;
-  }
-
-  if( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 1 )
-  {
-    return;
-  }
-
-  std::cout << std::endl;
-  std::cout << "++++++++++++++++++++++++++" << std::endl;
-  std::cout << "PerforationData = " << getName() << " of " << getParent()->getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
-  std::cout << "Number of local perforations = " << size() << std::endl;
-
-  for( localIndex iperf = 0; iperf < size(); ++iperf )
-  {
-    std::cout << "m_toMeshElements.m_toElementRegion[" << iperf << "] = "
-              << m_toMeshElements.m_toElementRegion[iperf]
-              << std::endl;
-    std::cout << "m_toMeshElements.m_toElementSubRegion[" << iperf << "] = "
-              << m_toMeshElements.m_toElementSubRegion[iperf]
-              << std::endl;
-    std::cout << "m_toMeshElements.m_toElementIndex[" << iperf << "] = "
-              << m_toMeshElements.m_toElementIndex[iperf]
-              << std::endl;
-
-    std::cout << "m_wellElementIndexLocal[" << iperf << "] = " << m_wellElementIndex[iperf]
-              << std::endl;
-    std::cout << "m_location[" << iperf << "] = " << m_location[iperf]
-              << std::endl;
-    std::cout << "m_wellTransmissibility[" << iperf << "] = " << m_wellTransmissibility[iperf]
-              << std::endl;
-  }
 }
 
 } //namespace geosx

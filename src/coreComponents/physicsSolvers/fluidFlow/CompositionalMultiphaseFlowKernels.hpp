@@ -40,14 +40,14 @@ struct ComponentFractionKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( arraySlice1d< real64 const > compDens,
+  compute( arraySlice1d< real64 const > compDens,
            arraySlice1d< real64 const > dCompDens,
            arraySlice1d< real64 > compFrac,
            arraySlice2d< real64 > dCompFrac_dCompDens );
 
   template< localIndex NC >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView2d< real64 const > const & compDens,
           arrayView2d< real64 const > const & dCompDens,
           arrayView2d< real64 > const & compFrac,
@@ -55,7 +55,7 @@ struct ComponentFractionKernel
 
   template< localIndex NC >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView2d< real64 const > const & compDens,
           arrayView2d< real64 const > const & dCompDens,
           arrayView2d< real64 > const & compFrac,
@@ -73,7 +73,7 @@ struct PhaseVolumeFractionKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( arraySlice1d< real64 const > const & compDens,
+  compute( arraySlice1d< real64 const > const & compDens,
            arraySlice1d< real64 const > const & dCompDens,
            arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseDens,
@@ -88,7 +88,7 @@ struct PhaseVolumeFractionKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView2d< real64 const > const & compDens,
           arrayView2d< real64 const > const & dCompDens,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
@@ -104,7 +104,7 @@ struct PhaseVolumeFractionKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView2d< real64 const > const & compDens,
           arrayView2d< real64 const > const & dCompDens,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
@@ -130,7 +130,7 @@ struct PhaseMobilityKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+  compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseDens,
            arraySlice1d< real64 const > const & dPhaseDens_dPres,
            arraySlice2d< real64 const > const & dPhaseDens_dComp,
@@ -147,7 +147,7 @@ struct PhaseMobilityKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseDens,
           arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -165,7 +165,7 @@ struct PhaseMobilityKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseDens,
           arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -188,7 +188,7 @@ struct FluidUpdateKernel
 {
   template< typename POLICY, typename FLUID_WRAPPER >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           real64 const temp,
@@ -198,14 +198,14 @@ struct FluidUpdateKernel
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k], temp, compFrac[k] );
       }
     } );
   }
 
   template< typename POLICY, typename FLUID_WRAPPER >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
@@ -216,14 +216,14 @@ struct FluidUpdateKernel
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
       }
     } );
   }
 
   template< typename POLICY, typename FLUID_WRAPPER >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
@@ -235,14 +235,14 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
       }
     } );
   }
 
   template< typename POLICY, typename FLUID_WRAPPER >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           real64 const temp,
@@ -253,7 +253,7 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -265,7 +265,7 @@ struct RelativePermeabilityUpdateKernel
 {
   template< typename POLICY, typename RELPERM_WRAPPER >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           RELPERM_WRAPPER const & relPermWrapper,
           arrayView2d< real64 const > const & phaseVolFrac )
   {
@@ -273,14 +273,14 @@ struct RelativePermeabilityUpdateKernel
     {
       for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
       {
-        relPermWrapper.Update( k, q, phaseVolFrac[k] );
+        relPermWrapper.update( k, q, phaseVolFrac[k] );
       }
     } );
   }
 
   template< typename POLICY, typename RELPERM_WRAPPER >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           RELPERM_WRAPPER const & relPermWrapper,
           arrayView2d< real64 const > const & phaseVolFrac )
   {
@@ -289,7 +289,7 @@ struct RelativePermeabilityUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
       {
-        relPermWrapper.Update( k, q, phaseVolFrac[k] );
+        relPermWrapper.update( k, q, phaseVolFrac[k] );
       }
     } );
   }
@@ -301,7 +301,7 @@ struct CapillaryPressureUpdateKernel
 {
   template< typename POLICY, typename CAPPRES_WRAPPER >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           CAPPRES_WRAPPER const & capPresWrapper,
           arrayView2d< real64 const > const & phaseVolFrac )
   {
@@ -309,14 +309,14 @@ struct CapillaryPressureUpdateKernel
     {
       for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
       {
-        capPresWrapper.Update( k, q, phaseVolFrac[k] );
+        capPresWrapper.update( k, q, phaseVolFrac[k] );
       }
     } );
   }
 
   template< typename POLICY, typename CAPPRES_WRAPPER >
   static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           CAPPRES_WRAPPER const & capPresWrapper,
           arrayView2d< real64 const > const & phaseVolFrac )
   {
@@ -325,7 +325,7 @@ struct CapillaryPressureUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
       {
-        capPresWrapper.Update( k, q, phaseVolFrac[k] );
+        capPresWrapper.update( k, q, phaseVolFrac[k] );
       }
     } );
   }
@@ -342,7 +342,7 @@ struct AccumulationKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-    Compute( localIndex const numPhases,
+    compute( localIndex const numPhases,
              real64 const & volume,
              real64 const & porosityOld,
              real64 const & porosityRef,
@@ -366,7 +366,7 @@ struct AccumulationKernel
 
   template< localIndex NC >
   static void
-  Launch( localIndex const numPhases,
+  launch( localIndex const numPhases,
           localIndex const size,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
@@ -414,7 +414,7 @@ struct FluxKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( localIndex const stencilSize,
+  compute( localIndex const stencilSize,
            localIndex const numPhases,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
@@ -447,7 +447,7 @@ struct FluxKernel
 
   template< localIndex NC, typename STENCIL_TYPE, bool IS_UT_FORM = true>
   static void
-  Launch( localIndex const numPhases,
+  launch( localIndex const numPhases,
           STENCIL_TYPE const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -489,7 +489,7 @@ struct VolumeBalanceKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( real64 const & volume,
+  compute( real64 const & volume,
            real64 const & porosityRef,
            real64 const & pvMult,
            real64 const & dPvMult_dPres,
@@ -501,7 +501,7 @@ struct VolumeBalanceKernel
 
   template< localIndex NC, localIndex NP >
   static void
-  Launch( localIndex const size,
+  launch( localIndex const size,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
@@ -550,7 +550,7 @@ void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 {
   internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
-    KERNELWRAPPER::template Launch< NC() >( std::forward< ARGS >( args )... );
+    KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
   } );
 }
 
@@ -562,9 +562,9 @@ void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ...
     switch( numPhase )
     {
       case 2:
-        { KERNELWRAPPER::template Launch< NC(), 2 >( std::forward< ARGS >( args )... ); return; }
+        { KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args )... ); return; }
       case 3:
-        { KERNELWRAPPER::template Launch< NC(), 3 >( std::forward< ARGS >( args )... ); return; }
+        { KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args )... ); return; }
       default:
         { GEOSX_ERROR( "Unsupported number of phases: " << numPhase ); }
     }

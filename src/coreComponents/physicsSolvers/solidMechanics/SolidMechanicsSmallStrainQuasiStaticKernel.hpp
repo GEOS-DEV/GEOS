@@ -18,7 +18,6 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
-
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geosx
@@ -246,7 +245,7 @@ public:
     real64 strainInc[6] = {0};
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-    m_constitutiveUpdate.SmallStrain( k, q, strainInc );
+    m_constitutiveUpdate.smallStrain( k, q, strainInc );
 
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
     m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
@@ -270,11 +269,11 @@ public:
 
     real64 N[numNodesPerElem];
     FE_TYPE::calcN( q, N );
-    FE_TYPE::plus_gradNajAij_plus_NaFi( dNdX,
-                                        stress,
-                                        N,
-                                        gravityForce,
-                                        reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
+                                     stress,
+                                     N,
+                                     gravityForce,
+                                     reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   }
 
   /**

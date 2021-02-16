@@ -27,6 +27,7 @@ namespace geosx
 
 class DomainPartition;
 class FluxApproximationBase;
+class HybridMimeticDiscretization;
 
 /**
  * @class FiniteVolumeManager
@@ -54,9 +55,9 @@ public:
    */
   virtual ~FiniteVolumeManager() override;
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Return the FluxApproximation associated with the provided name.
@@ -69,6 +70,18 @@ public:
    * @copydoc getFluxApproximation( string const & ) const
    */
   FluxApproximationBase & getFluxApproximation( string const & name );
+
+  /**
+   * @brief Return the HybridMimeticDiscretization associated with the provided name.
+   * @param[in] name the provided name
+   * @return the HybridMimeticDiscretization associated with the provided name
+   */
+  HybridMimeticDiscretization const & getHybridMimeticDiscretization( string const & name ) const;
+
+  /**
+   * @copydoc getHybridMimeticDiscretization( string const & ) const
+   */
+  HybridMimeticDiscretization & getHybridMimeticDiscretization( string const & name );
 
 private:
 

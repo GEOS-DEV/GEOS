@@ -31,7 +31,7 @@ class SolidMechanicsLagrangianFEM;
 class SolidMechanicsEmbeddedFractures : public SolverBase
 {
 public:
-  SolidMechanicsEmbeddedFractures( const std::string & name,
+  SolidMechanicsEmbeddedFractures( const string & name,
                                    Group * const parent );
 
   ~SolidMechanicsEmbeddedFractures() override;
@@ -40,17 +40,17 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName()
+  static string catalogName()
   {
     return "SolidMechanicsEmbeddedFractures";
   }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void SetupDofs( DomainPartition const & domain,
+  virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void SetupSystem( DomainPartition & domain,
+  virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
                             array1d< real64 > & localRhs,
@@ -58,15 +58,15 @@ public:
                             bool const setSparsity = true ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
-  virtual void ImplicitStepComplete( real64 const & time_n,
+  virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
                                      DomainPartition & domain ) override final;
 
-  virtual void AssembleSystem( real64 const time,
+  virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
@@ -74,7 +74,7 @@ public:
                                arrayView1d< real64 > const & localRhs ) override;
 
 
-  virtual void ApplyBoundaryConditions( real64 const time,
+  virtual void applyBoundaryConditions( real64 const time,
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
@@ -82,19 +82,19 @@ public:
                                         arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override final;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition & domain ) override;
@@ -109,11 +109,13 @@ public:
 
     constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
 
+    constexpr static auto fractureRegionNameString = "fractureRegionName";
+
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
 protected:
 
-  void AddCouplingNumNonzeros( DomainPartition & domain,
+  void addCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,
                                arrayView1d< localIndex > const & rowLengths ) const;
 
@@ -123,73 +125,17 @@ protected:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
    */
-  void AddCouplingSparsityPattern( DomainPartition const & domain,
+  void addCouplingSparsityPattern( DomainPartition const & domain,
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
-
-  /*
-   * @brief Assemble Equilibrium operator
-   * @param eqMatrix Equilibrium operator
-   * @param embeddedSurfaceSubRegion subRegion
-   * @param k cell index
-   * @param hInv scaling coefficient
-   */
-  void AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
-                                    EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
-                                    const localIndex k,
-                                    const real64 hInv );
-  /*
-   * @brief Assemble Compatibility operator
-   * @param compMatrix
-   * @param embeddedSurfaceSubRegion
-   * @param k cell index
-   * @param q quadrature point index
-   * @param elemsToNodes element to node map
-   * @param nodesCoord nodes coordinates
-   * @param embeddedSurfaceToCell embedded surface to cell maps
-   * @param numNodesPerElement number of nodes per element
-   * @param dNdX shape functions derivatives
-   */
-  void AssembleCompatibilityOperator( array2d< real64 > & compMatrix,
-                                      EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
-                                      localIndex const k,
-                                      localIndex const q,
-                                      CellBlock::NodeMapType const & elemsToNodes,
-                                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
-                                      localIndex const cellElementIndex,
-                                      localIndex const numNodesPerElement,
-                                      arrayView4d< real64 const > const & dNdX );
-
-  /*
-   * @brief Assemble Compatibility operator
-   * @param strainMatrix strain matrix (B)
-   * @param elIndex element index
-   * @param q quadrature point index
-   * @param numNodesPerElement number of nodes per element
-   * @param dNdX shape functions derivatives
-   */
-  void AssembleStrainOperator( array2d< real64 > & strainMatrix,
-                               localIndex const elIndex,
-                               localIndex const q,
-                               localIndex const numNodesPerElement,
-                               arrayView4d< real64 const > const & dNdX );
-  /*
-   * @brief Computes traction and derivative on each fracture segment.
-   * @param constitutiveManager constant pointer to the constitutive mamanger
-   * @param dispJump displacement jump
-   * @param tractionVector traction vector
-   * @param dTdw Derivative of the traction w.r.t. the jump.
-   */
-  void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
-                        array1d< real64 >  const & dispJump,
-                        array1d< real64 > & tractionVector,
-                        array2d< real64 > & dTdw );
-
 
 private:
 
   /// Solid mechanics solver name
   string m_solidSolverName;
+
+  /// fracture region name
+  string m_fractureRegionName;
 
   /// pointer to the solid mechanics solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
@@ -198,6 +144,7 @@ private:
   string m_contactRelationName;
 
 };
+
 
 } /* namespace geosx */
 

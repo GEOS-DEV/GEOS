@@ -29,7 +29,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-EdgeManager::EdgeManager( std::string const & name,
+EdgeManager::EdgeManager( string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_edgesToFractureConnectorsEdges(),
@@ -397,7 +397,7 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   } );
 }
 
-void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager )
+void EdgeManager::buildEdges( FaceManager * const faceManager, NodeManager * const nodeManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -405,11 +405,11 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
-  faceManager->edgeList().SetRelatedObject( this );
+  faceManager->edgeList().setRelatedObject( this );
   ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager->edgeList();
 
-  m_toNodesRelation.SetRelatedObject( nodeManager );
-  m_toFacesRelation.SetRelatedObject( faceManager );
+  m_toNodesRelation.setRelatedObject( nodeManager );
+  m_toFacesRelation.setRelatedObject( faceManager );
 
   ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
   createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
@@ -435,23 +435,23 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   for( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
-    std::string const & setName = setWrapper->getName();
-    CreateSet( setName );
+    string const & setName = setWrapper->getName();
+    createSet( setName );
   }
 
   // Then loop over them in parallel.
   forAll< parallelHostPolicy >( nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
-    std::string const & setName = setWrapper->getName();
+    string const & setName = setWrapper->getName();
     SortedArrayView< localIndex const > const targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
-    ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
+    constructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
 
-  SetDomainBoundaryObjects( faceManager );
+  setDomainBoundaryObjects( faceManager );
 }
 
-void EdgeManager::BuildEdges( localIndex const numNodes,
+void EdgeManager::buildEdges( localIndex const numNodes,
                               ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                               ArrayOfArrays< localIndex > & faceToEdgeMap )
 {
@@ -476,12 +476,12 @@ void EdgeManager::BuildEdges( localIndex const numNodes,
 }
 
 
-void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const referenceObject )
+void EdgeManager::setDomainBoundaryObjects( ObjectManagerBase const * const referenceObject )
 {
-  referenceObject->CheckTypeID( typeid( NodeManager ) );
+  referenceObject->checkTypeId( typeid( NodeManager ) );
 
   // cast the referenceObject into a faceManager
-  FaceManager const * const faceManager = Group::group_cast< const FaceManager * >( referenceObject );
+  FaceManager const * const faceManager = Group::groupCast< const FaceManager * >( referenceObject );
 
   // get the "isDomainBoundary" field from the faceManager. This should have
   // been set already!
@@ -532,7 +532,7 @@ bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) co
 //  return(val);
 //}
 
-void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
+void EdgeManager::setIsExternal( FaceManager const * const faceManager )
 {
   // get the "isExternal" field from the faceManager->..This should have been
   // set already!
@@ -560,11 +560,11 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
 }
 
 
-void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+void EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
                                                                    std::vector< std::vector< globalIndex > > & globalEdgeNodes )
 {
   GEOSX_MARK_FUNCTION;
-  nodeManager->CheckTypeID( typeid( NodeManager ) );
+  nodeManager->checkTypeId( typeid( NodeManager ) );
 
   localIndex const numEdges = size();
 
@@ -592,7 +592,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 }
 
 
-void EdgeManager::ConnectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
+void EdgeManager::connectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
                                                  const map< globalIndex, localIndex > & nodeGlobalToLocal,
                                                  const map< globalIndex, localIndex > & GEOSX_UNUSED_PARAM( faceGlobalToLocal ) )
 {
@@ -637,7 +637,7 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const SortedArray< localIndex >
 
 }
 
-void EdgeManager::AddToEdgeToFaceMap( FaceManager const * const faceManager,
+void EdgeManager::addToEdgeToFaceMap( FaceManager const * const faceManager,
                                       arrayView1d< localIndex const > const & newFaceIndices )
 {
   ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager->edgeList().toViewConst();
@@ -657,29 +657,29 @@ void EdgeManager::AddToEdgeToFaceMap( FaceManager const * const faceManager,
   }
 }
 
-localIndex EdgeManager::PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+localIndex EdgeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return PackUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsPrivate< false >( junk, packList );
 }
 
-localIndex EdgeManager::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex EdgeManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return PackUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsPrivate< true >( buffer, packList );
 }
 
 template< bool DOPACK >
-localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex EdgeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                arrayView1d< localIndex const > const & packList ) const
 {
   arrayView1d< globalIndex const > const localToGlobal = localToGlobalMap();
-  arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().RelatedObjectLocalToGlobal();
-  arrayView1d< globalIndex const > faceLocalToGlobal = faceList().RelatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > faceLocalToGlobal = faceList().relatedObjectLocalToGlobal();
 
   localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toNodesRelation.Base().toViewConst(),
+                                           m_toNodesRelation.base().toViewConst(),
                                            m_unmappedGlobalIndicesInToNodes,
                                            packList,
                                            localToGlobal,
@@ -688,7 +688,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toFacesRelation.Base().toArrayOfArraysView(),
+                                           m_toFacesRelation.base().toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToFaces,
                                            packList,
                                            localToGlobal,
@@ -699,7 +699,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 
-localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
                                           bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
@@ -717,7 +717,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      packList,
                                      m_unmappedGlobalIndicesInToNodes,
                                      this->globalToLocalMap(),
-                                     m_toNodesRelation.RelatedObjectGlobalToLocal() );
+                                     m_toNodesRelation.relatedObjectGlobalToLocal() );
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
@@ -728,20 +728,20 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      packList,
                                      m_unmappedGlobalIndicesInToFaces,
                                      this->globalToLocalMap(),
-                                     m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                     m_toFacesRelation.relatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 
   return unPackedSize;
 }
 
-void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
+void EdgeManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
-  ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
+  ObjectManagerBase::fixUpDownMaps( m_toNodesRelation,
                                     m_unmappedGlobalIndicesInToNodes,
                                     clearIfUnmapped );
 
-  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation.Base(),
-                                    m_toFacesRelation.RelatedObjectGlobalToLocal(),
+  ObjectManagerBase::fixUpDownMaps( m_toFacesRelation.base(),
+                                    m_toFacesRelation.relatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
 }
@@ -754,7 +754,7 @@ void EdgeManager::compressRelationMaps()
 void EdgeManager::depopulateUpMaps( std::set< localIndex > const & receivedEdges,
                                     ArrayOfArraysView< localIndex const > const & facesToEdges )
 {
-  ObjectManagerBase::CleanUpMap( receivedEdges, m_toFacesRelation.toView(), facesToEdges );
+  ObjectManagerBase::cleanUpMap( receivedEdges, m_toFacesRelation.toView(), facesToEdges );
 }
 
 

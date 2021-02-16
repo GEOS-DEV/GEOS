@@ -20,7 +20,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "managers/DomainPartition.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"
-#include <string>
+
 #include <fstream>
 #include <chrono>
 
@@ -29,7 +29,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-ChomboIO::ChomboIO( std::string const & name, Group * const parent ):
+ChomboIO::ChomboIO( string const & name, Group * const parent ):
   OutputBase( name, parent ),
   m_coupler( nullptr ),
   m_outputPath(),
@@ -68,7 +68,7 @@ ChomboIO::~ChomboIO()
   m_coupler = nullptr;
 }
 
-void ChomboIO::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+bool ChomboIO::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -79,14 +79,14 @@ void ChomboIO::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   {
     GEOSX_ERROR_IF( m_waitForInput && m_inputPath == "/INVALID_INPUT_PATH", "Waiting for input but no input path was specified." );
 
-    DomainPartition * const domainPartition = Group::group_cast< DomainPartition * >( domain );
+    DomainPartition * const domainPartition = Group::groupCast< DomainPartition * >( domain );
     MeshLevel * const meshLevel = domainPartition->getMeshBody( 0 )->getMeshLevel( 0 );
     m_coupler = new ChomboCoupler( MPI_COMM_GEOSX, m_outputPath, m_inputPath, *meshLevel );
   }
 
   if( cycleNumber < m_beginCycle )
   {
-    return;
+    return false;
   }
 
   m_coupler->write( dt );
@@ -95,7 +95,9 @@ void ChomboIO::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   {
     m_coupler->read( m_useChomboPressures );
   }
+
+  return false;
 }
 
-REGISTER_CATALOG_ENTRY( OutputBase, ChomboIO, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, ChomboIO, string const &, Group * const )
 } /* namespace geosx */

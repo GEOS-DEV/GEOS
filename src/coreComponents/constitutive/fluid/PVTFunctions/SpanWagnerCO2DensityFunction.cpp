@@ -145,11 +145,11 @@ SpanWagnerCO2DensityFunction::SpanWagnerCO2DensityFunction( string_array const &
 
   GEOSX_ERROR_IF( notFound, "Component CO2 is not found!" );
 
-  MakeTable( inputPara );
+  makeTable( inputPara );
 
 }
 
-void SpanWagnerCO2DensityFunction::MakeTable( string_array const & inputPara )
+void SpanWagnerCO2DensityFunction::makeTable( string_array const & inputPara )
 {
 
   real64_array pressures;
@@ -183,7 +183,7 @@ void SpanWagnerCO2DensityFunction::MakeTable( string_array const & inputPara )
   catch( const std::invalid_argument & e )
   {
 
-    GEOSX_ERROR( "Invalid SpanWagnerCO2Density argument:" + std::string( e.what()));
+    GEOSX_ERROR( "Invalid SpanWagnerCO2Density argument:" + string( e.what()));
 
   }
 
@@ -212,7 +212,7 @@ void SpanWagnerCO2DensityFunction::MakeTable( string_array const & inputPara )
 
   real64_array2d densities( nP, nT );
 
-  CalculateCO2Density( pressures, temperatures, densities );
+  calculateCO2Density( pressures, temperatures, densities );
 
   m_CO2DensityTable = std::make_shared< XYTable >( "SpanWagnerCO2DensityTable", pressures, temperatures, densities );
 
@@ -220,7 +220,7 @@ void SpanWagnerCO2DensityFunction::MakeTable( string_array const & inputPara )
 }
 
 
-void SpanWagnerCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM(
+void SpanWagnerCO2DensityFunction::evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM(
                                                  phaseComposition ), EvalVarArgs & value, bool useMass ) const
 {
 
@@ -231,7 +231,7 @@ void SpanWagnerCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, Eva
   T.m_var = temperature.m_var;
   T.m_der[1] = 1.0;
 
-  density = m_CO2DensityTable->Value( P, T );
+  density = m_CO2DensityTable->value( P, T );
 
   real64 CO2MW = m_componentMolarWeight[m_CO2Index];
 
@@ -247,7 +247,7 @@ void SpanWagnerCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, Eva
 
 }
 
-void SpanWagnerCO2DensityFunction::CalculateCO2Density( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density )
+void SpanWagnerCO2DensityFunction::calculateCO2Density( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density )
 {
 
   constexpr real64 T_K_f = 273.15;
@@ -264,14 +264,14 @@ void SpanWagnerCO2DensityFunction::CalculateCO2Density( real64_array const & pre
 
       TK = temperature[j] + T_K_f;
 
-      SpanWagnerCO2Density( TK, PPa, density[i][j], &f );
+      spanWagnerCO2Density( TK, PPa, density[i][j], &f );
 
     }
 
   }
 }
 
-void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density( real64 const & T, real64 const & P, real64 & rho, real64 (*f)( real64 const & x1, real64 const & x2,
+void SpanWagnerCO2DensityFunction::spanWagnerCO2Density( real64 const & T, real64 const & P, real64 & rho, real64 (*f)( real64 const & x1, real64 const & x2,
                                                                                                                         real64 const & x3 ))
 {
   constexpr real64 P_Pa_f = 1e+5;

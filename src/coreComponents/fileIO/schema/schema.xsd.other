@@ -353,9 +353,11 @@
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
 			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="HybridMimeticDiscretizationType" />
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--cellStencil => (no description available)-->
 		<xsd:attribute name="cellStencil" type="geosx_CellElementStencilTPFA" />
@@ -366,6 +368,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
+			<xsd:element name="Python" type="PythonType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="TimeHistory" type="TimeHistoryType" />
@@ -374,6 +377,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType" />
 	<xsd:complexType name="ChomboIOType" />
+	<xsd:complexType name="PythonType" />
 	<xsd:complexType name="RestartType" />
 	<xsd:complexType name="SiloType" />
 	<xsd:complexType name="TimeHistoryType">
@@ -669,6 +673,8 @@
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageLinearElasticIsotropic" type="DamageLinearElasticIsotropicType" />
+			<xsd:element name="DamageSpectralLinearElasticIsotropic" type="DamageSpectralLinearElasticIsotropicType" />
+			<xsd:element name="DamageVolDevLinearElasticIsotropic" type="DamageVolDevLinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
@@ -845,6 +851,34 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="DamageLinearElasticIsotropicType">
+		<!--BulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="BulkModulus" type="real64_array" />
+		<!--ShearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="DamageSpectralLinearElasticIsotropicType">
+		<!--BulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="BulkModulus" type="real64_array" />
+		<!--ShearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="DamageVolDevLinearElasticIsotropicType">
 		<!--BulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
@@ -1189,7 +1223,7 @@
 		<xsd:attribute name="K_IC" type="real64_array2d" />
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
-		<!--TransMultiplier => An array that holds the transmissibility multipliers => TwoPointFluxApproximation-->
+		<!--TransMultiplier => An array that holds the transmissibility multipliers => HybridMimeticDiscretization, TwoPointFluxApproximation-->
 		<xsd:attribute name="TransMultiplier" type="real64_array" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />

@@ -45,7 +45,7 @@ public:
   LinearSolverParametersInput() = delete;
 
   /// Constructor
-  LinearSolverParametersInput( std::string const & name, Group * const parent );
+  LinearSolverParametersInput( string const & name, Group * const parent );
 
   /// Copy constructor
   LinearSolverParametersInput( LinearSolverParametersInput && ) = default;
@@ -54,10 +54,10 @@ public:
   virtual ~LinearSolverParametersInput() override = default;
 
   /// Catalog name
-  static string CatalogName() { return "LinearSolverParameters"; }
+  static string catalogName() { return "LinearSolverParameters"; }
 
   /// Postprocessing of input
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   LinearSolverParameters const & get() const
   { return m_parameters; }

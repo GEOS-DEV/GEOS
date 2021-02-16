@@ -20,6 +20,7 @@
 #include "FiniteVolumeManager.hpp"
 
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -38,31 +39,56 @@ FiniteVolumeManager::FiniteVolumeManager( string const & name, Group * const par
 FiniteVolumeManager::~FiniteVolumeManager()
 {}
 
-Group * FiniteVolumeManager::CreateChild( string const & childKey, string const & childName )
+Group * FiniteVolumeManager::createChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup< FluxApproximationBase >( childName, std::move( approx ));
-}
-
-
-void FiniteVolumeManager::ExpandObjectCatalogs()
-{
-  // During schema generation, register one of each type derived from FluxApproximationBase here
-  for( auto & catalogIter: FluxApproximationBase::GetCatalog())
+  if( childKey == HybridMimeticDiscretization::catalogName() )
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
+    return this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+  }
+  else
+  {
+    std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::factory( childKey, childName, this );
+    return this->registerGroup< FluxApproximationBase >( childName, std::move( approx ));
   }
 }
 
 
-FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation( std::string const & name ) const
+void FiniteVolumeManager::expandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from FluxApproximationBase here
+  for( auto & catalogIter: FluxApproximationBase::getCatalog())
+  {
+    createChild( catalogIter.first, catalogIter.first );
+  }
+  // Then do the same thing for the HybridMimeticDiscretization
+  for( auto & catalogIter: HybridMimeticDiscretization::getCatalog())
+  {
+    string const childName = catalogIter.first;
+    std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
+    this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+  }
+}
+
+
+FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation( string const & name ) const
 {
   return getGroupReference< FluxApproximationBase >( name );
 }
 
-FluxApproximationBase & FiniteVolumeManager::getFluxApproximation( std::string const & name )
+FluxApproximationBase & FiniteVolumeManager::getFluxApproximation( string const & name )
 {
   return getGroupReference< FluxApproximationBase >( name );
+}
+
+HybridMimeticDiscretization const & FiniteVolumeManager::getHybridMimeticDiscretization( string const & name ) const
+{
+  return getGroupReference< HybridMimeticDiscretization >( name );
+}
+
+HybridMimeticDiscretization & FiniteVolumeManager::getHybridMimeticDiscretization( string const & name )
+{
+  return getGroupReference< HybridMimeticDiscretization >( name );
 }
 
 

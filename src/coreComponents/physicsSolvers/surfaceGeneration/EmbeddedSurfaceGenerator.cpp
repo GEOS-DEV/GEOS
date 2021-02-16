@@ -42,7 +42,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
+EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent )
 {
@@ -62,10 +62,10 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 {}
 
-void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
+void EmbeddedSurfaceGenerator::registerDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
 {}
 
-void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
+void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemManager )
 {
   /*
    * Here we generate embedded elements for fractures (or faults) that already exist in the domain and
@@ -73,14 +73,14 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
    */
 
   // Get domain
-  DomainPartition * domain = problemManager->GetGroup< DomainPartition >( dataRepository::keys::domain );
+  DomainPartition * domain = problemManager->getGroup< DomainPartition >( dataRepository::keys::domain );
   // Get geometric object manager
-  GeometricObjectManager * geometricObjManager = problemManager->GetGroup< GeometricObjectManager >( "Geometry" );
+  GeometricObjectManager * geometricObjManager = problemManager->getGroup< GeometricObjectManager >( "Geometry" );
 
   // Get meshLevel
   Group * const meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody   = meshBodies->GetGroup< MeshBody >( 0 );
-  MeshLevel * const meshLevel  = meshBody->GetGroup< MeshLevel >( 0 );
+  MeshBody * const meshBody   = meshBodies->getGroup< MeshBody >( 0 );
+  MeshLevel * const meshLevel  = meshBody->getGroup< MeshLevel >( 0 );
 
   // Get managers
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -90,9 +90,9 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   // Get EmbeddedSurfaceSubRegions
   SurfaceElementRegion * const embeddedSurfaceRegion =
-    elemManager->GetRegion< SurfaceElementRegion >( this->m_fractureRegionName );
+    elemManager->getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
   EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion =
-    embeddedSurfaceRegion->GetSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+    embeddedSurfaceRegion->getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   // Loop over all the fracture planes
   geometricObjManager->forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
@@ -137,7 +137,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
         if( isPositive * isNegative == 1 )
         {
 
-          bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
+          bool added = embeddedSurfaceSubRegion->addNewEmbeddedSurface( cellIndex,
                                                                         esr,
                                                                         er,
                                                                         *nodeManager,
@@ -147,6 +147,8 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
           if( added )
           {
             GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+            // Add the information to the CellElementSubRegion
+            subRegion.addFracturedElement( cellIndex, embeddedSurfaceSubRegion->size()-1 );
           }
         }
       } // end loop over cells
@@ -154,7 +156,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   } );// end loop over thick planes
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
-    elemManager->ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager->constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
 
@@ -177,10 +179,10 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   localIndex numOfPoints = nodeManager->embSurfNodesPosition().size( 0 );
 
-  embSurfEdgeManager.BuildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+  embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 }
 
-void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
+void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
 {
   // I don't think there is  much to do here.
 }
@@ -193,7 +195,7 @@ void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UN
 }
 
 
-real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
                                              DomainPartition & domain )
@@ -216,13 +218,13 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
-      FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
+      FluxApproximationBase * const fluxApprox = fvManager.getGroup< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addEDFracToFractureStencil( *meshLevel,
@@ -235,6 +237,6 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
 REGISTER_CATALOG_ENTRY( SolverBase,
                         EmbeddedSurfaceGenerator,
-                        std::string const &, dataRepository::Group * const )
+                        string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

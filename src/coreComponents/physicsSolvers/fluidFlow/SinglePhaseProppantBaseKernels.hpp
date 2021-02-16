@@ -32,7 +32,7 @@ namespace SinglePhaseProppantBaseKernels
 struct FluidUpdateKernel
 {
   template< typename FLUID_WRAPPER >
-  static void Launch( FLUID_WRAPPER const & fluidWrapper,
+  static void launch( FLUID_WRAPPER const & fluidWrapper,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & dPres,
                       arrayView1d< real64 const > const & proppantConcentration,
@@ -45,7 +45,7 @@ struct FluidUpdateKernel
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( a, q,
+        fluidWrapper.update( a, q,
                              pres[a] + dPres[a],
                              proppantConcentration[a] + dProppantConcentration[a],
                              componentConcentration[a],

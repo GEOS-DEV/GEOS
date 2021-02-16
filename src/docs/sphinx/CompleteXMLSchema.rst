@@ -155,6 +155,20 @@ Element: DamageLinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic.rst
 
 
+.. _XML_DamageSpectralLinearElasticIsotropic:
+
+Element: DamageSpectralLinearElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralLinearElasticIsotropic.rst
+
+
+.. _XML_DamageVolDevLinearElasticIsotropic:
+
+Element: DamageVolDevLinearElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevLinearElasticIsotropic.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -251,6 +265,13 @@ Element: Geometry
 Element: HaltEvent
 ==================
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
+
+
+.. _XML_HybridMimeticDiscretization:
+
+Element: HybridMimeticDiscretization
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization.rst
 
 
 .. _XML_Hydrofracture:
@@ -482,6 +503,13 @@ Element: ProppantSlurryFluid
 Element: ProppantTransport
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
+
+
+.. _XML_Python:
+
+Element: Python
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/Python.rst
 
 
 .. _XML_Restart:
@@ -845,6 +873,20 @@ Datastructure: DamageLinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_DamageSpectralLinearElasticIsotropic:
+
+Datastructure: DamageSpectralLinearElasticIsotropic
+===================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralLinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamageVolDevLinearElasticIsotropic:
+
+Datastructure: DamageVolDevLinearElasticIsotropic
+=================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevLinearElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -948,6 +990,13 @@ Datastructure: Geometry
 Datastructure: HaltEvent
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
+
+
+.. _DATASTRUCTURE_HybridMimeticDiscretization:
+
+Datastructure: HybridMimeticDiscretization
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization_other.rst
 
 
 .. _DATASTRUCTURE_Hydrofracture:
@@ -1193,6 +1242,13 @@ Datastructure: ProppantSlurryFluid
 Datastructure: ProppantTransport
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
+
+
+.. _DATASTRUCTURE_Python:
+
+Datastructure: Python
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Python_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
