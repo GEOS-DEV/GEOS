@@ -479,8 +479,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                        real64 const dt,
                                                        DomainPartition & domain )
 {
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  // MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   fsManager.apply( time_n+ dt,
                    &domain,
