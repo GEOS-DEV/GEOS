@@ -822,16 +822,16 @@ void CommunicationTools::asyncSendRecv( const std::map< string, string_array > &
   {
     int neighborIndex;
     MpiWrapper::waitany( icomm.size,
-                          icomm.mpiSizeRecvBufferRequest.data(),
-                          &neighborIndex,
-                          icomm.mpiSizeRecvBufferStatus.data() );
+                         icomm.mpiSizeRecvBufferRequest.data(),
+                         &neighborIndex,
+                         icomm.mpiSizeRecvBufferStatus.data() );
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
     neighbor.mpiISendReceiveBuffers( icomm.commID,
-                                    icomm.mpiSendBufferRequest[neighborIndex],
-                                    icomm.mpiRecvBufferRequest[neighborIndex],
-                                    MPI_COMM_GEOSX );
+                                     icomm.mpiSendBufferRequest[neighborIndex],
+                                     icomm.mpiRecvBufferRequest[neighborIndex],
+                                     MPI_COMM_GEOSX );
   }
 }
 
@@ -878,21 +878,26 @@ bool CommunicationTools::asyncUnpack( MeshLevel * const mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-  int neighborIndex = -1;
-  int flag = 0;
+  int neighborIndex = 0;
+  int flag = 1;
 
-  MpiWrapper::testany( icomm.size,
-                       icomm.mpiRecvBufferRequest.data(),
-                       &neighborIndex,
-                       &flag,
-                       icomm.mpiRecvBufferStatus.data() );
+  while( flag && neighborIndex >= 0 )
+  {
+    flag = 0;
+    neighborIndex = -1;
+    MpiWrapper::testany( icomm.size,
+                         icomm.mpiRecvBufferRequest.data(),
+                         &neighborIndex,
+                         &flag,
+                         icomm.mpiRecvBufferStatus.data() );
 
   // flag returns true for MPI_REQUEST_NULLs from previous calls, so we also need to check that neighborIndex has been set
-  if ( flag && neighborIndex >= 0)
-  {
-    // unpack the recvd buffer
-    NeighborCommunicator & neighbor = neighbors[ neighborIndex ];
-    neighbor.unpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, on_device );
+    if ( flag && neighborIndex >= 0)
+    {
+      // unpack the recvd buffer
+      NeighborCommunicator & neighbor = neighbors[ neighborIndex ];
+      neighbor.unpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, on_device );
+    }
   }
 
   MpiWrapper::testall( icomm.size,

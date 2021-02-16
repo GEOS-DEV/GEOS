@@ -648,7 +648,6 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   //CommunicationTools::synchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
   CommunicationTools::asyncPack( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
-  CommunicationTools::asyncSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
   explicitKernelDispatch( mesh,
                           targetRegionNames(),
@@ -657,26 +656,25 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                           dt,
                           string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
 
+  // the device sync in here means both the packing and explicit kernels will need to complete before we launch the 
+  //  sends/recvs. it would be better to collec the packing events and just poll them for completion so the explicit
+  //  kernels can compute while we communicate.
+  CommunicationTools::asyncSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+
+  // these just launch new kernels, and don't effect the data being operated on by the internal explicit update above,
+  // so zero synch is needed or used to launch these whenever
+  CommunicationTools::asyncUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
+
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
+
+  CommunicationTools::asyncUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
 
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
   //CommunicationTools::synchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
-  while( ! CommunicationTools::asyncUnpack( &mesh, domain.getNeighbors(), m_iComm, true ) ) { }
+  // this includes  a device sync, so all the unpacks (including new ones )and the field updates have to complete before we exit this
   CommunicationTools::finalizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
-
-  // probably a better layout:
-  // bool unpackDone = false;
-  // asyncRun( otherWork );
-  // while( otherWorkRunning )
-  // {
-  //   if ( ! unpackDone )
-  //   {
-  //     unpackDone = CommunicationTools::asyncUnpack( &mesh, domain.getNeighbors(), m_iComm, true ) )
-  //   }
-  // }
-  // CommunicationTools::finalizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
 
   return dt;
 }
