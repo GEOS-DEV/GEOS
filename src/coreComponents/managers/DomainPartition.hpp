@@ -170,49 +170,37 @@ public:
 
   /**
    * @brief Get the mesh bodies, const version.
-   * @return Pointer to a const instance of a Group that contains MeshBody instances.
+   * @return Reference to a const instance of a Group that contains MeshBody instances.
    */
-  Group const * getMeshBodies() const
-  { return this->getGroupPointer( groupKeys.meshBodies ); }
+  Group const & getMeshBodies() const
+  { return this->getGroup( groupKeys.meshBodies ); }
 
   /**
    * @brief Get the mesh bodies.
-   * @return Pointer to a instance of a Group that contains MeshBody instances.
+   * @return Reference to a instance of a Group that contains MeshBody instances.
    */
-  Group * getMeshBodies()
-  { return this->getGroupPointer( groupKeys.meshBodies ); }
+  Group & getMeshBodies()
+  { return this->getGroup( groupKeys.meshBodies ); }
 
   /**
    * @brief Get a MeshBody by name, const version.
-   * @param meshName The name of the MeshBody.
-   * @return Pointer to a const MeshBody instance matching @p meshName.
+   * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
+   * @param key The key to the MeshBody.
+   * @return Reference to a const MeshBody instance matching @p key.
    */
-  MeshBody const * getMeshBody( string const & meshName ) const
-  { return getMeshBodies()->getGroupPointer< MeshBody >( meshName ); }
+  template< typename KEY_TYPE >
+  MeshBody const & getMeshBody( KEY_TYPE const & key ) const
+  { return getMeshBodies().getGroup< MeshBody >( key ); }
 
   /**
    * @brief Get a MeshBody by name.
-   * @param meshName The name of the MeshBody.
-   * @return Pointer to a const MeshBody instance matching @p meshName.
+   * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
+   * @param key The key to the MeshBody.
+   * @return Reference to a const MeshBody instance matching @p key.
    */
-  MeshBody * getMeshBody( string const & meshName )
-  { return getMeshBodies()->getGroupPointer< MeshBody >( meshName ); }
-
-  /**
-   * @brief Get a MeshBody by index, const version.
-   * @param index The index of the MeshBody.
-   * @return Pointer to a const MeshBody instance at @p index position.
-   */
-  MeshBody const * getMeshBody( localIndex const index ) const
-  { return getMeshBodies()->getGroupPointer< MeshBody >( index ); }
-
-  /**
-   * @brief Get MeshBody by index.
-   * @param index The index of the MeshBody.
-   * @return Pointer to a MeshBody instance at @p index position.
-   */
-  MeshBody * getMeshBody( localIndex const index )
-  { return getMeshBodies()->getGroupPointer< MeshBody >( index ); }
+  template< typename KEY_TYPE >
+  MeshBody & getMeshBody( KEY_TYPE const & key )
+  { return getMeshBodies().getGroup< MeshBody >( key ); }
 
   /**
    * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList

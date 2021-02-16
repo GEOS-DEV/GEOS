@@ -77,12 +77,12 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   GeometricObjectManager & geometricObjManager = getGlobalState().getProblemManager().getGroup< GeometricObjectManager >( "Geometry" );
 
   // Get meshLevel
-  MeshLevel * const meshLevel  = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // Get managers
-  ElementRegionManager & elemManager = *meshLevel->getElemManager();
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
-  EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+  ElementRegionManager & elemManager = *meshLevel.getElemManager();
+  NodeManager * const nodeManager = meshLevel.getNodeManager();
+  EdgeManager * const edgeManager = meshLevel.getEdgeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager->referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
@@ -175,7 +175,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
   // Populate EdgeManager for embedded surfaces.
-  EdgeManager & embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
+  EdgeManager & embSurfEdgeManager = meshLevel.getEmbdSurfEdgeManager();
 
   EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
@@ -213,17 +213,16 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel * meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addEDFracToFractureStencil( *meshLevel,
-                                                this->m_fractureRegionName );
+        fluxApprox->addEDFracToFractureStencil( meshLevel, this->m_fractureRegionName );
       }
     }
   }

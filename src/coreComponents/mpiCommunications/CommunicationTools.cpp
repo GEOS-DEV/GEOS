@@ -724,7 +724,7 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
 }
 
 void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                                       MeshLevel * const mesh,
+                                                       MeshLevel & mesh,
                                                        std::vector< NeighborCommunicator > & neighbors,
                                                        MPI_iCommData & icomm,
                                                        bool on_device )
@@ -736,7 +736,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, s
   for( std::size_t neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    int const bufferSize = neighbor.packCommSizeForSync( fieldNames, *mesh, icomm.commID, on_device );
+    int const bufferSize = neighbor.packCommSizeForSync( fieldNames, mesh, icomm.commID, on_device );
 
     neighbor.mpiISendReceiveBufferSizes( icomm.commID,
                                          icomm.mpiSizeSendBufferRequest[neighborIndex],
@@ -749,7 +749,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, s
 
 
 void CommunicationTools::synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                                  MeshLevel * const mesh,
+                                                  MeshLevel & mesh,
                                                   std::vector< NeighborCommunicator > & neighbors,
                                                   MPI_iCommData & icomm,
                                                   bool on_device )
@@ -759,7 +759,7 @@ void CommunicationTools::synchronizePackSendRecv( const std::map< string, string
   MPI_iCommData sizeComm;
   for( NeighborCommunicator & neighbor : neighbors )
   {
-    neighbor.packCommBufferForSync( fieldNames, *mesh, icomm.commID, on_device );
+    neighbor.packCommBufferForSync( fieldNames, mesh, icomm.commID, on_device );
   }
 
   for( std::size_t count=0; count<neighbors.size(); ++count )
@@ -781,7 +781,7 @@ void CommunicationTools::synchronizePackSendRecv( const std::map< string, string
 
 }
 
-void CommunicationTools::synchronizeUnpack( MeshLevel * const mesh,
+void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
                                             bool on_device )
@@ -812,7 +812,7 @@ void CommunicationTools::synchronizeUnpack( MeshLevel * const mesh,
 }
 
 void CommunicationTools::synchronizeFields( const std::map< string, string_array > & fieldNames,
-                                            MeshLevel * const mesh,
+                                            MeshLevel & mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             bool on_device )
 {

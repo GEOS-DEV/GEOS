@@ -64,8 +64,8 @@ TEST( FieldSpecification, Recursive )
   localIndex nbHexReg1 = 50;
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  Group * const meshBodies = domain.getMeshBodies();
-  MeshBody & meshBody = meshBodies->registerGroup< MeshBody >( "body" );
+  Group & meshBodies = domain.getMeshBodies();
+  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( "body" );
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
 
   CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );

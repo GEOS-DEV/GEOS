@@ -91,7 +91,7 @@ For example this would look something like:
     {
       for( auto & mesh : MeshBodies->GetSubGroups() )
       {
-        NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
+        NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ).getNodeManager();
 
         nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
           setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -142,7 +142,7 @@ Then the registration is simplified as follows:
     {
       for( auto & mesh : MeshBodies->GetSubGroups() )
       {
-        NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
+        NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ).getNodeManager();
         nodes->registerExtrinsicData< extrinsicMeshData::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
       }
     }

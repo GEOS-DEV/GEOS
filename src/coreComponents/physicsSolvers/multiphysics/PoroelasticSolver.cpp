@@ -74,7 +74,7 @@ void PoroelasticSolver::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    ElementRegionManager * const elemManager = meshBody.getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager * const elemManager = meshBody.getMeshLevel( 0 ).getElemManager();
 
     elemManager->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
     {
@@ -128,7 +128,7 @@ void PoroelasticSolver::implicitStepSetup( real64 const & time_n,
 
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
-    MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+    MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
     forTargetSubRegions( mesh, [&] ( localIndex const, ElementSubRegionBase & subRegion )
     {
@@ -191,7 +191,7 @@ void PoroelasticSolver::resetStateToBeginningOfStep( DomainPartition & domain )
   m_flowSolver->resetStateToBeginningOfStep( domain );
   m_solidSolver->resetStateToBeginningOfStep( domain );
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&] ( localIndex const, ElementSubRegionBase & subRegion )
   {
@@ -237,7 +237,7 @@ real64 PoroelasticSolver::solverStep( real64 const & time_n,
 void PoroelasticSolver::updateDeformationForCoupling( DomainPartition & domain )
 {
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
@@ -354,7 +354,7 @@ void PoroelasticSolver::assembleCouplingTerms( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
 
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );

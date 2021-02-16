@@ -230,9 +230,9 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel * const meshLevel = meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    ElementRegionManager * const elemManager = meshLevel.getElemManager();
 
     elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
@@ -262,9 +262,9 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::RuptureRate >( this->getName() );
     } );
 
-    NodeManager * const nodeManager = meshLevel->getNodeManager();
-    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-    FaceManager * const faceManager = meshLevel->getFaceManager();
+    NodeManager * const nodeManager = meshLevel.getNodeManager();
+    EdgeManager * const edgeManager = meshLevel.getEdgeManager();
+    FaceManager * const faceManager = meshLevel.getFaceManager();
 
     nodeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex,
                                         extrinsicMeshData::ChildIndex,
@@ -297,11 +297,11 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel * meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    NodeManager * const nodeManager = meshLevel->getNodeManager();
-    FaceManager * const faceManager = meshLevel->getFaceManager();
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    NodeManager * const nodeManager = meshLevel.getNodeManager();
+    FaceManager * const faceManager = meshLevel.getFaceManager();
 
     arrayView1d< localIndex > const & parentNodeIndex = nodeManager->getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
@@ -336,11 +336,11 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
     }
   }
 
-  domain.getMeshBodies()->forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  domain.getMeshBodies().forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel * meshLevel = meshBody.getMeshLevel( 0 );
-    FaceManager * const faceManager = meshLevel->getFaceManager();
-    ElementRegionManager * const elementManager = meshLevel->getElemManager();
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+    FaceManager * const faceManager = meshLevel.getFaceManager();
+    ElementRegionManager * const elementManager = meshLevel.getElemManager();
     arrayView2d< real64 const > const & faceNormals = faceManager->faceNormal();
 
     //TODO: roughness to KIC should be made a material constitutive relationship.
@@ -406,12 +406,12 @@ void SurfaceGenerator::postRestartInitialization()
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   // repopulate the fracture stencil
-  domain.getMeshBodies()->forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  domain.getMeshBodies().forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel * meshLevel = meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
-    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    EdgeManager * const edgeManager = meshLevel.getEdgeManager();
+    ElementRegionManager * const elemManager = meshLevel.getElemManager();
     SurfaceElementRegion * const fractureRegion = elemManager->getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     FaceElementSubRegion * const fractureSubRegion = fractureRegion->getSubRegion< FaceElementSubRegion >( 0 );
 
@@ -430,9 +430,7 @@ void SurfaceGenerator::postRestartInitialization()
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addToFractureStencil( *meshLevel,
-                                          this->m_fractureRegionName,
-                                          false );
+        fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, false );
         edgeManager->m_recalculateFractureConnectorEdges.clear();
         fractureSubRegion->m_newFaceElements.clear();
       }
@@ -448,9 +446,9 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 {
   int rval = 0;
 
-  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel & meshLevel = *dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     {
       SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
@@ -469,13 +467,13 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel * meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     {
-      ElementRegionManager * const elemManager = meshLevel->getElemManager();
-      EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+      ElementRegionManager * const elemManager = meshLevel.getElemManager();
+      EdgeManager * const edgeManager = meshLevel.getEdgeManager();
       SurfaceElementRegion * const fractureRegion = elemManager->getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
 
       for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
@@ -483,9 +481,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
         FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
         if( fluxApprox!=nullptr )
         {
-          fluxApprox->addToFractureStencil( *meshLevel,
-                                            this->m_fractureRegionName,
-                                            true );
+          fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, true );
           edgeManager->m_recalculateFractureConnectorEdges.clear();
           fractureRegion->getSubRegion< FaceElementSubRegion >( 0 )->m_newFaceElements.clear();
         }
@@ -524,7 +520,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key() ) );
   fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors() );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {

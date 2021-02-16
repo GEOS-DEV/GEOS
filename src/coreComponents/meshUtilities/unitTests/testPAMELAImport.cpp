@@ -46,11 +46,11 @@ void TestMeshImport( string const & inputStringMesh,
   auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", &root ) );
   meshManager.generateMeshes( *domain );
 
-  MeshBody * const meshBody = domain->getMeshBody( 0 );
-  MeshLevel * const meshLevel = meshBody->getMeshLevel( 0 );
-  NodeManager const & nodeManager = *meshLevel->getNodeManager();
-  FaceManager const & faceManager = *meshLevel->getFaceManager();
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshBody & meshBody = domain->getMeshBody( 0 );
+  MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+  NodeManager const & nodeManager = *meshLevel.getNodeManager();
+  FaceManager const & faceManager = *meshLevel.getFaceManager();
+  ElementRegionManager * const elemManager = meshLevel.getElemManager();
 
   // Create the ElementRegions
   xmlDocument.load_buffer( inputStringRegion.c_str(), inputStringRegion.size() );
@@ -78,7 +78,7 @@ void TestMeshImport( string const & inputStringMesh,
       {
         real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[ ei ] );
         LvArray::tensorOps::subtract< 3 >( center, centerProperty[er][esr][ei] );
-        GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
+        GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody.getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
       }
     } );
   }

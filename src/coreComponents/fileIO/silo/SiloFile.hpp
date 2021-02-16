@@ -248,7 +248,7 @@ public:
    * @param problemTime the current problem time
    * @param isRestart whether or not we want to write restart only data
    */
-  void writeMeshLevel( MeshLevel const * const meshLevel,
+  void writeMeshLevel( MeshLevel const & meshLevel,
                        int const cycleNum,
                        real64 const problemTime,
                        bool const isRestart );

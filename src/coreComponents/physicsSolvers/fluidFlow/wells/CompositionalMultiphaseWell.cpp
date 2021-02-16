@@ -118,7 +118,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 {
   WellSolverBase::registerDataOnMesh( meshBodies );
 
-  MeshLevel & meshLevel = *meshBodies.getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+  MeshLevel & meshLevel = meshBodies.getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -341,7 +341,7 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
   WellSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   validateConstitutiveModels( meshLevel, cm );
@@ -403,7 +403,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
   WellSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
@@ -824,7 +824,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
   localIndex const NC = m_numComponents;
   localIndex const NP = m_numPhases;
 
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
@@ -927,7 +927,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_P
   // saved current dt for residual normalization
   m_currentDt = dt;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -980,7 +980,7 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( real64 const GEOSX
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
@@ -1026,7 +1026,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( DomainPartition const & doma
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   real64 localResidualNorm = 0;
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
@@ -1076,7 +1076,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
     return 1.0;
   }
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   real64 scalingFactor = 1.0;
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -1131,7 +1131,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   int localCheck = 1;
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -1313,7 +1313,7 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaMixtureConnRateString() ) );
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
 
@@ -1324,7 +1324,7 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
 
 void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domain )
 {
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   localIndex const NC = m_numComponents;
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -1360,7 +1360,7 @@ void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domai
 
 void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   localIndex const NC = m_numComponents;
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -1396,7 +1396,7 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
 {
   WellSolverBase::resetViews( domain );
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   CompositionalMultiphaseFlow & flowSolver = getParent()->getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
@@ -1517,7 +1517,7 @@ void CompositionalMultiphaseWell::formPressureRelations( DomainPartition const &
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
@@ -1606,7 +1606,7 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & GEOSX_UNU
                                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                         DomainPartition & domain )
 {
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   localIndex const NC = m_numComponents;
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,

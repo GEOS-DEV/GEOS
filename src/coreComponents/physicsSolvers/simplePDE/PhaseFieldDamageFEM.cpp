@@ -85,7 +85,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = *meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
     NodeManager * const nodes = meshLevel.getNodeManager();
 
@@ -218,8 +218,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager * const nodeManager = mesh.getNodeManager();
 
   arrayView1d< globalIndex const > const & dofIndex = nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
@@ -232,7 +232,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
     regionBasedKernelApplication< serialPolicy,
                                   constitutive::DamageBase,
                                   CellElementSubRegion,
-                                  PhaseFieldDamageKernel >( *mesh,
+                                  PhaseFieldDamageKernel >( mesh,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),
                                                             m_solidModelNames,
@@ -419,12 +419,9 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  dofManager.addVectorToField( localSolution,
-                               m_fieldName,
-                               m_fieldName,
-                               scalingFactor );
+  dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
 
   // Syncronize ghost nodes
   std::map< string, string_array > fieldNames;
@@ -479,7 +476,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
                                             arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  const MeshLevel & mesh = *( domain.getMeshBody( 0 )->getMeshLevel( 0 ) );
+  const MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   const NodeManager & nodeManager = *mesh.getNodeManager();
   const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
 

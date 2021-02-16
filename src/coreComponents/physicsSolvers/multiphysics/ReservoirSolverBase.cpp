@@ -74,8 +74,8 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = getGlobalState().getProblemManager().getGroup< DomainPartition >( keys::domain );
 
-  MeshLevel * const meshLevel = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = meshLevel.getElemManager();
 
   // loop over the wells
   elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
@@ -86,9 +86,7 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
     PerforationData * const perforationData = subRegion.getPerforationData();
 
     // compute the Peaceman index (if not read from XML)
-    perforationData->computeWellTransmissibility( *meshLevel,
-                                                  &subRegion,
-                                                  permeabilityKey );
+    perforationData->computeWellTransmissibility( meshLevel, &subRegion, permeabilityKey );
   } );
 
   // bind the stored reservoir views to the current domain
@@ -135,7 +133,7 @@ void ReservoirSolverBase::addCouplingNumNonzeros( DomainPartition & domain,
   localIndex const resNDOF = m_wellSolver->numDofPerResElement();
   localIndex const wellNDOF = m_wellSolver->numDofPerWellElement();
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );

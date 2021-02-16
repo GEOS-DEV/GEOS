@@ -323,7 +323,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   PARAMS && ... params )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
 

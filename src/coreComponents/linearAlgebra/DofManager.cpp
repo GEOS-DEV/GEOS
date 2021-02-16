@@ -78,8 +78,9 @@ void DofManager::setMesh( DomainPartition & domain,
     // Domain is changed! Delete old data structure and create new
     clear();
   }
+
   m_domain = &domain;
-  m_mesh = m_domain->getMeshBody( meshBodyIndex )->getMeshLevel( meshLevelIndex );
+  m_mesh = &m_domain->getMeshBody( meshBodyIndex ).getMeshLevel( meshLevelIndex );
 }
 
 localIndex DofManager::getFieldIndex( string const & name ) const
@@ -280,8 +281,7 @@ void DofManager::createIndexArray( FieldDescription & field )
     fieldNames[ MeshHelper< LOC >::syncObjName ].emplace_back( field.key );
 
     getGlobalState().getCommunicationTools().
-      synchronizeFields( fieldNames, m_mesh,
-                         m_domain->getNeighbors() );
+      synchronizeFields( fieldNames, *m_mesh, m_domain->getNeighbors() );
   } );
   GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast< int >(field.location) );
 }
@@ -1744,8 +1744,7 @@ void DofManager::reorderByRank()
 
   // synchronize index arrays for all fields across ranks
   getGlobalState().getCommunicationTools().
-    synchronizeFields( fieldToSync, m_mesh,
-                       m_domain->getNeighbors() );
+    synchronizeFields( fieldToSync, *m_mesh, m_domain->getNeighbors() );
 
   m_reordered = true;
 }

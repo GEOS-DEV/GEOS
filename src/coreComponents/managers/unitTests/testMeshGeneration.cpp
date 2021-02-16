@@ -62,11 +62,11 @@ protected:
 
   void SetUp() override
   {
-    m_nodeManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
-    m_faceManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
-    m_edgeManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getEdgeManager();
+    m_nodeManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+    m_faceManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
+    m_edgeManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 ).getMeshLevel( 0 ).getEdgeManager();
 
-    ElementRegionManager * const elemManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager * const elemManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
     GEOSX_ERROR_IF_NE_MSG( elemManager->getRegions().size(), 1, "Only one region should exist." );
 
     ElementRegionBase * const elemRegion = elemManager->getRegion( 0 );
@@ -121,7 +121,7 @@ protected:
     MeshManager & meshManager = getGlobalState().getProblemManager().getGroup< MeshManager >( getGlobalState().getProblemManager().groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
-    ElementRegionManager * elementManager = domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager * elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
     elementManager->processInputFileRecursive( topLevelNode );
     elementManager->postProcessInputRecursive();

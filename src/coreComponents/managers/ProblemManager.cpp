@@ -156,7 +156,7 @@ void ProblemManager::problemSetup()
 
   applyNumericalMethods();
 
-  registerDataOnMeshRecursive( *getDomainPartition()->getMeshBodies() );
+  registerDataOnMeshRecursive( getDomainPartition()->getMeshBodies() );
 
   initialize();
 }
@@ -265,7 +265,7 @@ void ProblemManager::generateDocumentation()
     DomainPartition & domain = *getDomainPartition();
     meshManager.generateMeshLevels( domain );
 
-    registerDataOnMeshRecursive( *domain.getMeshBodies() );
+    registerDataOnMeshRecursive( domain.getMeshBodies() );
 
     // Generate schema
     schemaUtilities::ConvertDocumentationToSchema( schemaName.c_str(), this, 0 );
@@ -303,7 +303,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
-  ElementRegionManager * elementManager = domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  ElementRegionManager * elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
   elementManager->generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( *elementManager, schemaRoot, targetChoiceNode, documentationType );
 
@@ -399,7 +399,7 @@ void ProblemManager::parseInputFile()
     // Open mesh levels
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
-    ElementRegionManager * elementManager = domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager * elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
     topLevelNode = xmlProblemNode.child( elementManager->getName().c_str());
     elementManager->processInputFileRecursive( topLevelNode );
 
@@ -492,11 +492,11 @@ void ProblemManager::generateMesh()
   meshManager.generateMeshes( domain );
   Group & cellBlockManager = domain.getGroup( keys::cellManager );
 
-  Group * const meshBodies = domain.getMeshBodies();
+  Group & meshBodies = domain.getMeshBodies();
 
-  for( localIndex a = 0; a < meshBodies->numSubGroups(); ++a )
+  for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
   {
-    MeshBody & meshBody = meshBodies->getGroup< MeshBody >( a );
+    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
     for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
     {
       MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( b );
@@ -540,8 +540,8 @@ void ProblemManager::generateMesh()
     }
   }
 
-  GEOSX_THROW_IF_NE( meshBodies->numSubGroups(), 1, InputError );
-  MeshBody & meshBody = meshBodies->getGroup< MeshBody >( 0 );
+  GEOSX_THROW_IF_NE( meshBodies.numSubGroups(), 1, InputError );
+  MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
 
   GEOSX_THROW_IF_NE( meshBody.numSubGroups(), 1, InputError );
   MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
@@ -562,14 +562,11 @@ void ProblemManager::applyNumericalMethods()
 
   DomainPartition * domain  = getDomainPartition();
   ConstitutiveManager & constitutiveManager = domain->getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-  Group * const meshBodies = domain->getMeshBodies();
+  Group & meshBodies = domain->getMeshBodies();
 
-  map< std::pair< string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( *meshBodies );
+  map< std::pair< string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
 
-  setRegionQuadrature( *meshBodies,
-                       constitutiveManager,
-                       regionQuadrature );
-
+  setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
 
 map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
@@ -600,9 +597,9 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
         MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
         for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
         {
-          MeshLevel * const meshLevel = meshBody.getMeshLevel( b );
-          NodeManager * const nodeManager = meshLevel->getNodeManager();
-          ElementRegionManager * const elemManager = meshLevel->getElemManager();
+          MeshLevel & meshLevel = meshBody.getMeshLevel( b );
+          NodeManager * const nodeManager = meshLevel.getNodeManager();
+          ElementRegionManager * const elemManager = meshLevel.getElemManager();
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
           for( auto const & regionName : targetRegions )
@@ -666,8 +663,8 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
     for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
     {
-      MeshLevel * const meshLevel = meshBody.getMeshLevel( b );
-      ElementRegionManager * const elemManager = meshLevel->getElemManager();
+      MeshLevel & meshLevel = meshBody.getMeshLevel( b );
+      ElementRegionManager * const elemManager = meshLevel.getElemManager();
 
       elemManager->forElementSubRegionsComplete( [&]( localIndex const,
                                                       localIndex const,

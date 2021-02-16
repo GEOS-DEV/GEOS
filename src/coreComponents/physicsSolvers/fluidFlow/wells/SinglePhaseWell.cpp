@@ -61,7 +61,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 {
   WellSolverBase::registerDataOnMesh( meshBodies );
 
-  MeshLevel & meshLevel = *meshBodies.getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+  MeshLevel & meshLevel = meshBodies.getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -94,7 +94,7 @@ void SinglePhaseWell::initializePreSubGroups()
   WellSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   validateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
   validateWellConstraints( meshLevel );
@@ -297,7 +297,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
@@ -367,7 +367,7 @@ void SinglePhaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
   // saved current dt for residual normalization
   m_currentDt = dt;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -405,7 +405,7 @@ void SinglePhaseWell::formPressureRelations( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion const & subRegion )
@@ -559,7 +559,7 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   real64 localResidualNorm = 0;
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
@@ -600,7 +600,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   localIndex localCheck = 1;
 
@@ -661,7 +661,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaConnRateString() ) );
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
 
@@ -672,7 +672,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
 void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
 {
 
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion & subRegion )
@@ -699,7 +699,7 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
 {
   WellSolverBase::resetViews( domain );
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   SinglePhaseBase & flowSolver = getParent()->getGroup< SinglePhaseBase >( getFlowSolverName() );
@@ -750,7 +750,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
                                             real64 const & GEOSX_UNUSED_PARAM( real64 const & dt ),
                                             DomainPartition & domain )
 {
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *meshLevel.getElemManager();
 
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )

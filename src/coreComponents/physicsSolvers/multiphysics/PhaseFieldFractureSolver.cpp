@@ -66,7 +66,7 @@ void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    ElementRegionManager * const elemManager = meshBody.getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager * const elemManager = meshBody.getMeshLevel( 0 ).getElemManager();
 
     elemManager->forElementSubRegions< CellElementSubRegion,
                                        FaceElementSubRegion >( [&] ( auto & elementSubRegion )
@@ -84,9 +84,9 @@ void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PA
                                                   DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegionManager * const elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
     elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
@@ -95,9 +95,7 @@ void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PA
     elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
 
   //***** loop over all elements and initialize the derivative arrays *****
-  forAllElemsInMesh( mesh, [ &]( localIndex const er,
-                                 localIndex const esr,
-                                 localIndex const k )
+  forAllElemsInMesh( mesh, [ &]( localIndex const er, localIndex const esr, localIndex const k )
   {
     oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
   } );
@@ -137,8 +135,8 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 
 void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
     elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
@@ -289,8 +287,8 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 {
 
   GEOSX_MARK_FUNCTION;
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager * const nodeManager = mesh.getNodeManager();
 
   SolidMechanicsLagrangianFEM &
   solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
@@ -303,7 +301,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   //should get reference to damage field here.
   arrayView1d< real64 const > const nodalDamage = nodeManager->getReference< array1d< real64 > >( damageFieldName );
 
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegionManager * const elemManager = mesh.getElemManager();
 
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
@@ -312,7 +310,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
 
   // begin region loop
-  forTargetSubRegionsComplete< CellElementSubRegion >( *mesh, [this, &solidSolver, nodalDamage]
+  forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [this, &solidSolver, nodalDamage]
                                                          ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &,
                                                          CellElementSubRegion & elementSubRegion )
   {

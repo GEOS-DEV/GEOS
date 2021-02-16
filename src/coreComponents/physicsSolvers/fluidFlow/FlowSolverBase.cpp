@@ -83,7 +83,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & mesh = *meshBody.getMeshLevel( 0 );
+    MeshLevel & mesh = meshBody.getMeshLevel( 0 );
 
     forTargetSubRegions( mesh, [&]( localIndex const,
                                     ElementSubRegionBase & subRegion )
@@ -143,9 +143,9 @@ void FlowSolverBase::initializePreSubGroups()
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
 
   // Validate solid models in regions (fluid models are validated by derived classes)
-  domain.getMeshBodies()->forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  domain.getMeshBodies().forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = *meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
     validateModelMapping( *meshLevel.getElemManager(), m_solidModelNames );
   } );
 
@@ -177,7 +177,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   resetViews( mesh );
 

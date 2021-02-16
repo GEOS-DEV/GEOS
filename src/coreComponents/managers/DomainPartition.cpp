@@ -81,8 +81,8 @@ void DomainPartition::generateSets()
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * const mesh = this->getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  MeshLevel & mesh = this->getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager const * const nodeManager = mesh.getNodeManager();
 
   dataRepository::Group const & nodeSets = nodeManager->sets();
 
@@ -108,7 +108,7 @@ void DomainPartition::generateSets()
   }
 
 
-  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
+  ElementRegionManager * const elementRegionManager = mesh.getElemManager();
   elementRegionManager->forElementSubRegions( [&]( auto & subRegion )
   {
     dataRepository::Group & elementSets = subRegion.sets();
@@ -223,7 +223,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
 #endif
 
-  MeshLevel & meshLevel = *getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = getMeshBody( 0 ).getMeshLevel( 0 );
 
   for( NeighborCommunicator const & neighbor : m_neighbors )
   {

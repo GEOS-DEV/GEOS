@@ -277,9 +277,9 @@ void InitializeLocalSearch( MeshLevel const & mesh,
                                                                 arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
   // to initialize the local search for the reservoir element that contains "location",
   // we find the reservoir element that minimizes the distance from "location" to the reservoir element center
-  auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
-                                                 localIndex const esr,
-                                                 localIndex const ei ) -> real64
+  auto ret = minLocOverElemsInMesh( mesh, [&] ( localIndex const er,
+                                                localIndex const esr,
+                                                localIndex const ei )
   {
     R1Tensor v = location;
     LvArray::tensorOps::subtract< 3 >( v, resElemCenter[er][esr][ei] );

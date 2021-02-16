@@ -187,7 +187,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
   array1d< real64 > const & residual = solver.getLocalRhs();
   DofManager const & dofManager = solver.getDofManager();
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   // assemble the analytical residual

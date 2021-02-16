@@ -82,7 +82,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = *meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel.getElemManager();
     {
@@ -173,7 +173,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
   GEOSX_MARK_FUNCTION;
   m_solidSolver->setupDofs( domain, dofManager );
 
-  MeshLevel const & meshLevel              = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel              = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   array1d< string > regions;
@@ -265,7 +265,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
   // If specified as a b.c. apply traction
   applyTractionBC( time, dt, domain );
 
-  MeshLevel & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
@@ -304,7 +304,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
                                                               DofManager & dofManager,
                                                               arrayView1d< localIndex > const & rowLengths ) const
 {
-  MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh                   = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager const & nodeManager          = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
@@ -370,8 +370,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
                                                                   DofManager const & dofManager,
                                                                   SparsityPatternView< globalIndex > const & pattern ) const
 {
-
-  MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh                   = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager const & nodeManager          = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
@@ -507,7 +506,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
   // Matrix residual
   real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( domain, dofManager, localRhs );
   // Fracture residual
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
 
@@ -605,7 +604,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString() ) );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
 
@@ -615,12 +614,12 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
 
-  MeshLevel * const meshLevel = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = meshLevel.getElemManager();
 
-  ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
+  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
   ContactRelationBase const &
-  contactRelation = constitutiveManager->getGroup< ContactRelationBase >( m_contactRelationName );
+  contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
 
   elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {

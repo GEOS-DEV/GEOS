@@ -108,23 +108,23 @@ public:
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
   void synchronizeFields( const std::map< string, string_array > & fieldNames,
-                          MeshLevel * const mesh,
+                          MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & allNeighbors,
                           bool on_device = false );
 
   void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                     MeshLevel * const mesh,
+                                     MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
                                      bool on_device = false );
 
   void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                MeshLevel * const mesh,
+                                MeshLevel & mesh,
                                 std::vector< NeighborCommunicator > & allNeighbors,
                                 MPI_iCommData & icomm,
                                 bool on_device = false );
 
-  void synchronizeUnpack( MeshLevel * const mesh,
+  void synchronizeUnpack( MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & neighbors,
                           MPI_iCommData & icomm,
                           bool on_device = false );

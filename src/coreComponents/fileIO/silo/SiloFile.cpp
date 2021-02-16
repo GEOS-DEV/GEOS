@@ -1357,7 +1357,7 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
                                      bool const isRestart )
 {
 
-  MeshLevel const * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   writeMeshLevel( mesh, cycleNum, problemTime, isRestart );
 
   if( isRestart )
@@ -1602,13 +1602,13 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
   }
 }
 
-void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
+void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
                                int const cycleNum,
                                real64 const problemTime,
                                bool const isRestart )
 {
 
-  NodeManager const * const nodeManager = meshLevel->getNodeManager();
+  NodeManager const * const nodeManager = meshLevel.getNodeManager();
   localIndex const numNodes = nodeManager->size();
 
 
@@ -1658,7 +1658,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
 
 
 
-  ElementRegionManager const * const elementManager = meshLevel->getElemManager();
+  ElementRegionManager const * const elementManager = meshLevel.getElemManager();
   elementManager->forElementRegions( [&]( ElementRegionBase const & elemRegion )
   {
     string const & regionName = elemRegion.getName();
@@ -1678,7 +1678,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
 
   if( m_writeFaceMesh )
   {
-    FaceManager const * const faceManager = meshLevel->getFaceManager();
+    FaceManager const * const faceManager = meshLevel.getFaceManager();
     localIndex const numFaces = faceManager->size();
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
@@ -1803,10 +1803,10 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
   if( m_writeEdgeMesh )
   {
     // write edges
-    FaceManager const * const faceManager = meshLevel->getFaceManager();
+    FaceManager const * const faceManager = meshLevel.getFaceManager();
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
-    EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
+    EdgeManager const * const edgeManager = meshLevel.getEdgeManager();
     localIndex const numEdges = edgeManager->size();
 
 

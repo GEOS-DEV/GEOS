@@ -111,7 +111,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
   FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
-  domain.getMeshBodies()->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
     m_lengthScale = meshBody.getGlobalLengthScale();
 

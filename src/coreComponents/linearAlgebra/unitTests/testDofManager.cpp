@@ -79,7 +79,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( &state.getProblemManager(), xmlInput );
-    mesh = state.getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
+    mesh = &state.getProblemManager().getDomainPartition()->getMeshBody( 0 ).getMeshLevel( 0 );
     dofManager.setMesh( *state.getProblemManager().getDomainPartition(), 0, 0 );
   }
 

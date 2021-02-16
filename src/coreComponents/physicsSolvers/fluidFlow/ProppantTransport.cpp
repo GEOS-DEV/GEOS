@@ -98,7 +98,7 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
 
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = *meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
     forTargetSubRegions< CellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                  CellElementSubRegion & subRegion )
@@ -159,9 +159,9 @@ void ProppantTransport::initializePreSubGroups()
   ConstitutiveManager & cm = domain.getConstitutiveManager();
 
   // Validate proppant models in regions
-  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel & meshLevel = *dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     validateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
     validateModelMapping< ParticleFluidBase >( *meshLevel.getElemManager(), m_proppantModelNames );
   }
@@ -171,7 +171,7 @@ void ProppantTransport::initializePreSubGroups()
   m_numComponents = fluid0.numFluidComponents();
   m_numDofPerCell = m_numComponents + 1;
 
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   localIndex const NC = m_numComponents;
 
   if( NC > 0 )
@@ -317,13 +317,13 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::componentConcentrationString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
   resetViews( mesh );
 
@@ -397,7 +397,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   FlowSolverBase::precomputeData( mesh );
 
@@ -462,7 +462,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
@@ -498,7 +498,7 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
                                            DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   resetViews( mesh );
 
 }
@@ -509,7 +509,7 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   localIndex const NC = m_numComponents;
 
@@ -587,7 +587,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
@@ -649,7 +649,7 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
 
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -919,7 +919,7 @@ ProppantTransport::calculateResidualNorm( DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           arrayView1d< real64 const > const & localRhs )
 {
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   localIndex const NDOF = m_numDofPerCell;
 
@@ -963,7 +963,7 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
                                              real64 const scalingFactor,
                                              DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::proppantConcentrationString(),
@@ -985,7 +985,7 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaProppantConcentrationString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaComponentConcentrationString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
@@ -1011,7 +1011,7 @@ void ProppantTransport::solveSystem( DofManager const & dofManager,
 
 void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   localIndex const NC = m_numComponents;
 
@@ -1236,7 +1236,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -1272,7 +1272,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::cellBasedFluxString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
 }
 
@@ -1286,7 +1286,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -1338,7 +1338,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantExcessPackVolumeString() ) );
     fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantLiftFluxString() ) );
 
-    getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+    getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
   }
 
   forTargetSubRegions( mesh, [&]( localIndex const,
@@ -1365,7 +1365,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString() ) );
     fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantPackVolumeFractionString() ) );
 
-    getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+    getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
   }
 
   forTargetSubRegions( mesh, [&]( localIndex const,

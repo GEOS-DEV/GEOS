@@ -121,8 +121,7 @@ void PackCollection::filterGhostIndices( localIndex const setIndex,
 // TODO : once we add additional history collectors, this should likely be pulled into a super-class
 ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & domain )
 {
-  MeshLevel * const meshLevel = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  dataRepository::Group * targetGroup = meshLevel;
+  dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
   string_array const targetTokens = stringutilities::Tokenize( m_objectPath, "/" );
   localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 

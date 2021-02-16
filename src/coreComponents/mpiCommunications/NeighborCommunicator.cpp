@@ -655,7 +655,7 @@ void NeighborCommunicator::sendRecvBuffers( int const commID )
 
 
 void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array > const & fieldNames,
-                                                MeshLevel * const mesh,
+                                                MeshLevel & mesh,
                                                 int const commID,
                                                 bool on_device )
 {
@@ -664,10 +664,10 @@ void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array >
   buffer_type const & receiveBuff = receiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
 
-  NodeManager & nodeManager = *(mesh->getNodeManager());
-  EdgeManager & edgeManager = *(mesh->getEdgeManager());
-  FaceManager & faceManager = *(mesh->getFaceManager());
-  ElementRegionManager & elemManager = *(mesh->getElemManager());
+  NodeManager & nodeManager = *mesh.getNodeManager();
+  EdgeManager & edgeManager = *mesh.getEdgeManager();
+  FaceManager & faceManager = *mesh.getFaceManager();
+  ElementRegionManager & elemManager = *mesh.getElemManager();
 
   array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
   array1d< localIndex > & edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();

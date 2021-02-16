@@ -80,7 +80,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  MeshLevel & meshLevel = *meshBodies.getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+  MeshLevel & meshLevel = meshBodies.getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -96,7 +96,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 void WellSolverBase::setupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   array1d< string > regions;
   forTargetRegions< WellElementRegion >( meshLevel, [&]( localIndex const,
@@ -152,7 +152,7 @@ void WellSolverBase::assembleSystem( real64 const time,
 void WellSolverBase::updateStateAll( DomainPartition & domain )
 {
 
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion & subRegion )
   {
@@ -167,9 +167,9 @@ void WellSolverBase::initializePreSubGroups()
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
 
-  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel & meshLevel = *dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     validateModelMapping( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 
@@ -184,7 +184,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const,
                                                           WellElementSubRegion & subRegion )
   {
@@ -201,7 +201,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 void WellSolverBase::precomputeData( DomainPartition & domain )
 {
   R1Tensor const gravVector = gravityVector();
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -241,8 +241,8 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
 
 void WellSolverBase::resetViews( DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *mesh->getElemManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   m_resGravCoef.clear();
   m_resGravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( FlowSolverBase::viewKeyStruct::gravityCoefString() );

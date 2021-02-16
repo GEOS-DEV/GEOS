@@ -182,7 +182,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow & solver,
 {
   localIndex const NC = solver.numFluidComponents();
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                          ElementSubRegionBase & subRegion )
@@ -265,7 +265,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow & 
   localIndex const NC = solver.numFluidComponents();
   localIndex const NP = solver.numFluidPhases();
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                          ElementSubRegionBase & subRegion )
@@ -385,7 +385,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow & solver
   localIndex const NC = solver.numFluidComponents();
   localIndex const NP = solver.numFluidPhases();
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                          ElementSubRegionBase & subRegion )
@@ -510,7 +510,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
   array1d< real64 > const & residual = solver.getLocalRhs();
   DofManager const & dofManager = solver.getDofManager();
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // assemble the analytical residual
   solver.resetStateToBeginningOfStep( domain );

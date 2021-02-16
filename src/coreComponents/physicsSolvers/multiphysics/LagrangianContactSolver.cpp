@@ -99,7 +99,7 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = *meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel.getElemManager();
     elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
@@ -226,7 +226,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 {
   m_solidSolver->implicitStepComplete( time_n, dt, domain );
 
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *meshLevel.getElemManager();
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
@@ -260,7 +260,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTractionString() ) );
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
 
@@ -285,7 +285,7 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   FaceManager const & faceManager = *mesh.getFaceManager();
   NodeManager const & nodeManager = *mesh.getNodeManager();
@@ -434,7 +434,7 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
 {
   m_solidSolver->resetStateToBeginningOfStep( domain );
 
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *meshLevel.getElemManager();
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
@@ -492,7 +492,7 @@ real64 LagrangianContactSolver::solverStep( real64 const & time_n,
 
 void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & domain )
 {
-  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager const & nodeManager = *meshLevel.getNodeManager();
   FaceManager & faceManager = *meshLevel.getFaceManager();
@@ -942,7 +942,7 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
   m_solidSolver->setupDofs( domain, dofManager );
 
   // restrict coupling to fracture regions only
-  ElementRegionManager const & elemManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  ElementRegionManager const & elemManager = *domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
   string_array fractureRegions;
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
   {
@@ -1008,7 +1008,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager const & nodeManager = *mesh.getNodeManager();
 
@@ -1167,7 +1167,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     {
       if( m_solidSolver->getRigidBodyModes().empty() )
       {
-        MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+        MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
         LAIHelperFunctions::ComputeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
@@ -1193,7 +1193,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
 void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   FaceManager const & faceManager = *mesh.getFaceManager();
   ElementRegionManager & elemManager = *mesh.getElemManager();
@@ -1301,7 +1301,7 @@ void LagrangianContactSolver::
                                               arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   FaceManager const & faceManager = *mesh.getFaceManager();
   NodeManager & nodeManager = *mesh.getNodeManager();
@@ -1436,7 +1436,7 @@ void LagrangianContactSolver::
                                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   FaceManager const & faceManager = *mesh.getFaceManager();
   NodeManager const & nodeManager = *mesh.getNodeManager();
@@ -1674,7 +1674,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   FaceManager const & faceManager = *mesh.getFaceManager();
   NodeManager const & nodeManager = *mesh.getNodeManager();
@@ -2110,7 +2110,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   // previousFractureStateString and previousLocalJumpString used locally only
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
 
@@ -2137,7 +2137,7 @@ void LagrangianContactSolver::setFractureStateForElasticStep( DomainPartition & 
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
@@ -2160,7 +2160,7 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
@@ -2270,7 +2270,7 @@ void LagrangianContactSolver::synchronizeFractureState( DomainPartition & domain
   fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
 }
@@ -2288,7 +2288,7 @@ void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition co
                                                               globalIndex & numOpen,
                                                               bool printAll ) const
 {
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   array1d< localIndex > localCounter( 3 );

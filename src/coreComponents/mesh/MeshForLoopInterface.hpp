@@ -38,10 +38,10 @@ namespace geosx
  * @param lambda The type of lambda function to execute for each element.
  */
 template< class POLICY=serialPolicy, typename LAMBDA=void >
-void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambda )
+void forAllElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
 {
 
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  ElementRegionManager const * const elemManager = mesh.getElemManager();
   elemManager->forElementSubRegionsComplete< ElementSubRegionBase >( [&] ( localIndex const er,
                                                                            localIndex const esr,
                                                                            ElementRegionBase const &,
@@ -59,14 +59,14 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambda )
  */
 template< typename LAMBDA >
 auto
-minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambda )
+minLocOverElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
 {
   using NUMBER = decltype( lambda( 0, 0, 0 ) );
 
   NUMBER minVal = std::numeric_limits< NUMBER >::max();
   localIndex minReg = -1, minSubreg = -1, minIndex = -1;
 
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  ElementRegionManager const * const elemManager = mesh.getElemManager();
 
   for( localIndex er=0; er<elemManager->numRegions(); ++er )
   {

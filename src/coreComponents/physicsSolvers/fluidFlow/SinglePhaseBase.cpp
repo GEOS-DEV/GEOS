@@ -51,7 +51,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = *meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel.getElemManager();
 
@@ -123,9 +123,9 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
 void SinglePhaseBase::validateFluidModels( DomainPartition const & domain ) const
 {
-  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel const & meshLevel = *dynamicCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel const & meshLevel = dynamicCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
     validateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 }
@@ -222,12 +222,12 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors() );
 
   resetViews( mesh );
 
@@ -319,7 +319,7 @@ void SinglePhaseBase::setupSystem( DomainPartition & domain,
                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  resetViews( *(domain.getMeshBody( 0 )->getMeshLevel( 0 )) );
+  resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   SolverBase::setupSystem( domain,
                            dofManager,
@@ -333,7 +333,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   resetViews( mesh );
 
@@ -371,7 +371,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
@@ -576,7 +576,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh,
                                                                         [&]( localIndex const targetIndex,
@@ -715,7 +715,7 @@ void SinglePhaseBase::solveSystem( DofManager const & dofManager,
 
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
