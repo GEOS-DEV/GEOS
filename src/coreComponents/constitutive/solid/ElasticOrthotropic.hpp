@@ -33,10 +33,8 @@ namespace constitutive
 /**
  * @class ElasticOrthotropicUpdates
  *
- * Class to provide linear elastic transverse isotropic material updates that
+ * Class to provide elastic orthotropic material updates that
  * may be called from a kernel function.
- *
- * @note The "transverse" directions are 1 and 2 (or 0 and 1 in C-index)
  */
 class ElasticOrthotropicUpdates : public SolidBaseUpdates
 {
@@ -46,24 +44,36 @@ public:
   /**
    * @brief Constructor
    * @param[in] c11 The 11 component of the Voigt stiffness tensor.
+   * @param[in] c12 The 12 component of the Voigt stiffness tensor.
    * @param[in] c13 The 13 component of the Voigt stiffness tensor.
+   * @param[in] c22 The 22 component of the Voigt stiffness tensor.
+   * @param[in] c23 The 23 component of the Voigt stiffness tensor.
    * @param[in] c33 The 33 component of the Voigt stiffness tensor.
    * @param[in] c44 The 44 component of the Voigt stiffness tensor.
+   * @param[in] c55 The 55 component of the Voigt stiffness tensor.
    * @param[in] c66 The 66 component of the Voigt stiffness tensor.
    * @param[in] stress The ArrayView holding the stress data for each quadrature
    *                   point.
    */
   ElasticOrthotropicUpdates( arrayView1d< real64 const > const & c11,
-                                           arrayView1d< real64 const > const & c13,
-                                           arrayView1d< real64 const > const & c33,
-                                           arrayView1d< real64 const > const & c44,
-                                           arrayView1d< real64 const > const & c66,
-                                           arrayView3d< real64, solid::STRESS_USD > const & stress ):
+                             arrayView1d< real64 const > const & c12,
+                             arrayView1d< real64 const > const & c13,
+                             arrayView1d< real64 const > const & c22,
+                             arrayView1d< real64 const > const & c23,
+                             arrayView1d< real64 const > const & c33,
+                             arrayView1d< real64 const > const & c44,
+                             arrayView1d< real64 const > const & c55,
+                             arrayView1d< real64 const > const & c66,
+                             arrayView3d< real64, solid::STRESS_USD > const & stress ):
     SolidBaseUpdates( stress ),
     m_c11( c11 ),
+    m_c12( c12 ),
     m_c13( c13 ),
+    m_c22( c22 ),
+    m_c23( c23 ),
     m_c33( c33 ),
     m_c44( c44 ),
+    m_c55( c55 ),
     m_c66( c66 )
   {}
 
@@ -118,16 +128,16 @@ public:
     GEOSX_UNUSED_VAR( q );
     memset( c, 0, sizeof( c ) );
     c[0][0] = m_c11[k];
-    c[0][1] = m_c11[k] - 2 * m_c66[k];
+    c[0][1] = m_c12[k];
     c[0][2] = m_c13[k];
     c[1][0] = c[0][1];
-    c[1][1] = m_c11[k];
-    c[1][2] = m_c13[k];
+    c[1][1] = m_c22[k];
+    c[1][2] = m_c23[k];
     c[2][0] = c[0][2];
     c[2][1] = c[1][2];
     c[2][2] = m_c33[k];
     c[3][3] = m_c44[k];
-    c[4][4] = m_c44[k];
+    c[4][4] = m_c55[k];
     c[5][5] = m_c66[k];
   }
 
@@ -159,14 +169,26 @@ private:
   /// A reference to the ArrayView holding c11 for each element.
   arrayView1d< real64 const > const m_c11;
 
+  /// A reference to the ArrayView holding c12 for each element.
+  arrayView1d< real64 const > const m_c12;
+
   /// A reference to the ArrayView holding c13 for each element.
   arrayView1d< real64 const > const m_c13;
+
+  /// A reference to the ArrayView holding c22 for each element.
+  arrayView1d< real64 const > const m_c22;
+
+  /// A reference to the ArrayView holding c23 for each element.
+  arrayView1d< real64 const > const m_c23;
 
   /// A reference to the ArrayView holding c33 for each element.
   arrayView1d< real64 const > const m_c33;
 
   /// A reference to the ArrayView holding c44 for each element.
   arrayView1d< real64 const > const m_c44;
+
+  /// A reference to the ArrayView holding c55 for each element.
+  arrayView1d< real64 const > const m_c55;
 
   /// A reference to the ArrayView holding c66 for each element.
   arrayView1d< real64 const > const m_c66;
@@ -308,17 +330,56 @@ public:
     /// string/key for transverse shear modulus
     static constexpr auto defaultShearModulusAxialTransverse = "defaultShearModulusAxialTransverse";
 
+    /// string/key for default c11 component of Voigt stiffness tensor
+    static constexpr auto defaultC11 = "defaultC11";
+
+    /// string/key for default c12 component of Voigt stiffness tensor
+    static constexpr auto defaultC12 = "defaultC12";
+
+    /// string/key for default c13 component of Voigt stiffness tensor
+    static constexpr auto defaultC13 = "defaultC13";
+
+    /// string/key for default c22 component of Voigt stiffness tensor
+    static constexpr auto defaultC22 = "defaultC22";
+
+    /// string/key for default c23 component of Voigt stiffness tensor
+    static constexpr auto defaultC23 = "defaultC23";
+
+    /// string/key for default c33 component of Voigt stiffness tensor
+    static constexpr auto defaultC33 = "defaultC33";
+
+    /// string/key for default c44 component of Voigt stiffness tensor
+    static constexpr auto defaultC44 = "defaultC44";
+
+    /// string/key for default c55 component of Voigt stiffness tensor
+    static constexpr auto defaultC55 = "defaultC55";
+
+    /// string/key for default c66 component of Voigt stiffness tensor
+    static constexpr auto defaultC66 = "defaultC66";
+
     /// string/key for c11 component of Voigt stiffness tensor
     static constexpr auto c11 = "c11";
 
+    /// string/key for c12 component of Voigt stiffness tensor
+    static constexpr auto c12 = "c12";
+
     /// string/key for c13 component of Voigt stiffness tensor
     static constexpr auto c13 = "c13";
+
+    /// string/key for c22 component of Voigt stiffness tensor
+    static constexpr auto c22 = "c22";
+
+    /// string/key for c23 component of Voigt stiffness tensor
+    static constexpr auto c23 = "c23";
 
     /// string/key for c33 component of Voigt stiffness tensor
     static constexpr auto c33 = "c33";
 
     /// string/key for c44 component of Voigt stiffness tensor
     static constexpr auto c44 = "c44";
+
+    /// string/key for c55 component of Voigt stiffness tensor
+    static constexpr auto c55 = "c55";
 
     /// string/key for c66 component of Voigt stiffness tensor
     static constexpr auto c66 = "c66";
@@ -488,11 +549,15 @@ public:
   ElasticOrthotropicUpdates createKernelUpdates()
   {
     return ElasticOrthotropicUpdates( m_c11,
-                                                    m_c13,
-                                                    m_c33,
-                                                    m_c44,
-                                                    m_c66,
-                                                    m_stress );
+                                      m_c12,
+                                      m_c13,
+                                      m_c22,
+                                      m_c23,
+                                      m_c33,
+                                      m_c44,
+                                      m_c55,
+                                      m_c66,
+                                      m_stress );
   }
 
   /**
@@ -508,9 +573,13 @@ public:
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_c11,
+                          m_c12,
                           m_c13,
+                          m_c22,
+                          m_c23,
                           m_c33,
                           m_c44,
+                          m_c55,
                           m_c66,
                           m_stress );
   }
@@ -541,17 +610,65 @@ private:
   /// allocations.
   real64 m_defaultShearModulusAxialTransverse;
 
+  /// The default value of the 11 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC11;
+
+  /// The default value of the 12 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC12;
+
+  /// The default value of the 13 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC13;
+
+  /// The default value of the 22 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC22;
+
+  /// The default value of the 23 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC23;
+
+  /// The default value of the 33 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC33;
+
+  /// The default value of the 44 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC44;
+
+  /// The default value of the 55 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC55;
+
+  /// The default value of the 66 component of the Voigt stiffness tensor
+  /// for any new allocations.
+  real64 m_defaultC66;
+
   /// The 11 component of the Voigt stiffness tensor.
   array1d< real64 > m_c11;
 
+  /// The 12 component of the Voigt stiffness tensor.
+  array1d< real64 > m_c12;
+
   /// The 13 component of the Voigt stiffness tensor.
   array1d< real64 > m_c13;
+
+  /// The 22 component of the Voigt stiffness tensor.
+  array1d< real64 > m_c22;
+
+  /// The 23 component of the Voigt stiffness tensor.
+  array1d< real64 > m_c23;
 
   /// The 33 component of the Voigt stiffness tensor.
   array1d< real64 > m_c33;
 
   /// The 44 component of the Voigt stiffness tensor.
   array1d< real64 > m_c44;
+
+  /// The 55 component of the Voigt stiffness tensor.
+  array1d< real64 > m_c55;
 
   /// The 66 component of the Voigt stiffness tensor.
   array1d< real64 > m_c66;

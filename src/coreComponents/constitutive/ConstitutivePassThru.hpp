@@ -26,6 +26,7 @@
 #include "solid/LinearElasticIsotropic.hpp"
 #include "solid/LinearElasticAnisotropic.hpp"
 #include "solid/LinearElasticTransverseIsotropic.hpp"
+#include "solid/ElasticOrthotropic.hpp"
 #include "solid/PoroElastic.hpp"
 
 namespace geosx
@@ -78,6 +79,10 @@ struct ConstitutivePassThru< SolidBase >
     else if( dynamic_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation ) )
     {
       lambda( static_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< ElasticOrthotropic * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< ElasticOrthotropic * >( constitutiveRelation) );
     }
     else if( dynamic_cast< LinearElasticAnisotropic * >( constitutiveRelation ) )
     {

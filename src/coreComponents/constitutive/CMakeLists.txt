@@ -40,6 +40,7 @@ set( constitutive_headers
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
      solid/LinearElasticTransverseIsotropic.hpp
+     solid/ElasticOrthotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/SolidBase.hpp
@@ -47,6 +48,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
+     solid/SolidModelDiscretizationOpsOrthotropic.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -89,6 +91,7 @@ set( constitutive_sources
      solid/LinearElasticAnisotropic.cpp
      solid/LinearElasticIsotropic.cpp
      solid/LinearElasticTransverseIsotropic.cpp
+     solid/ElasticOrthotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
      solid/SolidBase.cpp
