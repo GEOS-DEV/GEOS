@@ -197,32 +197,32 @@ void CompareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 void CompositionalMultiphaseFlow::validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const
 {
-  MultiFluidBase const & fluid0 = *cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
 
   for( localIndex i = 1; i < m_fluidModelNames.size(); ++i )
   {
-    MultiFluidBase const & fluid = *cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[i] );
+    MultiFluidBase const & fluid = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[i] );
     CompareMultiphaseModels( fluid, fluid0 );
     CompareMulticomponentModels( fluid, fluid0 );
   }
 
-  RelativePermeabilityBase const & relPerm0 = *cm.getConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[0] );
+  RelativePermeabilityBase const & relPerm0 = cm.getConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[0] );
   CompareMultiphaseModels( relPerm0, fluid0 );
 
   for( localIndex i = 1; i < m_relPermModelNames.size(); ++i )
   {
-    RelativePermeabilityBase const & relPerm = *cm.getConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[i] );
+    RelativePermeabilityBase const & relPerm = cm.getConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[i] );
     CompareMultiphaseModels( relPerm, relPerm0 );
   }
 
   if( m_capPressureFlag )
   {
-    CapillaryPressureBase const & capPres0 = *cm.getConstitutiveRelation< CapillaryPressureBase >( m_capPressureModelNames[0] );
+    CapillaryPressureBase const & capPres0 = cm.getConstitutiveRelation< CapillaryPressureBase >( m_capPressureModelNames[0] );
     CompareMultiphaseModels( capPres0, fluid0 );
 
     for( localIndex i = 1; i < m_capPressureModelNames.size(); ++i )
     {
-      CapillaryPressureBase const & capPres = *cm.getConstitutiveRelation< CapillaryPressureBase >( m_capPressureModelNames[i] );
+      CapillaryPressureBase const & capPres = cm.getConstitutiveRelation< CapillaryPressureBase >( m_capPressureModelNames[i] );
       CompareMultiphaseModels( capPres, capPres0 );
     }
   }
@@ -234,10 +234,10 @@ void CompositionalMultiphaseFlow::initializePreSubGroups()
   FlowSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  ConstitutiveManager const & cm = *domain.getConstitutiveManager();
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 1. Set key dimensions of the problem
-  MultiFluidBase const & fluid0 = *cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
   m_numPhases     = fluid0.numFluidPhases();
   m_numComponents = fluid0.numFluidComponents();
   m_numDofPerCell = m_numComponents + 1;

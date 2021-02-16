@@ -146,15 +146,15 @@ public:
    * @brief Get the constitutive manager, const version.
    * @return Pointer to a const instance of a ConstitutiveManager.
    */
-  constitutive::ConstitutiveManager const * getConstitutiveManager() const
-  { return this->getGroupPointer< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager ); }
+  constitutive::ConstitutiveManager const & getConstitutiveManager() const
+  { return this->getGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager ); }
 
   /**
    * @brief Get the constitutive manager.
    * @return Pointer to an instance of a ConstitutiveManager.
    */
-  constitutive::ConstitutiveManager * getConstitutiveManager()
-  { return this->getGroupPointer< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager ); }
+  constitutive::ConstitutiveManager & getConstitutiveManager()
+  { return this->getGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager ); }
 
   /**
    * @brief @return Return a reference to const NumericalMethodsManager from ProblemManager

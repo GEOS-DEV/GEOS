@@ -260,10 +260,9 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
   // arrayView1d<real64 const> const faceArea = faceManager->faceArea();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
-  ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
+  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
 
-  ContactRelationBase const &
-  contactRelation = constitutiveManager->getGroup< ContactRelationBase >( m_contactRelationName );
+  ContactRelationBase const & contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
 
   elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
@@ -871,7 +870,7 @@ HydrofractureSolver::
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   FaceManager const & faceManager = *mesh.getFaceManager();
   NodeManager const & nodeManager = *mesh.getNodeManager();
-  ConstitutiveManager const & constitutiveManager = *domain.getConstitutiveManager();
+  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
 
   string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );

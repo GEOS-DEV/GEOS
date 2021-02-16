@@ -59,28 +59,16 @@ public:
 
   ~ConstitutiveManager() override;
 
-  template< typename T = ConstitutiveBase >
-  T const * getConstitutiveRelation( string const & constitutiveRelationInstanceName ) const
+  template< typename T = ConstitutiveBase, typename KEY_TYPE = void >
+  T const & getConstitutiveRelation( KEY_TYPE const & key ) const
   {
-    return this->getGroupPointer< T >( constitutiveRelationInstanceName );
+    return this->getGroup< T >( key );
   }
 
-  template< typename T = ConstitutiveBase >
-  T * getConstitutiveRelation( string const & constitutiveRelationInstanceName )
+  template< typename T = ConstitutiveBase, typename KEY_TYPE = void >
+  T & getConstitutiveRelation( KEY_TYPE const & key )
   {
-    return this->getGroupPointer< T >( constitutiveRelationInstanceName );
-  }
-
-  template< typename T = ConstitutiveBase >
-  T const * getConstitutiveRelation( localIndex const index ) const
-  {
-    return this->getGroupPointer< T >( index );
-  }
-
-  template< typename T = ConstitutiveBase >
-  T * getConstitutiveRelation( localIndex const index )
-  {
-    return this->getGroupPointer< T >( index );
+    return this->getGroup< T >( key );
   }
 
   // template< typename T >

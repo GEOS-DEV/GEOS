@@ -182,11 +182,10 @@ void LagrangianContactSolver::initializePreSubGroups()
   SolverBase::initializePreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  ConstitutiveManager const * const cm = domain.getConstitutiveManager();
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
-  ConstitutiveBase const * const contactRelation  = cm->getConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
-  GEOSX_ERROR_IF( contactRelation == nullptr, "fracture constitutive model " + m_contactRelationName + " not found" );
-  m_contactRelationFullIndex = contactRelation->getIndexInParent();
+  ConstitutiveBase const & contactRelation = cm.getConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
+  m_contactRelationFullIndex = contactRelation.getIndexInParent();
 }
 
 void LagrangianContactSolver::setupSystem( DomainPartition & domain,
@@ -1443,8 +1442,8 @@ void LagrangianContactSolver::
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
-  ContactRelationBase const & contactRelation = constitutiveManager->getGroup< ContactRelationBase const >( m_contactRelationName );
+  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
+  ContactRelationBase const & contactRelation = constitutiveManager.getGroup< ContactRelationBase const >( m_contactRelationName );
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
@@ -2164,7 +2163,7 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
-  ConstitutiveManager const & constitutiveManager = *domain.getConstitutiveManager();
+  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
   ContactRelationBase const & contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
 
   bool checkActiveSet = true;

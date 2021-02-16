@@ -246,17 +246,17 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( MeshLevel const & 
     }
 
     // Check that each well model is compatible with all models in perforated reservoir regions
-    MultiFluidBase const & wellFluid = *cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[targetIndex] );
-    RelativePermeabilityBase const & wellRelPerm = *cm.getConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[targetIndex] );
+    MultiFluidBase const & wellFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[targetIndex] );
+    RelativePermeabilityBase const & wellRelPerm = cm.getConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[targetIndex] );
     for( localIndex resTargetIndex = 0; resTargetIndex < flowTargetRegionNames.size(); ++resTargetIndex )
     {
       if( reservoirRegionNames.count( flowTargetRegionNames[resTargetIndex] ) > 0 )
       {
-        MultiFluidBase const & resFluid = *cm.getConstitutiveRelation< MultiFluidBase >( flowFluidModels[resTargetIndex] );
+        MultiFluidBase const & resFluid = cm.getConstitutiveRelation< MultiFluidBase >( flowFluidModels[resTargetIndex] );
         CompareMultiphaseModels( wellFluid, resFluid );
         CompareMulticomponentModels( wellFluid, resFluid );
 
-        RelativePermeabilityBase const & resRelPerm = *cm.getConstitutiveRelation< RelativePermeabilityBase >( flowRelPermModels[resTargetIndex] );
+        RelativePermeabilityBase const & resRelPerm = cm.getConstitutiveRelation< RelativePermeabilityBase >( flowRelPermModels[resTargetIndex] );
         CompareMultiphaseModels( wellRelPerm, resRelPerm );
       }
     }
@@ -342,12 +342,12 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ConstitutiveManager const & cm = *domain.getConstitutiveManager();
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   validateConstitutiveModels( meshLevel, cm );
 
   // Set key dimensions (phases, components) from one of the fluids - they should all be compatible
-  MultiFluidBase const & fluid0 = *cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
   m_numPhases     = fluid0.numFluidPhases();
   m_numComponents = fluid0.numFluidComponents();
   m_numDofPerWellElement = m_numComponents + 2; // 1 pressure + NC compositions + 1 connectionRate

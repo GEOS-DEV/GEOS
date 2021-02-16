@@ -156,7 +156,7 @@ void ProppantTransport::initializePreSubGroups()
   FlowSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
-  ConstitutiveManager & cm = *domain.getConstitutiveManager();
+  ConstitutiveManager & cm = domain.getConstitutiveManager();
 
   // Validate proppant models in regions
   for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
@@ -166,9 +166,9 @@ void ProppantTransport::initializePreSubGroups()
     validateModelMapping< ParticleFluidBase >( *meshLevel.getElemManager(), m_proppantModelNames );
   }
 
-  SlurryFluidBase const * fluid0 = cm.getConstitutiveRelation< SlurryFluidBase >( m_fluidModelNames[0] );
+  SlurryFluidBase const & fluid0 = cm.getConstitutiveRelation< SlurryFluidBase >( m_fluidModelNames[0] );
 
-  m_numComponents = fluid0->numFluidComponents();
+  m_numComponents = fluid0.numFluidComponents();
   m_numDofPerCell = m_numComponents + 1;
 
   MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );

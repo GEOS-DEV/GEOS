@@ -2825,10 +2825,9 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
   arrayView1d< localIndex const > const & childNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
   arrayView1d< localIndex > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
-  ConstitutiveManager const * const cm = domain.getConstitutiveManager();
-  ConstitutiveBase const * const solid  = cm->getConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
-  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
-  m_solidMaterialFullIndex = solid->getIndexInParent();
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  ConstitutiveBase const & solid = cm.getConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
+  m_solidMaterialFullIndex = solid.getIndexInParent();
 
   ConstitutiveManager & constitutiveManager =
     domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
@@ -3667,10 +3666,9 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  ConstitutiveManager const * const cm = domain.getConstitutiveManager();
-  ConstitutiveBase const * const solid  = cm->getConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
-  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
-  m_solidMaterialFullIndex = solid->getIndexInParent();
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  ConstitutiveBase const & solid = cm.getConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
+  m_solidMaterialFullIndex = solid.getIndexInParent();
 
   ConstitutiveManager & constitutiveManager =
     domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );

@@ -60,11 +60,9 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                                                dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex ) const
 {
-  ConstitutiveBase const * const
-  constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
+  ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
 
-  std::unique_ptr< ConstitutiveBase >
-  material = constitutiveRelation->deliverClone( constitutiveRelationInstanceName, parent );
+  std::unique_ptr< ConstitutiveBase > material = constitutiveRelation.deliverClone( constitutiveRelationInstanceName, parent );
 
   material->allocateConstitutiveData( parent,
                                       numConstitutivePointsPerParentIndex );
@@ -82,8 +80,6 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   rval.setSizedFromParent( 1 );
   rval.resize( constitutiveGroup->size() );
   return rval;
-
-
 }
 
 }

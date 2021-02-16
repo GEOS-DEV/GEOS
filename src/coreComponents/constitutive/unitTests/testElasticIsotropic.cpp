@@ -85,7 +85,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( 2 );
 
-  ElasticIsotropic & cm = *(constitutiveManager.getConstitutiveRelation< ElasticIsotropic >( "granite" ));
+  ElasticIsotropic & cm = constitutiveManager.getConstitutiveRelation< ElasticIsotropic >( "granite" );
 
   cm.allocateConstitutiveData( &disc, 2 );
   ElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();

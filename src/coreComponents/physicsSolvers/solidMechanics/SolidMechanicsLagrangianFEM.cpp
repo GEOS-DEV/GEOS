@@ -877,7 +877,7 @@ SolidMechanicsLagrangianFEM::
   }
 
   ElementRegionManager * const elementRegionManager = mesh.getElemManager();
-  ConstitutiveManager & constitutiveManager = *domain.getConstitutiveManager();
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
   constitutiveRelations = elementRegionManager->constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
 

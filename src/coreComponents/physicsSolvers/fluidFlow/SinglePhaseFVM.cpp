@@ -258,7 +258,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   FaceManager & faceManager = *mesh.getFaceManager();
 
-  ConstitutiveManager & constitutiveManager = *domain.getConstitutiveManager();
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -316,7 +316,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
     //       Can we just use cell properties for an approximate flux computation?
     //       Then we can forget about capturing the fluid model.
-    SingleFluidBase & fluidBase = *constitutiveManager.getConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
+    SingleFluidBase & fluidBase = constitutiveManager.getConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
 
     constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
     {
