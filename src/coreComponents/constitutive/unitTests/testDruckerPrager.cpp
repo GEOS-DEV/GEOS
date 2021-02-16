@@ -20,11 +20,35 @@
 #include "constitutive/solid/InvariantDecompositions.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 using namespace geosx;
 using namespace ::geosx::constitutive;
 
-TEST( DruckerPragerTests, testDruckerPrager )
+
+struct StrainData
+{
+  real64 strainIncrement[6] = {-1e-4, 0, 0, 0, 0, 0};
+};
+
+
+template< typename CMW >
+void getStress( CMW const cmw,
+                real64 (&stress)[6])
+{
+  forAll< serialPolicy >( 1, [&stress,cmw] ( localIndex const k )
+  {
+    stress[0] = cmw.m_oldStress(k,0,0);
+    stress[1] = cmw.m_oldStress(k,0,1);
+    stress[2] = cmw.m_oldStress(k,0,2);
+    stress[3] = cmw.m_oldStress(k,0,3);
+    stress[4] = cmw.m_oldStress(k,0,4);
+    stress[5] = cmw.m_oldStress(k,0,5);
+  } );
+}
+
+template< typename POLICY >
+void testDruckerPragerDriver()
 {
   // create a Drucker-Prager model, and test xml input
   conduit::Node node;
@@ -81,15 +105,23 @@ TEST( DruckerPragerTests, testDruckerPrager )
 
   DruckerPrager::KernelWrapper cmw = cm.createKernelUpdates();
 
-  real64 strainIncrement[6] = {-1e-4, 0, 0, 0, 0, 0};
-  real64 stress[6];
-  real64 stiffness[6][6];
+  StrainData data;
+  data.strainIncrement[0] = -1e-4;
 
   for( localIndex loadstep=0; loadstep < 30; ++loadstep )
   {
-    cmw.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
+    forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      real64 stress[6] = {0};
+      real64 stiffness[6][6] = {{0}};
+      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stress, stiffness );
+    } );
     cm.saveConvergedState();
   }
+
+
+  real64 stress[6] = {0};
+  getStress( cmw, stress );
 
   // loading was set up to drive to total cohesion loss (c=0), at which
   // point the Q/P ratio should equal the slope of the DP yield surface:
@@ -104,17 +136,31 @@ TEST( DruckerPragerTests, testDruckerPrager )
 
   real64 phi = friction * M_PI / 180;
   real64 slope = -6 * sin( phi ) / ( 3 - sin( phi ) );
+
   EXPECT_TRUE( fabs( invariantQ / invariantP / slope - 1 ) < 1e-8 );
 
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, strainIncrement ) );
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+}
+
+
+#ifdef USE_CUDA
+TEST( DruckerPragerTests, testDruckerPragerHost )
+{
+  testDruckerPragerDriver< geosx::parallelDevicePolicy< > >();
+}
+#endif
+TEST( DruckerPragerTests, testDruckerPragerHost )
+{
+  testDruckerPragerDriver< serialPolicy >();
 }
 
 
 
-TEST( DruckerPragerTests, testDruckerPragerExtended )
+template< typename POLICY >
+void testDruckerPragerExtendedDriver()
 {
   // create an Extended-Drucker-Prager model, and test xml input
   conduit::Node node;
@@ -176,19 +222,27 @@ TEST( DruckerPragerTests, testDruckerPragerExtended )
 
   DruckerPragerExtended::KernelWrapper cmw = cm.createKernelUpdates();
 
-  real64 strainIncrement[6] = {-1e-3, 0, 0, 0, 0, 0};
-  real64 stress[6];
-  real64 stiffness[6][6];
+  StrainData data;
+  data.strainIncrement[0] = -1e-3;
   real64 invariantP, invariantQ;
-  real64 deviator[6];
   real64 total = 0;
+  real64 deviator[6] = {0};
 
   //FILE* fp = fopen("pq.txt","w");
   for( localIndex loadstep=0; loadstep < 300; ++loadstep )
   {
-    total += strainIncrement[0];
-    cmw.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
+    total += data.strainIncrement[0];
+    forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      real64 stress[6] = {0};
+      real64 stiffness[6][6] = {{0}};
+      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stress, stiffness );
+    } );
+
     cm.saveConvergedState();
+
+    real64 stress[6] = {0};
+    getStress( cmw, stress );
 
     twoInvariant::stressDecomposition( stress,
                                        invariantP,
@@ -212,5 +266,17 @@ TEST( DruckerPragerTests, testDruckerPragerExtended )
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, strainIncrement ) );
+  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
 }
+
+#ifdef USE_CUDA
+TEST( DruckerPragerTests, testDruckerPragerExtendedHost )
+{
+  testDruckerPragerExtendedDriver< geosx::parallelDevicePolicy< > >();
+}
+#endif
+TEST( DruckerPragerTests, testDruckerPragerExtendedHost )
+{
+  testDruckerPragerExtendedDriver< serialPolicy >();
+}
+
