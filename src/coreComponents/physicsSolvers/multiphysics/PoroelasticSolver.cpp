@@ -279,7 +279,7 @@ void PoroelasticSolver::updateDeformationForCoupling( DomainPartition & domain )
     arrayView1d< real64 > const &
     dVol = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaVolumeString );
 
-    arrayView1d< real64 const > const & bulkModulus = solid.getReference< array1d< real64 > >( "bulkModulus" );
+    arrayView1d< real64 const > const & bulkModulus = solid.getReference< array1d< real64 > >( ElasticIsotropic::viewKeyStruct::bulkModulusString );
 
     real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
 

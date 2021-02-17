@@ -53,11 +53,9 @@ namespace constitutive
 //
 // NOTE: This model uses the m_newStress array to represent the stress in an
 //       elastic, "undamaged" configuration.  We then scale the results
-//       by the damage factor whenever the true stress is requested through a getter.
-//
-// TODO: This approach is probably error prone---e.g. when stress data is
-//       accessed directly through an array view.  We should refactor so
-//       the true state is saved, similar to the plasticity models
+//       by the damage factor whenever the true stress is requested through an update
+//       function.  The developer should be very cautious if accessing the stress
+//       directly through an arrayView, as it does not represent the true stress.
 
 template< typename UPDATE_BASE >
 class DamageUpdates : public UPDATE_BASE

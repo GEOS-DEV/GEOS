@@ -223,13 +223,10 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", MechanicsSolver: " );
 
-    //solidSolver.resetStressToBeginningOfStep( domain );
     dtReturnTemporary = solidSolver.nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
                                                            domain );
-
-    //std::cout << "Here: "<< dtReturnTemporary << std::endl;
 
     if( dtReturnTemporary < dtReturn )
     {

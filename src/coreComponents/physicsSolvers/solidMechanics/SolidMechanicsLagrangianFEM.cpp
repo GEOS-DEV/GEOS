@@ -522,17 +522,11 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     {
       setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
-      //if( solveIter>0 )
-      //{
-      //  resetStressToBeginningOfStep( domain );
-      //}
-
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
                                         cycleNumber,
                                         domain );
 
-//      updateStress( domain );
       if( surfaceGenerator!=nullptr )
       {
         if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )

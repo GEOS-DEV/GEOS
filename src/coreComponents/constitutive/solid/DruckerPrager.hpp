@@ -221,7 +221,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     jacobian[1][2] = 3 * m_shearModulus[k];
     jacobian[2][0] = m_friction[k];
     jacobian[2][1] = 1;
-    jacobian[2][2] = -cohesionDeriv;  
+    jacobian[2][2] = -cohesionDeriv;
 
     LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );

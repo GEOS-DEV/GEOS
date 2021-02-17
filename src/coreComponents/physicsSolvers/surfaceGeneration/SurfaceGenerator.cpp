@@ -1837,8 +1837,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                   faceIsExternal[iface] < 1 &&
                   checkOrphanElement( elementManager, faceManager, iface ) == 0 &&
                   isFaceSeparable[iface] == 1
-//                  && fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[faceIndex], faceNormals[iface])) > cos(
-// m_maxTurnAngle )
+//                  && fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[faceIndex], faceNormals[iface])) > cos( m_maxTurnAngle )
                   )
               {
                 m_tipFaces.insert( iface );
@@ -3550,8 +3549,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition & domain,
           LvArray::tensorOps::copy< 3 >( extFaceNormal[j], faceNormal[extFacesOnTrailingEdge[j]] );
         }
 
-        if( std::fabs( LvArray::tensorOps::AiBi< 3 >( extFaceNormal[0], extFaceNormal[1] )) < 0.9 ) //The two faces are
-                                                                                                    // not coplanar.
+        if( std::fabs( LvArray::tensorOps::AiBi< 3 >( extFaceNormal[0], extFaceNormal[1] )) < 0.9 ) //The two faces are not coplanar.
         {
           incompleteTrailingEdgeTopology = true;
         }
@@ -3565,13 +3563,9 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition & domain,
 
 
   real64 tipForce[3];
-  tipForce[0] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecTipNorm ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0],
-                                                                                                     vecTipNorm ) / 2.0 -
-                LvArray::tensorOps::AiBi< 3 >( fFaceA[1], vecTipNorm ) / 2.0;
-  tipForce[1] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecTip ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecTip ) / 2.0 - LvArray::tensorOps::AiBi< 3 >(
-    fFaceA[1], vecTip ) / 2.0;
-  tipForce[2] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecEdge ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecEdge ) / 2.0 - LvArray::tensorOps::AiBi< 3 >(
-    fFaceA[1], vecEdge ) / 2.0;
+  tipForce[0] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecTipNorm ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecTipNorm ) / 2.0 - LvArray::tensorOps::AiBi< 3 >( fFaceA[1], vecTipNorm ) / 2.0;
+  tipForce[1] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecTip ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecTip ) / 2.0 - LvArray::tensorOps::AiBi< 3 >( fFaceA[1], vecTip ) / 2.0;
+  tipForce[2] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecEdge ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecEdge ) / 2.0 - LvArray::tensorOps::AiBi< 3 >( fFaceA[1], vecEdge ) / 2.0;
 
   real64 tipDisplacement[3], tipOpening[3], tipFaceDisplacement[2][3];
 
@@ -3758,8 +3752,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
           if( elementsToNodes( ei, n ) == nodeID )
           {
             real64 temp[3]{};
-            LvArray::tensorOps::copy< 3 >( xEle, elemCenter[er][esr][ei] ); //For C3D6 element type, elementsToNodes map
-                                                                            // may include
+            LvArray::tensorOps::copy< 3 >( xEle, elemCenter[er][esr][ei] ); //For C3D6 element type, elementsToNodes map may include
             // repeated indices and the following may run multiple
             // times for the same element.
 
@@ -3959,8 +3952,7 @@ void SurfaceGenerator::markRuptureFaceFromNode ( const localIndex nodeIndex,
 //          for( auto iface : edgeToFaceMap[iedge] )
 //          {
 //            if( iface != pickedFace && isFaceSeparable[iface] == 1 && faceManager.isExternal()[iface] < 1 &&
-//                fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[pickedFace], faceNormals[iface])) > cos( m_maxTurnAngle
-// ) &&
+//                fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[pickedFace], faceNormals[iface])) > cos( m_maxTurnAngle ) &&
 //                ((faceToNodeMap[iface].size() == 3) || (faceToNodeMap[iface].size() == 4 &&
 //                    (std::find(faceToNodeMap[iface].begin(), faceToNodeMap[iface].end(), nodeIndex) !=
 // faceToNodeMap[iface].end()))))
@@ -4079,8 +4071,7 @@ void SurfaceGenerator::markRuptureFaceFromEdge ( localIndex const edgeID,
 //      if( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace ) > cos( m_maxTurnAngle ))
       {
         eligibleFaces.emplace_back( iface );
-        real64 thetaFace = acos( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace )*0.999999 );  // We multiply this by
-                                                                                               // 0.9999999 to avoid an
+        real64 thetaFace = acos( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace )*0.999999 );  // We multiply this by 0.9999999 to avoid an
         // exception caused by acos a number slightly larger
         // than 1.
 
@@ -4221,8 +4212,7 @@ void SurfaceGenerator::markRuptureFaceFromEdge ( localIndex const edgeID,
 //              if( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace ) > cos( m_maxTurnAngle ) &&
 //                  uDist / segmentLength > -m_faceToEdgeProjectionTol &&
 //                  uDist / segmentLength < 1 + m_faceToEdgeProjectionTol &&
-//                  fabs( LvArray::tensorOps::AiBi< 3 >( vecEdge, fn )) < m_faceToEdgeCoplaneTol &&  // this face is
-// kind of parallel to the
+//                  fabs( LvArray::tensorOps::AiBi< 3 >( vecEdge, fn )) < m_faceToEdgeCoplaneTol &&  // this face is kind of parallel to the
 // tip
 //                                                                         // edge.
 //                  fabs( LvArray::tensorOps::AiBi< 3 >( fn0, fn )) > 1 - m_faceToFaceCoplaneTol )  // co-plane

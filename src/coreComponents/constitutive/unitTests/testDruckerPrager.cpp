@@ -34,16 +34,16 @@ struct StrainData
 
 template< typename CMW >
 void getStress( CMW const cmw,
-                real64 (&stress)[6])
+                real64 (& stress)[6] )
 {
-  forAll< serialPolicy >( 1, [&stress,cmw] ( localIndex const k )
+  forAll< serialPolicy >( 1, [&stress, cmw] ( localIndex const k )
   {
-    stress[0] = cmw.m_newStress(k,0,0);
-    stress[1] = cmw.m_newStress(k,0,1);
-    stress[2] = cmw.m_newStress(k,0,2);
-    stress[3] = cmw.m_newStress(k,0,3);
-    stress[4] = cmw.m_newStress(k,0,4);
-    stress[5] = cmw.m_newStress(k,0,5);
+    stress[0] = cmw.m_newStress( k, 0, 0 );
+    stress[1] = cmw.m_newStress( k, 0, 1 );
+    stress[2] = cmw.m_newStress( k, 0, 2 );
+    stress[3] = cmw.m_newStress( k, 0, 3 );
+    stress[4] = cmw.m_newStress( k, 0, 4 );
+    stress[5] = cmw.m_newStress( k, 0, 5 );
   } );
 }
 
@@ -279,4 +279,3 @@ TEST( DruckerPragerTests, testDruckerPragerExtendedHost )
 {
   testDruckerPragerExtendedDriver< serialPolicy >();
 }
-
