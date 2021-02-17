@@ -503,6 +503,13 @@ Element: Poroelastic
 Element: PoroelasticEmbeddedFractures
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticEmbeddedFractures.rst
+=======
+.. _XML_PoroelasticPhaseField:
+
+Element: PoroelasticPhaseField
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticPhaseField.rst
+>>>>>>> cce1b7d43 (create new solver, modified poro materials)
 
 
 .. _XML_Problem:
@@ -1263,6 +1270,13 @@ Datastructure: Poroelastic
 Datastructure: PoroelasticEmbeddedFractures
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticEmbeddedFractures_other.rst
+=======
+.. _DATASTRUCTURE_PoroelasticPhaseField:
+
+Datastructure: PoroelasticPhaseField
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticPhaseField_other.rst
+>>>>>>> cce1b7d43 (create new solver, modified poro materials)
 
 
 .. _DATASTRUCTURE_Problem:

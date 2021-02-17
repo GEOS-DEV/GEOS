@@ -857,6 +857,7 @@ the relative residual norm satisfies:
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
 			<xsd:element name="PoroelasticEmbeddedFractures" type="PoroelasticEmbeddedFracturesType" />
+			<xsd:element name="PoroelasticPhaseField" type="PoroelasticPhaseFieldType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
@@ -1222,6 +1223,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="PoroelasticEmbeddedFracturesType">
+	<xsd:complexType name="PoroelasticPhaseFieldType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -1236,17 +1238,34 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--fracturesSolverName => Name of the fractures solver to use in the fractured poroelastic solver-->
 		<xsd:attribute name="fracturesSolverName" type="string" use="required" />
+		<!--couplingTypeOption => Coupling option. Valid options:
+* FixedStress
+* TightlyCoupled-->
+		<xsd:attribute name="couplingTypeOption" type="geosx_PoroelasticPhaseFieldSolver_CouplingTypeOption" use="required" />
+		<!--damageSolverName => Name of the damage mechanics solver to use in the PhaseFieldFracture solver-->
+		<xsd:attribute name="damageSolverName" type="string" use="required" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->  
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--solidSolverName => Name of the poroelastic solver to use in the PhaseFieldFracture solver-->
+		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--subcycling => turn on subcycling on each load step-->
+		<xsd:attribute name="subcycling" type="integer" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_PoroelasticPhaseFieldSolver_CouplingTypeOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|FixedStress|TightlyCoupled" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />

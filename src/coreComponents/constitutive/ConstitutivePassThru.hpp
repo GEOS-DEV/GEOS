@@ -21,6 +21,7 @@
 #define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "NullModel.hpp"
+#include "solid/Damage.hpp"
 #include "solid/DamageVolDev.hpp"
 #include "solid/DamageSpectral.hpp"
 #include "solid/DruckerPrager.hpp"
@@ -171,6 +172,11 @@ struct ConstitutivePassThru< PoroElasticBase >
     {
       lambda( static_cast< PoroElastic< ElasticTransverseIsotropic > * >( constitutiveRelation) );
     }
+    else if( dynamic_cast< PoroElastic< Damage<ElasticIsotropic> > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< PoroElastic< Damage<ElasticIsotropic> > * >( constitutiveRelation) );
+    }
+
     else
     {
       string name;
