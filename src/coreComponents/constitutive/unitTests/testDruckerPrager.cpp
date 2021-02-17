@@ -28,7 +28,7 @@ using namespace ::geosx::constitutive;
 
 struct StrainData
 {
-  real64 strainIncrement[6] = {-1e-4, 0, 0, 0, 0, 0};
+  real64 strainIncrement[6] = { };
 };
 
 
@@ -38,14 +38,15 @@ void getStress( CMW const cmw,
 {
   forAll< serialPolicy >( 1, [&stress,cmw] ( localIndex const k )
   {
-    stress[0] = cmw.m_oldStress(k,0,0);
-    stress[1] = cmw.m_oldStress(k,0,1);
-    stress[2] = cmw.m_oldStress(k,0,2);
-    stress[3] = cmw.m_oldStress(k,0,3);
-    stress[4] = cmw.m_oldStress(k,0,4);
-    stress[5] = cmw.m_oldStress(k,0,5);
+    stress[0] = cmw.m_newStress(k,0,0);
+    stress[1] = cmw.m_newStress(k,0,1);
+    stress[2] = cmw.m_newStress(k,0,2);
+    stress[3] = cmw.m_newStress(k,0,3);
+    stress[4] = cmw.m_newStress(k,0,4);
+    stress[5] = cmw.m_newStress(k,0,5);
   } );
 }
+
 
 template< typename POLICY >
 void testDruckerPragerDriver()
@@ -66,7 +67,7 @@ void testDruckerPragerDriver()
     "      defaultShearModulus=\"1000.0\" "
     "      defaultFrictionAngle=\"" + std::to_string( friction )+ "\" "
                                                                   "      defaultDilationAngle=\"15.0\" "
-                                                                  "      defaultHardeningRate=\"-4000.0\" "
+                                                                  "      defaultHardeningRate=\"-2000.0\" "
                                                                   "      defaultCohesion=\"1\"/>"
                                                                   "</Constitutive>";
 
@@ -108,7 +109,7 @@ void testDruckerPragerDriver()
   StrainData data;
   data.strainIncrement[0] = -1e-4;
 
-  for( localIndex loadstep=0; loadstep < 30; ++loadstep )
+  for( localIndex loadstep=0; loadstep < 50; ++loadstep )
   {
     forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -118,7 +119,6 @@ void testDruckerPragerDriver()
     } );
     cm.saveConvergedState();
   }
-
 
   real64 stress[6] = {0};
   getStress( cmw, stress );
