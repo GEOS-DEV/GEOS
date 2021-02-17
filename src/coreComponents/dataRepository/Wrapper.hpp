@@ -295,7 +295,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc geosx::WrapperBase::pack
   virtual
-  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
+  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
@@ -303,11 +303,11 @@ public:
     {
       if( withMetadata )
       {
-        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference() );
+        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference(), events );
       }
       else
       {
-        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference() );
+        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference(), events );
       }
     }
     else
@@ -320,7 +320,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc geosx::WrapperBase::packByIndex
   virtual
-  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
+  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
@@ -330,11 +330,11 @@ public:
       {
         if( withMetadata )
         {
-          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList );
+          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList, events );
         }
         else
         {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList );
+          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList, events );
         }
       }
       else
@@ -348,7 +348,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc geosx::WrapperBase::packSize
   virtual
-  localIndex packSize( bool withMetadata, bool onDevice ) const override final
+  localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
@@ -357,11 +357,11 @@ public:
     {
       if( withMetadata )
       {
-        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference() );
+        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference(), events );
       }
       else
       {
-        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference() );
+        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference(), events );
       }
     }
     else
@@ -374,7 +374,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc geosx::WrapperBase::packByIndexSize
   virtual
-  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
+  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     buffer_unit_type * buffer = nullptr;
@@ -385,11 +385,11 @@ public:
       {
         if( withMetadata )
         {
-          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList );
+          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList, events );
         }
         else
         {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList );
+          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList, events );
         }
       }
       else
@@ -403,7 +403,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc geosx::WrapperBase::unpack
   virtual
-  localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
+  localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
     localIndex unpackedSize = 0;
     if( withMetadata )
@@ -416,11 +416,11 @@ public:
     {
       if( withMetadata )
       {
-        unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView() );
+        unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events );
       }
       else
       {
-        unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView() );
+        unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView(), events );
       }
     }
     else
@@ -433,7 +433,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc geosx::WrapperBase::unpackByIndex
   virtual
-  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) override final
+  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
@@ -448,11 +448,11 @@ public:
       {
         if( withMetadata )
         {
-          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices );
+          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
         }
         else
         {
-          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices );
+          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
         }
       }
       else

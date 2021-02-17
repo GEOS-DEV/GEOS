@@ -576,7 +576,7 @@ void CompositionalMultiphaseFlow::initializePostInitialConditionsPreSubGroups( G
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::globalCompDensityString ) );
 
-  CommunicationTools::synchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
+  CommunicationTools::synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), false );
 
   // set mass fraction flag on fluid models
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )

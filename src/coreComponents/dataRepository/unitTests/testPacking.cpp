@@ -128,14 +128,18 @@ TEST( testPacking, testTensorPacking )
     tns[0][ii] = drand();
 
   buffer_unit_type * null_buf = nullptr;
-  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, tns.toViewConst() );
+  parallelDeviceEvents packEvents;
+  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, tns.toViewConst(), packEvents );
   buffer_type buf( calc_size );
   buffer_unit_type * b = &buf[0];
-  bufferOps::PackDevice< true >( b, tns.toViewConst() );
+  bufferOps::PackDevice< true >( b, tns.toViewConst(), packEvents);
+  waitAllDeviceEvents( packEvents );
 
   array1d< R1Tensor > unp( 1 );
   buffer_unit_type const * bc = &buf[0];
-  bufferOps::UnpackDevice( bc, unp.toView() );
+  parallelDeviceEvents unpackEvents;
+  bufferOps::UnpackDevice( bc, unp.toView(), unpackEvents );
+  waitAllDeviceEvents( unpackEvents );
   unp.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < 3; ++ii )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
@@ -153,14 +157,18 @@ TEST( testPacking, testPackingDevice )
       veloc[ii][jj] = drand();
 
   buffer_unit_type * null_buf = NULL;
-  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst() );
+  parallelDeviceEvents packEvents;
+  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst(), packEvents );
 
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  bufferOps::PackDevice< true >( buffer, veloc.toViewConst());
+  bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents);
+  waitAllDeviceEvents( packEvents );
 
   buffer_unit_type const * cbuffer = &buf[0];
-  bufferOps::UnpackDevice( cbuffer, unpacked.toView());
+  parallelDeviceEvents unpackEvents;
+  bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents);
+  waitAllDeviceEvents( unpackEvents );
   unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
@@ -178,14 +186,18 @@ TEST( testPacking, testPackingDeviceHelper )
     veloc[ii] = drand();
 
   buffer_unit_type * null_buf = NULL;
-  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst() );
+  parallelDeviceEvents packEvents;
+  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst(), packEvents );
 
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  dataRepository::wrapperHelpers::PackDevice< true >( buffer, veloc.toViewConst());
+  dataRepository::wrapperHelpers::PackDevice< true >( buffer, veloc.toViewConst(), packEvents);
+  waitAllDeviceEvents( packEvents );
 
+  parallelDeviceEvents unpackEvents;
   buffer_unit_type const * cbuffer = &buf[0];
-  dataRepository::wrapperHelpers::UnpackDevice( cbuffer, unpacked.toView());
+  dataRepository::wrapperHelpers::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents);
+  waitAllDeviceEvents( unpackEvents );
   unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
@@ -212,14 +224,18 @@ TEST( testPacking, testPackByIndexDevice )
   buffer_unit_type * null_buf = NULL;
   // [ num_dim, stride_i.. , tensor_0, tensor_1, ..., tensor_n ]
   arrayView1d< R1Tensor const > const & veloc_view = veloc.toViewConst();
-  localIndex calc_size = bufferOps::PackByIndexDevice< false >( null_buf, veloc_view, indices.toViewConst());
+  parallelDeviceEvents packEvents;
+  localIndex calc_size = bufferOps::PackByIndexDevice< false >( null_buf, veloc_view, indices.toViewConst(), packEvents );
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  localIndex packed_size = bufferOps::PackByIndexDevice< true >( buffer, veloc_view, indices.toViewConst());
+  localIndex packed_size = bufferOps::PackByIndexDevice< true >( buffer, veloc_view, indices.toViewConst(), packEvents );
   EXPECT_EQ ( calc_size, packed_size );
+  waitAllDeviceEvents( packEvents );
   buffer_unit_type const * cbuffer = &buf[0];
-  localIndex unpacked_size = bufferOps::UnpackByIndexDevice( cbuffer, unpacked.toView(), indices.toViewConst());
+  parallelDeviceEvents unpackEvents;
+  localIndex unpacked_size = bufferOps::UnpackByIndexDevice( cbuffer, unpacked.toView(), indices.toViewConst(), unpackEvents );
   EXPECT_EQ ( unpacked_size, packed_size );
+  waitAllDeviceEvents( unpackEvents );
   unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )
   {

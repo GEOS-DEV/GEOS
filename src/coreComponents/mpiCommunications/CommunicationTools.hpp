@@ -22,6 +22,7 @@
 #include "MpiWrapper.hpp"
 
 #include "common/DataTypes.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include <set>
 
@@ -70,46 +71,48 @@ public:
   static void synchronizeFields( const std::map< string, string_array > & fieldNames,
                                  MeshLevel * const mesh,
                                  std::vector< NeighborCommunicator > & allNeighbors,
-                                 bool on_device = false );
+                                 bool onDevice );
 
   static void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
                                             MeshLevel * const mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
-                                            bool on_device = false );
+                                            bool onDevice );
 
   static void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
                                        MeshLevel * const mesh,
                                        std::vector< NeighborCommunicator > & allNeighbors,
                                        MPI_iCommData & icomm,
-                                       bool on_device = false );
+                                       bool onDevice );
 
   static void asyncPack( const std::map< string, string_array > & fieldNames,
                          MeshLevel * const mesh,
                          std::vector< NeighborCommunicator > & neighbors,
                          MPI_iCommData & icomm,
-                         bool on_device );
+                         bool onDevice,
+                         parallelDeviceEvents & events );
 
-  static void asyncSendRecv( const std::map< string, string_array > & fieldNames,
-                             MeshLevel * const mesh,
-                             std::vector< NeighborCommunicator > & neighbors,
+  static void asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
                              MPI_iCommData & icomm,
-                             bool on_device );
+                             bool onDevice,
+                             parallelDeviceEvents & events );
 
   static void synchronizeUnpack( MeshLevel * const mesh,
                                  std::vector< NeighborCommunicator > & neighbors,
                                  MPI_iCommData & icomm,
-                                 bool on_device = false );
+                                 bool onDevice );
 
   static bool asyncUnpack( MeshLevel * const mesh,
                            std::vector< NeighborCommunicator > & neighbors,
                            MPI_iCommData & icomm,
-                           bool on_device = false );
+                           bool onDevice,
+                           parallelDeviceEvents & events );
 
   static void finalizeUnpack( MeshLevel * const mesh,
                               std::vector< NeighborCommunicator > & neighbors,
                               MPI_iCommData & icomm,
-                              bool on_device = false );
+                              bool onDevice,
+                              parallelDeviceEvents & events );
 
 
 };

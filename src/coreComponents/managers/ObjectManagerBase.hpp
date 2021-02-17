@@ -77,18 +77,21 @@ public:
   virtual localIndex packSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
-                               bool on_device = false ) const override;
+                               bool onDevice,
+                               parallelDeviceEvents & events ) const override;
 
   virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
-                           bool on_device = false )  const override;
+                           bool onDevice,
+                           parallelDeviceEvents & events ) const override;
 
   virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
-                             bool on_device = false ) override;
+                             bool onDevice,
+                             parallelDeviceEvents & events ) override;
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.
@@ -240,7 +243,7 @@ private:
    * @param wrapperNames
    * @param packList The element we want packed.
    * @param recursive recursive pack or not.
-   * @param on_device Whether to use device-based packing functions
+   * @param onDevice Whether to use device-based packing functions
    *                  (buffer must be either pinned or a device pointer)
    * @return The packed size.
    */
@@ -249,7 +252,8 @@ private:
                           string_array const & wrapperNames,
                           arrayView1d< localIndex const > const & packList,
                           integer const recursive,
-                          bool on_device ) const;
+                          bool onDevice,
+                          parallelDeviceEvents & events ) const;
 
   /**
    * @brief Packing global maps.
