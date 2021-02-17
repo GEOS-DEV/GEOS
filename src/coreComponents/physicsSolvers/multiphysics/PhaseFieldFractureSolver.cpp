@@ -314,13 +314,13 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
                                                          ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &,
                                                          CellElementSubRegion & elementSubRegion )
   {
-    constitutive::ConstitutiveBase * const
+    constitutive::ConstitutiveBase &
     solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( solidSolver.solidMaterialNames()[targetIndex] );
 
-    ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto * const damageModel )
+    ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto & damageModel )
     {
-      using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
-      typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
+      using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
+      typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
       arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();

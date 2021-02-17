@@ -258,14 +258,14 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                                           CellElementSubRegion & elementSubRegion )
     {
 
-      constitutive::ConstitutiveBase * const
+      constitutive::ConstitutiveBase &
       solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( m_solidModelName );
 
       constitutive::ConstitutivePassThru< constitutive::DamageBase >::execute( solidModel,
-                                                                               [&]( auto * const damageModel )
+                                                                               [&]( auto & damageModel )
       {
-        using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
-        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
+        using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
+        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
         arrayView4d< real64 const > const &
         dNdX = elementSubRegion.dNdX();

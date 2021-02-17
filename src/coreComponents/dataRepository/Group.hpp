@@ -388,8 +388,9 @@ public:
    * @param name the name of sub-group to search for
    * @return @p true if sub-group exists, @p false otherwise
    */
+  template< typename T = Group >
   bool hasGroup( string const & name ) const
-  { return (m_subGroups[name] != nullptr); }
+  { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
 
   ///@}
 

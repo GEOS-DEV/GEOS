@@ -190,8 +190,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow & solver,
     SCOPED_TRACE( subRegion.getParent()->getParent()->getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
-    Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
-    MultiFluidBase const & fluid = constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
 
     arrayView2d< real64 > & compDens =
@@ -273,8 +272,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow & 
     SCOPED_TRACE( subRegion.getParent()->getParent()->getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
-    Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
-    MultiFluidBase const & fluid = constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
@@ -393,8 +391,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow & solver
     SCOPED_TRACE( subRegion.getParent()->getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
-    Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
-    MultiFluidBase const & fluid = constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
 

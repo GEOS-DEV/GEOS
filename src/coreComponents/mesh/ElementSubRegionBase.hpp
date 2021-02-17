@@ -193,14 +193,14 @@ public:
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
-  dataRepository::Group const * getConstitutiveModels() const
-  { return &m_constitutiveModels; }
+  dataRepository::Group const & getConstitutiveModels() const
+  { return m_constitutiveModels; }
 
   /**
    * @copydoc getConstitutiveModels() const
    */
-  dataRepository::Group * getConstitutiveModels()
-  { return &m_constitutiveModels; }
+  dataRepository::Group & getConstitutiveModels()
+  { return m_constitutiveModels; }
 
   /**
    * @brief Get a pointer to the constitutive model.
@@ -209,19 +209,15 @@ public:
    * @return A pointer to the constitutive model.
    */
   template< typename T = constitutive::ConstitutiveBase >
-  T const * getConstitutiveModel( string const & name ) const
-  {
-    return m_constitutiveModels.getGroupPointer< T >( name );
-  }
+  T const & getConstitutiveModel( string const & name ) const
+  { return m_constitutiveModels.getGroup< T >( name ); }
 
   /**
    * @copydoc getConstitutiveModel( string const & ) const
    */
   template< typename T = constitutive::ConstitutiveBase >
-  T * getConstitutiveModel( string const & name )
-  {
-    return m_constitutiveModels.getGroupPointer< T >( name );
-  }
+  T & getConstitutiveModel( string const & name )
+  { return m_constitutiveModels.getGroup< T >( name ); }
 
 
   /**

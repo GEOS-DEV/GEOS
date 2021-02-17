@@ -222,7 +222,7 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
 
     /// Write out the quadrature averaged constitutive data and the full data if requested.
     Group & averagedSubRegionData = averagedElementData.registerGroup( topologyName );
-    subRegion.getConstitutiveModels()->forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
+    subRegion.getConstitutiveModels().forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
     {
       writeOutConstitutiveData( constitutiveModel, fields, topologyName, averagedSubRegionData );
 

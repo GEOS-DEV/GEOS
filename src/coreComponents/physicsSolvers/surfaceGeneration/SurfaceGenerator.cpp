@@ -2832,7 +2832,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
   {
     for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {
-      subRegion.getConstitutiveModel( m_solidMaterialNames[mat] )->
+      subRegion.getConstitutiveModel( m_solidMaterialNames[mat] ).
         getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::CPU,
                                                                                                                        false );
     }

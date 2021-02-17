@@ -161,10 +161,10 @@ public:
    */
   KernelBase( SUBREGION_TYPE const & elementSubRegion,
               FE_TYPE const & finiteElementSpace,
-              CONSTITUTIVE_TYPE * const inputConstitutiveType ):
+              CONSTITUTIVE_TYPE & inputConstitutiveType ):
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_elemGhostRank( elementSubRegion.ghostRank() ),
-    m_constitutiveUpdate( inputConstitutiveType->createKernelUpdates() ),
+    m_constitutiveUpdate( inputConstitutiveType.createKernelUpdates() ),
     m_finiteElementSpace( finiteElementSpace )
   {}
 
@@ -411,7 +411,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     constitutive::NullModel * nullConstitutiveModel = nullptr;
     if( targetRegionIndex <= constitutiveNames.size()-1 )
     {
-      constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
+      constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
     }
     else
     {
@@ -420,7 +420,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     }
 
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
-    constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( constitutiveRelation,
+    constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( *constitutiveRelation,
                                                                       [&maxResidualContribution,
                                                                        &nodeManager,
                                                                        &edgeManager,
@@ -429,10 +429,10 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                                        &elementSubRegion,
                                                                        &finiteElementName,
                                                                        numElems]
-                                                                        ( auto * const castedConstitutiveRelation )
+                                                                        ( auto & castedConstitutiveRelation )
     {
       // Create an alias for the type of constitutive model.
-      using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
+      using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
 
       string const elementTypeString = elementSubRegion.getElementTypeString();

@@ -1214,14 +1214,14 @@ ElementRegionManager::
     for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
       ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( kSubReg );
-      dataRepository::Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
 
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
       for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
       {
         string const & constitutiveName = cm.getGroup( matIndex ).getName();
-        dataRepository::Group const * const constitutiveRelation = constitutiveGroup->getGroupPointer( constitutiveName );
+        dataRepository::Group const * const constitutiveRelation = constitutiveGroup.getGroupPointer( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation->getWrapperPointer< VIEWTYPE >( viewName );
@@ -1252,14 +1252,14 @@ ElementRegionManager::
     for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
       ElementSubRegionBase & subRegion = elemRegion.getSubRegion( kSubReg );
-      dataRepository::Group * const constitutiveGroup = subRegion.getConstitutiveModels();
+      dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
 
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
       for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
       {
         string const & constitutiveName = cm.getGroup( matIndex ).getName();
-        dataRepository::Group * const constitutiveRelation = constitutiveGroup->getGroupPointer( constitutiveName );
+        dataRepository::Group * const constitutiveRelation = constitutiveGroup.getGroupPointer( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation->getWrapperPointer< VIEWTYPE >( viewName );
@@ -1303,7 +1303,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
     region.forElementSubRegionsIndex( [&]( localIndex const esr,
                                            ElementSubRegionBase const & subRegion )
     {
-      dataRepository::Group const & constitutiveGroup = *subRegion.getConstitutiveModels();
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
       dataRepository::Group const & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
 
       dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
@@ -1348,7 +1348,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 
     region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
     {
-      dataRepository::Group & constitutiveGroup = *subRegion.getConstitutiveModels();
+      dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
       dataRepository::Group & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
 
       dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
@@ -1393,7 +1393,7 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
     for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
       ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( kSubReg );
-      dataRepository::Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
       for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
@@ -1401,7 +1401,7 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
         string const & constitutiveName = cm.getGroup( matIndex ).getName();
 
         CONSTITUTIVE_TYPE * const
-        constitutiveRelation = constitutiveGroup->getGroupPointer< CONSTITUTIVE_TYPE >( constitutiveName );
+        constitutiveRelation = constitutiveGroup.getGroupPointer< CONSTITUTIVE_TYPE >( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           accessor[kReg][kSubReg][matIndex] = constitutiveRelation;
@@ -1426,7 +1426,7 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
     for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
       ElementSubRegionBase & subRegion = elemRegion.getSubRegion( kSubReg );
-      dataRepository::Group * const constitutiveGroup = subRegion.getConstitutiveModels();
+      dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
       for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
@@ -1434,7 +1434,7 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
         string const & constitutiveName = cm.getGroup( matIndex ).getName();
 
         CONSTITUTIVE_TYPE * const
-        constitutiveRelation = constitutiveGroup->getGroupPointer< CONSTITUTIVE_TYPE >( constitutiveName );
+        constitutiveRelation = constitutiveGroup.getGroupPointer< CONSTITUTIVE_TYPE >( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           accessor[kReg][kSubReg][matIndex] = constitutiveRelation;

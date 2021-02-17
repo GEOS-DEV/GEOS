@@ -329,8 +329,7 @@ string_array ElementRegionBase::getConstitutiveNames() const
   string_array rval;
   for( string const & matName : m_materialList )
   {
-    CONSTITUTIVE_TYPE const * const matModel = this->getSubRegion( 0 ).getConstitutiveModels()->getGroupPointer< CONSTITUTIVE_TYPE >( matName );
-    if( matModel != nullptr )
+    if( this->getSubRegion( 0 ).getConstitutiveModels().hasGroup< CONSTITUTIVE_TYPE >( matName ) )
     {
       rval.emplace_back( matName );
     }
