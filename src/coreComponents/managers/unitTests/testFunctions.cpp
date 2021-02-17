@@ -18,8 +18,10 @@
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/FunctionBase.hpp"
 #include "managers/Functions/TableFunction.hpp"
+#include "managers/GeosxState.hpp"
+
 #ifdef GEOSX_USE_MATHPRESSO
-#include "managers/Functions/SymbolicFunction.hpp"
+  #include "managers/Functions/SymbolicFunction.hpp"
 #endif
 
 #include <random>
@@ -62,7 +64,7 @@ void checkDirectionalDerivative( real64 const (&input)[4],
 
 TEST( FunctionTests, 1DTable )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // 1D table, various interpolation methods
   localIndex const Naxis = 4;
@@ -148,7 +150,7 @@ TEST( FunctionTests, 1DTable )
 
 TEST( FunctionTests, 2DTable )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // 2D table with linear interpolation
   // f(x, y) = 2*x - 3*y + 5
@@ -197,8 +199,8 @@ TEST( FunctionTests, 2DTable )
   table_b->reInitializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string const groupName = "testGroup";
-  dataRepository::Group testGroup( groupName, nullptr );
+  conduit::Node node;
+  dataRepository::Group testGroup( "testGroup", node );
 
   real64_array2d testCoordinates;
   testGroup.registerWrapper( inputName, &testCoordinates )->
@@ -248,7 +250,7 @@ TEST( FunctionTests, 2DTable )
 
 TEST( FunctionTests, 4DTable_multipleInputs )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y + 7*z + 11*t
@@ -319,8 +321,8 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   table_c->reInitializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string const groupName = "testGroup";
-  dataRepository::Group testGroup( groupName, nullptr );
+  conduit::Node node;
+  dataRepository::Group testGroup( "testGroup", node );
 
   real64_array2d testCoordinates;
   testGroup.registerWrapper( coordinatesName, &testCoordinates )->
@@ -374,7 +376,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 
 TEST( FunctionTests, 4DTable_derivatives )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y*y + 7*z*z*z + 11*t*t*t*t
@@ -493,7 +495,7 @@ TEST( FunctionTests, 4DTable_derivatives )
 
 TEST( FunctionTests, 4DTable_symbolic )
 {
-  FunctionManager * functionManager = &FunctionManager::FunctionManager::instance();
+  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
   // Symbolic function with four inputs
   string const expression = "1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d)";
@@ -518,8 +520,9 @@ TEST( FunctionTests, 4DTable_symbolic )
   table_e->initializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
-  string const groupName = "testGroup";
-  dataRepository::Group testGroup( groupName, nullptr );
+  conduit::Node node;
+  dataRepository::Group testGroup( "testGroup", node );
+
   real64_array inputA;
   real64_array inputB;
   real64_array inputC;
@@ -575,13 +578,13 @@ TEST( FunctionTests, 4DTable_symbolic )
 
 int main( int argc, char * * argv )
 {
-  basicSetup( argc, argv );
-
   ::testing::InitGoogleTest( &argc, argv );
+
+  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  basicCleanup();
+  geosx::basicCleanup();
 
   return result;
 }

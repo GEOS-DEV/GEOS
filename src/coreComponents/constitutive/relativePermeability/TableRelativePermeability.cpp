@@ -1,5 +1,5 @@
 /*
- * ------------------------------------------------------------------------------------------------------------
+   1;5202;0c * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
@@ -18,6 +18,7 @@
 
 #include "TableRelativePermeability.hpp"
 
+#include "managers/GeosxState.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 
 namespace geosx
@@ -72,49 +73,54 @@ void TableRelativePermeability::initializePreSubGroups( Group * const group )
 
 void TableRelativePermeability::createAllTableKernelWrappers()
 {
-  FunctionManager const & functionManager = FunctionManager::instance();
+  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
 
   m_phaseMinVolumeFraction.resize( PhaseType::MAX_NUM_PHASES );
 
-  // check water-oil relperms
-  for( localIndex ip = 0; ip < m_waterOilRelPermTableNames.size(); ++ip )
+  if( m_waterOilRelPermTableKernelWrappers.size() == 0 &&
+      m_gasOilRelPermTableKernelWrappers.size() == 0 )
   {
-    TableFunction const & relPermTable = *functionManager.getGroup< TableFunction const >( m_waterOilRelPermTableNames[ip] );
-    real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
-    if( ip == 0 ) // water
-    {
-      m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = minVolPhaseFrac;
-    }
-    else if( ip == 1 ) // oil
-    {
-      m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = minVolPhaseFrac;
-    }
-    else
-    {
-      GEOSX_ERROR( "There should be only two table names for the water-oil pair" );
-    }
-    m_waterOilRelPermTableKernelWrappers.emplace_back( relPermTable.createKernelWrapper() );
-  }
 
-  // check gas-oil relperms
-  for( localIndex ip = 0; ip < m_gasOilRelPermTableNames.size(); ++ip )
-  {
-    TableFunction const & relPermTable = *functionManager.getGroup< TableFunction const >( m_gasOilRelPermTableNames[ip] );
-    real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
-    if( ip == 0 ) // gas
+    // check water-oil relperms
+    for( localIndex ip = 0; ip < m_waterOilRelPermTableNames.size(); ++ip )
     {
-      m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::GAS]] = minVolPhaseFrac;
-    }
-    else if( ip == 1 ) // oil
-    {
-      m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = minVolPhaseFrac;
-    }
-    else
-    {
-      GEOSX_ERROR( "There should be only two table names for the gas-oil pair" );
+      TableFunction const & relPermTable = *functionManager.getGroup< TableFunction const >( m_waterOilRelPermTableNames[ip] );
+      real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
+      if( ip == 0 ) // water
+      {
+        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = minVolPhaseFrac;
+      }
+      else if( ip == 1 ) // oil
+      {
+        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = minVolPhaseFrac;
+      }
+      else
+      {
+        GEOSX_ERROR( "There should be only two table names for the water-oil pair" );
+      }
+      m_waterOilRelPermTableKernelWrappers.emplace_back( relPermTable.createKernelWrapper() );
     }
 
-    m_gasOilRelPermTableKernelWrappers.emplace_back( relPermTable.createKernelWrapper() );
+    // check gas-oil relperms
+    for( localIndex ip = 0; ip < m_gasOilRelPermTableNames.size(); ++ip )
+    {
+      TableFunction const & relPermTable = *functionManager.getGroup< TableFunction const >( m_gasOilRelPermTableNames[ip] );
+      real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
+      if( ip == 0 ) // gas
+      {
+        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::GAS]] = minVolPhaseFrac;
+      }
+      else if( ip == 1 ) // oil
+      {
+        m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = minVolPhaseFrac;
+      }
+      else
+      {
+        GEOSX_ERROR( "There should be only two table names for the gas-oil pair" );
+      }
+
+      m_gasOilRelPermTableKernelWrappers.emplace_back( relPermTable.createKernelWrapper() );
+    }
   }
 }
 

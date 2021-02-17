@@ -937,6 +937,11 @@ public:
 //  void tvTemplateInstantiation();
 #endif
 
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyObject * createPythonObject( ) override
+  { return wrapperHelpers::createPythonObject( reference() ); }
+#endif
+
 private:
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
   /// address of m_data

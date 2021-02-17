@@ -59,7 +59,7 @@ public:
   /**
    * This method is called when its host event is triggered
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -658,6 +658,8 @@ public:
 
   string getDiscretizationName() const {return m_discretizationName;}
 
+  virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
+
 protected:
 
   static real64 eisenstatWalker( real64 const newNewtonNorm,
@@ -732,6 +734,8 @@ protected:
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
+
+  std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
 private:
 

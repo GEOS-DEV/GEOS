@@ -175,7 +175,7 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
            arraySlice1d< real64 > const & phaseRelPerm,
            arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  for( double & val : dPhaseRelPerm_dPhaseVolFrac )
+  for( real64 & val : dPhaseRelPerm_dPhaseVolFrac )
   {
     val = 0.0;
   }

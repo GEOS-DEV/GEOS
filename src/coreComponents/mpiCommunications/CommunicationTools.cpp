@@ -34,52 +34,15 @@ using namespace dataRepository;
 
 CommunicationTools::CommunicationTools()
 {
-  // TODO Auto-generated constructor stub
+  for( int i = 0; i < NeighborCommunicator::maxComm; ++i )
+  {
+    m_freeCommIDs.insert( i );
+  }
 }
 
 CommunicationTools::~CommunicationTools()
 {
   // TODO Auto-generated destructor stub
-}
-
-
-std::set< int > & CommunicationTools::getFreeCommIDs()
-{
-  static std::set< int > commIDs;
-  static bool isInitialized = false;
-
-  if( !isInitialized )
-  {
-    for( int a = 0; a < NeighborCommunicator::maxComm; ++a )
-    {
-      commIDs.insert( a );
-    }
-    isInitialized = true;
-  }
-
-  return commIDs;
-}
-
-
-int CommunicationTools::reserveCommID()
-{
-  std::set< int > & commIDs = getFreeCommIDs();
-
-  int rval = *( commIDs.begin() );
-  commIDs.erase( rval );
-  return rval;
-}
-
-void CommunicationTools::releaseCommID( int & ID )
-{
-  std::set< int > & commIDs = getFreeCommIDs();
-
-  if( commIDs.count( ID ) > 0 )
-  {
-    GEOSX_ERROR( "Attempting to release commID that is already free" );
-  }
-  commIDs.insert( ID );
-  ID = -1;
 }
 
 void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
@@ -428,7 +391,7 @@ CommunicationTools::
   {
     array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
 
-    int commID = reserveCommID();
+    CommID commID = getCommID();
 
     for( std::size_t i=0; i<allNeighbors.size(); ++i )
     {
@@ -466,8 +429,6 @@ CommunicationTools::
         }
       }
     }
-
-    releaseCommID( commID );
   }
 }
 
@@ -683,7 +644,7 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
                                      bool const unorderedComms )
 {
   GEOSX_MARK_FUNCTION;
-  int commID = CommunicationTools::reserveCommID();
+  CommID commID = CommunicationTools::getCommID();
 
   NodeManager & nodeManager = *( meshLevel.getNodeManager() );
   EdgeManager & edgeManager = *( meshLevel.getEdgeManager() );
@@ -760,8 +721,6 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
   nodeManager.compressRelationMaps();
   edgeManager.compressRelationMaps();
   faceManager.compressRelationMaps();
-
-  CommunicationTools::releaseCommID( commID );
 }
 
 void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
