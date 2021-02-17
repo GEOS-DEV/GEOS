@@ -67,15 +67,15 @@ void NodeManager::resize( localIndex const newSize )
 }
 
 
-void NodeManager::setEdgeMaps( EdgeManager const * const edgeManager )
+void NodeManager::setEdgeMaps( EdgeManager const & edgeManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager->nodeList();
+  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList();
   localIndex const numEdges = edgeToNodeMap.size( 0 );
   localIndex const numNodes = size();
 
-  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager->maxEdgesPerNode() );
+  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager.maxEdgesPerNode() );
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
 
   forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
@@ -116,15 +116,15 @@ void NodeManager::setEdgeMaps( EdgeManager const * const edgeManager )
 }
 
 
-void NodeManager::setFaceMaps( FaceManager const * const faceManager )
+void NodeManager::setFaceMaps( FaceManager const & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
   localIndex const numFaces = faceToNodes.size();
   localIndex const numNodes = size();
 
-  ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager->maxFacesPerNode() );
+  ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager.maxFacesPerNode() );
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces = 0;
 
   forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
@@ -167,7 +167,7 @@ void NodeManager::setFaceMaps( FaceManager const * const faceManager )
 }
 
 
-void NodeManager::setElementMaps( ElementRegionManager const * const elementRegionManager )
+void NodeManager::setElementMaps( ElementRegionManager const & elementRegionManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -182,7 +182,7 @@ void NodeManager::setElementMaps( ElementRegionManager const * const elementRegi
   // The total number of elements, the sum of elemsPerNode.
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
 
-  elementRegionManager->
+  elementRegionManager.
     forElementSubRegions< CellElementSubRegion >( [&elemsPerNode, &totalNodeElems]( CellElementSubRegion const & subRegion )
   {
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
@@ -231,7 +231,7 @@ void NodeManager::setElementMaps( ElementRegionManager const * const elementRegi
   // Populate the element maps.
   // Note that this can't be done in parallel because the three element lists must be in the same order.
   // If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
-  elementRegionManager->
+  elementRegionManager.
     forElementSubRegionsComplete< CellElementSubRegion >( [&toElementRegionList, &toElementSubRegionList, &toElementList]
                                                             ( localIndex const er, localIndex const esr, ElementRegionBase const &,
                                                             CellElementSubRegion const & subRegion )
@@ -249,7 +249,7 @@ void NodeManager::setElementMaps( ElementRegionManager const * const elementRegi
     }
   } );
 
-  this->m_toElements.setElementRegionManager( *elementRegionManager );
+  this->m_toElements.setElementRegionManager( elementRegionManager );
 }
 
 

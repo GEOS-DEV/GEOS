@@ -121,10 +121,10 @@ bool BlueprintOutput::execute( real64 const time,
   mesh[ "state/time" ] = time;
   mesh[ "state/cycle" ] = cycle;
 
-  addNodalData( *meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
+  addNodalData( meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
 
   dataRepository::Group averagedElementData( "averagedElementData", this );
-  addElementData( *meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
+  addElementData( meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
 
   /// The Blueprint will complain if the fields node is present but empty.
   if( mesh[ "fields" ].number_of_children() == 0 )

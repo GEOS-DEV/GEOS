@@ -84,9 +84,9 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
-    ElementRegionManager * const elemManager = meshLevel.getElemManager();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
     {
-      elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
+      elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
@@ -174,7 +174,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
   m_solidSolver->setupDofs( domain, dofManager );
 
   MeshLevel const & meshLevel              = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
+  ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   array1d< string > regions;
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
@@ -267,8 +267,8 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager const & nodeManager = *(mesh.getNodeManager());
-  ElementRegionManager const & elemManager = *(mesh.getElemManager());
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
   SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
   EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
@@ -305,8 +305,8 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
                                                               arrayView1d< localIndex > const & rowLengths ) const
 {
   MeshLevel const & mesh                   = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager          = *mesh.getNodeManager();
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  NodeManager const & nodeManager          = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -369,8 +369,8 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
                                                                   SparsityPatternView< globalIndex > const & pattern ) const
 {
   MeshLevel const & mesh                   = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager          = *mesh.getNodeManager();
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  NodeManager const & nodeManager          = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -611,13 +611,13 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
 
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel.getElemManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
   ContactRelationBase const &
   contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
 
-  elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
+  elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {
     arrayView2d< real64 const > const & jump  =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );

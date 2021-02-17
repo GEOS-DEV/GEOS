@@ -119,7 +119,7 @@ void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
  * @param[in] ei the index of the reservoir element
  * @return true if "location" is contained in reservoir element ei, false otherwise
  */
-bool IsPointInsideElement( NodeManager const * const nodeManager,
+bool IsPointInsideElement( NodeManager const & nodeManager,
                            R1Tensor const & location,
                            CellBlock const & subRegion,
                            localIndex ei )
@@ -135,7 +135,7 @@ bool IsPointInsideElement( NodeManager const * const nodeManager,
   }
 
   // if the point is in the element, save the indices and stop the search
-  if( computationalGeometry::IsPointInsidePolyhedron( nodeManager->referencePosition(),
+  if( computationalGeometry::IsPointInsidePolyhedron( nodeManager.referencePosition(),
                                                       faceNodes,
                                                       location ))
   {
@@ -187,12 +187,12 @@ bool VisitNeighborElements( MeshLevel const & mesh,
                             localIndex & esrMatched,
                             localIndex & eiMatched )
 {
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
-  NodeManager const * const nodeManager          = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
-  ArrayOfArraysView< localIndex const > const & toElementRegionList    = nodeManager->elementRegionList();
-  ArrayOfArraysView< localIndex const > const & toElementSubRegionList = nodeManager->elementSubRegionList();
-  ArrayOfArraysView< localIndex const > const & toElementList          = nodeManager->elementList();
+  ArrayOfArraysView< localIndex const > const & toElementRegionList    = nodeManager.elementRegionList();
+  ArrayOfArraysView< localIndex const > const & toElementSubRegionList = nodeManager.elementSubRegionList();
+  ArrayOfArraysView< localIndex const > const & toElementList          = nodeManager.elementList();
 
   bool matched = false;
 
@@ -218,7 +218,7 @@ bool VisitNeighborElements( MeshLevel const & mesh,
       localIndex const esr     = toElementSubRegionList[currNode][b];
       localIndex const eiLocal = toElementList[currNode][b];
 
-      CellElementRegion const & region = elemManager->getRegion< CellElementRegion >( er );
+      CellElementRegion const & region = elemManager.getRegion< CellElementRegion >( er );
       CellBlock const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
       globalIndex const eiGlobal = subRegion.localToGlobalMap()[eiLocal];
 
@@ -273,8 +273,8 @@ void InitializeLocalSearch( MeshLevel const & mesh,
                             localIndex & eiInit )
 {
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  resElemCenter = mesh.getElemManager()->constructViewAccessor< array2d< real64 >,
-                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+  resElemCenter = mesh.getElemManager().constructViewAccessor< array2d< real64 >,
+                                                               arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
   // to initialize the local search for the reservoir element that contains "location",
   // we find the reservoir element that minimizes the distance from "location" to the reservoir element center
   auto ret = minLocOverElemsInMesh( mesh, [&] ( localIndex const er,
@@ -319,7 +319,7 @@ bool SearchLocalElements( MeshLevel const & mesh,
   // the assumption here is that perforations have been entered in order of depth
   bool resElemFound = false;
 
-  CellElementRegion const & region = mesh.getElemManager()->getRegion< CellElementRegion >( erInit );
+  CellElementRegion const & region = mesh.getElemManager().getRegion< CellElementRegion >( erInit );
   CellBlock const & subRegion = region.getSubRegion< CellBlock >( esrInit );
 
   SortedArray< localIndex >  nodes;
@@ -608,16 +608,16 @@ void WellElementSubRegion::updateNodeManagerSize( MeshLevel & mesh,
 {
 
   // get the node manager to compute the total number of mesh nodes
-  NodeManager * const nodeManager    = mesh.getNodeManager();
+  NodeManager & nodeManager    = mesh.getNodeManager();
   localIndex const numWellNodesLocal = localNodes.size();
-  localIndex const oldNumNodesLocal  = nodeManager->size();
+  localIndex const oldNumNodesLocal  = nodeManager.size();
 
   // resize nodeManager to account for the new well nodes and update the properties
-  nodeManager->resize( oldNumNodesLocal + numWellNodesLocal );
+  nodeManager.resize( oldNumNodesLocal + numWellNodesLocal );
 
-  arrayView1d< integer > const & isDomainBoundary = nodeManager->getDomainBoundaryIndicator();
+  arrayView1d< integer > const & isDomainBoundary = nodeManager.getDomainBoundaryIndicator();
 
-  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
   arrayView2d< real64 const > const & nodeCoordsGlobal = wellGeometry.getNodeCoords();
 
@@ -625,7 +625,7 @@ void WellElementSubRegion::updateNodeManagerSize( MeshLevel & mesh,
   localIndex iwellNodeLocal = 0;
   // loop over global *well* indices
 
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   for( globalIndex iwellNodeGlobal : localNodes )
   {
     // local *nodeManager* index
@@ -644,13 +644,13 @@ void WellElementSubRegion::updateNodeManagerSize( MeshLevel & mesh,
     iwellNodeLocal++;
   }
 
-  // now with update the relevant node indices in nodeManager->globalToLocalMap
-  // this is to avoid a call to nodeManager->ConstructGlobalToLocalMap everytime we add a well
+  // now with update the relevant node indices in nodeManager.globalToLocalMap
+  // this is to avoid a call to nodeManager.ConstructGlobalToLocalMap everytime we add a well
   for( iwellNodeLocal = 0; iwellNodeLocal < numWellNodesLocal; ++iwellNodeLocal )
   {
     // local *nodeManager* index
     localIndex const inodeLocal = oldNumNodesLocal + iwellNodeLocal;
-    nodeManager->updateGlobalToLocalMap( inodeLocal );
+    nodeManager.updateGlobalToLocalMap( inodeLocal );
   }
 }
 
@@ -666,7 +666,7 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
   arrayView2d< globalIndex const > const & elemToNodesGlobal = wellGeometry.getElemToNodesMap();
   arrayView1d< real64 const >      const & elemVolumeGlobal  = wellGeometry.getElemVolume();
 
-  NodeManager const * const nodeManager = mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   resize( localElems.size() );
 
@@ -722,8 +722,8 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
     globalIndex const inodeBottomGlobal = nodeOffsetGlobal + elemToNodesGlobal[iwelemGlobal][InternalWellGenerator::NodeLocation::BOTTOM];
 
     // then get the local node indices in nodeManager ordering
-    localIndex const inodeTopLocal    = nodeManager->globalToLocalMap( inodeTopGlobal );
-    localIndex const inodeBottomLocal = nodeManager->globalToLocalMap( inodeBottomGlobal );
+    localIndex const inodeTopLocal    = nodeManager.globalToLocalMap( inodeTopGlobal );
+    localIndex const inodeBottomLocal = nodeManager.globalToLocalMap( inodeBottomGlobal );
 
     m_toNodesRelation[iwelemLocal][InternalWellGenerator::NodeLocation::TOP]    = inodeTopLocal;
     m_toNodesRelation[iwelemLocal][InternalWellGenerator::NodeLocation::BOTTOM] = inodeBottomLocal;
@@ -733,20 +733,20 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
 
 void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
 {
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
-  NodeManager * const nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
 
   // at this point, NodeManager::SetElementMaps has already been called for the mesh nodes
   // we have to update the following maps for the well nodes
-  ArrayOfArrays< localIndex > & toElementRegionList    = nodeManager->elementRegionList();
-  ArrayOfArrays< localIndex > & toElementSubRegionList = nodeManager->elementSubRegionList();
-  ArrayOfArrays< localIndex > & toElementList          = nodeManager->elementList();
+  ArrayOfArrays< localIndex > & toElementRegionList    = nodeManager.elementRegionList();
+  ArrayOfArrays< localIndex > & toElementSubRegionList = nodeManager.elementSubRegionList();
+  ArrayOfArrays< localIndex > & toElementList          = nodeManager.elementList();
 
   // we get the region and subregion indices in the elemManager
   WellElementRegion const & elemRegion = dynamicCast< WellElementRegion & >( *this->getParent()->getParent() );
   string const & elemRegionName = elemRegion.getName();
 
-  localIndex const iregion    = elemManager->getRegions().getIndex( elemRegionName );
+  localIndex const iregion    = elemManager.getRegions().getIndex( elemRegionName );
   localIndex const isubRegion = elemRegion.getSubRegions().getIndex( getName() );
 
   // for each (new) well element
@@ -914,8 +914,8 @@ void WellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 
 void WellElementSubRegion::debugNodeManager( MeshLevel const & mesh ) const
 {
-  NodeManager const * const nodeManager = mesh.getNodeManager();
-  // arrayView2d< real64 const > const & X = nodeManager->referencePosition();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  // arrayView2d< real64 const > const & X = nodeManager.referencePosition();
 
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 1 )
   {
@@ -925,17 +925,17 @@ void WellElementSubRegion::debugNodeManager( MeshLevel const & mesh ) const
   GEOSX_LOG_RANK( "++++++++++++++++++++++++++" );
   GEOSX_LOG_RANK( "WellElementSubRegion = " << getName() );
   GEOSX_LOG_RANK( "Number of local well elements = " << size() );
-  GEOSX_LOG_RANK( "Number of local node elements = " << nodeManager->size() );
+  GEOSX_LOG_RANK( "Number of local node elements = " << nodeManager.size() );
 
-  if( nodeManager->size() > 0 )
+  if( nodeManager.size() > 0 )
   {
     return;
   }
 
-  arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
-  for( localIndex inodeLocal = 0; inodeLocal < nodeManager->size(); ++inodeLocal )
+  arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
+  for( localIndex inodeLocal = 0; inodeLocal < nodeManager.size(); ++inodeLocal )
   {
-    std::cout << "nodeManager->localToGlobalMap["    << inodeLocal << "] = " << nodeLocalToGlobal[inodeLocal]  << std::endl;
+    std::cout << "nodeManager.localToGlobalMap["    << inodeLocal << "] = " << nodeLocalToGlobal[inodeLocal]  << std::endl;
   }
 }
 

@@ -333,12 +333,12 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) &&
   // (partition.GetPartitions()[1]==1);
 
-  NodeManager * nodeManager = meshLevel0.getNodeManager();
+  NodeManager & nodeManager = meshLevel0.getNodeManager();
 
   // Make sure that the node manager fields are initialized
 
   CellBlockManager & elementManager = domain.getGroup< CellBlockManager >( keys::cellManager );
-  Group & nodeSets = nodeManager->sets();
+  Group & nodeSets = nodeManager.sets();
 
   PartitionBase & partition = domain.getReference< PartitionBase >( keys::partitionManager );
 
@@ -536,10 +536,10 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     numNodes *= numNodesInDir[i];
   }
 
-  nodeManager->resize( numNodes );
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+  nodeManager.resize( numNodes );
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
   {
     localIndex localNodeIndex = 0;
@@ -812,7 +812,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   /*
      {// Move nodes in the extension layers.
 
-     for (localIndex iN = 0; iN != nodeManager->DataLengths(); ++iN)
+     for (localIndex iN = 0; iN != nodeManager.DataLengths(); ++iN)
      {
      for (int i=0; i<m_dim; ++i)
      {
@@ -842,7 +842,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   if( m_fPerturb > 0 )
   {
 
-    for( localIndex iN = 0; iN != nodeManager->size(); ++iN )
+    for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
     {
 
       for( int i = 0; i < m_dim; ++i )
@@ -867,7 +867,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   if( std::fabs( m_skewAngle ) > 0.0 )
   {
-    for( localIndex iN = 0; iN != nodeManager->size(); ++iN )
+    for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
     {
       X[iN][0] -= ( X[iN][1] - m_skewCenter[1] ) * std::tan( m_skewAngle );
     }
@@ -876,7 +876,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   if( m_mapToRadial > 0 )
   {
     // Map to radial mesh
-    for( localIndex iN = 0; iN != nodeManager->size(); ++iN )
+    for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
     {
       m_meshTheta = X[iN][1] * M_PI / 180.0;
       m_meshAxis = static_cast< int >(round( m_meshTheta * 2.0 / M_PI ));
@@ -1228,7 +1228,7 @@ void InternalMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARA
   //    const Table3D* tableDx =
   // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDx);
   //
-  //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
+  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
   //    {
   //      real64 dx=tableDx->Lookup(X[iN]);
   //      X[iN][0] += dx;
@@ -1240,7 +1240,7 @@ void InternalMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARA
   //    const Table3D* tableDy =
   // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDy);
   //
-  //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
+  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
   //    {
   //      real64 dy=tableDy->Lookup(X[iN]);
   //      X[iN][1] += dy;
@@ -1252,7 +1252,7 @@ void InternalMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARA
   //    const Table3D* tableDz =
   // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDz);
   //
-  //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
+  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
   //    {
   //      real64 dz=tableDz->Lookup(X[iN]);
   //      X[iN][2] += dz;

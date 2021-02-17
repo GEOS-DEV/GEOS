@@ -102,10 +102,8 @@ void CompositionalMultiphaseWell::postProcessInput()
   WellSolverBase::postProcessInput();
   checkModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString() );
 
-  CompositionalMultiphaseFlow const * const flowSolver = getParent()->getGroupPointer< CompositionalMultiphaseFlow >( getFlowSolverName() );
-  GEOSX_ERROR_IF( flowSolver == nullptr,
-                  "Flow solver " << getFlowSolverName() << " not found or incompatible type "
-                                                           "(referenced from well solver " << getName() << ")" );
+  CompositionalMultiphaseFlow const & flowSolver = getParent()->getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
+  GEOSX_UNUSED_VAR( flowSolver );
 
   GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                          "The maximum absolute change in component fraction must smaller or equal to 1.0" );
@@ -242,7 +240,7 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( MeshLevel const & 
     std::set< string > reservoirRegionNames;
     for( localIndex const ei : resElementRegion )
     {
-      reservoirRegionNames.insert( meshLevel.getElemManager()->getRegion( ei ).getName() );
+      reservoirRegionNames.insert( meshLevel.getElemManager().getRegion( ei ).getName() );
     }
 
     // Check that each well model is compatible with all models in perforated reservoir regions
@@ -352,8 +350,8 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
   m_numComponents = fluid0.numFluidComponents();
   m_numDofPerWellElement = m_numComponents + 2; // 1 pressure + NC compositions + 1 connectionRate
 
-  validateModelMapping< MultiFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
-  validateModelMapping< RelativePermeabilityBase >( *meshLevel.getElemManager(), m_relPermModelNames );
+  validateModelMapping< MultiFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
+  validateModelMapping< RelativePermeabilityBase >( meshLevel.getElemManager(), m_relPermModelNames );
   validateInjectionStreams( meshLevel );
   validateWellConstraints( meshLevel, fluid0 );
 
@@ -1397,7 +1395,7 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
   WellSolverBase::resetViews( domain );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = *mesh.getElemManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
 
   CompositionalMultiphaseFlow & flowSolver = getParent()->getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
 

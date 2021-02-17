@@ -124,9 +124,9 @@ void LaplaceFEM::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    NodeManager * const nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
+    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
 
-    nodes->registerWrapper< real64_array >( m_fieldName ).
+    nodes.registerWrapper< real64_array >( m_fieldName ).
       setApplyDefaultValue( 0.0 ).
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setDescription( "Primary field variable" );
@@ -209,9 +209,9 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
   SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
   arrayView1d< globalIndex const > const &
-  dofIndex = nodeManager->getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
+  dofIndex = nodeManager.getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
 
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
                                                   dofManager.numGlobalDofs(),
@@ -257,7 +257,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager & nodeManager = *mesh.getNodeManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView1d< globalIndex const > const &
   dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );

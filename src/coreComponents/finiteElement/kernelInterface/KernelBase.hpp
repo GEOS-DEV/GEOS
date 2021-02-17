@@ -375,10 +375,10 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
   // save the maximum residual contribution for scaling residuals for convergence criteria.
   real64 maxResidualContribution = 0;
 
-  NodeManager & nodeManager = *(mesh.getNodeManager());
-  EdgeManager & edgeManager = *(mesh.getEdgeManager());
-  FaceManager & faceManager = *(mesh.getFaceManager());
-  ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
+  NodeManager & nodeManager = mesh.getNodeManager();
+  EdgeManager & edgeManager = mesh.getEdgeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
 
   // Create a tuple that contains the kernelConstructorParams, as the lambda does not properly catch the parameter pack

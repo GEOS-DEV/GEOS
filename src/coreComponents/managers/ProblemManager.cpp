@@ -303,9 +303,9 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
-  ElementRegionManager * elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  elementManager->generateDataStructureSkeleton( 0 );
-  schemaUtilities::SchemaConstruction( *elementManager, schemaRoot, targetChoiceNode, documentationType );
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  elementManager.generateDataStructureSkeleton( 0 );
+  schemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
 
 
   // Add entries that are only used in the pre-processor
@@ -399,9 +399,9 @@ void ProblemManager::parseInputFile()
     // Open mesh levels
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
-    ElementRegionManager * elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-    topLevelNode = xmlProblemNode.child( elementManager->getName().c_str());
-    elementManager->processInputFileRecursive( topLevelNode );
+    ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+    topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
+    elementManager.processInputFileRecursive( topLevelNode );
 
   }
 }
@@ -501,10 +501,10 @@ void ProblemManager::generateMesh()
     {
       MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( b );
 
-      NodeManager & nodeManager = *meshLevel.getNodeManager();
-      EdgeManager & edgeManager = *meshLevel.getEdgeManager();
-      FaceManager & faceManager = *meshLevel.getFaceManager();
-      ElementRegionManager & elemManager = *meshLevel.getElemManager();
+      NodeManager & nodeManager = meshLevel.getNodeManager();
+      EdgeManager & edgeManager = meshLevel.getEdgeManager();
+      FaceManager & faceManager = meshLevel.getFaceManager();
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
 
       GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
 
@@ -546,14 +546,14 @@ void ProblemManager::generateMesh()
   GEOSX_THROW_IF_NE( meshBody.numSubGroups(), 1, InputError );
   MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
 
-  FaceManager * const faceManager = meshLevel.getFaceManager();
-  EdgeManager * edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
   domain.setupCommunications( useNonblockingMPI );
-  faceManager->setIsExternal();
-  edgeManager->setIsExternal( faceManager );
+  faceManager.setIsExternal();
+  edgeManager.setIsExternal( faceManager );
 }
 
 
@@ -598,13 +598,13 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
         for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
         {
           MeshLevel & meshLevel = meshBody.getMeshLevel( b );
-          NodeManager * const nodeManager = meshLevel.getNodeManager();
-          ElementRegionManager * const elemManager = meshLevel.getElemManager();
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+          NodeManager & nodeManager = meshLevel.getNodeManager();
+          ElementRegionManager & elemManager = meshLevel.getElemManager();
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
           for( auto const & regionName : targetRegions )
           {
-            ElementRegionBase & elemRegion = elemManager->getRegion( regionName );
+            ElementRegionBase & elemRegion = elemManager.getRegion( regionName );
 
             if( feDiscretization != nullptr )
             {
@@ -664,12 +664,12 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
     {
       MeshLevel & meshLevel = meshBody.getMeshLevel( b );
-      ElementRegionManager * const elemManager = meshLevel.getElemManager();
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-      elemManager->forElementSubRegionsComplete( [&]( localIndex const,
-                                                      localIndex const,
-                                                      ElementRegionBase & elemRegion,
-                                                      ElementSubRegionBase & elemSubRegion )
+      elemManager.forElementSubRegionsComplete( [&]( localIndex const,
+                                                     localIndex const,
+                                                     ElementRegionBase & elemRegion,
+                                                     ElementSubRegionBase & elemSubRegion )
       {
         string const & regionName = elemRegion.getName();
         string const & subRegionName = elemSubRegion.getName();

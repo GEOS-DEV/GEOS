@@ -518,8 +518,8 @@ string VTKPolyDataWriterInterface::getTimeStepSubFolder( real64 time ) const
 void VTKPolyDataWriterInterface::write( real64 time, integer cycle, DomainPartition const & domain )
 {
   createTimeStepSubFolder( time );
-  ElementRegionManager const & elemManager = *domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  NodeManager const & nodeManager = *domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
   writeCellElementRegions( time, elemManager, nodeManager );
   writeWellElementRegions( time, elemManager, nodeManager );
   writeSurfaceElementRegions( time, elemManager, nodeManager );

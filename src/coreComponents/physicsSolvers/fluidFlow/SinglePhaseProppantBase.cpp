@@ -44,7 +44,7 @@ void SinglePhaseProppantBase::validateFluidModels( DomainPartition const & domai
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
     MeshLevel const & meshLevel = dynamicCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
-    validateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+    validateModelMapping< SlurryFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
   }
 }
 

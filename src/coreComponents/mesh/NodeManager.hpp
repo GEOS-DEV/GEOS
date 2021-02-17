@@ -150,19 +150,19 @@ public:
    * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager
    */
-  void setEdgeMaps( EdgeManager const * const edgeManager );
+  void setEdgeMaps( EdgeManager const & edgeManager );
 
   /**
    * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
    * @param [in] faceManager the faceManager to assign this NodeManager
    */
-  void setFaceMaps( FaceManager const * const faceManager );
+  void setFaceMaps( FaceManager const & faceManager );
 
   /**
    * @brief Assign the ElementRegionManager \p elementRegionManager to the NodeManager, and performs the node-to-element mapping
    * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
    */
-  void setElementMaps( ElementRegionManager const * const elementRegionManager );
+  void setElementMaps( ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.

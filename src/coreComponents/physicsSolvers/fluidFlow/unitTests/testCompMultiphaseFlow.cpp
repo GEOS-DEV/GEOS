@@ -636,7 +636,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = state.getProblemManager().getPhysicsSolverManager().getGroupPointer< CompositionalMultiphaseFlow >( "compflow" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseFlow >( "compflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

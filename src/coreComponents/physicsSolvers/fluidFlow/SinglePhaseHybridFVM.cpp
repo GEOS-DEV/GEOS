@@ -60,10 +60,10 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-    FaceManager * const faceManager = meshLevel.getFaceManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
 
     // primary variables: face pressures changes
-    faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() ).
+    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() ).
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRegisteringObjects( this->getName()).
       setDescription( "An array that holds the accumulated pressure updates at the faces." );
@@ -78,7 +78,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( fvManager.getGroupPointer< HybridMimeticDiscretization >( m_discretizationName ) == nullptr )
+  if( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ) )
   {
     GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM" );
   }
@@ -92,8 +92,8 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
@@ -133,7 +133,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
 
   // setup the face fields
   MeshLevel & meshLevel     = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  FaceManager & faceManager = *meshLevel.getFaceManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
 
   // get the accumulated pressure updates
   arrayView1d< real64 > const & dFacePres =
@@ -154,7 +154,7 @@ void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
 
   // increment the face fields
   MeshLevel & meshLevel     = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  FaceManager & faceManager = *meshLevel.getFaceManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
 
   // get the face-based pressures
   arrayView1d< real64 > const & facePres =
@@ -210,8 +210,8 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   GEOSX_MARK_FUNCTION;
 
   MeshLevel const & mesh          = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -234,7 +234,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   // get the element dof numbers for the assembly
   string const & elemDofKey = dofManager.getKey( viewKeyStruct::pressureString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-    mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+    mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
   elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
   // get the face-centered pressures
@@ -324,7 +324,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                                                     arrayView1d< real64 const > const & localRhs )
 {
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  FaceManager const & faceManager = *mesh.getFaceManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   // here we compute the cell-centered residual norm in the derived class
   // to avoid duplicating a synchronization point
@@ -423,7 +423,7 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
                                                 real64 const scalingFactor )
 {
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  FaceManager const & faceManager = *mesh.getFaceManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   localIndex localCheck = 1;
 
@@ -538,7 +538,7 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
 
   // 2. Reset the face-based fields
   MeshLevel & mesh          = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  FaceManager & faceManager = *mesh.getFaceManager();
+  FaceManager & faceManager = mesh.getFaceManager();
 
   // get the accumulated face pressure updates
   arrayView1d< real64 > const & dFacePres =

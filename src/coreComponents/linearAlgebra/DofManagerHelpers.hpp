@@ -469,7 +469,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
     array1d< localIndex > locationsToVisit{};
     locationsToVisit.reserve( objectManager.size() );
 
-    meshLevel->getElemManager()->
+    meshLevel->getElemManager().
       forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( localIndex const, auto const & subRegion )
     {
       // derive some more useful, subregion-dependent type aliases
@@ -626,7 +626,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
                      std::vector< string > const & regions,
                      LAMBDA lambda )
   {
-    meshLevel->getElemManager()->
+    meshLevel->getElemManager().
       forElementSubRegionsComplete< SUBREGIONTYPES... >( regions, [&]( localIndex const,
                                                                        localIndex const er,
                                                                        localIndex const esr,
@@ -671,7 +671,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, V
                      std::vector< string > const & regions,
                      LAMBDA && lambda )
   {
-    meshLevel->getElemManager()->
+    meshLevel->getElemManager().
       forElementSubRegionsComplete< SUBREGIONTYPES... >( regions, [&]( localIndex const,
                                                                        localIndex const er,
                                                                        localIndex const esr,
@@ -840,9 +840,9 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
           string const & description,
           std::vector< string > const & regions )
   {
-    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions,
-                                                                                [&]( localIndex const,
-                                                                                     auto & subRegion )
+    mesh->getElemManager().template forElementSubRegions< SUBREGIONTYPES... >( regions,
+                                                                               [&]( localIndex const,
+                                                                                    auto & subRegion )
     {
       subRegion.template registerWrapper< ArrayType >( key ).
         setApplyDefaultValue( -1 ).
@@ -854,7 +854,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
 
   static Accessor get( Mesh * const mesh, string const & key )
   {
-    return mesh->getElemManager()->template constructViewAccessor< ArrayType, ViewType >( key );
+    return mesh->getElemManager().template constructViewAccessor< ArrayType, ViewType >( key );
   }
 
   static inline INDEX value( Accessor & indexArray,
@@ -879,9 +879,9 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
           string const & key,
           std::vector< string > const & regions )
   {
-    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions,
-                                                                                [&]( localIndex const,
-                                                                                     ElementSubRegionBase & subRegion )
+    mesh->getElemManager().template forElementSubRegions< SUBREGIONTYPES... >( regions,
+                                                                               [&]( localIndex const,
+                                                                                    ElementSubRegionBase & subRegion )
     {
       subRegion.deregisterWrapper( key );
     } );

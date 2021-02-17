@@ -170,7 +170,7 @@ void WellSolverBase::initializePreSubGroups()
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
     MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    validateModelMapping( *meshLevel.getElemManager(), m_fluidModelNames );
+    validateModelMapping( meshLevel.getElemManager(), m_fluidModelNames );
   }
 
   FlowSolverBase const & flowSolver = getParent()->getGroup< FlowSolverBase >( getFlowSolverName() );
@@ -242,7 +242,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
 void WellSolverBase::resetViews( DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   m_resGravCoef.clear();
   m_resGravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( FlowSolverBase::viewKeyStruct::gravityCoefString() );

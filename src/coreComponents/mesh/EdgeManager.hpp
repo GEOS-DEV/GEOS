@@ -116,7 +116,7 @@ public:
    * @details external edges are the edges on the faces which are external
    * @param[in] faceManager the face manager to obtain external face
    */
-  void setIsExternal( FaceManager const * const faceManager );
+  void setIsExternal( FaceManager const & faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
@@ -208,14 +208,6 @@ public:
   void connectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
                                       const map< globalIndex, localIndex > & nodeGlobalToLocal,
                                       const map< globalIndex, localIndex > & faceGlobalToLocal );
-
-  /**
-   * @brief Add new faces to the faces to edges map.
-   * @param[in] faceManager the FaceManager
-   * @param[in] newFaceIndices the new face indices to be added
-   */
-  void addToEdgeToFaceMap( FaceManager const * const faceManager,
-                           arrayView1d< localIndex const > const & newFaceIndices );
 
   /**
    * @brief Split an edge (separate its two extremity nodes)

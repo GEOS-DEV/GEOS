@@ -405,11 +405,11 @@ void EdgeManager::buildEdges( FaceManager & faceManager, NodeManager & nodeManag
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  faceManager.edgeList().setRelatedObject( this );
+  faceManager.edgeList().setRelatedObject( *this );
   ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
 
-  m_toNodesRelation.setRelatedObject( &nodeManager );
-  m_toFacesRelation.setRelatedObject( &faceManager );
+  m_toNodesRelation.setRelatedObject( nodeManager );
+  m_toFacesRelation.setRelatedObject( faceManager );
 
   ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
   createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
@@ -527,19 +527,19 @@ bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) co
 //  return(val);
 //}
 
-void EdgeManager::setIsExternal( FaceManager const * const faceManager )
+void EdgeManager::setIsExternal( FaceManager const & faceManager )
 {
-  // get the "isExternal" field from the faceManager->..This should have been
+  // get the "isExternal" field from the faceManager...This should have been
   // set already!
-  arrayView1d< integer const > const & isExternalFace = faceManager->isExternal();
+  arrayView1d< integer const > const & isExternalFace = faceManager.isExternal();
 
-  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager.edgeList().toViewConst();
 
   // get the "isExternal" field from for *this, and set it to zero
   m_isExternal.setValues< serialPolicy >( 0 );
 
   // loop through all faces
-  for( localIndex kf=0; kf<faceManager->size(); ++kf )
+  for( localIndex kf=0; kf<faceManager.size(); ++kf )
   {
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
@@ -629,26 +629,6 @@ void EdgeManager::connectivityFromGlobalToLocal( const SortedArray< localIndex >
 //
 //  }
 
-}
-
-void EdgeManager::addToEdgeToFaceMap( FaceManager const * const faceManager,
-                                      arrayView1d< localIndex const > const & newFaceIndices )
-{
-  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager->edgeList().toViewConst();
-
-  // loop over all faces in list
-  for( localIndex const newFaceIndex : newFaceIndices )
-  {
-
-    // now iterate over the faceToEdgeMap (i.e. all nodes in the faceToNodeMap)
-    localIndex const numEdges = faceToEdgeMap.sizeOfArray( newFaceIndex );
-    for( localIndex a = 0; a < numEdges; ++a )
-    {
-      // enter the value of the face index into the nodeToFace map
-      localIndex const edgeID = faceToEdgeMap( newFaceIndex, a );
-      m_toFacesRelation.insertIntoSet( edgeID, newFaceIndex );
-    }
-  }
 }
 
 localIndex EdgeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const

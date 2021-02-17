@@ -143,19 +143,6 @@ public:
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
   };
 
-
-  SolidMechanicsLagrangianFEM * getSolidSolver()
-  { return this->getParent()->getGroupPointer< SolidMechanicsLagrangianFEM >( m_solidSolverName ); }
-
-  SolidMechanicsLagrangianFEM const * getSolidSolver() const
-  { return this->getParent()->getGroupPointer< SolidMechanicsLagrangianFEM >( m_solidSolverName ); }
-
-  FlowSolverBase * getFlowSolver()
-  { return this->getParent()->getGroupPointer< FlowSolverBase >( m_flowSolverName ); }
-
-  FlowSolverBase const * getFlowSolver() const
-  { return this->getParent()->getGroupPointer< FlowSolverBase >( m_flowSolverName ); }
-
 protected:
 
   virtual void postProcessInput() override;

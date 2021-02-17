@@ -41,11 +41,11 @@ template< class POLICY=serialPolicy, typename LAMBDA=void >
 void forAllElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
 {
 
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
-  elemManager->forElementSubRegionsComplete< ElementSubRegionBase >( [&] ( localIndex const er,
-                                                                           localIndex const esr,
-                                                                           ElementRegionBase const &,
-                                                                           ElementSubRegionBase const & subRegion )
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  elemManager.forElementSubRegionsComplete< ElementSubRegionBase >( [&] ( localIndex const er,
+                                                                          localIndex const esr,
+                                                                          ElementRegionBase const &,
+                                                                          ElementSubRegionBase const & subRegion )
   {
     forAll< POLICY >( subRegion.size(), [&]( localIndex const k ) { lambda( er, esr, k ); } );
   } );
@@ -66,11 +66,11 @@ minLocOverElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
   NUMBER minVal = std::numeric_limits< NUMBER >::max();
   localIndex minReg = -1, minSubreg = -1, minIndex = -1;
 
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  for( localIndex er=0; er<elemManager->numRegions(); ++er )
+  for( localIndex er=0; er<elemManager.numRegions(); ++er )
   {
-    ElementRegionBase const & elemRegion = elemManager->getRegion( er );
+    ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 
     elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion const & subRegion )
     {

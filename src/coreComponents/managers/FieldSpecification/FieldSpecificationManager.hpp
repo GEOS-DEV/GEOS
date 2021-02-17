@@ -241,7 +241,6 @@ public:
         {
           dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );;
 
-          string processedPath;
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {
             dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
@@ -262,11 +261,7 @@ public:
               continue;
             }
 
-            targetGroup = targetGroup->getGroupPointer( targetPath[pathLevel] );
-            processedPath += "/" + targetPath[pathLevel];
-
-            GEOSX_ERROR_IF( targetGroup == nullptr,
-                            "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
+            targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
           }
           applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
         }

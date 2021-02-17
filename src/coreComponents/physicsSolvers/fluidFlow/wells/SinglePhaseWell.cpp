@@ -51,10 +51,8 @@ void SinglePhaseWell::postProcessInput()
 {
   WellSolverBase::postProcessInput();
 
-  SinglePhaseBase const * const flowSolver = getParent()->getGroupPointer< SinglePhaseBase >( getFlowSolverName() );
-  GEOSX_ERROR_IF( flowSolver == nullptr,
-                  "Flow solver " << getFlowSolverName() << " not found or incompatible type "
-                                                           "(referenced from well solver " << getName() << ")" );
+  SinglePhaseBase const & flowSolver = getParent()->getGroup< SinglePhaseBase >( getFlowSolverName() );
+  GEOSX_UNUSED_VAR( flowSolver );
 }
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
@@ -96,7 +94,7 @@ void SinglePhaseWell::initializePreSubGroups()
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  validateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+  validateModelMapping< SingleFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
   validateWellConstraints( meshLevel );
 }
 
@@ -700,7 +698,7 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
   WellSolverBase::resetViews( domain );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = *mesh.getElemManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
 
   SinglePhaseBase & flowSolver = getParent()->getGroup< SinglePhaseBase >( getFlowSolverName() );
 
@@ -751,7 +749,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
                                             DomainPartition & domain )
 {
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = *meshLevel.getElemManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {

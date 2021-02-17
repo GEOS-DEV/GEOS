@@ -87,16 +87,16 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
-    NodeManager * const nodes = meshLevel.getNodeManager();
+    NodeManager & nodes = meshLevel.getNodeManager();
 
-    nodes->registerWrapper< real64_array >( m_fieldName )
+    nodes.registerWrapper< real64_array >( m_fieldName )
       .setApplyDefaultValue( 0.0 )
       .setPlotLevel( PlotLevel::LEVEL_0 )
       .setDescription( "Primary field variable" );
 
-    ElementRegionManager * const elemManager = meshLevel.getElemManager();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-    elemManager->forElementSubRegions< CellElementSubRegion >( [ &]( CellElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion >( [ &]( CellElementSubRegion & subRegion )
     {
       subRegion.registerWrapper( viewKeyStruct::coeffNameString(), &m_coeff ).
         setApplyDefaultValue( 0.0 ).
@@ -219,9 +219,9 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
 {
   GEOSX_MARK_FUNCTION;
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh.getNodeManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d< globalIndex const > const & dofIndex = nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+  arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
   // Initialize all entries to zero
 #if 1 // Andre...this is the new code
@@ -294,7 +294,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
 
         real64 threshold = constitutiveUpdate.getEnergyThreshold();//elastic energy threshold - use when Local Dissipation is linear
 
-        arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( m_fieldName );
+        arrayView1d< real64 > const & nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
         //real64 diffusion = 1.0;
         // begin element loop, skipping ghost elements
         for( localIndex k = 0; k < elementSubRegion.size(); ++k )
@@ -477,7 +477,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
   const MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  const NodeManager & nodeManager = *mesh.getNodeManager();
+  const NodeManager & nodeManager = mesh.getNodeManager();
   const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
 
   const arrayView1d< const globalIndex > &

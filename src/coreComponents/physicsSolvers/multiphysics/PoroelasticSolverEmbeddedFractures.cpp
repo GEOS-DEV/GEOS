@@ -78,8 +78,8 @@ void PoroelasticSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Gro
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
-    ElementRegionManager * const elemManager = meshLevel.getElemManager();
-    elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
     {
       region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
       {
@@ -108,7 +108,7 @@ void PoroelasticSolverEmbeddedFractures::setupDofs( DomainPartition const & doma
 
   // Add coupling between fracture pressure and displacement jump
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
+  ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   array1d< string > regions;
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
@@ -188,7 +188,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition
 
   // Add the number of nonzeros induced by coupling jump-displacement
   MeshLevel const & mesh                   = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
   string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
@@ -288,7 +288,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
   m_fracturesSolver->addCouplingSparsityPattern( domain, dofManager, pattern );
 
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
   string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
@@ -443,7 +443,7 @@ void PoroelasticSolverEmbeddedFractures::
   string const jumpDofKey     = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
 
   // Get fracture's views
-  ElementRegionManager const & elemManager = *(mesh.getElemManager());
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   SurfaceElementRegion const & fractureRegion =
     elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
@@ -797,14 +797,14 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
 {
   // update aperture to be equal to the normal displacement jump and traction on the fracture to include the pressure contribution
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel.getElemManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
 
   ContactRelationBase const &
   contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
 
-  elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
+  elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {
     arrayView2d< real64 const > const dispJump =
       subRegion.getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );

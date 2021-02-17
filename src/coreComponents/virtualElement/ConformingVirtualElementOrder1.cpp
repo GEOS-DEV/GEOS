@@ -27,9 +27,9 @@ void ConformingVirtualElementOrder1::computeProjectors( MeshLevel const & mesh,
                                                         localIndex const & cellIndex )
 {
   // Get geometry managers
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
-  ElementRegionManager const & elementManager = *mesh.getElemManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  ElementRegionManager const & elementManager = mesh.getElemManager();
 
   // Get pre-computed maps
   CellElementRegion const & cellRegion = elementManager.getRegion< CellElementRegion >( regionIndex );
@@ -241,9 +241,9 @@ ConformingVirtualElementOrder1::
                         array1d< real64 > & threeDMonomialIntegrals )
 {
   // Get geometry managers.
-  FaceManager const & faceManager = *mesh.getFaceManager();
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  EdgeManager const & edgeManager = *mesh.getEdgeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
 
   // Get pre-computed maps.
   arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];

@@ -53,9 +53,9 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
-    ElementRegionManager * const elemManager = meshLevel.getElemManager();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString() ).setPlotLevel( PlotLevel::LEVEL_0 );
 
@@ -79,7 +79,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE );
     } );
 
-    elemManager->forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( auto & subRegion )
+    elemManager.forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( auto & subRegion )
     {
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString() ).setPlotLevel( PlotLevel::LEVEL_0 );
 
@@ -111,9 +111,9 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
         setDefaultValue( 1.0 );
     } );
 
-    FaceManager * const faceManager = meshLevel.getFaceManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
     {
-      faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::facePressureString() ).
+      faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::facePressureString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the pressures at the faces." );
@@ -126,7 +126,7 @@ void SinglePhaseBase::validateFluidModels( DomainPartition const & domain ) cons
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
     MeshLevel const & meshLevel = dynamicCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
-    validateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+    validateModelMapping< SingleFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
   }
 }
 
@@ -268,9 +268,9 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     }
   } );
 
-  mesh.getElemManager()->forElementRegions< SurfaceElementRegion >( targetRegionNames(),
-                                                                    [&]( localIndex const targetIndex,
-                                                                         SurfaceElementRegion & region )
+  mesh.getElemManager().forElementRegions< SurfaceElementRegion >( targetRegionNames(),
+                                                                   [&]( localIndex const targetIndex,
+                                                                        SurfaceElementRegion & region )
   {
     region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -752,7 +752,7 @@ void SinglePhaseBase::backupFields( MeshLevel & mesh ) const
 void SinglePhaseBase::resetViews( MeshLevel & mesh )
 {
   FlowSolverBase::resetViews( mesh );
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   m_pressure.clear();
   m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::pressureString() );

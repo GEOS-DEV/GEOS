@@ -125,7 +125,6 @@ ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & dom
   string_array const targetTokens = stringutilities::Tokenize( m_objectPath, "/" );
   localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
-  string processedPath;
   for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
   {
     dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
@@ -144,9 +143,7 @@ ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & dom
       continue;
     }
 
-    targetGroup = targetGroup->getGroupPointer( targetTokens[pathLevel] );
-    processedPath += "/" + targetTokens[pathLevel];
-    GEOSX_ERROR_IF( targetGroup == nullptr, "PackCollction::getTargetObject( ): Last entry in objectPath (" << processedPath << ") is not found" );
+    targetGroup = &targetGroup->getGroup( targetTokens[pathLevel] );
   }
 
   return dynamicCast< ObjectManagerBase const * >( targetGroup );

@@ -352,10 +352,10 @@ void DofManager::addField( string const & fieldName,
     field.docstring += " (with " + std::to_string( components ) + "-component blocks)";
   }
 
-  ElementRegionManager * const elemManager = m_mesh->getElemManager();
+  ElementRegionManager & elemManager = m_mesh->getElemManager();
   if( field.regions.empty() )
   {
-    elemManager->forElementRegions( [&]( ElementRegionBase const & region )
+    elemManager.forElementRegions( [&]( ElementRegionBase const & region )
     {
       field.regions.emplace_back( region.getName() );
     } );
@@ -364,7 +364,7 @@ void DofManager::addField( string const & fieldName,
   {
     for( string const & regionName : field.regions )
     {
-      elemManager->getRegion( regionName );
+      elemManager.getRegion( regionName );
     }
   }
 
@@ -468,13 +468,13 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
     DofManager::Location constexpr ELEM  = DofManager::Location::Elem;
     DofManager::Location constexpr EDGE = DofManager::Location::Edge;
 
-    EdgeManager const * const edgeManager = mesh->getEdgeManager();
-    ElementRegionManager const * const elemManager = mesh->getElemManager();
+    EdgeManager const & edgeManager = mesh->getEdgeManager();
+    ElementRegionManager const & elemManager = mesh->getElemManager();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofIndex =
-      elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
+      elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
 
-    array1d< localIndex > edgeConnectorIndex( edgeManager->size() );
+    array1d< localIndex > edgeConnectorIndex( edgeManager.size() );
     edgeConnectorIndex.setValues< serialPolicy >( -1 );
 
     localIndex edgeCount = 0;
@@ -545,7 +545,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
   localIndex const NC = field.numComponents;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumber =
-    m_mesh->getElemManager()->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
+    m_mesh->getElemManager().constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
 
   array1d< globalIndex > rowIndices( NC );
   array1d< globalIndex > colIndices( NC );
@@ -746,7 +746,7 @@ void DofManager::setSparsityPatternFromStencil( SparsityPattern< globalIndex > &
   globalIndex const rankDofOffset = rankOffset();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumber =
-    m_mesh->getElemManager()->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
+    m_mesh->getElemManager().constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
 
   array1d< globalIndex > rowDofIndices( NC );
   array1d< globalIndex > colDofIndices( NC );
@@ -863,8 +863,8 @@ void DofManager::setFiniteElementSparsityPattern( SparsityPattern< globalIndex >
   //constexpr int MAX_NODES_PER_ELEM = 8;
   //constexpr int MAX_NODE_NEIGHBORS = 27;
 
-  ElementRegionManager const & elemManager = *m_mesh->getElemManager();
-  NodeManager const & nodeManager = *m_mesh->getNodeManager();
+  ElementRegionManager const & elemManager = m_mesh->getElemManager();
+  NodeManager const & nodeManager = m_mesh->getNodeManager();
 
   array1d< array1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > > > elemsToNodesArray( elemManager.numRegions() );
   elemManager.forElementRegionsComplete< CellElementRegion >( field.regions,
@@ -1094,7 +1094,7 @@ void DofManager::countRowLengthsFromStencil( arrayView1d< localIndex > const & r
   globalIndex const rankDofOffset = rankOffset();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumber =
-    m_mesh->getElemManager()->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
+    m_mesh->getElemManager().constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
 
   array1d< globalIndex > rowDofIndices( NC );
   array1d< globalIndex > colDofIndices( NC );
@@ -1404,9 +1404,9 @@ void DofManager::vectorToField( LOCAL_VECTOR const localVector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions,
-                                                                            [&]( localIndex const,
-                                                                                 ElementSubRegionBase & subRegion )
+    m_mesh->getElemManager().forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions,
+                                                                           [&]( localIndex const,
+                                                                                ElementSubRegionBase & subRegion )
     {
       vectorToFieldImpl< FIELD_OP, POLICY >( localVector,
                                              subRegion,
@@ -1511,9 +1511,9 @@ void DofManager::fieldToVector( LOCAL_VECTOR localVector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions,
-                                                                            [&]( localIndex const,
-                                                                                 ElementSubRegionBase const & subRegion )
+    m_mesh->getElemManager().forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions,
+                                                                           [&]( localIndex const,
+                                                                                ElementSubRegionBase const & subRegion )
     {
       fieldToVectorImpl< FIELD_OP, POLICY >( localVector,
                                              subRegion,

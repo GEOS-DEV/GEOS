@@ -82,9 +82,9 @@ void DomainPartition::generateSets()
   GEOSX_MARK_FUNCTION;
 
   MeshLevel & mesh = this->getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
-  dataRepository::Group const & nodeSets = nodeManager->sets();
+  dataRepository::Group const & nodeSets = nodeManager.sets();
 
   map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
@@ -93,7 +93,7 @@ void DomainPartition::generateSets()
   for( auto & wrapper : nodeSets.wrappers() )
   {
     string const & name = wrapper.second->getName();
-    nodeInSet[name].resize( nodeManager->size() );
+    nodeInSet[name].resize( nodeManager.size() );
     nodeInSet[name].setValues< serialPolicy >( false );
 
     if( nodeSets.hasWrapper( name ) )
@@ -108,8 +108,8 @@ void DomainPartition::generateSets()
   }
 
 
-  ElementRegionManager * const elementRegionManager = mesh.getElemManager();
-  elementRegionManager->forElementSubRegions( [&]( auto & subRegion )
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
+  elementRegionManager.forElementSubRegions( [&]( auto & subRegion )
   {
     dataRepository::Group & elementSets = subRegion.sets();
 
@@ -230,9 +230,9 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
     neighbor.addNeighborGroupToMesh( meshLevel );
   }
 
-  NodeManager & nodeManager = *meshLevel.getNodeManager();
-  FaceManager & faceManager = *meshLevel.getFaceManager();
-  EdgeManager & edgeManager = *meshLevel.getEdgeManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
   nodeManager.setMaxGlobalIndex();
 
@@ -248,7 +248,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   getGlobalState().getCommunicationTools().findGhosts( meshLevel, m_neighbors, use_nonblocking );
 
-  faceManager.sortAllFaceNodes( nodeManager, *meshLevel.getElemManager() );
+  faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
   faceManager.computeGeometry( nodeManager );
 }
 

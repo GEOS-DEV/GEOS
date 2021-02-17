@@ -646,10 +646,10 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
   GEOSX_MARK_FUNCTION;
   CommID commID = CommunicationTools::getCommID();
 
-  NodeManager & nodeManager = *( meshLevel.getNodeManager() );
-  EdgeManager & edgeManager = *( meshLevel.getEdgeManager() );
-  FaceManager & faceManager = *( meshLevel.getFaceManager() );
-  ElementRegionManager & elemManager = *( meshLevel.getElemManager() );
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   auto sendGhosts = [&] ( int idx )
   {

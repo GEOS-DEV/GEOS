@@ -57,10 +57,10 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   MeshManager & meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
-  ElementRegionManager * elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->processInputFileRecursive( topLevelNode );
-  elementManager->postProcessInputRecursive();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.postProcessInputRecursive();
 
   problemManager->problemSetup();
   problemManager->applyInitialConditions();
@@ -83,7 +83,7 @@ string_array getRegions( MeshLevel const * const mesh, std::vector< string > con
   }
   else
   {
-    mesh->getElemManager()->forElementRegions( [&]( ElementRegionBase const & region )
+    mesh->getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
     {
       regions.emplace_back( region.getName() );
     } );
@@ -153,7 +153,7 @@ struct forLocalObjectsImpl
 
     array1d< bool > visited( ghostRank.size() );
 
-    mesh->getElemManager()->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+    mesh->getElemManager().forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
     {
       using MapType = typename helper::template ElemToObjMap< std::remove_reference_t< decltype( subRegion ) > >;
 
@@ -184,14 +184,14 @@ struct forLocalObjectsImpl< DofManager::Location::Elem >
                  LAMBDA lambda )
   {
     // make a list of regions
-    ElementRegionManager const * const elemManager = mesh->getElemManager();
+    ElementRegionManager const & elemManager = mesh->getElemManager();
 
-    elemManager->forElementSubRegionsComplete< ElementSubRegionBase >( regions,
-                                                                       [&]( localIndex const,
-                                                                            localIndex const er,
-                                                                            localIndex const esr,
-                                                                            ElementRegionBase const &,
-                                                                            ElementSubRegionBase const & subRegion )
+    elemManager.forElementSubRegionsComplete< ElementSubRegionBase >( regions,
+                                                                      [&]( localIndex const,
+                                                                           localIndex const er,
+                                                                           localIndex const esr,
+                                                                           ElementRegionBase const &,
+                                                                           ElementSubRegionBase const & subRegion )
     {
       arrayView1d< integer const > ghostRank = subRegion.ghostRank();
 
@@ -254,21 +254,21 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
                        localIndex const numComp,
                        MATRIX & sparsity )
 {
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager const & elemManager = mesh->getElemManager();
+  FaceManager const & faceManager = mesh->getFaceManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
-    elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+    elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
   // Make a set of target region indices to check face fluxes.
   SortedArray< localIndex > regionSet;
-  elemManager->forElementRegions( regions, [&]( localIndex const, ElementRegionBase const & region )
+  elemManager.forElementRegions( regions, [&]( localIndex const, ElementRegionBase const & region )
   {
     regionSet.insert( region.getIndexInParent() );
   } );
 
   // prepare data for assembly loop
-  FaceManager::ElemMapType const & faceToElem = faceManager->toElementRelation();
+  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
   localIndex const numElem = faceToElem.size( 1 );
 
   array1d< globalIndex > localDofIndex( numElem * numComp );
@@ -314,14 +314,13 @@ void makeSparsityFEM( MeshLevel const * const mesh,
                       localIndex const numComp,
                       MATRIX & sparsity )
 {
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager const & elemManager = mesh->getElemManager();
+  NodeManager const & nodeManager = mesh->getNodeManager();
 
-  arrayView1d< globalIndex const > nodeDofIndex =
-    nodeManager->getReference< array1d< globalIndex > >( dofIndexKey );
+  arrayView1d< globalIndex const > nodeDofIndex = nodeManager.getReference< array1d< globalIndex > >( dofIndexKey );
 
   // perform assembly loop over elements
-  elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+  elemManager.forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
     using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
     traits::ViewTypeConst< NodeMapType > const
@@ -366,14 +365,14 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
                           localIndex const numCompElem,
                           MATRIX & sparsity )
 {
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager const & elemManager = mesh->getElemManager();
+  NodeManager const & nodeManager = mesh->getNodeManager();
 
   arrayView1d< globalIndex const > nodeDofIndex =
-    nodeManager->getReference< array1d< globalIndex > >( dofIndexKeyNode );
+    nodeManager.getReference< array1d< globalIndex > >( dofIndexKeyNode );
 
   // perform assembly loop over elements
-  elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+  elemManager.forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
     using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
     traits::ViewTypeConst< NodeMapType > const
@@ -426,10 +425,10 @@ void makeSparsityMass( MeshLevel const * const mesh,
                        localIndex const numComp,
                        MATRIX & sparsity )
 {
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  ElementRegionManager const & elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
-    elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+    elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
   array1d< globalIndex > localDofIndex( numComp );
   array2d< real64 > localValues( numComp, numComp );
@@ -460,14 +459,14 @@ void makeSparsityFlux( MeshLevel const * const mesh,
                        localIndex const numComp,
                        MATRIX & sparsity )
 {
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager const & elemManager = mesh->getElemManager();
+  FaceManager const & faceManager = mesh->getFaceManager();
 
   arrayView1d< globalIndex const > faceDofIndex =
-    faceManager->getReference< array1d< globalIndex > >( dofIndexKey );
+    faceManager.getReference< array1d< globalIndex > >( dofIndexKey );
 
   // perform assembly loop over elements
-  elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+  elemManager.forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
     using FaceMapType = typename TYPEOFREF( subRegion ) ::FaceMapType;
     traits::ViewTypeConst< FaceMapType > const

@@ -1085,7 +1085,7 @@ ElementRegionManager::constructViewAccessor( string const & viewName, string con
 
       if( !neighborName.empty() )
       {
-        group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroupPointer( neighborName );
+        group = &group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroup( neighborName );
       }
 
       dataRepository::Wrapper< VIEWTYPE > const * const wrapper = group->getWrapperPointer< VIEWTYPE >( viewName );
@@ -1117,7 +1117,7 @@ ElementRegionManager::
 
       if( !neighborName.empty() )
       {
-        group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroupPointer( neighborName );
+        group = &group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroup( neighborName );
       }
 
       dataRepository::Wrapper< VIEWTYPE > * const wrapper = group->getWrapperPointer< VIEWTYPE >( viewName );
@@ -1156,7 +1156,7 @@ ElementRegionManager::
 
       if( !neighborName.empty() )
       {
-        group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroupPointer( neighborName );
+        group = &group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroup( neighborName );
       }
 
       if( group->hasWrapper( viewName ) )
@@ -1186,7 +1186,7 @@ ElementRegionManager::
 
       if( !neighborName.empty() )
       {
-        group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroupPointer( neighborName );
+        group = &group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroup( neighborName );
       }
 
       if( group->hasWrapper( viewName ) )

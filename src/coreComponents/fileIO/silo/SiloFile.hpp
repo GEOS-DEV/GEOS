@@ -231,7 +231,7 @@ public:
    * @param writeArbitraryPolygon
    */
   void writeElementMesh( ElementRegionBase const & elementRegion,
-                         NodeManager const * const nodeManager,
+                         NodeManager const & nodeManager,
                          string const & meshName,
                          const localIndex nnodes,
                          real64 * coords[3],
@@ -323,7 +323,7 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void writeGroupSilo( dataRepository::Group const * group,
+  void writeGroupSilo( dataRepository::Group const & group,
                        string const & siloDirName,
                        string const & meshname,
                        int const centering,

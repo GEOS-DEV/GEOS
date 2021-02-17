@@ -117,7 +117,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
 
   // get the permeability in the domain
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
-    mesh.getElemManager()->constructArrayViewAccessor< real64, 2 >( permeabilityKey );
+    mesh.getElemManager().constructArrayViewAccessor< real64, 2 >( permeabilityKey );
 
   arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion.getElementCenter();
 
@@ -200,16 +200,16 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
                                                      localIndex const er, localIndex const esr, localIndex const ei,
                                                      real64 & dx, real64 & dy, real64 & dz ) const
 {
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
-  NodeManager const * const nodeManager = mesh.getNodeManager();
-  CellElementRegion const & region = elemManager->getRegion< CellElementRegion >( er );
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  CellElementRegion const & region = elemManager.getRegion< CellElementRegion >( er );
   CellBlock const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];
   computationalGeometry::GetBoundingBox( ei,
                                          subRegion.nodeList(),
-                                         nodeManager->referencePosition(),
+                                         nodeManager.referencePosition(),
                                          boxDims );
 
   // dx and dz from bounding box

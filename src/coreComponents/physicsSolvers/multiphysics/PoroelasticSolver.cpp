@@ -74,9 +74,9 @@ void PoroelasticSolver::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    ElementRegionManager * const elemManager = meshBody.getMeshLevel( 0 ).getElemManager();
+    ElementRegionManager & elemManager = meshBody.getMeshLevel( 0 ).getElemManager();
 
-    elemManager->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
     {
       elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString() ).
         setDescription( "Total Mean Stress" );
@@ -238,7 +238,7 @@ void PoroelasticSolver::updateDeformationForCoupling( DomainPartition & domain )
 {
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager & nodeManager = *mesh.getNodeManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
@@ -355,7 +355,7 @@ void PoroelasticSolver::assembleCouplingTerms( DomainPartition const & domain,
   GEOSX_MARK_FUNCTION;
 
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & uDofNumber = nodeManager.getReference< globalIndex_array >( uDofKey );

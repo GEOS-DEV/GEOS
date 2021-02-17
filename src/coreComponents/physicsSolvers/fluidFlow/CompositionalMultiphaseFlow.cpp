@@ -248,7 +248,7 @@ void CompositionalMultiphaseFlow::initializePreSubGroups()
   // 3. Check that the discretization is valid for this solver
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  if( fvManager.getGroupPointer< FluxApproximationBase >( m_discretizationName ) == nullptr )
+  if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
     GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with CompositionalMultiphaseFlow" );
   }
@@ -259,11 +259,11 @@ void CompositionalMultiphaseFlow::initializePreSubGroups()
     MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     resizeFields( meshLevel );
 
-    validateModelMapping< MultiFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
-    validateModelMapping< RelativePermeabilityBase >( *meshLevel.getElemManager(), m_relPermModelNames );
+    validateModelMapping< MultiFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
+    validateModelMapping< RelativePermeabilityBase >( meshLevel.getElemManager(), m_relPermModelNames );
     if( m_capPressureFlag )
     {
-      validateModelMapping< CapillaryPressureBase >( *meshLevel.getElemManager(), m_capPressureModelNames );
+      validateModelMapping< CapillaryPressureBase >( meshLevel.getElemManager(), m_capPressureModelNames );
     }
   }
 }
@@ -860,7 +860,7 @@ void CompositionalMultiphaseFlow::assembleFluxTerms( real64 const dt,
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::dofFieldString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-  elemDofNumber = mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+  elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( getName() + "/accessors/" + dofKey );
 
   fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
@@ -1506,7 +1506,7 @@ void CompositionalMultiphaseFlow::implicitStepComplete( real64 const & GEOSX_UNU
 void CompositionalMultiphaseFlow::resetViews( MeshLevel & mesh )
 {
   FlowSolverBase::resetViews( mesh );
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   m_pressure.clear();
   m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::pressureString() );

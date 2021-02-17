@@ -200,11 +200,11 @@ void ElementRegionManager::generateAggregates( FaceManager const & faceManager, 
 void ElementRegionManager::generateWells( MeshManager & meshManager,
                                           MeshLevel & meshLevel )
 {
-  NodeManager * const nodeManager = meshLevel.getNodeManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
 
   // get the offsets to construct local-to-global maps for well nodes and elements
-  nodeManager->setMaxGlobalIndex();
-  globalIndex const nodeOffsetGlobal = nodeManager->maxGlobalIndex() + 1;
+  nodeManager.setMaxGlobalIndex();
+  globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
   localIndex const elemOffsetLocal  = this->getNumberOfElements();
   globalIndex const elemOffsetGlobal = MpiWrapper::sum( elemOffsetLocal );
 
@@ -242,7 +242,7 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
   } );
 
   // communicate to rebuild global node info since we modified global ordering
-  nodeManager->setMaxGlobalIndex();
+  nodeManager.setMaxGlobalIndex();
 }
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,

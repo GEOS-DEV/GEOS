@@ -100,7 +100,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
 
   //TODO for the moment we only consider on mesh level "Level0"
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-  NodeManager * nodeManager = meshLevel0.getNodeManager();
+  NodeManager & nodeManager = meshLevel0.getNodeManager();
   CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
 
 
@@ -108,12 +108,12 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   auto const polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ));
 
   // Vertices are written first
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
-  nodeManager->resize( m_pamelaMesh->get_PointCollection()->size_all());
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  nodeManager.resize( m_pamelaMesh->get_PointCollection()->size_all());
 
-  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
-  Group & nodeSets = nodeManager->sets();
+  Group & nodeSets = nodeManager.sets();
   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
 
   real64 xMax[3] = { std::numeric_limits< real64 >::min() };

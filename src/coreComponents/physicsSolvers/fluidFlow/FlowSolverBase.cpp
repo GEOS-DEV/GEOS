@@ -97,12 +97,12 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
         setApplyDefaultValue( 0.0 );
     } );
 
-    ElementRegionManager * const elemManager = mesh.getElemManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
-    elemManager->forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
-                                                                               localIndex const,
-                                                                               ElementRegionBase & region,
-                                                                               SurfaceElementSubRegion & subRegion )
+    elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
+                                                                              localIndex const,
+                                                                              ElementRegionBase & region,
+                                                                              SurfaceElementSubRegion & subRegion )
     {
       SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
 
@@ -124,8 +124,8 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
-    FaceManager * const faceManager = mesh.getFaceManager();
-    faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).setApplyDefaultValue( 0.0 );
+    FaceManager & faceManager = mesh.getFaceManager();
+    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).setApplyDefaultValue( 0.0 );
   } );
 }
 
@@ -146,7 +146,7 @@ void FlowSolverBase::initializePreSubGroups()
   domain.getMeshBodies().forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-    validateModelMapping( *meshLevel.getElemManager(), m_solidModelNames );
+    validateModelMapping( meshLevel.getElemManager(), m_solidModelNames );
   } );
 
   // fill stencil targetRegions
@@ -154,7 +154,7 @@ void FlowSolverBase::initializePreSubGroups()
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( fvManager.getGroupPointer< FluxApproximationBase >( m_discretizationName ) != nullptr )
+  if( fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
     array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
@@ -187,7 +187,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 
 void FlowSolverBase::precomputeData( MeshLevel & mesh )
 {
-  FaceManager & faceManager = *mesh.getFaceManager();
+  FaceManager & faceManager = mesh.getFaceManager();
   real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
   forTargetSubRegions( mesh, [&]( localIndex const,
@@ -221,7 +221,7 @@ FlowSolverBase::~FlowSolverBase() = default;
 
 void FlowSolverBase::resetViews( MeshLevel & mesh )
 {
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   m_elemGhostRank.clear();
   m_elemGhostRank = elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );

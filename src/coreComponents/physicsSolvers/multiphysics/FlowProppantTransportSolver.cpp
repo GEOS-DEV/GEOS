@@ -55,11 +55,8 @@ void FlowProppantTransportSolver::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  m_proppantSolver = this->getParent()->getGroupPointer< ProppantTransport >( m_proppantSolverName );
-  GEOSX_ERROR_IF( m_proppantSolver == nullptr, "Invalid proppant solver name: " << m_proppantSolverName );
-
-  m_flowSolver = this->getParent()->getGroupPointer< FlowSolverBase >( m_flowSolverName );
-  GEOSX_ERROR_IF( m_flowSolver == nullptr, "Invalid flow solver name: " << m_flowSolverName );
+  m_proppantSolver = &this->getParent()->getGroup< ProppantTransport >( m_proppantSolverName );
+  m_flowSolver = &this->getParent()->getGroup< FlowSolverBase >( m_flowSolverName );
 }
 
 FlowProppantTransportSolver::~FlowProppantTransportSolver() = default;

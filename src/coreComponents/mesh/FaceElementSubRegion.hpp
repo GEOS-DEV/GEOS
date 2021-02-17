@@ -117,7 +117,7 @@ public:
    * @param faceManager The face manager group
    * @param indices The list of indices to set value of ghostRank
    */
-  void inheritGhostRankFromParentFace( FaceManager const * const faceManager,
+  void inheritGhostRankFromParentFace( FaceManager const & faceManager,
                                        std::set< localIndex > const & indices );
 
   /**

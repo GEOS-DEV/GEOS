@@ -48,28 +48,28 @@ void TestMeshImport( string const & inputStringMesh,
 
   MeshBody & meshBody = domain->getMeshBody( 0 );
   MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-  NodeManager const & nodeManager = *meshLevel.getNodeManager();
-  FaceManager const & faceManager = *meshLevel.getFaceManager();
-  ElementRegionManager * const elemManager = meshLevel.getElemManager();
+  NodeManager const & nodeManager = meshLevel.getNodeManager();
+  FaceManager const & faceManager = meshLevel.getFaceManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   // Create the ElementRegions
   xmlDocument.load_buffer( inputStringRegion.c_str(), inputStringRegion.size() );
 
   xmlWrapper::xmlNode xmlRegionNode = xmlDocument.child( "ElementRegions" );
-  elemManager->processInputFileRecursive( xmlRegionNode );
-  elemManager->postProcessInputRecursive();
+  elemManager.processInputFileRecursive( xmlRegionNode );
+  elemManager.postProcessInputRecursive();
 
   Group & cellBlockManager = domain->getGroup( keys::cellManager );
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
-  elemManager->generateMesh( cellBlockManager );
+  elemManager.generateMesh( cellBlockManager );
 
 
   // Check if the computed center match with the imported center
   if( !propertyToTest.empty() )
   {
-    auto centerProperty = elemManager->constructArrayViewAccessor< real64, 2 >( propertyToTest );
-    elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
+    auto centerProperty = elemManager.constructArrayViewAccessor< real64, 2 >( propertyToTest );
+    elemManager.forElementSubRegionsComplete< ElementSubRegionBase >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion )
     {
       elemSubRegion.calculateElementGeometricQuantities( nodeManager, faceManager );

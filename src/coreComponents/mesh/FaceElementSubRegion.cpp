@@ -219,10 +219,10 @@ void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 
 }
 
-void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const * const faceManager,
+void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,
                                                            std::set< localIndex > const & indices )
 {
-  arrayView1d< integer const > const & faceGhostRank = faceManager->ghostRank();
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   for( localIndex const & index : indices )
   {
     m_ghostRank[index] = faceGhostRank[ m_toFacesRelation[index][0] ];

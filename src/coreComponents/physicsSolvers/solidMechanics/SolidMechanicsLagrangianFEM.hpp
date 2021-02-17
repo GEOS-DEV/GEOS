@@ -325,7 +325,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
   GEOSX_MARK_FUNCTION;
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager const & nodeManager = *(mesh.getNodeManager());
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );

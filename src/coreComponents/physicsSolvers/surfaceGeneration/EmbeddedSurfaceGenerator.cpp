@@ -80,10 +80,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // Get managers
-  ElementRegionManager & elemManager = *meshLevel.getElemManager();
-  NodeManager * const nodeManager = meshLevel.getNodeManager();
-  EdgeManager * const edgeManager = meshLevel.getEdgeManager();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager->referencePosition();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
   SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
@@ -141,8 +141,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
             bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
                                                                          esr,
                                                                          er,
-                                                                         *nodeManager,
-                                                                         *edgeManager,
+                                                                         nodeManager,
+                                                                         edgeManager,
                                                                          cellToEdges,
                                                                          &fracture );
 
@@ -178,7 +178,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
-  localIndex numOfPoints = nodeManager->embSurfNodesPosition().size( 0 );
+  localIndex numOfPoints = nodeManager.embSurfNodesPosition().size( 0 );
 
   embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 }

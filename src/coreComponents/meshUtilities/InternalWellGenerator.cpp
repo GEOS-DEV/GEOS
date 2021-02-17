@@ -187,9 +187,9 @@ void InternalWellGenerator::generateMesh( DomainPartition & domain )
   // get the element (sub) region to populate and save the well generator and constraints names
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  ElementRegionManager * const elemManager = meshLevel.getElemManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
   WellElementRegion &
-  wellRegion = elemManager->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
+  wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
                  getGroup< WellElementRegion >( this->m_wellRegionName );
 
   wellRegion.setWellGeneratorName( this->getName() );

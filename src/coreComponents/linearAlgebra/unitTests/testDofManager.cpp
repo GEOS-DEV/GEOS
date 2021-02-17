@@ -127,8 +127,8 @@ void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const
                                                          array1d< globalIndex > & dofNumbers )
 {
   // make a list of regions
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  auto const dofNumber = elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+  ElementRegionManager const & elemManager = mesh->getElemManager();
+  auto const dofNumber = elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
   forLocalObjects< DofManager::Location::Elem >( mesh, regions, [&]( auto const idx )
   {

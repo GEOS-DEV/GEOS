@@ -93,7 +93,7 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
         registerBoundaryStencil( stencilGroup, setName );
       } );
 
-      FaceManager & faceManager = *mesh.getFaceManager();
+      FaceManager & faceManager = mesh.getFaceManager();
       faceManager.registerWrapper< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() ).
         setApplyDefaultValue( 1.0 ).
         setPlotLevel( PlotLevel::LEVEL_0 ).

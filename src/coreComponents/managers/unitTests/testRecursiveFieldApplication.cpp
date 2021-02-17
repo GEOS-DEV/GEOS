@@ -94,11 +94,11 @@ TEST( FieldSpecification, Recursive )
   auto & cellToVertexreg1Tet = reg1Tet.nodeList();
   cellToVertexreg1Tet.resize( nbTetReg1, 4 );
 
-  ElementRegionManager * elemManager = meshLevel0.getElemManager();
-  CellElementRegion & reg0 = dynamicCast< CellElementRegion & >( *elemManager->createChild( "CellElementRegion", "reg0" ) );
+  ElementRegionManager & elemManager = meshLevel0.getElemManager();
+  CellElementRegion & reg0 = dynamicCast< CellElementRegion & >( *elemManager.createChild( "CellElementRegion", "reg0" ) );
   reg0.addCellBlockName( reg0Hex.getName());
   reg0.addCellBlockName( reg0Tet.getName());
-  CellElementRegion & reg1 = dynamicCast< CellElementRegion & >( *elemManager->createChild( "CellElementRegion", "reg1" ) );
+  CellElementRegion & reg1 = dynamicCast< CellElementRegion & >( *elemManager.createChild( "CellElementRegion", "reg1" ) );
   reg1.addCellBlockName( reg1Hex.getName());
   reg1.addCellBlockName( reg1Tet.getName());
   reg0.generateMesh( cellBlockManager.getGroup( keys::cellBlocks ) );
@@ -161,11 +161,11 @@ TEST( FieldSpecification, Recursive )
 
   /// Check if the values are well set
 
-  auto field0 = elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field0" );
-  auto field1 = elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field1" );
-  auto field2 = elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field2" );
-  auto field3 = elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field3" );
-  elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
+  auto field0 = elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field0" );
+  auto field1 = elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field1" );
+  auto field2 = elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field2" );
+  auto field3 = elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field3" );
+  elemManager.forElementSubRegionsComplete< ElementSubRegionBase >(
     [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
   {
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
