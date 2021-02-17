@@ -198,7 +198,7 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
   // loop over all the regions
   for( typename dataRepository::indexType er = 0; er < elementManager.numRegions(); ++er )
   {
-    ElementRegionBase const & elemRegion = *elementManager.getRegion( er );
+    ElementRegionBase const & elemRegion = elementManager.getRegion( er );
 
     // loop over all the subregions
     elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
@@ -328,7 +328,7 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
       localIndex const elementLocalFaceIndex = facesByLowestNode( nodeID, j ).elementLocalFaceIndex;
 
       // Get the number of face nodes from the subregion.
-      CellElementSubRegion const & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
+      CellElementSubRegion const & subRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
       numNodesPerFace[ curFaceID ] = subRegion.getNumFaceNodes( k, elementLocalFaceIndex );
       totalFaceNodes += numNodesPerFace[ curFaceID ];
 
@@ -344,7 +344,7 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
       localIndex const elementLocalFaceIndex = facesByLowestNode( nodeID, j ).elementLocalFaceIndex;
 
       // Get the number of face nodes from the subregion.
-      CellElementSubRegion const & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
+      CellElementSubRegion const & subRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
       numNodesPerFace[ curFaceID ] = subRegion.getNumFaceNodes( k, elementLocalFaceIndex );
       totalFaceNodes += numNodesPerFace[ curFaceID ];
     }
@@ -399,7 +399,7 @@ void addInteriorFace( ElementRegionManager & elementManager,
     localIndex const elementLocalFaceIndex = fb0.elementLocalFaceIndex;
 
     // Get the subRegion associated with the element.
-    CellElementSubRegion & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
+    CellElementSubRegion & subRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
 
     // The first element defines the node ordering for the face.
     localIndex const numFaceNodes = subRegion.getFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
@@ -422,7 +422,7 @@ void addInteriorFace( ElementRegionManager & elementManager,
     localIndex const k = fb1.k;
     localIndex const elementLocalFaceIndex = fb1.elementLocalFaceIndex;
 
-    CellElementSubRegion & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
+    CellElementSubRegion & subRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
     subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
 
     elemRegionList( faceID, 1 ) = er;
@@ -455,7 +455,7 @@ void addBoundaryFace( ElementRegionManager & elementManager,
   localIndex const elementLocalFaceIndex = fb.elementLocalFaceIndex;
 
   // Get the subRegion associated with the element.
-  CellElementSubRegion & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
+  CellElementSubRegion & subRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
 
   // Get the nodes associated with the face.
   localIndex const numFaceNodes = subRegion.getFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
@@ -691,10 +691,10 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
   forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
   {
-    ElementRegionBase const * const elemRegion = elemManager.getRegion( elemRegionList[kf][0] );
-    CellElementSubRegion const * const subRegion = elemRegion->getSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
+    ElementRegionBase const & elemRegion = elemManager.getRegion( elemRegionList[kf][0] );
+    CellElementSubRegion const & subRegion = elemRegion.getSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
     localIndex const numFaceNodes = faceToNodeMap.sizeOfArray( kf );
-    arrayView2d< real64 const > const elemCenter = subRegion->getElementCenter();
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
     sortFaceNodes( X, elemCenter[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
   } );
 }
@@ -984,9 +984,9 @@ void FaceManager::depopulateUpMaps( std::set< localIndex > const & receivedFaces
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        CellElementSubRegion const * subRegion = elemRegionManager.getRegion( elemRegionIndex )->
+        CellElementSubRegion const & subRegion = elemRegionManager.getRegion( elemRegionIndex ).
                                                    getSubRegion< CellElementSubRegion >( elemSubRegionIndex );
-        array2d< localIndex > const & downmap = subRegion->faceList();
+        array2d< localIndex > const & downmap = subRegion.faceList();
         bool hasTargetIndex = false;
 
         for( localIndex a=0; a<downmap.size( 1 ); ++a )

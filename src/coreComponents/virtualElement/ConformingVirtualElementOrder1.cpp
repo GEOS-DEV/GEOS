@@ -32,10 +32,8 @@ void ConformingVirtualElementOrder1::computeProjectors( MeshLevel const & mesh,
   ElementRegionManager const & elementManager = *mesh.getElemManager();
 
   // Get pre-computed maps
-  CellElementRegion const & cellRegion =
-    *elementManager.getRegion< CellElementRegion >( regionIndex );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.getSubRegion< CellElementSubRegion >( subRegionIndex );
+  CellElementRegion const & cellRegion = elementManager.getRegion< CellElementRegion >( regionIndex );
+  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( subRegionIndex );
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   FixedOneToManyRelation const & elementToFaceMap = cellSubRegion.faceList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =

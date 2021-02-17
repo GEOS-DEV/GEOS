@@ -768,10 +768,10 @@ void SolverBase::validateModelMapping( ElementRegionManager const & elemRegionMa
   GEOSX_ERROR_IF_NE( modelNames.size(), m_targetRegionNames.size() );
   for( localIndex k = 0; k < modelNames.size(); ++k )
   {
-    ElementRegionBase const & region = *elemRegionManager.getRegion( m_targetRegionNames[k] );
+    ElementRegionBase const & region = elemRegionManager.getRegion( m_targetRegionNames[k] );
     for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
     {
-      ElementSubRegionBase const & subRegion = *region.getSubRegion( esr );
+      ElementSubRegionBase const & subRegion = region.getSubRegion( esr );
       MODEL_TYPE const * const model = subRegion.getConstitutiveModels()->getGroupPointer< MODEL_TYPE >( modelNames[k] );
       GEOSX_ERROR_IF( model == nullptr,
                       getName() << ": constitutive model " << modelNames[k] << " not found in " << region.getName() << '/' << subRegion.getName() );

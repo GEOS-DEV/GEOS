@@ -58,8 +58,7 @@ void ElementRegionManager::resize( integer_array const & numElements,
   localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<n_regions; ++reg )
   {
-    ElementRegionBase * elemRegion = this->getRegion( reg );
-    elemRegion->resize( numElements[reg] );
+    this->getRegion( reg ).resize( numElements[reg] );
   }
 }
 
@@ -127,8 +126,7 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   for( string const & name: names )
   {
-    ElementRegionBase & elementRegion = *getRegion( name );
-    schemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType );
+    schemaUtilities::SchemaConstruction( getRegion( name ), schemaRoot, targetChoiceNode, documentationType );
   }
 }
 
@@ -276,12 +274,12 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->getName() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->numSubRegions() );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
 
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
@@ -339,11 +337,11 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase * const elemRegion = getRegion( regionName );
+    ElementRegionBase & elemRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase & subRegion )
     {
       string subRegionName;
@@ -382,11 +380,11 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->getName() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->numSubRegions() );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
@@ -423,12 +421,12 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase * const elemRegion = getRegion( regionName );
+    ElementRegionBase & elemRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
     packList[kReg].resize( numSubRegionsRead );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase & subRegion )
     {
       string subRegionName;
@@ -479,11 +477,11 @@ ElementRegionManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->getName() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->numSubRegions() );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
@@ -527,11 +525,11 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase * const elemRegion = getRegion( regionName );
+    ElementRegionBase & elemRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const kSubReg, ElementSubRegionBase & subRegion )
     {
       string subRegionName;

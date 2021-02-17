@@ -121,17 +121,17 @@ void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
  */
 bool IsPointInsideElement( NodeManager const * const nodeManager,
                            R1Tensor const & location,
-                           CellBlock const * subRegion,
+                           CellBlock const & subRegion,
                            localIndex ei )
 {
   bool isInsideElement = false;
 
-  array1d< array1d< localIndex > > faceNodes( subRegion->numFacesPerElement() );
+  array1d< array1d< localIndex > > faceNodes( subRegion.numFacesPerElement() );
 
   // collect the faces for this element
-  for( localIndex kf = 0; kf < subRegion->numFacesPerElement(); ++kf )
+  for( localIndex kf = 0; kf < subRegion.numFacesPerElement(); ++kf )
   {
-    subRegion->getFaceNodes( ei, kf, faceNodes[kf] );
+    subRegion.getFaceNodes( ei, kf, faceNodes[kf] );
   }
 
   // if the point is in the element, save the indices and stop the search
@@ -150,14 +150,14 @@ bool IsPointInsideElement( NodeManager const * const nodeManager,
  * @param[in] ei the index of the reservoir element
  * @param[inout] nodes the nodes that have already been visited
  */
-void CollectElementNodes( CellBlock const *         subRegion,
+void CollectElementNodes( CellBlock const & subRegion,
                           localIndex ei,
                           SortedArray< localIndex > & nodes )
 {
   // get all the nodes belonging to this element
-  for( localIndex a = 0; a < subRegion->numNodesPerElement(); ++a )
+  for( localIndex a = 0; a < subRegion.numNodesPerElement(); ++a )
   {
-    localIndex const inode = subRegion->nodeList( ei, a );
+    localIndex const inode = subRegion.nodeList( ei, a );
 
     // if not already visited, store the newly found node
     if( !nodes.contains( inode ))
@@ -218,9 +218,9 @@ bool VisitNeighborElements( MeshLevel const & mesh,
       localIndex const esr     = toElementSubRegionList[currNode][b];
       localIndex const eiLocal = toElementList[currNode][b];
 
-      CellElementRegion const * const region = dynamicCast< CellElementRegion const * >( elemManager->getRegion( er ));
-      CellBlock const * const subRegion = dynamicCast< CellElementSubRegion const * >( region->getSubRegion( esr ));
-      globalIndex const eiGlobal  = subRegion->localToGlobalMap()[eiLocal];
+      CellElementRegion const & region = elemManager->getRegion< CellElementRegion >( er );
+      CellBlock const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
+      globalIndex const eiGlobal = subRegion.localToGlobalMap()[eiLocal];
 
       // if this element has not been visited yet, save it
       if( !elements.contains( eiGlobal ))
@@ -319,8 +319,8 @@ bool SearchLocalElements( MeshLevel const & mesh,
   // the assumption here is that perforations have been entered in order of depth
   bool resElemFound = false;
 
-  CellElementRegion const * region = dynamicCast< CellElementRegion const * >( mesh.getElemManager()->getRegion( erInit ));
-  CellBlock const * subRegion      = dynamicCast< CellBlock const * >( region->getSubRegion( esrInit ));
+  CellElementRegion const & region = mesh.getElemManager()->getRegion< CellElementRegion >( erInit );
+  CellBlock const & subRegion = region.getSubRegion< CellBlock >( esrInit );
 
   SortedArray< localIndex >  nodes;
   SortedArray< globalIndex > elements;

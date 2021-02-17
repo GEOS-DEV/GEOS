@@ -907,7 +907,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
     for( localIndex matI=0; matI<nmat; ++matI )
     {
       Group const &
-      constitutiveModel = elemRegion.getSubRegion( 0 )->getConstitutiveModels()->getGroup( regionMaterialList[matI] );
+      constitutiveModel = elemRegion.getSubRegion( 0 ).getConstitutiveModels()->getGroup( regionMaterialList[matI] );
 
       for( auto const & wrapperIter : constitutiveModel.wrappers() )
       {

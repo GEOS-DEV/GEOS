@@ -364,7 +364,7 @@ void DofManager::addField( string const & fieldName,
   {
     for( string const & regionName : field.regions )
     {
-      GEOSX_ERROR_IF( elemManager->getRegion( regionName ) == nullptr, "Element region not found: " << regionName );
+      elemManager->getRegion( regionName );
     }
   }
 

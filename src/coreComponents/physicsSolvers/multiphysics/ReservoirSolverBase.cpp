@@ -86,7 +86,7 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
     PerforationData * const perforationData = subRegion.getPerforationData();
 
     // compute the Peaceman index (if not read from XML)
-    perforationData->computeWellTransmissibility( meshLevel, &subRegion, permeabilityKey );
+    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeabilityKey );
   } );
 
   // bind the stored reservoir views to the current domain

@@ -99,7 +99,7 @@ void CellElementRegion::generateAggregates( FaceManager const & faceManager,
   array1d< localIndex > offsetSubRegions( this->getSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
   {
-    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->getSubRegion( subRegionIndex )->size();
+    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->getSubRegion( subRegionIndex ).size();
   }
   for( localIndex kf = 0; kf < faceManager.size(); ++kf )
   {

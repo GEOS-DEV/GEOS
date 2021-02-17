@@ -232,46 +232,24 @@ public:
 
   /**
    * @brief Get a element region.
-   * @param regionName name of element region
-   * @return pointer to const ElementRegionBase
+   * @param key The key of element region, either name or number.
+   * @return Reference to const T.
    */
-  template< typename T=ElementRegionBase >
-  T const * getRegion( string const & regionName ) const
+  template< typename T=ElementRegionBase, typename KEY_TYPE=void >
+  T const & getRegion( KEY_TYPE const & key ) const
   {
-    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroupPointer< T >( regionName );
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroup< T >( key );
   }
 
   /**
    * @brief Get a element region.
-   * @param regionName name of element region
-   * @return pointer to ElementRegionBase
+   * @param key The key of the element region, either name or number.
+   * @return Reference to T.
    */
-  template< typename T=ElementRegionBase >
-  T * getRegion( string const & regionName )
+  template< typename T=ElementRegionBase, typename KEY_TYPE=void >
+  T & getRegion( KEY_TYPE const & key )
   {
-    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroupPointer< T >( regionName );
-  }
-
-  /**
-   * @brief This is a const function to get a element region.
-   * @param index index of element region
-   * @return pointer to const ElementRegionBase
-   */
-  template< typename T=ElementRegionBase >
-  T const * getRegion( localIndex const index ) const
-  {
-    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroupPointer< T >( index );
-  }
-
-  /**
-   * @brief This is a function to get a element region.
-   * @param index index of element region
-   * @return pointer to ElementRegionBase
-   */
-  template< typename T=ElementRegionBase >
-  T * getRegion( localIndex const index )
-  {
-    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroupPointer< T >( index );
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroup< T >( key );
   }
 
   /**
@@ -376,7 +354,7 @@ public:
   {
     for( localIndex er=0; er<this->numRegions(); ++er )
     {
-      ElementRegionBase & elementRegion = *this->getRegion( er );
+      ElementRegionBase & elementRegion = this->getRegion( er );
 
       Group::applyLambdaToContainer< REGIONTYPE, REGIONTYPES... >( elementRegion, [&]( auto & castedRegion )
       {
@@ -396,7 +374,7 @@ public:
   {
     for( localIndex er=0; er<this->numRegions(); ++er )
     {
-      ElementRegionBase const & elementRegion = *this->getRegion( er );
+      ElementRegionBase const & elementRegion = this->getRegion( er );
 
       Group::applyLambdaToContainer< REGIONTYPE, REGIONTYPES... >( elementRegion, [&]( auto const & castedRegion )
       {
@@ -668,11 +646,11 @@ public:
   {
     for( localIndex er=0; er<this->numRegions(); ++er )
     {
-      ElementRegionBase & elementRegion = *this->getRegion( er );
+      ElementRegionBase & elementRegion = this->getRegion( er );
 
       for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
       {
-        ElementSubRegionBase & subRegion = *elementRegion.getSubRegion( esr );
+        ElementSubRegionBase & subRegion = elementRegion.getSubRegion( esr );
 
         Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
         {
@@ -693,11 +671,11 @@ public:
   {
     for( localIndex er=0; er<this->numRegions(); ++er )
     {
-      ElementRegionBase const & elementRegion = *this->getRegion( er );
+      ElementRegionBase const & elementRegion = this->getRegion( er );
 
       for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
       {
-        ElementSubRegionBase const & subRegion = *elementRegion.getSubRegion( esr );
+        ElementSubRegionBase const & subRegion = elementRegion.getSubRegion( esr );
 
         Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
         {
@@ -724,7 +702,7 @@ public:
 
       for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
       {
-        ElementSubRegionBase & subRegion = *elementRegion.getSubRegion( esr );
+        ElementSubRegionBase & subRegion = elementRegion.getSubRegion( esr );
 
         Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
         {
@@ -751,7 +729,7 @@ public:
 
       for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
       {
-        ElementSubRegionBase const & subRegion = *elementRegion.getSubRegion( esr );
+        ElementSubRegionBase const & subRegion = elementRegion.getSubRegion( esr );
 
         Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
         {
@@ -1098,12 +1076,12 @@ ElementRegionManager::constructViewAccessor( string const & viewName, string con
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
     {
-      Group const * group = elemRegion->getSubRegion( kSubReg );
+      Group const * group = &elemRegion.getSubRegion( kSubReg );
 
       if( !neighborName.empty() )
       {
@@ -1130,12 +1108,12 @@ ElementRegionManager::
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase * const elemRegion = getRegion( kReg );
-    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
+    ElementRegionBase & elemRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
     {
-      Group * group = elemRegion->getSubRegion( kSubReg );
+      Group * group = &elemRegion.getSubRegion( kSubReg );
 
       if( !neighborName.empty() )
       {
@@ -1169,12 +1147,12 @@ ElementRegionManager::
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
-      Group const * group = elemRegion->getSubRegion( kSubReg );
+      Group const * group = &elemRegion.getSubRegion( kSubReg );
 
       if( !neighborName.empty() )
       {
@@ -1199,12 +1177,12 @@ ElementRegionManager::
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase * const elemRegion = getRegion( kReg );
-    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
+    ElementRegionBase & elemRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
-      Group * group = elemRegion->getSubRegion( kSubReg );
+      Group * group = &elemRegion.getSubRegion( kSubReg );
 
       if( !neighborName.empty() )
       {
@@ -1230,13 +1208,13 @@ ElementRegionManager::
   accessor.resize( numRegions() );
   for( localIndex kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    accessor[kReg].resize( elemRegion->numSubRegions() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    accessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
-      ElementSubRegionBase const * const subRegion = elemRegion->getSubRegion( kSubReg );
-      dataRepository::Group const * const constitutiveGroup = subRegion->getConstitutiveModels();
+      ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( kSubReg );
+      dataRepository::Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
 
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
@@ -1268,13 +1246,13 @@ ElementRegionManager::
   accessor.resize( numRegions() );
   for( localIndex kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase * const elemRegion = getRegion( kReg );
-    accessor[kReg].resize( elemRegion->numSubRegions() );
+    ElementRegionBase & elemRegion = getRegion( kReg );
+    accessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
-      ElementSubRegionBase * const subRegion = elemRegion->getSubRegion( kSubReg );
-      dataRepository::Group * const constitutiveGroup = subRegion->getConstitutiveModels();
+      ElementSubRegionBase & subRegion = elemRegion.getSubRegion( kSubReg );
+      dataRepository::Group * const constitutiveGroup = subRegion.getConstitutiveModels();
 
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
@@ -1310,7 +1288,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   accessor.resize( numRegions() );
   for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
   {
-    accessor[kReg].resize( getRegion( kReg )->numSubRegions() );
+    accessor[kReg].resize( getRegion( kReg ).numSubRegions() );
   }
 
   subGroupMap const & regionMap = getRegions();
@@ -1320,7 +1298,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
-    ElementRegionBase const & region = *getRegion( er );
+    ElementRegionBase const & region = getRegion( er );
 
     region.forElementSubRegionsIndex( [&]( localIndex const esr,
                                            ElementSubRegionBase const & subRegion )
@@ -1356,7 +1334,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   accessor.resize( numRegions() );
   for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
   {
-    accessor[kReg].resize( getRegion( kReg )->numSubRegions() );
+    accessor[kReg].resize( getRegion( kReg ).numSubRegions() );
   }
 
   subGroupMap const & regionMap = getRegions();
@@ -1366,7 +1344,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
-    ElementRegionBase & region = *getRegion( er );
+    ElementRegionBase & region = getRegion( er );
 
     region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
     {
@@ -1409,14 +1387,13 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
   accessor.resize( numRegions() );
   for( localIndex kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    accessor[kReg].resize( elemRegion->numSubRegions() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    accessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
-      ElementSubRegionBase const * const subRegion = elemRegion->getSubRegion( kSubReg );
-      dataRepository::Group const * const
-      constitutiveGroup = subRegion->getConstitutiveModels();
+      ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( kSubReg );
+      dataRepository::Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
       for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
@@ -1443,14 +1420,13 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
   accessor.resize( numRegions() );
   for( localIndex kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase * const elemRegion = getRegion( kReg );
-    accessor[kReg].resize( elemRegion->numSubRegions() );
+    ElementRegionBase & elemRegion = getRegion( kReg );
+    accessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
     {
-      ElementSubRegionBase * const subRegion = elemRegion->getSubRegion( kSubReg );
-      dataRepository::Group * const
-      constitutiveGroup = subRegion->getConstitutiveModels();
+      ElementSubRegionBase & subRegion = elemRegion.getSubRegion( kSubReg );
+      dataRepository::Group * const constitutiveGroup = subRegion.getConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
       for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )

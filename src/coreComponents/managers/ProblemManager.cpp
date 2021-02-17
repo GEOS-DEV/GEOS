@@ -604,11 +604,11 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
           for( auto const & regionName : targetRegions )
           {
-            ElementRegionBase * const elemRegion = elemManager->getRegion( regionName );
+            ElementRegionBase & elemRegion = elemManager->getRegion( regionName );
 
             if( feDiscretization != nullptr )
             {
-              elemRegion->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+              elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
               {
                 string const elementTypeString = subRegion.getElementTypeString();
 
@@ -636,7 +636,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
             }
             else //if( fvFluxApprox != nullptr )
             {
-              elemRegion->forElementSubRegions( [&]( auto & subRegion )
+              elemRegion.forElementSubRegions( [&]( auto & subRegion )
               {
                 localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                            subRegion.getName() ) ];

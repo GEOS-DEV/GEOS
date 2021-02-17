@@ -1230,8 +1230,7 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
 {
   // I've tried to access the finiteElement::dispatch3D with
   // finiteElement::FiniteElementBase const &
-  // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName()
-  // );
+  // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName() );
   // but it's either empty (unknown discretization) or for 3D only (e.g., hexahedra)
   GEOSX_MARK_FUNCTION;
 
@@ -1697,21 +1696,21 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const &
   surfaceGenerator = this->getParent()->getGroup< SurfaceGenerator >( "SurfaceGen" );
-  SurfaceElementRegion const * const fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
-  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
-  GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
-  arrayView2d< localIndex const > const faceMap = fractureSubRegion->faceList();
+  SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
+  FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+  GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
+  arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
   // Get the state of fracture elements
   arrayView1d< integer const > const & fractureState =
-    fractureSubRegion->getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+    fractureSubRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
 
   // Get the tractions and stabilization contribution to the local jump
   arrayView2d< real64 const > const & traction =
-    fractureSubRegion->getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
+    fractureSubRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
   arrayView2d< real64 const > const & deltaTraction =
-    fractureSubRegion->getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
+    fractureSubRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
 
   // Get the volume for all elements
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
@@ -1724,7 +1723,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
   arrayView3d< real64 const > const &
-  faceRotationMatrix = fractureSubRegion->getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+  faceRotationMatrix = fractureSubRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
@@ -1742,7 +1741,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
     elemManager.constructViewAccessor< CellBlock::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
   ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
-  arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion->getReference< globalIndex_array >( tracDofKey );
+  arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion.getReference< globalIndex_array >( tracDofKey );
 
   stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
   {

@@ -356,8 +356,8 @@ CommunicationTools::
     localIndex const esr = iter.first.second;
     std::set< localIndex > const & indexList = iter.second;
 
-    ElementSubRegionBase * const subRegion = elementManager.getRegion( er )->getSubRegion( esr );
-    arrayView1d< globalIndex > const & localToGlobal = subRegion->localToGlobalMap();
+    ElementSubRegionBase & subRegion = elementManager.getRegion( er ).getSubRegion( esr );
+    arrayView1d< globalIndex > const & localToGlobal = subRegion.localToGlobalMap();
 
     for( localIndex const newLocalIndex : indexList )
     {
@@ -366,7 +366,7 @@ CommunicationTools::
                                       << localToGlobal[newLocalIndex] );
 
       localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
-      subRegion->updateGlobalToLocalMap( newLocalIndex );
+      subRegion.updateGlobalToLocalMap( newLocalIndex );
 
       nIndicesAssigned += 1;
     }

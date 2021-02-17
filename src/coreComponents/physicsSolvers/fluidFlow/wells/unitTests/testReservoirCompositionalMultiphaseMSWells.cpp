@@ -267,8 +267,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
   for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
-    ElementRegionBase * const elemRegion = elemManager.getRegion( er );
-    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
+    ElementRegionBase & elemRegion = elemManager.getRegion( er );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
     {
       // get the degrees of freedom and ghosting information
       arrayView1d< globalIndex const > const & dofNumber =

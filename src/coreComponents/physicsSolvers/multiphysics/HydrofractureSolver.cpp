@@ -572,7 +572,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       FaceElementSubRegion const & elementSubRegion =
-        *elemManager.getRegion( seri[iconn][0] )->getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
+        elemManager.getRegion( seri[iconn][0] ).getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
 
       ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
 
@@ -635,7 +635,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       FaceElementSubRegion const & elementSubRegion =
-        *elemManager.getRegion( seri[iconn][0] )->getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
+        elemManager.getRegion( seri[iconn][0] ).getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
 
       ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
 

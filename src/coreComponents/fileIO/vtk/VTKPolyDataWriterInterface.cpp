@@ -373,7 +373,7 @@ void VTKPolyDataWriterInterface::writeWellElementRegions( real64 time, ElementRe
 {
   elemManager.forElementRegions< WellElementRegion >( [&]( WellElementRegion const & er )
   {
-    WellElementSubRegion const & esr = dynamicCast< WellElementSubRegion const & >( *er.getSubRegion( 0 ) );
+    WellElementSubRegion const & esr = dynamicCast< WellElementSubRegion const & >( er.getSubRegion( 0 ) );
     vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
     auto VTKWell = getWell( esr, nodeManager );
     ug->SetPoints( VTKWell.first );
@@ -392,7 +392,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 time,
     vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
     if( er.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::embeddedElement )
     {
-      EmbeddedSurfaceSubRegion const & esr = dynamicCast< EmbeddedSurfaceSubRegion const & >( *er.getSubRegion( 0 ) );
+      EmbeddedSurfaceSubRegion const & esr = dynamicCast< EmbeddedSurfaceSubRegion const & >( er.getSubRegion( 0 ) );
 
       auto VTKSurface = getEmbeddedSurface( esr, nodeManager );
       ug->SetPoints( VTKSurface.first );
@@ -402,7 +402,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 time,
     }
     else if( er.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
     {
-      FaceElementSubRegion const & esr = dynamicCast< FaceElementSubRegion const & >( *er.getSubRegion( 0 ) );
+      FaceElementSubRegion const & esr = dynamicCast< FaceElementSubRegion const & >( er.getSubRegion( 0 ) );
 
       auto VTKSurface = getSurface( esr, nodeManager );
 

@@ -86,10 +86,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager->referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
-  SurfaceElementRegion & embeddedSurfaceRegion =
-    *( elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
-  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion =
-    *( embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 ) );
+  SurfaceElementRegion & embeddedSurfaceRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
+  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   localIndex localNumberOfSurfaceElems         = 0;
 

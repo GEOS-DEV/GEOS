@@ -111,7 +111,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  updateState( *getGlobalState().getProblemManager().getDomainPartition() );
+  updateState( getGlobalState().getProblemManager().getDomainPartition() );
 }
 
 
@@ -269,8 +269,8 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
-  SurfaceElementRegion const & region = *(elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName ));
-  EmbeddedSurfaceSubRegion const & subRegion = *(region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+  EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
@@ -316,11 +316,9 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  SurfaceElementRegion const & fractureRegion =
-    *(elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() ) );
+  SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
 
-  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-    *(fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   arrayView1d< globalIndex const > const &
   jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
@@ -382,11 +380,9 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  SurfaceElementRegion const & fractureRegion =
-    *(elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() ) );
+  SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
 
-  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-    *(fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   arrayView1d< globalIndex const > const &
   jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );

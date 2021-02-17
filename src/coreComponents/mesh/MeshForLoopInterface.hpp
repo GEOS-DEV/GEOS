@@ -70,9 +70,9 @@ minLocOverElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
 
   for( localIndex er=0; er<elemManager->numRegions(); ++er )
   {
-    ElementRegionBase const * const elemRegion = elemManager->getRegion( er );
+    ElementRegionBase const & elemRegion = elemManager->getRegion( er );
 
-    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion const & subRegion )
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion const & subRegion )
     {
       localIndex const size = subRegion.size();
       for( localIndex k = 0; k < size; ++k )

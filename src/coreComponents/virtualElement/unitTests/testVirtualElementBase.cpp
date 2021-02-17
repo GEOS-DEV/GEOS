@@ -189,10 +189,8 @@ TEST( VirtualElementBase, unitCube )
                                            vemElement.m_basisDerivativesIntegralMean );
 
   NodeManager const & nodeManager = *mesh.getNodeManager();
-  CellElementRegion const & cellRegion =
-    *elementManager->getRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
+  CellElementRegion const & cellRegion = elementManager->getRegion< CellElementRegion >( 0 );
+  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( 0 );
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
@@ -251,10 +249,8 @@ TEST( VirtualElementBase, wedges )
   problemManager.problemSetup();
 
   ConformingVirtualElementOrder1 vemElement;
-  CellElementRegion const & cellRegion =
-    *elementManager->getRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
+  CellElementRegion const & cellRegion = elementManager->getRegion< CellElementRegion >( 0 );
+  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();

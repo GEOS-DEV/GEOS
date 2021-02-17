@@ -91,7 +91,7 @@ void PoroelasticSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Gro
 
 void PoroelasticSolverEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  updateState( *getGlobalState().getProblemManager().getDomainPartition() );
+  updateState( getGlobalState().getProblemManager().getDomainPartition() );
 }
 
 void PoroelasticSolverEmbeddedFractures::setupDofs( DomainPartition const & domain,
@@ -209,12 +209,12 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition
     for( localIndex k=0; k<numEmbeddedElems; ++k )
     {
       // Get rock matrix element subregion
-      CellElementSubRegion const * const subRegion =
-        elemManager.getRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+      CellElementSubRegion const & subRegion =
+        elemManager.getRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] ).
           getSubRegion< CellElementSubRegion >( embeddedSurfacesToCells.m_toElementSubRegion[k][0] );
 
       arrayView1d< globalIndex const > const &
-      pressureDofNumber =  subRegion->getReference< globalIndex_array >( pressureDofKey );
+      pressureDofNumber = subRegion.getReference< globalIndex_array >( pressureDofKey );
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -253,7 +253,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition
       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-        *elemManager.getRegion( seri[iconn][0] )->getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
+        elemManager.getRegion( seri[iconn][0] ).getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
 
       arrayView1d< globalIndex const > const &
       pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
@@ -309,12 +309,12 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
     for( localIndex k=0; k<numEmbeddedElems; ++k )
     {
       // Get rock matrix element subregion
-      CellElementSubRegion const * const subRegion =
-        elemManager.getRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+      CellElementSubRegion const & subRegion =
+        elemManager.getRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] ).
           getSubRegion< CellElementSubRegion >( embeddedSurfacesToCells.m_toElementSubRegion[k][0] );
 
       arrayView1d< globalIndex const > const &
-      pressureDofNumber =  subRegion->getReference< globalIndex_array >( pressureDofKey );
+      pressureDofNumber = subRegion.getReference< globalIndex_array >( pressureDofKey );
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -349,7 +349,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-        *elemManager.getRegion( seri[iconn][0] )->getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
+        elemManager.getRegion( seri[iconn][0] ).getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
 
       arrayView1d< globalIndex const > const &
       pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
@@ -446,10 +446,9 @@ void PoroelasticSolverEmbeddedFractures::
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
 
   SurfaceElementRegion const & fractureRegion =
-    *(elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() ));
+    elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
 
-  EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion =
-    *(fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+  EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   arrayView1d< globalIndex const > const jumpDofNumber = embeddedSurfSubRegion.getReference< globalIndex_array >( jumpDofKey );
 

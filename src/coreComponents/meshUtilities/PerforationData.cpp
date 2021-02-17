@@ -111,7 +111,7 @@ void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
 }
 
 void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
-                                                   WellElementSubRegion const * const wellElemSubRegion,
+                                                   WellElementSubRegion const & wellElemSubRegion,
                                                    string const & permeabilityKey )
 {
 
@@ -119,7 +119,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
     mesh.getElemManager()->constructArrayViewAccessor< real64, 2 >( permeabilityKey );
 
-  arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion->getElementCenter();
+  arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion.getElementCenter();
 
   // for all the local perforations on this well
   for( localIndex iperf = 0; iperf < size(); ++iperf )
@@ -180,7 +180,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     real64 const kh = h * sqrt( k1 * k2 );
 
     arrayView1d< real64 const > const & wellElemRadius =
-      wellElemSubRegion->getReference< array1d< real64 > >( WellElementSubRegion::viewKeyStruct::radiusString() );
+      wellElemSubRegion.getReference< array1d< real64 > >( WellElementSubRegion::viewKeyStruct::radiusString() );
 
     GEOSX_ERROR_IF( rEq < wellElemRadius[wellElemIndex],
                     "The equivalent radius r_eq = " << rEq <<
@@ -201,14 +201,14 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
                                                      real64 & dx, real64 & dy, real64 & dz ) const
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
-  NodeManager const * const nodeManager          = mesh.getNodeManager();
-  CellElementRegion const * const region    = dynamicCast< CellElementRegion const * >( elemManager->getRegion( er ));
-  CellBlock const * const subRegion = dynamicCast< CellElementSubRegion const * >( region->getSubRegion( esr ));
+  NodeManager const * const nodeManager = mesh.getNodeManager();
+  CellElementRegion const & region = elemManager->getRegion< CellElementRegion >( er );
+  CellBlock const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];
   computationalGeometry::GetBoundingBox( ei,
-                                         subRegion->nodeList(),
+                                         subRegion.nodeList(),
                                          nodeManager->referencePosition(),
                                          boxDims );
 
@@ -217,7 +217,7 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
   dy = boxDims[ 1 ];
 
   // dz is computed as vol / (dx * dy)
-  dz  = subRegion->getElementVolume()[ei];
+  dz  = subRegion.getElementVolume()[ei];
   dz /= dx * dy;
 
   GEOSX_ERROR_IF( dx <= 0 || dy <= 0 || dz <= 0,

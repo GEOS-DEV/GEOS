@@ -192,7 +192,7 @@ public:
    * @param[in] permeabilityKey key to access the permeability in the reservoir
    */
   void computeWellTransmissibility( MeshLevel const & mesh,
-                                    WellElementSubRegion const * const wellElemSubRegion,
+                                    WellElementSubRegion const & wellElemSubRegion,
                                     string const & permeabilityKey );
 
   ///@}

@@ -106,20 +106,20 @@ TEST( FieldSpecification, Recursive )
 
 
   /// Field Definition
-  reg0.getSubRegion( "reg0hex" )->registerWrapper< array1d< real64 > >( "field0" );
-  reg0.getSubRegion( "reg0tet" )->registerWrapper< array1d< real64 > >( "field0" );
-  reg1.getSubRegion( "reg1tet" )->registerWrapper< array1d< real64 > >( "field0" );
-  reg1.getSubRegion( "reg1hex" )->registerWrapper< array1d< real64 > >( "field0" );
+  reg0.getSubRegion( "reg0hex" ).registerWrapper< array1d< real64 > >( "field0" );
+  reg0.getSubRegion( "reg0tet" ).registerWrapper< array1d< real64 > >( "field0" );
+  reg1.getSubRegion( "reg1tet" ).registerWrapper< array1d< real64 > >( "field0" );
+  reg1.getSubRegion( "reg1hex" ).registerWrapper< array1d< real64 > >( "field0" );
 
-  reg0.getSubRegion( "reg0hex" )->registerWrapper< array1d< real64 > >( "field1" );
-  reg0.getSubRegion( "reg0tet" )->registerWrapper< array1d< real64 > >( "field1" );
+  reg0.getSubRegion( "reg0hex" ).registerWrapper< array1d< real64 > >( "field1" );
+  reg0.getSubRegion( "reg0tet" ).registerWrapper< array1d< real64 > >( "field1" );
 
-  reg0.getSubRegion( "reg0hex" )->registerWrapper< array1d< real64 > >( "field2" );
+  reg0.getSubRegion( "reg0hex" ).registerWrapper< array1d< real64 > >( "field2" );
 
-  reg1.getSubRegion( "reg1tet" )->registerWrapper< array1d< real64 > >( "field3" );
+  reg1.getSubRegion( "reg1tet" ).registerWrapper< array1d< real64 > >( "field3" );
 
   SortedArray< localIndex > & set0hex = reg0.getSubRegion( "reg0hex" )
-                                          ->getGroup( "sets" )
+                                          .getGroup( "sets" )
                                           .registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           .reference();
   for( localIndex i = 0; i < nbHexReg0; i++ )
@@ -128,7 +128,7 @@ TEST( FieldSpecification, Recursive )
   }
 
   SortedArray< localIndex > & set0tet = reg0.getSubRegion( "reg0tet" )
-                                          ->getGroup( "sets" )
+                                          .getGroup( "sets" )
                                           .registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           .reference();
   for( localIndex i = 0; i < nbTetReg0; i++ )
@@ -137,7 +137,7 @@ TEST( FieldSpecification, Recursive )
   }
 
   SortedArray< localIndex > & set1hex = reg1.getSubRegion( "reg1hex" )
-                                          ->getGroup( "sets" )
+                                          .getGroup( "sets" )
                                           .registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           .reference();
   for( localIndex i = 0; i < nbHexReg1; i++ )
@@ -146,7 +146,7 @@ TEST( FieldSpecification, Recursive )
   }
 
   SortedArray< localIndex > & set1tet = reg1.getSubRegion( "reg1tet" )
-                                          ->getGroup( "sets" )
+                                          .getGroup( "sets" )
                                           .registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           .reference();
   for( localIndex i = 0; i < nbTetReg1; i++ )

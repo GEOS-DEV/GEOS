@@ -252,10 +252,10 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
   // begin region loop
   for( localIndex er = 0; er < elemManager->numRegions(); ++er )
   {
-    ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
+    ElementRegionBase & elementRegion = elemManager->GetRegion( er );
 
-    elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
-                                                                           CellElementSubRegion & elementSubRegion )
+    elementRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
+                                                                          CellElementSubRegion & elementSubRegion )
     {
 
       constitutive::ConstitutiveBase * const

@@ -217,8 +217,8 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
   for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
-    ElementRegionBase * const elemRegion = elemManager.getRegion( er );
-    elemRegion->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    ElementRegionBase & elemRegion = elemManager.getRegion( er );
+    elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       // get the dof numbers and ghosting information
       arrayView1d< globalIndex const > const & dofNumber =

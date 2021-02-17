@@ -94,7 +94,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
   for( localIndex a=0; a<elemManager->numRegions(); ++a )
   {
-    elementAdjacencySet[a].resize( elemManager->getRegion( a )->numSubRegions() );
+    elementAdjacencySet[a].resize( elemManager->getRegion( a ).numSubRegions() );
   }
 
   nodeAdjacencySet.insert( seedNodeList.begin(), seedNodeList.end() );
@@ -114,11 +114,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
     for( typename dataRepository::indexType kReg=0; kReg<elemManager->numRegions(); ++kReg )
     {
-      ElementRegionBase const * const elemRegion = elemManager->getRegion( kReg );
+      ElementRegionBase const & elemRegion = elemManager->getRegion( kReg );
 
-      elemRegion->forElementSubRegionsIndex< CellElementSubRegion,
-                                             WellElementSubRegion >( [&]( localIndex const kSubReg,
-                                                                          auto const & subRegion )
+      elemRegion.forElementSubRegionsIndex< CellElementSubRegion,
+                                            WellElementSubRegion >( [&]( localIndex const kSubReg,
+                                                                         auto const & subRegion )
       {
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
         arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
@@ -158,9 +158,9 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
   for( localIndex kReg=0; kReg<elemManager->numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = elemManager->getRegion( kReg );
+    ElementRegionBase const & elemRegion = elemManager->getRegion( kReg );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
     {
       elementAdjacencyList[kReg][kSubReg].get().clear();
       elementAdjacencyList[kReg][kSubReg].get().resize( LvArray::integerConversion< localIndex >( elementAdjacencySet[kReg][kSubReg].size()) );

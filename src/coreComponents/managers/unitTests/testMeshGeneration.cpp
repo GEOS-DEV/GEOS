@@ -69,10 +69,10 @@ protected:
     ElementRegionManager * const elemManager = getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
     GEOSX_ERROR_IF_NE_MSG( elemManager->getRegions().size(), 1, "Only one region should exist." );
 
-    ElementRegionBase * const elemRegion = elemManager->getRegion( 0 );
-    GEOSX_ERROR_IF_NE_MSG( elemRegion->getSubRegions().size(), 1, "Only one subregion should exist." );
+    ElementRegionBase & elemRegion = elemManager->getRegion( 0 );
+    GEOSX_ERROR_IF_NE_MSG( elemRegion.getSubRegions().size(), 1, "Only one subregion should exist." );
 
-    m_subRegion = elemRegion->getSubRegion< CellElementSubRegion >( 0 );
+    m_subRegion = &elemRegion.getSubRegion< CellElementSubRegion >( 0 );
   }
 
   NodeManager * m_nodeManager;

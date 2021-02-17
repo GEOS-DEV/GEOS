@@ -242,7 +242,7 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( MeshLevel const & 
     std::set< string > reservoirRegionNames;
     for( localIndex const ei : resElementRegion )
     {
-      reservoirRegionNames.insert( meshLevel.getElemManager()->getRegion( ei )->getName() );
+      reservoirRegionNames.insert( meshLevel.getElemManager()->getRegion( ei ).getName() );
     }
 
     // Check that each well model is compatible with all models in perforated reservoir regions

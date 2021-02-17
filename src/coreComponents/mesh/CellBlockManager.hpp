@@ -89,9 +89,9 @@ public:
    * @param regionName name of the element sub-region
    * @return pointer to the element sub-region
    */
-  CellBlock * getRegion( string const & regionName )
+  CellBlock & getRegion( string const & regionName )
   {
-    return this->getGroup( dataRepository::keys::cellBlocks ).getGroupPointer< CellBlock >( regionName );
+    return this->getGroup( dataRepository::keys::cellBlocks ).getGroup< CellBlock >( regionName );
   }
 
 

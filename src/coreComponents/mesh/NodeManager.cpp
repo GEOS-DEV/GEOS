@@ -397,9 +397,9 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
       localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];
       localIndex const elemIndex          = m_toElements.m_toElementIndex[targetIndex][k];
 
-      CellElementSubRegion const * subRegion = elemRegionManager.getRegion( elemRegionIndex )->
+      CellElementSubRegion const & subRegion = elemRegionManager.getRegion( elemRegionIndex ).
                                                  getSubRegion< CellElementSubRegion >( elemSubRegionIndex );
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const downmap = subRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const downmap = subRegion.nodeList();
       bool hasTargetIndex = false;
 
       for( localIndex a=0; a<downmap.size( 1 ); ++a )
