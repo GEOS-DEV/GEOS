@@ -14,6 +14,7 @@
 
 // Source includes
 #include "managers/initialization.hpp"
+#include "managers/GeosxState.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
@@ -28,6 +29,7 @@ using namespace geosx;
 using namespace geosx::testing;
 using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
+using namespace geosx::PVTProps;
 
 /// Black-oil tables written into temporary files during testing
 
@@ -108,6 +110,16 @@ static const char * pvdo_str = "#P[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
 
 static const char * pvdw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
                                "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
+
+// CO2-brine model
+
+static const char * pvtliquid_str = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0.2\n"
+                                    "ViscosityFun BrineViscosity 0.1";
+
+static const char * pvtgas_str = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1\n"
+                                 "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 1";
+
+static const char * co2flash_str = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
 
 void testNumericalDerivatives( MultiFluidBase & fluid,
                                Group & parent,
@@ -267,6 +279,112 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                        "phaseCompFrac", var, phases, components );
     }
   } );
+}
+
+// TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
+void testValuesAgainstPreviousImplementation( NewMultiPhaseMultiComponentFluid::KernelWrapper const & wrapper,
+                                              MultiPhaseMultiComponentFluid::KernelWrapper const & oldWrapper,
+                                              real64 const P,
+                                              real64 const T,
+                                              arraySlice1d< real64 > const & composition,
+                                              real64 const relTol )
+{
+  stackArray1d< real64, 2 > phaseFraction( 2 );
+  stackArray1d< real64, 2 > dPhaseFraction_dPressure( 2 );
+  stackArray1d< real64, 2 > dPhaseFraction_dTemperature( 2 );
+  stackArray2d< real64, 4 > dPhaseFraction_dGlobalCompFraction( 2, 2 );
+  stackArray1d< real64, 2 > phaseDensity( 2 );
+  stackArray1d< real64, 2 > dPhaseDensity_dPressure( 2 );
+  stackArray1d< real64, 2 > dPhaseDensity_dTemperature( 2 );
+  stackArray2d< real64, 4 > dPhaseDensity_dGlobalCompFraction( 2, 2 );
+  stackArray1d< real64, 2 > phaseMassDensity( 2 );
+  stackArray1d< real64, 2 > dPhaseMassDensity_dPressure( 2 );
+  stackArray1d< real64, 2 > dPhaseMassDensity_dTemperature( 2 );
+  stackArray2d< real64, 4 > dPhaseMassDensity_dGlobalCompFraction( 2, 2 );
+  stackArray1d< real64, 2 > phaseViscosity( 2 );
+  stackArray1d< real64, 2 > dPhaseViscosity_dPressure( 2 );
+  stackArray1d< real64, 2 > dPhaseViscosity_dTemperature( 2 );
+  stackArray2d< real64, 4 > dPhaseViscosity_dGlobalCompFraction( 2, 2 );
+  stackArray2d< real64, 4 > phaseCompFraction( 2, 2 );
+  stackArray2d< real64, 4 > dPhaseCompFraction_dPressure( 2, 2 );
+  stackArray2d< real64, 4 > dPhaseCompFraction_dTemperature( 2, 2 );
+  stackArray3d< real64, 8 > dPhaseCompFraction_dGlobalCompFraction( 2, 2, 2 );
+  real64 totalDensity = 0.0;
+  real64 dTotalDensity_dPressure = 0.0;
+  real64 dTotalDensity_dTemperature = 0.0;
+  stackArray1d< real64, 2 >  dTotalDensity_dGlobalCompFraction( 2 );
+
+  stackArray1d< real64, 2 > oldPhaseFraction( 2 );
+  stackArray1d< real64, 2 > oldPhaseDensity( 2 );
+  stackArray1d< real64, 2 > oldPhaseMassDensity( 2 );
+  stackArray1d< real64, 2 > oldPhaseViscosity( 2 );
+  stackArray2d< real64, 4 > oldPhaseCompFraction( 2, 2 );
+  real64 oldTotalDensity = 0.0;
+
+  wrapper.compute( P, T, composition,
+                   phaseFraction,
+                   dPhaseFraction_dPressure,
+                   dPhaseFraction_dTemperature,
+                   dPhaseFraction_dGlobalCompFraction,
+                   phaseDensity,
+                   dPhaseDensity_dPressure,
+                   dPhaseDensity_dTemperature,
+                   dPhaseDensity_dGlobalCompFraction,
+                   phaseMassDensity,
+                   dPhaseMassDensity_dPressure,
+                   dPhaseMassDensity_dTemperature,
+                   dPhaseMassDensity_dGlobalCompFraction,
+                   phaseViscosity,
+                   dPhaseViscosity_dPressure,
+                   dPhaseViscosity_dTemperature,
+                   dPhaseViscosity_dGlobalCompFraction,
+                   phaseCompFraction,
+                   dPhaseCompFraction_dPressure,
+                   dPhaseCompFraction_dTemperature,
+                   dPhaseCompFraction_dGlobalCompFraction,
+                   totalDensity,
+                   dTotalDensity_dPressure,
+                   dTotalDensity_dTemperature,
+                   dTotalDensity_dGlobalCompFraction );
+
+  oldWrapper.compute( P, T, composition,
+                      oldPhaseFraction,
+                      dPhaseFraction_dPressure,
+                      dPhaseFraction_dTemperature,
+                      dPhaseFraction_dGlobalCompFraction,
+                      oldPhaseDensity,
+                      dPhaseDensity_dPressure,
+                      dPhaseDensity_dTemperature,
+                      dPhaseDensity_dGlobalCompFraction,
+                      oldPhaseMassDensity,
+                      dPhaseMassDensity_dPressure,
+                      dPhaseMassDensity_dTemperature,
+                      dPhaseMassDensity_dGlobalCompFraction,
+                      oldPhaseViscosity,
+                      dPhaseViscosity_dPressure,
+                      dPhaseViscosity_dTemperature,
+                      dPhaseViscosity_dGlobalCompFraction,
+                      oldPhaseCompFraction,
+                      dPhaseCompFraction_dPressure,
+                      dPhaseCompFraction_dTemperature,
+                      dPhaseCompFraction_dGlobalCompFraction,
+                      oldTotalDensity,
+                      dTotalDensity_dPressure,
+                      dTotalDensity_dTemperature,
+                      dTotalDensity_dGlobalCompFraction );
+
+  checkRelativeError( totalDensity, oldTotalDensity, relTol );
+  for( localIndex ip = 0; ip < 2; ++ip )
+  {
+    checkRelativeError( phaseFraction[ip], oldPhaseFraction[ip], relTol );
+    checkRelativeError( phaseDensity[ip], oldPhaseDensity[ip], relTol );
+    checkRelativeError( phaseMassDensity[ip], oldPhaseMassDensity[ip], relTol );
+    checkRelativeError( phaseViscosity[ip], oldPhaseViscosity[ip], relTol );
+    for( localIndex ic = 0; ic < 2; ++ic )
+    {
+      checkRelativeError( phaseCompFraction[ip][ic], oldPhaseCompFraction[ip][ic], relTol );
+    }
+  }
 }
 
 MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
@@ -561,11 +679,202 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
   testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol, absTol );
 }
 
+MultiFluidBase * makeMultiPhaseMultiComponentFluid( string const & name, Group * parent )
+{
+  auto fluid = parent->registerGroup< NewMultiPhaseMultiComponentFluid >( name );
+
+  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  compNames.resize( 2 );
+  compNames[0] = "co2"; compNames[1] = "water";
+
+  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  molarWgt.resize( 2 );
+  molarWgt[0] = 44e-3; molarWgt[1] = 18e-3;
+
+  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  phaseNames.resize( 2 );
+  phaseNames[0] = "gas"; phaseNames[1] = "liquid";
+
+  auto & phasePVTParaFileNames = fluid->getReference< path_array >( MultiPhaseMultiComponentFluid::viewKeyStruct::phasePVTParaFilesString );
+  phasePVTParaFileNames.resize( 2 );
+  phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
+
+  auto & flashModelParaFileName = fluid->getReference< Path >( MultiPhaseMultiComponentFluid::viewKeyStruct::flashModelParaFileString );
+  flashModelParaFileName = "co2flash.txt";
+
+  fluid->postProcessInputRecursive();
+  return fluid;
+}
+
+// TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
+MultiFluidBase * makeOldMultiPhaseMultiComponentFluid( string const & name, Group * parent )
+{
+  auto fluid = parent->registerGroup< MultiPhaseMultiComponentFluid >( name );
+
+  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  compNames.resize( 2 );
+  compNames[0] = "co2"; compNames[1] = "water";
+
+  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  molarWgt.resize( 2 );
+  molarWgt[0] = 44e-3; molarWgt[1] = 18e-3;
+
+  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  phaseNames.resize( 2 );
+  phaseNames[0] = "gas"; phaseNames[1] = "liquid";
+
+  auto & phasePVTParaFileNames = fluid->getReference< path_array >( MultiPhaseMultiComponentFluid::viewKeyStruct::phasePVTParaFilesString );
+  phasePVTParaFileNames.resize( 2 );
+  phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
+
+  auto & flashModelParaFileName = fluid->getReference< Path >( MultiPhaseMultiComponentFluid::viewKeyStruct::flashModelParaFileString );
+  flashModelParaFileName = "co2flash.txt";
+
+  fluid->postProcessInputRecursive();
+  return fluid;
+}
+
+
+class MultiPhaseMultiComponentFluidTest : public CompositionalFluidTestBase
+{
+protected:
+
+  MultiPhaseMultiComponentFluidTest()
+  {
+    writeTableToFile( "pvtliquid.txt", pvtliquid_str );
+    writeTableToFile( "pvtgas.txt", pvtgas_str );
+    writeTableToFile( "co2flash.txt", co2flash_str );
+
+    parent.resize( 1 );
+    fluid = makeMultiPhaseMultiComponentFluid( "fluid", &parent );
+    oldFluid = makeOldMultiPhaseMultiComponentFluid( "oldFluid", &parent );
+
+    parent.initialize( &parent );
+    parent.initializePostInitialConditions( &parent );
+  }
+
+  ~MultiPhaseMultiComponentFluidTest()
+  {
+    removeFile( "pvtliquid.txt" );
+    removeFile( "pvtgas.txt" );
+    removeFile( "co2flash.txt" );
+  }
+
+  MultiFluidBase * oldFluid; // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
+};
+
+// TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
+TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMolarTemporary )
+{
+  fluid->setMassFlag( false );
+  oldFluid->setMassFlag( false );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const relTol = 1e-10;
+
+  fluid->allocateConstitutiveData( fluid->getParent(), 1 );
+  oldFluid->allocateConstitutiveData( oldFluid->getParent(), 1 );
+
+  NewMultiPhaseMultiComponentFluid::KernelWrapper wrapper =
+    dynamicCast< NewMultiPhaseMultiComponentFluid * >( fluid )->createKernelWrapper();
+  MultiPhaseMultiComponentFluid::KernelWrapper oldWrapper =
+    dynamicCast< MultiPhaseMultiComponentFluid * >( oldFluid )->createKernelWrapper();
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testValuesAgainstPreviousImplementation( wrapper, oldWrapper, P[i], T[j], comp, relTol );
+    }
+  }
+}
+
+// TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
+TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMassTemporary )
+{
+  fluid->setMassFlag( true );
+  oldFluid->setMassFlag( true );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  //real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-10;
+
+  fluid->allocateConstitutiveData( fluid->getParent(), 1 );
+  oldFluid->allocateConstitutiveData( oldFluid->getParent(), 1 );
+
+  NewMultiPhaseMultiComponentFluid::KernelWrapper wrapper =
+    dynamicCast< NewMultiPhaseMultiComponentFluid * >( fluid )->createKernelWrapper();
+  MultiPhaseMultiComponentFluid::KernelWrapper oldWrapper =
+    dynamicCast< MultiPhaseMultiComponentFluid * >( oldFluid )->createKernelWrapper();
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testValuesAgainstPreviousImplementation( wrapper, oldWrapper, P[i], T[j], comp, relTol );
+    }
+  }
+}
+
+TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMolar )
+{
+  fluid->setMassFlag( false );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-4;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, relTol );
+    }
+  }
+}
+
+TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMass )
+{
+  fluid->setMassFlag( true );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-4;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, relTol );
+    }
+  }
+}
+
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 

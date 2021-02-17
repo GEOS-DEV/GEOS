@@ -7,7 +7,8 @@ set( gtest_geosx_tests
      testLinearElasticIsotropic.cpp
      testLinearElasticAnisotropic.cpp
      testRelPerm.cpp
-     testCapillaryPressure.cpp 
+     testCapillaryPressure.cpp
+     testCO2BrinePVTModels.cpp     
    )
 
 set( dependencyList gtest )

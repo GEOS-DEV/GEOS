@@ -18,6 +18,7 @@ LinearElasticAnisotropic              node :ref:`DATASTRUCTURE_LinearElasticAnis
 LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsotropic`                
 LinearElasticTransverseIsotropic      node :ref:`DATASTRUCTURE_LinearElasticTransverseIsotropic`      
 MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiComponentFluid`         
+NewMultiPhaseMultiComponentFluid      node :ref:`DATASTRUCTURE_NewMultiPhaseMultiComponentFluid`      
 NullModel                             node :ref:`DATASTRUCTURE_NullModel`                             
 ParticleFluid                         node :ref:`DATASTRUCTURE_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           

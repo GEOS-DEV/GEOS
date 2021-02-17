@@ -18,6 +18,7 @@ LinearElasticAnisotropic              node         :ref:`XML_LinearElasticAnisot
 LinearElasticIsotropic                node         :ref:`XML_LinearElasticIsotropic`                
 LinearElasticTransverseIsotropic      node         :ref:`XML_LinearElasticTransverseIsotropic`      
 MultiPhaseMultiComponentFluid         node         :ref:`XML_MultiPhaseMultiComponentFluid`         
+NewMultiPhaseMultiComponentFluid      node         :ref:`XML_NewMultiPhaseMultiComponentFluid`      
 NullModel                             node         :ref:`XML_NullModel`                             
 ParticleFluid                         node         :ref:`XML_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node         :ref:`XML_PoreVolumeCompressibleSolid`           
