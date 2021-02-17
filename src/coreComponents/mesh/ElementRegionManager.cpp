@@ -281,7 +281,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
   packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
-  
+
   parallelDeviceEvents noEvents;
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
@@ -357,7 +357,7 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
       /// THIS IS WRONG??
       arrayView1d< localIndex > & elemList = packList[kReg][esr];
 
-      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, noEvents);
+      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, noEvents );
     } );
   }
 

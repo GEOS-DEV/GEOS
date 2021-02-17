@@ -137,7 +137,7 @@ RAJA_INLINE bool testAllDeviceEvents( parallelDeviceEvents & events )
   bool allDone = true;
   for( auto & event : events )
   {
-    if ( ! event.check() )
+    if( !event.check() )
     {
       allDone = false;
       break;
@@ -148,7 +148,8 @@ RAJA_INLINE bool testAllDeviceEvents( parallelDeviceEvents & events )
 
 RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 {
-  while( ! testAllDeviceEvents( events ) ) { }
+  while( !testAllDeviceEvents( events ) )
+  { }
 }
 
 template< typename POLICY, typename LAMBDA >

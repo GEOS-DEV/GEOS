@@ -132,7 +132,7 @@ TEST( testPacking, testTensorPacking )
   localIndex calc_size = bufferOps::PackDevice< false >( null_buf, tns.toViewConst(), packEvents );
   buffer_type buf( calc_size );
   buffer_unit_type * b = &buf[0];
-  bufferOps::PackDevice< true >( b, tns.toViewConst(), packEvents);
+  bufferOps::PackDevice< true >( b, tns.toViewConst(), packEvents );
   waitAllDeviceEvents( packEvents );
 
   array1d< R1Tensor > unp( 1 );
@@ -162,12 +162,12 @@ TEST( testPacking, testPackingDevice )
 
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents);
+  bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents );
   waitAllDeviceEvents( packEvents );
 
   buffer_unit_type const * cbuffer = &buf[0];
   parallelDeviceEvents unpackEvents;
-  bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents);
+  bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
   unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )
@@ -191,12 +191,12 @@ TEST( testPacking, testPackingDeviceHelper )
 
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  dataRepository::wrapperHelpers::PackDevice< true >( buffer, veloc.toViewConst(), packEvents);
+  dataRepository::wrapperHelpers::PackDevice< true >( buffer, veloc.toViewConst(), packEvents );
   waitAllDeviceEvents( packEvents );
 
   parallelDeviceEvents unpackEvents;
   buffer_unit_type const * cbuffer = &buf[0];
-  dataRepository::wrapperHelpers::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents);
+  dataRepository::wrapperHelpers::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
   unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )

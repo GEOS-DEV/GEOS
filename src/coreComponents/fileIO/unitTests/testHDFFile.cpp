@@ -51,7 +51,7 @@ TEST( testHDFIO, ArrayHistory )
 
     buffer_unit_type * buffer = io.getBufferHead( );
     parallelDeviceEvents packEvents;
-    bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ), packEvents);
+    bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ), packEvents );
     waitAllDeviceEvents( packEvents );
 
     io.write( );

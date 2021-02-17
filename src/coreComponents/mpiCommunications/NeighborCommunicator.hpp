@@ -276,7 +276,7 @@ public:
                            MeshLevel const & meshLevel,
                            int const commID,
                            bool onDevice,
-                           parallelDeviceEvents & events  );
+                           parallelDeviceEvents & events );
 
   void sendRecvBuffers( int const commID );
 

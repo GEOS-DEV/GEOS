@@ -248,7 +248,7 @@ public:
    * @brief Check whether wrapped type is can be packed into a buffer on host or device.
    * @param[in] onDevice    determine whether the wrapper is packable on host vs device
    * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all 
+   *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
    * @return @p true if @p T is packable, @p false otherwise
    */
@@ -262,7 +262,7 @@ public:
    * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all 
+   *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
    * @return               the number of @p buffer_unit_type units packed
    */
@@ -277,7 +277,7 @@ public:
    * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all 
+   *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
    * @return               the number of @p buffer_unit_type units packed
    */
@@ -291,7 +291,7 @@ public:
    *                         this matters as the size on device differs from the size on host
    *                         as we pack less metadata on device
    * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all 
+   *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
    * @return the number of @p buffer_unit_type units needed to pack
    */
@@ -316,7 +316,7 @@ public:
    * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all 
+   *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
    * @return               the number of @p buffer_unit_type units unpacked
    */
@@ -331,7 +331,7 @@ public:
    * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all 
+   *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
    * @return                  the number of @p buffer_unit_type units unpacked
    */

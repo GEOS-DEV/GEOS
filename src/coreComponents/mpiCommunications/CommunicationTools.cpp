@@ -837,7 +837,7 @@ void CommunicationTools::synchronizePackSendRecv( const std::map< string, string
 bool CommunicationTools::asyncUnpack( MeshLevel * const mesh,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       MPI_iCommData & icomm,
-                                      bool onDevice, 
+                                      bool onDevice,
                                       parallelDeviceEvents & events )
 {
   GEOSX_MARK_FUNCTION;
@@ -855,8 +855,8 @@ bool CommunicationTools::asyncUnpack( MeshLevel * const mesh,
                          &flag,
                          icomm.mpiRecvBufferStatus.data() );
 
-  // flag returns true for MPI_REQUEST_NULLs from previous calls, so we also need to check that neighborIndex has been set
-    if ( flag && neighborIndex >= 0)
+    // flag returns true for MPI_REQUEST_NULLs from previous calls, so we also need to check that neighborIndex has been set
+    if( flag && neighborIndex >= 0 )
     {
       // unpack the recvd buffer
       NeighborCommunicator & neighbor = neighbors[ neighborIndex ];
@@ -875,13 +875,14 @@ bool CommunicationTools::asyncUnpack( MeshLevel * const mesh,
 void CommunicationTools::finalizeUnpack( MeshLevel * const mesh,
                                          std::vector< NeighborCommunicator > & neighbors,
                                          MPI_iCommData & icomm,
-                                         bool onDevice, 
+                                         bool onDevice,
                                          parallelDeviceEvents & events )
 {
   GEOSX_MARK_FUNCTION;
 
   // wait to unpack any remaining buffers
-  while( ! asyncUnpack( mesh, neighbors, icomm, onDevice, events ) ) { }
+  while( !asyncUnpack( mesh, neighbors, icomm, onDevice, events ) )
+  { }
   if( onDevice )
   {
     waitAllDeviceEvents( events );

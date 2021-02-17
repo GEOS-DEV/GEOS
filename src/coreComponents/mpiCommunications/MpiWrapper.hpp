@@ -188,9 +188,9 @@ public:
 
   static int test( MPI_Request * request, int * flag, MPI_Status * status );
 
-  static int testany( int count,  MPI_Request array_of_requests[], int * idx, int * flags, MPI_Status array_of_statuses[] );
+  static int testany( int count, MPI_Request array_of_requests[], int * idx, int * flags, MPI_Status array_of_statuses[] );
 
-  static int testall( int count,  MPI_Request array_of_requests[], int * flags, MPI_Status array_of_statuses[] );
+  static int testall( int count, MPI_Request array_of_requests[], int * flags, MPI_Status array_of_statuses[] );
 
   static int wait( MPI_Request * request, MPI_Status * status );
 

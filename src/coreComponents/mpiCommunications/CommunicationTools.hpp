@@ -105,57 +105,53 @@ public:
   { return CommID( m_freeCommIDs ); }
 
   void synchronizeFields( const std::map< string, string_array > & fieldNames,
-                                 MeshLevel * const mesh,
-                                 std::vector< NeighborCommunicator > & allNeighbors,
-                                 bool onDevice );
+                          MeshLevel * const mesh,
+                          std::vector< NeighborCommunicator > & allNeighbors,
+                          bool onDevice );
 
   void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                            MeshLevel * const mesh,
-                                            std::vector< NeighborCommunicator > & neighbors,
-                                            MPI_iCommData & icomm,
-                                            bool onDevice );
+                                     MeshLevel * const mesh,
+                                     std::vector< NeighborCommunicator > & neighbors,
+                                     MPI_iCommData & icomm,
+                                     bool onDevice );
 
   void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                       MeshLevel * const mesh,
-                                       std::vector< NeighborCommunicator > & allNeighbors,
-                                       MPI_iCommData & icomm,
-                                       bool onDevice );
+                                MeshLevel * const mesh,
+                                std::vector< NeighborCommunicator > & allNeighbors,
+                                MPI_iCommData & icomm,
+                                bool onDevice );
 
   void asyncPack( const std::map< string, string_array > & fieldNames,
-                         MeshLevel * const mesh,
-                         std::vector< NeighborCommunicator > & neighbors,
-                         MPI_iCommData & icomm,
-                         bool onDevice,
-                         parallelDeviceEvents & events );
+                  MeshLevel * const mesh,
+                  std::vector< NeighborCommunicator > & neighbors,
+                  MPI_iCommData & icomm,
+                  bool onDevice,
+                  parallelDeviceEvents & events );
 
   void asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
-                             MPI_iCommData & icomm,
-                             bool onDevice,
-                             parallelDeviceEvents & events );
-
-  void synchronizeUnpack( MeshLevel * const mesh,
-                                 std::vector< NeighborCommunicator > & neighbors,
-                                 MPI_iCommData & icomm,
-                                 bool onDevice );
-
-  bool asyncUnpack( MeshLevel * const mesh,
-                           std::vector< NeighborCommunicator > & neighbors,
-                           MPI_iCommData & icomm,
-                           bool onDevice,
-                           parallelDeviceEvents & events );
-
-  void finalizeUnpack( MeshLevel * const mesh,
-                              std::vector< NeighborCommunicator > & neighbors,
-                              MPI_iCommData & icomm,
-                              bool onDevice,
-                              parallelDeviceEvents & events );
-  void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                            std::vector< NeighborCommunicator > & allNeighbors );
+                      MPI_iCommData & icomm,
+                      bool onDevice,
+                      parallelDeviceEvents & events );
 
   void synchronizeUnpack( MeshLevel * const mesh,
                           std::vector< NeighborCommunicator > & neighbors,
                           MPI_iCommData & icomm,
                           bool onDevice );
+
+  bool asyncUnpack( MeshLevel * const mesh,
+                    std::vector< NeighborCommunicator > & neighbors,
+                    MPI_iCommData & icomm,
+                    bool onDevice,
+                    parallelDeviceEvents & events );
+
+  void finalizeUnpack( MeshLevel * const mesh,
+                       std::vector< NeighborCommunicator > & neighbors,
+                       MPI_iCommData & icomm,
+                       bool onDevice,
+                       parallelDeviceEvents & events );
+
+  void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+                                            std::vector< NeighborCommunicator > & allNeighbors );
 
 private:
   std::set< int > m_freeCommIDs;

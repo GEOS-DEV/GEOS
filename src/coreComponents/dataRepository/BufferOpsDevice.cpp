@@ -158,7 +158,7 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
       {
         memcpy( threadBuffer, &value, sizeof( T ) );
         threadBuffer += sizeof( T );
-      } ); 
+      } );
     } ) );
 
     buffer += numIndices * unitSize;
@@ -221,15 +221,15 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
 #define DECLARE_PACK_UNPACK( TYPE, NDIM, USD ) \
   template localIndex PackDevice< true, TYPE, NDIM, USD > \
     ( buffer_unit_type * &buffer, \
-     ArrayView< TYPE const, NDIM, USD > const & var, \
+    ArrayView< TYPE const, NDIM, USD > const & var, \
     parallelDeviceEvents & events ); \
   template localIndex PackDevice< false, TYPE, NDIM, USD > \
     ( buffer_unit_type * &buffer, \
-     ArrayView< TYPE const, NDIM, USD > const & var, \
+    ArrayView< TYPE const, NDIM, USD > const & var, \
     parallelDeviceEvents & events ); \
   template localIndex UnpackDevice< TYPE, NDIM, USD > \
     ( buffer_unit_type const * & buffer, \
-     ArrayView< TYPE, NDIM, USD > const & var, \
+    ArrayView< TYPE, NDIM, USD > const & var, \
     parallelDeviceEvents & events ); \
   template localIndex PackByIndexDevice< true, TYPE, NDIM, USD > \
     ( buffer_unit_type * &buffer, \
