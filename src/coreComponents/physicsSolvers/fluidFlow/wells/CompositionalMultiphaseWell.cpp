@@ -340,7 +340,7 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
 {
   WellSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
@@ -402,7 +402,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 {
   WellSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells

@@ -55,7 +55,7 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
 {
   BASE::initializePreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 

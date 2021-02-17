@@ -108,7 +108,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )

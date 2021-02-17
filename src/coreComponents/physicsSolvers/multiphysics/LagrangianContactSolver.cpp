@@ -181,7 +181,7 @@ void LagrangianContactSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   ConstitutiveBase const & contactRelation = cm.getConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );

@@ -191,7 +191,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
   problemManager.processInputFileRecursive( xmlProblemNode );
 
-  DomainPartition & domain = *problemManager.getDomainPartition();
+  DomainPartition & domain = problemManager.getDomainPartition();
 
   constitutive::ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());

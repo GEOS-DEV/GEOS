@@ -491,7 +491,7 @@ protected:
     setupProblemFromXML( state.getProblemManager(), xmlInput );
     solver = state.getProblemManager().getPhysicsSolverManager().getGroupPointer< CompositionalMultiphaseReservoir >( "reservoirSystem" );
 
-    DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     solver->setupSystem( domain,
                          solver->getDofManager(),
@@ -539,7 +539,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -555,7 +555,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Volum
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -570,7 +570,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,

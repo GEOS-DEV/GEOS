@@ -165,7 +165,7 @@ void WellSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
 
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
@@ -181,7 +181,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );

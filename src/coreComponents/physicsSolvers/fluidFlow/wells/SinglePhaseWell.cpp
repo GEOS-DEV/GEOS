@@ -93,7 +93,7 @@ void SinglePhaseWell::initializePreSubGroups()
 
   WellSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   validateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );

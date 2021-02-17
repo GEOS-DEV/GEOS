@@ -74,7 +74,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
@@ -90,7 +90,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
   FaceManager const & faceManager = *mesh.getFaceManager();

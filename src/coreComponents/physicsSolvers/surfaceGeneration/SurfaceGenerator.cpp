@@ -296,7 +296,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
 void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
     MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
@@ -400,7 +400,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 
 void SurfaceGenerator::postRestartInitialization()
 {
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();

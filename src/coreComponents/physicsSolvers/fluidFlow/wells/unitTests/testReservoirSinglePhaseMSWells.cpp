@@ -375,7 +375,7 @@ protected:
     setupProblemFromXML( state.getProblemManager(), xmlInput );
     solver = state.getProblemManager().getPhysicsSolverManager().getGroupPointer< SinglePhaseReservoir >( "reservoirSystem" );
 
-    DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     solver->setupSystem( domain,
                          solver->getDofManager(),
@@ -403,7 +403,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -418,7 +418,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -433,7 +433,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,

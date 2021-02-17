@@ -77,7 +77,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   {
     // do any 1-time metadata output
     localIndex metaCollectorCount = collector.getNumMetaCollectors( );
-    DomainPartition * domainGroup = pm.getDomainPartition();
+    DomainPartition & domainGroup = pm.getDomainPartition();
     for( localIndex metaIdx = 0; metaIdx < metaCollectorCount; ++metaIdx )
     {
       std::unique_ptr< HistoryCollection > metaCollector = collector.getMetaCollector( pm, metaIdx );
@@ -91,7 +91,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
         metaIOs[ii]->init( false );
       }
 
-      metaCollector->execute( 0.0, 0.0, 0, 0, 0, *domainGroup );
+      metaCollector->execute( 0.0, 0.0, 0, 0, 0, domainGroup );
       for( localIndex ii = 0; ii < metaCollector->getCollectionCount( ); ++ii )
       {
         metaIOs[ii]->write( );

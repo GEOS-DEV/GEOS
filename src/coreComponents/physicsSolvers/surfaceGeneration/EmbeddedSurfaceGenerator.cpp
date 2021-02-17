@@ -71,7 +71,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
    */
 
   // Get domain
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
 
   // Get geometric object manager
   GeometricObjectManager & geometricObjManager = getGlobalState().getProblemManager().getGroup< GeometricObjectManager >( "Geometry" );

@@ -63,7 +63,7 @@ TEST( FieldSpecification, Recursive )
   localIndex nbTetReg1 = 40;
   localIndex nbHexReg1 = 50;
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( "body" );
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));

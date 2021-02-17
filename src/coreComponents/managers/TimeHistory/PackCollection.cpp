@@ -33,14 +33,14 @@ void PackCollection::initializePostSubGroups()
 {
   localIndex numSets = m_setNames.size( );
   m_collectionCount = numSets == 0 ? 1 : numSets;
-  DomainPartition & domain = *( getGlobalState().getProblemManager().getDomainPartition( ) );
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   updateSetsIndices( domain );
   HistoryCollection::initializePostSubGroups();
 }
 
 HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex collectionIdx )
 {
-  DomainPartition & domain = *(pm.getDomainPartition( ));
+  DomainPartition & domain = pm.getDomainPartition();
   Group const * target_object = this->getTargetObject( domain );
   WrapperBase const & target = target_object->getWrapperBase( m_fieldName );
   if( m_setNames.size() != 0 )

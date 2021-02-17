@@ -83,7 +83,7 @@ protected:
     problemManager.processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
-    DomainPartition & domain = *problemManager.getDomainPartition();
+    DomainPartition & domain = problemManager.getDomainPartition();
     MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
@@ -99,14 +99,14 @@ protected:
 
 TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
 {
-  DomainPartition * const domain = getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = domain->getMeshBody( 0 ).getMeshLevel( 0 );
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager * const nodeManager = meshLevel.getNodeManager();
 
   arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( *domain, 0, 0 );
+  dofManager.setMesh( domain, 0, 0 );
 
   string_array Region;
   Region.emplace_back( "region1" );
@@ -166,12 +166,12 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
 
 TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
 {
-  DomainPartition * const domain = getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & meshLevel = domain->getMeshBody( 0 ).getMeshLevel( 0 );
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel.getElemManager();;
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( *domain, 0, 0 );
+  dofManager.setMesh( domain, 0, 0 );
 
   string_array region;
   region.emplace_back( "region1" );

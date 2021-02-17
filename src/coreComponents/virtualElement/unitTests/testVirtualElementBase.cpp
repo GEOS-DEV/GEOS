@@ -170,7 +170,7 @@ TEST( VirtualElementBase, unitCube )
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition & domain = *problemManager.getDomainPartition();
+  DomainPartition & domain = problemManager.getDomainPartition();
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -240,7 +240,7 @@ TEST( VirtualElementBase, wedges )
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition & domain = *problemManager.getDomainPartition();
+  DomainPartition & domain = problemManager.getDomainPartition();
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );

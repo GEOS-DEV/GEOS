@@ -233,7 +233,7 @@ void CompositionalMultiphaseFlow::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 1. Set key dimensions of the problem
@@ -570,7 +570,7 @@ void CompositionalMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 

@@ -156,7 +156,7 @@ void ProblemManager::problemSetup()
 
   applyNumericalMethods();
 
-  registerDataOnMeshRecursive( getDomainPartition()->getMeshBodies() );
+  registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
 }
@@ -262,7 +262,7 @@ void ProblemManager::generateDocumentation()
     generateDataStructureSkeleton( 0 );
 
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-    DomainPartition & domain = *getDomainPartition();
+    DomainPartition & domain = getDomainPartition();
     meshManager.generateMeshLevels( domain );
 
     registerDataOnMeshRecursive( domain.getMeshBodies() );
@@ -290,7 +290,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   // These objects are handled differently during the xml read step,
   // so we need to explicitly add them into the schema structure
-  DomainPartition & domain = *getDomainPartition();
+  DomainPartition & domain = getDomainPartition();
 
   m_functionManager->generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( *m_functionManager, schemaRoot, targetChoiceNode, documentationType );
@@ -370,7 +370,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::parseInputFile()
 {
-  DomainPartition & domain = *getDomainPartition();
+  DomainPartition & domain = getDomainPartition();
 
   Group & commandLine = getGroup< Group >( groupKeys.commandLine );
   string const & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
@@ -409,7 +409,7 @@ void ProblemManager::parseInputFile()
 
 void ProblemManager::postProcessInput()
 {
-  DomainPartition * domain  = getDomainPartition();
+  DomainPartition & domain = getDomainPartition();
 
   Group const & commandLine = getGroup< Group >( groupKeys.commandLine );
   integer const & xparCL = commandLine.getReference< integer >( viewKeys.xPartitionsOverride );
@@ -419,7 +419,7 @@ void ProblemManager::postProcessInput()
   integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
   setPreferPinned((suppressPinned == 0));
 
-  PartitionBase & partition = domain->getReference< PartitionBase >( keys::partitionManager );
+  PartitionBase & partition = domain.getReference< PartitionBase >( keys::partitionManager );
   bool repartition = false;
   integer xpar = 1;
   integer ypar = 1;
@@ -486,7 +486,7 @@ void ProblemManager::initializationOrder( string_array & order )
 void ProblemManager::generateMesh()
 {
   GEOSX_MARK_FUNCTION;
-  DomainPartition & domain = *getDomainPartition();
+  DomainPartition & domain = getDomainPartition();
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.generateMeshes( domain );
@@ -560,9 +560,9 @@ void ProblemManager::generateMesh()
 void ProblemManager::applyNumericalMethods()
 {
 
-  DomainPartition * domain  = getDomainPartition();
-  ConstitutiveManager & constitutiveManager = domain->getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-  Group & meshBodies = domain->getMeshBodies();
+  DomainPartition & domain  = getDomainPartition();
+  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+  Group & meshBodies = domain.getMeshBodies();
 
   map< std::pair< string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
 
@@ -696,23 +696,22 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
 
 bool ProblemManager::runSimulation()
 {
-  DomainPartition * domain = getDomainPartition();
-  return m_eventManager->run( *domain );
+  return m_eventManager->run( getDomainPartition() );
 }
 
-DomainPartition * ProblemManager::getDomainPartition()
+DomainPartition & ProblemManager::getDomainPartition()
 {
-  return getGroupPointer< DomainPartition >( keys::domain );
+  return getGroup< DomainPartition >( keys::domain );
 }
 
-DomainPartition const * ProblemManager::getDomainPartition() const
+DomainPartition const & ProblemManager::getDomainPartition() const
 {
-  return getGroupPointer< DomainPartition >( keys::domain );
+  return getGroup< DomainPartition >( keys::domain );
 }
 
 void ProblemManager::applyInitialConditions()
 {
-  m_fieldSpecificationManager->applyInitialConditions( *getDomainPartition() );
+  m_fieldSpecificationManager->applyInitialConditions( getDomainPartition() );
   initializePostInitialConditions();
 }
 

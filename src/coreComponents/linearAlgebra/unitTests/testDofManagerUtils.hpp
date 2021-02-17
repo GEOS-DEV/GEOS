@@ -53,7 +53,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   problemManager->processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = problemManager->getDomainPartition();
   MeshManager & meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 

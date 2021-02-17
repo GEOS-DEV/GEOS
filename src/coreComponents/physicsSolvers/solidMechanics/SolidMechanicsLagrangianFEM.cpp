@@ -240,7 +240,7 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
 
   // Validate solid models in target regions
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
@@ -379,7 +379,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager & nodes = *mesh.getNodeManager();

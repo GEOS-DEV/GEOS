@@ -150,13 +150,13 @@ public:
    * @brief Returns a pointer to the DomainPartition
    * @return Pointer to the DomainPartition
    */
-  DomainPartition * getDomainPartition();
+  DomainPartition & getDomainPartition();
 
   /**
    * @brief Returns a pointer to the DomainPartition
    * @return Const pointer to the DomainPartition
    */
-  DomainPartition const * getDomainPartition() const;
+  DomainPartition const & getDomainPartition() const;
 
   /**
    * @brief Returns the problem name

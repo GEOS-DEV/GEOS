@@ -177,7 +177,7 @@ void PoroelasticSolver::initializePostInitialConditionsPreSubGroups()
   {
     m_flowSolver->setPoroElasticCoupling();
     // Calculate initial total mean stress
-    updateDeformationForCoupling( *getGlobalState().getProblemManager().getDomainPartition() );
+    updateDeformationForCoupling( getGlobalState().getProblemManager().getDomainPartition() );
   }
 }
 
