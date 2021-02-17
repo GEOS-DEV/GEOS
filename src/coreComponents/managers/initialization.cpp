@@ -415,7 +415,11 @@ void setupOpenMP()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMPI( int argc, char * argv[] )
 {
-  MpiWrapper::init( &argc, &argv );
+  if( !MpiWrapper::initialized() )
+  {
+    MpiWrapper::init( &argc, &argv );
+  }
+
   MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
 }
 
