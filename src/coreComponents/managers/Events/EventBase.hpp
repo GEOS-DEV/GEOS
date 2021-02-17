@@ -39,7 +39,7 @@ public:
    * @param name The name of the object in the data repository.
    * @param parent The parent of this object in the data repository.
    **/
-  explicit EventBase( std::string const & name,
+  explicit EventBase( string const & name,
                       Group * const parent );
 
   /// Destructor
@@ -67,7 +67,7 @@ public:
    * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
    * @copydoc ExecutableGroup::execute()
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -110,7 +110,7 @@ public:
   /**
    * @brief Process input data to retrieve targeted objects internally.
    * The target object for an event may be specified via the keyword "target" in the input xml.
-   * This string is empty by default and uses GetGroupByPath() method in Group, which returns
+   * This string is empty by default and uses getGroupByPath() method in Group, which returns
    * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
    * This involves a lot of string parsing, so we do it once during initialization.
    */
@@ -209,7 +209,7 @@ public:
   /// @endcond
 
   /// Catalog interface
-  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, string const &, Group * const >;
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 

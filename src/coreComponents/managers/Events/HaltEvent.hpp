@@ -38,7 +38,7 @@ public:
    * @param name The name of the object in the data repository.
    * @param parent The parent of this object in the data repository.
    **/
-  HaltEvent( const std::string & name,
+  HaltEvent( const string & name,
              Group * const parent );
 
   /// Destructor

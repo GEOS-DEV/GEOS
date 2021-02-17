@@ -21,6 +21,7 @@
 #include "FlowProppantTransportSolver.hpp"
 
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/ProppantTransport.hpp"
@@ -31,7 +32,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-FlowProppantTransportSolver::FlowProppantTransportSolver( const std::string & name, Group * const parent ):
+FlowProppantTransportSolver::FlowProppantTransportSolver( const string & name, Group * const parent ):
   SolverBase( name, parent ),
   m_proppantSolverName(),
   m_flowSolverName(),
@@ -76,7 +77,7 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
     m_proppantSolver->resizeFractureFields( *domain.getMeshBody( 0 )->getMeshLevel( 0 ) );
 
     // We need re-apply initial conditions to fractures after they are generated
-    FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
+    FieldSpecificationManager const & boundaryConditionManager = getGlobalState().getFieldSpecificationManager();
     boundaryConditionManager.applyInitialConditions( &domain );
   }
 
@@ -176,6 +177,6 @@ real64 FlowProppantTransportSolver::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, FlowProppantTransportSolver, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, FlowProppantTransportSolver, string const &, Group * const )
 
 } /* namespace geosx */

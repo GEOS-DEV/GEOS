@@ -18,13 +18,14 @@
 
 #include "PeriodicEvent.hpp"
 #include "managers/Functions/FunctionManager.hpp"
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
 
 using namespace dataRepository;
 
-PeriodicEvent::PeriodicEvent( const std::string & name,
+PeriodicEvent::PeriodicEvent( const string & name,
                               Group * const parent ):
   EventBase( name, parent ),
   m_functionTarget( nullptr ),
@@ -122,7 +123,7 @@ void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
                                                     Group * GEOSX_UNUSED_PARAM( domain ))
 {
   // Grab the function
-  FunctionManager & functionManager = FunctionManager::instance();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
   FunctionBase * function = functionManager.getGroup< FunctionBase >( m_functionName );
 
   real64 result = 0.0;
@@ -233,6 +234,6 @@ void PeriodicEvent::cleanup( real64 const time_n,
   }
 }
 
-REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, string const &, Group * const )
 
 } /* namespace geosx */

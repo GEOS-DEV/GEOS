@@ -28,7 +28,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -45,7 +45,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-HydrofractureSolver::HydrofractureSolver( const std::string & name,
+HydrofractureSolver::HydrofractureSolver( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
@@ -89,7 +89,7 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion * const region )
@@ -237,10 +237,10 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString ) );
         fieldNames["elems"].emplace_back( "elementAperture" );
 
-        CommunicationTools::synchronizeFields( fieldNames,
-                                               domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                               domain.getNeighbors(),
-                                               false );
+        getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+                                                                    domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                                    domain.getNeighbors(),
+                                                                    false );
 
         this->updateDeformationForCoupling( domain );
 
@@ -1050,5 +1050,5 @@ void HydrofractureSolver::initializeNewFaceElements( DomainPartition const & )
 //  m_flowSolver->
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, string const &, Group * const )
 } /* namespace geosx */

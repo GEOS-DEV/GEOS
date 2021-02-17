@@ -52,7 +52,7 @@ namespace keys
 using namespace dataRepository;
 using namespace constitutive;
 
-PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
+PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),
@@ -432,10 +432,10 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( m_fieldName );
 
-  CommunicationTools::synchronizeFields( fieldNames,
-                                         mesh,
-                                         domain.getNeighbors(),
-                                         false );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+                                                              mesh,
+                                                              domain.getNeighbors(),
+                                                              false );
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(
@@ -569,8 +569,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     arrayView1d< real64 > const & localRhs )
 
 {
-  GEOSX_MARK_FUNCTION;
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
   fsManager.apply( time,
                    &domain,
                    "nodeManager",
@@ -594,6 +593,6 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
   fsManager.applyFieldValue< serialPolicy >( time, &domain, "ElementRegions", viewKeyStruct::coeffName );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, std::string const &,
+REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )
 } // namespace geosx

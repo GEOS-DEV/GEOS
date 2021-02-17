@@ -20,16 +20,7 @@
 #ifndef GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
-#ifdef GEOSX_USE_PYTHON
-// Note: the python header must be included first to avoid conflicting
-// definitions of _posix_c_source
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <Python.h>
-#include <numpy/arrayobject.h>
-#endif
-
 #include "EventManager.hpp"
-#include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
 
 namespace geosx
@@ -41,6 +32,10 @@ namespace constitutive
 {
 class ConstitutiveManager;
 }
+class FunctionManager;
+class FieldSpecificationManager;
+struct CommandLineOptions;
+
 /**
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOSX
@@ -50,11 +45,12 @@ class ProblemManager : public dataRepository::Group
 public:
 
   /**
-   * @param name the name of this object manager
-   * @param parent the parent Group
+   * @brief Create a new ProblemManager, it must be created from the root conduit node.
+   * @param name The name of the ProblemManager.
+   * @param root The root conduit node.
    */
-  explicit ProblemManager( const std::string & name,
-                           Group * const parent );
+  explicit ProblemManager( const string & name,
+                           conduit::Node & root );
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group
@@ -91,25 +87,12 @@ public:
   void parseCommandLineInput();
 
   /**
-   * @brief Parses a restart file
-   * @param restartFileName the name of the restart file
-   * @return flag indicating beginFromRestart status
+   * @brief Parses a restart file.
+   * @param restartFileName The name of the restart file.
+   * @param options The command line options.
+   * @return Flag indicating beginFromRestart status
    */
-  static bool parseRestart( std::string & restartFileName );
-
-  /**
-   * @brief Initializes a python interpreter within GEOSX
-   * @note This is not regularly used or tested, and may be removed in future versions.
-   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
-   */
-  void initializePythonInterpreter();
-
-  /**
-   * @brief Closes the internal python interpreter
-   * @note This is not regularly used or tested, and may be removed in future versions.
-   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
-   */
-  void closePythonInterpreter();
+  static bool parseRestart( string & restartFileName, CommandLineOptions const & options );
 
   /**
    * @brief Generates the xml schema documentation
@@ -151,8 +134,9 @@ public:
 
   /**
    * @brief Run the events in the scheduler.
+   * @return True iff the simulation exited early, and needs to be run again to completion.
    */
-  void runSimulation();
+  bool runSimulation();
 
   /**
    * @brief After initialization, overwrites data using a restart file
@@ -271,6 +255,46 @@ public:
     return *m_physicsSolverManager;
   }
 
+  /**
+   * @brief Returns the FunctionManager.
+   * @return The FunctionManager.
+   */
+  FunctionManager & getFunctionManager()
+  {
+    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    return *m_functionManager;
+  }
+
+  /**
+   * @brief Returns the const FunctionManager.
+   * @return The const FunctionManager.
+   */
+  FunctionManager const & getFunctionManager() const
+  {
+    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    return *m_functionManager;
+  }
+
+  /**
+   * @brief Returns the FieldSpecificationManager.
+   * @return The FieldSpecificationManager.
+   */
+  FieldSpecificationManager & getFieldSpecificationManager()
+  {
+    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    return *m_fieldSpecificationManager;
+  }
+
+  /**
+   * @brief Returns the const FunctionManager.
+   * @return The const FunctionManager.
+   */
+  FieldSpecificationManager const & getFieldSpecificationManager() const
+  {
+    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    return *m_fieldSpecificationManager;
+  }
+
 protected:
   /**
    * @brief Post process the command line input
@@ -310,6 +334,9 @@ private:
 
   /// The FunctionManager
   FunctionManager * m_functionManager;
+
+  /// The FieldSpecificationManager
+  FieldSpecificationManager * m_fieldSpecificationManager;
 };
 
 } /* namespace geosx */

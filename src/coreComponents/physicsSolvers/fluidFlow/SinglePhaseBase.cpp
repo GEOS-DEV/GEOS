@@ -25,6 +25,7 @@
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
@@ -35,7 +36,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace SinglePhaseBaseKernels;
 
-SinglePhaseBase::SinglePhaseBase( const std::string & name,
+SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
   FlowSolverBase( name, parent )
 {
@@ -226,7 +227,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups( Group * const
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
 
-  CommunicationTools::synchronizeFields( fieldNames, &mesh, domain->getNeighbors(), false );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain->getNeighbors(), false );
 
   resetViews( mesh );
 
@@ -607,7 +608,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   fsManager.apply( time_n + dt,
@@ -654,7 +655,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   fsManager.apply( time_n + dt, &domain,

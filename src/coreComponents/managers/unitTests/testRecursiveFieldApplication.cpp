@@ -15,6 +15,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "managers/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/initialization.hpp"
@@ -33,7 +34,7 @@ void RegisterAndApplyField( DomainPartition * domain,
                             string const & objectPath,
                             real64 value )
 {
-  FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fieldSpecificationManager = getGlobalState().getFieldSpecificationManager();
 
   auto fieldSpec = fieldSpecificationManager.registerGroup< FieldSpecificationBase >( fieldName );
   fieldSpec->setFieldName( fieldName );
@@ -61,12 +62,13 @@ TEST( FieldSpecification, Recursive )
   localIndex nbHexReg0 = 60;
   localIndex nbTetReg1 = 40;
   localIndex nbHexReg1 = 50;
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
-  auto meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( "body" );
-  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
 
-  CellBlockManager * cellBlockManager = domain->getGroup< CellBlockManager >( keys::cellManager );
+  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  auto meshBodies = domain.getMeshBodies();
+  MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( "body" );
+  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( string( "Level0" ));
+
+  CellBlockManager * cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
 
   CellBlock * reg0Hex = cellBlockManager->getGroup( keys::cellBlocks )->registerGroup< CellBlock >( "reg0hex" );
   reg0Hex->setElementType( "C3D8" );
@@ -118,7 +120,7 @@ TEST( FieldSpecification, Recursive )
 
   SortedArray< localIndex > & set0hex = reg0->getSubRegion( "reg0hex" )
                                           ->getGroup( "sets" )
-                                          ->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )
+                                          ->registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           ->reference();
   for( localIndex i = 0; i < nbHexReg0; i++ )
   {
@@ -127,7 +129,7 @@ TEST( FieldSpecification, Recursive )
 
   SortedArray< localIndex > & set0tet = reg0->getSubRegion( "reg0tet" )
                                           ->getGroup( "sets" )
-                                          ->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )
+                                          ->registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           ->reference();
   for( localIndex i = 0; i < nbTetReg0; i++ )
   {
@@ -136,7 +138,7 @@ TEST( FieldSpecification, Recursive )
 
   SortedArray< localIndex > & set1hex = reg1->getSubRegion( "reg1hex" )
                                           ->getGroup( "sets" )
-                                          ->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )
+                                          ->registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           ->reference();
   for( localIndex i = 0; i < nbHexReg1; i++ )
   {
@@ -145,17 +147,17 @@ TEST( FieldSpecification, Recursive )
 
   SortedArray< localIndex > & set1tet = reg1->getSubRegion( "reg1tet" )
                                           ->getGroup( "sets" )
-                                          ->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )
+                                          ->registerWrapper< SortedArray< localIndex > >( string( "all" ) )
                                           ->reference();
   for( localIndex i = 0; i < nbTetReg1; i++ )
   {
     set1tet.insert( i );
   }
 
-  RegisterAndApplyField( domain.get(), "field0", "ElementRegions", 1. );
-  RegisterAndApplyField( domain.get(), "field1", "ElementRegions/reg0", 2. );
-  RegisterAndApplyField( domain.get(), "field2", "ElementRegions/reg0/elementSubRegions/reg0hex", 3. );
-  RegisterAndApplyField( domain.get(), "field3", "ElementRegions/reg1/elementSubRegions/reg1tet", 4. );
+  RegisterAndApplyField( &domain, "field0", "ElementRegions", 1. );
+  RegisterAndApplyField( &domain, "field1", "ElementRegions/reg0", 2. );
+  RegisterAndApplyField( &domain, "field2", "ElementRegions/reg0/elementSubRegions/reg0hex", 3. );
+  RegisterAndApplyField( &domain, "field3", "ElementRegions/reg1/elementSubRegions/reg1tet", 4. );
 
   /// Check if the values are well set
 
@@ -197,7 +199,7 @@ TEST( FieldSpecification, Recursive )
 
 int main( int argc, char * * argv )
 {
-  basicSetup( argc, argv );
+  GeosxState state( basicSetup( argc, argv ) );
 
   ::testing::InitGoogleTest( &argc, argv );
   int const result = RUN_ALL_TESTS();

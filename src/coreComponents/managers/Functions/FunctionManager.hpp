@@ -33,24 +33,14 @@ namespace geosx
 class FunctionManager : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  FunctionManager( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  FunctionManager( const string & name,
                    dataRepository::Group * const parent );
 
   /**
    * @brief destructor
    */
   virtual ~FunctionManager() override;
-
-  /**
-   * @brief Return the function manager instance
-   * @return the function manager instance
-   */
-  static FunctionManager & instance()
-  {
-    static FunctionManager theFunctionManager( "Functions", nullptr );
-    return theFunctionManager;
-  }
 
   /**
    * @brief Static Factory Catalog Functions

@@ -30,6 +30,7 @@
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowKernels.hpp"
@@ -576,7 +577,7 @@ void CompositionalMultiphaseFlow::initializePostInitialConditionsPreSubGroups( G
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::globalCompDensityString ) );
 
-  CommunicationTools::synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), false );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), false );
 
   // set mass fraction flag on fluid models
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
@@ -966,7 +967,7 @@ void CompositionalMultiphaseFlow::applySourceFluxBC( real64 const time,
                                                      arrayView1d< real64 > const & localRhs ) const
 {
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
@@ -1021,7 +1022,7 @@ void CompositionalMultiphaseFlow::applyDirichletBC( real64 const time,
 {
   localIndex const NC = m_numComponents;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   map< string, map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
 
@@ -1413,7 +1414,7 @@ void CompositionalMultiphaseFlow::applySystemSolution( DofManager const & dofMan
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
-  CommunicationTools::synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {

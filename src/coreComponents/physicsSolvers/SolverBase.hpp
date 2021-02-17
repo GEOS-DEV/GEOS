@@ -26,7 +26,7 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 
-#include <string>
+
 #include <limits>
 
 namespace geosx
@@ -38,7 +38,7 @@ class SolverBase : public ExecutableGroup
 {
 public:
 
-  explicit SolverBase( std::string const & name,
+  explicit SolverBase( string const & name,
                        Group * const parent );
 
   SolverBase( SolverBase && ) = default;
@@ -59,7 +59,7 @@ public:
   /**
    * This method is called when its host event is triggered
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -515,7 +515,7 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, string const &, Group * const >;
   static CatalogInterface::CatalogType & getCatalog();
 
   struct viewKeyStruct
@@ -658,6 +658,8 @@ public:
 
   string getDiscretizationName() const {return m_discretizationName;}
 
+  virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
+
 protected:
 
   static real64 eisenstatWalker( real64 const newNewtonNorm,
@@ -732,6 +734,8 @@ protected:
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
+
+  std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
 private:
 

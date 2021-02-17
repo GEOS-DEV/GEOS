@@ -47,7 +47,7 @@ public:
    * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
-  static std::string catalogName() { return "HybridMimeticDiscretization"; }
+  static string catalogName() { return "HybridMimeticDiscretization"; }
 
   HybridMimeticDiscretization() = delete;
 
@@ -56,7 +56,7 @@ public:
    * @param name the name of the HybridMimeticDiscretization in the data repository
    * @param parent the parent group of this group.
    */
-  HybridMimeticDiscretization( std::string const & name, dataRepository::Group * const parent );
+  HybridMimeticDiscretization( string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief View keys.

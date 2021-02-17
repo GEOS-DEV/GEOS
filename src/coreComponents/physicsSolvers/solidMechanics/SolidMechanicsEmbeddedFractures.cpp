@@ -41,7 +41,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::string & name,
+SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
@@ -555,12 +555,12 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString ) );
 
-  CommunicationTools::synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
 } /* namespace geosx */

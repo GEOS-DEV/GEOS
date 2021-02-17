@@ -26,7 +26,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ObjectManagerBase::ObjectManagerBase( std::string const & name,
+ObjectManagerBase::ObjectManagerBase( string const & name,
                                       Group * const parent ):
   Group( name, parent ),
   m_sets( groupKeyStruct::setsString, this ),
@@ -69,14 +69,14 @@ ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::getCatalog
   return catalog;
 }
 
-void ObjectManagerBase::createSet( const std::string & newSetName )
+void ObjectManagerBase::createSet( const string & newSetName )
 {
   m_sets.registerWrapper< SortedArray< localIndex > >( newSetName );
 }
 
 void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                                    const array2d< localIndex > & map,
-                                                   const std::string & setName )
+                                                   const string & setName )
 {
   SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
@@ -108,7 +108,7 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
 
 void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                                    const array1d< localIndex_array > & map,
-                                                   const std::string & setName )
+                                                   const string & setName )
 {
   SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
@@ -139,7 +139,7 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
 
 void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                                    ArrayOfArraysView< localIndex const > const & map,
-                                                   const std::string & setName )
+                                                   const string & setName )
 {
   SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();

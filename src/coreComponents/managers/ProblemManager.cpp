@@ -29,6 +29,7 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
 #include "managers/Tasks/TasksManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
@@ -56,12 +57,12 @@ class CellElementSubRegion;
 class FaceElementSubRegion;
 
 
-ProblemManager::ProblemManager( const std::string & name,
-                                Group * const parent ):
-  dataRepository::Group( name, parent ),
+ProblemManager::ProblemManager( string const & name, conduit::Node & root ):
+  dataRepository::Group( name, root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
-  m_functionManager( nullptr )
+  m_functionManager( nullptr ),
+  m_fieldSpecificationManager( nullptr )
 {
   // Groups that do not read from the xml
   registerGroup< DomainPartition >( groupKeys.domain );
@@ -70,13 +71,7 @@ ProblemManager::ProblemManager( const std::string & name,
 
   setInputFlags( InputFlags::PROBLEM_ROOT );
 
-  // Mandatory groups that read from the xml
-  registerGroup< FieldSpecificationManager >( groupKeys.fieldSpecificationManager.key(),
-                                              &FieldSpecificationManager::get() );//->setRestartFlags(RestartFlags::NO_WRITE);
-
-
-  // registerGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
-  // registerGroup<ElementRegionManager>(groupKeys.elementRegionManager);
+  m_fieldSpecificationManager = registerGroup< FieldSpecificationManager >( groupKeys.fieldSpecificationManager );
 
   m_eventManager = registerGroup< EventManager >( groupKeys.eventManager );
   registerGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
@@ -85,11 +80,7 @@ ProblemManager::ProblemManager( const std::string & name,
   registerGroup< OutputManager >( groupKeys.outputManager );
   m_physicsSolverManager = registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
   registerGroup< TasksManager >( groupKeys.tasksManager );
-
-  // The function manager is handled separately
-  m_functionManager = &FunctionManager::instance();
-  // Mandatory groups that read from the xml
-  registerGroup< FunctionManager >( groupKeys.functionManager.key(), m_functionManager );
+  m_functionManager = registerGroup< FunctionManager >( groupKeys.functionManager );
 
   // Command line entries
   commandLine->registerWrapper< string >( viewKeys.inputFileName.key() )->
@@ -168,10 +159,6 @@ void ProblemManager::problemSetup()
   registerDataOnMeshRecursive( getGroup< DomainPartition >( groupKeys.domain )->getMeshBodies() );
 
   initialize( this );
-
-  applyInitialConditions();
-
-  initializePostInitialConditions( this );
 }
 
 
@@ -179,9 +166,9 @@ void ProblemManager::parseCommandLineInput()
 {
   Group * commandLine = getGroup< Group >( groupKeys.commandLine );
 
-  CommandLineOptions const & opts = getCommandLineOptions();
+  CommandLineOptions const & opts = getGlobalState().getCommandLineOptions();
 
-  commandLine->getReference< std::string >( viewKeys.restartFileName ) = opts.restartFileName;
+  commandLine->getReference< string >( viewKeys.restartFileName ) = opts.restartFileName;
   commandLine->getReference< integer >( viewKeys.beginFromRestart ) = opts.beginFromRestart;
   commandLine->getReference< integer >( viewKeys.xPartitionsOverride ) = opts.xPartitionsOverride;
   commandLine->getReference< integer >( viewKeys.yPartitionsOverride ) = opts.yPartitionsOverride;
@@ -190,16 +177,16 @@ void ProblemManager::parseCommandLineInput()
   commandLine->getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
   commandLine->getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
 
-  std::string & inputFileName = commandLine->getReference< std::string >( viewKeys.inputFileName );
+  string & inputFileName = commandLine->getReference< string >( viewKeys.inputFileName );
   inputFileName = opts.inputFileName;
 
-  std::string & schemaName = commandLine->getReference< std::string >( viewKeys.schemaFileName );
+  string & schemaName = commandLine->getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
 
-  std::string & problemName = commandLine->getReference< std::string >( viewKeys.problemName );
+  string & problemName = commandLine->getReference< string >( viewKeys.problemName );
   problemName = opts.problemName;
 
-  std::string & outputDirectory = commandLine->getReference< std::string >( viewKeys.outputDirectory );
+  string & outputDirectory = commandLine->getReference< string >( viewKeys.outputDirectory );
   outputDirectory = opts.outputDirectory;
 
   if( schemaName.empty())
@@ -209,15 +196,6 @@ void ProblemManager::parseCommandLineInput()
     string notUsed;
     splitPath( inputFileName, xmlFolder, notUsed );
     Path::pathPrefix() = xmlFolder;
-
-    if( outputDirectory != "." )
-    {
-      mkdir( outputDirectory.data(), 0755 );
-      if( chdir( outputDirectory.data()) != 0 )
-      {
-        GEOSX_ERROR( "Could not change to the output directory: " + outputDirectory );
-      }
-    }
   }
 
   if( opts.suppressMoveLogging )
@@ -227,29 +205,28 @@ void ProblemManager::parseCommandLineInput()
 }
 
 
-bool ProblemManager::parseRestart( std::string & restartFileName )
+bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions const & options )
 {
-  CommandLineOptions const & opts = getCommandLineOptions();
-  bool const beginFromRestart = opts.beginFromRestart;
-  restartFileName = opts.restartFileName;
+  bool const beginFromRestart = options.beginFromRestart;
+  restartFileName = options.restartFileName;
 
   if( beginFromRestart == 1 )
   {
-    std::string dirname;
-    std::string basename;
+    string dirname;
+    string basename;
     splitPath( restartFileName, dirname, basename );
 
-    std::vector< std::string > dir_contents;
+    std::vector< string > dir_contents;
     readDirectory( dirname, dir_contents );
 
     GEOSX_ERROR_IF( dir_contents.size() == 0, "Directory gotten from " << restartFileName << " " << dirname << " is empty." );
 
     std::regex basename_regex( basename );
 
-    std::string min_str( "" );
-    std::string & max_match = min_str;
+    string min_str( "" );
+    string & max_match = min_str;
     bool match_found = false;
-    for( std::string & s : dir_contents )
+    for( string & s : dir_contents )
     {
       if( std::regex_match( s, basename_regex ))
       {
@@ -268,50 +245,12 @@ bool ProblemManager::parseRestart( std::string & restartFileName )
 }
 
 
-void ProblemManager::initializePythonInterpreter()
-{
-#ifdef GEOSX_USE_PYTHON
-  // Initialize python and numpy
-  GEOSX_LOG_RANK_0( "Loading python interpreter" );
-
-  // Check to make sure the appropriate environment variables are set
-  if( getenv( "GPAC_SCHEMA" ) == NULL )
-  {
-    GEOSX_ERROR( "GPAC_SCHEMA must be defined to use the new preprocessor!" );
-  }
-  if( getenv( "GEOS_PYTHONPATH" ) == NULL )
-  {
-    GEOSX_ERROR( "GEOS_PYTHONPATH must be defined to use the new preprocessor!" );
-  }
-  if( getenv( "GEOS_PYTHONHOME" ) == NULL )
-  {
-    GEOSX_ERROR( "GEOS_PYTHONHOME must be defined to use the new preprocessor!" );
-  }
-
-  setenv( "PYTHONPATH", getenv( "GEOS_PYTHONPATH" ), 1 );
-  Py_SetPythonHome( getenv( "GEOS_PYTHONHOME" ));
-  Py_Initialize();
-  import_array();
-#endif
-}
-
-
-void ProblemManager::closePythonInterpreter()
-{
-#ifdef GEOSX_USE_PYTHON
-  // Add any other cleanup here
-  GEOSX_LOG_RANK_0( "Closing python interpreter" );
-  Py_Finalize();
-#endif
-}
-
-
 void ProblemManager::generateDocumentation()
 {
   // Documentation output
   std::cout << "Trying to generate schema..." << std::endl;
   Group * commandLine = getGroup< Group >( groupKeys.commandLine );
-  std::string const & schemaName = commandLine->getReference< std::string >( viewKeys.schemaFileName );
+  string const & schemaName = commandLine->getReference< string >( viewKeys.schemaFileName );
 
   if( !schemaName.empty() )
   {
@@ -352,9 +291,8 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   m_functionManager->generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( m_functionManager, schemaRoot, targetChoiceNode, documentationType );
 
-  FieldSpecificationManager & bcManager = FieldSpecificationManager::get();
-  bcManager.generateDataStructureSkeleton( 0 );
-  schemaUtilities::SchemaConstruction( &bcManager, schemaRoot, targetChoiceNode, documentationType );
+  m_fieldSpecificationManager->generateDataStructureSkeleton( 0 );
+  schemaUtilities::SchemaConstruction( m_fieldSpecificationManager, schemaRoot, targetChoiceNode, documentationType );
 
   ConstitutiveManager * constitutiveManager = domain->getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   schemaUtilities::SchemaConstruction( constitutiveManager, schemaRoot, targetChoiceNode, documentationType );
@@ -389,7 +327,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   Group * benchmarks = this->registerGroup< Group >( "Benchmarks" );
   benchmarks->setInputFlags( InputFlags::OPTIONAL );
 
-  for( std::string const & machineName : {"quartz", "lassen"} )
+  for( string const & machineName : {"quartz", "lassen"} )
   {
     Group * machine = benchmarks->registerGroup< Group >( machineName );
     machine->setInputFlags( InputFlags::OPTIONAL );
@@ -397,7 +335,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     Group * run = machine->registerGroup< Group >( "Run" );
     run->setInputFlags( InputFlags::OPTIONAL );
 
-    run->registerWrapper< std::string >( "name" )->setInputFlag( InputFlags::REQUIRED )->
+    run->registerWrapper< string >( "name" )->setInputFlag( InputFlags::REQUIRED )->
       setDescription( "The name of this benchmark." );
 
     run->registerWrapper< int >( "nodes" )->setInputFlag( InputFlags::REQUIRED )->
@@ -412,10 +350,10 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     run->registerWrapper< int >( "timeLimit" )->setInputFlag( InputFlags::OPTIONAL )->
       setDescription( "The time limit of the benchmark." );
 
-    run->registerWrapper< std::string >( "args" )->setInputFlag( InputFlags::OPTIONAL )->
+    run->registerWrapper< string >( "args" )->setInputFlag( InputFlags::OPTIONAL )->
       setDescription( "Any extra command line arguments to pass to GEOSX." );
 
-    run->registerWrapper< std::string >( "autoPartition" )->setInputFlag( InputFlags::OPTIONAL )->
+    run->registerWrapper< string >( "autoPartition" )->setInputFlag( InputFlags::OPTIONAL )->
       setDescription( "May be 'Off' or 'On', if 'On' partitioning arguments are created automatically. Default is Off." );
 
     run->registerWrapper< array1d< int > >( "strongScaling" )->setInputFlag( InputFlags::OPTIONAL )->
@@ -431,36 +369,7 @@ void ProblemManager::parseInputFile()
   DomainPartition * domain  = getDomainPartition();
 
   Group * commandLine = getGroup< Group >( groupKeys.commandLine );
-  std::string const & inputFileName = commandLine->getReference< std::string >( viewKeys.inputFileName );
-
-
-#ifdef GEOSX_USE_PYTHON
-  // Load the pygeos module
-  PyObject *pModule = PyImport_ImportModule( "pygeos" );
-  if( pModule == NULL )
-  {
-    PyErr_Print();
-    GEOSX_ERROR( "Could not find the pygeos module in GEOS_PYTHONPATH!" );
-  }
-
-  // Call the xml preprocessor
-  PyObject *pPreprocessorFunction = PyObject_GetAttrString( pModule, "PreprocessGEOSXML" );
-  PyObject *pPreprocessorInputStr = Py_BuildValue( "(s)", inputFileName.c_str());
-  PyObject *pKeywordDict = Py_BuildValue( "{s:s}", "schema", getenv( "GPAC_SCHEMA" ));
-  PyObject *pPreprocessorResult = PyObject_Call( pPreprocessorFunction, pPreprocessorInputStr, pKeywordDict );
-  inputFileName = PyString_AsString( pPreprocessorResult );
-
-  // Cleanup
-  Py_DECREF( pPreprocessorResult );
-  Py_DECREF( pKeywordDict );
-  Py_DECREF( pPreprocessorInputStr );
-  Py_DECREF( pPreprocessorFunction );
-  Py_DECREF( pModule );
-
-#else
-  GEOSX_LOG_RANK_0( "GEOSX must be configured to use Python to use parameters, symbolic math, etc. in input files" );
-#endif
-
+  string const & inputFileName = commandLine->getReference< string >( viewKeys.inputFileName );
 
   // Load preprocessed xml file and check for errors
   xmlResult = xmlDocument.load_file( inputFileName.c_str());
@@ -785,10 +694,10 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
 }
 
 
-void ProblemManager::runSimulation()
+bool ProblemManager::runSimulation()
 {
   DomainPartition * domain = getDomainPartition();
-  m_eventManager->run( domain );
+  return m_eventManager->run( domain );
 }
 
 DomainPartition * ProblemManager::getDomainPartition()
@@ -804,7 +713,8 @@ DomainPartition const * ProblemManager::getDomainPartition() const
 void ProblemManager::applyInitialConditions()
 {
   DomainPartition * domain = getGroup< DomainPartition >( keys::domain );
-  FieldSpecificationManager::get().applyInitialConditions( domain );
+  m_fieldSpecificationManager->applyInitialConditions( domain );
+  initializePostInitialConditions( this );
 }
 
 void ProblemManager::readRestartOverwrite()

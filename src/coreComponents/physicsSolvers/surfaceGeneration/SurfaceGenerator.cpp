@@ -170,7 +170,7 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
 }
 
 
-SurfaceGenerator::SurfaceGenerator( const std::string & name,
+SurfaceGenerator::SurfaceGenerator( const string & name,
                                     Group * const parent ):
   SolverBase( name, parent ),
   m_failCriterion( 1 ),
@@ -528,7 +528,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key ) );
   fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal ) );
 
-  CommunicationTools::synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), false );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), false );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
@@ -609,10 +609,10 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     modifiedObjects.clearNewFromModified();
 
     // 1) Assign new global indices to the new objects
-    CommunicationTools::assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
-    CommunicationTools::assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
-    CommunicationTools::assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
-//    CommunicationTools::AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
+    getGlobalState().getCommunicationTools().assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
+    getGlobalState().getCommunicationTools().assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
+    getGlobalState().getCommunicationTools().assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
+//    getGlobalState().getCommunicationTools().AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
     ModifiedObjectLists receivedObjects;
 
@@ -4543,6 +4543,6 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
 
 REGISTER_CATALOG_ENTRY( SolverBase,
                         SurfaceGenerator,
-                        std::string const &, dataRepository::Group * const )
+                        string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

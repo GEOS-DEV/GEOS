@@ -30,11 +30,13 @@
 #include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
 #include <iostream>
-#include <string>
+
 #include <sstream>
 #include <algorithm>
 #include <iterator>
@@ -249,6 +251,7 @@ SiloFile::SiloFile():
   m_driver( DB_HDF5 ),
   m_plotFileRoot( "plot" ),
   m_restartFileRoot( "restart" ),
+  m_siloDirectory( getGlobalState().getCommandLineOptions().outputDirectory + "/siloFiles" ),
   m_fileName(),
   m_baseFileName(),
   m_emptyMeshes(),
@@ -281,19 +284,7 @@ void SiloFile::makeSiloDirectories()
 
   if( rank==0 )
   {
-    struct stat sb;
-
-    if( !( stat( m_siloDirectory.c_str(), &sb ) == 0 && S_ISDIR( sb.st_mode ) ) )
-    {
-      mode_t nMode = 0733;
-      mkdir( m_siloDirectory.c_str(), nMode );
-    }
-
-    if( !( stat( (m_siloDirectory +"/"+ m_siloDataSubDirectory).c_str(), &sb ) == 0 && S_ISDIR( sb.st_mode ) ) )
-    {
-      mode_t nMode = 0733;
-      mkdir((m_siloDirectory +"/"+ m_siloDataSubDirectory).c_str(), nMode );
-    }
+    makeDirsForPath( m_siloDirectory + "/" + m_siloDataSubDirectory );
   }
 }
 
@@ -1031,12 +1022,12 @@ void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
 
   if( rank != 0 )
   {
-    for( std::string const & emptyObject : m_emptyVariables )
+    for( string const & emptyObject : m_emptyVariables )
     {
       sendbufferVars += emptyObject + ' ';
     }
 
-    for( std::string const & emptyObject : m_emptyMeshes )
+    for( string const & emptyObject : m_emptyMeshes )
     {
       sendbufferMesh += emptyObject + ' ';
     }
@@ -1114,7 +1105,7 @@ void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
     DBfile *siloFile = DBOpen( baseFilePathAndName.c_str(), DB_UNKNOWN, DB_APPEND );
     string empty( "EMPTY" );
 
-    for( std::string const & emptyObject : m_emptyVariables )
+    for( string const & emptyObject : m_emptyVariables )
     {
       size_t pathBegin = emptyObject.find_first_of( '/', 1 );
       size_t pathEnd = emptyObject.find_last_of( '/' );
@@ -1160,7 +1151,7 @@ void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
     }
 
 
-    for( std::string const & emptyObject : m_emptyMeshes )
+    for( string const & emptyObject : m_emptyMeshes )
     {
       size_t pathBegin = emptyObject.find_first_of( '/', 1 );
       size_t pathEnd = emptyObject.find_last_of( '/' );
@@ -1260,10 +1251,11 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
                                        real64 const problemTime,
                                        bool const isRestart )
 {
+  // TODO: This is a hack.
+  conduit::Node conduitNode;
+  dataRepository::Group fakeGroup( elemRegion.getName(), conduitNode );
 
   localIndex numElems = 0;
-  dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
-  fakeGroup.setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
   std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
@@ -1694,7 +1686,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
     // face mesh
-    const std::string facemeshName( "face_mesh" );
+    const string facemeshName( "face_mesh" );
 
     if( writeArbitraryPolygon )
     {
@@ -1821,7 +1813,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
     localIndex const numEdges = edgeManager->size();
 
 
-    const std::string edgeMeshName( "edge_mesh" );
+    const string edgeMeshName( "edge_mesh" );
 
     const int numEdgeTypes = 1;
     const int numNodesPerEdge = 2;
@@ -1891,7 +1883,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
 }
 
 // Arbitrary polygon. Have to deal with this separately
-void SiloFile::writePolygonMeshObject( const std::string & meshName,
+void SiloFile::writePolygonMeshObject( const string & meshName,
                                        const localIndex nnodes,
                                        real64 * coords[3],
                                        const globalIndex *,
@@ -1911,7 +1903,7 @@ void SiloFile::writePolygonMeshObject( const std::string & meshName,
 
 
 //  DBfacelist* facelist;
-//  std::string facelistName;
+//  string facelistName;
 //  facelistName = meshName + "_facelist";
 
   DBoptlist * optlist = DBMakeOptlist( 4 );
@@ -1924,13 +1916,13 @@ void SiloFile::writePolygonMeshObject( const std::string & meshName,
   {
     char pwd[256];
     DBGetDir( m_dbFilePtr, pwd );
-    std::string emptyObject = pwd;
+    string emptyObject = pwd;
     emptyObject += "/" + meshName;
     m_emptyMeshes.emplace_back( emptyObject );
   }
   else
   {
-    std::string zonelistName;
+    string zonelistName;
     zonelistName = meshName + "_zonelist";
 
 

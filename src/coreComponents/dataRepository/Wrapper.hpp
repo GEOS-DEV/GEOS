@@ -72,7 +72,7 @@ public:
    * @param name name of the object
    * @param parent parent group which owns the Wrapper
    */
-  explicit Wrapper( std::string const & name,
+  explicit Wrapper( string const & name,
                     Group * const parent ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
@@ -93,7 +93,7 @@ public:
    * @param parent parent group that owns the Wrapper
    * @param object object that is being wrapped by the Wrapper
    */
-  explicit Wrapper( std::string const & name,
+  explicit Wrapper( string const & name,
                     Group * const parent,
                     std::unique_ptr< T > object ):
     WrapperBase( name, parent ),
@@ -115,7 +115,7 @@ public:
    * @param parent parent group that owns the Wrapper
    * @param object object that is being wrapped by the Wrapper
    */
-  explicit Wrapper( std::string const & name,
+  explicit Wrapper( string const & name,
                     Group * const parent,
                     T * object ):
     WrapperBase( name, parent ),
@@ -711,20 +711,20 @@ public:
   /**
    * @copydoc WrapperBase::getDefaultValueString()
    */
-  virtual std::string getDefaultValueString() const override
+  virtual string getDefaultValueString() const override
   {
     // Find the dimensionality of the wrapper value
-    std::string wrapper_type = rtTypes::typeNames( std::type_index( getTypeId()));
+    string wrapper_type = rtTypes::typeNames( std::type_index( getTypeId()));
     integer value_dim = 0;
-    if( wrapper_type.find( "array3d" ) != std::string::npos )
+    if( wrapper_type.find( "array3d" ) != string::npos )
     {
       value_dim = 3;
     }
-    else if( wrapper_type.find( "array2d" ) != std::string::npos )
+    else if( wrapper_type.find( "array2d" ) != string::npos )
     {
       value_dim = 2;
     }
-    else if( wrapper_type.find( "array" ) != std::string::npos )
+    else if( wrapper_type.find( "array" ) != string::npos )
     {
       value_dim = 1;
     }
@@ -781,7 +781,7 @@ public:
 
   /**
    * @brief Associate the path to this wrapper with the object being held.
-   * @note This calls T::setName( std::string ) if it exists and is a no-op if not.
+   * @note This calls T::setName( string ) if it exists and is a no-op if not.
    *       LvArray objects implement this method.
    */
   void setName()
@@ -790,17 +790,17 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   void addBlueprintField( conduit::Node & fields,
-                          std::string const & name,
-                          std::string const & topology,
-                          std::vector< std::string > const & componentNames = {} ) const override
+                          string const & name,
+                          string const & topology,
+                          std::vector< string > const & componentNames = {} ) const override
   { wrapperHelpers::addBlueprintField( reference(), fields, name, topology, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void populateMCArray( conduit::Node & node, std::vector< std::string > const & componentNames = {} ) const override
+  void populateMCArray( conduit::Node & node, std::vector< string > const & componentNames = {} ) const override
   { wrapperHelpers::populateMCArray( reference(), node, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  std::unique_ptr< WrapperBase > averageOverSecondDim( std::string const & name, Group & group ) const override
+  std::unique_ptr< WrapperBase > averageOverSecondDim( string const & name, Group & group ) const override
   {
     auto ptr = wrapperHelpers::averageOverSecondDim( reference() );
     using U = typename decltype( ptr )::element_type;
@@ -935,6 +935,11 @@ public:
     return 0;
   }
 //  void tvTemplateInstantiation();
+#endif
+
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyObject * createPythonObject( ) override
+  { return wrapperHelpers::createPythonObject( reference() ); }
 #endif
 
 private:

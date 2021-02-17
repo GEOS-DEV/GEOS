@@ -17,28 +17,24 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
-
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
 namespace dataRepository
 {
 
-conduit::Node & conduitNodeFromParent( string const & name, Group * const parent )
+Group::Group( string const & name,
+              Group * const parent ):
+  Group( name, parent->getConduitNode() )
 {
-  if( parent == nullptr )
-  {
-    return rootConduitNode[ name ];
-  }
-  else
-  {
-    return parent->getConduitNode()[ name ];
-  }
+  GEOSX_ERROR_IF( parent == nullptr, "Should not be null." );
+  m_parent = parent;
 }
 
-Group::Group( std::string const & name,
-              Group * const parent ):
-  m_parent( parent ),
+Group::Group( string const & name,
+              conduit::Node & rootNode ):
+  m_parent( nullptr ),
   m_sizedFromParent( 0 ),
   m_wrappers(),
   m_subGroups(),
@@ -48,7 +44,7 @@ Group::Group( std::string const & name,
   m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
-  m_conduitNode( conduitNodeFromParent( name, parent ) )
+  m_conduitNode( rootNode[ name ] )
 {}
 
 Group::~Group()
@@ -133,7 +129,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   for( xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
-    std::string childName = childNode.attribute( "name" ).value();
+    string childName = childNode.attribute( "name" ).value();
     if( childName.empty())
     {
       childName = childNode.name();
@@ -159,7 +155,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
 {
 
   std::set< string > processedXmlNodes;
-  for( std::pair< std::string const, WrapperBase * > & pair : m_wrappers )
+  for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {
     if( pair.second->processInputFile( targetNode ) )
     {
@@ -241,7 +237,7 @@ string Group::dumpInputOptions() const
   return rval;
 }
 
-void Group::deregisterGroup( std::string const & name )
+void Group::deregisterGroup( string const & name )
 {
   GEOSX_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
   m_subGroups.erase( name );
@@ -258,8 +254,6 @@ void Group::initializationOrder( string_array & order )
 
 void Group::initialize( Group * const group )
 {
-  static localIndex indent = 0;
-
   initializePreSubGroups( group );
 
   string_array initOrder;
@@ -267,9 +261,7 @@ void Group::initialize( Group * const group )
 
   for( auto const & groupName : initOrder )
   {
-    ++indent;
     this->getGroup( groupName )->initialize( group );
-    --indent;
   }
 
   initializePostSubGroups( group );

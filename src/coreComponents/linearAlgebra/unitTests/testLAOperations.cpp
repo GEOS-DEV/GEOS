@@ -242,8 +242,8 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   using Matrix = typename TypeParam::ParallelMatrix;
 
   // Get the MPI rank
-  int numranks = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
-  int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int numranks = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   std::cout << "*** Rank: " << rank << std::endl;
 
@@ -715,7 +715,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestElasticity2D, PetscInterface, )
 //void parallel_vector_copy_constructor()
 //{
 //
-//  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+//  int const rank = MpiWrapper::commRank( MPI_COMM_WORLD );
 //  typename LAI::ParallelVector x;
 //  typename LAI::ParallelVector y;
 //  localIndex const localSize = rank*10 + 1;
@@ -740,7 +740,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestElasticity2D, PetscInterface, )
 //template<typename LAI>
 //void parallel_vector_create_with_local_size()
 //{
-//  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+//  int const rank = MpiWrapper::commRank( MPI_COMM_WORLD );
 //  typename LAI::ParallelVector x;
 //  localIndex const localSize = rank*10;
 //  globalIndex const globalSize = MpiWrapper::sum( localSize );
@@ -754,7 +754,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestElasticity2D, PetscInterface, )
 //template<typename LAI>
 //void parallel_vector_create_with_global_size()
 //{
-//  int const numRanks = MpiWrapper::Comm_size( MPI_COMM_WORLD );
+//  int const numRanks = MpiWrapper::commSize( MPI_COMM_WORLD );
 //  typename LAI::ParallelVector x;
 //  localIndex const localSize = integer_conversion< localIndex >( numRanks );
 //  globalIndex const globalSize = integer_conversion< globalIndex >( localSize * localSize );

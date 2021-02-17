@@ -107,7 +107,7 @@ namespace geosx
  *
  * The static wrapper functions around the mpi.h function are named by removing the "MPI_" from the beginning
  * of the native mpi function name. For instance the "Comm_rank()" function calls "MPI_Comm_rank()". Since all
- * wrapper functions are static, the should be referred to by their scoped name, for example "MpiWrapper::Comm_rank()".
+ * wrapper functions are static, the should be referred to by their scoped name, for example "MpiWrapper::commRank()".
  */
 struct MpiWrapper
 {
@@ -687,9 +687,9 @@ void MpiWrapper::broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ), MP
 
 template<>
 inline
-void MpiWrapper::broadcast< std::string >( std::string & MPI_PARAM( value ),
-                                           int MPI_PARAM( srcRank ),
-                                           MPI_Comm MPI_PARAM( comm ) )
+void MpiWrapper::broadcast< string >( string & MPI_PARAM( value ),
+                                      int MPI_PARAM( srcRank ),
+                                      MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   int size = value.size();

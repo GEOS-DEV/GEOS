@@ -20,6 +20,7 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
@@ -32,6 +33,8 @@ using namespace geosx;
 using namespace geosx::dataRepository;
 using namespace geosx::constitutive;
 using namespace geosx::testing;
+
+CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
@@ -64,14 +67,17 @@ char const * xmlInput =
   "                                 useMass=\"0\">\n"
   "        <WellControls name=\"wellControls1\"\n"
   "                      type=\"producer\"\n"
+  "                      referenceElevation=\"1.25\"\n"
   "                      control=\"BHP\"\n"
-  "                      targetBHP=\"4e6\"\n"
-  "                      targetRate=\"1\"/>\n"
+  "                      targetBHP=\"2e6\"\n"
+  "                      targetPhaseRate=\"1\"\n"
+  "                      targetPhaseName=\"oil\"/>\n"
   "        <WellControls name=\"wellControls2\"\n"
   "                      type=\"injector\"\n"
-  "                      control=\"liquidRate\" \n"
-  "                      targetBHP=\"2e7\"\n"
-  "                      targetRate=\"1e-5\" \n"
+  "                      referenceElevation=\"1.25\"\n"
+  "                      control=\"totalVolRate\" \n"
+  "                      targetBHP=\"6e7\"\n"
+  "                      targetTotalRate=\"1e-5\" \n"
   "                      injectionStream=\"{0.1, 0.1, 0.1, 0.7}\"/>\n"
   "    </CompositionalMultiphaseWell>\n"
   "  </Solvers>\n"
@@ -420,7 +426,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         dWellElemCompDens.move( LvArray::MemorySpace::CPU, true );
         dWellElemCompDens[iwelem][jc] = dRho;
 
-        wellSolver.updateStateAll( domain );
+        wellSolver.updateState( subRegion, targetIndex );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
         jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -444,6 +450,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
         dConnRate.move( LvArray::MemorySpace::CPU, true );
         dConnRate[iwelem] = dRate;
+
+        wellSolver.updateState( subRegion, targetIndex );
 
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
         jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -472,18 +480,18 @@ class CompositionalMultiphaseReservoirSolverTest : public ::testing::Test
 {
 public:
 
-  CompositionalMultiphaseReservoirSolverTest()
-    : problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) )
+  CompositionalMultiphaseReservoirSolverTest():
+    state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
 protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( *problemManager, xmlInput );
-    solver = problemManager->getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoir >( "reservoirSystem" );
+    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    solver = state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoir >( "reservoirSystem" );
 
-    DomainPartition & domain = *problemManager->getDomainPartition();
+    DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
     solver->setupSystem( domain,
                          solver->getDofManager(),
@@ -498,7 +506,7 @@ protected:
   static real64 constexpr dt = 1e4;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
-  std::unique_ptr< ProblemManager > problemManager;
+  GeosxState state;
   CompositionalMultiphaseReservoir * solver;
 };
 
@@ -513,7 +521,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perfo
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -531,7 +539,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -547,7 +555,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Volum
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -562,7 +570,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -575,7 +583,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geosx::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;

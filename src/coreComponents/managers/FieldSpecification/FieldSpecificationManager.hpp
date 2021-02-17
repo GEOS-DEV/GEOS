@@ -49,13 +49,14 @@ class FieldSpecificationManager : public dataRepository::Group
 {
 public:
 
-
   /**
-   * @brief Singleton getter returns a pointer to the Singleton instance of
-   *        FieldSpecificationManager.
-   * @return a pointer to the singleton FieldSpecificationManager
+   * @brief private constructor for the singleton BoundaryConditionManager.
+   * @param name The name of the BoundaryConditionManager in the data repository.
+   * @param parent The parent of BoundaryConditionManager in the data repository.
    */
-  static FieldSpecificationManager & get();
+  FieldSpecificationManager( string const & name, dataRepository::Group * const parent );
+
+  virtual ~FieldSpecificationManager() override;
 
   /**
    * @brief Create a new FieldSpecificationBase object as a child of this group.
@@ -278,14 +279,6 @@ public:
   }
 
 private:
-  /**
-   * @brief private constructor for the singleton BoundaryConditionManager.
-   * @param name The name of the BoundaryConditionManager in the data repository.
-   * @param parent The parent of BoundaryConditionManager in the data repository.
-   */
-  FieldSpecificationManager( string const & name, dataRepository::Group * const parent );
-  virtual ~FieldSpecificationManager() override;
-
   template< typename LAMBDA >
   void applyOnTargetRecursive( Group * target,
                                FieldSpecificationBase const * fs,

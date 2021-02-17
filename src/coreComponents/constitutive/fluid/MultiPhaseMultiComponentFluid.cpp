@@ -34,7 +34,7 @@ using namespace stringutilities;
 namespace constitutive
 {
 
-MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( std::string const & name, Group * const parent ):
+MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
 
@@ -107,7 +107,7 @@ void MultiPhaseMultiComponentFluid::initializePostSubGroups( Group * const group
 
 void MultiPhaseMultiComponentFluid::createPVTModels()
 {
-  for( std::string & filename : m_phasePVTParaFiles )
+  for( string & filename : m_phasePVTParaFiles )
   {
     std::ifstream is( filename );
 
@@ -116,7 +116,7 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
 
     while( is.getline( buf, buf_size ))
     {
-      std::string const str( buf );
+      string const str( buf );
       string_array const strs = Tokenize( str, " " );
 
       if( strs[0] == "DensityFun" )
@@ -150,7 +150,7 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
 
     while( is.getline( buf, buf_size ))
     {
-      std::string const str( buf );
+      string const str( buf );
       string_array const strs = Tokenize( str, " " );
 
       if( strs[0] == "FlashModel" )
@@ -171,7 +171,7 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
   }
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseMultiComponentFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseMultiComponentFluid, string const &, Group * const )
 
 void MultiPhaseMultiComponentFluidUpdate::compute( real64 pressure,
                                                    real64 temperature,
@@ -308,7 +308,7 @@ void MultiPhaseMultiComponentFluidUpdate::compute( real64 pressure,
   EvalVarArgs P =  pressure;
   P.m_der[0] = 1.0;
 
-  static real64 TK = 273.15;
+  constexpr real64 TK = 273.15;
   EvalVarArgs T =  temperature - TK;
 
   stackArray1d< EvalVarArgs, maxNumPhase > phaseFractionTemp( NP );

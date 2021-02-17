@@ -24,7 +24,7 @@
 namespace geosx
 {
 
-/// Forward declarations
+// Forward declarations
 class MeshLevel;
 class NodeManager;
 class ElementRegionManager;
@@ -42,7 +42,7 @@ public:
    * @param name The name of the BlueprintObject in the data repository.
    * @param parent The parent Group.
    */
-  BlueprintOutput( std::string const & name,
+  BlueprintOutput( string const & name,
                    Group * const parent );
 
   /**
@@ -61,7 +61,7 @@ public:
    * @brief Writes out a Blueprint plot file.
    * @copydetails EventBase::execute()
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -115,22 +115,22 @@ private:
    */
   void writeOutWrappersAsFields( Group const & group,
                                  conduit::Node & fields,
-                                 std::string const & topology,
-                                 std::string const & prefix="" );
+                                 string const & topology,
+                                 string const & prefix="" );
 
   void writeOutConstitutiveData( dataRepository::Group const & constitutiveModel,
                                  conduit::Node & fields,
-                                 std::string const & topology,
+                                 string const & topology,
                                  dataRepository::Group & averagedElementData );
 
-  /// Used to determine which fields to write out.
+  // Used to determine which fields to write out.
   dataRepository::PlotLevel m_plotLevel = dataRepository::PlotLevel::LEVEL_1;
 
-  /// If true will write out the full quadrature data, otherwise it is averaged over.
+  // If true will write out the full quadrature data, otherwise it is averaged over.
   int m_outputFullQuadratureData = 0;
 };
 
 
-} /// namespace geosx
+} // namespace geosx
 
-#endif /// GEOSX_MANAGERS_OUTPUTS_BLUEPRINTOUTPUT_HPP_
+#endif // GEOSX_MANAGERS_OUTPUTS_BLUEPRINTOUTPUT_HPP_

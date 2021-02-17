@@ -15,6 +15,7 @@
 #include "FunctionManager.hpp"
 #include "CompositeFunction.hpp"
 #include "common/DataTypes.hpp"
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -23,16 +24,16 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const functionNames = "functionNames";
-std::string const variableNames = "variableNames";
-std::string const expression = "expression";
+string const functionNames = "functionNames";
+string const variableNames = "variableNames";
+string const expression = "expression";
 }
 }
 
 using namespace dataRepository;
 
 
-CompositeFunction::CompositeFunction( const std::string & name,
+CompositeFunction::CompositeFunction( const string & name,
                                       Group * const parent ):
   FunctionBase( name, parent ),
   parserContext(),
@@ -71,7 +72,7 @@ void CompositeFunction::initializeFunction()
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 
   // Grab pointers to sub functions
-  FunctionManager & functionManager = FunctionManager::instance();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
@@ -119,6 +120,6 @@ real64 CompositeFunction::evaluate( real64 const * const input ) const
   return parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, string const &, Group * const )
 
 } // namespace geosx

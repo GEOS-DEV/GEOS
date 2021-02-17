@@ -27,7 +27,7 @@ using namespace dataRepository;
 EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  this->GetGroup( viewKeyStruct::elementSubRegions )->registerGroup< EmbeddedSurfaceSubRegion >( "default" );
+  this->getGroup( viewKeyStruct::elementSubRegions )->registerGroup< EmbeddedSurfaceSubRegion >( "default" );
 
   registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -49,6 +49,6 @@ void EmbeddedSurfaceRegion::initializePreSubGroups( Group * const )
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, string const &, Group * const )
 
 } /* namespace geosx */

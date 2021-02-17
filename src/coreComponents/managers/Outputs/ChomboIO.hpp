@@ -33,8 +33,8 @@ namespace geosx
 class ChomboIO final : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  ChomboIO( std::string const & name, Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  ChomboIO( string const & name, Group * const parent );
 
   /// Destructor
   virtual ~ChomboIO() override;
@@ -50,7 +50,7 @@ public:
    * @brief Writes out a Chombo plot file.
    * @copydetails EventBase::execute()
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -90,9 +90,9 @@ public:
 
 private:
   ChomboCoupler * m_coupler;
-  std::string m_outputPath;
+  string m_outputPath;
   double m_beginCycle;
-  std::string m_inputPath;
+  string m_inputPath;
   integer m_waitForInput;
   integer m_useChomboPressures;
 };

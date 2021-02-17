@@ -42,7 +42,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  BoundedPlane( const std::string & name,
+  BoundedPlane( const string & name,
                 Group * const parent );
 
   /**
@@ -144,6 +144,8 @@ private:
   array1d< real64 > m_dimensions;
   /// Length and width of the bounded plane
   array2d< real64 > m_points;
+  /// tolerance to determine if a point sits on the plane or not
+  real64 m_tolerance;
 
   /// @cond DO_NOT_DOCUMENT
 
@@ -154,6 +156,7 @@ private:
     static constexpr auto dimensionsString    = "dimensions";
     static constexpr auto mLengthVectorString = "lengthVector";
     static constexpr auto mWidthVectorString  = "widthVector";
+    static constexpr auto toleranceString     = "tolerance";
   };
 
   /// @endcond

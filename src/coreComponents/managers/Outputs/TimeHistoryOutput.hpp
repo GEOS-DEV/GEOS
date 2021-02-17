@@ -37,7 +37,7 @@ namespace geosx
 class TimeHistoryOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
   TimeHistoryOutput( string const & name,
                      Group * const parent );
 
@@ -65,7 +65,7 @@ public:
    * @brief Writes out a time history file.
    * @copydoc EventBase::execute()
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,

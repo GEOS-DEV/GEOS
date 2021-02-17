@@ -189,7 +189,7 @@ public:
    * @param problemTime the current problem time
    * @param lnodelist
    */
-  void writePolygonMeshObject( const std::string & meshName,
+  void writePolygonMeshObject( const string & meshName,
                                const localIndex nnodes,
                                real64 * coords[3],
                                const globalIndex * dummy1,
@@ -675,7 +675,7 @@ private:
 
   string m_restartFileRoot;
 
-  string const m_siloDirectory = "siloFiles";
+  string const m_siloDirectory;
 
   string const m_siloDataSubDirectory = "data";
 
@@ -683,9 +683,9 @@ private:
 
   string m_baseFileName;
 
-  std::vector< std::string > m_emptyMeshes;
+  std::vector< string > m_emptyMeshes;
 //  string_array m_emptyMaterials;
-  std::vector< std::string > m_emptyVariables;
+  std::vector< string > m_emptyVariables;
 
   integer m_writeEdgeMesh;
   integer m_writeFaceMesh;

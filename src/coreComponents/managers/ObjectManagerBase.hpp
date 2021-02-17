@@ -40,7 +40,7 @@ public:
    * @param[in] name Name of this object manager
    * @param[in] parent Parent Group
    */
-  explicit ObjectManagerBase( std::string const & name,
+  explicit ObjectManagerBase( string const & name,
                               dataRepository::Group * const parent );
 
   /**
@@ -54,9 +54,9 @@ public:
   ///@{
   /**
    * @brief Nested type for the `factory` pattern, defining the base class (ObjectManagerBase)
-   *        and the builder arguments (std::string const &, dataRepository::Group * const) of the derived products.
+   *        and the builder arguments (string const &, dataRepository::Group * const) of the derived products.
    */
-  using CatalogInterface = dataRepository::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ObjectManagerBase, string const &, dataRepository::Group * const >;
 
   /**
    * @brief Acessing the unique instance of this catalog.
@@ -308,7 +308,7 @@ public:
    * @brief Creates a new set.
    * @param newSetName The set name.
    */
-  void createSet( const std::string & newSetName );
+  void createSet( const string & newSetName );
 
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
@@ -318,7 +318,7 @@ public:
    */
   void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   const array2d< localIndex > & map,
-                                  const std::string & setName );
+                                  const string & setName );
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
    * @param inputSet The input set.
@@ -327,7 +327,7 @@ public:
    */
   void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   const array1d< localIndex_array > & map,
-                                  const std::string & setName );
+                                  const string & setName );
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
    * @param inputSet The input set.
@@ -336,7 +336,7 @@ public:
    */
   void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   ArrayOfArraysView< localIndex const > const & map,
-                                  const std::string & setName );
+                                  const string & setName );
 
   /**
    * @brief Constructs the global to local map.
@@ -889,7 +889,7 @@ public:
    */
   void addNeighbor( int const rank )
   {
-    std::string const & rankString = std::to_string( rank );
+    string const & rankString = std::to_string( rank );
     m_neighborData.emplace( std::piecewise_construct, std::make_tuple( rank ), std::make_tuple( rankString, &m_neighborGroup ) );
     m_neighborGroup.registerGroup( rankString, &getNeighborData( rank ) );
   }
