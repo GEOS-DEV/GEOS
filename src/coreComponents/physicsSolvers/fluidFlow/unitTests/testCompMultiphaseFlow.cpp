@@ -18,6 +18,7 @@
 #include "managers/initialization.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/ProblemManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
@@ -26,6 +27,8 @@ using namespace geosx;
 using namespace geosx::dataRepository;
 using namespace geosx::constitutive;
 using namespace geosx::testing;
+
+CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
@@ -628,18 +631,18 @@ class CompositionalMultiphaseFlowTest : public ::testing::Test
 {
 public:
 
-  CompositionalMultiphaseFlowTest()
-    : problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) )
+  CompositionalMultiphaseFlowTest():
+    state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
 protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( *problemManager, xmlInput );
-    solver = problemManager->getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
+    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    solver = state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
 
-    DomainPartition & domain = *problemManager->getDomainPartition();
+    DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
     solver->setupSystem( domain,
                          solver->getDofManager(),
@@ -654,7 +657,7 @@ protected:
   static real64 constexpr dt = 1e4;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
-  std::unique_ptr< ProblemManager > problemManager;
+  GeosxState state;
   CompositionalMultiphaseFVM * solver;
 };
 
@@ -667,7 +670,7 @@ TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-4;
 
-  DomainPartition * domain = problemManager->getDomainPartition();
+  DomainPartition * domain = state.getProblemManager().getDomainPartition();
 
   testCompositionNumericalDerivatives( *solver, *domain, perturb, tol );
 }
@@ -677,7 +680,7 @@ TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseVolumeFra
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 5e-2; // 5% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
   testPhaseVolumeFractionNumericalDerivatives( *solver, domain, perturb, tol );
 }
 
@@ -686,7 +689,7 @@ TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseMobility 
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 5e-2; // 5% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testPhaseMobilityNumericalDerivatives( *solver, domain, perturb, tol );
 }
@@ -702,7 +705,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -718,7 +721,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -734,7 +737,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance )
   real64 const perturb = sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -747,7 +750,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geosx::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;

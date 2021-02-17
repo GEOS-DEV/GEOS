@@ -812,9 +812,9 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
-  CommunicationTools::synchronizeFields( fieldNames,
-                                         &mesh,
-                                         domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+                                                              &mesh,
+                                                              domain.getNeighbors() );
 
   // 4. update secondary variables
 

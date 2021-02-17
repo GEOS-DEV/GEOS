@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh ):
+ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const string & outputPath, const string & inputPath, MeshLevel & mesh ):
   m_comm( comm ),
   m_outputPath( outputPath ),
   m_inputPath( inputPath ),
