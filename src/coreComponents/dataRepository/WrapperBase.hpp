@@ -247,9 +247,6 @@ public:
   /**
    * @brief Check whether wrapped type is can be packed into a buffer on host or device.
    * @param[in] onDevice    determine whether the wrapper is packable on host vs device
-   * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all
-   *                         events are finalized )
    * @return @p true if @p T is packable, @p false otherwise
    */
   virtual
@@ -304,6 +301,9 @@ public:
    * @param[in] withMetadata whether to pack string metadata with the underlying data
    * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return             the number of @p buffer_unit_type units needed to pack
    */
   virtual

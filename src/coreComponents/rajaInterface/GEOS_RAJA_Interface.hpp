@@ -29,9 +29,6 @@ using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;
 using serialAtomic = RAJA::seq_atomic;
 
-using parallelDeviceEvent = RAJA::resources::Event;
-using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
-
 #if defined(GEOSX_USE_OPENMP)
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
@@ -59,6 +56,9 @@ using parallelDeviceStream = RAJA::resources::Cuda;
 using parallelDeviceReduce = RAJA::cuda_reduce;
 using parallelDeviceAtomic = RAJA::cuda_atomic;
 
+using parallelDeviceEvent = RAJA::resources::Event;
+using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
+
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::policy::cuda::cuda_synchronize >(); }
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
@@ -81,6 +81,9 @@ using parallelDeviceStream = RAJA::resources::Omp;
 
 using parallelDeviceReduce = parallelHostReduce;
 using parallelDeviceAtomic = parallelHostAtomic;
+
+using parallelDeviceEvent = RAJA::resources::HostEvent;
+using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
 
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::policy::omp::omp_synchronize >(); }
 
