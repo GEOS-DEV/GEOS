@@ -106,6 +106,38 @@ public:
 
   inline real64 apertureTolerance() const { return m_apertureTolerance; }
 
+  virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                arraySlice1d< real64 > const & tractionVector ) const;
+
+  void addPressureToTraction ( real64 const & pressure,
+                               arraySlice1d< real64 > const & tractionVector ) const
+  {
+    tractionVector[0] -= pressure;
+  }
+
+  void dTraction_dPressure( real64 & dTdpf,
+                            bool const open ) const
+  {
+    dTdpf = open ? -1.0 : 0.0;
+  }
+
+  virtual void dTraction_dJump( arraySlice1d< real64 const > const & dispJump,
+                                arraySlice2d< real64 > const & dTdw ) const
+  {
+
+    dTdw( 0, 0 ) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
+
+    // all the others are zeros
+    dTdw( 0, 1 ) = 0.0;
+    dTdw( 0, 2 ) = 0.0;
+    dTdw( 1, 0 ) = 0.0;
+    dTdw( 1, 1 ) = 0.0;
+    dTdw( 1, 2 ) = 0.0;
+    dTdw( 2, 0 ) = 0.0;
+    dTdw( 2, 1 ) = 0.0;
+    dTdw( 2, 2 ) = 0.0;
+  }
+
   /**
    * @struct Structure to hold scoped key names
    */

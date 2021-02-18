@@ -147,6 +147,14 @@ void ContactRelationBase::initializePreSubGroups( Group * const )
 
 }
 
+void ContactRelationBase::computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                           arraySlice1d< real64 > const & tractionVector ) const
+{
+  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
+  tractionVector[1] = 0.0;
+  tractionVector[2] = 0.0;
+}
+
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, Group * const )
 
 }

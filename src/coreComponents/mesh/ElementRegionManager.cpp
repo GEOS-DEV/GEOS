@@ -63,7 +63,7 @@ void ElementRegionManager::resize( integer_array const & numElements,
   }
 }
 
-void ElementRegionManager::SetMaxGlobalIndex()
+void ElementRegionManager::setMaxGlobalIndex()
 {
   forElementSubRegions< ElementSubRegionBase >( [this] ( ElementSubRegionBase const & subRegion )
   {
@@ -158,8 +158,6 @@ void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const fac
     //loop over the cells
     for( localIndex kc = 0; kc < subRegion.size(); kc++ )
     {
-      // loop over the faces
-      // std::cout << "Element: " << kc << std::endl;
       count = 0;
       for( localIndex kf = 0; kf < subRegion.numFacesPerElement(); kf++ )
       {
@@ -182,7 +180,6 @@ void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const fac
           }
           if( isUnique )
           {
-            // std::cout << edgeIndex << std::endl;
             cellToEdges( kc, count ) = edgeIndex;
             count++;
           }

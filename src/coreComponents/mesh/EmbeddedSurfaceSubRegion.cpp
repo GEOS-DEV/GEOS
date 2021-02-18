@@ -19,6 +19,8 @@
 #include "EmbeddedSurfaceSubRegion.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
+#include "mpiCommunications/MpiWrapper.hpp"
+
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
@@ -166,6 +168,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
       numPoints++;
     }
   } //end of edge loop
+
 
   if( addEmbeddedElem && intersectionPoints.size( 0 ) > 0 )
   {

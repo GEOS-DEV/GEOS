@@ -305,6 +305,7 @@ void CellBlock::setElementType( string const & elementType )
 void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
   this->m_toNodesRelation.setRelatedObject( mesh->getNodeManager() );
+  this->m_toEdgesRelation.setRelatedObject( mesh->getEdgeManager() );
   this->m_toFacesRelation.setRelatedObject( mesh->getFaceManager() );
 }
 

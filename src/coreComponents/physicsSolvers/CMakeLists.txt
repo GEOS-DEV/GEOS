@@ -33,6 +33,7 @@ set( physicsSolvers_headers
      multiphysics/LagrangianContactSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/PoroelasticSolver.hpp
+     multiphysics/PoroelasticSolverEmbeddedFractures.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
      multiphysics/CompositionalMultiphaseReservoir.hpp
@@ -81,6 +82,7 @@ set( physicsSolvers_sources
      multiphysics/LagrangianContactSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
      multiphysics/PoroelasticSolver.cpp
+     multiphysics/PoroelasticSolverEmbeddedFractures.cpp
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
      multiphysics/CompositionalMultiphaseReservoir.cpp
