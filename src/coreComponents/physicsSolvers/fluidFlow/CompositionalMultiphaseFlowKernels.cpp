@@ -1306,8 +1306,11 @@ compute( localIndex const numPhases,
               return k_up;
           };
 
-        auto getUpwindG = [&presGrad, &dGravHead_dX, &phase_eps, &minGravHead, &totFlux_unw, &all_pos_](bool is_ppu_, bool is_pu_, bool is_hu_, localIndex kp)
+        auto getUpwindG = [&seri, &sesri, &sei, &gravCoef, &presGrad, &dGravHead_dX, &phase_eps, &minGravHead, &totFlux_unw, &all_pos_](bool is_ppu_, bool is_pu_, bool is_hu_, localIndex kp)
         {
+          localIndex const er  = seri[0];
+          localIndex const esr = sesri[0];
+          localIndex const ei  = sei[0];
 
           real64 gravHeadOther{};
           real64 dGravHeadOther_dP[NUM_ELEMS]{};
@@ -1324,7 +1327,7 @@ compute( localIndex const numPhases,
           }
           else if( is_pu_ || is_hu_ )
           {
-            k_up_g = 0;
+            k_up_g = ( gravCoef[er][esr][ei] > 0 ) ? 0 : 1;//heavy is upwinded with above value (resp. the lighter with below)
             if( std::fabs( gravHeadOther ) <= std::fabs( minGravHead )
                 && !(all_pos_) )
               k_up_g = ( k_up_g == 1 ) ? 0 : 1;
