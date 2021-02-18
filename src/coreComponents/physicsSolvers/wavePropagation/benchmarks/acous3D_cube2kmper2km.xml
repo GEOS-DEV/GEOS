@@ -12,12 +12,9 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
-      sourceCoordinates="{ { 1010.0, 1010.0, 1010.0 } }"
+      sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
       timeSourceFrequency="5.0"
-      receiverCoordinates="{ { 100, 100, 150 },
-			     { 100, 950, 150 },
-			     { 100, 1850, 150 },
-			     { 1200,1010, 1200 } }"/>
+      receiverCoordinates="{ { 1105,1005, 1005 } }"/>
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
@@ -26,9 +23,9 @@
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 2001 }"
-      yCoords="{ 0, 2001 }"
-      zCoords="{ 0, 2001 }"
+      xCoords="{ 0, 2000 }"
+      yCoords="{ 0, 2000 }"
+      zCoords="{ 0, 2000 }"
       nx="{ 100 }"
       ny="{ 100 }"
       nz="{ 100 }"
@@ -37,7 +34,7 @@
 
    
   <Events
-    maxTime="1.25">
+    maxTime="1.5">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <!-- (there are other ways to control the time step size) -->
@@ -63,8 +60,8 @@
       name="timeHistoryOutput"
       timeFrequency="0.05"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>    
-
+      target="/Outputs/timeHistoryOutput"/>
+    
   </Events>
 
   <NumericalMethods>
@@ -125,8 +122,7 @@
 
   </FieldSpecifications>
 
-
-  <!-- collect the pressure values at the nodes -->
+    <!-- collect the pressure values at the nodes -->
 
   <Tasks>
     <PackCollection
@@ -141,7 +137,7 @@
 
     <VTK
       name="vtkOutput"
-      plotLevel="0"/>
+      plotLevel="3"/>
 
     <!-- output the pressure values to a file named pressure_history.hdf5  -->
 
@@ -150,5 +146,5 @@
       sources="{ /Tasks/pressureCollection }"
       filename="pressure_history"/>
   </Outputs>
-
+  
 </Problem>

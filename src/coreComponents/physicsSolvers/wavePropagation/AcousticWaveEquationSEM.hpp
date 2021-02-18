@@ -56,9 +56,17 @@ public:
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
-  /// Returns the value of a Ricker at time t0 with central Fourier frequency f0
+  /// Returns the value of a Ricker at time t0 with central frequency f0
   virtual
   real64 evaluateRicker( real64 const & t0, real64 const & f0 );
+
+  /// Returns the value of the first derivative of a Ricker at time t0 with central frequency f0
+  virtual
+  real64 evaluateRickerOrder1( real64 const & t, real64 const & f0 );
+
+  /// Returns the value of the second derivative of a Ricker at time t0 with central frequency f0
+  virtual
+  real64 evaluateRickerOrder2( real64 const & t, real64 const & f0 );
 
   /**@}*/
 

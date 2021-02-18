@@ -234,15 +234,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 real64 coordsOnRefElem[3]; // 3D coord of the source in Ref element
                 localIndex q=0; // index of node 0 in the element
 
-                //real64 N[ numNodesPerElem ];
-                real64 gradN[ numNodesPerElem ][ 3 ];
-                //FE_TYPE::calcN( q, N );
-                real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
                 ///Compute invJ = DF^{-1}
                 real64 invJ[3][3]={{0}};
                 FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-                std::cout << "invJ Ok "<< std::endl;
 
                 /// compute (coords - coordsNode_0)
                 real64 coordsRef[3]={0};
@@ -288,7 +282,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 {
 
                   sourceNodeIds[isrc][a] = elemsToNodes[k][a];
-                  sourceConstants[isrc][a] = detJ*Ntest[a]; // precompute detJ x N[position of source] here
+                  sourceConstants[isrc][a] = Ntest[a];
 
                   std::cout << "For source #" << isrc << " I save node #" << sourceNodeIds[isrc][a] << " and constant value = " << sourceConstants[isrc][a] << std::endl;
 
@@ -334,15 +328,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 real64 coordsOnRefElem[3]; // 3D coord of the source in Ref element
                 localIndex q=0; // index of node 0 in the element
 
-                //real64 N[ numNodesPerElem ];
-                //real64 gradN[ numNodesPerElem ][ 3 ];
-                //FE_TYPE::calcN( q, N );
-                //real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
                 ///Compute invJ = DF^{-1}
                 real64 invJ[3][3]={{0}};
                 FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-                std::cout << "invJ Ok "<< std::endl;
 
                 /// compute (coords - coordsNode_0)
                 real64 coordsRef[3]={0};
@@ -388,7 +376,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 {
 
                   receiverNodeIds[ircv][a] = elemsToNodes[k][a];
-                  receiverConstants[ircv][a] = Ntest[a]; // precompute N[position of source] here
+                  receiverConstants[ircv][a] = Ntest[a];
 
                   std::cout << "For receiver #" << ircv << " I save node #" << receiverNodeIds[ircv][a] <<  " and constant value = " << receiverConstants[ircv][a] << std::endl;
 
@@ -412,7 +400,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arr
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
 
-  real64 const fi = evaluateRicker( time, this->m_timeSourceFrequency );
+  real64 const fi = evaluateRickerOrder2( time, this->m_timeSourceFrequency );
 
   // loop over all the sources
   for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
@@ -423,7 +411,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arr
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         // multiply the precomputed part by the ricker
-        rhs[sourceNodeIds[isrc][inode]] += sourceConstants[isrc][inode] * fi;
+        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * fi;
       }
     }
   }
@@ -514,6 +502,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
   arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
   /// damping matrix to be computed for each dof in the boundary of the mesh
   arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+  damping.setValues< serialPolicy >( 0.0 );
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -570,14 +559,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group
           }
         }
 
-        real64 sumMass = 0.0;
-        for( localIndex a=0; a<nodeManager.size(); ++a )
-        {
-          sumMass +=mass[a];
-        }
-
         /* Unit test
            // Test for mass matrix sumTerm*c2 should be volume of the domaine
+              real64 sumMass = 0.0;
+              for( localIndex a=0; a<nodeManager.size(); ++a )
+              {
+                sumMass +=mass[a];
+              }
+
            // assuming MediumVelocity c = 1500
            sumMass *=1500*1500;
            std::cout << "Sum mass terms time C2 = " << sumMass << std::endl;
@@ -656,12 +645,12 @@ real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
 real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & t0, real64 const & f0 )
 {
   // Center time
-  real64 T0 = 1.0/f0;
+  real64 o_tpeak = 1.0/f0;
   real64 pulse = 0.0;
-  if((t0 <= -0.9*T0) || (t0 >= 2.9*T0))
+  if((t0 <= -0.9*o_tpeak) || (t0 >= 2.9*o_tpeak))
     return pulse;
 
-  real64 pi = 3.14;
+  real64 pi = 2.0*acos( 0 );
   real64 tmp = f0*t0-1.0;
   real64 f0tm1_2 = 2*(tmp*pi)*(tmp*pi);
   real64 gaussian_term = exp( -f0tm1_2 );
@@ -669,6 +658,39 @@ real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & t0, real64 const 
 
   return pulse;
 }
+
+
+real64 AcousticWaveEquationSEM::evaluateRickerOrder1( real64 const & t, real64 const & f0 )
+{
+  real64 o_tpeak = 1.0/f0;
+  real64 pulse = 0.0;
+
+  if((t <= -0.9*o_tpeak) || (t >= 2.9*o_tpeak))
+    return pulse;
+
+  real64 pi = 2.0*acos( 0 );
+  real64 lam = (f0*pi)*(f0*pi);
+  pulse = -2.0*lam*(t-o_tpeak)*exp( -lam*(t-o_tpeak)*(t-o_tpeak));
+
+  return pulse;
+}
+
+
+real64 AcousticWaveEquationSEM::evaluateRickerOrder2( real64 const & t, real64 const & f0 )
+{
+  real64 o_tpeak = 1.0/f0;
+  real64 pulse = 0.0;
+  if((t <= -0.9*o_tpeak) || (t >= 2.9*o_tpeak))
+    return pulse;
+
+  real64 pi = 2.0*acos( 0 );
+  real64 lam = (f0*pi)*(f0*pi);
+  pulse = 2.0*lam*(2.0*lam*(t-o_tpeak)*(t-o_tpeak)-1.0)*exp( -lam*(t-o_tpeak)*(t-o_tpeak));
+
+  return pulse;
+}
+
+
 
 real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               real64 const & dt,
