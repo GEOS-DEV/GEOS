@@ -24,7 +24,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-DruckerPragerExtended::DruckerPragerExtended( std::string const & name, Group * const parent ):
+DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const parent ):
   ElasticIsotropic( name, parent ),
   m_defaultInitialFrictionAngle(),
   m_defaultResidualFrictionAngle(),
@@ -57,7 +57,7 @@ DruckerPragerExtended::DruckerPragerExtended( std::string const & name, Group * 
     setDescription( "Dilation ratio [0,1] (ratio = tan dilationAngle / tan frictionAngle)" );
 
   registerWrapper( viewKeyStruct::defaultHardeningString, &m_defaultHardening )->
-    setApplyDefaultValue( 1.0e6 )->
+    setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Hardening parameter (hardening rate is faster for smaller values)" );
 
@@ -169,6 +169,6 @@ void DruckerPragerExtended::saveConvergedState() const
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPragerExtended, string const &, Group * const )
 }
 } /* namespace geosx */

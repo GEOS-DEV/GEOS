@@ -136,7 +136,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
-  // decompose into mean (P) and von mises (Q) stress invariants
+  // decompose into mean (P) and von Mises (Q) stress invariants
 
   real64 trialP;
   real64 trialQ;
@@ -205,8 +205,6 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     {
       normZero = norm;
     }
-
-    //printf("%ld %.2e\n",iter,norm);
 
     if( norm < 1e-8*(normZero+1))
     {
@@ -332,7 +330,7 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return m_catalogNameString; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

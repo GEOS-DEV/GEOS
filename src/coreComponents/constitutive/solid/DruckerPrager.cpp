@@ -24,7 +24,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
+DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
   ElasticIsotropic( name, parent ),
   m_defaultFrictionAngle(),
   m_defaultDilationAngle(),

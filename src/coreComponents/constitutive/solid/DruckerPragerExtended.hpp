@@ -103,10 +103,10 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
 private:
-  /// A reference to the ArrayView holding the initial friction angle for each element.
+  /// A reference to the ArrayView holding the initial friction param for each element.
   arrayView1d< real64 const > const m_initialFriction;
 
-  /// A reference to the ArrayView holding the residual friction angle for each element.
+  /// A reference to the ArrayView holding the residual friction param for each element.
   arrayView1d< real64 const > const m_residualFriction;
 
   /// A reference to the ArrayView holding the dilation ratio for each element.
@@ -356,7 +356,7 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return m_catalogNameString; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

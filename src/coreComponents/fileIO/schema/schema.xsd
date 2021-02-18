@@ -1866,7 +1866,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--defaultDilationRatio => Dilation ratio [0,1] (ratio = tan dilationAngle / tan frictionAngle)-->
 		<xsd:attribute name="defaultDilationRatio" type="real64" default="1" />
 		<!--defaultHardening => Hardening parameter (hardening rate is faster for smaller values)-->
-		<xsd:attribute name="defaultHardening" type="real64" default="1e+06" />
+		<xsd:attribute name="defaultHardening" type="real64" default="0" />
 		<!--defaultInitialFrictionAngle => Initial friction angle (degrees)-->
 		<xsd:attribute name="defaultInitialFrictionAngle" type="real64" default="30" />
 		<!--defaultPoissonRatio => Poisson's ratio-->
@@ -2024,7 +2024,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--defaultDilationRatio => Dilation ratio [0,1] (ratio = tan dilationAngle / tan frictionAngle)-->
 		<xsd:attribute name="defaultDilationRatio" type="real64" default="1" />
 		<!--defaultHardening => Hardening parameter (hardening rate is faster for smaller values)-->
-		<xsd:attribute name="defaultHardening" type="real64" default="1e+06" />
+		<xsd:attribute name="defaultHardening" type="real64" default="0" />
 		<!--defaultInitialFrictionAngle => Initial friction angle (degrees)-->
 		<xsd:attribute name="defaultInitialFrictionAngle" type="real64" default="30" />
 		<!--defaultPoissonRatio => Poisson's ratio-->

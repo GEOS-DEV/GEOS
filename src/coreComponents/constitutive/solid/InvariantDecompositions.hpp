@@ -65,11 +65,7 @@ void strainDecomposition( real64 const ( &strain )[6],
                           real64 & devStrain,
                           real64 ( & deviator )[6] )
 {
-  volStrain = 0;
-  for( localIndex i=0; i<3; ++i )
-  {
-    volStrain += strain[i];
-  }
+  volStrain = strain[0] + strain[1] + strain[2];
 
   for( localIndex i=0; i<3; ++i )
   {
@@ -119,12 +115,7 @@ void stressDecomposition( real64 const ( &stress )[6],
                           real64 & devStress,
                           real64 ( & deviator )[6] )
 {
-  volStress = 0;
-  for( localIndex i=0; i<3; ++i )
-  {
-    volStress += stress[i];
-  }
-  volStress /= 3.;
+  volStress = ( stress[0] + stress[1] + stress[2] ) / 3;
 
   for( localIndex i=0; i<3; ++i )
   {

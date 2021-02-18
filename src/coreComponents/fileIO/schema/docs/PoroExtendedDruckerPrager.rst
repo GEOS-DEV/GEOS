@@ -9,7 +9,7 @@ defaultBulkModulus           real64 -1       Elastic Bulk Modulus Parameter
 defaultCohesion              real64 0        Initial cohesion                                                     
 defaultDensity               real64 required Default Material Density                                             
 defaultDilationRatio         real64 1        Dilation ratio [0,1] (ratio = tan dilationAngle / tan frictionAngle) 
-defaultHardening             real64 1e+06    Hardening parameter (hardening rate is faster for smaller values)    
+defaultHardening             real64 0        Hardening parameter (hardening rate is faster for smaller values)    
 defaultInitialFrictionAngle  real64 30       Initial friction angle (degrees)                                     
 defaultPoissonRatio          real64 -1       Poisson's ratio                                                      
 defaultResidualFrictionAngle real64 30       Residual friction angle (degrees)                                    
