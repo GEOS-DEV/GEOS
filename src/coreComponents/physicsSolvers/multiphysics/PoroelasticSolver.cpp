@@ -68,9 +68,9 @@ PoroelasticSolver::PoroelasticSolver( const string & name,
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void PoroelasticSolver::registerDataOnMesh( dataRepository::Group * const MeshBodies )
+void PoroelasticSolver::registerDataOnMesh( dataRepository::Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  for( auto & mesh : meshBodies->getSubGroups() )
   {
     ElementRegionManager * const elemManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
 
@@ -327,17 +327,11 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
 {
 
   // assemble J_SS
-//  m_solidSolver->AssembleSystem( time_n, dt,
-//                                 domain,
-//                                 dofManager,
-//                                 localMatrix,
-//                                 localRhs );
-
-  m_solidSolver->assemblyLaunch< constitutive::PoroElasticBase,
-                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
-                                                                                               dofManager,
-                                                                                               localMatrix,
-                                                                                               localRhs );
+  m_solidSolver->assembleSystem( time_n, dt,
+                                 domain,
+                                 dofManager,
+                                 localMatrix,
+                                 localRhs );
 
   // assemble J_FF
   m_flowSolver->assembleSystem( time_n, dt,
