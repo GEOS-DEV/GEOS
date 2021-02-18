@@ -19,7 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"

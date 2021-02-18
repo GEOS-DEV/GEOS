@@ -15,7 +15,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 
-#include "common/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
+#include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"  // interface to linear solvers and linear algebra libraries

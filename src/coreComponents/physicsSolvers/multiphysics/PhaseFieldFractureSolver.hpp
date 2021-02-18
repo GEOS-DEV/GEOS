@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx

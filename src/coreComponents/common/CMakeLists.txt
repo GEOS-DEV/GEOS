@@ -6,7 +6,6 @@ set(common_headers
     ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     BufferAllocator.hpp
     DataTypes.hpp
-    EnumStrings.hpp
     Path.hpp
     GeosxMacros.hpp
     Stopwatch.hpp

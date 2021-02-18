@@ -4,6 +4,7 @@
 #
 set( codingUtilities_headers
      traits.hpp
+     EnumStrings.hpp
      StringUtilities.hpp
      UnitTestUtilities.hpp
      Utilities.hpp
