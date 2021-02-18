@@ -498,6 +498,13 @@ Element: Poroelastic
 .. include:: ../../coreComponents/fileIO/schema/docs/Poroelastic.rst
 
 
+.. _XML_PoroelasticEmbeddedFractures:
+
+Element: PoroelasticEmbeddedFractures
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticEmbeddedFractures.rst
+
+
 .. _XML_Problem:
 
 Element: Problem
@@ -1249,6 +1256,13 @@ Datastructure: PoroExtendedDruckerPrager
 Datastructure: Poroelastic
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/Poroelastic_other.rst
+
+
+.. _DATASTRUCTURE_PoroelasticEmbeddedFractures:
+
+Datastructure: PoroelasticEmbeddedFractures
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticEmbeddedFractures_other.rst
 
 
 .. _DATASTRUCTURE_Problem:
