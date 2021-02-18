@@ -123,6 +123,7 @@ localIndex CellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buf
 
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > edgeLocalToGlobal = edgeList().relatedObjectLocalToGlobal();
   arrayView1d< globalIndex const > faceLocalToGlobal = faceList().relatedObjectLocalToGlobal();
 
 
@@ -132,6 +133,14 @@ localIndex CellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buf
                                                      packList,
                                                      localToGlobal,
                                                      nodeLocalToGlobal );
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer,
+                                           edgeList().base().toViewConst(),
+                                           m_unmappedGlobalIndicesInEdgelist,
+                                           packList,
+                                           localToGlobal,
+                                           edgeLocalToGlobal );
+
 
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            faceList().base().toViewConst(),
@@ -158,6 +167,13 @@ localIndex CellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
                                      nodeList().relatedObjectGlobalToLocal() );
 
   unPackedSize += bufferOps::Unpack( buffer,
+                                     edgeList().base(),
+                                     packList,
+                                     m_unmappedGlobalIndicesInEdgelist,
+                                     this->globalToLocalMap(),
+                                     edgeList().relatedObjectGlobalToLocal() );
+
+  unPackedSize += bufferOps::Unpack( buffer,
                                      faceList().base(),
                                      packList,
                                      m_unmappedGlobalIndicesInFacelist,
@@ -171,6 +187,10 @@ void CellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( nodeList(),
                                     m_unmappedGlobalIndicesInNodelist,
+                                    clearIfUnmapped );
+
+  ObjectManagerBase::fixUpDownMaps( edgeList(),
+                                    m_unmappedGlobalIndicesInEdgelist,
                                     clearIfUnmapped );
 
   ObjectManagerBase::fixUpDownMaps( faceList(),

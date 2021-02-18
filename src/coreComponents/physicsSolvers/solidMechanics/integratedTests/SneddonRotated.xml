@@ -43,19 +43,19 @@
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 3 }"
       yCoords="{ 0, 3 }"
-      zCoords="{ 0, 3 }"
+      zCoords="{ 0, 1 }"
       nx="{ 11 }"
       ny="{ 11 }"
-      nz="{ 11 }"
+      nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="0, 1, 0"
+      normal="0.5547, 0.8321, 0"
       origin="1.5, 1.5, 1.5"
-      lengthVector="1, 0, 0"
+      lengthVector="0.8321, -0.5547, 0"
       widthVector="0, 0, 1"
       dimensions="{ 1.1, 4 }"/>
   </Geometry>
@@ -148,13 +148,13 @@
       scale="-0.0"
       setNames="{ yneg }"/>
 
-    <FieldSpecification
+    <!--FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ zneg, zpos }"/>
+      setNames="{ zneg, zpos }"/-->
       
       <FieldSpecification
       name="Traction"
