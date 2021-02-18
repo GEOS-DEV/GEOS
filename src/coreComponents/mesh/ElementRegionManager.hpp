@@ -201,7 +201,7 @@ public:
   /**
    * @brief Set the maximum local and global index.
    */
-  void SetMaxGlobalIndex();
+  virtual void setMaxGlobalIndex() override final;
 
   /**
    * @brief Get a collection of element regions

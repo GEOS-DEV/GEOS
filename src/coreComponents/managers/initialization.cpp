@@ -511,13 +511,14 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   adiak::value( "CUDA runtime version", cudaRuntimeVersion );
   adiak::value( "CUDA driver version", cudaDriverVersion );
 }
+#endif // defined( GEOSX_USE_CALIPER )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeCaliper()
 {
+#if defined( GEOSX_USE_CALIPER )
   adiak::fini();
+#endif
 }
-
-#endif // defined( GEOSX_USE_CALIPER )
 
 } // namespace geosx

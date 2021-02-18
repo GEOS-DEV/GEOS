@@ -94,26 +94,13 @@ public:
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
+  void updateState( DomainPartition & domain );
+
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static auto solidSolverNameString = "solidSolverName";
-
-    constexpr static auto contactRelationNameString = "contactRelationName";
-
-    constexpr static auto dispJumpString = "displacementJump";
-
-    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
-
-    constexpr static auto fractureRegionNameString = "fractureRegionName";
-
-  } SolidMechanicsEmbeddedFracturesViewKeys;
-
-protected:
 
   void addCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,
@@ -129,6 +116,38 @@ protected:
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static auto solidSolverNameString = "solidSolverName";
+
+    constexpr static auto contactRelationNameString = "contactRelationName";
+
+    constexpr static auto dispJumpString = "displacementJump";
+
+    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
+
+    constexpr static auto fractureRegionNameString = "fractureRegionName";
+
+    constexpr static auto fractureTractionString = "fractureTraction";
+
+    constexpr static auto dTraction_dJumpString = "dTraction_dJump";
+
+  } SolidMechanicsEmbeddedFracturesViewKeys;
+
+  string const & getContactRelationName() const { return m_contactRelationName; };
+
+  string const & getFractureRegionName() const { return m_fractureRegionName; };
+
+  void applyTractionBC( real64 const time_n,
+                        real64 const dt,
+                        DomainPartition & domain );
+
+protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const problemManager ) override final;
+
+  virtual void postProcessInput() override final;
+
 private:
 
   /// Solid mechanics solver name
@@ -142,7 +161,6 @@ private:
 
   /// contact relation name string
   string m_contactRelationName;
-
 };
 
 

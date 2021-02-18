@@ -10,7 +10,7 @@
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }">
+      targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonMaxIter="2"
         newtonTol="1.0e-2"
@@ -27,7 +27,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ shale }">
     </SolidMechanicsLagrangianSSLE>
 
@@ -35,7 +35,7 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Region1 }"
+      targetRegions="{ Domain }"
       fluidNames="{ water }"
       solidNames="{ shale }">
     </SinglePhaseFVM>
@@ -148,7 +148,7 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region1"
+      name="Domain"
       cellBlocks="{ cb1 }"
       materialList="{ shale, water }"/>
   </ElementRegions>
@@ -177,14 +177,14 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="0.0"/>
 
     <!--FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Region1/cb1"
+               objectPath="ElementRegions/Domain/cb1"
                fieldName="pressure"
 	       functionName="solutionFunction"
                scale="1.000e2"/-->
@@ -220,7 +220,7 @@
       component="0"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="1.000e-4"/>
 
@@ -229,7 +229,7 @@
       component="1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="0.0"/>
 
@@ -238,7 +238,7 @@
       component="2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="1.000e-4"/>
 
@@ -246,7 +246,7 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="referencePorosity"
       scale="0.0"/>
 
@@ -301,7 +301,7 @@
       functionName="timeFunction"/>
 
     <!--FieldSpecification name="boundaryPressure"
-               objectPath="ElementRegions/Region1/cb1"
+               objectPath="ElementRegions/Domain/cb1"
                fieldName="pressure"
                scale="0.000e0"
 	       setNames="{rigEle}"/-->

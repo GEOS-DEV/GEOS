@@ -435,7 +435,7 @@ public:
   /**
    * @brief Computes the maximum global index allong all the MPI ranks.
    */
-  void setMaxGlobalIndex();
+  virtual void setMaxGlobalIndex();
 
   /**
    * @brief Fixing the up/down maps by mapping the unmapped indices.
@@ -901,11 +901,19 @@ public:
   }
 
   /**
+   * @brief Get the local maximum global index on this rank.
+   * @return The index.
+   */
+  globalIndex localMaxGlobalIndex() const
+  { return m_localMaxGlobalIndex; }
+
+  /**
    * @brief Get the maximum global index of all objects across all rank. See @see #m_maxGlobalIndex
    * @return The index.
    */
   globalIndex maxGlobalIndex() const
   { return m_maxGlobalIndex; }
+
 
   /**
    * @brief Get the domain boundary indicator

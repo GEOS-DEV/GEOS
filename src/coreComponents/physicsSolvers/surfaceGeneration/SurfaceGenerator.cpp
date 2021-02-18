@@ -4472,7 +4472,7 @@ void SurfaceGenerator::
     }
   }
 
-  elementManager.SetMaxGlobalIndex();
+  elementManager.setMaxGlobalIndex();
 }
 
 real64
