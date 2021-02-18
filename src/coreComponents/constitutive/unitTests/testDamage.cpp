@@ -65,7 +65,7 @@ TEST( DamageTests, testDamageSpectral )
   disc.resize( numElem );
 
   DamageSpectral< ElasticIsotropic > & cm = constitutiveManager.getConstitutiveRelation< DamageSpectral< ElasticIsotropic > >( "shale" );
-  cm.allocateConstitutiveData( &disc, numQuad );
+  cm.allocateConstitutiveData( disc, numQuad );
 
   // confirm allocation sizes
 

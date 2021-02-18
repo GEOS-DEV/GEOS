@@ -149,7 +149,7 @@ public:
   virtual ~ParticleFluidBase() override;
 
   // *** ConstitutiveBase interface
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 4;

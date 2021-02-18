@@ -157,8 +157,8 @@ void PoroelasticSolver::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  m_flowSolver = &this->getParent()->getGroup< SinglePhaseBase >( m_flowSolverName );
-  m_solidSolver = &this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_flowSolver = &this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
+  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   m_solidSolver->setEffectiveStress( 1 );
 

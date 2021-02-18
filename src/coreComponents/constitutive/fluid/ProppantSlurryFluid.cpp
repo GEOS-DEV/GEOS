@@ -63,7 +63,7 @@ ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const par
 
 ProppantSlurryFluid::~ProppantSlurryFluid() = default;
 
-void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group * const parent,
+void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group & parent,
                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
   SlurryFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

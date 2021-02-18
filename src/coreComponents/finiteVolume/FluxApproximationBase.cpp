@@ -81,7 +81,7 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
       registerFractureStencil( stencilGroup );
       // For each face-based boundary condition on target field, create a boundary stencil
       fsManager.apply( 0.0,
-                       dynamicCast< DomainPartition & >( *meshBodies.getParent() ), // TODO: Apply() should take a MeshLevel directly
+                       dynamicCast< DomainPartition & >( meshBodies.getParent() ), // TODO: Apply() should take a MeshLevel directly
                        "faceManager",
                        m_fieldName,
                        [&] ( FieldSpecificationBase const &,

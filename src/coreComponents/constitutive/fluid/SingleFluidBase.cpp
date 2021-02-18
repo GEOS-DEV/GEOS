@@ -56,18 +56,18 @@ void SingleFluidBase::postProcessInput()
 
 }
 
-void SingleFluidBase::allocateConstitutiveData( Group * const parent,
+void SingleFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  this->resize( parent->size() );
+  this->resize( parent.size() );
 
-  m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dDensity_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_density.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dDensity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
 
-  m_viscosity.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dViscosity_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_viscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dViscosity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
 } //namespace constitutive

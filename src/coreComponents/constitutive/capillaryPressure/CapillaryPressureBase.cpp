@@ -111,7 +111,7 @@ void CapillaryPressureBase::resizeFields( localIndex const size,
 }
 
 
-void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
   resizeFields( 0, numConstitutivePointsPerParentIndex );

@@ -138,11 +138,11 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, NC );
 }
 
-void MultiFluidBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  resizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
 MultiFluidBase::~MultiFluidBase()

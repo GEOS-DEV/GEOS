@@ -743,7 +743,7 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
   ArrayOfArrays< localIndex > & toElementList          = nodeManager.elementList();
 
   // we get the region and subregion indices in the elemManager
-  WellElementRegion const & elemRegion = dynamicCast< WellElementRegion & >( *this->getParent()->getParent() );
+  WellElementRegion const & elemRegion = dynamicCast< WellElementRegion & >( this->getParent().getParent() );
   string const & elemRegionName = elemRegion.getName();
 
   localIndex const iregion    = elemManager.getRegions().getIndex( elemRegionName );

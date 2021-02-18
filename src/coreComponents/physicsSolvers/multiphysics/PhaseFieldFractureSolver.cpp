@@ -113,11 +113,11 @@ void PhaseFieldFractureSolver::postProcessInput()
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
     SolidMechanicsLagrangianFEM &
-    solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
     integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     PhaseFieldDamageFEM &
-    damageSolver = this->getParent()->getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
+    damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
     integer & minNewtonIterFluid = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     minNewtonIterSolid = 0;
@@ -181,10 +181,10 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
   real64 dtReturnTemporary;
 
   SolidMechanicsLagrangianFEM &
-  solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   PhaseFieldDamageFEM &
-  damageSolver = this->getParent()->getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
+  damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
 
   damageSolver.setupSystem( domain,
                             damageSolver.getDofManager(),
@@ -291,10 +291,10 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   NodeManager & nodeManager = mesh.getNodeManager();
 
   SolidMechanicsLagrangianFEM &
-  solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   PhaseFieldDamageFEM const &
-  damageSolver = this->getParent()->getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
+  damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
 
   string const & damageFieldName = damageSolver.getFieldName();
 

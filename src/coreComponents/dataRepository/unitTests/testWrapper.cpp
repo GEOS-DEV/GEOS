@@ -30,7 +30,7 @@ public:
   WrapperSetGet():
     m_node(),
     m_group( "root", m_node ),
-    m_wrapper( "wrapper", &m_group ),
+    m_wrapper( "wrapper", m_group ),
     m_wrapperBase( m_wrapper )
   {}
 

@@ -87,7 +87,7 @@ DruckerPrager::~DruckerPrager()
 {}
 
 
-void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const parent,
+void DruckerPrager::allocateConstitutiveData( dataRepository::Group & parent,
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newCohesion.resize( 0, numConstitutivePointsPerParentIndex );

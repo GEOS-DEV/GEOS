@@ -277,7 +277,7 @@ private:
                                LAMBDA && lambda
                                ) const
   {
-    if( ( target.getParent()->getName() == ElementRegionBase::viewKeyStruct::elementSubRegions()
+    if( ( target.getParent().getName() == ElementRegionBase::viewKeyStruct::elementSubRegions()
           || target.getName() == "nodeManager"
           || target.getName() == "FaceManager"
           || target.getName() == "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are

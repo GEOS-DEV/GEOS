@@ -27,19 +27,17 @@ namespace dataRepository
 
 
 WrapperBase::WrapperBase( string const & name,
-                          Group * const parent ):
+                          Group & parent ):
   m_name( name ),
-  m_parent( parent ),
+  m_parent( &parent ),
   m_sizedFromParent( 1 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_plotLevel( PlotLevel::NOPLOT ),
   m_inputFlag( InputFlags::INVALID ),
   m_description(),
   m_registeringObjects(),
-  m_conduitNode( parent->getConduitNode()[ name ] )
-{
-  GEOSX_ERROR_IF( parent == nullptr, "Cannot have a view with no parent." );
-}
+  m_conduitNode( parent.getConduitNode()[ name ] )
+{}
 
 
 WrapperBase::~WrapperBase()

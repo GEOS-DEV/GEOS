@@ -173,7 +173,7 @@ void WellSolverBase::initializePreSubGroups()
     validateModelMapping( meshLevel.getElemManager(), m_fluidModelNames );
   }
 
-  FlowSolverBase const & flowSolver = getParent()->getGroup< FlowSolverBase >( getFlowSolverName() );
+  FlowSolverBase const & flowSolver = getParent().getGroup< FlowSolverBase >( getFlowSolverName() );
   m_numDofPerResElement = flowSolver.numDofPerCell();
 }
 

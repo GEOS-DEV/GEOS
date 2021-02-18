@@ -69,7 +69,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
 
-void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group * const parent,
+void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

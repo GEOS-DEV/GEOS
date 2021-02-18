@@ -149,8 +149,8 @@ void HydrofractureSolver::implicitStepComplete( real64 const & time_n,
 
 void HydrofractureSolver::postProcessInput()
 {
-  m_solidSolver = &this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-  m_flowSolver = &this->getParent()->getGroup< FlowSolverBase >( m_flowSolverName );
+  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_flowSolver = &this->getParent().getGroup< FlowSolverBase >( m_flowSolverName );
 }
 
 void HydrofractureSolver::initializePostInitialConditionsPreSubGroups()
@@ -174,7 +174,7 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
 {
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator = this->getParent()->getGroupPointer< SolverBase >( "SurfaceGen" );
+  SolverBase * const surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( "SurfaceGen" );
 
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
@@ -1026,7 +1026,7 @@ void HydrofractureSolver::setNextDt( real64 const & currentDt,
   }
   else
   {
-    SolverBase & surfaceGenerator = this->getParent()->getGroup< SolverBase >( "SurfaceGen" );
+    SolverBase & surfaceGenerator = this->getParent().getGroup< SolverBase >( "SurfaceGen" );
     nextDt = surfaceGenerator.GetTimestepRequest() < 1e99 ? surfaceGenerator.GetTimestepRequest() : currentDt;
   }
 

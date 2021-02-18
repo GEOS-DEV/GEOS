@@ -584,7 +584,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
     }
     else if( curGroupName == ".." )
     {
-      currentGroup = this->getParent();
+      currentGroup = &this->getParent();
     }
     else
     {

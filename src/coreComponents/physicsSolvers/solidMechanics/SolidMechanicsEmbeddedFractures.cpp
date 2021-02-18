@@ -75,7 +75,7 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
 
 void SolidMechanicsEmbeddedFractures::postProcessInput()
 {
-  m_solidSolver = &this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 }
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )

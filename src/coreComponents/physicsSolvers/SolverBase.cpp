@@ -882,9 +882,9 @@ void SolverBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time )
 R1Tensor const SolverBase::gravityVector() const
 {
   R1Tensor rval;
-  if( dynamicCast< PhysicsSolverManager const * >( getParent() ) != nullptr )
+  if( dynamicCast< PhysicsSolverManager const * >( &getParent() ) != nullptr )
   {
-    rval = getParent()->getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() );
+    rval = getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() );
   }
   else
   {

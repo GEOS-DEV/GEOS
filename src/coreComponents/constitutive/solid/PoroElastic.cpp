@@ -90,7 +90,7 @@ PoroElastic< BASE >::deliverClone( string const & name,
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group * const parent,
+void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
   m_poreVolumeMultiplier.resize( 0, numConstitutivePointsPerParentIndex );

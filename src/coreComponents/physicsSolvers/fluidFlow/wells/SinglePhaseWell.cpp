@@ -51,7 +51,7 @@ void SinglePhaseWell::postProcessInput()
 {
   WellSolverBase::postProcessInput();
 
-  SinglePhaseBase const & flowSolver = getParent()->getGroup< SinglePhaseBase >( getFlowSolverName() );
+  SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
   GEOSX_UNUSED_VAR( flowSolver );
 }
 
@@ -700,7 +700,7 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  SinglePhaseBase & flowSolver = getParent()->getGroup< SinglePhaseBase >( getFlowSolverName() );
+  SinglePhaseBase & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
 
   {
     using keys = SinglePhaseBase::viewKeyStruct;

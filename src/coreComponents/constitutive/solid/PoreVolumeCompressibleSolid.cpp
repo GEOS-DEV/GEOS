@@ -60,15 +60,15 @@ PoreVolumeCompressibleSolid::deliverClone( string const & name,
   return clone;
 }
 
-void PoreVolumeCompressibleSolid::allocateConstitutiveData( dataRepository::Group * const parent,
+void PoreVolumeCompressibleSolid::allocateConstitutiveData( dataRepository::Group & parent,
                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  this->resize( parent->size() );
+  this->resize( parent.size() );
 
-  m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_poreVolumeMultiplier.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dPVMult_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
 }
 

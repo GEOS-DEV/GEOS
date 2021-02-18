@@ -1906,7 +1906,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
       const std::pair< CellElementSubRegion *, localIndex > & elem = iter_elem->first;
 
       CellElementSubRegion & elemSubRegion = *(elem.first);
-      ElementRegionBase & elemRegion = dynamicCast< ElementRegionBase & >( *elemSubRegion.getParent()->getParent() );
+      ElementRegionBase & elemRegion = dynamicCast< ElementRegionBase & >( elemSubRegion.getParent().getParent() );
       string const & elemRegionName = elemRegion.getName();
 
       localIndex const regionIndex = elementManager.getRegions().getIndex( elemRegionName );

@@ -73,7 +73,7 @@ public:
    * @param parent parent group which owns the Wrapper
    */
   explicit Wrapper( string const & name,
-                    Group * const parent ):
+                    Group & parent ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
     m_data( new T() ),
@@ -94,7 +94,7 @@ public:
    * @param object object that is being wrapped by the Wrapper
    */
   explicit Wrapper( string const & name,
-                    Group * const parent,
+                    Group & parent,
                     std::unique_ptr< T > object ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
@@ -116,7 +116,7 @@ public:
    * @param object object that is being wrapped by the Wrapper
    */
   explicit Wrapper( string const & name,
-                    Group * const parent,
+                    Group & parent,
                     T * object ):
     WrapperBase( name, parent ),
     m_ownsData( false ),
@@ -177,7 +177,7 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
-                                                Group * const parent ) override
+                                                Group & parent ) override
   {
     std::unique_ptr< WrapperBase >
     clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, m_data );
@@ -752,7 +752,7 @@ public:
 
     GEOSX_ERROR_IF( ptr == nullptr, "Failed to average over the second dimension of." );
 
-    return std::make_unique< Wrapper< U > >( name, &group, std::move( ptr ) );
+    return std::make_unique< Wrapper< U > >( name, group, std::move( ptr ) );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -62,7 +62,7 @@ void SolidBase::postProcessInput()
 }
 
 
-void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   m_density.resize( 0, numConstitutivePointsPerParentIndex );

@@ -67,7 +67,7 @@ void PoroelasticSolverEmbeddedFractures::postProcessInput()
 {
   PoroelasticSolver::postProcessInput();
 
-  m_fracturesSolver  = &this->getParent()->getGroup< SolidMechanicsEmbeddedFractures >( m_fracturesSolverName );
+  m_fracturesSolver  = &this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_fracturesSolverName );
 }
 
 void PoroelasticSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )

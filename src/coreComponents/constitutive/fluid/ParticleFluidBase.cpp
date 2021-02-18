@@ -59,13 +59,13 @@ void ParticleFluidBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 }
 
-void ParticleFluidBase::allocateConstitutiveData( Group * const parent,
+void ParticleFluidBase::allocateConstitutiveData( Group & parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  this->resize( parent->size() );
-  m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS );
+  this->resize( parent.size() );
+  m_dSettlingFactor_dComponentConcentration.resize( parent.size(), MAX_NUM_COMPONENTS );
 }
 
 } //namespace constitutive

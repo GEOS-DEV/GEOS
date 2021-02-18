@@ -55,8 +55,8 @@ void FlowProppantTransportSolver::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  m_proppantSolver = &this->getParent()->getGroup< ProppantTransport >( m_proppantSolverName );
-  m_flowSolver = &this->getParent()->getGroup< FlowSolverBase >( m_flowSolverName );
+  m_proppantSolver = &this->getParent().getGroup< ProppantTransport >( m_proppantSolverName );
+  m_flowSolver = &this->getParent().getGroup< FlowSolverBase >( m_flowSolverName );
 }
 
 FlowProppantTransportSolver::~FlowProppantTransportSolver() = default;

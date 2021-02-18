@@ -163,7 +163,7 @@ public:
 
   // *** ConstitutiveBase interface
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluid-specific interface

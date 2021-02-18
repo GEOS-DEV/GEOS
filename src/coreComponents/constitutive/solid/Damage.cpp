@@ -68,7 +68,7 @@ void Damage< BASE >::postProcessInput()
 }
 
 template< typename BASE >
-void Damage< BASE >::allocateConstitutiveData( dataRepository::Group * const parent,
+void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );

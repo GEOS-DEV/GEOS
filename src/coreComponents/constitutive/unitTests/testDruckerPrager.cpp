@@ -92,7 +92,7 @@ void testDruckerPragerDriver()
   disc.resize( numElem );
 
   DruckerPrager & cm = constitutiveManager.getConstitutiveRelation< DruckerPrager >( "granite" );
-  cm.allocateConstitutiveData( &disc, numQuad );
+  cm.allocateConstitutiveData( disc, numQuad );
 
   // confirm allocation sizes
 
@@ -208,7 +208,7 @@ void testDruckerPragerExtendedDriver()
   disc.resize( numElem );
 
   DruckerPragerExtended & cm = constitutiveManager.getConstitutiveRelation< DruckerPragerExtended >( "granite" );
-  cm.allocateConstitutiveData( &disc, numQuad );
+  cm.allocateConstitutiveData( disc, numQuad );
 
   // confirm allocation sizes
 

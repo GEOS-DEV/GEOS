@@ -46,11 +46,11 @@ ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::getCatalog()
   return catalog;
 }
 
-void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
-  m_constitutiveDataGroup = parent;
+  m_constitutiveDataGroup = &parent;
 
   for( auto & group : this->getSubGroups() )
   {
@@ -59,7 +59,7 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const p
       if( wrapper.second->sizedFromParent() )
       {
         string const & wrapperName = wrapper.first;
-        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
+        parent.registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
           setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
@@ -70,12 +70,12 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const p
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = wrapper.first;
-      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
+      parent.registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
         setRestartFlags( RestartFlags::NO_WRITE );
     }
   }
 
-  this->resize( parent->size() );
+  this->resize( parent.size() );
 }
 
 std::unique_ptr< ConstitutiveBase >

@@ -64,7 +64,7 @@ public:
    * @param[in] parent pointer to Group that holds this WrapperBase
    */
   explicit WrapperBase( string const & name,
-                        Group * const parent );
+                        Group & parent );
 
   /// @cond DO_NOT_DOCUMENT
   WrapperBase() = delete;
@@ -493,7 +493,7 @@ public:
    * The overridden function will create a copy of the derived Wrapper<T> the using the provided
    * values of name and parent to differentiate itself from the source.
    */
-  virtual std::unique_ptr< WrapperBase > clone( string const & name, Group * const parent ) = 0;
+  virtual std::unique_ptr< WrapperBase > clone( string const & name, Group & parent ) = 0;
 
   /**
    * @brief Copy the the data contained in another wrapper into this wrapper.

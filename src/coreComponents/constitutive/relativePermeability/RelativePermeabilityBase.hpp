@@ -126,7 +126,7 @@ public:
 
   virtual ~RelativePermeabilityBase() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   localIndex numFluidPhases() const { return m_phaseNames.size(); }

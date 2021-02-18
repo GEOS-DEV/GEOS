@@ -102,7 +102,7 @@ void CompositionalMultiphaseWell::postProcessInput()
   WellSolverBase::postProcessInput();
   checkModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString() );
 
-  CompositionalMultiphaseFlow const & flowSolver = getParent()->getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
+  CompositionalMultiphaseFlow const & flowSolver = getParent().getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
   GEOSX_UNUSED_VAR( flowSolver );
 
   GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
@@ -226,7 +226,7 @@ void CompareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 void CompositionalMultiphaseWell::validateConstitutiveModels( MeshLevel const & meshLevel, ConstitutiveManager const & cm ) const
 {
-  CompositionalMultiphaseFlow const & flowSolver = getParent()->getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
+  CompositionalMultiphaseFlow const & flowSolver = getParent().getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
   arrayView1d< string const > const & flowTargetRegionNames = flowSolver.targetRegionNames();
   arrayView1d< string const > const & flowFluidModels = flowSolver.fluidModelNames();
   arrayView1d< string const > const & flowRelPermModels = flowSolver.relPermModelNames();
@@ -1397,7 +1397,7 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  CompositionalMultiphaseFlow & flowSolver = getParent()->getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
+  CompositionalMultiphaseFlow & flowSolver = getParent().getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
 
   {
     using keys = CompositionalMultiphaseFlow::viewKeyStruct;

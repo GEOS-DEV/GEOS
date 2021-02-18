@@ -1148,16 +1148,23 @@ public:
 
   /**
    * @brief Access the group's parent.
-   * @return pointer to parent Group
+   * @return reference to parent Group
+   * @throw std::domain_error if the Group doesn't have a parent.
    */
-  Group * getParent()
-  { return m_parent; }
+  Group & getParent()
+  {
+    GEOSX_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    return *m_parent;
+  }
 
   /**
    * @copydoc getParent()
    */
-  Group const * getParent() const
-  { return m_parent; }
+  Group const & getParent() const
+  {
+    GEOSX_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    return *m_parent;
+  }
 
   /**
    * @brief Get the group's index withing its parent group
@@ -1375,7 +1382,7 @@ Wrapper< TBASE > & Group::registerWrapper( string const & name,
 {
   std::unique_ptr< TBASE > newObj = std::make_unique< T >();
   m_wrappers.insert( name,
-                     new Wrapper< TBASE >( name, this, std::move( newObj ) ),
+                     new Wrapper< TBASE >( name, *this, std::move( newObj ) ),
                      true );
 
   if( rkey != nullptr )
@@ -1408,7 +1415,7 @@ Wrapper< T > & Group::registerWrapper( string const & name,
                                        std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, std::move( newObject ) ),
+                     new Wrapper< T >( name, *this, std::move( newObject ) ),
                      true );
 
   Wrapper< T > & rval = getWrapper< T >( name );
@@ -1424,7 +1431,7 @@ Wrapper< T > & Group::registerWrapper( string const & name,
                                        T * newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, newObject ),
+                     new Wrapper< T >( name, *this, newObject ),
                      true );
 
   Wrapper< T > & rval = getWrapper< T >( name );

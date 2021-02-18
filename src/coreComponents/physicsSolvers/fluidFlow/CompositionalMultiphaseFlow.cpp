@@ -1111,8 +1111,8 @@ void CompositionalMultiphaseFlow::applyDirichletBC( real64 const time,
                          string const & )
   {
     // TODO: hack! Find a better way to get the fluid
-    Group const * const region = subRegion.getParent()->getParent();
-    string const & fluidName = m_fluidModelNames[ targetRegionIndex( region->getName() ) ];
+    Group const & region = subRegion.getParent().getParent();
+    string const & fluidName = m_fluidModelNames[ targetRegionIndex( region.getName() ) ];
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
     arrayView1d< integer const > const ghostRank =

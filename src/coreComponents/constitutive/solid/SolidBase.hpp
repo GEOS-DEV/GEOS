@@ -573,7 +573,7 @@ public:
    * @param parent Object's parent group (element subregion)
    * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
    */
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep

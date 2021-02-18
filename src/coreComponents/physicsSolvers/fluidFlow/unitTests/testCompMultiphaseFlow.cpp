@@ -187,7 +187,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow & solver,
   solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                          ElementSubRegionBase & subRegion )
   {
-    SCOPED_TRACE( subRegion.getParent()->getParent()->getName() + "/" + subRegion.getName() );
+    SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
@@ -269,7 +269,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow & 
   solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                          ElementSubRegionBase & subRegion )
   {
-    SCOPED_TRACE( subRegion.getParent()->getParent()->getName() + "/" + subRegion.getName() );
+    SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
@@ -388,7 +388,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow & solver
   solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                          ElementSubRegionBase & subRegion )
   {
-    SCOPED_TRACE( subRegion.getParent()->getName() + "/" + subRegion.getName() );
+    SCOPED_TRACE( subRegion.getParent().getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );

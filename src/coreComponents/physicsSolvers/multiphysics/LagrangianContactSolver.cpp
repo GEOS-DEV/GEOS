@@ -269,7 +269,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 
 void LagrangianContactSolver::postProcessInput()
 {
-  m_solidSolver = &this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   SolverBase::postProcessInput();
 }
 
@@ -1695,7 +1695,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const &
-  surfaceGenerator = this->getParent()->getGroup< SurfaceGenerator >( "SurfaceGen" );
+  surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
   SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );

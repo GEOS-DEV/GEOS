@@ -121,7 +121,7 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)

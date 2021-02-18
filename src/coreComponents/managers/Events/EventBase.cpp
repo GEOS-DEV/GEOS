@@ -130,7 +130,7 @@ void EventBase::expandObjectCatalogs()
 {
   // Only add children if the parent is of type EventManager
   // otherwise, this would fall into a loop
-  if( strcmp( this->getParent()->getName().c_str(), "Events" ) == 0 )
+  if( strcmp( this->getParent().getName().c_str(), "Events" ) == 0 )
   {
     for( auto & catalogIter: EventBase::getCatalog())
     {

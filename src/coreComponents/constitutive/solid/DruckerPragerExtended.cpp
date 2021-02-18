@@ -103,7 +103,7 @@ DruckerPragerExtended::~DruckerPragerExtended()
 {}
 
 
-void DruckerPragerExtended::allocateConstitutiveData( dataRepository::Group * const parent,
+void DruckerPragerExtended::allocateConstitutiveData( dataRepository::Group & parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newState.resize( 0, numConstitutivePointsPerParentIndex );

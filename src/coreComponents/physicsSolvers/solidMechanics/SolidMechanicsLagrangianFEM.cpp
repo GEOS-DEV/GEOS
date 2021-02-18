@@ -500,7 +500,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator = this->getParent()->getGroupPointer< SolverBase >( "SurfaceGen" );
+  SolverBase * const surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( "SurfaceGen" );
 
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
