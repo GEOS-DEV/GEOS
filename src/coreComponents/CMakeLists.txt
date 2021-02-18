@@ -82,12 +82,16 @@ if( BUILD_OBJ_LIBS )
                     SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
 else()
-  blt_combine_static_libraries( NAME          geosx_core
-                                SOURCE_LIBS   ${coreLibs}
-                                LIB_TYPE ${CSL_TYPE}
-                                LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
-                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
-                              )
+#  blt_combine_static_libraries( NAME          geosx_core
+#                                SOURCE_LIBS   ${coreLibs}
+#                                LIB_TYPE ${CSL_TYPE}
+#                                LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
+#                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
+#                              )
+  blt_add_library ( NAME geosx_core
+                    SOURCES dummy.cpp
+                    DEPENDS_ON  ${coreLibs}
+                  )
 endif()
 
 # To install the library with the runtime path used during the building
