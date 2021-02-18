@@ -15,7 +15,7 @@ set( virtualElement_sources
 if( BUILD_OBJ_LIBS)
   set( dependencyList dataRepository codingUtilities)
 else()
-  set( dependencyList common)
+  set( dependencyList mesh)
 endif()
 
 if( ENABLE_OPENMP )
