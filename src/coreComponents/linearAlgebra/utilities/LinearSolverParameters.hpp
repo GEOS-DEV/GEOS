@@ -50,17 +50,18 @@ struct LinearSolverParameters
    */
   enum class PreconditionerType : integer
   {
-    none,   ///< No preconditioner
-    jacobi, ///< Jacobi smoothing
-    gs,     ///< Gauss-Seidel smoothing
-    sgs,    ///< Symmetric Gauss-Seidel smoothing
-    iluk,   ///< Incomplete LU with k-level of fill
-    ilut,   ///< Incomplete LU with thresholding
-    icc,    ///< Incomplete Cholesky
-    ict,    ///< Incomplete Cholesky with thresholding
-    amg,    ///< Algebraic Multigrid
-    mgr,    ///< Multigrid reduction (Hypre only)
-    block   ///< Block preconditioner
+    none,    ///< No preconditioner
+    jacobi,  ///< Jacobi smoothing
+    gs,      ///< Gauss-Seidel smoothing
+    sgs,     ///< Symmetric Gauss-Seidel smoothing
+    iluk,    ///< Incomplete LU with k-level of fill
+    ilut,    ///< Incomplete LU with thresholding
+    icc,     ///< Incomplete Cholesky
+    ict,     ///< Incomplete Cholesky with thresholding
+    amg,     ///< Algebraic Multigrid
+    mgr,     ///< Multigrid reduction (Hypre only)
+    block,   ///< Block preconditioner
+    block_fs ///< Block preconditioner with fixed-stress
   };
 
   integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
@@ -185,7 +186,8 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "ict",
               "amg",
               "mgr",
-              "block" )
+              "block",
+              "block_fs" )
 
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
               "none",

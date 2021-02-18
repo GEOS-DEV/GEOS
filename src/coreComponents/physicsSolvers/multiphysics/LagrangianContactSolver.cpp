@@ -1547,7 +1547,8 @@ void LagrangianContactSolver::
                   }
                 }
 
-                real64 const limitTau = contactRelation->limitTangentialTractionNorm( traction[kfe][0] );
+                // check to avoid very (small) negative values for limitTau caused by positive traction[kfe][0]
+                real64 const limitTau = ( traction[kfe][0] < 0.0 ) ? contactRelation->limitTangentialTractionNorm( traction[kfe][0] ) : 0.0;
                 real64 sliding[ 2 ] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
                 real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
@@ -1563,8 +1564,8 @@ void LagrangianContactSolver::
 
                   // A symmetric 2x2 matrix.
                   real64 dUdgT[ 3 ];
-                  dUdgT[ 0 ] = (slidingNorm * slidingNorm - sliding[ 0 ] * sliding[ 0 ]) * limitTau / std::pow( slidingNorm, 3 );
-                  dUdgT[ 1 ] = (slidingNorm * slidingNorm - sliding[ 1 ] * sliding[ 1 ]) * limitTau / std::pow( slidingNorm, 3 );
+                  dUdgT[ 0 ] = sliding[ 1 ] * sliding[ 1 ] * limitTau / std::pow( slidingNorm, 3 );
+                  dUdgT[ 1 ] = sliding[ 0 ] * sliding[ 0 ] * limitTau / std::pow( slidingNorm, 3 );
                   dUdgT[ 2 ] = -sliding[ 0 ] * sliding[ 1 ] * limitTau / std::pow( slidingNorm, 3 );
 
                   for( localIndex kf = 0; kf < 2; ++kf )

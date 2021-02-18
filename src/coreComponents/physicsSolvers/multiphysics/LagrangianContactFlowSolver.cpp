@@ -977,6 +977,80 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
 
     m_precond = std::move( precond );
   }
+  else if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block_fs )
+  {
+    // TODO: move among inputs (xml)
+    string const leadingBlockApproximation = "blockJacobi";
+    //string const leadingBlockApproximation = "jacobi";
+
+    LinearSolverParameters mechParams = m_contactSolver->getSolidSolver()->getLinearSolverParameters();
+    // Because of boundary conditions
+    mechParams.isSymmetric = false;
+
+    std::vector< SchurComplementOption > schurOptions( 2 );
+    std::unique_ptr< BlockPreconditionerGeneral< LAInterface > > precond;
+    std::unique_ptr< PreconditionerBase< LAInterface > > tracPrecond;
+    std::unique_ptr< PreconditionerBase< LAInterface > > flowPrecond;
+
+    if( leadingBlockApproximation == "jacobi" )
+    {
+      schurOptions[0] = SchurComplementOption::Diagonal;
+
+      // Using LAI implementation of Jacobi preconditioner
+      LinearSolverParameters tracParams;
+      tracParams.preconditionerType = LinearSolverParameters::PreconditionerType::jacobi;
+      tracPrecond = LAInterface::createPreconditioner( tracParams );
+    }
+    else if( leadingBlockApproximation == "blockJacobi" )
+    {
+      schurOptions[0] = SchurComplementOption::UserDefined;
+
+      tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( mechParams.dofsPerNode );
+    }
+    else
+    {
+      GEOSX_ERROR( "LagrangianContactSolver::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+    }
+
+    // Mechanics + Jacobi: using LAI implementation of Jacobi preconditioner
+    schurOptions[1] = SchurComplementOption::Diagonal;
+
+    LinearSolverParameters flowParams;
+    flowParams.preconditionerType = LinearSolverParameters::PreconditionerType::jacobi;
+    flowPrecond = LAInterface::createPreconditioner( flowParams );
+
+    precond = std::make_unique< BlockPreconditionerGeneral< LAInterface > >( 3,
+                                                                             BlockShapeOption::LowerUpperTriangular,
+                                                                             schurOptions );
+
+    precond->setupBlock( 0,
+                         { { m_tractionKey, 0, 3 } },
+                         std::move( tracPrecond ) );
+
+    if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
+    {
+      if( m_contactSolver->getSolidSolver()->getRigidBodyModes().empty() )
+      {
+        MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+        LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+                                                   m_dofManager,
+                                                   { keys::TotalDisplacement },
+                                                   m_contactSolver->getSolidSolver()->getRigidBodyModes() );
+      }
+    }
+
+    // Preconditioner for the Schur complement: mechPrecond
+    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_contactSolver->getSolidSolver()->getRigidBodyModes() );
+    precond->setupBlock( 1,
+                         { { keys::TotalDisplacement, 0, 3 } },
+                         std::move( mechPrecond ) );
+
+    precond->setupBlock( 2,
+                         { { m_pressureKey, 0, 1 } },
+                         std::move( flowPrecond ) );
+
+    m_precond = std::move( precond );
+  }
   else
   {
     //TODO: Revisit this part such that is coherent across physics solver
