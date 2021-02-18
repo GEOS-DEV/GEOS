@@ -12,6 +12,7 @@ CompressibleSinglePhaseFluid          node         :ref:`XML_CompressibleSingleP
 Contact                               node         :ref:`XML_Contact`                               
 Coulomb                               node         :ref:`XML_Coulomb`                               
 DamageElasticIsotropic                node         :ref:`XML_DamageElasticIsotropic`                
+DamagePoroElasticIsotropic            node         :ref:`XML_DamagePoroElasticIsotropic`            
 DamageSpectralElasticIsotropic        node         :ref:`XML_DamageSpectralElasticIsotropic`        
 DamageVolDevElasticIsotropic          node         :ref:`XML_DamageVolDevElasticIsotropic`          
 DruckerPrager                         node         :ref:`XML_DruckerPrager`                         

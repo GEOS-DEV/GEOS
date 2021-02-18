@@ -123,6 +123,12 @@ public:
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
 
+  GEOSX_HOST_DEVICE
+  virtual real64 getBiotCoefficient() const
+  {
+    return 0;
+  }
+
   // TODO: confirm hyper stress/strain measures before activatiing
 
   /*

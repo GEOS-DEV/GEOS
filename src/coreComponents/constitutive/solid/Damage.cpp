@@ -20,6 +20,7 @@
 #include "Damage.hpp"
 #include "ElasticIsotropic.hpp"
 #include "ElasticTransverseIsotropic.hpp"
+#include "PoroElastic.hpp"
 
 namespace geosx
 {
@@ -77,8 +78,11 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group * const par
 }
 
 typedef Damage< ElasticIsotropic > DamageElasticIsotropic;
-
+typedef Damage< PoroElastic < ElasticIsotropic> > DamagePoroElasticIsotropic;
+  
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamagePoroElasticIsotropic, string const &, Group * const )
 
+  
 }
 } /* namespace geosx */

@@ -245,14 +245,6 @@ public:
     return m_strainEnergyDensity( k, q );
   }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 0401526b6 (add getEnergy function to Spectral)
-<<<<<<< HEAD
-=======
-  
->>>>>>> 0401526b6 (add getEnergy function to Spectral)
 };
 
 

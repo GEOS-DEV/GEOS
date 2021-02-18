@@ -86,7 +86,7 @@ public:
   using UPDATE_BASE::hypoUpdate_StressOnly;
   using UPDATE_BASE::hyperUpdate;
   using UPDATE_BASE::hyperUpdate_StressOnly;
-
+  using UPDATE_BASE::getBiotCoefficient;
   //Standard quadratic degradation functions
 
   GEOSX_FORCE_INLINE
@@ -191,7 +191,7 @@ public:
   Damage( string const & name, dataRepository::Group * const parent );
   virtual ~Damage() override = default;
 
-  static string catalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "Damage" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void postProcessInput() override;

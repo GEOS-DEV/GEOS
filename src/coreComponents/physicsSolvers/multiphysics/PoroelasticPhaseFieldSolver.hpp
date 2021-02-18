@@ -83,7 +83,7 @@ public:
     constexpr static auto totalMeanStressString = "totalMeanStress";
     constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
 
-    constexpr static auto solidSolverNameString = "solidSolverName";
+    constexpr static auto poroelasticSolverNameString = "poroelasticSolverName";
     constexpr static auto damageSolverNameString = "damageSolverName";
     constexpr static auto subcyclingOptionString = "subcycling";
 

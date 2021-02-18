@@ -12,6 +12,7 @@ CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSingl
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
 Coulomb                               node :ref:`DATASTRUCTURE_Coulomb`                               
 DamageElasticIsotropic                node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                
+DamagePoroElasticIsotropic            node :ref:`DATASTRUCTURE_DamagePoroElasticIsotropic`            
 DamageSpectralElasticIsotropic        node :ref:`DATASTRUCTURE_DamageSpectralElasticIsotropic`        
 DamageVolDevElasticIsotropic          node :ref:`DATASTRUCTURE_DamageVolDevElasticIsotropic`          
 DruckerPrager                         node :ref:`DATASTRUCTURE_DruckerPrager`                         

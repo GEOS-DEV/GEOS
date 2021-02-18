@@ -75,6 +75,10 @@ struct ConstitutivePassThru< SolidBase >
     {
       lambda( static_cast< DamageVolDev< ElasticIsotropic > * >( constitutiveRelation) );
     }
+    else if( dynamic_cast< Damage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< Damage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation) );
+    }
     else if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
     {
       lambda( static_cast< Damage< ElasticIsotropic > * >( constitutiveRelation) );
@@ -172,10 +176,6 @@ struct ConstitutivePassThru< PoroElasticBase >
     {
       lambda( static_cast< PoroElastic< ElasticTransverseIsotropic > * >( constitutiveRelation) );
     }
-    else if( dynamic_cast< PoroElastic< Damage<ElasticIsotropic> > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< PoroElastic< Damage<ElasticIsotropic> > * >( constitutiveRelation) );
-    }
 
     else
     {
@@ -211,6 +211,10 @@ struct ConstitutivePassThru< DamageBase >
     else if( dynamic_cast< DamageVolDev< ElasticIsotropic > * >( constitutiveRelation ) )
     {
       lambda( static_cast< DamageVolDev< ElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< Damage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< Damage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation) );
     }
     else if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
     {

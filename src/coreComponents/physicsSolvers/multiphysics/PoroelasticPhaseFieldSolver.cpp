@@ -28,6 +28,7 @@
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/multiphysics/PoroelasticSolver.hpp"
+#include <iostream>
 
 namespace geosx
 {
@@ -43,7 +44,7 @@ PoroelasticPhaseFieldSolver::PoroelasticPhaseFieldSolver( const string & name,
   m_couplingTypeOption( CouplingTypeOption::FixedStress )
 
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString, &m_poroelasticSolverName )->
+  registerWrapper( viewKeyStruct::poroelasticSolverNameString, &m_poroelasticSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription(
     "Name of the poroelastic solver to use in the PhaseFieldFracture solver" );
@@ -115,14 +116,15 @@ void PoroelasticPhaseFieldSolver::postProcessInput()
   {
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
+    std::cout<<m_poroelasticSolverName<<std::endl;
     PoroelasticSolver &
     poroelasticSolver = *( this->getParent()->getGroup( m_poroelasticSolverName )->groupCast< PoroelasticSolver * >() );
     integer & minNewtonIterSolid = poroelasticSolver.getNonlinearSolverParameters().m_minIterNewton;
-
     PhaseFieldDamageFEM &
     damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
     integer & minNewtonIterFluid = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
-
+    //GEOSX_ERROR_IF( &poroelasticSolver == 0, "Poroelastic solver not found or invalid type: " << m_poroelasticSolverName );
+    //GEOSX_ERROR_IF( &damageSolver == 0, "Damage solver not found or invalid type: " << m_damageSolverName );
     minNewtonIterSolid = 0;
     minNewtonIterFluid = 0;
   }
