@@ -250,7 +250,7 @@ public:
                            CellElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs );
+                           arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief interface to launche the accumulation kernel
@@ -263,7 +263,7 @@ public:
                            SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs );
+                           arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief assembles the flux terms for all cells

@@ -20,7 +20,8 @@
 #define GEOSX_CONSTITUTIVE_PERMEABILITY_PERMEABILITYSELECTOR_HPP
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
-#include "constitutive/permeability/FracturePermeability.hpp"
+#include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "ParallelPlatesPermeability.hpp"
 
 namespace geosx
 {
@@ -40,14 +41,28 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( PermeabilityBase const & perm,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< FracturePermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< CarmanKozenyPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( PermeabilityBase & perm,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< FracturePermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< CarmanKozenyPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
+}
+
+template< typename LAMBDA >
+void constitutiveUpdatePassThru( FracturePermeabilityBase const & perm,
+                                 LAMBDA && lambda )
+{
+  ConstitutivePassThruHandler< ParallelPlatesPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
+}
+
+template< typename LAMBDA >
+void constitutiveUpdatePassThru( FracturePermeabilityBase & perm,
+                                 LAMBDA && lambda )
+{
+  ConstitutivePassThruHandler< ParallelPlatesPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
 }
 
 #undef PASSTHROUGH_HANDLE_CASE

@@ -13,10 +13,10 @@
  */
 
 /**
- * @file FracturePermeability.cpp
+ * @file FracturePermeabilityBase.cpp
  */
 
-#include "../permeability/FracturePermeability.hpp"
+#include "../permeability/FracturePermeabilityBase.hpp"
 
 namespace geosx
 {
@@ -27,14 +27,14 @@ namespace constitutive
 {
 
 
-FracturePermeability::FracturePermeability( string const & name, Group * const parent ):
+FracturePermeabilityBase::FracturePermeabilityBase( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {}
 
-FracturePermeability::~FracturePermeability() = default;
+FracturePermeabilityBase::~FracturePermeabilityBase() = default;
 
 std::unique_ptr< ConstitutiveBase >
-FracturePermeability::deliverClone( string const & name,
+FracturePermeabilityBase::deliverClone( string const & name,
                                     Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
@@ -42,8 +42,8 @@ FracturePermeability::deliverClone( string const & name,
   return clone;
 }
 
-void FracturePermeability::allocateConstitutiveData( dataRepository::Group * const parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+void FracturePermeabilityBase::allocateConstitutiveData( dataRepository::Group * const parent,
+                                                         localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
@@ -53,18 +53,8 @@ void FracturePermeability::allocateConstitutiveData( dataRepository::Group * con
   m_dPerm_dAperture.resize( parent->size(), numConstitutivePointsPerParentIndex, 1 );
 }
 
-void FracturePermeability::postProcessInput()
+void FracturePermeabilityBase::postProcessInput()
 {}
-
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, FracturePermeability, string const &, Group * const )
-
-void FracturePermeabilityUpdate::compute( real64 const & effectiveAperture,
-                                          arraySlice1d< real64 > const & permeability,
-                                          arraySlice1d< real64 > const & dPerm_dAperture )
-{
-  permeability[0] = effectiveAperture*effectiveAperture*effectiveAperture /12;
-  dPerm_dAperture[0]  = effectiveAperture*effectiveAperture / 12;
-}
 
 }
 } /* namespace geosx */

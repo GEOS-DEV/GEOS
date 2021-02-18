@@ -724,8 +724,10 @@ void CompositionalMultiphaseFlow::accumulationLaunch( localIndex const targetInd
                                                       CellElementSubRegion const & subRegion,
                                                       DofManager const & dofManager,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                      arrayView1d< real64 > const & localRhs )
+                                                      arrayView1d< real64 > const & localRhs ) const
 {
+  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
@@ -799,8 +801,10 @@ void CompositionalMultiphaseFlow::accumulationLaunch( localIndex const targetInd
                                                       SurfaceElementSubRegion const & subRegion,
                                                       DofManager const & dofManager,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                      arrayView1d< real64 > const & localRhs )
+                                                      arrayView1d< real64 > const & localRhs ) const
 {
+  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
@@ -865,13 +869,11 @@ void CompositionalMultiphaseFlow::assembleAccumulationTerms( DomainPartition con
 
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
-
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh,
                                                                         [&]( localIndex const targetIndex,
                                                                              auto const & subRegion )
   {
-    accumulationLaunch( targatIndex,
+    accumulationLaunch( targetIndex,
                         subRegion,
                         dofManager,
                         localMatrix,

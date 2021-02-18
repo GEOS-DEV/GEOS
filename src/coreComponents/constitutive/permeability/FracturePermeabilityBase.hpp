@@ -13,13 +13,13 @@
  */
 
 /**
- * @file PoreVolumeCompressibleSolid.hpp
+ * @file FracturePermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_
+#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITYBASE_HPP_
+#define GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITYBASE_HPP_
 
-#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 
 
 namespace geosx
@@ -27,49 +27,69 @@ namespace geosx
 namespace constitutive
 {
 
-class FracturePermeabilityUpdate
+class FracturePermeabilityBaseUpdate
 {
 public:
 
-  FracturePermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                              arrayView3d< real64 > const & dPerm_dAperture )
+  /**
+   * @brief Get number of elements in this wrapper.
+   * @return number of elements
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numElems() const { return m_permeability.size( 0 ); }
+
+  /**
+   * @brief Get number of gauss points per element.
+   * @return number of gauss points per element
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numGauss() const { return m_permeability.size( 1 ); }
+
+protected:
+
+  FracturePermeabilityBaseUpdate( arrayView3d< real64 > const & permeability,
+                                  arrayView3d< real64 > const & dPerm_dAperture )
     : m_permeability( permeability ),
-    m_dPerm_dAperture( dPerm_dAperture )
+      m_dPerm_dAperture( dPerm_dAperture )
   {}
 
   /// Default copy constructor
-  FracturePermeabilityUpdate( FracturePermeabilityUpdate const & ) = default;
+  FracturePermeabilityBaseUpdate( FracturePermeabilityBaseUpdate const & ) = default;
 
   /// Default move constructor
-  FracturePermeabilityUpdate( FracturePermeabilityUpdate && ) = default;
+  FracturePermeabilityBaseUpdate( FracturePermeabilityBaseUpdate && ) = default;
 
   /// Deleted copy assignment operator
-  FracturePermeabilityUpdate & operator=( FracturePermeabilityUpdate const & ) = delete;
+  FracturePermeabilityBaseUpdate & operator=( FracturePermeabilityBaseUpdate const & ) = delete;
 
   /// Deleted move assignment operator
-  FracturePermeabilityUpdate & operator=( FracturePermeabilityUpdate && ) = delete;
+  FracturePermeabilityBaseUpdate & operator=( FracturePermeabilityBaseUpdate && ) = delete;
 
-protected:
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void compute( real64 const & effectiveAperture,
+                arraySlice1d< real64 > const & permeability,
+                arraySlice1d< real64 > const & dPerm_dAperture ) const = 0;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void update( localIndex const k,
+               localIndex const q,
+               real64 const & effectiveAperture ) const = 0;
+private:
 
   arrayView3d< real64 > m_permeability;
   arrayView3d< real64 > m_dPerm_dAperture;
 
-private:
-
-  void compute( real64 const & effectiveAperture,
-                arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dAperture );
-
-  void update(  );
 };
 
 
-class FracturePermeability : public PermeabilityBase
+class FracturePermeabilityBase : public ConstitutiveBase
 {
 public:
-  FracturePermeability( string const & name, Group * const parent );
+  FracturePermeabilityBase( string const & name, Group * const parent );
 
-  virtual ~FracturePermeability() override;
+  virtual ~FracturePermeabilityBase() override;
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -103,6 +123,7 @@ protected:
 
 private:
 
+  array3d< real64 > m_permeability;
   array3d< real64 > m_dPerm_dAperture;
 
 };
