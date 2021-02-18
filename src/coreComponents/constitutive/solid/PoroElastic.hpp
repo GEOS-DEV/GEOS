@@ -182,12 +182,8 @@ public:
   template< typename UPDATE_KERNEL, typename ... PARAMS >
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
-    return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
-                          m_biotCoefficient,
-			  this->bulkModulus(),
-                          this->shearModulus(),
-                          arrayView3d< real64, solid::STRESS_USD >(),
-                          arrayView3d< real64, solid::STRESS_USD >());
+    return BASE::template createDerivedKernelUpdates< UPDATE_KERNEL >( std::forward< PARAMS >( constructorParams )...,
+                          m_biotCoefficient);
   }
   
   /// Data view keys

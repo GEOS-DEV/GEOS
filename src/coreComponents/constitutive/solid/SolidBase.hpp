@@ -385,9 +385,7 @@ public:
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const
   {
-    std::cout<<"Checkpoint 0"<<std::endl;
     auto const & stress = m_newStress[k][q];
-    std::cout<<"Checkpoint 1"<<std::endl;
     real64 strain[6];
     getElasticStrain( k, q, strain );
 
@@ -395,10 +393,8 @@ public:
 
     for( localIndex i=0; i<6; ++i )
     {
-      std::cout<<"Checkpoint 2"<<std::endl;
       energy += stress[i]*strain[i];  // contraction sigma:epsilon
     }
-    std::cout<<"Checkpoint 3"<<std::endl;
     energy *= 0.5;
 
     GEOSX_ASSERT_MSG( energy >= 0.0, "negative strain energy density detected" );
