@@ -101,6 +101,8 @@ along the Z axes, 420 elements along the X axis and 121 elements along the Y axi
 All the elements are hexahedral elements (C3D8) and that refinement is performed
 around the fracture.
 
+.. image:: SneddonTutorialGrid.png
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
     :language: xml
     :start-after: <!-- SPHINX_SNEDDON_MESH -->
