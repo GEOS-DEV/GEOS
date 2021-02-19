@@ -28,14 +28,14 @@ namespace constitutive
 
 
 FracturePermeabilityBase::FracturePermeabilityBase( string const & name, Group * const parent ):
-  PermeabilityBase( name, parent )
+  ConstitutiveBase( name, parent )
 {}
 
 FracturePermeabilityBase::~FracturePermeabilityBase() = default;
 
 std::unique_ptr< ConstitutiveBase >
 FracturePermeabilityBase::deliverClone( string const & name,
-                                    Group * const parent ) const
+                                        Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 

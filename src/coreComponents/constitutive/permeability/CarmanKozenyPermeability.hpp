@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
 #define GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
 
-#include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 
 
 namespace geosx
@@ -27,54 +27,43 @@ namespace geosx
 namespace constitutive
 {
 
-class CarmanKozenyPermeabilityUpdate
+class CarmanKozenyPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  /**
-   * @brief Get number of elements in this wrapper.
-   * @return number of elements
-   */
-  GEOSX_HOST_DEVICE
-  localIndex numElems() const { return m_permeability.size( 0 ); }
-
-  /**
-   * @brief Get number of gauss points per element.
-   * @return number of gauss points per element
-   */
-  GEOSX_HOST_DEVICE
-  localIndex numGauss() const { return m_permeability.size( 1 ); }
-
-
   CarmanKozenyPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                                  arrayView3d< real64 > const & dPerm_dPorosity )
-    : m_permeability( permeability ),
-      m_dPerm_dPorosity( dPerm_dPorosity )
+                                  arrayView3d< real64 > const & dPerm_dPorosity,
+                                  real64 const particleDiameter,
+                                  real64 const sphericity )
+    : PermeabilityBaseUpdate( permeability ),
+    m_dPerm_dPorosity( dPerm_dPorosity ),
+    m_particleDiameter( particleDiameter ),
+    m_sphericity( sphericity )
   {}
 
   /// Default copy constructor
-  CarmanKozenyPermeabilityUpdate( FracturePermeabilityUpdate const & ) = default;
+  CarmanKozenyPermeabilityUpdate( CarmanKozenyPermeabilityUpdate const & ) = default;
 
   /// Default move constructor
-  CarmanKozenyPermeabilityUpdate( FracturePermeabilityUpdate && ) = default;
+  CarmanKozenyPermeabilityUpdate( CarmanKozenyPermeabilityUpdate && ) = default;
 
   /// Deleted copy assignment operator
-  CarmanKozenyPermeabilityUpdate & operator=( FracturePermeabilityUpdate const & ) = delete;
+  CarmanKozenyPermeabilityUpdate & operator=( CarmanKozenyPermeabilityUpdate const & ) = delete;
 
   /// Deleted move assignment operator
-  CarmanKozenyPermeabilityUpdate & operator=( FracturePermeabilityUpdate && ) = delete;
+  CarmanKozenyPermeabilityUpdate & operator=( CarmanKozenyPermeabilityUpdate && ) = delete;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void compute( real64 const & effectiveAperture,
+  void compute( real64 const & porosity,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dPorosity ) const;
+                arraySlice1d< real64 > const & dPerm_dPorosity ) const override;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void update( localIndex const k,
                localIndex const q,
-               real64 const & porosity ) const
+               real64 const & porosity ) const override
   {
     compute( porosity,
              m_permeability[k][q],
@@ -83,8 +72,13 @@ public:
 
 private:
 
-  arrayView3d< real64 > m_permeability;
   arrayView3d< real64 > m_dPerm_dPorosity;
+
+  /// Particle diameter
+  real64 m_particleDiameter;
+
+  /// Sphericity of the particles
+  real64 m_sphericity;
 
 };
 
@@ -107,7 +101,7 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = FracturePermeabilityUpdate;
+  using KernelWrapper = CarmanKozenyPermeabilityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -116,20 +110,32 @@ public:
   KernelWrapper createKernelWrapper()
   {
     return KernelWrapper( m_permeability,
-                          m_dPerm_dPorosity );
+                          m_dPerm_dPorosity,
+                          m_particleDiameter,
+                          m_sphericity );
   }
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
-  {} viewKeys;
+  {
+    static constexpr auto dPerm_dPorosityString = "dPerm_dPorosity";
+    static constexpr auto particleDiameterString = "particleDiameter";
+    static constexpr auto sphericityString = "sphericity";
+  } viewKeys;
 
 protected:
   virtual void postProcessInput() override;
 
 private:
 
+  /// dPermeability_dPorosity
   array3d< real64 > m_dPerm_dPorosity;
-  real64 m_Dp;
+
+  /// Particle diameter
+  real64 m_particleDiameter;
+
+  /// Sphericity of the particles
+  real64 m_sphericity;
 };
 
 
@@ -139,10 +145,14 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
                                               arraySlice1d< real64 > const & permeability,
                                               arraySlice1d< real64 > const & dPerm_dPorosity ) const
 {
-  for ( localIndex i=0; i < permeability.size(); i++ )
+  real64 const permValue = pow( m_sphericity*m_particleDiameter, 2) * pow( porosity, 3 )
+      / (150 * pow( (1 - porosity), 2 ) );
+  real64 const dPerm_dPorValue = pow( m_sphericity*m_particleDiameter, 2) * pow( porosity, 3 );
+
+  for( localIndex i=0; i < permeability.size(); i++ )
   {
-    permeability[i] = porosity; // carmanKozeny eq. here;
-    dPerm_dPorosity[i] = 1;
+    permeability[i] = permValue;
+    dPerm_dPorosity[i] = dPerm_dPorValue;
   }
 }
 

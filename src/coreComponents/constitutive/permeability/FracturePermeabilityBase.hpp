@@ -50,7 +50,7 @@ protected:
   FracturePermeabilityBaseUpdate( arrayView3d< real64 > const & permeability,
                                   arrayView3d< real64 > const & dPerm_dAperture )
     : m_permeability( permeability ),
-      m_dPerm_dAperture( dPerm_dAperture )
+    m_dPerm_dAperture( dPerm_dAperture )
   {}
 
   /// Default copy constructor
@@ -68,15 +68,14 @@ protected:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void compute( real64 const & effectiveAperture,
-                arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dAperture ) const = 0;
+                        arraySlice1d< real64 > const & permeability,
+                        arraySlice1d< real64 > const & dPerm_dAperture ) const = 0;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
-               localIndex const q,
-               real64 const & effectiveAperture ) const = 0;
-private:
+                       localIndex const q,
+                       real64 const & effectiveAperture ) const = 0;
 
   arrayView3d< real64 > m_permeability;
   arrayView3d< real64 > m_dPerm_dAperture;
@@ -101,27 +100,11 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = FracturePermeabilityUpdate;
-
-  /**
-   * @brief Create an update kernel wrapper.
-   * @return the wrapper
-   */
-  KernelWrapper createKernelWrapper()
-  {
-    return KernelWrapper( m_permeability,
-                          m_dPerm_dAperture );
-  }
-
-
-  struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {} viewKeys;
 
 protected:
   virtual void postProcessInput() override;
-
-private:
 
   array3d< real64 > m_permeability;
   array3d< real64 > m_dPerm_dAperture;

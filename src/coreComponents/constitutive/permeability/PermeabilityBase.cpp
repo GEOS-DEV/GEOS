@@ -29,7 +29,9 @@ namespace constitutive
 
 PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
-{}
+{
+  registerWrapper( viewKeyStruct::permeabilityString, &m_permeability )->setPlotLevel( PlotLevel::LEVEL_0 );
+}
 
 PermeabilityBase::~PermeabilityBase() = default;
 

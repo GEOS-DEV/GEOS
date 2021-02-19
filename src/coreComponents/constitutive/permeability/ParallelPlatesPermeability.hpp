@@ -32,21 +32,21 @@ class ParallelPlatesPermeabilityUpdate : public FracturePermeabilityBaseUpdate
 public:
 
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                              arrayView3d< real64 > const & dPerm_dAperture )
+                                    arrayView3d< real64 > const & dPerm_dAperture )
     : FracturePermeabilityBaseUpdate( permeability, dPerm_dAperture )
   {}
 
   /// Default copy constructor
-  ParallelPlatesPermeabilityUpdate( FracturePermeabilityUpdate const & ) = default;
+  ParallelPlatesPermeabilityUpdate( ParallelPlatesPermeabilityUpdate const & ) = default;
 
   /// Default move constructor
-  ParallelPlatesPermeabilityUpdate( FracturePermeabilityUpdate && ) = default;
+  ParallelPlatesPermeabilityUpdate( ParallelPlatesPermeabilityUpdate && ) = default;
 
   /// Deleted copy assignment operator
-  ParallelPlatesPermeabilityUpdate & operator=( FracturePermeabilityUpdate const & ) = delete;
+  ParallelPlatesPermeabilityUpdate & operator=( ParallelPlatesPermeabilityUpdate const & ) = delete;
 
   /// Deleted move assignment operator
-  ParallelPlatesPermeabilityUpdate & operator=( FracturePermeabilityUpdate && ) = delete;
+  ParallelPlatesPermeabilityUpdate & operator=( ParallelPlatesPermeabilityUpdate && ) = delete;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -103,8 +103,6 @@ public:
   {} viewKeys;
 
 protected:
-  virtual void postProcessInput() override;
-
 
 };
 

@@ -29,13 +29,23 @@ namespace constitutive
 
 CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
-{}
+{
+  registerWrapper( viewKeyStruct::particleDiameterString, &m_particleDiameter )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Diameter of the spherical particles." );
+
+  registerWrapper( viewKeyStruct::sphericityString, &m_sphericity )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Sphericity of the particles." );
+
+  registerWrapper( viewKeyStruct::dPerm_dPorosityString, &m_dPerm_dPorosity );
+}
 
 CarmanKozenyPermeability::~CarmanKozenyPermeability() = default;
 
 std::unique_ptr< ConstitutiveBase >
 CarmanKozenyPermeability::deliverClone( string const & name,
-                                    Group * const parent ) const
+                                        Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 

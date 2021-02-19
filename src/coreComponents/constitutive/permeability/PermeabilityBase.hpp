@@ -28,6 +28,58 @@ namespace geosx
 namespace constitutive
 {
 
+class PermeabilityBaseUpdate
+{
+public:
+
+  /**
+   * @brief Get number of elements in this wrapper.
+   * @return number of elements
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numElems() const { return m_permeability.size( 0 ); }
+
+  /**
+   * @brief Get number of gauss points per element.
+   * @return number of gauss points per element
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numGauss() const { return m_permeability.size( 1 ); }
+
+protected:
+
+  PermeabilityBaseUpdate( arrayView3d< real64 > const & permeability )
+    : m_permeability( permeability )
+  {}
+
+  /// Default copy constructor
+  PermeabilityBaseUpdate( PermeabilityBaseUpdate const & ) = default;
+
+  /// Default move constructor
+  PermeabilityBaseUpdate( PermeabilityBaseUpdate && ) = default;
+
+  /// Deleted copy assignment operator
+  PermeabilityBaseUpdate & operator=( PermeabilityBaseUpdate const & ) = delete;
+
+  /// Deleted move assignment operator
+  PermeabilityBaseUpdate & operator=( PermeabilityBaseUpdate && ) = delete;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void compute( real64 const & porosity,
+                        arraySlice1d< real64 > const & permeability,
+                        arraySlice1d< real64 > const & dPerm_dPorosity ) const = 0;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const & porosity ) const = 0;
+
+  arrayView3d< real64 > m_permeability;
+};
+
+
 class PermeabilityBase : public ConstitutiveBase
 {
 public:
