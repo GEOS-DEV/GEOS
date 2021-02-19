@@ -19,9 +19,10 @@
 
 #include "PoroElastic.hpp"
 
-#include "LinearElasticAnisotropic.hpp"
-#include "LinearElasticIsotropic.hpp"
-#include "LinearElasticTransverseIsotropic.hpp"
+#include "ElasticIsotropic.hpp"
+#include "ElasticTransverseIsotropic.hpp"
+#include "DruckerPrager.hpp"
+#include "DruckerPragerExtended.hpp"
 
 namespace geosx
 {
@@ -73,15 +74,7 @@ template< typename BASE >
 void PoroElastic< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
-
-  if( m_compressibility <= 0 )
-  {
-//    string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2
-// constants!";
-//    GEOSX_ERROR( message );
-  }
   m_poreVolumeRelation.setCoefficients( m_referencePressure, 1.0, m_compressibility );
-
 }
 
 template< typename BASE >
@@ -129,13 +122,15 @@ void PoroElastic< BASE >::stateUpdateBatchPressure( arrayView1d< real64 const > 
   } );
 }
 
-typedef PoroElastic< LinearElasticIsotropic > PoroLinearElasticIsotropic;
-typedef PoroElastic< LinearElasticAnisotropic > PoroLinearElasticAnisotropic;
-typedef PoroElastic< LinearElasticTransverseIsotropic > PoroLinearElasticTransverseIsotropic;
+typedef PoroElastic< ElasticIsotropic > PoroElasticIsotropic;
+typedef PoroElastic< ElasticTransverseIsotropic > PoroElasticTransverseIsotropic;
+typedef PoroElastic< DruckerPrager > PoroDruckerPrager;
+typedef PoroElastic< DruckerPragerExtended > PoroDruckerPragerExtended;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPrager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPragerExtended, string const &, Group * const )
 
 }
 } /* namespace geosx */

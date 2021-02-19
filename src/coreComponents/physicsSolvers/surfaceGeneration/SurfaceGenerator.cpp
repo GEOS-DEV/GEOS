@@ -2838,10 +2838,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
     domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
+    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "BulkModulus", constitutiveManager );
+    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
   stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
@@ -3680,10 +3680,10 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
     domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
+    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "BulkModulus", constitutiveManager );
+    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
   stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
@@ -4472,7 +4472,7 @@ void SurfaceGenerator::
     }
   }
 
-  elementManager.SetMaxGlobalIndex();
+  elementManager.setMaxGlobalIndex();
 }
 
 real64

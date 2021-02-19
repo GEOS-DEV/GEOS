@@ -223,13 +223,10 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", MechanicsSolver: " );
 
-    solidSolver.resetStressToBeginningOfStep( domain );
     dtReturnTemporary = solidSolver.nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
                                                            domain );
-
-    //std::cout << "Here: "<< dtReturnTemporary << std::endl;
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -316,7 +313,8 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
   // begin region loop
   forTargetSubRegionsComplete< CellElementSubRegion >( *mesh, [this, &solidSolver, nodalDamage]
-                                                         ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &, CellElementSubRegion & elementSubRegion )
+                                                         ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &,
+                                                         CellElementSubRegion & elementSubRegion )
   {
     constitutive::ConstitutiveBase * const
     solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( solidSolver.solidMaterialNames()[targetIndex] );
