@@ -82,15 +82,15 @@ void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartiti
 
     // get the well element indices corresponding to each perforation
     arrayView1d< localIndex const > const & perfWellElemIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
 
     // get the element region, subregion, index
     arrayView1d< localIndex const > const & resElementRegion =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
     arrayView1d< localIndex const > const & resElementSubRegion =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
     arrayView1d< localIndex const > const & resElementIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
 
     // Insert the entries corresponding to reservoir-well perforations
@@ -180,22 +180,22 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
 
     // get well variables on perforations
     arrayView2d< real64 const > const & compPerfRate =
-      perforationData->getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::compPerforationRateString );
+      perforationData->getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::compPerforationRateString() );
     arrayView3d< real64 const > const & dCompPerfRate_dPres =
-      perforationData->getReference< array3d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCompPerforationRate_dPresString );
+      perforationData->getReference< array3d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCompPerforationRate_dPresString() );
     arrayView4d< real64 const > const & dCompPerfRate_dComp =
-      perforationData->getReference< array4d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCompPerforationRate_dCompString );
+      perforationData->getReference< array4d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCompPerforationRate_dCompString() );
 
     arrayView1d< localIndex const > const & perfWellElemIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
 
     // get the element region, subregion, index
     arrayView1d< localIndex const > const & resElementRegion =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
     arrayView1d< localIndex const > const & resElementSubRegion =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
     arrayView1d< localIndex const > const & resElementIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
     // loop over the perforations and add the rates to the residual and jacobian
     forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )

@@ -41,16 +41,16 @@ CompositeFunction::CompositeFunction( const string & name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  registerWrapper( keys::functionNames, &m_functionNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::functionNames, &m_functionNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of source functions. The order must match the variableNames argument." );
 
-  registerWrapper( keys::variableNames, &m_variableNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::variableNames, &m_variableNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of variables in expression" );
 
-  registerWrapper( keys::expression, &m_expression )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::expression, &m_expression ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Composite math expression" );
 }
 
@@ -76,11 +76,11 @@ void CompositeFunction::initializeFunction()
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
-    m_subFunctions.emplace_back( functionManager.getGroup< FunctionBase >( m_functionNames[ii] ));
+    m_subFunctions.emplace_back( functionManager.getGroupPointer< FunctionBase >( m_functionNames[ii] ) );
   }
 }
 
-void CompositeFunction::evaluate( dataRepository::Group const * const group,
+void CompositeFunction::evaluate( dataRepository::Group const & group,
                                   real64 const time,
                                   SortedArrayView< localIndex const > const & set,
                                   real64_array & result ) const

@@ -57,7 +57,7 @@ MeshLevel::MeshLevel( string const & name,
 MeshLevel::~MeshLevel()
 {}
 
-void MeshLevel::initializePostInitialConditionsPostSubGroups( Group * const )
+void MeshLevel::initializePostInitialConditionsPostSubGroups()
 {
   m_elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {

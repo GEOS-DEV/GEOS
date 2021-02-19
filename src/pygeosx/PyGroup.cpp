@@ -183,7 +183,7 @@ static PyObject * PyGroup_getGroup( PyGroup * const self, PyObject * const args 
     return nullptr;
   }
 
-  dataRepository::Group * const result = self->group->getGroupByPath( path );
+  dataRepository::Group * const result = &self->group->getGroupByPath( path );
   if( result == nullptr && defaultReturnValue == nullptr )
   {
     PyErr_SetString( PyExc_ValueError, ( "No Group at " + self->group->getPath() + "/" + path ).c_str() );
@@ -242,9 +242,9 @@ static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const arg
   string groupPath, wrapperName;
   splitPath( path, groupPath, wrapperName );
 
-  dataRepository::Group * const group = self->group->getGroupByPath( groupPath );
+  dataRepository::Group * const group = &self->group->getGroupByPath( groupPath );
 
-  dataRepository::WrapperBase * const result = group->getWrapperBase( wrapperName );
+  dataRepository::WrapperBase * const result = &group->getWrapperBase( wrapperName );
   if( result == nullptr && defaultReturnValue == nullptr )
   {
     PyErr_SetString( PyExc_ValueError, ( "No Wrapper at " + self->group->getPath() + "/" + groupPath ).c_str() );

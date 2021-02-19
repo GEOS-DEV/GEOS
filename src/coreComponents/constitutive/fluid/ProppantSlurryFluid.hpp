@@ -309,14 +309,13 @@ public:
 
   struct viewKeyStruct : public SlurryFluidBase::viewKeyStruct
   {
-    static constexpr auto compressibilityString    = "compressibility";
-    static constexpr auto referencePressureString  = "referencePressure";
-    static constexpr auto referenceDensityString   = "referenceDensity";
-    static constexpr auto referenceProppantDensityString   = "referenceProppantDensity";
-    static constexpr auto maxProppantConcentrationString   = "maxProppantConcentration";
-    static constexpr auto referenceViscosityString = "referenceViscosity";
-
-  } viewKeysProppantSlurryFluid;
+    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * referencePressureString() { return "referencePressure"; }
+    static constexpr char const * referenceDensityString() { return "referenceDensity"; }
+    static constexpr char const * referenceProppantDensityString() { return "referenceProppantDensity"; }
+    static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
+    static constexpr char const * referenceViscosityString() { return "referenceViscosity"; }
+  };
 
 protected:
 

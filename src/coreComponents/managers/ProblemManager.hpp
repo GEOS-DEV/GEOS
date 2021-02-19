@@ -164,29 +164,29 @@ public:
    * @brief Returns the problem name
    * @return The problem name
    */
-  const string & getProblemName() const
-  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
+  string const & getProblemName() const
+  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
-  const string & getInputFileName() const
-  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
+  string const & getInputFileName() const
+  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
-  const string & getRestartFileName() const
-  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
+  string const & getRestartFileName() const
+  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
-  const string & getSchemaFileName() const
-  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
+  string const & getSchemaFileName() const
+  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.schemaFileName ); }
 
   /// Input file xml document handle
   xmlWrapper::xmlDocument xmlDocument;
@@ -222,7 +222,8 @@ public:
   /// Child group viewKeys
   struct groupKeysStruct
   {
-    static constexpr auto numericalMethodsManagerString = "NumericalMethods";             ///< Numerical methods string
+    ///< Numerical methods string
+    static constexpr char const * numericalMethodsManagerString() { return "NumericalMethods"; }
     dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key
     dataRepository::GroupKey domain    = { "domain" };                                    ///< Domain key
@@ -231,7 +232,7 @@ public:
     dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
     dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
-    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString }; ///< Numerical methods key
+    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
     dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
     dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key

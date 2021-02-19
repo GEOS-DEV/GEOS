@@ -1302,16 +1302,15 @@ void vectorToFieldImpl( LOCAL_VECTOR const localVector,
   arrayView1d< globalIndex const > const dofNumber = manager.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const ghostRank = manager.ghostRank();
 
-  WrapperBase * const wrapper = manager.getWrapperBase( fieldName );
-  GEOSX_ASSERT( wrapper != nullptr );
+  WrapperBase & wrapper = manager.getWrapperBase( fieldName );
 
-  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->getTypeId() ) ),
+  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper.getTypeId() ) ),
                                   false,
                                   [&]( auto arrayInstance,
                                        auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
   {
     using ArrayType = decltype( arrayInstance );
-    Wrapper< ArrayType > & view = Wrapper< ArrayType >::cast( *wrapper );
+    Wrapper< ArrayType > & view = dynamicCast< Wrapper< ArrayType > & >( wrapper );
     traits::ViewType< ArrayType > field = view.reference().toView();
 
     vectorToFieldKernel< FIELD_OP, POLICY >( localVector,
@@ -1365,16 +1364,15 @@ void fieldToVectorImpl( LOCAL_VECTOR localVector,
   arrayView1d< globalIndex const > const & dofNumber = manager.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const & ghostRank = manager.ghostRank();
 
-  WrapperBase const * const wrapper = manager.getWrapperBase( fieldName );
-  GEOSX_ASSERT( wrapper != nullptr );
+  WrapperBase const & wrapper = manager.getWrapperBase( fieldName );
 
-  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->getTypeId() ) ),
+  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper.getTypeId() ) ),
                                   false,
                                   [&]( auto arrayInstance,
                                        auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
   {
     using ArrayType = decltype( arrayInstance );
-    Wrapper< ArrayType > const & view = Wrapper< ArrayType >::cast( *wrapper );
+    Wrapper< ArrayType > const & view = dynamicCast< Wrapper< ArrayType > const & >( wrapper );
     traits::ViewTypeConst< ArrayType > field = view.reference();
 
     fieldToVectorKernel< FIELD_OP, POLICY >( localVector,

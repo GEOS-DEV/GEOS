@@ -56,9 +56,9 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto compressibilityString = "compressibility";
-    static constexpr auto referencePressureString = "referencePressure";
-  } viewKeys;
+    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * referencePressureString() { return "referencePressure"; }
+  };
 
 protected:
   virtual void postProcessInput() override;

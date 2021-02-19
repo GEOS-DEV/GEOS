@@ -64,7 +64,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Getter for system matrix
@@ -520,19 +520,18 @@ public:
 
   struct viewKeyStruct
   {
-    constexpr static auto cflFactorString = "cflFactor";
-    constexpr static auto initialDtString = "initialDt";
-    constexpr static auto maxStableDtString = "maxStableDt";
-    static constexpr auto discretizationString = "discretization";
-    constexpr static auto targetRegionsString = "targetRegions";
-
-  } viewKeys;
+    static constexpr char const * cflFactorString() { return "cflFactor"; }
+    static constexpr char const * initialDtString() { return "initialDt"; }
+    static constexpr char const * maxStableDtString() { return "maxStableDt"; }
+    static constexpr char const * discretizationString() { return "discretization"; }
+    static constexpr char const * targetRegionsString() { return "targetRegions"; }
+  };
 
   struct groupKeyStruct
   {
-    constexpr static auto linearSolverParametersString = "LinearSolverParameters";
-    constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
-  } groupKeys;
+    static constexpr char const * linearSolverParametersString() { return "LinearSolverParameters"; }
+    static constexpr char const * nonlinearSolverParametersString() { return "NonlinearSolverParameters"; }
+  };
 
 
   /**
@@ -747,27 +746,19 @@ private:
 template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
 {
-  Group const * const constitutiveModels =
-    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  Group const & constitutiveModels =
+    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 
-  BASETYPE const * const model = constitutiveModels->getGroup< BASETYPE >( key );
-  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
-
-  return *model;
+  return constitutiveModels.getGroup< BASETYPE >( key );
 }
 
 template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
 {
-  Group * const constitutiveModels =
-    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  Group & constitutiveModels =
+    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 
-  BASETYPE * const model = constitutiveModels->getGroup< BASETYPE >( key );
-  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
-
-  return *model;
+  return constitutiveModels.getGroup< BASETYPE >( key );
 }
 
 template< typename MODEL_TYPE >
@@ -781,7 +772,7 @@ void SolverBase::validateModelMapping( ElementRegionManager const & elemRegionMa
     for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
     {
       ElementSubRegionBase const & subRegion = *region.getSubRegion( esr );
-      MODEL_TYPE const * const model = subRegion.getConstitutiveModels()->getGroup< MODEL_TYPE >( modelNames[k] );
+      MODEL_TYPE const * const model = subRegion.getConstitutiveModels()->getGroupPointer< MODEL_TYPE >( modelNames[k] );
       GEOSX_ERROR_IF( model == nullptr,
                       getName() << ": constitutive model " << modelNames[k] << " not found in " << region.getName() << '/' << subRegion.getName() );
     }

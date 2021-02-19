@@ -23,149 +23,149 @@ using namespace geosx::testing;
 using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
 
-RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group & parent )
+RelativePermeabilityBase & makeBrooksCoreyRelPerm( string const & name, Group & parent )
 {
-  auto relPerm = parent.registerGroup< BrooksCoreyRelativePermeability >( name );
+  BrooksCoreyRelativePermeability & relPerm = parent.registerGroup< BrooksCoreyRelativePermeability >( name );
 
-  auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  auto & phaseMinSat = relPerm->getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
   phaseMinSat[0] = 0.1; phaseMinSat[1] = 0.15;
 
-  auto & phaseRelPermExp = relPerm->getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseRelPermExponentString );
+  array1d< real64 > & phaseRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseRelPermExponentString() );
   phaseRelPermExp.resize( 2 );
   phaseRelPermExp[0] = 2.0; phaseRelPermExp[1] = 2.0;
 
-  auto & phaseRelPermMaxVal = relPerm->getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseRelPermMaxValueString );
+  array1d< real64 > & phaseRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseRelPermMaxValueString() );
   phaseRelPermMaxVal.resize( 2 );
   phaseRelPermMaxVal[0] = 0.8; phaseRelPermMaxVal[1] = 0.9;
 
-  relPerm->postProcessInputRecursive();
+  relPerm.postProcessInputRecursive();
   return relPerm;
 }
 
-RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, Group & parent )
+RelativePermeabilityBase & makeBrooksCoreyBakerRelPermTwoPhase( string const & name, Group & parent )
 {
-  auto relPerm = parent.registerGroup< BrooksCoreyBakerRelativePermeability >( name );
+  BrooksCoreyBakerRelativePermeability & relPerm = parent.registerGroup< BrooksCoreyBakerRelativePermeability >( name );
 
-  auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
   phaseNames[0] = "water"; phaseNames[1] = "oil";
 
-  auto & phaseMinSat = relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
   phaseMinSat[0] = 0.03; phaseMinSat[1] = 0.01;
 
-  auto & waterOilRelPermExp = relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermExponentString );
+  array1d< real64 > & waterOilRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermExponentString() );
   waterOilRelPermExp.resize( 2 );
   waterOilRelPermExp[0] = 1.9; waterOilRelPermExp[1] = 3.95;
 
-  auto & waterOilRelPermMaxVal =
-    relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString );
+  array1d< real64 > & waterOilRelPermMaxVal =
+    relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString() );
   waterOilRelPermMaxVal.resize( 2 );
   waterOilRelPermMaxVal[0] = 0.8; waterOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->postProcessInputRecursive();
+  relPerm.postProcessInputRecursive();
   return relPerm;
 }
 
-RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, Group & parent )
+RelativePermeabilityBase & makeBrooksCoreyBakerRelPermThreePhase( string const & name, Group & parent )
 {
-  auto relPerm = parent.registerGroup< BrooksCoreyBakerRelativePermeability >( name );
+  BrooksCoreyBakerRelativePermeability & relPerm = parent.registerGroup< BrooksCoreyBakerRelativePermeability >( name );
 
-  auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  auto & phaseMinSat = relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 3 );
   phaseMinSat[0] = 0.03; phaseMinSat[1] = 0.01; phaseMinSat[2] = 0.025;
 
-  auto & waterOilRelPermExp = relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermExponentString );
+  array1d< real64 > & waterOilRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermExponentString() );
   waterOilRelPermExp.resize( 2 );
   waterOilRelPermExp[0] = 2.4; waterOilRelPermExp[1] = 1.5;
 
-  auto & waterOilRelPermMaxVal =
-    relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString );
+  array1d< real64 > & waterOilRelPermMaxVal =
+    relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString() );
   waterOilRelPermMaxVal.resize( 2 );
   waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.65;
 
-  auto & gasOilRelPermExp = relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentString );
+  array1d< real64 > & gasOilRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentString() );
   gasOilRelPermExp.resize( 2 );
   gasOilRelPermExp[0] = 1.9; gasOilRelPermExp[1] = 3.95;
 
-  auto & gasOilRelPermMaxVal = relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString );
+  array1d< real64 > & gasOilRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString() );
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.95;
 
-  relPerm->postProcessInputRecursive();
+  relPerm.postProcessInputRecursive();
   return relPerm;
 }
 
-RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & name, Group & parent )
+RelativePermeabilityBase & makeVanGenuchtenBakerRelPermTwoPhase( string const & name, Group & parent )
 {
-  auto relPerm = parent.registerGroup< VanGenuchtenBakerRelativePermeability >( name );
+  VanGenuchtenBakerRelativePermeability & relPerm = parent.registerGroup< VanGenuchtenBakerRelativePermeability >( name );
 
-  auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  auto & phaseMinSat = relPerm->getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
   phaseMinSat[0] = 0.02; phaseMinSat[1] = 0.05;
 
-  auto & gasOilRelPermExpInv =
-    relPerm->getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentInvString );
+  array1d< real64 > & gasOilRelPermExpInv =
+    relPerm.getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentInvString() );
   gasOilRelPermExpInv.resize( 2 );
   gasOilRelPermExpInv[0] = 1.7; gasOilRelPermExpInv[1] = 2.15;
 
-  auto & gasOilRelPermMaxVal = relPerm->getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString );
+  array1d< real64 > & gasOilRelPermMaxVal = relPerm.getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString() );
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.5; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->postProcessInputRecursive();
+  relPerm.postProcessInputRecursive();
   return relPerm;
 }
 
-RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, Group & parent )
+RelativePermeabilityBase & makeVanGenuchtenBakerRelPermThreePhase( string const & name, Group & parent )
 {
-  auto relPerm = parent.registerGroup< VanGenuchtenBakerRelativePermeability >( name );
+  VanGenuchtenBakerRelativePermeability & relPerm = parent.registerGroup< VanGenuchtenBakerRelativePermeability >( name );
 
-  auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  auto & phaseMinSat = relPerm->getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 3 );
   phaseMinSat[0] = 0.03; phaseMinSat[1] = 0.01; phaseMinSat[2] = 0.025;
 
-  auto & waterOilRelPermExpInv = relPerm->getReference< array1d< real64 > >(
-    VanGenuchtenBakerRelativePermeability::viewKeyStruct::waterOilRelPermExponentInvString );
+  array1d< real64 > & waterOilRelPermExpInv = relPerm.getReference< array1d< real64 > >(
+    VanGenuchtenBakerRelativePermeability::viewKeyStruct::waterOilRelPermExponentInvString() );
   waterOilRelPermExpInv.resize( 2 );
   waterOilRelPermExpInv[0] = 2.4; waterOilRelPermExpInv[1] = 2.5;
 
-  auto & waterOilRelPermMaxVal =
-    relPerm->getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString );
+  array1d< real64 > & waterOilRelPermMaxVal =
+    relPerm.getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString() );
   waterOilRelPermMaxVal.resize( 2 );
   waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.75;
 
-  auto & gasOilRelPermExpInv =
-    relPerm->getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentInvString );
+  array1d< real64 > & gasOilRelPermExpInv =
+    relPerm.getReference< array1d< real64 > >( VanGenuchtenBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentInvString() );
   gasOilRelPermExpInv.resize( 2 );
   gasOilRelPermExpInv[0] = 1.9; gasOilRelPermExpInv[1] = 3.95;
 
-  auto & gasOilRelPermMaxVal = relPerm->getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString );
+  array1d< real64 > & gasOilRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString() );
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->postProcessInputRecursive();
+  relPerm.postProcessInputRecursive();
   return relPerm;
 }
 
-RelativePermeabilityBase * makeTableRelPermTwoPhase( string const & name, Group & parent )
+RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group & parent )
 {
   FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
@@ -191,37 +191,37 @@ RelativePermeabilityBase * makeTableRelPermTwoPhase( string const & name, Group 
     values[i] = coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction * table_w = functionManager->createChild( "TableFunction", "water_swof" )->groupCast< TableFunction * >();
-  table_w->setTableCoordinates( coordinates );
-  table_w->setTableValues( values );
-  table_w->reInitializeFunction();
+  TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "water_swof" ) );
+  table_w.setTableCoordinates( coordinates );
+  table_w.setTableValues( values );
+  table_w.reInitializeFunction();
 
-  table_w->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction * table_o = functionManager->createChild( "TableFunction", "oil_swof" )->groupCast< TableFunction * >();
-  table_o->setTableCoordinates( coordinates );
-  table_o->setTableValues( values );
-  table_o->reInitializeFunction();
+  TableFunction & table_o = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "oil_swof" ) );
+  table_o.setTableCoordinates( coordinates );
+  table_o.setTableValues( values );
+  table_o.reInitializeFunction();
 
-  table_o->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   // 2) Then set up the constitutive model
 
-  auto relPerm = parent.registerGroup< TableRelativePermeability >( name );
+  auto & relPerm = parent.registerGroup< TableRelativePermeability >( name );
 
-  auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "water";
 
-  auto & waterOilTableNames = relPerm->getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::waterOilRelPermTableNamesString );
+  auto & waterOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::waterOilRelPermTableNamesString() );
   waterOilTableNames.resize( 2 );
   waterOilTableNames[0] = "water_swof"; waterOilTableNames[1] = "oil_swof";
 
-  relPerm->postProcessInputRecursive();
+  relPerm.postProcessInputRecursive();
   return relPerm;
 }
 
-RelativePermeabilityBase * makeTableRelPermThreePhase( string const & name, Group & parent )
+RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Group & parent )
 {
   FunctionManager * functionManager = &getGlobalState().getFunctionManager();
 
@@ -249,19 +249,19 @@ RelativePermeabilityBase * makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction * table_ow_w = functionManager->createChild( "TableFunction", "water_swof" )->groupCast< TableFunction * >();
-  table_ow_w->setTableCoordinates( coordinates );
-  table_ow_w->setTableValues( values );
-  table_ow_w->reInitializeFunction();
+  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "water_swof" ) );
+  table_ow_w.setTableCoordinates( coordinates );
+  table_ow_w.setTableValues( values );
+  table_ow_w.reInitializeFunction();
 
-  table_ow_w->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction * table_ow_o = functionManager->createChild( "TableFunction", "oil_swof" )->groupCast< TableFunction * >();
-  table_ow_o->setTableCoordinates( coordinates );
-  table_ow_o->setTableValues( values );
-  table_ow_o->reInitializeFunction();
+  TableFunction & table_ow_o = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "oil_swof" ) );
+  table_ow_o.setTableCoordinates( coordinates );
+  table_ow_o.setTableValues( values );
+  table_ow_o.reInitializeFunction();
 
-  table_ow_o->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_ow_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   // 1.a) Second pair of phases (og)
 
@@ -278,37 +278,37 @@ RelativePermeabilityBase * makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction * table_og_g = functionManager->createChild( "TableFunction", "gas_sgof" )->groupCast< TableFunction * >();
-  table_og_g->setTableCoordinates( coordinates );
-  table_og_g->setTableValues( values );
-  table_og_g->reInitializeFunction();
+  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "gas_sgof" ) );
+  table_og_g.setTableCoordinates( coordinates );
+  table_og_g.setTableValues( values );
+  table_og_g.reInitializeFunction();
 
-  table_og_g->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction * table_og_o = functionManager->createChild( "TableFunction", "oil_sgof" )->groupCast< TableFunction * >();
-  table_og_o->setTableCoordinates( coordinates );
-  table_og_o->setTableValues( values );
-  table_og_o->reInitializeFunction();
+  TableFunction & table_og_o = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "oil_sgof" ) );
+  table_og_o.setTableCoordinates( coordinates );
+  table_og_o.setTableValues( values );
+  table_og_o.reInitializeFunction();
 
-  table_og_o->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_og_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   // 2) Then set up the constitutive model
 
-  auto relPerm = parent.registerGroup< TableRelativePermeability >( name );
+  auto & relPerm = parent.registerGroup< TableRelativePermeability >( name );
 
-  auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
 
-  auto & waterOilTableNames = relPerm->getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::waterOilRelPermTableNamesString );
+  auto & waterOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::waterOilRelPermTableNamesString() );
   waterOilTableNames.resize( 2 );
   waterOilTableNames[0] = "water_swof"; waterOilTableNames[1] = "oil_swof";
 
-  auto & gasOilTableNames = relPerm->getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::gasOilRelPermTableNamesString );
+  auto & gasOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::gasOilRelPermTableNamesString() );
   gasOilTableNames.resize( 2 );
   gasOilTableNames[0] = "gas_sgof"; gasOilTableNames[1] = "oil_sgof";
 
-  relPerm->postProcessInputRecursive();
+  relPerm.postProcessInputRecursive();
   return relPerm;
 }
 

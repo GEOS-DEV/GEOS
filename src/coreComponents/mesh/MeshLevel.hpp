@@ -65,7 +65,7 @@ public:
                                integer const depth );
 
 
-  virtual void initializePostInitialConditionsPostSubGroups( Group * const ) override;
+  virtual void initializePostInitialConditionsPostSubGroups() override;
 
   /// @cond DO_NOT_DOCUMENT
 

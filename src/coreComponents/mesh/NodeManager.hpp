@@ -248,73 +248,64 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     /// String to access the reference position
-    static constexpr auto referencePositionString       = "ReferencePosition";
+    static constexpr char const * referencePositionString() { return "ReferencePosition"; }
 
     /// String to access the location of the nodes
-    static constexpr auto EmbSurfNodesPositionString = "EmbSurfNodesPosition";
+    static constexpr char const * EmbSurfNodesPositionString() { return "EmbSurfNodesPosition"; }
 
     /// String to access the displacement
-    static constexpr auto totalDisplacementString       = "TotalDisplacement";
+    static constexpr char const * totalDisplacementString() { return "TotalDisplacement"; }
 
     /// String to access the incremental displacement
-    static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
+    static constexpr char const * incrementalDisplacementString() { return "IncrementalDisplacement"; }
 
     /// String to access the edge map
-    static constexpr auto edgeListString                = "edgeList";
+    static constexpr char const * edgeListString() { return "edgeList"; }
 
     /// String to access the face map
-    static constexpr auto faceListString                = "faceList";
+    static constexpr char const * faceListString() { return "faceList"; }
 
     /// String to access the element region map
-    static constexpr auto elementRegionListString       = "elemRegionList";
+    static constexpr char const * elementRegionListString() { return "elemRegionList"; }
 
     /// String to access the element subregion map
-    static constexpr auto elementSubRegionListString    = "elemSubRegionList";
+    static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
 
     /// String to access the element map
-    static constexpr auto elementListString             = "elemList";
+    static constexpr char const * elementListString() { return "elemList"; }
 
-    /// String to access the reference position
-    dataRepository::ViewKey referencePosition       = { referencePositionString };
+    /// Accessor to reference position
+    dataRepository::ViewKey referencePosition       = { referencePositionString() };
 
-    /// String to access the displacement
-    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString };
+    /// Accessor to displacement
+    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString() };
 
-    /// String to access the incremental displacement
-    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
+    /// Accessor to incremental displacement
+    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString() };
 
-    /// String to access the edge map
-    dataRepository::ViewKey edgeList                = { edgeListString };
+    /// Accessor to edge map
+    dataRepository::ViewKey edgeList                = { edgeListString() };
 
-    /// String to access the face map
-    dataRepository::ViewKey faceList                = { faceListString };
+    /// Accessor to face map
+    dataRepository::ViewKey faceList                = { faceListString() };
 
-    /// String to access the element region map
-    dataRepository::ViewKey elementRegionList       = { elementRegionListString };
+    /// Accessor to element region map
+    dataRepository::ViewKey elementRegionList       = { elementRegionListString() };
 
-    /// String to access the element subregion map
-    dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString };
+    /// Accessor to element subregion map
+    dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString() };
 
-    /// String to access the element map
-    dataRepository::ViewKey elementList             = { elementListString };
+    /// Accessor to element map
+    dataRepository::ViewKey elementList             = { elementListString() };
 
-    /// String to access the velocity
+    /// Accessor to velocity
     dataRepository::ViewKey velocity                = { dataRepository::keys::Velocity };
 
-    /// String to access the acceleration
+    /// Accessor to acceleration
     dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
   }
   /// viewKeys
   viewKeys;
-
-  /**
-   * @brief contains the added group access keys to be bound with class in group hierarchy
-   * @struct groupKeys
-   */
-  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {}
-  /// groupKeys
-  groupKeys;
 
   ///@}
 

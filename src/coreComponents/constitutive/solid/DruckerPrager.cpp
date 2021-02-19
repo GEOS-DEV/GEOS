@@ -38,47 +38,47 @@ DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
 {
   // register default values
 
-  registerWrapper( viewKeyStruct::defaultFrictionAngleString, &m_defaultFrictionAngle )->
-    setApplyDefaultValue( 30.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultFrictionAngleString(), &m_defaultFrictionAngle ).
+    setApplyDefaultValue( 30.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Friction angle (degrees)" );
 
-  registerWrapper( viewKeyStruct::defaultDilationAngleString, &m_defaultDilationAngle )->
-    setApplyDefaultValue( 30.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultDilationAngleString(), &m_defaultDilationAngle ).
+    setApplyDefaultValue( 30.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Dilation angle (degrees)" );
 
-  registerWrapper( viewKeyStruct::defaultHardeningString, &m_defaultHardening )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultHardeningString(), &m_defaultHardening ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Cohesion hardening/softening rate" );
 
-  registerWrapper( viewKeyStruct::defaultCohesionString, &m_defaultCohesion )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultCohesionString(), &m_defaultCohesion ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Initial cohesion" );
 
   // register fields
 
-  registerWrapper( viewKeyStruct::frictionString, &m_friction )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::frictionString(), &m_friction ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Yield surface slope" );
 
-  registerWrapper( viewKeyStruct::dilationString, &m_dilation )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::dilationString(), &m_dilation ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Plastic potential slope" );
 
-  registerWrapper( viewKeyStruct::hardeningString, &m_hardening )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Hardening rate" );
 
-  registerWrapper( viewKeyStruct::newCohesionString, &m_newCohesion )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 )->
+  registerWrapper( viewKeyStruct::newCohesionString(), &m_newCohesion ).
+    setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
     setDescription( "New cohesion state" );
 
-  registerWrapper( viewKeyStruct::oldCohesionString, &m_oldCohesion )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::oldCohesionString(), &m_oldCohesion ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Old cohesion state" );
 }
 
@@ -119,15 +119,19 @@ void DruckerPrager::postProcessInput()
 
   // set results as array default values
 
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString )->
+  getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString() ).
     setApplyDefaultValue( C );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString )->
+
+  getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString() ).
     setApplyDefaultValue( C );
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::dilationString )->
+
+  getWrapper< array1d< real64 > >( viewKeyStruct::dilationString() ).
     setApplyDefaultValue( D );
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::frictionString )->
+
+  getWrapper< array1d< real64 > >( viewKeyStruct::frictionString() ).
     setApplyDefaultValue( F );
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString )->
+
+  getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString() ).
     setApplyDefaultValue( m_defaultHardening );
 }
 

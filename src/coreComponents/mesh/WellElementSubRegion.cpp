@@ -28,20 +28,20 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_wellControlsName( "" ),
   m_toNodesRelation(),
   m_topWellElementIndex( -1 ),
-  m_perforationData( groupKeyStruct::perforationDataString, this ),
+  m_perforationData( groupKeyStruct::perforationDataString(), this ),
   m_topRank( -1 ),
   m_searchDepth( 10 )
 {
 
-  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName );
-  registerWrapper( viewKeyStruct::wellNodeListString, &m_toNodesRelation );
-  registerWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex );
-  registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString, &m_nextWellElementIndexGlobal );
-  registerWrapper( viewKeyStruct::topWellElementIndexString, &m_topWellElementIndex );
-  registerWrapper( viewKeyStruct::topRankString, &m_topRank );
-  registerWrapper( viewKeyStruct::radiusString, &m_radius );
+  registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
+  registerWrapper( viewKeyStruct::wellNodeListString(), &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::nextWellElementIndexString(), &m_nextWellElementIndex );
+  registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString(), &m_nextWellElementIndexGlobal );
+  registerWrapper( viewKeyStruct::topWellElementIndexString(), &m_topWellElementIndex );
+  registerWrapper( viewKeyStruct::topRankString(), &m_topRank );
+  registerWrapper( viewKeyStruct::radiusString(), &m_radius );
 
-  registerGroup( groupKeyStruct::perforationDataString, &m_perforationData );
+  registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );
@@ -54,9 +54,9 @@ WellElementSubRegion::~WellElementSubRegion()
 {}
 
 
-void WellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+void WellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {
-  m_toNodesRelation.setRelatedObject( mesh->getNodeManager() );
+  m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
 }
 
 namespace
@@ -218,8 +218,8 @@ bool VisitNeighborElements( MeshLevel const & mesh,
       localIndex const esr     = toElementSubRegionList[currNode][b];
       localIndex const eiLocal = toElementList[currNode][b];
 
-      CellElementRegion const * const region    = dataRepository::Group::groupCast< CellElementRegion const * >( elemManager->getRegion( er ));
-      CellBlock const * const subRegion = dataRepository::Group::groupCast< CellElementSubRegion const * >( region->getSubRegion( esr ));
+      CellElementRegion const * const region = dynamicCast< CellElementRegion const * >( elemManager->getRegion( er ));
+      CellBlock const * const subRegion = dynamicCast< CellElementSubRegion const * >( region->getSubRegion( esr ));
       globalIndex const eiGlobal  = subRegion->localToGlobalMap()[eiLocal];
 
       // if this element has not been visited yet, save it
@@ -274,7 +274,7 @@ void InitializeLocalSearch( MeshLevel const & mesh,
 {
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   resElemCenter = mesh.getElemManager()->constructViewAccessor< array2d< real64 >,
-                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
+                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
   // to initialize the local search for the reservoir element that contains "location",
   // we find the reservoir element that minimizes the distance from "location" to the reservoir element center
   auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
@@ -319,8 +319,8 @@ bool SearchLocalElements( MeshLevel const & mesh,
   // the assumption here is that perforations have been entered in order of depth
   bool resElemFound = false;
 
-  CellElementRegion const * region = dataRepository::Group::groupCast< CellElementRegion const * >( mesh.getElemManager()->getRegion( erInit ));
-  CellBlock const * subRegion      = dataRepository::Group::groupCast< CellBlock const * >( region->getSubRegion( esrInit ));
+  CellElementRegion const * region = dynamicCast< CellElementRegion const * >( mesh.getElemManager()->getRegion( erInit ));
+  CellBlock const * subRegion      = dynamicCast< CellBlock const * >( region->getSubRegion( esrInit ));
 
   SortedArray< localIndex >  nodes;
   SortedArray< globalIndex > elements;
@@ -743,11 +743,11 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
   ArrayOfArrays< localIndex > & toElementList          = nodeManager->elementList();
 
   // we get the region and subregion indices in the elemManager
-  WellElementRegion const * const elemRegion = this->getParent()->getParent()->groupCast< WellElementRegion * >();
-  string const elemRegionName = elemRegion->getName();
+  WellElementRegion const & elemRegion = dynamicCast< WellElementRegion & >( *this->getParent()->getParent() );
+  string const & elemRegionName = elemRegion.getName();
 
   localIndex const iregion    = elemManager->getRegions().getIndex( elemRegionName );
-  localIndex const isubRegion = elemRegion->getSubRegions().getIndex( getName() );
+  localIndex const isubRegion = elemRegion.getSubRegions().getIndex( getName() );
 
   // for each (new) well element
   for( localIndex iwelemLocal = 0; iwelemLocal < size(); ++iwelemLocal )
@@ -764,7 +764,8 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
       toElementList.emplaceBack( inodeLocal, iwelemLocal );
     }
   }
-  setupRelatedObjectsInRelations( &mesh );
+
+  setupRelatedObjectsInRelations( mesh );
 }
 
 void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
@@ -862,7 +863,7 @@ bool WellElementSubRegion::isLocallyOwned() const
 void WellElementSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
   ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
 }
 
 localIndex WellElementSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const

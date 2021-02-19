@@ -31,6 +31,7 @@ namespace geosx
 
 
 class ObjectManagerBase;
+class NodeManager;
 class NeighborCommunicator;
 class MeshLevel;
 class ElementRegionManager;
@@ -87,7 +88,7 @@ public:
   ~CommunicationTools();
 
   void assignGlobalIndices( ObjectManagerBase & object,
-                            ObjectManagerBase const & compositionObject,
+                            NodeManager const & compositionObject,
                             std::vector< NeighborCommunicator > & neighbors );
 
   void assignNewGlobalIndices( ObjectManagerBase & object,
@@ -103,7 +104,7 @@ public:
   CommID getCommID()
   { return CommID( m_freeCommIDs ); }
 
-  void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+  void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
   void synchronizeFields( const std::map< string, string_array > & fieldNames,

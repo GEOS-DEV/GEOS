@@ -30,20 +30,20 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value for density." );
 
-  registerWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultViscosity ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value for viscosity." );
 
-  registerWrapper( viewKeyStruct::densityString, &m_density )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::densityString(), &m_density ).setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper( viewKeyStruct::dDens_dPresString, &m_dDensity_dPressure );
+  registerWrapper( viewKeyStruct::dDens_dPresString(), &m_dDensity_dPressure );
 
-  registerWrapper( viewKeyStruct::viscosityString, &m_viscosity )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dVisc_dPresString, &m_dViscosity_dPressure );
+  registerWrapper( viewKeyStruct::viscosityString(), &m_viscosity ).setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dVisc_dPresString(), &m_dViscosity_dPressure );
 }
 
 SingleFluidBase::~SingleFluidBase() = default;
@@ -51,8 +51,8 @@ SingleFluidBase::~SingleFluidBase() = default;
 void SingleFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString )->setApplyDefaultValue( m_defaultDensity );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString )->setApplyDefaultValue( m_defaultViscosity );
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).setApplyDefaultValue( m_defaultDensity );
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString() ).setApplyDefaultValue( m_defaultViscosity );
 
 }
 

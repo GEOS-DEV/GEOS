@@ -81,7 +81,7 @@ public:
   {
     if( traits::is_tensorT< T > || std::is_arithmetic< T >::value || traits::is_string< T > )
     {
-      this->setSizedFromParent( 0 );
+      setSizedFromParent( 0 );
     }
 
     setName();
@@ -103,7 +103,7 @@ public:
   {
     if( traits::is_tensorT< T > || std::is_arithmetic< T >::value || traits::is_string< T > )
     {
-      this->setSizedFromParent( 0 );
+      setSizedFromParent( 0 );
     }
 
     setName();
@@ -125,7 +125,7 @@ public:
   {
     if( traits::is_tensorT< T > || std::is_arithmetic< T >::value || traits::is_string< T > )
     {
-      this->setSizedFromParent( 0 );
+      setSizedFromParent( 0 );
     }
 
     setName();
@@ -180,7 +180,7 @@ public:
                                                 Group * const parent ) override
   {
     std::unique_ptr< WrapperBase >
-    clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, this->m_data );
+    clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, m_data );
     clonedWrapper->copyWrapperAttributes( *this );
 
     return clonedWrapper;
@@ -188,9 +188,9 @@ public:
 
   virtual void copyWrapper( WrapperBase const & source ) override
   {
-    GEOSX_ERROR_IF( source.getName() != this->m_name, "Tried to clone wrapper of with different name" );
+    GEOSX_ERROR_IF( source.getName() != m_name, "Tried to clone wrapper of with different name" );
     WrapperBase::copyWrapperAttributes( source );
-    Wrapper< T > const & castedSource = *cast( &source );
+    Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
     copyData( source );
@@ -201,7 +201,7 @@ public:
   virtual void copyWrapperAttributes( WrapperBase const & source ) override
   {
     WrapperBase::copyWrapperAttributes( source );
-    Wrapper< T > const & castedSource = *cast( &source );
+    Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
   }
@@ -214,61 +214,11 @@ public:
 
   ///@}
 
-  /**
-   * @name Type-casting static functions
-   */
-  ///@{
-
-  /**
-   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
-   *
-   * @param base
-   * @return casted Wrapper<T>
-   */
-  static Wrapper< T > * cast( WrapperBase * const base )
-  {
-    return dynamicCast< Wrapper< T > * >( base );
-  }
-
-  /**
-   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
-   *
-   * @param base
-   * @return casted reference to const Wrapper<T>
-   */
-  static Wrapper< T > const * cast( WrapperBase const * const base )
-  {
-    return dynamicCast< Wrapper< T > const * >( base );
-  }
-
-  /**
-   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
-   *
-   * @param base
-   * @return casted Wrapper<T>
-   */
-  static Wrapper< T > & cast( WrapperBase & base )
-  {
-    return dynamicCast< Wrapper< T > & >( base );
-  }
-
-  /**
-   * Static function to cast a Wrapper base to a derived Wrapper<T>
-   * @param base
-   * @return casted reference to const Wrapper<T>
-   */
-  static Wrapper< T > const & cast( WrapperBase const & base )
-  {
-    return dynamicCast< Wrapper< T > const & >( base );
-  }
-
-  ///@}
-
   /// @copydoc geosx::WrapperBase::getHistoryMetadata
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
-    return geosx::getHistoryMetadata( getName(), this->referenceAsView( ), packCount );
+    return geosx::getHistoryMetadata( getName(), referenceAsView( ), packCount );
   }
 
   /**
@@ -298,7 +248,7 @@ public:
   localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
     if( onDevice )
     {
       if( withMetadata )
@@ -325,7 +275,7 @@ public:
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
     {
-      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
       if( onDevice )
       {
         if( withMetadata )
@@ -352,7 +302,7 @@ public:
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
+    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
     if( onDevice )
     {
       if( withMetadata )
@@ -380,7 +330,7 @@ public:
     buffer_unit_type * buffer = nullptr;
     if( sizedFromParent() == 1 )
     {
-      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
+      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
       if( onDevice )
       {
         if( withMetadata )
@@ -410,7 +360,7 @@ public:
     {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
     }
     if( onDevice )
     {
@@ -442,7 +392,7 @@ public:
       {
         string name;
         unpackedSize += bufferOps::Unpack( buffer, name );
-        GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+        GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
       }
       if( onDevice )
       {
@@ -531,27 +481,23 @@ public:
     {}
 
     template< typename U=T >
-    static
-    typename std::enable_if< traits::hasCopyAssignmentOp< U >, void >::type
+    static std::enable_if_t< traits::hasCopyAssignmentOp< U > >
     copyData( U & destinationData, U const & sourceData )
     {
       destinationData = sourceData;
     }
 
     template< typename U=T >
-    static
-    typename std::enable_if< !traits::hasCopyAssignmentOp< U >, void >::type
+    static std::enable_if_t< !traits::hasCopyAssignmentOp< U > >
     copyData( U &, U const & )
     {}
-
-
   };
   /// @endcond
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override
   {
-    if( this->sizedFromParent() )
+    if( sizedFromParent() )
     {
       copy_wrapper::copy( reference(), sourceIndex, destIndex );
     }
@@ -561,7 +507,7 @@ public:
 
   virtual void copyData( WrapperBase const & source ) override
   {
-    Wrapper< T > const & castedSource = *cast( &source );
+    Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     copy_wrapper::copyData( *m_data, *castedSource.m_data );
   }
 
@@ -661,7 +607,7 @@ public:
    * @return reference to const T
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, typename DefaultValue< U >::value_type const & >::type
+  std::enable_if_t< DefaultValue< U >::has_default_value, typename DefaultValue< U >::value_type const & >
   getDefaultValue() const
   {
     return m_default.value;
@@ -673,11 +619,11 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  std::enable_if_t< DefaultValue< U >::has_default_value, Wrapper< T > & >
   setDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
-    return this;
+    return *this;
   }
 
   /**
@@ -686,12 +632,12 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< !traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  std::enable_if_t< !traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > & >
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
     *m_data = m_default.value;
-    return this;
+    return *this;
   }
 
   /**
@@ -700,12 +646,12 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  std::enable_if_t< traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > & >
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
     m_data->template setValues< serialPolicy >( m_default.value );
-    return this;
+    return *this;
   }
 
   /**
@@ -866,55 +812,55 @@ public:
   /**
    * @copydoc WrapperBase::setSizedFromParent(int)
    */
-  Wrapper< T > * setSizedFromParent( int val )
+  Wrapper< T > & setSizedFromParent( int val )
   {
     WrapperBase::setSizedFromParent( val );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setRestartFlags(RestartFlags)
    */
-  Wrapper< T > * setRestartFlags( RestartFlags flags )
+  Wrapper< T > & setRestartFlags( RestartFlags flags )
   {
     WrapperBase::setRestartFlags( flags );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setPlotLevel(PlotLevel const)
    */
-  Wrapper< T > * setPlotLevel( PlotLevel const flag )
+  Wrapper< T > & setPlotLevel( PlotLevel const flag )
   {
     WrapperBase::setPlotLevel( flag );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setInputFlag(InputFlags const)
    */
-  Wrapper< T > * setInputFlag( InputFlags const input )
+  Wrapper< T > & setInputFlag( InputFlags const input )
   {
     WrapperBase::setInputFlag( input );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setDescription(string const &)
    */
-  Wrapper< T > * setDescription( string const & description )
+  Wrapper< T > & setDescription( string const & description )
   {
     WrapperBase::setDescription( description );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setRegisteringObjects(string const &)
    */
-  Wrapper< T > * setRegisteringObjects( string const & objectName )
+  Wrapper< T > & setRegisteringObjects( string const & objectName )
   {
     WrapperBase::setRegisteringObjects( objectName );
-    return this;
+    return *this;
   }
 
   ///@}

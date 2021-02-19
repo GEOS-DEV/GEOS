@@ -59,20 +59,20 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   m_solidModelNames()
 {
 
-  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "option for default time integration method" );
 
-  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.fieldVarName.key(), &m_fieldName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.fieldVarName.key(), &m_fieldName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "name of field variable" );
 
-  registerWrapper( viewKeyStruct::localDissipationOption, &m_localDissipationOption )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
 
-  registerWrapper( viewKeyStruct::solidModelNamesString, &m_solidModelNames )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::solidModelNamesString(), &m_solidModelNames ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "name of solid constitutive model" );
 }
 
@@ -81,31 +81,29 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
   // TODO Auto-generated destructor stub
 }
 
-void PhaseFieldDamageFEM::registerDataOnMesh( Group * const MeshBodies )
+void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
+    MeshLevel & meshLevel = *meshBody.getMeshLevel( 0 );
 
-    MeshLevel *meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-
-    NodeManager * const nodes = meshLevel->getNodeManager();
+    NodeManager * const nodes = meshLevel.getNodeManager();
 
     nodes->registerWrapper< real64_array >( m_fieldName )
-      ->setApplyDefaultValue( 0.0 )
-      ->setPlotLevel( PlotLevel::LEVEL_0 )
-      ->setDescription( "Primary field variable" );
+      .setApplyDefaultValue( 0.0 )
+      .setPlotLevel( PlotLevel::LEVEL_0 )
+      .setDescription( "Primary field variable" );
 
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    ElementRegionManager * const elemManager = meshLevel.getElemManager();
 
     elemManager->forElementSubRegions< CellElementSubRegion >( [ &]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper( viewKeyStruct::coeffName, &m_coeff )->
-        setApplyDefaultValue( 0.0 )->
-        setPlotLevel( PlotLevel::LEVEL_0 )->
+      subRegion.registerWrapper( viewKeyStruct::coeffNameString(), &m_coeff ).
+        setApplyDefaultValue( 0.0 ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
         setDescription( "field variable representing the diffusion coefficient" );
     } );
-
-  }
+  } );
 }
 
 void PhaseFieldDamageFEM::postProcessInput()
@@ -279,7 +277,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
 
         // arrayView1d<real64 const> const &
-        // coeff = elementSubRegion.getReference<array1d<real64> >(viewKeyStruct::coeffName);
+        // coeff = elementSubRegion.getReference<array1d<real64> >(viewKeyStruct::coeffNameString());
 
         globalIndex_array elemDofIndex( numNodesPerElement );
         real64_array element_rhs( numNodesPerElement );
@@ -570,26 +568,26 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 {
   FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
   fsManager.apply( time,
-                   &domain,
+                   domain,
                    "nodeManager",
                    m_fieldName,
-                   [&]( FieldSpecificationBase const * const bc, string const &,
+                   [&]( FieldSpecificationBase const & bc, string const &,
                         SortedArrayView< localIndex const > const & targetSet,
-                        Group * const targetGroup,
+                        Group & targetGroup,
                         string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
   {
-    bc->applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                        parallelDevicePolicy< 32 > >( targetSet,
-                                                                      time,
-                                                                      targetGroup,
-                                                                      m_fieldName,
-                                                                      dofManager.getKey( m_fieldName ),
-                                                                      dofManager.rankOffset(),
-                                                                      localMatrix,
-                                                                      localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     m_fieldName,
+                                                                     dofManager.getKey( m_fieldName ),
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 
-  fsManager.applyFieldValue< serialPolicy >( time, &domain, "ElementRegions", viewKeyStruct::coeffName );
+  fsManager.applyFieldValue< serialPolicy >( time, domain, "ElementRegions", viewKeyStruct::coeffNameString() );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,

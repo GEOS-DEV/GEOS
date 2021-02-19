@@ -46,21 +46,21 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
                                               Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames )->
-    setSizedFromParent( 0 )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
-  registerWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes )->
+  registerWrapper( viewKeyStruct::phaseTypesString(), &m_phaseTypes ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder )->
+  registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureString, &m_phaseCapPressure )->
+  registerWrapper( viewKeyStruct::phaseCapPressureString(), &m_phaseCapPressure ).
     setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString, &m_dPhaseCapPressure_dPhaseVolFrac );
+  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(), &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 CapillaryPressureBase::~CapillaryPressureBase()

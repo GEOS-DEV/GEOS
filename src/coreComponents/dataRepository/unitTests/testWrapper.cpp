@@ -37,75 +37,75 @@ public:
   void testSizedFromParent( int const value )
   {
     {
-      Wrapper< T > * rval = m_wrapper.setSizedFromParent( value );
+      Wrapper< T > & rval = m_wrapper.setSizedFromParent( value );
       EXPECT_EQ( value, m_wrapper.sizedFromParent() );
-      EXPECT_EQ( rval, &m_wrapper );
+      EXPECT_EQ( &rval, &m_wrapper );
     }
 
     {
-      WrapperBase * rval = m_wrapperBase.setSizedFromParent( value );
+      WrapperBase & rval = m_wrapperBase.setSizedFromParent( value );
       EXPECT_EQ( value, m_wrapperBase.sizedFromParent() );
-      EXPECT_EQ( rval, &m_wrapperBase );
+      EXPECT_EQ( &rval, &m_wrapperBase );
     }
   }
 
   void testRestartFlags( RestartFlags const value )
   {
     {
-      Wrapper< T > * rval = m_wrapper.setRestartFlags( value );
+      Wrapper< T > & rval = m_wrapper.setRestartFlags( value );
       EXPECT_EQ( value, m_wrapper.getRestartFlags() );
-      EXPECT_EQ( rval, &m_wrapper );
+      EXPECT_EQ( &rval, &m_wrapper );
     }
 
     {
-      WrapperBase * rval = m_wrapperBase.setRestartFlags( value );
+      WrapperBase & rval = m_wrapperBase.setRestartFlags( value );
       EXPECT_EQ( value, m_wrapperBase.getRestartFlags() );
-      EXPECT_EQ( rval, &m_wrapperBase );
+      EXPECT_EQ( &rval, &m_wrapperBase );
     }
   }
 
   void testPlotLevel( PlotLevel const value )
   {
     {
-      Wrapper< T > * rval = m_wrapper.setPlotLevel( value );
+      Wrapper< T > & rval = m_wrapper.setPlotLevel( value );
       EXPECT_EQ( value, m_wrapper.getPlotLevel() );
-      EXPECT_EQ( rval, &m_wrapper );
+      EXPECT_EQ( &rval, &m_wrapper );
     }
 
     {
-      WrapperBase * rval = m_wrapperBase.setPlotLevel( value );
+      WrapperBase & rval = m_wrapperBase.setPlotLevel( value );
       EXPECT_EQ( value, m_wrapperBase.getPlotLevel() );
-      EXPECT_EQ( rval, &m_wrapperBase );
+      EXPECT_EQ( &rval, &m_wrapperBase );
     }
   }
 
   void testInputFlags( InputFlags const value )
   {
     {
-      Wrapper< T > * rval = m_wrapper.setInputFlag( value );
+      Wrapper< T > & rval = m_wrapper.setInputFlag( value );
       EXPECT_EQ( value, m_wrapper.getInputFlag() );
-      EXPECT_EQ( rval, &m_wrapper );
+      EXPECT_EQ( &rval, &m_wrapper );
     }
 
     {
-      WrapperBase * rval = m_wrapperBase.setInputFlag( value );
+      WrapperBase & rval = m_wrapperBase.setInputFlag( value );
       EXPECT_EQ( value, m_wrapperBase.getInputFlag() );
-      EXPECT_EQ( rval, &m_wrapperBase );
+      EXPECT_EQ( &rval, &m_wrapperBase );
     }
   }
 
   void testDescription( string const & value )
   {
     {
-      Wrapper< T > * rval = m_wrapper.setDescription( value );
+      Wrapper< T > & rval = m_wrapper.setDescription( value );
       EXPECT_EQ( value, m_wrapper.getDescription() );
-      EXPECT_EQ( rval, &m_wrapper );
+      EXPECT_EQ( &rval, &m_wrapper );
     }
 
     {
-      WrapperBase * rval = m_wrapperBase.setDescription( value );
+      WrapperBase & rval = m_wrapperBase.setDescription( value );
       EXPECT_EQ( value, m_wrapperBase.getDescription() );
-      EXPECT_EQ( rval, &m_wrapperBase );
+      EXPECT_EQ( &rval, &m_wrapperBase );
     }
   }
 

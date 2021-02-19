@@ -33,7 +33,7 @@ ElementRegionManager::ElementRegionManager( string const & name, Group * const p
   ObjectManagerBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-  this->registerGroup< Group >( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+  this->registerGroup< Group >( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
 }
 
 ElementRegionManager::~ElementRegionManager()
@@ -84,9 +84,10 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
   GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
-  Group * const elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
-  return elementRegions->registerGroup( childName,
-                                        CatalogInterface::factory( childKey, childName, elementRegions ) );
+
+  Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
+  return &elementRegions.registerGroup( childName,
+                                        CatalogInterface::factory( childKey, childName, &elementRegions ) );
 
 }
 
@@ -126,20 +127,20 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   for( string const & name: names )
   {
-    ElementRegionBase * const elementRegion = getRegion( name );
+    ElementRegionBase & elementRegion = *getRegion( name );
     schemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType );
   }
 }
 
-void ElementRegionManager::generateMesh( Group * const cellBlockManager )
+void ElementRegionManager::generateMesh( Group & cellBlockManager )
 {
   this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {
-    elemRegion.generateMesh( cellBlockManager->getGroup( keys::cellBlocks ) );
+    elemRegion.generateMesh( cellBlockManager.getGroup( keys::cellBlocks ) );
   } );
 }
 
-void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const faceManager )
+void ElementRegionManager::generateCellToEdgeMaps( FaceManager const & faceManager )
 {
   /*
    * Create cell to edges map
@@ -153,7 +154,7 @@ void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const fac
   {
     FixedOneToManyRelation & cellToEdges = subRegion.edgeList();
     FixedOneToManyRelation const & cellToFaces = subRegion.faceList();
-    InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager->edgeList();
+    InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager.edgeList();
 
     //loop over the cells
     for( localIndex kc = 0; kc < subRegion.size(); kc++ )
@@ -190,7 +191,7 @@ void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const fac
   } );
 }
 
-void ElementRegionManager::generateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
+void ElementRegionManager::generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager )
 {
   this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
   {
@@ -198,10 +199,10 @@ void ElementRegionManager::generateAggregates( FaceManager const * const faceMan
   } );
 }
 
-void ElementRegionManager::generateWells( MeshManager * const meshManager,
-                                          MeshLevel * const meshLevel )
+void ElementRegionManager::generateWells( MeshManager & meshManager,
+                                          MeshLevel & meshLevel )
 {
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  NodeManager * const nodeManager = meshLevel.getNodeManager();
 
   // get the offsets to construct local-to-global maps for well nodes and elements
   nodeManager->setMaxGlobalIndex();
@@ -218,32 +219,26 @@ void ElementRegionManager::generateWells( MeshManager * const meshManager,
 
     // get the global well geometry from the well generator
     string const generatorName = wellRegion.getWellGeneratorName();
-    InternalWellGenerator const * const wellGeometry =
-      meshManager->getGroup< InternalWellGenerator >( generatorName );
-
-    GEOSX_ERROR_IF( wellGeometry == nullptr,
-                    "InternalWellGenerator " << generatorName << " not found in well " << wellRegion.getName() );
+    InternalWellGenerator const & wellGeometry =
+      meshManager.getGroup< InternalWellGenerator >( generatorName );
 
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
     // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
-    wellRegion.generateWell( *meshLevel, *wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+    wellRegion.generateWell( meshLevel, wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
 
     // increment counters with global number of nodes and elements
-    wellElemCount += wellGeometry->getNumElements();
-    wellNodeCount += wellGeometry->getNumNodes();
+    wellElemCount += wellGeometry.getNumElements();
+    wellNodeCount += wellGeometry.getNumNodes();
 
-    string const subRegionName = wellRegion.getSubRegionName();
-    WellElementSubRegion * const
-    subRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
-                  ->getGroup< WellElementSubRegion >( subRegionName );
+    string const & subRegionName = wellRegion.getSubRegionName();
+    WellElementSubRegion &
+    subRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                  .getGroup< WellElementSubRegion >( subRegionName );
 
-    GEOSX_ERROR_IF( subRegion == nullptr,
-                    "Subregion " << subRegionName << " not found in well " << wellRegion.getName() );
+    globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
-    globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion->size() );
-
-    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry->getNumElements(),
+    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry.getNumElements(),
                     "Invalid partitioning in well " << subRegionName );
 
   } );
@@ -334,7 +329,7 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOSX_ERROR_IF( name!=this->getName(), "Unpacked name ("<<name<<") does not equal object name ("<<this->getName() );
+  GEOSX_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );

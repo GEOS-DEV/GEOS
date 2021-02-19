@@ -93,10 +93,10 @@ For example this would look something like:
       {
         NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
 
-        nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement )->
-          setPlotLevel( PlotLevel::LEVEL_0 )->
-          setRegisteringObjects( this->getName())->
-          setDescription( "An array that holds the total displacements on the nodes." )->
+        nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
+          setPlotLevel( PlotLevel::LEVEL_0 ).
+          setRegisteringObjects( this->getName()).
+          setDescription( "An array that holds the total displacements on the nodes." ).
           reference().resizeDimension< 1 >( 3 );
       }
     }

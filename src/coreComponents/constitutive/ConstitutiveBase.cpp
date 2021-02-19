@@ -58,8 +58,8 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const p
     {
       if( wrapper.second->sizedFromParent() )
       {
-        string const wrapperName = wrapper.first;
-        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
+        string const & wrapperName = wrapper.first;
+        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
           setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
@@ -70,7 +70,7 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const p
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = wrapper.first;
-      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
+      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
         setRestartFlags( RestartFlags::NO_WRITE );
     }
   }
@@ -87,7 +87,7 @@ ConstitutiveBase::deliverClone( string const & name,
 
   newModel->forWrappers( [&]( WrapperBase & wrapper )
   {
-    wrapper.copyWrapper( *(this->getWrapperBase( wrapper.getName() ) ) );
+    wrapper.copyWrapper( this->getWrapperBase( wrapper.getName() ) );
   } );
 
   return newModel;

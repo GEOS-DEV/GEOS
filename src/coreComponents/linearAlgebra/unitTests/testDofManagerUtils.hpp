@@ -44,20 +44,20 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  dataRepository::Group * commandLine =
+  dataRepository::Group & commandLine =
     problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
-  commandLine->registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() )->
+  commandLine.registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
   problemManager->processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
-  meshManager->generateMeshLevels( domain );
+  DomainPartition & domain = *problemManager->getDomainPartition();
+  MeshManager & meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
+  meshManager.generateMeshLevels( domain );
 
-  ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  ElementRegionManager * elementManager = domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
   elementManager->processInputFileRecursive( topLevelNode );
   elementManager->postProcessInputRecursive();
@@ -100,16 +100,24 @@ struct testMeshHelper {};
 template<>
 struct testMeshHelper< DofManager::Location::Node >
 {
-  static auto constexpr managerKey = MeshLevel::groupStructKeys::nodeManagerString;
-  static auto constexpr elemMapKey = ElementSubRegionBase::viewKeyStruct::nodeListString;
+  static constexpr auto managerKey()
+  { return MeshLevel::groupStructKeys::nodeManagerString; }
+
+  static constexpr auto elemMapKey()
+  { return ElementSubRegionBase::viewKeyStruct::nodeListString(); }
+
   template< typename SUBREGION > using ElemToObjMap = typename SUBREGION::NodeMapType;
 };
 
 template<>
 struct testMeshHelper< DofManager::Location::Face >
 {
-  static auto constexpr managerKey = MeshLevel::groupStructKeys::faceManagerString;
-  static auto constexpr elemMapKey = ElementSubRegionBase::viewKeyStruct::faceListString;
+  static constexpr auto managerKey()
+  { return MeshLevel::groupStructKeys::faceManagerString; }
+
+  static constexpr auto elemMapKey()
+  { return ElementSubRegionBase::viewKeyStruct::faceListString(); }
+
   template< typename SUBREGION > using ElemToObjMap = typename SUBREGION::FaceMapType;
 };
 
@@ -139,9 +147,9 @@ struct forLocalObjectsImpl
                  LAMBDA lambda )
   {
     using helper = testMeshHelper< LOC >;
-    ObjectManagerBase const * const manager = mesh->getGroup< ObjectManagerBase >( helper::managerKey );
+    ObjectManagerBase const & manager = mesh->getGroup< ObjectManagerBase >( helper::managerKey() );
 
-    arrayView1d< integer const > ghostRank = manager->ghostRank();
+    arrayView1d< integer const > ghostRank = manager.ghostRank();
 
     array1d< bool > visited( ghostRank.size() );
 
@@ -150,7 +158,7 @@ struct forLocalObjectsImpl
       using MapType = typename helper::template ElemToObjMap< std::remove_reference_t< decltype( subRegion ) > >;
 
       traits::ViewTypeConst< MapType > const
-      elemToObjMap = subRegion.template getReference< MapType >( helper::elemMapKey );
+      elemToObjMap = subRegion.template getReference< MapType >( helper::elemMapKey() );
 
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
@@ -317,7 +325,7 @@ void makeSparsityFEM( MeshLevel const * const mesh,
   {
     using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
     traits::ViewTypeConst< NodeMapType > const
-    nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
+    nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
 
     localIndex const numNode = subRegion.numNodesPerElement();
     array1d< globalIndex > localDofIndex( numNode * numComp );
@@ -369,7 +377,7 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
   {
     using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
     traits::ViewTypeConst< NodeMapType > const
-    nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
+    nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
 
     arrayView1d< globalIndex const > elemDofIndex =
       subRegion.template getReference< array1d< globalIndex > >( dofIndexKeyElem );
@@ -463,7 +471,7 @@ void makeSparsityFlux( MeshLevel const * const mesh,
   {
     using FaceMapType = typename TYPEOFREF( subRegion ) ::FaceMapType;
     traits::ViewTypeConst< FaceMapType > const
-    faceMap = subRegion.template getReference< FaceMapType >( ElementSubRegionBase::viewKeyStruct::faceListString );
+    faceMap = subRegion.template getReference< FaceMapType >( ElementSubRegionBase::viewKeyStruct::faceListString() );
 
     localIndex const numFace = subRegion.numFacesPerElement();
     array1d< globalIndex > localDofIndex( numFace * numComp );

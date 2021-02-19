@@ -127,23 +127,19 @@ public:
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
     /// String key for the derivatives of the shape functions with respect to the reference configuration
-    static constexpr auto dNdXString = "dNdX";
-
+    static constexpr char const * dNdXString() { return "dNdX"; }
     /// String key for the derivative of the jacobian.
-    static constexpr auto detJString = "detJ";
+    static constexpr char const * detJString() { return "detJ"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
-
     /// Separation coefficient string.
-    constexpr static auto separationCoeffString = "separationCoeff";
-
+    constexpr static char const * separationCoeffString() { return "separationCoeff"; }
     /// dSepCoeffdAper string.
-    constexpr static auto dSeparationCoeffdAperString = "dSeparationCoeffdAper";
+    constexpr static char const * dSeparationCoeffdAperString() { return "dSeparationCoeffdAper"; }
 #endif
-
   };
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
 
   /**

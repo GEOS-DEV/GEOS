@@ -37,26 +37,26 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy()
 {
-  this->registerWrapper( viewKeyStruct::damageString, &m_damage )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( PlotLevel::LEVEL_0 )->
+  this->registerWrapper( viewKeyStruct::damageString(), &m_damage ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Material Damage Variable" );
 
-  this->registerWrapper( viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( PlotLevel::LEVEL_0 )->
+  this->registerWrapper( viewKeyStruct::strainEnergyDensityString(), &m_strainEnergyDensity ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Strain Energy Density" );
 
-  this->registerWrapper( viewKeyStruct::lengthScaleString, &m_lengthScale )->
-    setInputFlag( InputFlags::REQUIRED )->
+  this->registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Length scale l in the phase-field equation" );
 
-  this->registerWrapper( viewKeyStruct::criticalFractureEnergyString, &m_criticalFractureEnergy )->
-    setInputFlag( InputFlags::REQUIRED )->
+  this->registerWrapper( viewKeyStruct::criticalFractureEnergyString(), &m_criticalFractureEnergy ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Critical fracture energy" );
 
-  this->registerWrapper( viewKeyStruct::criticalStrainEnergyString, &m_criticalStrainEnergy )->
-    setInputFlag( InputFlags::REQUIRED )->
+  this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Critical stress in a 1d tension test" );
 }
 

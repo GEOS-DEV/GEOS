@@ -46,7 +46,7 @@ CommunicationTools::~CommunicationTools()
 }
 
 void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
-                                              ObjectManagerBase const & compositionObject,
+                                              NodeManager const & compositionObject,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
   GEOSX_MARK_FUNCTION;
@@ -69,7 +69,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   // get the relation to the composition object used that will be used to identify the main object. For example,
   // a face can be identified by its nodes.
   std::vector< std::vector< globalIndex > > objectToCompositionObject;
-  object.extractMapFromObjectForAssignGlobalIndexNumbers( &compositionObject, objectToCompositionObject );
+  object.extractMapFromObjectForAssignGlobalIndexNumbers( compositionObject, objectToCompositionObject );
 
   // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with
@@ -377,14 +377,14 @@ CommunicationTools::
 
 void
 CommunicationTools::
-  findMatchedPartitionBoundaryObjects( ObjectManagerBase * const objectManager,
+  findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOSX_MARK_FUNCTION;
-  arrayView1d< integer > const & domainBoundaryIndicator = objectManager->getDomainBoundaryIndicator();
+  arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
 
   array1d< globalIndex > globalPartitionBoundaryObjectsIndices;
-  objectManager->constructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
+  objectManager.constructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
 
 
   // send the size of the partitionBoundaryObjects to neighbors
@@ -403,7 +403,7 @@ CommunicationTools::
     for( std::size_t i=0; i<allNeighbors.size(); ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      localIndex_array & matchedPartitionBoundaryObjects = objectManager->getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+      localIndex_array & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
 
       neighbor.mpiWaitAll( commID );
       localIndex localCounter = 0;
@@ -413,7 +413,7 @@ CommunicationTools::
       {
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
-          localIndex const localMatchedIndex = objectManager->globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
+          localIndex const localMatchedIndex = objectManager.globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
           matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;
           ++localCounter;

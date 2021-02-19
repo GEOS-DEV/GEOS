@@ -40,14 +40,14 @@ NodeManager::NodeManager( string const & name,
   m_referencePosition( 0, 3 ),
   m_embeddedSurfNodesPosition( 0, 3 )
 {
-  registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition );
+  registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
   //END_SPHINX_REFPOS_REG
-  registerWrapper( viewKeyStruct::EmbSurfNodesPositionString, &m_embeddedSurfNodesPosition )->setSizedFromParent( 0 );
-  this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
-  this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
-  this->registerWrapper( viewKeyStruct::elementRegionListString, &elementRegionList() );
-  this->registerWrapper( viewKeyStruct::elementSubRegionListString, &elementSubRegionList() );
-  this->registerWrapper( viewKeyStruct::elementListString, &elementList() );
+  registerWrapper( viewKeyStruct::EmbSurfNodesPositionString(), &m_embeddedSurfNodesPosition ).setSizedFromParent( 0 );
+  this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
+  this->registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
+  this->registerWrapper( viewKeyStruct::elementRegionListString(), &elementRegionList() );
+  this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
+  this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
 
 }
 
@@ -249,7 +249,7 @@ void NodeManager::setElementMaps( ElementRegionManager const * const elementRegi
     }
   } );
 
-  this->m_toElements.setElementRegionManager( elementRegionManager );
+  this->m_toElements.setElementRegionManager( *elementRegionManager );
 }
 
 
@@ -266,11 +266,11 @@ void NodeManager::compressRelationMaps()
 void NodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
   ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
 
   if( this->hasWrapper( "usedFaces" ) )
   {
@@ -299,7 +299,7 @@ localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
 {
   localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toEdgesRelation.toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToEdges,
@@ -307,7 +307,7 @@ localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            this->localToGlobalMap(),
                                            m_toEdgesRelation.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toFacesRelation.toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToFaces,
@@ -315,7 +315,7 @@ localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            this->localToGlobalMap(),
                                            m_toFacesRelation.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            this->m_toElements,
                                            packList,
@@ -333,7 +333,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString, "" );
+  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -343,7 +343,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString, "" );
+  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -353,7 +353,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString, "" );
+  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,

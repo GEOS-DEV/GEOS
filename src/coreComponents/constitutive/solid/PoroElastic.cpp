@@ -41,28 +41,28 @@ PoroElastic< BASE >::PoroElastic( string const & name, Group * const parent ):
   m_dPVMult_dPressure(),
   m_poreVolumeRelation()
 {
-  this->registerWrapper( viewKeyStruct::biotCoefficientString, &m_biotCoefficient )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  this->registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Biot's coefficient" );
 
-  this->registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  this->registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Pore volume compressibilty" );
 
-  this->registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure )->
-    setApplyDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  this->registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ReferencePressure" );
 
 
-  this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier )->
-    setApplyDefaultValue( 1.0 )->
+  this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "" );
 
-  this->registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure )->
-    setApplyDefaultValue( -1 )->
+  this->registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure ).
+    setApplyDefaultValue( -1 ).
     setDescription( "" );
 }
 

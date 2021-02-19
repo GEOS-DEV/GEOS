@@ -39,17 +39,17 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
                                                       Group * const parent )
   : FluxApproximationBase( name, parent )
 {
-  registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString )->
+  registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper< FaceElementStencil >( viewKeyStruct::fractureStencilString )->
+  registerWrapper< FaceElementStencil >( viewKeyStruct::fractureStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
 }
 
 void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
 {
-  stencilGroup.registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString )->
+  stencilGroup.registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );
 }
 
@@ -59,7 +59,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   FaceManager const & faceManager = *mesh.getFaceManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
+  CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
 
   arrayView2d< localIndex const > const & elemRegionList = faceManager.elementRegionList();
   arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
@@ -67,19 +67,19 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString );
+    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
     elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
-    elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
+    elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
-    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
@@ -197,7 +197,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
 void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
 {
-  stencilGroup.registerWrapper< FaceElementStencil >( viewKeyStruct::fractureStencilString )->
+  stencilGroup.registerWrapper< FaceElementStencil >( viewKeyStruct::fractureStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );
 }
 
@@ -211,10 +211,10 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ElementRegionManager * const elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager->constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
+    elemManager->constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
-    elemManager->constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager->constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
     elemManager->constructArrayViewAccessor< real64, 2 >( m_coeffName );
@@ -225,10 +225,10 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > X = nodeManager->referencePosition();
 
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager->getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString );
+    faceManager->getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
 
-  FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
-  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
+  FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
+  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
   fractureStencil.move( LvArray::MemorySpace::CPU );
   cellStencil.move( LvArray::MemorySpace::CPU );
 
@@ -240,10 +240,10 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges =
-    edgeManager->getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString );
+    edgeManager->getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString() );
 
   ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements =
-    edgeManager->getReference< ArrayOfArrays< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString );
+    edgeManager->getReference< ArrayOfArrays< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString() );
 
   FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion->getToCellRelation();
 
@@ -636,8 +636,8 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   NodeManager & nodeManager = *( mesh.getNodeManager() );
 
   // Get the stencils
-  FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
-  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
+  FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
+  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
   fractureStencil.move( LvArray::MemorySpace::CPU );
   cellStencil.move( LvArray::MemorySpace::CPU );
 
@@ -780,7 +780,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
 void TwoPointFluxApproximation::registerBoundaryStencil( Group & stencilGroup, string const & setName ) const
 {
-  stencilGroup.registerWrapper< BoundaryStencil >( setName )->
+  stencilGroup.registerWrapper< BoundaryStencil >( setName ).
     setRestartFlags( RestartFlags::NO_WRITE );
 }
 
@@ -800,10 +800,10 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
-    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
     elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );

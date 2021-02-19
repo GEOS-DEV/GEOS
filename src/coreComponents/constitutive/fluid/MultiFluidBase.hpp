@@ -305,43 +305,43 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto componentNamesString       = "componentNames";
-    static constexpr auto componentMolarWeightString = "componentMolarWeight";
+    static constexpr char const * componentNamesString() { return "componentNames"; }
+    static constexpr char const * componentMolarWeightString() { return "componentMolarWeight"; }
 
-    static constexpr auto phaseNamesString     = "phaseNames";
+    static constexpr char const * phaseNamesString() { return "phaseNames"; }
 
-    static constexpr auto phaseFractionString                            = "phaseFraction";                          // xi_p
-    static constexpr auto dPhaseFraction_dPressureString                 = "dPhaseFraction_dPressure";               // dXi_p/dP
-    static constexpr auto dPhaseFraction_dTemperatureString              = "dPhaseFraction_dTemperature";            // dXi_p/dT
-    static constexpr auto dPhaseFraction_dGlobalCompFractionString       = "dPhaseFraction_dGlobalCompFraction";     // dXi_p/dz
+    static constexpr char const * phaseFractionString() { return "phaseFraction"; } // xi_p
+    static constexpr char const * dPhaseFraction_dPressureString() { return "dPhaseFraction_dPressure"; } // dXi_p/dP
+    static constexpr char const * dPhaseFraction_dTemperatureString() { return "dPhaseFraction_dTemperature"; } // dXi_p/dT
+    static constexpr char const * dPhaseFraction_dGlobalCompFractionString() { return "dPhaseFraction_dGlobalCompFraction"; } // dXi_p/dz
 
-    static constexpr auto phaseDensityString                             = "phaseDensity";                           // rho_p
-    static constexpr auto dPhaseDensity_dPressureString                  = "dPhaseDensity_dPressure";                // dRho_p/dP
-    static constexpr auto dPhaseDensity_dTemperatureString               = "dPhaseDensity_dTemperature";             // dRho_p/dT
-    static constexpr auto dPhaseDensity_dGlobalCompFractionString        = "dPhaseDensity_dGlobalCompFraction";      // dRho_p/dz
+    static constexpr char const * phaseDensityString() { return "phaseDensity"; } // rho_p
+    static constexpr char const * dPhaseDensity_dPressureString() { return "dPhaseDensity_dPressure"; } // dRho_p/dP
+    static constexpr char const * dPhaseDensity_dTemperatureString() { return "dPhaseDensity_dTemperature"; } // dRho_p/dT
+    static constexpr char const * dPhaseDensity_dGlobalCompFractionString() { return "dPhaseDensity_dGlobalCompFraction"; } // dRho_p/dz
 
-    static constexpr auto phaseMassDensityString                         = "phaseMassDensity";                       // rho_p
-    static constexpr auto dPhaseMassDensity_dPressureString              = "dPhaseMassDensity_dPressure";            // dRho_p/dP
-    static constexpr auto dPhaseMassDensity_dTemperatureString           = "dPhaseMassDensity_dTemperature";         // dRho_p/dT
-    static constexpr auto dPhaseMassDensity_dGlobalCompFractionString    = "dPhaseMassDensity_dGlobalCompFraction";  // dRho_p/dz
+    static constexpr char const * phaseMassDensityString() { return "phaseMassDensity"; } // rho_p
+    static constexpr char const * dPhaseMassDensity_dPressureString() { return "dPhaseMassDensity_dPressure"; } // dRho_p/dP
+    static constexpr char const * dPhaseMassDensity_dTemperatureString() { return "dPhaseMassDensity_dTemperature"; } // dRho_p/dT
+    static constexpr char const * dPhaseMassDensity_dGlobalCompFractionString() { return "dPhaseMassDensity_dGlobalCompFraction"; } // dRho_p/dz
 
-    static constexpr auto phaseViscosityString                           = "phaseViscosity";                         // mu_p
-    static constexpr auto dPhaseViscosity_dPressureString                = "dPhaseViscosity_dPressure";              // dMu_p/dP
-    static constexpr auto dPhaseViscosity_dTemperatureString             = "dPhaseViscosity_dTemperature";           // dMu_p/dT
-    static constexpr auto dPhaseViscosity_dGlobalCompFractionString      = "dPhaseViscosity_dGlobalCompFraction";    // dMu_p/dz
+    static constexpr char const * phaseViscosityString() { return "phaseViscosity"; } // mu_p
+    static constexpr char const * dPhaseViscosity_dPressureString() { return "dPhaseViscosity_dPressure"; } // dMu_p/dP
+    static constexpr char const * dPhaseViscosity_dTemperatureString() { return "dPhaseViscosity_dTemperature"; } // dMu_p/dT
+    static constexpr char const * dPhaseViscosity_dGlobalCompFractionString() { return "dPhaseViscosity_dGlobalCompFraction"; } // dMu_p/dz
 
-    static constexpr auto phaseCompFractionString                        = "phaseCompFraction";                      // x_cp
-    static constexpr auto dPhaseCompFraction_dPressureString             = "dPhaseCompFraction_dPressure";           // dx_cp/dP
-    static constexpr auto dPhaseCompFraction_dTemperatureString          = "dPhaseCompFraction_dTemperature";        // dx_cp/dT
-    static constexpr auto dPhaseCompFraction_dGlobalCompFractionString   = "dPhaseCompFraction_dGlobalCompFraction"; // dx_cp/dz
+    static constexpr char const * phaseCompFractionString() { return "phaseCompFraction"; } // x_cp
+    static constexpr char const * dPhaseCompFraction_dPressureString() { return "dPhaseCompFraction_dPressure"; } // dx_cp/dP
+    static constexpr char const * dPhaseCompFraction_dTemperatureString() { return "dPhaseCompFraction_dTemperature"; } // dx_cp/dT
+    static constexpr char const * dPhaseCompFraction_dGlobalCompFractionString() { return "dPhaseCompFraction_dGlobalCompFraction"; } // dx_cp/dz
 
-    static constexpr auto totalDensityString                             = "totalDensity";                           // rho_t
-    static constexpr auto dTotalDensity_dPressureString                  = "dTotalDensity_dPressure";                // dRho_t/dP
-    static constexpr auto dTotalDensity_dTemperatureString               = "dTotalDensity_dTemperature";             // dRho_t/dT
-    static constexpr auto dTotalDensity_dGlobalCompFractionString        = "dTotalDensity_dGlobalCompFraction";      // dRho_t/dz
+    static constexpr char const * totalDensityString() { return "totalDensity"; } // rho_t
+    static constexpr char const * dTotalDensity_dPressureString() { return "dTotalDensity_dPressure"; } // dRho_t/dP
+    static constexpr char const * dTotalDensity_dTemperatureString() { return "dTotalDensity_dTemperature"; } // dRho_t/dT
+    static constexpr char const * dTotalDensity_dGlobalCompFractionString() { return "dTotalDensity_dGlobalCompFraction"; } // dRho_t/dz
 
-    static constexpr auto useMassString                                  = "useMass";
-  } viewKeysMultiFluidBase;
+    static constexpr char const * useMassString() { return "useMass"; }
+  };
 
 protected:
 

@@ -88,12 +88,12 @@ LaplaceFEM::LaplaceFEM( const string & name,
   m_fieldName( "primaryField" ),
   m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
 {
-  registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
-  registerWrapper( laplaceFEMViewKeys.fieldVarName.key(), &m_fieldName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( laplaceFEMViewKeys.fieldVarName.key(), &m_fieldName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of field variable" );
 }
 //END_SPHINX_INCLUDE_01
@@ -120,17 +120,17 @@ LaplaceFEM::~LaplaceFEM()
      The description here is simply an additional metadata for the newly mounted property.
  */
 //START_SPHINX_INCLUDE_02
-void LaplaceFEM::registerDataOnMesh( Group * const MeshBodies )
+void LaplaceFEM::registerDataOnMesh( Group & meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
+    NodeManager * const nodes = meshBody.getMeshLevel( 0 )->getNodeManager();
 
-    nodes->registerWrapper< real64_array >( m_fieldName )->
-      setApplyDefaultValue( 0.0 )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
+    nodes->registerWrapper< real64_array >( m_fieldName ).
+      setApplyDefaultValue( 0.0 ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
       setDescription( "Primary field variable" );
-  }
+  } );
 }
 //END_SPHINX_INCLUDE_02
 
@@ -208,7 +208,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
   GEOSX_MARK_FUNCTION;
   SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
-  MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
   arrayView1d< globalIndex const > const &
   dofIndex = nodeManager->getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
@@ -255,7 +255,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   NodeManager & nodeManager = *(mesh->getNodeManager());
 
@@ -346,23 +346,23 @@ void LaplaceFEM::applyDirichletBCImplicit( real64 const time,
   FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
 
   fsManager.apply( time,
-                   &domain,
+                   domain,
                    "nodeManager",
                    m_fieldName,
-                   [&]( FieldSpecificationBase const * const bc,
+                   [&]( FieldSpecificationBase const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
-                        Group * const targetGroup,
+                        Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc->applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
-                                                                                               time,
-                                                                                               targetGroup,
-                                                                                               m_fieldName,
-                                                                                               dofManager.getKey( m_fieldName ),
-                                                                                               dofManager.rankOffset(),
-                                                                                               localMatrix,
-                                                                                               localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
+                                                                                              time,
+                                                                                              targetGroup,
+                                                                                              m_fieldName,
+                                                                                              dofManager.getKey( m_fieldName ),
+                                                                                              dofManager.rankOffset(),
+                                                                                              localMatrix,
+                                                                                              localRhs );
   } );
 }
 

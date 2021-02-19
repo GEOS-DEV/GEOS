@@ -35,13 +35,13 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   m_numPerforationsGlobal( 0 ),
   m_location( 0, 3 )
 {
-  registerWrapper( viewKeyStruct::numPerforationsGlobalString, &m_numPerforationsGlobal );
-  registerWrapper( viewKeyStruct::reservoirElementRegionString, &m_toMeshElements.m_toElementRegion );
-  registerWrapper( viewKeyStruct::reservoirElementSubregionString, &m_toMeshElements.m_toElementSubRegion );
-  registerWrapper( viewKeyStruct::reservoirElementIndexString, &m_toMeshElements.m_toElementIndex );
-  registerWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex );
-  registerWrapper( viewKeyStruct::locationString, &m_location );
-  registerWrapper( viewKeyStruct::wellTransmissibilityString, &m_wellTransmissibility );
+  registerWrapper( viewKeyStruct::numPerforationsGlobalString(), &m_numPerforationsGlobal );
+  registerWrapper( viewKeyStruct::reservoirElementRegionString(), &m_toMeshElements.m_toElementRegion );
+  registerWrapper( viewKeyStruct::reservoirElementSubregionString(), &m_toMeshElements.m_toElementSubRegion );
+  registerWrapper( viewKeyStruct::reservoirElementIndexString(), &m_toMeshElements.m_toElementIndex );
+  registerWrapper( viewKeyStruct::wellElementIndexString(), &m_wellElementIndex );
+  registerWrapper( viewKeyStruct::locationString(), &m_location );
+  registerWrapper( viewKeyStruct::wellTransmissibilityString(), &m_wellTransmissibility );
 }
 
 PerforationData::~PerforationData()
@@ -180,7 +180,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     real64 const kh = h * sqrt( k1 * k2 );
 
     arrayView1d< real64 const > const & wellElemRadius =
-      wellElemSubRegion->getReference< array1d< real64 > >( WellElementSubRegion::viewKeyStruct::radiusString );
+      wellElemSubRegion->getReference< array1d< real64 > >( WellElementSubRegion::viewKeyStruct::radiusString() );
 
     GEOSX_ERROR_IF( rEq < wellElemRadius[wellElemIndex],
                     "The equivalent radius r_eq = " << rEq <<
@@ -202,8 +202,8 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
   NodeManager const * const nodeManager          = mesh.getNodeManager();
-  CellElementRegion const * const region    = Group::groupCast< CellElementRegion const * >( elemManager->getRegion( er ));
-  CellBlock const * const subRegion = Group::groupCast< CellElementSubRegion const * >( region->getSubRegion( esr ));
+  CellElementRegion const * const region    = dynamicCast< CellElementRegion const * >( elemManager->getRegion( er ));
+  CellBlock const * const subRegion = dynamicCast< CellElementSubRegion const * >( region->getSubRegion( esr ));
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];

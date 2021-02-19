@@ -18,6 +18,8 @@
 
 #include "SurfaceGenerator.hpp"
 
+#include "managers/GeosxState.hpp"
+#include "managers/ProblemManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "mpiCommunications/SpatialPartition.hpp"
@@ -179,42 +181,42 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   m_rockToughness( 1.0e99 ),
   m_mpiCommOrder( 0 )
 {
-  this->registerWrapper( viewKeyStruct::failCriterionString, &this->m_failCriterion );
+  this->registerWrapper( viewKeyStruct::failCriterionString(), &this->m_failCriterion );
 
-  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialNames ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the solid material used in solid mechanic solver" );
 
-  registerWrapper( viewKeyStruct::rockToughnessString, &m_rockToughness )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::rockToughnessString(), &m_rockToughness ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Rock toughness of the solid material" );
 
-  registerWrapper( viewKeyStruct::nodeBasedSIFString, &m_nodeBasedSIF )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::nodeBasedSIFString(), &m_nodeBasedSIF ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Rock toughness of the solid material" );
 
-  registerWrapper( viewKeyStruct::mpiCommOrderString, &m_mpiCommOrder )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable MPI consistent communication ordering" );
 
-  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
-    setInputFlag( dataRepository::InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "Fracture" );
 
-  registerWrapper( viewKeyStruct::tipNodesString, &m_tipNodes )->
+  registerWrapper( viewKeyStruct::tipNodesString(), &m_tipNodes ).
     setDescription( "Set containing all the nodes at the fracture tip" );
 
-  registerWrapper( viewKeyStruct::tipEdgesString, &m_tipEdges )->
+  registerWrapper( viewKeyStruct::tipEdgesString(), &m_tipEdges ).
     setDescription( "Set containing all the tip edges" );
 
-  registerWrapper( viewKeyStruct::tipFacesString, &m_tipFaces )->
+  registerWrapper( viewKeyStruct::tipFacesString(), &m_tipFaces ).
     setDescription( "Set containing all the tip faces" );
 
-  registerWrapper( viewKeyStruct::trailingFacesString, &m_trailingFaces )->
+  registerWrapper( viewKeyStruct::trailingFacesString(), &m_trailingFaces ).
     setDescription( "Set containing all the trailing faces" );
 
 
-  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 
 }
@@ -224,11 +226,11 @@ SurfaceGenerator::~SurfaceGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void SurfaceGenerator::registerDataOnMesh( Group * const MeshBodies )
+void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel * const meshLevel = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 );
+    MeshLevel * const meshLevel = meshBody.getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
@@ -289,15 +291,15 @@ void SurfaceGenerator::registerDataOnMesh( Group * const MeshBodies )
 
     // TODO: handle this automatically in registerExtrinsicData()
     faceManager->getExtrinsicData< extrinsicMeshData::K_IC >().resizeDimension< 1 >( 3 );
-  }
+  } );
 }
 
-void SurfaceGenerator::initializePostInitialConditionsPreSubGroups( Group * const problemManager )
+void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition * domain = problemManager->getGroup< DomainPartition >( dataRepository::keys::domain );
-  for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->getSubGroups() )
+  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
-    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
@@ -334,9 +336,9 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups( Group * cons
     }
   }
 
-  for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->getSubGroups() )
+  domain.getMeshBodies()->forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = meshBody.getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
     ElementRegionManager * const elementManager = meshLevel->getElemManager();
     arrayView2d< real64 const > const & faceNormals = faceManager->faceNormal();
@@ -370,11 +372,6 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups( Group * cons
                                                         getSubRegion< CellElementSubRegion >( faceToSubRegionMap[kf][k] );
             localIndex iEle = faceToElementMap[kf][k];
 
-            ElementRegionBase * const elementRegion = elementSubRegion->getParent()->getParent()->groupCast< ElementRegionBase * >();
-            string const elementRegionName = elementRegion->getName();
-            //          localIndex const er = elementManager->GetRegions().getIndex( elementRegionName );
-            //          localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
-
             arrayView1d< real64 const > const K_IC_00 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_00 >();
             arrayView1d< real64 const > const K_IC_01 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_01 >();
             arrayView1d< real64 const > const K_IC_02 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_02 >();
@@ -397,22 +394,21 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups( Group * cons
         }
       }
     }
-  }
+  } );
 }
 
 
-void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
+void SurfaceGenerator::postRestartInitialization()
 {
-  DomainPartition * const domain = domain0->groupCast< DomainPartition * >();
-
-  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
+  DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   // repopulate the fracture stencil
-  for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
+  domain.getMeshBodies()->forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = meshBody.getMeshLevel( 0 );
 
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -431,7 +427,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
-      FluxApproximationBase * const fluxApprox = fvManager.getGroup< FluxApproximationBase >( a );
+      FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( *meshLevel,
@@ -441,7 +437,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
         fractureSubRegion->m_newFaceElements.clear();
       }
     }
-  }
+  } );
 }
 
 
@@ -454,7 +450,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     {
       SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
@@ -475,7 +471,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
-    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     {
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -484,7 +480,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
       for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
       {
-        FluxApproximationBase * const fluxApprox = fvManager.getGroup< FluxApproximationBase >( a );
+        FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
         if( fluxApprox!=nullptr )
         {
           fluxApprox->addToFractureStencil( *meshLevel,
@@ -525,8 +521,8 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   ArrayOfArrays< localIndex > const & nodeToElementMap = nodeManager.elementList();
 
   map< string, string_array > fieldNames;
-  fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key ) );
-  fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal ) );
+  fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key() ) );
+  fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
@@ -836,10 +832,10 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
 //{
 //
 //  arrayView1d<integer> &
-//  nodeDegreeFromCrackTip = nodeManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString );
+//  nodeDegreeFromCrackTip = nodeManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString() );
 //
 //  arrayView1d<integer> &
-//  faceDegreeFromCrackTip = faceManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString );
+//  faceDegreeFromCrackTip = faceManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString() );
 //
 //  ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager.nodeList();
 //
@@ -1915,11 +1911,11 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
       const std::pair< CellElementSubRegion *, localIndex > & elem = iter_elem->first;
 
       CellElementSubRegion & elemSubRegion = *(elem.first);
-      ElementRegionBase * const elemRegion = elemSubRegion.getParent()->getParent()->groupCast< ElementRegionBase * >();
-      string const elemRegionName = elemRegion->getName();
+      ElementRegionBase & elemRegion = dynamicCast< ElementRegionBase & >( *elemSubRegion.getParent()->getParent() );
+      string const & elemRegionName = elemRegion.getName();
 
       localIndex const regionIndex = elementManager.getRegions().getIndex( elemRegionName );
-      localIndex const subRegionIndex = elemRegion->getSubRegions().getIndex( elemSubRegion.getName() );
+      localIndex const subRegionIndex = elemRegion.getSubRegions().getIndex( elemSubRegion.getName() );
       const localIndex elemIndex = elem.second;
 
       modifiedObjects.modifiedElements[{regionIndex, subRegionIndex}].insert( elemIndex );
@@ -2807,7 +2803,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
   SIFonFace.setValues< parallelHostPolicy >( 0 );
 
   arrayView2d< real64 const > const &
-  fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
+  fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
@@ -2834,7 +2830,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
-  ConstitutiveManager * const constitutiveManager =
+  ConstitutiveManager & constitutiveManager =
     domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
@@ -2845,7 +2841,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
   stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                             arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString,
+                                                             arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
                                                                                                                constitutiveManager );
 
 
@@ -2863,8 +2859,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
     for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {
       subRegion.getConstitutiveModel( m_solidMaterialNames[mat] )->
-        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU,
-                                                                                                                     false );
+        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::CPU,
+                                                                                                                       false );
     }
   } );
   displacement.move( LvArray::MemorySpace::CPU, false );
@@ -3676,7 +3672,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
-  ConstitutiveManager * const constitutiveManager =
+  ConstitutiveManager & constitutiveManager =
     domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
@@ -3687,7 +3683,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
   stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                             arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString,
+                                                             arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
                                                                                                                constitutiveManager );
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
@@ -3697,7 +3693,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
   detJ = elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
+    elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
   localIndex nElemEachSide[2];
   nElemEachSide[0] = 0;

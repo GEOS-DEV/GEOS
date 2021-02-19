@@ -158,21 +158,20 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr char const * settlingFactorString() { return "settlingFactor"; }
+    static constexpr char const * dSettlingFactor_dPressureString() { return "dSettlingFactor_dPressure"; }
+    static constexpr char const * dSettlingFactor_dProppantConcentrationString() { return "dSettlingFactor_dProppantConcentration"; }
+    static constexpr char const * dSettlingFactor_dComponentConcentrationString() { return "dSettlingFactor_dComponentConcentration"; }
 
-    static constexpr auto settlingFactorString    = "settlingFactor";
-    static constexpr auto dSettlingFactor_dPressureString  = "dSettlingFactor_dPressure";
-    static constexpr auto dSettlingFactor_dProppantConcentrationString  = "dSettlingFactor_dProppantConcentration";
-    static constexpr auto dSettlingFactor_dComponentConcentrationString  = "dSettlingFactor_dComponentConcentration";
+    static constexpr char const * collisionFactorString() { return "collisionFactor"; }
+    static constexpr char const * dCollisionFactor_dProppantConcentrationString() { return "dCollisionFactor_dProppantConcentration"; }
 
-    static constexpr auto collisionFactorString    = "collisionFactor";
-    static constexpr auto dCollisionFactor_dProppantConcentrationString  = "dCollisionFactor_dProppantConcentration";
+    static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
 
-    static constexpr auto maxProppantConcentrationString    = "maxProppantConcentration";
+    static constexpr char const * isCollisionalSlipString() { return "isCollisionalSlip"; }
 
-    static constexpr auto isCollisionalSlipString    = "isCollisionalSlip";
-
-    static constexpr auto proppantPackPermeabilityString    = "proppantPackPermeability";
-  } viewKeysParticleFluidBase;
+    static constexpr char const * proppantPackPermeabilityString() { return "proppantPackPermeability"; }
+  };
 
 protected:
 

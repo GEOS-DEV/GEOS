@@ -43,8 +43,7 @@ public:
    */
   static string catalogName() { return "Poroelastic"; }
 
-
-  virtual void registerDataOnMesh( dataRepository::Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
 
 
   virtual void setupSystem( DomainPartition & domain,
@@ -134,34 +133,34 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto couplingTypeOptionString = "couplingTypeOptionEnum";
-    constexpr static auto couplingTypeOptionStringString = "couplingTypeOption";
+    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
+    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
 
-    constexpr static auto totalMeanStressString = "totalMeanStress";
-    constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
+    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
+    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
 
-    constexpr static auto solidSolverNameString = "solidSolverName";
-    constexpr static auto fluidSolverNameString = "fluidSolverName";
-  } poroElasticSolverViewKeys;
+    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
+    constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
+  };
 
 
   SolidMechanicsLagrangianFEM * getSolidSolver()
-  {
-    return this->getParent()->getGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM * >();
-  }
-  SolidMechanicsLagrangianFEM const * getSolidSolver() const
-  {
-    return this->getParent()->getGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM const * >();
-  }
+  { return this->getParent()->getGroupPointer< SolidMechanicsLagrangianFEM >( m_solidSolverName ); }
 
-  FlowSolverBase * getFlowSolver()             { return this->getParent()->getGroup( m_flowSolverName )->groupCast< FlowSolverBase * >(); }
-  FlowSolverBase const * getFlowSolver() const { return this->getParent()->getGroup( m_flowSolverName )->groupCast< FlowSolverBase const * >(); }
+  SolidMechanicsLagrangianFEM const * getSolidSolver() const
+  { return this->getParent()->getGroupPointer< SolidMechanicsLagrangianFEM >( m_solidSolverName ); }
+
+  FlowSolverBase * getFlowSolver()
+  { return this->getParent()->getGroupPointer< FlowSolverBase >( m_flowSolverName ); }
+
+  FlowSolverBase const * getFlowSolver() const
+  { return this->getParent()->getGroupPointer< FlowSolverBase >( m_flowSolverName ); }
 
 protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   string m_solidSolverName;
   string m_flowSolverName;

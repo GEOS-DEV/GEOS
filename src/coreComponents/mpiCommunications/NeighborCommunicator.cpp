@@ -338,7 +338,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
 
   {
     ElemAdjListRefWrapType elementAdjacencyList =
-      elemManager.constructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::adjacencyListString,
+      elemManager.constructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
                                                                   std::to_string( this->m_neighborRank ) );
 
     mesh.generateAdjacencyLists( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary(),
@@ -350,7 +350,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
   }
 
   ElemAdjListViewType const elemAdjacencyList =
-    elemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString,
+    elemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
                                                                                            std::to_string( this->m_neighborRank ) );
 
   int const bufferSize = GhostSize( nodeManager, nodeAdjacencyList,
@@ -400,13 +400,13 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   unpackedSize += faceManager.unpackGlobalMaps( receiveBufferPtr, faceUnpackList, 0 );
 
   ElemAdjListRefType elementAdjacencyReceiveListArray =
-    elemManager.constructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
+    elemManager.constructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString(),
                                                                 std::to_string( this->m_neighborRank ) );
   unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr,
                                                 elementAdjacencyReceiveListArray );
 
   ElemAdjListViewType elementAdjacencyReceiveList =
-    elemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
+    elemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString(),
                                                                                            std::to_string( this->m_neighborRank ) );
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, nodeUnpackList, false, false );

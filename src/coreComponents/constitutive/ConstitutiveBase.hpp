@@ -106,9 +106,8 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
-    static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
-
+    static constexpr char const * poreVolumeMultiplierString() { return "poreVolumeMultiplier"; }
+    static constexpr char const * dPVMult_dPresString() { return "dPVMult_dDensity"; }
   };
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }

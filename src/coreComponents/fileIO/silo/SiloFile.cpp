@@ -906,10 +906,10 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
     std::set< std::pair< string, WrapperBase const * > > fieldNames;
     for( localIndex matI=0; matI<nmat; ++matI )
     {
-      Group const * const
+      Group const &
       constitutiveModel = elemRegion.getSubRegion( 0 )->getConstitutiveModels()->getGroup( regionMaterialList[matI] );
 
-      for( auto const & wrapperIter : constitutiveModel->wrappers() )
+      for( auto const & wrapperIter : constitutiveModel.wrappers() )
       {
         auto const & wrapper = wrapperIter.second;
 
@@ -1271,7 +1271,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
       if( wrapper->getPlotLevel() < m_plotLevel )
       {
         // the field name is the key to the map
-        string const fieldName = wrapper->getName();
+        string const & fieldName = wrapper->getName();
 
         viewPointers[esr][fieldName] = wrapper;
 
@@ -1279,17 +1279,15 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
         rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                         false,
-                                        [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )->void
+                                        [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )
         {
           typedef decltype( array ) arrayType;
-          Wrapper< arrayType > const &
-          sourceWrapper = Wrapper< arrayType >::cast( *wrapper );
+          Wrapper< arrayType > const & sourceWrapper = dynamicCast< Wrapper< arrayType > const & >( *wrapper );
           traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference();
 
-          Wrapper< arrayType > * const
-          newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
-          newWrapper->setPlotLevel( PlotLevel::LEVEL_0 );
-          arrayType & newarray = newWrapper->reference();
+          Wrapper< arrayType > & newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
+          newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
+          arrayType & newarray = newWrapper.reference();
           newarray.resize( arrayType::NDIM, sourceArray.dims() );
         } );
       }
@@ -1301,7 +1299,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
   for( auto & wrapperIter : fakeGroup.wrappers() )
   {
     WrapperBase * const wrapper = wrapperIter.second;
-    string const fieldName = wrapper->getName();
+    string const & fieldName = wrapper->getName();
     std::type_info const & typeID = wrapper->getTypeId();
 
     rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
@@ -1309,7 +1307,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
                                     [&]( auto array, auto GEOSX_UNUSED_PARAM( scalar ) )
     {
       typedef decltype( array ) arrayType;
-      Wrapper< arrayType > & wrapperT = Wrapper< arrayType >::cast( *wrapper );
+      Wrapper< arrayType > & wrapperT = dynamicCast< Wrapper< arrayType > & >( *wrapper );
       arrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
@@ -1319,8 +1317,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
         // check if the field actually exists / plotted on the current subregion
         if( viewPointers[esr].count( fieldName ) > 0 )
         {
-          Wrapper< arrayType > const &
-          sourceWrapper = Wrapper< arrayType >::cast( *(viewPointers[esr][fieldName]));
+          Wrapper< arrayType > const & sourceWrapper = dynamicCast< Wrapper< arrayType > const & >( *(viewPointers[esr][fieldName]));
           traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference().toViewConst();
 
           localIndex const offset = counter * targetArray.strides()[ 0 ];
@@ -1664,7 +1661,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
   ElementRegionManager const * const elementManager = meshLevel->getElemManager();
   elementManager->forElementRegions( [&]( ElementRegionBase const & elemRegion )
   {
-    string const regionName = elemRegion.getName();
+    string const & regionName = elemRegion.getName();
 
     writeElementMesh( elemRegion,
                       nodeManager,
@@ -2036,7 +2033,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
     if( wrapper->getPlotLevel() <= m_plotLevel )
     {
       // the field name is the key to the map
-      string const fieldName = wrapper->getName();
+      string const & fieldName = wrapper->getName();
 
       std::type_info const & typeID = wrapper->getTypeId();
 
@@ -2610,15 +2607,12 @@ void SiloFile::writeMaterialDataField2d( string const & meshName,
     fieldData[esr].resize( nmat );
     for( int matIndex=0; matIndex<nmat; ++matIndex )
     {
-      Group const * const
+      Group const &
       constitutiveModel = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] );
 
-      dataRepository::Wrapper< array2d< TYPE > > const * const
-      wrapper = constitutiveModel->getWrapper< array2d< TYPE > >( fieldName );
-
-      if( wrapper != nullptr )
+      if( constitutiveModel.hasWrapper( fieldName ) )
       {
-        arrayView2d< TYPE const > const & fieldView = wrapper->reference();
+        arrayView2d< TYPE const > const & fieldView = constitutiveModel.getReference< array2d< TYPE > >( fieldName );
 
         fieldData[esr][matIndex].resize( fieldView.size( 0 ), 1 );
         field[esr][matIndex] = fieldData[esr][matIndex].toViewConst();
@@ -2905,7 +2899,7 @@ void SiloFile::writeMaterialDataField3d( string const & meshName,
     for( localIndex matIndex = 0; matIndex<numMat; ++matIndex )
     {
       arrayView3d< TYPE const > const &
-      fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array3d< TYPE > >( fieldName );
+      fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] ).getReference< array3d< TYPE > >( fieldName );
       if( fieldData.size() > 0 )
       {
         fieldCopy[esr][matIndex].resize( fieldData.size( 0 ), fieldData.size( 1 ) );
@@ -2924,7 +2918,7 @@ void SiloFile::writeMaterialDataField3d( string const & meshName,
       for( localIndex matIndex = 0; matIndex < numMat; ++matIndex )
       {
         arrayView3d< TYPE const > const &
-        fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array3d< TYPE > >( fieldName );
+        fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] ).getReference< array3d< TYPE > >( fieldName );
 
         if( fieldData.size() > 0 && ivar < fieldData.size( 2 ))
         {
@@ -3011,7 +3005,7 @@ void SiloFile::writeMaterialDataField4d( string const & meshName,
     for( localIndex matIndex = 0; matIndex<numMat; ++matIndex )
     {
       arrayView4d< TYPE const > const &
-      fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array4d< TYPE > >( fieldName );
+      fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] ).getReference< array4d< TYPE > >( fieldName );
       if( fieldData.size() > 0 )
       {
         fieldCopy[esr][matIndex].resize( fieldData.size( 0 ), fieldData.size( 1 ) );
@@ -3033,7 +3027,7 @@ void SiloFile::writeMaterialDataField4d( string const & meshName,
         for( localIndex matIndex = 0; matIndex < numMat; ++matIndex )
         {
           arrayView4d< TYPE const > const &
-          fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array4d< TYPE > >( fieldName );
+          fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] ).getReference< array4d< TYPE > >( fieldName );
 
           if( fieldData.size() > 0 && ivar < fieldData.size( 2 ) && jvar < fieldData.size( 3 ))
           {

@@ -46,18 +46,18 @@ std::unordered_map< string, integer > const phaseDict =
 RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
-  registerWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes )->
+  registerWrapper( viewKeyStruct::phaseTypesString(), &m_phaseTypes ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder )->
+  registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseRelPermString, &m_phaseRelPerm )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString, &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerWrapper( viewKeyStruct::phaseRelPermString(), &m_phaseRelPerm ).setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString(), &m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
 RelativePermeabilityBase::~RelativePermeabilityBase()

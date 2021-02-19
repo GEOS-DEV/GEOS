@@ -191,20 +191,20 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow & solver,
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
 
     arrayView2d< real64 > & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString() );
 
     arrayView2d< real64 > & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString() );
 
     arrayView2d< real64 > & compFrac =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString() );
 
     arrayView3d< real64 > & dCompFrac_dCompDens =
-      subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+      subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
@@ -274,30 +274,30 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow & 
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
     arrayView1d< real64 > & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString() );
 
     arrayView1d< real64 > & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString() );
 
     arrayView2d< real64 > & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString() );
 
     arrayView2d< real64 > & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString() );
 
     arrayView2d< real64 > & phaseVolFrac =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString() );
 
     arrayView2d< real64 > & dPhaseVolFrac_dPres =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
 
     arrayView3d< real64 > & dPhaseVolFrac_dCompDens =
-      subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+      subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
 
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
@@ -394,30 +394,30 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow & solver
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.getConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
     arrayView1d< real64 > & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString() );
 
     arrayView1d< real64 > & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString() );
 
     arrayView2d< real64 > & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString() );
 
     arrayView2d< real64 > & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString() );
 
     arrayView2d< real64 > & phaseMob =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::phaseMobilityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::phaseMobilityString() );
 
     arrayView2d< real64 > & dPhaseMob_dPres =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dPressureString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dPressureString() );
 
     arrayView3d< real64 > & dPhaseMob_dCompDens =
-      subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
+      subRegion.getReference< array3d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString() );
 
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
@@ -528,7 +528,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.setValues< parallelDevicePolicy<> >( 0.0 );
 
-  string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
+  string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString() );
 
   solver.forTargetSubRegions( mesh, [&]( localIndex const,
                                          ElementSubRegionBase & subRegion )
@@ -539,18 +539,18 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
       subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< real64 const > const & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString() );
     pres.move( LvArray::MemorySpace::CPU, false );
 
     arrayView1d< real64 > const & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString() );
 
     arrayView2d< real64 const > const & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString() );
     compDens.move( LvArray::MemorySpace::CPU, false );
 
     arrayView2d< real64 > const & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString() );
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
@@ -639,7 +639,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseFlow >( "compflow" );
+    solver = state.getProblemManager().getPhysicsSolverManager().getGroupPointer< CompositionalMultiphaseFlow >( "compflow" );
 
     DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 

@@ -96,14 +96,9 @@ struct ConstitutivePassThru< SolidBase >
     }
     else
     {
-      string name;
-      if( constitutiveRelation !=nullptr )
-      {
-        name = constitutiveRelation->getName();
-      }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( " <<
+                   constitutiveRelation<< " ) failed. ( " <<
+                   constitutiveRelation<< " ) is named " << constitutiveRelation->getName() );
     }
   }
 };
@@ -128,14 +123,9 @@ struct ConstitutivePassThru< NullModel >
     }
     else
     {
-      string name;
-      if( constitutiveRelation !=nullptr )
-      {
-        name = constitutiveRelation->getName();
-      }
-      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::execute( " <<
+                   constitutiveRelation << " ) failed. ( " <<
+                   constitutiveRelation << " ) is named " << constitutiveRelation->getName() );
 
     }
   }
@@ -173,14 +163,9 @@ struct ConstitutivePassThru< PoroElasticBase >
     }
     else
     {
-      string name;
-      if( constitutiveRelation !=nullptr )
-      {
-        name = constitutiveRelation->getName();
-      }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( " <<
+                   constitutiveRelation << " ) failed. ( " <<
+                   constitutiveRelation << " ) is named " << constitutiveRelation->getName() );
     }
   }
 };
@@ -212,14 +197,9 @@ struct ConstitutivePassThru< DamageBase >
     }
     else
     {
-      string name;
-      if( constitutiveRelation !=nullptr )
-      {
-        name = constitutiveRelation->getName();
-      }
-      GEOSX_ERROR( "ConstitutivePassThru<DamageBase>::execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR( "ConstitutivePassThru<DamgeBase>::execute( " <<
+                   constitutiveRelation << " ) failed. ( " <<
+                   constitutiveRelation << " ) is named " << constitutiveRelation->getName() );
     }
   }
 };

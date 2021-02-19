@@ -79,7 +79,7 @@ public:
    * @brief Generate mesh.
    * @param cellBlocks cell blocks where the mesh is generated
    */
-  virtual void generateMesh( Group * const cellBlocks )
+  virtual void generateMesh( Group & cellBlocks )
   {
     GEOSX_UNUSED_VAR( cellBlocks );
     GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
@@ -97,7 +97,7 @@ public:
    */
   subGroupMap & getSubRegions()
   {
-    return getGroup( viewKeyStruct::elementSubRegions )->getSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
   }
 
   /**
@@ -106,7 +106,7 @@ public:
    */
   subGroupMap const & getSubRegions() const
   {
-    return getGroup( viewKeyStruct::elementSubRegions )->getSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
   }
 
 
@@ -120,7 +120,7 @@ public:
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * getSubRegion( string const & regionName ) const
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroupPointer< SUBREGIONTYPE >( regionName );
   }
 
   /**
@@ -129,7 +129,7 @@ public:
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE * getSubRegion( string const & regionName )
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroupPointer< SUBREGIONTYPE >( regionName );
   }
 
   /**
@@ -141,7 +141,7 @@ public:
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * getSubRegion( localIndex const & index ) const
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( index );
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroupPointer< SUBREGIONTYPE >( index );
   }
 
   /**
@@ -150,7 +150,7 @@ public:
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE * getSubRegion( localIndex const & index )
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( index );
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroupPointer< SUBREGIONTYPE >( index );
   }
 
   /**
@@ -159,7 +159,7 @@ public:
    */
   localIndex numSubRegions() const
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getSubGroups().size();
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups().size();
   }
 
   /**
@@ -237,8 +237,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    Group const * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+    this->getGroup( viewKeyStruct::elementSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
 /**
@@ -247,8 +246,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    Group * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+    this->getGroup( viewKeyStruct::elementSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
 /**
@@ -310,20 +308,17 @@ public:
 
   ///@}
 
-/**
- * @brief Struct to serve as a container for variable strings and keys.
- * @struct viewKeyStruct
- */
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     /// String key for the material list
-    static constexpr auto materialListString = "materialList";
+    static constexpr char const * materialListString() { return "materialList"; }
     /// String key for the element subregions
-    static constexpr auto elementSubRegions = "elementSubRegions";
+    static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
   };
-
-
-protected:
 
 private:
 
@@ -355,7 +350,7 @@ string_array ElementRegionBase::getConstitutiveNames() const
   string_array rval;
   for( string const & matName : m_materialList )
   {
-    Group const * const matModel = this->getSubRegion( 0 )->getConstitutiveModels()->getGroup( matName );
+    Group const * const matModel = this->getSubRegion( 0 )->getConstitutiveModels()->getGroupPointer( matName );
     if( dynamic_cast< CONSTITUTIVE_TYPE const * >( matModel ) != nullptr )
     {
       rval.emplace_back( matName );

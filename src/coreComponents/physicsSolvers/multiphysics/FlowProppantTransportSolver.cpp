@@ -39,29 +39,26 @@ FlowProppantTransportSolver::FlowProppantTransportSolver( const string & name, G
   m_flowSolver{},
   m_proppantSolver{}
 {
-  registerWrapper( viewKeyStruct::proppantSolverNameString, &m_proppantSolverName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::proppantSolverNameString(), &m_proppantSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the proppant transport solver to use in the flowProppantTransport solver" );
 
-  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::flowSolverNameString(), &m_flowSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the flow solver to use in the flowProppantTransport solver" );
 
-  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 }
-
-void FlowProppantTransportSolver::registerDataOnMesh( dataRepository::Group * const )
-{}
 
 void FlowProppantTransportSolver::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  m_proppantSolver = this->getParent()->getGroup< ProppantTransport >( m_proppantSolverName );
+  m_proppantSolver = this->getParent()->getGroupPointer< ProppantTransport >( m_proppantSolverName );
   GEOSX_ERROR_IF( m_proppantSolver == nullptr, "Invalid proppant solver name: " << m_proppantSolverName );
 
-  m_flowSolver = this->getParent()->getGroup< FlowSolverBase >( m_flowSolverName );
+  m_flowSolver = this->getParent()->getGroupPointer< FlowSolverBase >( m_flowSolverName );
   GEOSX_ERROR_IF( m_flowSolver == nullptr, "Invalid flow solver name: " << m_flowSolverName );
 }
 
@@ -78,7 +75,7 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
 
     // We need re-apply initial conditions to fractures after they are generated
     FieldSpecificationManager const & boundaryConditionManager = getGlobalState().getFieldSpecificationManager();
-    boundaryConditionManager.applyInitialConditions( &domain );
+    boundaryConditionManager.applyInitialConditions( domain );
   }
 
   m_flowSolver->setupSystem( domain,

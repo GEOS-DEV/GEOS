@@ -180,8 +180,8 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  SinglePhaseWell & wellSolver = *solver.getWellSolver()->groupCast< SinglePhaseWell * >();
-  SinglePhaseFVM< SinglePhaseBase > & flowSolver = *solver.getFlowSolver()->groupCast< SinglePhaseFVM< SinglePhaseBase > * >();
+  SinglePhaseWell & wellSolver = dynamicCast< SinglePhaseWell & >( *solver.getWellSolver() );
+  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.getFlowSolver() );
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > const & residual = solver.getLocalRhs();
@@ -226,9 +226,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
       // get the primary variables on reservoir elements
       arrayView1d< real64 const > const & pres =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
+        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
       arrayView1d< real64 > const & dPres =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
+        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
       pres.move( LvArray::MemorySpace::CPU, false );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
@@ -282,15 +282,15 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
     // get the primary variables on well elements
     arrayView1d< real64 const > const & wellElemPressure =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::pressureString() );
     arrayView1d< real64 > const & dWellElemPressure =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaPressureString() );
     wellElemPressure.move( LvArray::MemorySpace::CPU, false );
 
     arrayView1d< real64 const > const & connRate =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::connRateString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::connRateString() );
     arrayView1d< real64 > const & dConnRate =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaConnRateString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaConnRateString() );
     connRate.move( LvArray::MemorySpace::CPU, false );
 
     // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
@@ -373,7 +373,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoir >( "reservoirSystem" );
+    solver = state.getProblemManager().getPhysicsSolverManager().getGroupPointer< SinglePhaseReservoir >( "reservoirSystem" );
 
     DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 

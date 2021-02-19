@@ -117,11 +117,11 @@ protected:
     getGlobalState().getProblemManager().processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
-    DomainPartition * domain  = getGlobalState().getProblemManager().getDomainPartition();
-    MeshManager * meshManager = getGlobalState().getProblemManager().getGroup< MeshManager >( getGlobalState().getProblemManager().groupKeys.meshManager );
-    meshManager->generateMeshLevels( domain );
+    DomainPartition & domain = *getGlobalState().getProblemManager().getDomainPartition();
+    MeshManager & meshManager = getGlobalState().getProblemManager().getGroup< MeshManager >( getGlobalState().getProblemManager().groupKeys.meshManager );
+    meshManager.generateMeshLevels( domain );
 
-    ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager * elementManager = domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
     elementManager->processInputFileRecursive( topLevelNode );
     elementManager->postProcessInputRecursive();

@@ -91,7 +91,7 @@ public:
    */
   CellBlock * getRegion( string const & regionName )
   {
-    return this->getGroup( dataRepository::keys::cellBlocks )->getGroup< CellBlock >( regionName );
+    return this->getGroup( dataRepository::keys::cellBlocks ).getGroupPointer< CellBlock >( regionName );
   }
 
 
@@ -103,9 +103,9 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    Group * elementRegions = this->getGroup( dataRepository::keys::cellBlocks );
-    elementRegions->forSubGroups< CellBlock >( lambda );
+    this->getGroup( dataRepository::keys::cellBlocks ).forSubGroups< CellBlock >( lambda );
   }
+
 private:
 
   /**

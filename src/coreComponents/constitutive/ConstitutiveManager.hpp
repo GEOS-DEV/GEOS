@@ -52,7 +52,7 @@ public:
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;
 
-  ConstitutiveBase *
+  ConstitutiveBase &
   hangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                             dataRepository::Group * const parent,
                             localIndex const numConstitutivePointsPerParentIndex ) const;
@@ -62,25 +62,25 @@ public:
   template< typename T = ConstitutiveBase >
   T const * getConstitutiveRelation( string const & constitutiveRelationInstanceName ) const
   {
-    return this->getGroup< T >( constitutiveRelationInstanceName );
+    return this->getGroupPointer< T >( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
   T * getConstitutiveRelation( string const & constitutiveRelationInstanceName )
   {
-    return this->getGroup< T >( constitutiveRelationInstanceName );
+    return this->getGroupPointer< T >( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
   T const * getConstitutiveRelation( localIndex const index ) const
   {
-    return this->getGroup< T >( index );
+    return this->getGroupPointer< T >( index );
   }
 
   template< typename T = ConstitutiveBase >
   T * getConstitutiveRelation( localIndex const index )
   {
-    return this->getGroup< T >( index );
+    return this->getGroupPointer< T >( index );
   }
 
   // template< typename T >
@@ -96,10 +96,8 @@ public:
 
   struct groupKeyStruct
   {
-    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
-  } m_ConstitutiveManagerGroupKeys;
-
-
+    static constexpr auto constitutiveModelsString() { return "ConstitutiveModels"; }
+  };
 };
 
 
@@ -114,10 +112,10 @@ ConstitutiveManager::getConstitutiveData( string const & name,
   rval.resize( relationGroup->numSubGroups() );
   for( localIndex a=0; a<this->getSubGroups().size(); ++a )
   {
-    ConstitutiveBase const * const material = relationGroup->getGroup< ConstitutiveBase >( a );
-    if( material->hasWrapper( name ) )
+    ConstitutiveBase const & material = relationGroup->getGroup< ConstitutiveBase >( a );
+    if( material.hasWrapper( name ) )
     {
-      rval[a] = material->getReference< T >( name );
+      rval[a] = material.getReference< T >( name );
     }
   }
   return rval;
@@ -128,7 +126,7 @@ ConstitutiveManager::getConstitutiveData( string const & name,
 // ConstitutiveManager::GetConstitutiveData( string const & name,
 //                                           dataRepository::Group * const relationGroup )
 // {
-//   return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this)->
+//   return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this->
 //                                        GetConstitutiveData<T>( name, relationGroup ) );
 // }
 

@@ -174,9 +174,9 @@ public:
   /// Data view keys
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
-    static constexpr auto compressibilityString =  "compressibility";     ///< Compressibility key
-    static constexpr auto referencePressureString =  "referencePressure"; ///< Ref pressure key
-    static constexpr auto biotCoefficientString =  "BiotCoefficient";     ///< Biot key
+    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * referencePressureString() { return "referencePressure"; }
+    static constexpr char const * biotCoefficientString() { return "BiotCoefficient"; }
   };
 
 
