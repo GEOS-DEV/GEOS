@@ -46,7 +46,7 @@ CommunicationTools::~CommunicationTools()
 }
 
 void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
-                                              ObjectManagerBase const & compositionObject,
+                                              NodeManager const & compositionObject,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
   GEOSX_MARK_FUNCTION;
@@ -69,7 +69,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   // get the relation to the composition object used that will be used to identify the main object. For example,
   // a face can be identified by its nodes.
   std::vector< std::vector< globalIndex > > objectToCompositionObject;
-  object.extractMapFromObjectForAssignGlobalIndexNumbers( &compositionObject, objectToCompositionObject );
+  object.extractMapFromObjectForAssignGlobalIndexNumbers( compositionObject, objectToCompositionObject );
 
   // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with
@@ -356,8 +356,8 @@ CommunicationTools::
     localIndex const esr = iter.first.second;
     std::set< localIndex > const & indexList = iter.second;
 
-    ElementSubRegionBase * const subRegion = elementManager.getRegion( er )->getSubRegion( esr );
-    arrayView1d< globalIndex > const & localToGlobal = subRegion->localToGlobalMap();
+    ElementSubRegionBase & subRegion = elementManager.getRegion( er ).getSubRegion( esr );
+    arrayView1d< globalIndex > const & localToGlobal = subRegion.localToGlobalMap();
 
     for( localIndex const newLocalIndex : indexList )
     {
@@ -366,7 +366,7 @@ CommunicationTools::
                                       << localToGlobal[newLocalIndex] );
 
       localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
-      subRegion->updateGlobalToLocalMap( newLocalIndex );
+      subRegion.updateGlobalToLocalMap( newLocalIndex );
 
       nIndicesAssigned += 1;
     }
@@ -377,14 +377,14 @@ CommunicationTools::
 
 void
 CommunicationTools::
-  findMatchedPartitionBoundaryObjects( ObjectManagerBase * const objectManager,
+  findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOSX_MARK_FUNCTION;
-  arrayView1d< integer > const & domainBoundaryIndicator = objectManager->getDomainBoundaryIndicator();
+  arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
 
   array1d< globalIndex > globalPartitionBoundaryObjectsIndices;
-  objectManager->constructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
+  objectManager.constructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
 
 
   // send the size of the partitionBoundaryObjects to neighbors
@@ -403,7 +403,7 @@ CommunicationTools::
     for( std::size_t i=0; i<allNeighbors.size(); ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      localIndex_array & matchedPartitionBoundaryObjects = objectManager->getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+      localIndex_array & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
 
       neighbor.mpiWaitAll( commID );
       localIndex localCounter = 0;
@@ -413,7 +413,7 @@ CommunicationTools::
       {
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
-          localIndex const localMatchedIndex = objectManager->globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
+          localIndex const localMatchedIndex = objectManager.globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
           matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;
           ++localCounter;
@@ -646,10 +646,10 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
   GEOSX_MARK_FUNCTION;
   CommID commID = CommunicationTools::getCommID();
 
-  NodeManager & nodeManager = *( meshLevel.getNodeManager() );
-  EdgeManager & edgeManager = *( meshLevel.getEdgeManager() );
-  FaceManager & faceManager = *( meshLevel.getFaceManager() );
-  ElementRegionManager & elemManager = *( meshLevel.getElemManager() );
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   auto sendGhosts = [&] ( int idx )
   {
@@ -724,7 +724,7 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
 }
 
 void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                                       MeshLevel * const mesh,
+                                                       MeshLevel & mesh,
                                                        std::vector< NeighborCommunicator > & neighbors,
                                                        MPI_iCommData & icomm,
                                                        bool on_device )
@@ -736,7 +736,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, s
   for( std::size_t neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    int const bufferSize = neighbor.packCommSizeForSync( fieldNames, *mesh, icomm.commID, on_device );
+    int const bufferSize = neighbor.packCommSizeForSync( fieldNames, mesh, icomm.commID, on_device );
 
     neighbor.mpiISendReceiveBufferSizes( icomm.commID,
                                          icomm.mpiSizeSendBufferRequest[neighborIndex],
@@ -749,7 +749,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, s
 
 
 void CommunicationTools::synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                                  MeshLevel * const mesh,
+                                                  MeshLevel & mesh,
                                                   std::vector< NeighborCommunicator > & neighbors,
                                                   MPI_iCommData & icomm,
                                                   bool on_device )
@@ -759,7 +759,7 @@ void CommunicationTools::synchronizePackSendRecv( const std::map< string, string
   MPI_iCommData sizeComm;
   for( NeighborCommunicator & neighbor : neighbors )
   {
-    neighbor.packCommBufferForSync( fieldNames, *mesh, icomm.commID, on_device );
+    neighbor.packCommBufferForSync( fieldNames, mesh, icomm.commID, on_device );
   }
 
   for( std::size_t count=0; count<neighbors.size(); ++count )
@@ -781,7 +781,7 @@ void CommunicationTools::synchronizePackSendRecv( const std::map< string, string
 
 }
 
-void CommunicationTools::synchronizeUnpack( MeshLevel * const mesh,
+void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
                                             bool on_device )
@@ -812,7 +812,7 @@ void CommunicationTools::synchronizeUnpack( MeshLevel * const mesh,
 }
 
 void CommunicationTools::synchronizeFields( const std::map< string, string_array > & fieldNames,
-                                            MeshLevel * const mesh,
+                                            MeshLevel & mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             bool on_device )
 {

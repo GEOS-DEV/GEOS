@@ -29,14 +29,14 @@
 using namespace geosx;
 
 
-void evaluate1DFunction( FunctionBase * function,
+void evaluate1DFunction( FunctionBase & function,
                          arrayView1d< real64 const > const & inputs,
                          arrayView1d< real64 const > const & outputs )
 {
   for( localIndex ii=0; ii<inputs.size(); ++ii )
   {
     real64 input = inputs[ii];
-    real64 predicted = function->evaluate( &input );
+    real64 predicted = function.evaluate( &input );
     real64 expected = outputs[ii];
 
     ASSERT_NEAR( predicted, expected, 1e-10 );
@@ -85,10 +85,10 @@ TEST( FunctionTests, 1DTable )
   values[2] = -5.0;
   values[3] = 7.0;
 
-  TableFunction * table_a = functionManager->createChild( "TableFunction", "table_a" )->groupCast< TableFunction * >();
-  table_a->setTableCoordinates( coordinates );
-  table_a->setTableValues( values );
-  table_a->reInitializeFunction();
+  TableFunction & table_a = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_a" ) );
+  table_a.setTableCoordinates( coordinates );
+  table_a.setTableValues( values );
+  table_a.reInitializeFunction();
 
   // Setup testing coordinates, expected values
   real64_array testCoordinates( Ntest );
@@ -107,8 +107,8 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 3.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-  table_a->reInitializeFunction();
+  table_a.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_a.reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Upper
@@ -118,8 +118,8 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( TableFunction::InterpolationType::Upper );
-  table_a->reInitializeFunction();
+  table_a.setInterpolationMethod( TableFunction::InterpolationType::Upper );
+  table_a.reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Lower
@@ -129,8 +129,8 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = 3.0;
   testExpected[4] = -5.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( TableFunction::InterpolationType::Lower );
-  table_a->reInitializeFunction();
+  table_a.setInterpolationMethod( TableFunction::InterpolationType::Lower );
+  table_a.reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Nearest
@@ -140,8 +140,8 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( TableFunction::InterpolationType::Nearest );
-  table_a->reInitializeFunction();
+  table_a.setInterpolationMethod( TableFunction::InterpolationType::Nearest );
+  table_a.reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
 
 }
@@ -191,20 +191,20 @@ TEST( FunctionTests, 2DTable )
   inputVarNames[0] = inputName;
 
   // Initialize the table
-  TableFunction * table_b = functionManager->createChild( "TableFunction", "table_b" )->groupCast< TableFunction * >();
-  table_b->setTableCoordinates( coordinates );
-  table_b->setTableValues( values );
-  table_b->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-  table_b->setInputVarNames( inputVarNames );
-  table_b->reInitializeFunction();
+  TableFunction & table_b = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_b" ) );
+  table_b.setTableCoordinates( coordinates );
+  table_b.setTableValues( values );
+  table_b.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_b.setInputVarNames( inputVarNames );
+  table_b.reInitializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
   conduit::Node node;
   dataRepository::Group testGroup( "testGroup", node );
 
   real64_array2d testCoordinates;
-  testGroup.registerWrapper( inputName, &testCoordinates )->
-    setSizedFromParent( 1 )->
+  testGroup.registerWrapper( inputName, &testCoordinates ).
+    setSizedFromParent( 1 ).
     reference().resizeDimension< 1 >( Ndim );
   testGroup.resize( Ntest );
 
@@ -238,7 +238,7 @@ TEST( FunctionTests, 2DTable )
   }
 
   // Evaluate the function in batch mode
-  table_b->evaluate( &(testGroup), 0.0, set.toView(), output );
+  table_b.evaluate( testGroup, 0.0, set.toView(), output );
 
   // Compare results
   for( localIndex ii=0; ii<Ntest; ++ii )
@@ -313,20 +313,20 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   inputVarNames[1] = timeName;
 
   // Initialize the table
-  TableFunction * table_c = functionManager->createChild( "TableFunction", "table_c" )->groupCast< TableFunction * >();
-  table_c->setTableCoordinates( coordinates );
-  table_c->setTableValues( values );
-  table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-  table_c->setInputVarNames( inputVarNames );
-  table_c->reInitializeFunction();
+  TableFunction & table_c = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_c" ) );
+  table_c.setTableCoordinates( coordinates );
+  table_c.setTableValues( values );
+  table_c.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_c.setInputVarNames( inputVarNames );
+  table_c.reInitializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
   conduit::Node node;
   dataRepository::Group testGroup( "testGroup", node );
 
   real64_array2d testCoordinates;
-  testGroup.registerWrapper( coordinatesName, &testCoordinates )->
-    setSizedFromParent( 1 )->
+  testGroup.registerWrapper( coordinatesName, &testCoordinates ).
+    setSizedFromParent( 1 ).
     reference().resizeDimension< 1 >( Ndim - 1 );
   testGroup.resize( Ntest );
 
@@ -364,7 +364,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
     }
 
     // Evaluate the function in batch mode
-    table_c->evaluate( &(testGroup), t, set.toView(), output );
+    table_c.evaluate( testGroup, t, set.toView(), output );
 
     // Compare results
     for( localIndex jj=0; jj<Ntest; ++jj )
@@ -438,12 +438,12 @@ TEST( FunctionTests, 4DTable_derivatives )
   inputVarNames[1] = timeName;
 
   // Initialize the table
-  TableFunction * table_d = functionManager->createChild( "TableFunction", "table_d" )->groupCast< TableFunction * >();
-  table_d->setTableCoordinates( coordinates );
-  table_d->setTableValues( values );
-  table_d->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-  table_d->setInputVarNames( inputVarNames );
-  table_d->reInitializeFunction();
+  TableFunction & table_d = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_d" ) );
+  table_d.setTableCoordinates( coordinates );
+  table_d.setTableValues( values );
+  table_d.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_d.setInputVarNames( inputVarNames );
+  table_d.reInitializeFunction();
 
   real64 const relTol = 1e-4;
   real64 const eps = std::numeric_limits< real64 >::epsilon();
@@ -461,7 +461,7 @@ TEST( FunctionTests, 4DTable_derivatives )
   real64 derivatives[4]{};
   real64 perturbedDerivatives[4]{};
 
-  TableFunction::KernelWrapper kernelWrapper = table_d->createKernelWrapper();
+  TableFunction::KernelWrapper kernelWrapper = table_d.createKernelWrapper();
   for( localIndex mm=0; mm<nSamples; ++mm, input[3] += delta )
   {
     input[2] = start;
@@ -513,11 +513,11 @@ TEST( FunctionTests, 4DTable_symbolic )
   inputVarNames[3] = nameD;
 
   // Initialize the table
-  SymbolicFunction * table_e = functionManager->createChild( "SymbolicFunction", "table_e" )->groupCast< SymbolicFunction * >();
-  table_e->setSymbolicExpression( expression );
-  table_e->setInputVarNames( inputVarNames );
-  table_e->setSymbolicVariableNames( inputVarNames );
-  table_e->initializeFunction();
+  SymbolicFunction & table_e = dynamicCast< SymbolicFunction & >( *functionManager->createChild( "SymbolicFunction", "table_e" ) );
+  table_e.setSymbolicExpression( expression );
+  table_e.setInputVarNames( inputVarNames );
+  table_e.setSymbolicVariableNames( inputVarNames );
+  table_e.initializeFunction();
 
   // Setup a group for testing the batch mode function evaluation
   conduit::Node node;
@@ -527,10 +527,10 @@ TEST( FunctionTests, 4DTable_symbolic )
   real64_array inputB;
   real64_array inputC;
   real64_array inputD;
-  testGroup.registerWrapper( nameA, &inputA )->setSizedFromParent( 1 );
-  testGroup.registerWrapper( nameB, &inputB )->setSizedFromParent( 1 );
-  testGroup.registerWrapper( nameC, &inputC )->setSizedFromParent( 1 );
-  testGroup.registerWrapper( nameD, &inputD )->setSizedFromParent( 1 );
+  testGroup.registerWrapper( nameA, &inputA ).setSizedFromParent( 1 );
+  testGroup.registerWrapper( nameB, &inputB ).setSizedFromParent( 1 );
+  testGroup.registerWrapper( nameC, &inputC ).setSizedFromParent( 1 );
+  testGroup.registerWrapper( nameD, &inputD ).setSizedFromParent( 1 );
   testGroup.resize( Ntest );
 
   // Build testing inputs/outputs
@@ -564,7 +564,7 @@ TEST( FunctionTests, 4DTable_symbolic )
   }
 
   // Evaluate the function in batch mode
-  table_e->evaluate( &(testGroup), 0.0, set.toView(), output );
+  table_e.evaluate( testGroup, 0.0, set.toView(), output );
 
   // Compare results
   for( localIndex jj=0; jj<Ntest; ++jj )
