@@ -1,4 +1,4 @@
-Solid Mechanics Models
+Solid Models
 ======================
 
 Solid mechanics constitutive models govern the relationship between measures of 
