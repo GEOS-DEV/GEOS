@@ -111,7 +111,7 @@ where :math:`g_0` is a constant and :math:`b \leq B` is the dilatancy parameter.
 .. math::
    b = \frac{6  \, \sin\psi}{3 \pm \sin\psi},
    
- where :math:`\psi \leq \phi` is the dilation angle. If :math:`\psi > 0`, then the plastic flow is dilative.
+where :math:`\psi \leq \phi` is the dilation angle. If :math:`\psi > 0`, then the plastic flow is dilative.
 
 A hardening rule is defined which determines how the yield surface will change as a result of plastic deformations. Here we use linear hardening for the cohesion parameter, :math:`A`, 
 
