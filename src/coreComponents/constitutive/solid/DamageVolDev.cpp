@@ -20,9 +20,8 @@
 #include "Damage.hpp"
 #include "DamageVolDev.hpp"
 
-#include "LinearElasticAnisotropic.hpp"
-#include "LinearElasticIsotropic.hpp"
-#include "LinearElasticTransverseIsotropic.hpp"
+#include "ElasticIsotropic.hpp"
+#include "ElasticTransverseIsotropic.hpp"
 
 namespace geosx
 {
@@ -40,9 +39,9 @@ template< typename BASE >
 DamageVolDev< BASE >::~DamageVolDev()
 {}
 
-typedef DamageVolDev< LinearElasticIsotropic > DamageVolDevLinearElasticIsotropic;
+typedef DamageVolDev< ElasticIsotropic > DamageVolDevElasticIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageVolDevLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageVolDevElasticIsotropic, string const &, Group * const )
 
 }
 } /* namespace geosx */

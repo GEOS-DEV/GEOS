@@ -27,9 +27,9 @@ namespace constitutive
 {
 
 /**
- * @class LinearElasticIsotropic
+ * @class MohrCoulomb
  *
- * Class to provide a linear elastic isotropic material response.
+ * Class to provide a Coulomb friction model.
  */
 class Coulomb : public ContactRelationBase
 {
