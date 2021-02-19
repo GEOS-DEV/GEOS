@@ -1330,6 +1330,8 @@ void LagrangianContactFlowSolver::
   // Get the coordinates for all nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
+  std::ofstream outFile( "H1.coo" );
+
   forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
                                                        [&]( localIndex const,
                                                             localIndex const,
@@ -1435,11 +1437,20 @@ void LagrangianContactFlowSolver::
                                                                       nodeDOF,
                                                                       dRdU.data(),
                                                                       2 * 3 * numNodesPerFace );
+
+            for( localIndex ii = 0; ii < 2 * 3 * numNodesPerFace; ++ii )
+            {
+              char str[100];
+              sprintf(str,"%10li %10lli %20.11e\n", localRow, nodeDOF[ii], dRdU(ii));
+              outFile << str;
+            }
+
           }
         }
       } );
     }
   } );
+  outFile.close();
 }
 
 void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const & domain,
@@ -1503,12 +1514,12 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::bulkModulusString,
+    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString,
                                                                                                  m_contactSolver->getSolidSolver()->targetRegionNames(),
                                                                                                  m_contactSolver->getSolidSolver()->solidMaterialNames() );
   // Shear modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::shearModulusString,
+    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString,
                                                                                                  m_contactSolver->getSolidSolver()->targetRegionNames(),
                                                                                                  m_contactSolver->getSolidSolver()->solidMaterialNames() );
 
