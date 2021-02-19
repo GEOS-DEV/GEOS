@@ -1441,7 +1441,7 @@ void LagrangianContactFlowSolver::
             for( localIndex ii = 0; ii < 2 * 3 * numNodesPerFace; ++ii )
             {
               char str[100];
-              sprintf(str,"%10li %10lli %20.11e\n", localRow, nodeDOF[ii], dRdU(ii));
+              sprintf( str, "%10li %10lli %20.11e\n", localRow, nodeDOF[ii], dRdU( ii ));
               outFile << str;
             }
 
@@ -1803,6 +1803,8 @@ void LagrangianContactFlowSolver::solveSystem( DofManager const & dofManager,
                                                ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
+
+  matrix.write( "matrix.petsc", LAIOutputFormat::NATIVE_BINARY );
 
   if( getLogLevel() > 3 )
   {

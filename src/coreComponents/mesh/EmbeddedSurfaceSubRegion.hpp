@@ -161,8 +161,10 @@ public:
     /// Delta displacement jump string
     static constexpr auto deltaDispJumpString       = "deltaDisplacementJump";
 
+    /// traction vector string
     static constexpr auto fractureTractionString    = "fractureTraction";
 
+    /// dTraction_dJump string
     static constexpr auto dTraction_dJumpString     = "dTraction_dJump";
 
     /// Displacement jump key
