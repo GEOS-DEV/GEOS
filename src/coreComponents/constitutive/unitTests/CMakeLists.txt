@@ -3,11 +3,12 @@
 #
 
 set( gtest_geosx_tests
-     testAuxiliaryFunctions.cpp
-     testLinearElasticIsotropic.cpp
-     testLinearElasticAnisotropic.cpp
+     testDamage.cpp
+     testDamageUtilities.cpp
+     testDruckerPrager.cpp
+     testElasticIsotropic.cpp
+     testPropertyConversions.cpp
      testRelPerm.cpp
-     testCapillaryPressure.cpp 
    )
 
 set( dependencyList gtest )

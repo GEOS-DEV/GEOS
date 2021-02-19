@@ -180,7 +180,7 @@
       proppantDiameter="4.5e-4"
       maxProppantConcentration="0.6"/>
 
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"

@@ -155,7 +155,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="16.66666666666666e3"

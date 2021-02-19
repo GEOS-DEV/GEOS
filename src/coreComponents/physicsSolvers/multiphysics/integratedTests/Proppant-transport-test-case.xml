@@ -177,7 +177,7 @@
       maxProppantConcentration="0.62"/>
 
     <!-- Below are some dummy parameters that are not used in simulation, but required by silo output  -->
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"

@@ -222,13 +222,6 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
     elementRegionManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
     elementRegionManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n )->
-        setPlotLevel( PlotLevel::NOPLOT )->
-        setRestartFlags( RestartFlags::NO_WRITE )->
-        setRegisteringObjects( this->getName())->
-        setDescription( "Array to hold the beginning of step stress for implicit problem rewinds" )->
-        reference().resizeDimension< 2 >( 6 );
-
       subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes )->
         setPlotLevel( PlotLevel::NOPLOT )->
         setRestartFlags( RestartFlags::NO_WRITE );
@@ -529,17 +522,11 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     {
       setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
-      if( solveIter>0 )
-      {
-        resetStressToBeginningOfStep( domain );
-      }
-
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
                                         cycleNumber,
                                         domain );
 
-//      updateStress( domain );
       if( surfaceGenerator!=nullptr )
       {
         if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
@@ -580,6 +567,14 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodes = *mesh.getNodeManager();
+
+  // save previous constitutive state data in preparation for next timestep
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
 
   FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
@@ -889,29 +884,8 @@ SolidMechanicsLagrangianFEM::
                                                           CellElementSubRegion & subRegion )
   {
     SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-
-    arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
-
-    array3d< real64, solid::STRESS_PERMUTATION > &
-    stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
-    // TODO: eliminate
-    stress_n.resize( stress.size( 0 ), stress.size( 1 ), 6 );
-
-    arrayView3d< real64, solid::STRESS_USD > const vstress_n = stress_n;
-
-    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex a=0; a<stress.size( 1 ); ++a )
-      {
-        for( localIndex i=0; i<6; ++i )
-        {
-          vstress_n( k, a, i ) = stress( k, a, i );
-        }
-      }
-    } );
+    constitutiveRelation.saveConvergedState();
   } );
-
-
 
 }
 
@@ -955,6 +929,15 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
       }
     } );
   }
+
+  // save (converged) constitutive state data
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
+
 }
 
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
@@ -1114,8 +1097,9 @@ SolidMechanicsLagrangianFEM::
                                         parallelDevicePolicy< 32 > >( targetSet,
                                                                       time_n + dt,
                                                                       targetGroup,
-                                                                      keys::TotalDisplacement, // TODO fix use of dummy
-                                                                                               // name
+                                                                      keys::TotalDisplacement,   // TODO fix use of
+                                                                                                 // dummy
+                                                                                                 // name
                                                                       dofKey,
                                                                       dofManager.rankOffset(),
                                                                       localMatrix,
@@ -1271,36 +1255,6 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
       disp( a, i ) -= incdisp( a, i );
       incdisp( a, i ) = 0.0;
     }
-  } );
-
-  resetStressToBeginningOfStep( domain );
-}
-
-void SolidMechanicsLagrangianFEM::resetStressToBeginningOfStep( DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & subRegion )
-  {
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-
-    arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation.getStress();
-
-    arrayView3d< real64 const, solid::STRESS_USD > const &
-    stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
-
-    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex a=0; a<stress.size( 1 ); ++a )
-      {
-        for( localIndex i = 0; i < 6; ++i )
-        {
-          stress( k, a, i ) = stress_n( k, a, i );
-        }
-      }
-    } );
   } );
 }
 

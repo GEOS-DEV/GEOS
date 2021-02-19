@@ -21,7 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
-#include "constitutive/solid/LinearElasticIsotropic.hpp"
+#include "constitutive/solid/ElasticIsotropic.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"

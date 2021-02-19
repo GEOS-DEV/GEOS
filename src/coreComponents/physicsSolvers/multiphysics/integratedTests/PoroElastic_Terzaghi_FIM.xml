@@ -134,7 +134,7 @@
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="skeleton"
       defaultDensity="0"
       defaultYoungsModulus="1.0e4"
