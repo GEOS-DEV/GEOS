@@ -583,20 +583,17 @@ Available options are: TODO-->
 		<!--amgCoarseSolver => AMG coarsest level solver/smoother type
 Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct-->
 		<xsd:attribute name="amgCoarseSolver" type="string" default="direct" />
-<<<<<<< HEAD
 		<!--amgCoarseningType => AMG coarsening algorithm
 Available options are: TODO-->
 		<xsd:attribute name="amgCoarseningType" type="string" default="PMIS" />
 		<!--amgInterpolationType => AMG interpolation algorithm
 Available options are: TODO-->
 		<xsd:attribute name="amgInterpolationType" type="integer" default="0" />
+		<!--amgNullSpaceType => AMG near null space approximation-->
+		<xsd:attribute name="amgNullSpaceType" type="string" default="constantModes" />
 		<!--amgNumFunctions => AMG number of functions
 Available options are: TODO-->
 		<xsd:attribute name="amgNumFunctions" type="integer" default="1" />
-=======
-		<!--amgNullSpaceType => AMG near null space approximation-->
-		<xsd:attribute name="amgNullSpaceType" type="string" default="constantModes" />
->>>>>>> develop
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
 		<!--amgSmootherType => AMG smoother type
@@ -1573,7 +1570,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--minSetSize => The minimum size of the set(s) to be collected (use for sets that expand during the simulation).-->
-		<xsd:attribute name="minSetSize" type="integer" default="-1" />
+		<xsd:attribute name="minSetSize" type="localIndex" default="-1" />
 		<!--objectPath => The name of the object from which to retrieve field values.-->
 		<xsd:attribute name="objectPath" type="string" use="required" />
 		<!--setNames => The set(s) for which to retrieve data.-->

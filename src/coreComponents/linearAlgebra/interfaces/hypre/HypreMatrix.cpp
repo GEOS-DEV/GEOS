@@ -179,7 +179,6 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
 
 #if defined(OVERRIDE_CREATE)
 
-#if defined(GEOSX_USE_CUDA)
 #define cudaCheckErrors(msg) \
     do { \
         cudaError_t __err = cudaGetLastError(); \
@@ -191,9 +190,7 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
             exit(1); \
         } \
     } while (0)
-#else
-#define cudaCheckErrors(msg)
-#endif
+
 void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                           MPI_Comm const & comm )
 {
@@ -212,17 +209,22 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
 
   array1d<globalIndex> rows( localMatrix.numRows() );
   array1d<HYPRE_Int> sizes( localMatrix.numRows() );
+  array1d<HYPRE_Int> offsets( localMatrix.numRows() );
   localIndex const * const pSizes = localMatrix.getSizes();
+  localIndex const * const pOffsets = localMatrix.getOffsets();
+
   for( localIndex row=0; row<localMatrix.numRows(); ++row )
   {
     rows[row] = row + rankOffset;
     sizes[row] = pSizes[row];
+    offsets[row] = pOffsets[row];
   }
 
 #if defined(GEOSX_USE_CUDA)
   localMatrix.move( LvArray::MemorySpace::GPU, false );
   rows.move( LvArray::MemorySpace::GPU, false );
   sizes.move( LvArray::MemorySpace::GPU, false );
+  offsets.move( LvArray::MemorySpace::GPU, false );
 #endif
   open();
 
@@ -247,7 +249,7 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
                                                       localMatrix.numRows(),
                                                       sizes.data(),
                                                       rows.data(),
-                                                      localMatrix.getOffsets(),
+                                                      offsets.data(),
                                                       localMatrix.getColumns(),
                                                       localMatrix.getEntries() ) );
 

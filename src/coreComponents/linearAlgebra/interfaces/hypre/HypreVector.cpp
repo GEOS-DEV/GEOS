@@ -32,11 +32,13 @@ namespace geosx
 
 // Check matching requirements on index/value types between GEOSX and Hypre
 
-static_assert( sizeof( HYPRE_BigInt ) == sizeof( 4 ),
-               "HYPRE_BigInt 4" );
-
-static_assert( sizeof( 4 ) == sizeof( globalIndex ),
-               "4 geosx::globalIndex " );
+// WARNING. We don't have consistent types between HYPRE_Int and localIndex.
+//          Decision needs to be made either to use bigint option, or change
+//          localIndex to int. We are getting away with this because we do not
+//          pass ( localIndex * ) to hypre except when it is on the GPU, in
+//          which case we are using int for localIndex.
+//static_assert( sizeof( HYPRE_Int ) == sizeof( localIndex ),
+//               "HYPRE_Int and geosx::localIndex must have the same size" );
 
 static_assert( sizeof( HYPRE_BigInt ) == sizeof( globalIndex ),
                "HYPRE_BigInt and geosx::globalIndex must have the same size" );
