@@ -2,7 +2,7 @@
 
 
 #######################################################
-Tutorial X: Pressurized fracture in an infinite medium
+Tutorial 10: Pressurized fracture in an infinite medium
 #######################################################
 
 **Objectives**
