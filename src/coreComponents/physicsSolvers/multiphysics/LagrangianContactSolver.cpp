@@ -308,12 +308,12 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::bulkModulusString,
+    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString,
                                                                                                  m_solidSolver->targetRegionNames(),
                                                                                                  m_solidSolver->solidMaterialNames() );
   // Shear modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::shearModulusString,
+    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString,
                                                                                                  m_solidSolver->targetRegionNames(),
                                                                                                  m_solidSolver->solidMaterialNames() );
 
@@ -1231,7 +1231,8 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
 {
   // I've tried to access the finiteElement::dispatch3D with
   // finiteElement::FiniteElementBase const &
-  // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName() );
+  // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName()
+  // );
   // but it's either empty (unknown discretization) or for 3D only (e.g., hexahedra)
   GEOSX_MARK_FUNCTION;
 
@@ -1395,7 +1396,8 @@ void LagrangianContactSolver::
               {
                 rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
                 // Opposite sign w.r.t. to formulation presented in
-                // Algebraically Stabilized Lagrange Multiplier Method for Frictional Contact Mechanics with Hydraulically Active Fractures
+                // Algebraically Stabilized Lagrange Multiplier Method for Frictional Contact Mechanics with
+                // Hydraulically Active Fractures
                 // Franceschini, A., Castelletto, N., White, J. A., Tchelepi, H. A.
                 // Computer Methods in Applied Mechanics and Engineering (2020) 368, 113161
                 // doi: 10.1016/j.cma.2020.113161
@@ -1728,12 +1730,12 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::bulkModulusString,
+    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString,
                                                                                                  m_solidSolver->targetRegionNames(),
                                                                                                  m_solidSolver->solidMaterialNames() );
   // Shear modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::shearModulusString,
+    elemManager.constructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString,
                                                                                                  m_solidSolver->targetRegionNames(),
                                                                                                  m_solidSolver->solidMaterialNames() );
 
@@ -2299,7 +2301,8 @@ void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition co
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString );
-//      arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
+//      arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >(
+// viewKeyStruct::tractionString );
 
       RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )

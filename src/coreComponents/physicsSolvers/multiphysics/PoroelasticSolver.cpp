@@ -68,9 +68,9 @@ PoroelasticSolver::PoroelasticSolver( const string & name,
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void PoroelasticSolver::registerDataOnMesh( dataRepository::Group * const MeshBodies )
+void PoroelasticSolver::registerDataOnMesh( dataRepository::Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  for( auto & mesh : meshBodies->getSubGroups() )
   {
     ElementRegionManager * const elemManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
 
@@ -279,7 +279,7 @@ void PoroelasticSolver::updateDeformationForCoupling( DomainPartition & domain )
     arrayView1d< real64 > const &
     dVol = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaVolumeString );
 
-    arrayView1d< real64 const > const & bulkModulus = solid.getReference< array1d< real64 > >( "BulkModulus" );
+    arrayView1d< real64 const > const & bulkModulus = solid.getReference< array1d< real64 > >( ElasticIsotropic::viewKeyStruct::bulkModulusString );
 
     real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
 
@@ -327,17 +327,11 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
 {
 
   // assemble J_SS
-//  m_solidSolver->AssembleSystem( time_n, dt,
-//                                 domain,
-//                                 dofManager,
-//                                 localMatrix,
-//                                 localRhs );
-
-  m_solidSolver->assemblyLaunch< constitutive::PoroElasticBase,
-                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
-                                                                                               dofManager,
-                                                                                               localMatrix,
-                                                                                               localRhs );
+  m_solidSolver->assembleSystem( time_n, dt,
+                                 domain,
+                                 dofManager,
+                                 localMatrix,
+                                 localRhs );
 
   // assemble J_FF
   m_flowSolver->assembleSystem( time_n, dt,
@@ -403,8 +397,8 @@ void PoroelasticSolver::assembleCouplingTerms( DomainPartition const & domain,
     arrayView2d< real64 const > const & density = fluid.density();
 
     int dim = 3;
-    localIndex constexpr maxNumUDof = 24; // TODO: assuming linear HEX at most for the moment
-    localIndex constexpr maxNumPDof = 1; // TODO: assuming piecewise constant (P0) only for the moment
+    localIndex constexpr maxNumUDof = 24;   // TODO: assuming linear HEX at most for the moment
+    localIndex constexpr maxNumPDof = 1;   // TODO: assuming piecewise constant (P0) only for the moment
     localIndex const nUDof = dim * numNodesPerElement;
     localIndex const nPDof = m_flowSolver->numDofPerCell();
     GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
@@ -618,7 +612,7 @@ real64 PoroelasticSolver::splitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 
-    m_solidSolver->resetStressToBeginningOfStep( domain );
+    //m_solidSolver->resetStressToBeginningOfStep( domain );
     dtReturnTemporary = m_solidSolver->nonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
 
     if( dtReturnTemporary < dtReturn )

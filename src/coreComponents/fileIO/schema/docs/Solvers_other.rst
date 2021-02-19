@@ -15,6 +15,7 @@ LaplaceFEM                       node :ref:`DATASTRUCTURE_LaplaceFEM`
 PhaseFieldDamageFEM              node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node :ref:`DATASTRUCTURE_PhaseFieldFracture`               
 Poroelastic                      node :ref:`DATASTRUCTURE_Poroelastic`                      
+PoroelasticEmbeddedFractures     node :ref:`DATASTRUCTURE_PoroelasticEmbeddedFractures`     
 ProppantTransport                node :ref:`DATASTRUCTURE_ProppantTransport`                
 SinglePhaseFVM                   node :ref:`DATASTRUCTURE_SinglePhaseFVM`                   
 SinglePhaseHybridFVM             node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`             
