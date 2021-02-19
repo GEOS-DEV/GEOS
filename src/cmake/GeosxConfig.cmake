@@ -24,7 +24,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CUDA
                           PARMETIS
                           PETSC
-                          PYTHON
+                          PYGEOSX
                           RAJA 
                           SUPERLU_DIST
                           SUITESPARSE

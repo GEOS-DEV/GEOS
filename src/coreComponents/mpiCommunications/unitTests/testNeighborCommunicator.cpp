@@ -47,14 +47,14 @@ using namespace geosx;
 #define SKIP_TEST_IN_SERIAL( REASON ) \
   do \
   { \
-    int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX ); \
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
     SKIP_TEST_IF( mpiSize == 1, REASON ); \
   } while( 0 )
 
 #define SKIP_TEST_IN_PARALLEL( REASON ) \
   do \
   { \
-    int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX ); \
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
     SKIP_TEST_IF( mpiSize != 1, REASON ); \
   } while( 0 )
 
@@ -74,7 +74,7 @@ TEST( TestNeighborComms, testBuffers )
     auto nc = NeighborCommunicator();
     nc.resizeSendBuffer( 0, sz );
 
-    auto & sb = nc.SendBuffer( 0 );
+    auto & sb = nc.sendBuffer( 0 );
     for( size_t ii = 0; ii < sz; ++ii )
       sb[ii] = sd[ii];
 
@@ -105,7 +105,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
 {
   SKIP_TEST_IN_SERIAL( "Parallel test" );
   {
-    int rnk = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+    int rnk = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
     constexpr localIndex size = 1000;
     constexpr localIndex byte_size = 1000 * sizeof(int);

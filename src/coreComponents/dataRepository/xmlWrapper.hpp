@@ -119,7 +119,7 @@ public:
    */
   template< typename T >
   static std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-  StringToInputVariable( T & target, string const & value )
+  stringToInputVariable( T & target, string const & value )
   {
     std::istringstream ss( value );
     ss>>target;
@@ -130,7 +130,7 @@ public:
    * @param[out] target the object to read values into
    * @param[in]  value  the string that contains the data to be parsed into target
    */
-  static void StringToInputVariable( R1Tensor & target, string const & value );
+  static void stringToInputVariable( R1Tensor & target, string const & value );
 
   /**
    * @brief Parse a string and fill an Array with the value(s) in the string.
@@ -143,14 +143,14 @@ public:
    */
   template< typename T, int NDIM, typename PERMUTATION >
   static std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-  StringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value )
+  stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value )
   { LvArray::input::stringToArray( array, value ); }
 
   ///@}
 
   /// Defines a static constexpr bool canParseVariable that is true iff the template parameter T
   /// is a valid argument to StringToInputVariable.
-  IS_VALID_EXPRESSION( canParseVariable, T, StringToInputVariable( std::declval< T & >(), std::string() ) );
+  IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string() ) );
 
   /**
    * @name Attribute extraction from XML nodes.
@@ -169,7 +169,7 @@ public:
    */
   template< typename T, typename T_DEF = T >
   static std::enable_if_t< canParseVariable< T >, bool >
-  ReadAttributeAsType( T & rval,
+  readAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
                        T_DEF const & defVal )
@@ -178,7 +178,7 @@ public:
     if( !xmlatt.empty() )
     {
       // parse the string/attribute into a value
-      StringToInputVariable( rval, xmlatt.value() );
+      stringToInputVariable( rval, xmlatt.value() );
     }
     else
     {
@@ -199,7 +199,7 @@ public:
    */
   template< typename T >
   static std::enable_if_t< canParseVariable< T >, bool >
-  ReadAttributeAsType( T & rval,
+  readAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
                        bool const required )
@@ -211,7 +211,7 @@ public:
     if( success )
     {
       // parse the string/attribute into a value
-      StringToInputVariable( rval, xmlatt.value() );
+      stringToInputVariable( rval, xmlatt.value() );
     }
     return success;
   }
@@ -226,11 +226,11 @@ public:
    */
   template< typename T >
   static std::enable_if_t< !dataRepository::DefaultValue< T >::has_default_value, bool >
-  ReadAttributeAsType( T & rval,
+  readAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
                        dataRepository::DefaultValue< T > const & )
-  { return ReadAttributeAsType( rval, name, targetNode, false ); }
+  { return readAttributeAsType( rval, name, targetNode, false ); }
 
   /**
    * @brief Extract attribute in an xml tree, and translate its value into a typed variable.
@@ -243,11 +243,11 @@ public:
    */
   template< typename T >
   static typename std::enable_if_t< dataRepository::DefaultValue< T >::has_default_value, bool >
-  ReadAttributeAsType( T & rval,
+  readAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
                        dataRepository::DefaultValue< T > const & defVal )
-  { return ReadAttributeAsType( rval, name, targetNode, defVal.value ); }
+  { return readAttributeAsType( rval, name, targetNode, defVal.value ); }
 
   /**
    * @brief Stub that for unreadable types that errors out.
@@ -255,7 +255,7 @@ public:
    */
   template< typename T, typename U >
   static std::enable_if_t< !canParseVariable< T >, bool >
-  ReadAttributeAsType( T &, string const &, xmlNode const &, U const & )
+  readAttributeAsType( T &, string const &, xmlNode const &, U const & )
   {
     GEOSX_ERROR( "Cannot parse the given type " << LvArray::system::demangleType< T >() );
     return false;

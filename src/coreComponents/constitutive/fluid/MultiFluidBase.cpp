@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
+MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
   m_useMass( false )
 {
@@ -102,7 +102,7 @@ MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
 
 }
 
-void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPts )
+void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPts )
 {
   localIndex const NP = numFluidPhases();
   localIndex const NC = numFluidComponents();
@@ -142,16 +142,16 @@ void MultiFluidBase::allocateConstitutiveData( dataRepository::Group * const par
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+  resizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
 MultiFluidBase::~MultiFluidBase()
 {}
 
 
-void MultiFluidBase::PostProcessInput()
+void MultiFluidBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
@@ -179,7 +179,7 @@ void MultiFluidBase::PostProcessInput()
                                  viewKeyStruct::componentMolarWeightString )
 
   // call to correctly set member array tertiary sizes on the 'main' material object
-  ResizeFields( 0, 0 );
+  resizeFields( 0, 0 );
 }
 
 bool MultiFluidBase::getMassFlag() const

@@ -42,7 +42,7 @@ std::unordered_map< string, integer > const phaseDict =
 
 }
 
-CapillaryPressureBase::CapillaryPressureBase( std::string const & name,
+CapillaryPressureBase::CapillaryPressureBase( string const & name,
                                               Group * const parent )
   : ConstitutiveBase( name, parent )
 {
@@ -67,9 +67,9 @@ CapillaryPressureBase::~CapillaryPressureBase()
 {}
 
 
-void CapillaryPressureBase::PostProcessInput()
+void CapillaryPressureBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 
@@ -98,10 +98,10 @@ void CapillaryPressureBase::PostProcessInput()
                   "CapillaryPressureBase: reference oil phase has not been defined and should be included in model" );
 
   // call to correctly set member array tertiary sizes on the 'main' material object
-  ResizeFields( 0, 0 );
+  resizeFields( 0, 0 );
 }
 
-void CapillaryPressureBase::ResizeFields( localIndex const size,
+void CapillaryPressureBase::resizeFields( localIndex const size,
                                           localIndex const numPts )
 {
   localIndex const NP = numFluidPhases();
@@ -114,7 +114,7 @@ void CapillaryPressureBase::ResizeFields( localIndex const size,
 void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  ResizeFields( 0, numConstitutivePointsPerParentIndex );
+  resizeFields( 0, numConstitutivePointsPerParentIndex );
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

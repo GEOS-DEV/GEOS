@@ -33,11 +33,11 @@ BrineViscosityFunction::BrineViscosityFunction( string_array const & inputPara,
   PVTFunction( inputPara[1], componentNames, componentMolarWeight )
 {
 
-  MakeCoef( inputPara );
+  makeCoef( inputPara );
 
 }
 
-void BrineViscosityFunction::MakeCoef( string_array const & inputPara )
+void BrineViscosityFunction::makeCoef( string_array const & inputPara )
 {
 
   constexpr real64 a = 0.0816;
@@ -61,7 +61,7 @@ void BrineViscosityFunction::MakeCoef( string_array const & inputPara )
   catch( const std::invalid_argument & e )
   {
 
-    GEOSX_ERROR( "Invalid BrineViscosity argument:" + std::string( e.what()));
+    GEOSX_ERROR( "Invalid BrineViscosity argument:" + string( e.what()));
 
   }
 
@@ -73,7 +73,7 @@ void BrineViscosityFunction::MakeCoef( string_array const & inputPara )
 }
 
 
-void BrineViscosityFunction::Evaluation( EvalVarArgs const & GEOSX_UNUSED_PARAM(
+void BrineViscosityFunction::evaluation( EvalVarArgs const & GEOSX_UNUSED_PARAM(
                                            pressure ), EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM(
                                            phaseComposition ), EvalVarArgs & value, bool GEOSX_UNUSED_PARAM( useMass )) const
 {

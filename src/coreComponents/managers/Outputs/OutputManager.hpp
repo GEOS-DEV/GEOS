@@ -38,18 +38,18 @@ namespace keys
 class OutputManager : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  OutputManager( std::string const & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  OutputManager( string const & name,
                  Group * const parent );
 
   /// Destructor
   virtual ~OutputManager() override;
 
-  /// @copydoc geosx::dataRepository::Group::CreateChild( string const & childKey, string const & childName )
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  /// @copydoc geosx::dataRepository::Group::createChild( string const & childKey, string const & childName )
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct

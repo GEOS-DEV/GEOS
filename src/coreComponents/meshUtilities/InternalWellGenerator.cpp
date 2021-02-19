@@ -87,9 +87,9 @@ InternalWellGenerator::~InternalWellGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void InternalWellGenerator::PostProcessInput()
+void InternalWellGenerator::postProcessInput()
 {
-  GEOSX_ERROR_IF( getName().find( "well" ) == std::string::npos,
+  GEOSX_ERROR_IF( getName().find( "well" ) == string::npos,
                   "Currently, the well generator must contain the word well in its name " );
 
   GEOSX_ERROR_IF( m_polyNodeCoords.size( 1 ) != m_nDims,
@@ -118,7 +118,7 @@ void InternalWellGenerator::PostProcessInput()
   // TODO: check that with no branching we can go from top to bottom and touch all the elements
 }
 
-Group * InternalWellGenerator::CreateChild( string const & childKey, string const & childName )
+Group * InternalWellGenerator::createChild( string const & childKey, string const & childName )
 {
   if( childKey == keys::perforation )
   {
@@ -127,7 +127,7 @@ Group * InternalWellGenerator::CreateChild( string const & childKey, string cons
     // keep track of the perforations that have been added
     m_perforationList.emplace_back( childName );
 
-    return RegisterGroup< Perforation >( childName );
+    return registerGroup< Perforation >( childName );
   }
   else
   {
@@ -136,12 +136,12 @@ Group * InternalWellGenerator::CreateChild( string const & childKey, string cons
   return nullptr;
 }
 
-void InternalWellGenerator::ExpandObjectCatalogs()
+void InternalWellGenerator::expandObjectCatalogs()
 {
-  CreateChild( keys::perforation, keys::perforation );
+  createChild( keys::perforation, keys::perforation );
 }
 
-void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
+void InternalWellGenerator::generateMesh( DomainPartition * const domain )
 {
   // count the number of well elements to create
   m_numElems = m_numElemsPerSegment * m_segmentToPolyNodeMap.size( 0 );
@@ -164,44 +164,44 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
   m_perfElemId.resize( m_numPerforations );
 
   // construct a reverse map from the polyline nodes to the segments
-  ConstructPolylineNodeToSegmentMap();
+  constructPolylineNodeToSegmentMap();
 
   // detect the head polyline node based on depth
-  FindPolylineHeadNodeIndex();
+  findPolylineHeadNodeIndex();
 
   // compute the location and distance from top of the well elements
-  DiscretizePolyline();
+  discretizePolyline();
 
   // map the perforations to the well elements
-  ConnectPerforationsToWellElements();
+  connectPerforationsToWellElements();
 
   // merge perforations to make sure that no well element is shared between two MPI domains
   // TODO: instead of merging perforations, split the well elements and do not change the physical location of the
   // perforation
-  int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
   if( mpiSize > 1 )
   {
-    MergePerforations();
+    mergePerforations();
   }
 
   // get the element (sub) region to populate and save the well generator and constraints names
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const meshLevel = domain->getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
   WellElementRegion * const
-  wellRegion = elemManager->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup )->
-                 GetGroup< WellElementRegion >( this->m_wellRegionName );
+  wellRegion = elemManager->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup )->
+                 getGroup< WellElementRegion >( this->m_wellRegionName );
 
   GEOSX_ERROR_IF( wellRegion == nullptr,
                   "Well region " << this->m_wellRegionName << " not found in well " << getName() );
 
-  wellRegion->SetWellGeneratorName( this->getName() );
-  wellRegion->SetWellControlsName( m_wellControlsName );
+  wellRegion->setWellGeneratorName( this->getName() );
+  wellRegion->setWellControlsName( m_wellControlsName );
 }
 
 
 
-void InternalWellGenerator::ConstructPolylineNodeToSegmentMap()
+void InternalWellGenerator::constructPolylineNodeToSegmentMap()
 {
   m_polyNodeToSegmentMap.resize( m_polyNodeCoords.size( 0 ) );
 
@@ -238,7 +238,7 @@ void InternalWellGenerator::ConstructPolylineNodeToSegmentMap()
   }
 }
 
-void InternalWellGenerator::FindPolylineHeadNodeIndex()
+void InternalWellGenerator::findPolylineHeadNodeIndex()
 {
   // we assume that the first *polyline segment* in the XML input is the well head segment
   globalIndex const wellHeadSegId = 0;
@@ -275,7 +275,7 @@ void InternalWellGenerator::FindPolylineHeadNodeIndex()
   }
 }
 
-void InternalWellGenerator::DiscretizePolyline()
+void InternalWellGenerator::discretizePolyline()
 {
   // initialize well elements and node ids
   globalIndex ipolyNodeTop  = m_polylineHeadNodeId;
@@ -351,7 +351,7 @@ void InternalWellGenerator::DiscretizePolyline()
 
     // then consider the next polyline segment
     ipolyNodeTop = ipolyNodeBottom;
-    isegCurrent  = GetNextSegmentIndex( isegCurrent, ipolyNodeTop );
+    isegCurrent  = getNextSegmentIndex( isegCurrent, ipolyNodeTop );
   }
 
   // set the previous index for the bottom segment
@@ -361,7 +361,7 @@ void InternalWellGenerator::DiscretizePolyline()
 }
 
 
-void InternalWellGenerator::ConnectPerforationsToWellElements()
+void InternalWellGenerator::connectPerforationsToWellElements()
 {
 
   // assign a well element to each perforation
@@ -370,9 +370,9 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
 
     // get the perforation and its properties
     Perforation const * const perf =
-      this->GetGroup< Perforation >( m_perforationList[iperf] );
-    m_perfDistFromHead[iperf]  = perf->GetDistanceFromWellHead();
-    m_perfTransmissibility[iperf] = perf->GetWellTransmissibility();
+      this->getGroup< Perforation >( m_perforationList[iperf] );
+    m_perfDistFromHead[iperf]  = perf->getDistanceFromWellHead();
+    m_perfTransmissibility[iperf] = perf->getWellTransmissibility();
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
@@ -435,7 +435,7 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
 }
 
 
-globalIndex InternalWellGenerator::GetNextSegmentIndex( globalIndex topSegId,
+globalIndex InternalWellGenerator::getNextSegmentIndex( globalIndex topSegId,
                                                         globalIndex currentPolyNodeId ) const
 {
   globalIndex nextSegId = -1;
@@ -455,7 +455,7 @@ globalIndex InternalWellGenerator::GetNextSegmentIndex( globalIndex topSegId,
 }
 
 
-void InternalWellGenerator::MergePerforations()
+void InternalWellGenerator::mergePerforations()
 {
   array1d< array1d< localIndex > > elemToPerfMap;
   elemToPerfMap.resize( m_numElems );
@@ -511,9 +511,9 @@ void InternalWellGenerator::MergePerforations()
 }
 
 
-void InternalWellGenerator::DebugWellGeometry() const
+void InternalWellGenerator::debugWellGeometry() const
 {
-  if( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 0 )
   {
     return;
   }
@@ -521,7 +521,7 @@ void InternalWellGenerator::DebugWellGeometry() const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "InternalWellGenerator = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::commRank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of well elements = " << m_numElems << std::endl;
 
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
@@ -563,5 +563,5 @@ void InternalWellGenerator::DebugWellGeometry() const
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, string const &, Group * const )
 }

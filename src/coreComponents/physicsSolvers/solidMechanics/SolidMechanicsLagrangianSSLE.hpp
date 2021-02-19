@@ -37,7 +37,7 @@ public:
                                 Group * const parent );
   virtual ~SolidMechanicsLagrangianSSLE() override;
 
-  static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
+  static string catalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
 
 };

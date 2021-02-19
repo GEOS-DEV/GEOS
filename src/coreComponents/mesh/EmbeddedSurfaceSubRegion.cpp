@@ -19,6 +19,8 @@
 #include "EmbeddedSurfaceSubRegion.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
+#include "mpiCommunications/MpiWrapper.hpp"
+
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
@@ -68,7 +70,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
 EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
 {}
 
-void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
@@ -95,7 +97,7 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d<
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
 }
 
-bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
+bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellIndex,
                                                        localIndex const subRegionIndex,
                                                        localIndex const regionIndex,
                                                        NodeManager & nodeManager,
@@ -157,7 +159,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
                                                     point );
 
       // Check if the point is inside the fracture (bounded plane)
-      if( !(fracture->IsCoordInObject( point )) )
+      if( !(fracture->isCoordInObject( point )) )
       {
         addEmbeddedElem = false;
       }
@@ -166,6 +168,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       numPoints++;
     }
   } //end of edge loop
+
 
   if( addEmbeddedElem && intersectionPoints.size( 0 ) > 0 )
   {
@@ -238,7 +241,7 @@ void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< 
 
 void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
-  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
+  this->m_toNodesRelation.setRelatedObject( mesh->getNodeManager() );
 }
 
 } /* namespace geosx */

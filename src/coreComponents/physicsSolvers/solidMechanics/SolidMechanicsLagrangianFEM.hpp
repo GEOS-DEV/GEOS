@@ -56,7 +56,7 @@ public:
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
    */
-  SolidMechanicsLagrangianFEM( const std::string & name,
+  SolidMechanicsLagrangianFEM( const string & name,
                                Group * const parent );
 
 
@@ -74,11 +74,11 @@ public:
   /**
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
-  static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
+  static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -90,28 +90,28 @@ public:
    */
   /**@{*/
   virtual
-  real64 SolverStep( real64 const & time_n,
+  real64 solverStep( real64 const & time_n,
                      real64 const & dt,
                      integer const cycleNumber,
                      DomainPartition & domain ) override;
 
   virtual
-  real64 ExplicitStep( real64 const & time_n,
+  real64 explicitStep( real64 const & time_n,
                        real64 const & dt,
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
+  setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition & domain,
+  setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
                array1d< real64 > & localRhs,
@@ -119,7 +119,7 @@ public:
                bool const setSparsity = false ) override;
 
   virtual void
-  AssembleSystem( real64 const time,
+  assembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
@@ -127,18 +127,18 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  solveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
-  virtual void ApplyBoundaryConditions( real64 const time,
+  virtual void applyBoundaryConditions( real64 const time,
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
@@ -146,15 +146,13 @@ public:
                                         arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  void ResetStressToBeginningOfStep( DomainPartition & domain );
-
-  virtual void ImplicitStepComplete( real64 const & time,
+  virtual void implicitStepComplete( real64 const & time,
                                      real64 const & dt,
                                      DomainPartition & domain ) override;
 
@@ -166,7 +164,7 @@ public:
                       typename CONSTITUTIVE_TYPE,
                       typename FE_TYPE > class KERNEL_TEMPLATE,
             typename ... PARAMS >
-  void AssemblyLaunch( DomainPartition & domain,
+  void assemblyLaunch( DomainPartition & domain,
                        DofManager const & dofManager,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs,
@@ -185,29 +183,29 @@ public:
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    */
-  void ApplyDisplacementBC_implicit( real64 const time,
-                                     DofManager const & dofManager,
-                                     DomainPartition & domain,
-                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                     arrayView1d< real64 > const & localRhs );
+  void applyDisplacementBCImplicit( real64 const time,
+                                    DofManager const & dofManager,
+                                    DomainPartition & domain,
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    arrayView1d< real64 > const & localRhs );
 
-  void CRSApplyTractionBC( real64 const time,
+  void crsApplyTractionBC( real64 const time,
                            DofManager const & dofManager,
                            DomainPartition & domain,
                            arrayView1d< real64 > const & localRhs );
 
-  void ApplyChomboPressure( DofManager const & dofManager,
+  void applyChomboPressure( DofManager const & dofManager,
                             DomainPartition & domain,
                             arrayView1d< real64 > const & localRhs );
 
 
-  void ApplyContactConstraint( DofManager const & dofManager,
+  void applyContactConstraint( DofManager const & dofManager,
                                DomainPartition & domain,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs );
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
@@ -225,7 +223,6 @@ public:
     static constexpr auto maxNumResolvesString = "maxNumResolves";
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNamesString = "solidMaterialNames";
-    static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";
@@ -278,9 +275,9 @@ public:
   }
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
 
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
@@ -322,21 +319,19 @@ template< typename CONSTITUTIVE_BASE,
                     typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TEMPLATE,
           typename ... PARAMS >
-void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
+void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs,
                                                   PARAMS && ... params )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+  MeshLevel & mesh = *(domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
 
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-  ResetStressToBeginningOfStep( domain );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
@@ -356,7 +351,7 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                                                                   std::forward< PARAMS >( params )... );
 
 
-  ApplyContactConstraint( dofManager,
+  applyContactConstraint( dofManager,
                           domain,
                           localMatrix,
                           localRhs );

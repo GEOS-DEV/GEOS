@@ -43,7 +43,7 @@ std::unordered_map< string, integer > const phaseDict =
 }
 
 
-RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Group * const parent )
+RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames )->
@@ -64,22 +64,22 @@ RelativePermeabilityBase::~RelativePermeabilityBase()
 {}
 
 
-void RelativePermeabilityBase::PostProcessInput()
+void RelativePermeabilityBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
 
-  localIndex const NP = numFluidPhases();
+  localIndex const numPhases = numFluidPhases();
 
-  GEOSX_ERROR_IF( NP < 2, "RelativePermeabilityBase: number of fluid phases should be at least 2" );
+  GEOSX_ERROR_IF( numPhases < 2, "RelativePermeabilityBase: number of fluid phases should be at least 2" );
 
-  GEOSX_ERROR_IF( NP > PhaseType::MAX_NUM_PHASES,
+  GEOSX_ERROR_IF( numPhases > PhaseType::MAX_NUM_PHASES,
                   "RelativePermeabilityBase: number of fluid phases exceeds the maximum of " << PhaseType::MAX_NUM_PHASES );
 
-  m_phaseTypes.resize( NP );
+  m_phaseTypes.resize( numPhases );
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
   m_phaseOrder.setValues< serialPolicy >( -1 );
 
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases; ++ip )
   {
     auto it = phaseDict.find( m_phaseNames[ip] );
     GEOSX_ERROR_IF( it == phaseDict.end(), "RelativePermeabilityBase: phase not supported: " << m_phaseNames[ip] );
@@ -91,22 +91,22 @@ void RelativePermeabilityBase::PostProcessInput()
   }
 
   // call to correctly set member array tertiary sizes on the 'main' material object
-  ResizeFields( 0, 0 );
+  resizeFields( 0, 0 );
 }
 
-void RelativePermeabilityBase::ResizeFields( localIndex const size, localIndex const numPts )
+void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex const numPts )
 {
-  localIndex const NP = numFluidPhases();
+  localIndex const numPhases = numFluidPhases();
 
-  m_phaseRelPerm.resize( size, numPts, NP );
-  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, NP, NP );
+  m_phaseRelPerm.resize( size, numPts, numPhases );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
 }
 
 void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+  resizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

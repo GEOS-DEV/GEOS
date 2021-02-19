@@ -36,7 +36,7 @@ public:
   /**
    * @brief Create a NeighborData object with name @p name and parent @p parent.
    */
-  NeighborData( std::string const & name, Group * const parent ):
+  NeighborData( string const & name, Group * const parent ):
     dataRepository::Group( name, parent )
   {
     this->registerWrapper( "matchedPartitionBoundaryObjects", &m_matchedPartitionBoundary )->

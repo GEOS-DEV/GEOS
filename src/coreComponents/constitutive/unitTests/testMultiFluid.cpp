@@ -22,6 +22,7 @@
 
 // TPL includes
 #include <gtest/gtest.h>
+#include <conduit.hpp>
 
 using namespace geosx;
 using namespace geosx::testing;
@@ -109,6 +110,7 @@ static const char * pvdw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP
                                "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
 
 void testNumericalDerivatives( MultiFluidBase & fluid,
+                               Group & parent,
                                real64 const P,
                                real64 const T,
                                arraySlice1d< real64 > const & composition,
@@ -123,8 +125,8 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   // create a clone of the fluid to run updates on
-  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", nullptr );
-  MultiFluidBase & fluidCopy = *fluidCopyPtr->group_cast< MultiFluidBase * >();
+  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", &parent );
+  MultiFluidBase & fluidCopy = *fluidCopyPtr->groupCast< MultiFluidBase * >();
 
   fluid.allocateConstitutiveData( fluid.getParent(), 1 );
   fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
@@ -180,7 +182,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    fluidWrapper.Update( 0, 0, P, T, composition );
+    fluidWrapper.update( 0, 0, P, T, composition );
   } );
 
   // now perturb variables and update the copied fluid's state
@@ -191,7 +193,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
     // update pressure and check derivatives
     {
       real64 const dP = perturbParameter * (P + perturbParameter);
-      fluidWrapper.Update( 0, 0, P + dP, T, composition );
+      fluidWrapper.update( 0, 0, P + dP, T, composition );
 
       checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, absTol, "phaseFrac", "Pres", phases );
       checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
@@ -212,7 +214,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
     // update temperature and check derivatives
     {
       real64 const dT = perturbParameter * (T + perturbParameter);
-      fluidWrapper.Update( 0, 0, P, T + dT, composition );
+      fluidWrapper.update( 0, 0, P, T + dT, composition );
 
       checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, absTol, "phaseFrac", "Temp", phases );
       checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
@@ -254,7 +256,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       for( localIndex ic = 0; ic < NC; ++ic )
         compNew[ic] /= sum;
 
-      fluidWrapper.Update( 0, 0, P, T, compNew );
+      fluidWrapper.update( 0, 0, P, T, compNew );
 
       string const var = "compFrac[" + components[jc] + "]";
       checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
@@ -269,7 +271,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
 MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
 {
-  auto fluid = parent.RegisterGroup< CompositionalMultiphaseFluid >( name );
+  auto fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -301,27 +303,35 @@ MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 
-class CompositionalFluidTest : public ::testing::Test
+class CompositionalFluidTestBase : public ::testing::Test
 {
+public:
+  CompositionalFluidTestBase():
+    node(),
+    parent( "parent", node )
+  {}
+
 protected:
-
-  virtual void SetUp() override
-  {
-    parent = std::make_unique< Group >( "parent", nullptr );
-    parent->resize( 1 );
-
-    fluid = makeCompositionalFluid( "fluid", *parent );
-
-    parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
-  }
-
-  std::unique_ptr< Group > parent;
+  conduit::Node node;
+  Group parent;
   MultiFluidBase * fluid;
+};
+
+class CompositionalFluidTest : public CompositionalFluidTestBase
+{
+public:
+  CompositionalFluidTest()
+  {
+    parent.resize( 1 );
+    fluid = makeCompositionalFluid( "fluid", parent );
+
+    parent.initialize( &parent );
+    parent.initializePostInitialConditions( &parent );
+  }
 };
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
@@ -337,7 +347,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMass )
@@ -353,12 +363,12 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-2;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
 MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup< BlackOilFluid >( name );
+  auto fluid = parent->registerGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -385,13 +395,13 @@ MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
   auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
   fluidType = BlackOilFluid::FluidType::LiveOil;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 
 MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup< BlackOilFluid >( name );
+  auto fluid = parent->registerGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -418,11 +428,11 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
   fluidType = BlackOilFluid::FluidType::DeadOil;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 
-void writeTableToFile( std::string const & filename, char const * str )
+void writeTableToFile( string const & filename, char const * str )
 {
   std::ofstream os( filename );
   ASSERT_TRUE( os.is_open() );
@@ -430,39 +440,34 @@ void writeTableToFile( std::string const & filename, char const * str )
   os.close();
 }
 
-void removeFile( std::string const & filename )
+void removeFile( string const & filename )
 {
   int const ret = std::remove( filename.c_str() );
   ASSERT_TRUE( ret == 0 );
 }
 
-class LiveOilFluidTest : public ::testing::Test
+class LiveOilFluidTest : public CompositionalFluidTestBase
 {
-protected:
-
-  virtual void SetUp() override
+public:
+  LiveOilFluidTest()
   {
     writeTableToFile( "pvto.txt", pvto_str );
     writeTableToFile( "pvtg.txt", pvtg_str );
     writeTableToFile( "pvtw.txt", pvtw_str );
 
-    parent = std::make_unique< Group >( "parent", nullptr );
-    parent->resize( 1 );
-    fluid = makeLiveOilFluid( "fluid", parent.get());
+    parent.resize( 1 );
+    fluid = makeLiveOilFluid( "fluid", &parent );
 
-    parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
+    parent.initialize( &parent );
+    parent.initializePostInitialConditions( &parent );
   }
 
-  virtual void TearDown() override
+  ~LiveOilFluidTest()
   {
     removeFile( "pvto.txt" );
     removeFile( "pvtg.txt" );
     removeFile( "pvtw.txt" );
   }
-
-  std::unique_ptr< Group > parent;
-  MultiFluidBase * fluid;
 };
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
@@ -478,7 +483,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMass )
@@ -495,36 +500,32 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol, absTol );
 }
 
-class DeadOilFluidTest : public ::testing::Test
+class DeadOilFluidTest : public CompositionalFluidTestBase
 {
-protected:
+public:
 
-  virtual void SetUp() override
+  DeadOilFluidTest()
   {
     writeTableToFile( "pvdo.txt", pvdo_str );
     writeTableToFile( "pvdg.txt", pvdg_str );
     writeTableToFile( "pvdw.txt", pvdw_str );
 
-    parent = std::make_unique< Group >( "parent", nullptr );
-    parent->resize( 1 );
-    fluid = makeDeadOilFluid( "fluid", parent.get());
+    parent.resize( 1 );
+    fluid = makeDeadOilFluid( "fluid", &parent );
 
-    parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
+    parent.initialize( &parent );
+    parent.initializePostInitialConditions( &parent );
   }
 
-  virtual void TearDown() override
+  ~DeadOilFluidTest()
   {
     removeFile( "pvdo.txt" );
     removeFile( "pvdg.txt" );
     removeFile( "pvdw.txt" );
   }
-
-  std::unique_ptr< Group > parent;
-  MultiFluidBase * fluid;
 };
 
 TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
@@ -540,7 +541,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
 TEST_F( DeadOilFluidTest, numericalDerivativesMass )
@@ -557,7 +558,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol, absTol );
 }
 
 int main( int argc, char * * argv )

@@ -18,10 +18,8 @@
  */
 
 #include "Damage.hpp"
-
-#include "LinearElasticAnisotropic.hpp"
-#include "LinearElasticIsotropic.hpp"
-#include "LinearElasticTransverseIsotropic.hpp"
+#include "ElasticIsotropic.hpp"
+#include "ElasticTransverseIsotropic.hpp"
 
 namespace geosx
 {
@@ -39,7 +37,6 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy()
 {
-
   this->registerWrapper( viewKeyStruct::damageString, &m_damage )->
     setApplyDefaultValue( 0.0 )->
     setPlotLevel( PlotLevel::LEVEL_0 )->
@@ -48,29 +45,26 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity )->
     setApplyDefaultValue( 0.0 )->
     setPlotLevel( PlotLevel::LEVEL_0 )->
-    setDescription( "Stress Deviator" );
+    setDescription( "Strain Energy Density" );
 
   this->registerWrapper( viewKeyStruct::lengthScaleString, &m_lengthScale )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "lenght scale l in the phase-field equation" );
+    setDescription( "Length scale l in the phase-field equation" );
 
   this->registerWrapper( viewKeyStruct::criticalFractureEnergyString, &m_criticalFractureEnergy )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "critical fracture energy" );
+    setDescription( "Critical fracture energy" );
 
   this->registerWrapper( viewKeyStruct::criticalStrainEnergyString, &m_criticalStrainEnergy )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "material critical stress in a 1d tension test" );
+    setDescription( "Critical stress in a 1d tension test" );
 }
 
-template< typename BASE >
-Damage< BASE >::~Damage()
-{}
 
 template< typename BASE >
-void Damage< BASE >::PostProcessInput()
+void Damage< BASE >::postProcessInput()
 {
-  BASE::PostProcessInput();
+  BASE::postProcessInput();
 }
 
 template< typename BASE >
@@ -82,9 +76,9 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group * const par
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-typedef Damage< LinearElasticIsotropic > DamageLinearElasticIsotropic;
+typedef Damage< ElasticIsotropic > DamageElasticIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageElasticIsotropic, string const &, Group * const )
 
 }
 } /* namespace geosx */

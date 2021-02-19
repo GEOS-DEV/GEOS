@@ -28,12 +28,16 @@ on the pressure and the temperature as input data
 
  .. code-block:: c
 
+<<<<<<< HEAD
     void SpanWagnerCO2DensityFunction::Evaluation( EvalVarArgs const & pressure,
                                                    EvalVarArgs const & temperature,
                                                    arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM( phaseComposition ),
                                                    EvalVarArgs & value,
                                                    bool useMass ) const
 
+=======
+  double PVTPackage::CO2Model::computeMassDensity(double P, double T)
+>>>>>>> develop
 
 ``input parameters:``
 
@@ -56,12 +60,16 @@ on the pressure and the temperature as input data.
 
  .. code-block:: c
 
+<<<<<<< HEAD
     virtual void FenghourCO2ViscosityFunction:Evaluation( EvalVarArgs const & pressure,
                                                           EvalVarArgs const & temperature,
                                                           arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM( phaseComposition ),
                                                           EvalVarArgs & value,
                                                           bool GEOSX_UNUSED_PARAM( useMass )) const:
 
+=======
+  double PVTPackage::CO2Model::computeVisc(double P, double T)
+>>>>>>> develop
 
 ``input parameters:``
 
@@ -81,12 +89,16 @@ It is set and register in the object constructor. The evaluation is then interfa
 
  .. code-block:: c
 
+<<<<<<< HEAD
   void BrineCO2DensityFunction:Evaluation( EvalVarArgs const & pressure,
                                            EvalVarArgs const & temperature,
                                            arraySlice1d< EvalVarArgs const > const & phaseComposition,
                                            EvalVarArgs & value,
                                            bool useMass ) const
 
+=======
+  double PVTPackage::BrineModel::computeMassDensity(double P, double T, double salinity)
+>>>>>>> develop
 
 ``input parameters:``
 

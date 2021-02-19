@@ -84,11 +84,11 @@ public:
    * @brief Get the key name for the SurfaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "SurfaceElementRegion"; }
 
   virtual const string getCatalogName() const override final
-  { return SurfaceElementRegion::CatalogName(); }
+  { return SurfaceElementRegion::catalogName(); }
 
   ///@}
 
@@ -98,7 +98,7 @@ public:
    */
   ///@{
 
-  virtual void GenerateMesh( Group * ) override;
+  virtual void generateMesh( Group * ) override;
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
@@ -110,7 +110,7 @@ public:
    * @param faceIndices the local indices of the new faces that define the face element.
    * @return the local index of the new FaceElement entry.
    */
-  localIndex AddToFractureMesh( real64 const time_np1,
+  localIndex addToFractureMesh( real64 const time_np1,
                                 EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
@@ -158,7 +158,7 @@ public:
   };
 
 protected:
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups( Group * const ) override;
 
 private:
 

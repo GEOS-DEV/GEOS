@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-SlurryFluidBase::SlurryFluidBase( std::string const & name, Group * const parent ):
+SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_isNewtonianFluid( true )
 {
@@ -81,9 +81,9 @@ SlurryFluidBase::SlurryFluidBase( std::string const & name, Group * const parent
 
 SlurryFluidBase::~SlurryFluidBase() = default;
 
-void SlurryFluidBase::PostProcessInput()
+void SlurryFluidBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
 
   localIndex const NC = numFluidComponents();
 

@@ -184,7 +184,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateActiveStrainEnergyDensity( k, q );
+    real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
@@ -212,13 +212,13 @@ public:
       {
         stack.localResidual[ a ] += detJ * ( -3 * N[a] / 16  -
                                              0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
-                                             (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.GetDegradationDerivative( qp_damage ));
+                                             (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ));
       }
       else
       {
         stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage +
                                              (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
-                                              N[a] * m_constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+                                              N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
 
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
@@ -227,14 +227,14 @@ public:
         {
           stack.localJacobian[ a ][ b ] -= detJ *
                                            (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                            (0.5 * ell * D/Gc) * m_constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * N[a] * N[b]);
+                                            (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b]);
 
         }
         else
         {
           stack.localJacobian[ a ][ b ] -= detJ *
                                            ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                             N[a] * N[b] * (1 + m_constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
+                                             N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
                                            );
         }
       }

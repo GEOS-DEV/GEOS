@@ -42,7 +42,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  ThickPlane( const std::string & name,
+  ThickPlane( const string & name,
               Group * const parent );
 
   /**
@@ -61,11 +61,11 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "ThickPlane"; }
+  static string catalogName() { return "ThickPlane"; }
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
+  bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
   /**
    * @name Getters
@@ -100,7 +100,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 

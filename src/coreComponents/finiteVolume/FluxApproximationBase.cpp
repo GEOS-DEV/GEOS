@@ -52,15 +52,15 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
-FluxApproximationBase::GetCatalog()
+FluxApproximationBase::getCatalog()
 {
   static FluxApproximationBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
+void FluxApproximationBase::registerDataOnMesh( Group * const meshBodies )
 {
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
     meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
@@ -69,16 +69,16 @@ void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
 
       Group & stencilParentGroup = mesh.hasGroup( groupKeyStruct::stencilMeshGroupString ) ?
                                    mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ) :
-                                   *mesh.RegisterGroup( groupKeyStruct::stencilMeshGroupString );
+                                   *mesh.registerGroup( groupKeyStruct::stencilMeshGroupString );
 
       Group & stencilGroup = stencilParentGroup.hasGroup( getName() ) ?
                              stencilParentGroup.getGroupReference( getName() ) :
-                             *stencilParentGroup.RegisterGroup( getName() );
+                             *stencilParentGroup.registerGroup( getName() );
 
       registerCellStencil( stencilGroup );
       registerFractureStencil( stencilGroup );
       // For each face-based boundary condition on target field, create a boundary stencil
-      fsManager.Apply( 0.0,
+      fsManager.apply( 0.0,
                        meshBodies->getParent(), // TODO: Apply() should take a MeshLevel directly
                        "faceManager",
                        m_fieldName,
@@ -102,12 +102,12 @@ void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
   } );
 }
 
-void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void FluxApproximationBase::initializePostInitialConditionsPreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   domain.getMeshBodies()->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
@@ -119,7 +119,7 @@ void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group 
       computeCellStencil( mesh );
 
       // For each face-based boundary condition on target field, create a boundary stencil
-      fsManager.Apply( 0.0,
+      fsManager.apply( 0.0,
                        &domain,
                        "faceManager",
                        m_fieldName,

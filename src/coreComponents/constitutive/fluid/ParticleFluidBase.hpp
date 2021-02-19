@@ -127,7 +127,7 @@ private:
    * @param[in] dFluidViscosity_dComponentConcentration derivatives of the fluid viscosity wrt the composition
    */
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,
                        real64 const dFluidDensity_dPressure,
@@ -144,7 +144,7 @@ class ParticleFluidBase : public ConstitutiveBase
 {
 public:
 
-  ParticleFluidBase( std::string const & name, Group * const parent );
+  ParticleFluidBase( string const & name, Group * const parent );
 
   virtual ~ParticleFluidBase() override;
 
@@ -176,7 +176,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   array1d< real64 > m_settlingFactor;
   array1d< real64 > m_dSettlingFactor_dPressure;

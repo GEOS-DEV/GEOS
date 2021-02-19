@@ -49,7 +49,7 @@ pvt::EOS_TYPE getCompositionalEosType( string const & name )
 
 } // namespace
 
-CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, Group * const parent )
+CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentNamesString )->setInputFlag( InputFlags::REQUIRED );
@@ -95,9 +95,9 @@ CompositionalMultiphaseFluid::deliverClone( string const & name,
   return clone;
 }
 
-void CompositionalMultiphaseFluid::PostProcessInput()
+void CompositionalMultiphaseFluid::postProcessInput()
 {
-  MultiFluidPVTPackageWrapper::PostProcessInput();
+  MultiFluidPVTPackageWrapper::postProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
@@ -140,7 +140,7 @@ void CompositionalMultiphaseFluid::createFluid()
   std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(), getCompositionalEosType );
 
   std::vector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
-  std::vector< std::string > const components( m_componentNames.begin(), m_componentNames.end() );
+  std::vector< string > const components( m_componentNames.begin(), m_componentNames.end() );
   std::vector< double > const Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
   std::vector< double > const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
   std::vector< double > const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
@@ -151,7 +151,7 @@ void CompositionalMultiphaseFluid::createFluid()
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

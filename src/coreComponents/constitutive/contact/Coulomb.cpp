@@ -24,7 +24,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-Coulomb::Coulomb( std::string const & name, Group * const parent ):
+Coulomb::Coulomb( string const & name, Group * const parent ):
   ContactRelationBase( name, parent ),
   m_postProcessed( false ),
   m_cohesion(),
@@ -64,7 +64,7 @@ real64 Coulomb::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX
 
 static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
-void Coulomb::PostProcessInput()
+void Coulomb::postProcessInput()
 {
   if( !m_postProcessed )
   {
@@ -105,6 +105,6 @@ void Coulomb::PostProcessInput()
   m_postProcessed = true;
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, string const &, Group * const )
 }
 } /* namespace geosx */
