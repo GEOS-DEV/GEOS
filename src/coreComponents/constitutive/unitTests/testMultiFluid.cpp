@@ -22,6 +22,7 @@
 
 // TPL includes
 #include <gtest/gtest.h>
+#include <conduit.hpp>
 
 using namespace geosx;
 using namespace geosx::testing;
@@ -109,6 +110,7 @@ static const char * pvdw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP
                                "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
 
 void testNumericalDerivatives( MultiFluidBase & fluid,
+                               Group & parent,
                                real64 const P,
                                real64 const T,
                                arraySlice1d< real64 > const & composition,
@@ -123,7 +125,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   // create a clone of the fluid to run updates on
-  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", nullptr );
+  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", &parent );
   MultiFluidBase & fluidCopy = *fluidCopyPtr->groupCast< MultiFluidBase * >();
 
   fluid.allocateConstitutiveData( fluid.getParent(), 1 );
@@ -305,23 +307,31 @@ MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
   return fluid;
 }
 
-class CompositionalFluidTest : public ::testing::Test
+class CompositionalFluidTestBase : public ::testing::Test
 {
+public:
+  CompositionalFluidTestBase():
+    node(),
+    parent( "parent", node )
+  {}
+
 protected:
-
-  virtual void SetUp() override
-  {
-    parent = std::make_unique< Group >( "parent", nullptr );
-    parent->resize( 1 );
-
-    fluid = makeCompositionalFluid( "fluid", *parent );
-
-    parent->initialize( parent.get() );
-    parent->initializePostInitialConditions( parent.get() );
-  }
-
-  std::unique_ptr< Group > parent;
+  conduit::Node node;
+  Group parent;
   MultiFluidBase * fluid;
+};
+
+class CompositionalFluidTest : public CompositionalFluidTestBase
+{
+public:
+  CompositionalFluidTest()
+  {
+    parent.resize( 1 );
+    fluid = makeCompositionalFluid( "fluid", parent );
+
+    parent.initialize( &parent );
+    parent.initializePostInitialConditions( &parent );
+  }
 };
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
@@ -337,7 +347,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMass )
@@ -353,7 +363,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-2;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
 MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
@@ -436,33 +446,28 @@ void removeFile( string const & filename )
   ASSERT_TRUE( ret == 0 );
 }
 
-class LiveOilFluidTest : public ::testing::Test
+class LiveOilFluidTest : public CompositionalFluidTestBase
 {
-protected:
-
-  virtual void SetUp() override
+public:
+  LiveOilFluidTest()
   {
     writeTableToFile( "pvto.txt", pvto_str );
     writeTableToFile( "pvtg.txt", pvtg_str );
     writeTableToFile( "pvtw.txt", pvtw_str );
 
-    parent = std::make_unique< Group >( "parent", nullptr );
-    parent->resize( 1 );
-    fluid = makeLiveOilFluid( "fluid", parent.get());
+    parent.resize( 1 );
+    fluid = makeLiveOilFluid( "fluid", &parent );
 
-    parent->initialize( parent.get() );
-    parent->initializePostInitialConditions( parent.get() );
+    parent.initialize( &parent );
+    parent.initializePostInitialConditions( &parent );
   }
 
-  virtual void TearDown() override
+  ~LiveOilFluidTest()
   {
     removeFile( "pvto.txt" );
     removeFile( "pvtg.txt" );
     removeFile( "pvtw.txt" );
   }
-
-  std::unique_ptr< Group > parent;
-  MultiFluidBase * fluid;
 };
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
@@ -478,7 +483,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMass )
@@ -495,36 +500,32 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol, absTol );
 }
 
-class DeadOilFluidTest : public ::testing::Test
+class DeadOilFluidTest : public CompositionalFluidTestBase
 {
-protected:
+public:
 
-  virtual void SetUp() override
+  DeadOilFluidTest()
   {
     writeTableToFile( "pvdo.txt", pvdo_str );
     writeTableToFile( "pvdg.txt", pvdg_str );
     writeTableToFile( "pvdw.txt", pvdw_str );
 
-    parent = std::make_unique< Group >( "parent", nullptr );
-    parent->resize( 1 );
-    fluid = makeDeadOilFluid( "fluid", parent.get());
+    parent.resize( 1 );
+    fluid = makeDeadOilFluid( "fluid", &parent );
 
-    parent->initialize( parent.get() );
-    parent->initializePostInitialConditions( parent.get() );
+    parent.initialize( &parent );
+    parent.initializePostInitialConditions( &parent );
   }
 
-  virtual void TearDown() override
+  ~DeadOilFluidTest()
   {
     removeFile( "pvdo.txt" );
     removeFile( "pvdg.txt" );
     removeFile( "pvdw.txt" );
   }
-
-  std::unique_ptr< Group > parent;
-  MultiFluidBase * fluid;
 };
 
 TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
@@ -540,7 +541,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
 TEST_F( DeadOilFluidTest, numericalDerivativesMass )
@@ -557,7 +558,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
-  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol, absTol );
 }
 
 int main( int argc, char * * argv )

@@ -30,8 +30,9 @@
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/NumericalMethodsManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -221,13 +222,6 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
     elementRegionManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
     elementRegionManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n )->
-        setPlotLevel( PlotLevel::NOPLOT )->
-        setRestartFlags( RestartFlags::NO_WRITE )->
-        setRegisteringObjects( this->getName())->
-        setDescription( "Array to hold the beginning of step stress for implicit problem rewinds" )->
-        reference().resizeDimension< 2 >( 6 );
-
       subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes )->
         setPlotLevel( PlotLevel::NOPLOT )->
         setRestartFlags( RestartFlags::NO_WRITE );
@@ -528,17 +522,11 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     {
       setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
-      if( solveIter>0 )
-      {
-        resetStressToBeginningOfStep( domain );
-      }
-
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
                                         cycleNumber,
                                         domain );
 
-//      updateStress( domain );
       if( surfaceGenerator!=nullptr )
       {
         if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
@@ -580,7 +568,15 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodes = *mesh.getNodeManager();
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  // save previous constitutive state data in preparation for next timestep
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
+
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
   arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
@@ -593,7 +589,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   fieldNames["node"].emplace_back( keys::Velocity );
   fieldNames["node"].emplace_back( keys::Acceleration );
 
-  CommunicationTools::synchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+  getGlobalState().getCommunicationTools().synchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Acceleration );
 
@@ -646,7 +642,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
-  CommunicationTools::synchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+  getGlobalState().getCommunicationTools().synchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
   explicitKernelDispatch( mesh,
                           targetRegionNames(),
@@ -660,7 +656,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
-  CommunicationTools::synchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
+  getGlobalState().getCommunicationTools().synchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
 
   return dt;
 }
@@ -676,7 +672,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
   GEOSX_MARK_FUNCTION;
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
 
   fsManager.apply( time,
                    &domain,
@@ -705,9 +701,8 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
                                                       DomainPartition & domain,
                                                       arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  FunctionManager const & functionManager = FunctionManager::instance();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
 
   FaceManager const & faceManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
   NodeManager const & nodeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
@@ -923,29 +918,8 @@ SolidMechanicsLagrangianFEM::
                                                           CellElementSubRegion & subRegion )
   {
     SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-
-    arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
-
-    array3d< real64, solid::STRESS_PERMUTATION > &
-    stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
-    // TODO: eliminate
-    stress_n.resize( stress.size( 0 ), stress.size( 1 ), 6 );
-
-    arrayView3d< real64, solid::STRESS_USD > const vstress_n = stress_n;
-
-    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex a=0; a<stress.size( 1 ); ++a )
-      {
-        for( localIndex i=0; i<6; ++i )
-        {
-          vstress_n( k, a, i ) = stress( k, a, i );
-        }
-      }
-    } );
+    constitutiveRelation.saveConvergedState();
   } );
-
-
 
 }
 
@@ -989,6 +963,15 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
       }
     } );
   }
+
+  // save (converged) constitutive state data
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
+
 }
 
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
@@ -1130,7 +1113,7 @@ SolidMechanicsLagrangianFEM::
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   FaceManager & faceManager = *mesh.getFaceManager();
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -1148,8 +1131,9 @@ SolidMechanicsLagrangianFEM::
                                         parallelDevicePolicy< 32 > >( targetSet,
                                                                       time_n + dt,
                                                                       targetGroup,
-                                                                      keys::TotalDisplacement, // TODO fix use of dummy
-                                                                                               // name
+                                                                      keys::TotalDisplacement,   // TODO fix use of
+                                                                                                 // dummy
+                                                                                                 // name
                                                                       dofKey,
                                                                       dofManager.rankOffset(),
                                                                       localMatrix,
@@ -1273,10 +1257,10 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
   fieldNames["node"].emplace_back( keys::TotalDisplacement );
 
-  CommunicationTools::synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 }
 
 void SolidMechanicsLagrangianFEM::solveSystem( DofManager const & dofManager,
@@ -1305,36 +1289,6 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
       disp( a, i ) -= incdisp( a, i );
       incdisp( a, i ) = 0.0;
     }
-  } );
-
-  resetStressToBeginningOfStep( domain );
-}
-
-void SolidMechanicsLagrangianFEM::resetStressToBeginningOfStep( DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & subRegion )
-  {
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-
-    arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation.getStress();
-
-    arrayView3d< real64 const, solid::STRESS_USD > const &
-    stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
-
-    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex a=0; a<stress.size( 1 ); ++a )
-      {
-        for( localIndex i = 0; i < 6; ++i )
-        {
-          stress( k, a, i ) = stress_n( k, a, i );
-        }
-      }
-    } );
   } );
 }
 
@@ -1464,7 +1418,7 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   GEOSX_UNUSED_VAR( dofManager )
   GEOSX_UNUSED_VAR( localSolution )
 
-//  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+//  MeshLevel const * const mesh = domain->getMeshBodies()->getGroup<MeshBody>(0)->getMeshLevel(0);
 //  FaceManager const * const faceManager = mesh->getFaceManager();
 //  NodeManager const * const nodeManager = mesh->getNodeManager();
 //  ElementRegionManager const * const elemManager = mesh->getElemManager();

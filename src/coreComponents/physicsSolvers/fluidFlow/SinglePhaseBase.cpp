@@ -25,6 +25,7 @@
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
@@ -226,7 +227,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups( Group * const
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
 
-  CommunicationTools::synchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
   resetViews( mesh );
 
@@ -489,7 +490,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const dPvMult_dPres =
     solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString );
   arrayView1d< real64 const > const bulkModulus =
-    ISPORO ? solid.getReference< array1d< real64 > >( "BulkModulus" ) : porosityOld;
+    ISPORO ? solid.getReference< array1d< real64 > >( "bulkModulus" ) : porosityOld;
   real64 const biotCoefficient = ISPORO ? solid.getReference< real64 >( "BiotCoefficient" ) : 0.0;
 
   using Kernel = AccumulationKernel< CellElementSubRegion >;
@@ -607,7 +608,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   fsManager.apply( time_n + dt,
@@ -654,7 +655,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   fsManager.apply( time_n + dt, &domain,

@@ -116,9 +116,7 @@ void FlowSolverBase::registerDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
         setDefaultValue( faceRegion.getDefaultAperture() );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
-        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::
-                                                                           viewKeyStruct::
-                                                                           elementApertureString )->getDefaultValue() )->
+        setApplyDefaultValue( faceRegion.getDefaultAperture() )->
         setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 

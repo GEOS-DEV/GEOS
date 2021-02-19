@@ -17,6 +17,7 @@
  */
 
 #include "ContactRelationBase.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/TableFunction.hpp"
 
@@ -77,7 +78,7 @@ ContactRelationBase::createChild( string const & catalogKey, string const & chil
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::getCatalog();
   GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
 
-  m_apertureFunction = FunctionManager::instance().registerGroup( childName, FunctionBase::CatalogInterface::factory( catalogKey, childName, this ) );
+  m_apertureFunction = getGlobalState().getFunctionManager().registerGroup( childName, FunctionBase::CatalogInterface::factory( catalogKey, childName, this ) );
 
   return m_apertureFunction;
 }
@@ -144,6 +145,14 @@ void ContactRelationBase::initializePreSubGroups( Group * const )
 //    std::cout<<coord<<" "<<apertureTable->Evaluate( &coord )<<std::endl;
 //  }
 
+}
+
+void ContactRelationBase::computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                           arraySlice1d< real64 > const & tractionVector ) const
+{
+  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
+  tractionVector[1] = 0.0;
+  tractionVector[2] = 0.0;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, Group * const )

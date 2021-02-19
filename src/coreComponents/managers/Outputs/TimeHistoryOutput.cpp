@@ -1,4 +1,21 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
 #include "TimeHistoryOutput.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
+
 namespace geosx
 {
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
@@ -34,20 +51,25 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
 void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryCollection * collector )
 {
-  bool freshInit = ( m_recordCount == 0 );
+  bool const freshInit = ( m_recordCount == 0 );
+
+  string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
+  makeDirsForPath( outputDirectory );
+  string const outputFile = outputDirectory + "/" + m_filename;
+
   // rank == 0 do time output for the collector
   for( localIndex ii = 0; ii < collector->getCollectionCount( ); ++ii )
   {
     HistoryMetadata metadata = collector->getMetadata( pm, ii );
-    m_io.emplace_back( std::make_unique< HDFHistIO >( m_filename, metadata, m_recordCount ) );
+    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
     collector->registerBufferCall( ii, [this, ii]() { return m_io[ii]->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
   }
-  int rnk = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  if( rnk == 0 )
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
     HistoryMetadata timeMetadata = collector->getTimeMetadata( );
-    m_io.emplace_back( std::make_unique< HDFHistIO >( m_filename, timeMetadata, m_recordCount, 2, 2, MPI_COMM_SELF ) );
+    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 2, 2, MPI_COMM_SELF ) );
     collector->registerTimeBufferCall( [this]() { return m_io.back()->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
   }
@@ -64,7 +86,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
       {
         HistoryMetadata metaMetadata = metaCollector->getMetadata( pm, ii );
         metaMetadata.setName( collector->getTargetName() + " " + metaMetadata.getName( ) );
-        metaIOs[ii] = std::make_unique< HDFHistIO >( m_filename, metaMetadata, 0, 1 );
+        metaIOs[ii] = std::make_unique< HDFHistIO >( outputFile, metaMetadata, 0, 1 );
         metaCollector->registerBufferCall( ii, [&metaIOs, ii] () { return metaIOs[ii]->getBufferHead( ); } );
         metaIOs[ii]->init( false );
       }
@@ -82,7 +104,10 @@ void TimeHistoryOutput::initializePostSubGroups( Group * const group )
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    HDFFile( m_filename, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
+    makeDirsForPath( outputDirectory );
+    string const outputFile = outputDirectory + "/" + m_filename;
+    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
   ProblemManager & pm = dynamicCast< ProblemManager & >( *group );
   for( auto collector_path : m_collectorPaths )
@@ -95,7 +120,7 @@ void TimeHistoryOutput::initializePostSubGroups( Group * const group )
   }
 }
 
-void TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                  integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -110,6 +135,8 @@ void TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
     th_io->write( );
   }
   m_recordCount += newBuffered;
+
+  return false;
 }
 
 void TimeHistoryOutput::cleanup( real64 const time_n,

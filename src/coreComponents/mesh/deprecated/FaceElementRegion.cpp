@@ -28,7 +28,7 @@ using namespace dataRepository;
 FaceElementRegion::FaceElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  this->GetGroup( viewKeyStruct::elementSubRegions )->registerGroup< FaceElementSubRegion >( "default" );
+  this->getGroup( viewKeyStruct::elementSubRegions )->registerGroup< FaceElementSubRegion >( "default" );
 
   registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -67,9 +67,9 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   arrayView2d< localIndex const > const & faceToElementSubRegion = faceManager->elementSubRegionList();
   arrayView2d< localIndex const > const & faceToElementIndex = faceManager->elementList();
 
-  Group * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+  Group * elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
 
-  FaceElementSubRegion * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( subRegionName );
+  FaceElementSubRegion * subRegion = elementSubRegions->getGroup< FaceElementSubRegion >( subRegionName );
   subRegion->resize( subRegion->size() + 1 );
   rval = subRegion->size() - 1;
 

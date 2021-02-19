@@ -28,7 +28,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -89,7 +89,7 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion * const region )
@@ -202,16 +202,8 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
                    m_localRhs,
                    m_localSolution );
 
-      if( solveIter > 0 )
-      {
-        m_solidSolver->resetStressToBeginningOfStep( domain );
-      }
-
       // currently the only method is implicit time integration
       dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-
-//      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -237,9 +229,9 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString ) );
         fieldNames["elems"].emplace_back( "elementAperture" );
 
-        CommunicationTools::synchronizeFields( fieldNames,
-                                               domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                               domain.getNeighbors() );
+        getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+                                                                    domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                                    domain.getNeighbors() );
 
         this->updateDeformationForCoupling( domain );
 
@@ -610,7 +602,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
           }
         }
       }
-    }//);
+    }  //);
   } );
 
 }
@@ -682,7 +674,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
           }
         }
       }
-    }  //);
+    }   //);
   } );
 }
 
@@ -820,8 +812,8 @@ HydrofractureSolver::
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
 
         // TODO make if work for any element type.
-        globalIndex rowDOF[24]; // Here it assumes 8 nodes?
-        real64 nodeRHS[24];  // Here it assumes 8 nodes?
+        globalIndex rowDOF[24];   // Here it assumes 8 nodes?
+        real64 nodeRHS[24];   // Here it assumes 8 nodes?
         stackArray2d< real64, 12*12 > dRdP( numNodesPerFace*3, 1 );
         globalIndex colDOF = pressureDofNumber[kfe];
 
