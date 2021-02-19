@@ -65,10 +65,12 @@ TableFunction::TableFunction( const string & name,
 
   registerWrapper( keys::coordinateFiles, &m_coordinateFiles ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "List of coordinate file names for ND Table" );
 
   registerWrapper( keys::voxelFile, &m_voxelFile ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Voxel file name for ND Table" );
 
   registerWrapper( keys::tableInterpolation, &m_interpolationMethod ).
