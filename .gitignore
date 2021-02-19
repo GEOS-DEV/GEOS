@@ -12,6 +12,7 @@ install-*
 *.vscode*
 *.out
 *.core
+*.DS_Store
 /build/
 /Default/
 /debugTests/
