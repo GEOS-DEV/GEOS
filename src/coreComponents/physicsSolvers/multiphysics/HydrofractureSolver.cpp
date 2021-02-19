@@ -202,16 +202,8 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
                    m_localRhs,
                    m_localSolution );
 
-      if( solveIter > 0 )
-      {
-        m_solidSolver->resetStressToBeginningOfStep( domain );
-      }
-
       // currently the only method is implicit time integration
       dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-
-//      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -610,7 +602,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
           }
         }
       }
-    }//);
+    }  //);
   } );
 
 }
@@ -682,7 +674,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
           }
         }
       }
-    }  //);
+    }   //);
   } );
 }
 
@@ -820,8 +812,8 @@ HydrofractureSolver::
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
 
         // TODO make if work for any element type.
-        globalIndex rowDOF[24]; // Here it assumes 8 nodes?
-        real64 nodeRHS[24];  // Here it assumes 8 nodes?
+        globalIndex rowDOF[24];   // Here it assumes 8 nodes?
+        real64 nodeRHS[24];   // Here it assumes 8 nodes?
         stackArray2d< real64, 12*12 > dRdP( numNodesPerFace*3, 1 );
         globalIndex colDOF = pressureDofNumber[kfe];
 
