@@ -649,7 +649,6 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   //getGlobalState().getCommunicationTools().synchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
   parallelDeviceEvents packEvents;
-  packEvents.reserve( domain.getNeighbors().size( ) * fieldNames.size( ) );
   getGlobalState().getCommunicationTools().asyncPack( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true, packEvents );
 
   waitAllDeviceEvents( packEvents );
@@ -670,7 +669,6 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   //CommunicationTools::synchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
   // this includes  a device sync after launching all the unpacking kernels
   parallelDeviceEvents unpackEvents;
-  unpackEvents.reserve( domain.getNeighbors().size( ) * fieldNames.size( ) );
   getGlobalState().getCommunicationTools().finalizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
   return dt;

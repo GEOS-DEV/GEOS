@@ -182,6 +182,72 @@ int MpiWrapper::testall( int count, MPI_Request array_of_requests[], int * flag,
   return 0;
 }
 
+int MpiWrapper::check( MPI_Request * request, int * flag, MPI_Status * status )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Request_get_status( *request, flag, status );
+#endif
+  *flag = 0;
+  return 0;
+}
+
+int MpiWrapper::checkany( int count, MPI_Request array_of_requests[], int * idx, int * flag, MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  bool found = false;
+  int flagCache = -1;
+  int rval = MPI_SUCCESS;
+  std::vector< int > rvals( count );
+  for( int jdx = 0; jdx < count; ++jdx )
+  {
+    *flag = 0;
+    rvals[ jdx ] = MPI_Request_get_status( array_of_requests[ jdx ], flag, &array_of_statuses[ jdx ] );
+    if( *flag && !found )
+    {
+      *idx = jdx;
+      flagCache = *flag;
+    }
+    if( rvals[ jdx ] != MPI_SUCCESS )
+    {
+      rval = rvals[ jdx ];
+    }
+  }
+  if( found )
+  {
+    *flag = flagCache;
+  }
+  return rval;
+#endif
+  *flag = 0;
+  return 0;
+}
+
+int MpiWrapper::checkall( int count, MPI_Request array_of_requests[], int * flag, MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  // assume all passing, any that don't pass set the flag to false
+  *flag = 1;
+  int rval = MPI_SUCCESS;
+  std::vector< int > rvals( count );
+  int iFlag = 0;
+  for( int idx = 0; idx < count; ++idx )
+  {
+    rvals[ idx ] = MPI_Request_get_status( array_of_requests[ idx ], &iFlag, &array_of_statuses[ idx ] );
+    if( !iFlag )
+    {
+      *flag = iFlag;
+    }
+    if( rvals[ idx ] != MPI_SUCCESS )
+    {
+      rval = rvals[ idx ];
+    }
+  }
+  return rval;
+#endif
+  *flag = 0;
+  return 0;
+}
+
 int MpiWrapper::wait( MPI_Request * request, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI
