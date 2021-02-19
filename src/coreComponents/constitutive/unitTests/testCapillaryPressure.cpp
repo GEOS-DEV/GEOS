@@ -21,119 +21,119 @@ using namespace geosx::testing;
 using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
 
-CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name, Group & parent )
+CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase( string const & name, Group & parent )
 {
-  auto capPressure = parent.registerGroup< BrooksCoreyCapillaryPressure >( name );
+  BrooksCoreyCapillaryPressure & capPressure = parent.registerGroup< BrooksCoreyCapillaryPressure >( name );
 
-  auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = capPressure.getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
   phaseNames[0] = "water"; phaseNames[1] = "oil";
 
-  auto & phaseMinSat = capPressure->getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
   phaseMinSat[0] = 0.1; phaseMinSat[1] = 0.05;
 
-  auto & phaseCapPressureExpInv =
-    capPressure->getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString );
+  array1d< real64 > & phaseCapPressureExpInv =
+    capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString() );
   phaseCapPressureExpInv.resize( 2 );
   phaseCapPressureExpInv[0] = 2; phaseCapPressureExpInv[1] = 4;
 
-  auto & phaseEntryPressure = capPressure->getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString );
+  array1d< real64 > & phaseEntryPressure = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString() );
   phaseEntryPressure.resize( 2 );
   phaseEntryPressure[0] = 1; phaseEntryPressure[1] = 1;
 
-  auto & capPressureEpsilon = capPressure->getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
+  real64 & capPressureEpsilon = capPressure.getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString() );
   capPressureEpsilon = 1e-4;
 
-  capPressure->postProcessInputRecursive();
+  capPressure.postProcessInputRecursive();
   return capPressure;
 }
 
 
-CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & name, Group & parent )
+CapillaryPressureBase & makeBrooksCoreyCapPressureThreePhase( string const & name, Group & parent )
 {
-  auto capPressure = parent.registerGroup< BrooksCoreyCapillaryPressure >( name );
+  BrooksCoreyCapillaryPressure & capPressure = parent.registerGroup< BrooksCoreyCapillaryPressure >( name );
 
-  auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = capPressure.getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "water"; phaseNames[1] = "oil"; phaseNames[2] = "gas";
 
-  auto & phaseMinSat = capPressure->getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 3 );
   phaseMinSat[0] = 0.04; phaseMinSat[1] = 0.02; phaseMinSat[2] = 0.1;
 
-  auto & phaseCapPressureExpInv =
-    capPressure->getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString );
+  array1d< real64 > & phaseCapPressureExpInv =
+    capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString() );
   phaseCapPressureExpInv.resize( 3 );
   phaseCapPressureExpInv[0] = 2; phaseCapPressureExpInv[1] = -3; phaseCapPressureExpInv[2] = 2.5;
 
-  auto & phaseEntryPressure = capPressure->getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString );
+  array1d< real64 > & phaseEntryPressure = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString() );
   phaseEntryPressure.resize( 3 );
   phaseEntryPressure[0] = 1; phaseEntryPressure[1] = -1; phaseEntryPressure[2] = 2;
 
-  auto & capPressureEpsilon = capPressure->getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
+  real64 & capPressureEpsilon = capPressure.getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString() );
   capPressureEpsilon = 1e-7;
 
-  capPressure->postProcessInputRecursive();
+  capPressure.postProcessInputRecursive();
   return capPressure;
 }
 
 
-CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name, Group & parent )
+CapillaryPressureBase & makeVanGenuchtenCapPressureTwoPhase( string const & name, Group & parent )
 {
-  auto capPressure = parent.registerGroup< VanGenuchtenCapillaryPressure >( name );
+  VanGenuchtenCapillaryPressure & capPressure = parent.registerGroup< VanGenuchtenCapillaryPressure >( name );
 
-  auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = capPressure.getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  auto & phaseMinSat = capPressure->getReference< array1d< real64 > >( VanGenuchtenCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = capPressure.getReference< array1d< real64 > >( VanGenuchtenCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
   phaseMinSat[0] = 0.04; phaseMinSat[1] = 0.1;
 
-  auto & phaseCapPressureExpInv = capPressure->getReference< array1d< real64 > >(
-    VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString );
+  array1d< real64 > & phaseCapPressureExpInv = capPressure.getReference< array1d< real64 > >(
+    VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString() );
   phaseCapPressureExpInv.resize( 2 );
   phaseCapPressureExpInv[0] = 0.4; phaseCapPressureExpInv[1] = 0.5;
 
-  auto & phaseCapPressureMultiplier = capPressure->getReference< array1d< real64 > >(
-    VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureMultiplierString );
+  array1d< real64 > & phaseCapPressureMultiplier = capPressure.getReference< array1d< real64 > >(
+    VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureMultiplierString() );
   phaseCapPressureMultiplier.resize( 2 );
   phaseCapPressureMultiplier[0] = 0.5; phaseCapPressureMultiplier[1] = 1;
 
-  auto & capPressureEpsilon = capPressure->getReference< real64 >( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
+  real64 & capPressureEpsilon = capPressure.getReference< real64 >( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString() );
   capPressureEpsilon = 1e-4;
 
-  capPressure->postProcessInputRecursive();
+  capPressure.postProcessInputRecursive();
   return capPressure;
 }
 
-CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( string const & name, Group & parent )
+CapillaryPressureBase & makeVanGenuchtenCapPressureThreePhase( string const & name, Group & parent )
 {
-  auto capPressure = parent.registerGroup< VanGenuchtenCapillaryPressure >( name );
+  VanGenuchtenCapillaryPressure & capPressure = parent.registerGroup< VanGenuchtenCapillaryPressure >( name );
 
-  auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = capPressure.getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  auto & phaseMinSat = capPressure->getReference< array1d< real64 > >( VanGenuchtenCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString );
+  array1d< real64 > & phaseMinSat = capPressure.getReference< array1d< real64 > >( VanGenuchtenCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 3 );
   phaseMinSat[0] = 0.04; phaseMinSat[1] = 0.1; phaseMinSat[2] = 0.;
 
-  auto & phaseCapPressureExpInv = capPressure->getReference< array1d< real64 > >(
-    VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString );
+  array1d< real64 > & phaseCapPressureExpInv = capPressure.getReference< array1d< real64 > >(
+    VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString() );
   phaseCapPressureExpInv.resize( 3 );
   phaseCapPressureExpInv[0] = 0.33; phaseCapPressureExpInv[1] = 0.4; phaseCapPressureExpInv[ 2 ] = 0.5;
 
-  auto & phaseCapPressureMultiplier = capPressure->getReference< array1d< real64 > >(
-    VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureMultiplierString );
+  array1d< real64 > & phaseCapPressureMultiplier = capPressure.getReference< array1d< real64 > >(
+    VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureMultiplierString() );
   phaseCapPressureMultiplier.resize( 3 );
   phaseCapPressureMultiplier[0] = 0.5; phaseCapPressureMultiplier[1] = 1; phaseCapPressureMultiplier[2] = 0.2;
 
-  auto & capPressureEpsilon = capPressure->getReference< real64 >( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
+  real64 & capPressureEpsilon = capPressure.getReference< real64 >( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString() );
   capPressureEpsilon = 1e-4;
 
-  capPressure->postProcessInputRecursive();
+  capPressure.postProcessInputRecursive();
   return capPressure;
 }
 

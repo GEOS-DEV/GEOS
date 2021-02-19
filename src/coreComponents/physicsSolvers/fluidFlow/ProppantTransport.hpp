@@ -77,11 +77,9 @@ public:
    */
   static string catalogName() { return "ProppantTransport"; }
 
-  virtual void
-  initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void
-  registerDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual real64
   solverStep( real64 const & time_n,
@@ -190,56 +188,45 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-
-    static constexpr auto proppantNamesString      = "proppantNames";
+    static constexpr char const * proppantNamesString() { return "proppantNames"; }
 
     // primary solution field
-    static constexpr auto proppantConcentrationString      = "proppantConcentration";
-    static constexpr auto deltaProppantConcentrationString      = "deltaProppantConcentration";
-    static constexpr auto componentConcentrationString      = "componentConcentration";
-    static constexpr auto deltaComponentConcentrationString      = "deltaComponentConcentration";
-    static constexpr auto bcComponentConcentrationString      = "bcComponentConcentration";
+    static constexpr char const * proppantConcentrationString() { return "proppantConcentration"; }
+    static constexpr char const * deltaProppantConcentrationString() { return "deltaProppantConcentration"; }
+    static constexpr char const * componentConcentrationString() { return "componentConcentration"; }
+    static constexpr char const * deltaComponentConcentrationString() { return "deltaComponentConcentration"; }
+    static constexpr char const * bcComponentConcentrationString() { return "bcComponentConcentration"; }
 
     // these are used to store last converged time step values
 
-    static constexpr auto oldComponentDensityString  = "oldComponentDensity";
+    static constexpr char const * oldComponentDensityString() { return "oldComponentDensity"; }
 
-    static constexpr auto updateProppantPackingString  = "updateProppantPacking";
-    static constexpr auto cellBasedFluxString  = "cellBasedFlux";
+    static constexpr char const * updateProppantPackingString() { return "updateProppantPacking"; }
+    static constexpr char const * cellBasedFluxString() { return "cellBasedFlux"; }
 
-    static constexpr auto isProppantBoundaryString   = "isProppantBoundary";
-    static constexpr auto isProppantMobileString   = "isProppantMobile";
+    static constexpr char const * isProppantBoundaryString() { return "isProppantBoundary"; }
+    static constexpr char const * isProppantMobileString() { return "isProppantMobile"; }
 
-    static constexpr auto proppantPackVolumeFractionString  = "proppantPackVolumeFraction";
-    static constexpr auto proppantExcessPackVolumeString  = "proppantExcessPackVolume";
-    static constexpr auto proppantLiftFluxString  = "proppantLiftFlux";
+    static constexpr char const * proppantPackVolumeFractionString() { return "proppantPackVolumeFraction"; }
+    static constexpr char const * proppantExcessPackVolumeString() { return "proppantExcessPackVolume"; }
+    static constexpr char const * proppantLiftFluxString() { return "proppantLiftFlux"; }
 
-    static constexpr auto poroMultiplierString  = "poroMultiplier";
-    static constexpr auto transTMultiplierString  = "transTMultiplier";
-    static constexpr auto bridgingFactorString  = "bridgingFactor";
+    static constexpr char const * poroMultiplierString() { return "poroMultiplier"; }
+    static constexpr char const * transTMultiplierString() { return "transTMultiplier"; }
+    static constexpr char const * bridgingFactorString() { return "bridgingFactor"; }
 
-    static constexpr auto maxProppantConcentrationString  = "maxProppantConcentration";
+    static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
 
-    static constexpr auto proppantDiameterString  = "proppantDiameter";
-    static constexpr auto proppantDensityString  = "proppantDensity";
+    static constexpr char const * proppantDiameterString() { return "proppantDiameter"; }
+    static constexpr char const * proppantDensityString() { return "proppantDensity"; }
 
-    static constexpr auto criticalShieldsNumberString  = "criticalShieldsNumber";
-    static constexpr auto frictionCoefficientString  = "frictionCoefficient";
-
-  } viewKeysProppantTransport;
-
-  viewKeyStruct & viewKeys() { return viewKeysProppantTransport; }
-  viewKeyStruct const & viewKeys() const { return viewKeysProppantTransport; }
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysProppantTransport;
-
-  groupKeyStruct & groupKeys() { return groupKeysProppantTransport; }
-  groupKeyStruct const & groupKeys() const { return groupKeysProppantTransport; }
+    static constexpr char const * criticalShieldsNumberString() { return "criticalShieldsNumber"; }
+    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
+  };
 
   static constexpr localIndex MAX_NUM_COMPONENTS = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   void updateProppantMobility( Group & dataGroup );
 

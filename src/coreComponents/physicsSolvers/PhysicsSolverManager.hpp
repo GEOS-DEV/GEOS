@@ -41,11 +41,8 @@ public:
 
   struct viewKeyStruct
   {
-    constexpr static auto gravityVectorString = "gravityVector";
-  } viewKeys;
-
-  struct groupKeyStruct
-  {} groupKeys;
+    constexpr static char const * gravityVectorString() { return "gravityVector"; };
+  };
 
   R1Tensor const & gravityVector() const { return m_gravityVector; }
   R1Tensor & gravityVector()       { return m_gravityVector; }

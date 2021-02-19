@@ -56,7 +56,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Write one final restart file as the code exits
@@ -66,7 +66,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
     execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }

@@ -14,3 +14,5 @@ Welcome to the GEOSX build guide.
    ContinuousIntegration
 
    ubuntuVirtualMachineOnOSX/Instructions
+
+   Spack and Uberenv

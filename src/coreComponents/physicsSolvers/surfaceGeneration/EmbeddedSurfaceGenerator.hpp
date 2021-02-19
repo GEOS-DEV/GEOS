@@ -62,16 +62,14 @@ public:
 
   static string catalogName() { return "EmbeddedSurfaceGenerator"; }
 
-  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
-
   virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
-    solverStep( time_n, dt, cycleNumber, *domain->groupCast< DomainPartition * >());
+    solverStep( time_n, dt, cycleNumber, domain );
     return false;
   }
 
@@ -92,25 +90,9 @@ public:
 
 protected:
 
-  /**
-   * @brief xxx
-   * @param[in] ...
-   * @param[in] ...
-   * @param[in] ...
-   * @return ...
-   *
-   */
-  virtual void initializePostSubGroups( Group * const problemManager ) override final;
-  /**
-   * @brief xxx
-   * @param[in] ...
-   * @param[in] ...
-   * @param[in] ...
-   * @return ...
-   *
-   */
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const problemManager ) override final;
-  virtual void postRestartInitialization( Group * const domain ) override final;
+  virtual void initializePostSubGroups() override final;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
 private:
 
@@ -127,12 +109,12 @@ private:
    */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto solidMaterialNameString = "solidMaterialNames";
-    constexpr static auto fractureRegionNameString = "fractureRegion";
+    constexpr static char const * solidMaterialNameString() {return "solidMaterialNames"; }
+    constexpr static char const * fractureRegionNameString() {return "fractureRegion"; }
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
-    constexpr static auto rockToughnessString = "rockToughness";
-  }; //SurfaceGenViewKeys;
+    constexpr static char const * rockToughnessString() {return "rockToughness"; }
+  };
 
   // solid solver name
   array1d< string > m_solidMaterialNames;

@@ -141,13 +141,13 @@ public:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString  = "phaseMinVolumeFraction";
-    static constexpr auto waterOilRelPermExponentString = "waterOilRelPermExponent";
-    static constexpr auto waterOilRelPermMaxValueString = "waterOilRelPermMaxValue";
-    static constexpr auto gasOilRelPermExponentString   = "gasOilRelPermExponent";
-    static constexpr auto gasOilRelPermMaxValueString   = "gasOilRelPermMaxValue";
-    static constexpr auto volFracScaleString            = "volFracScale";
-  } viewKeysBrooksCoreyBakerRelativePermeability;
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * waterOilRelPermExponentString() { return "waterOilRelPermExponent"; }
+    static constexpr char const * waterOilRelPermMaxValueString() { return "waterOilRelPermMaxValue"; }
+    static constexpr char const * gasOilRelPermExponentString() { return "gasOilRelPermExponent"; }
+    static constexpr char const * gasOilRelPermMaxValueString() { return "gasOilRelPermMaxValue"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
+  };
 
 protected:
 

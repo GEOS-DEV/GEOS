@@ -192,7 +192,7 @@ public:
    * @param[in] permeabilityKey key to access the permeability in the reservoir
    */
   void computeWellTransmissibility( MeshLevel const & mesh,
-                                    WellElementSubRegion const * const wellElemSubRegion,
+                                    WellElementSubRegion const & wellElemSubRegion,
                                     string const & permeabilityKey );
 
   ///@}
@@ -221,47 +221,37 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     /// String key for the global number of perforations
-    static constexpr auto numPerforationsGlobalString     = "numPerforationsGlobal";
+    static constexpr char const * numPerforationsGlobalString() { return "numPerforationsGlobal"; }
     /// String key for the reservoir element region index
-    static constexpr auto reservoirElementRegionString    = "reservoirElementRegion";
+    static constexpr char const * reservoirElementRegionString() { return "reservoirElementRegion"; }
     /// String key for the reservoir element subregion index
-    static constexpr auto reservoirElementSubregionString = "reservoirElementSubregion";
+    static constexpr char const * reservoirElementSubregionString() { return "reservoirElementSubregion"; }
     /// String key for the reservoir element index
-    static constexpr auto reservoirElementIndexString     = "reservoirElementIndex";
+    static constexpr char const * reservoirElementIndexString() { return "reservoirElementIndex"; }
     /// String key for the well element index
-    static constexpr auto wellElementIndexString          = "wellElementIndex";
+    static constexpr char const * wellElementIndexString() { return "wellElementIndex"; }
     /// String key for the perforation location
-    static constexpr auto locationString                  = "location";
+    static constexpr char const * locationString() { return "location"; }
     /// String key for the well transmissibility
-    static constexpr auto wellTransmissibilityString      = "wellTransmissibility";
+    static constexpr char const * wellTransmissibilityString() { return "wellTransmissibility"; }
 
     /// ViewKey for the global number of perforations
-    dataRepository::ViewKey numPerforationsGlobal     = { numPerforationsGlobalString };
+    dataRepository::ViewKey numPerforationsGlobal     = { numPerforationsGlobalString() };
     /// ViewKey for the reservoir element region index
-    dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString };
+    dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString() };
     /// ViewKey for the reservoir element subregion index
-    dataRepository::ViewKey reservoirElementSubregion = { reservoirElementSubregionString };
+    dataRepository::ViewKey reservoirElementSubregion = { reservoirElementSubregionString() };
     /// ViewKey for the reservoir element index
-    dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString };
+    dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString() };
     /// ViewKey for the well element index
-    dataRepository::ViewKey wellElementIndex          = { wellElementIndexString };
+    dataRepository::ViewKey wellElementIndex          = { wellElementIndexString() };
     /// ViewKey for the well location
-    dataRepository::ViewKey location                  = { locationString };
+    dataRepository::ViewKey location                  = { locationString() };
     /// ViewKey for the well transmissibility
-    dataRepository::ViewKey wellTransmissibility      = { wellTransmissibilityString };
-
+    dataRepository::ViewKey wellTransmissibility      = { wellTransmissibilityString() };
   }
   /// ViewKey struct for the PerforationData class
   viewKeysPerforationData;
-
-  /**
-   * @brief struct to serve as a container for group strings and keys
-   * @struct groupKeyStruct
-   */
-  struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
-  {}
-  /// groupKey struct for the PerforationData class
-  groupKeysPerforationData;
 
 private:
 

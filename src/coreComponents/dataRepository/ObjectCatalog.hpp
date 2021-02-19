@@ -215,8 +215,8 @@ public:
   template< typename TYPE >
   static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::catalogName();
-    std::string objectName = object.getName();
+    std::string const & castedName = TYPE::catalogName();
+    std::string const & objectName = object.getName();
 
     if( castedName != objectName )
     {
@@ -504,8 +504,8 @@ public:
   template< typename TYPE >
   static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::catalogName();
-    std::string objectName = object.getName();
+    std::string const & castedName = TYPE::catalogName();
+    std::string const & objectName = object.getName();
 
     if( castedName != objectName )
     {

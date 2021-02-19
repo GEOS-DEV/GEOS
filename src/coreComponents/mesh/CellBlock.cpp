@@ -35,9 +35,9 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   m_toFacesRelation(),
   m_externalPropertyNames()
 {
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation );
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
-  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
+  registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
+  registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
 }
 
 CellBlock::~CellBlock()
@@ -302,11 +302,11 @@ void CellBlock::setElementType( string const & elementType )
 
 }
 
-void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+void CellBlock::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {
-  this->m_toNodesRelation.setRelatedObject( mesh->getNodeManager() );
-  this->m_toEdgesRelation.setRelatedObject( mesh->getEdgeManager() );
-  this->m_toFacesRelation.setRelatedObject( mesh->getFaceManager() );
+  this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
+  this->m_toEdgesRelation.setRelatedObject( mesh.getEdgeManager() );
+  this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
 }
 
 void CellBlock::calculateElementGeometricQuantities( NodeManager const & nodeManager,

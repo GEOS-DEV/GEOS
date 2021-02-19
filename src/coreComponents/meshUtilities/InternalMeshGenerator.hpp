@@ -107,7 +107,7 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void generateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition & domain ) override;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
@@ -118,7 +118,7 @@ public:
                                              int nodeIDInBox[],
                                              const int size ) override;
 
-  virtual void remapMesh ( dataRepository::Group * const domain ) override;
+  virtual void remapMesh ( dataRepository::Group & domain ) override;
 
 //  int m_delayMeshDeformation;
 

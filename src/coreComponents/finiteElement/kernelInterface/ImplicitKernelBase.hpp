@@ -84,7 +84,7 @@ public:
                       FaceManager const & faceManager,
                       SUBREGION_TYPE const & elementSubRegion,
                       FE_TYPE const & finiteElementSpace,
-                      CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                      CONSTITUTIVE_TYPE & inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
                       CRSMatrixView< real64, globalIndex const > const & inputMatrix,

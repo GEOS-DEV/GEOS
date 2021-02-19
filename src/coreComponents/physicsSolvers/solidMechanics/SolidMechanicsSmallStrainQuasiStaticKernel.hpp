@@ -92,7 +92,7 @@ public:
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               CONSTITUTIVE_TYPE & inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDofNumber,
                globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
@@ -112,7 +112,7 @@ public:
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_density( inputConstitutiveType->getDensity() )
+    m_density( inputConstitutiveType.getDensity() )
   {}
 
 

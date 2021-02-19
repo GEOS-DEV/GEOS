@@ -81,7 +81,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void evaluate( dataRepository::Group const * const group,
+  virtual void evaluate( dataRepository::Group const & group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const = 0;
@@ -113,7 +113,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @return An array holding the min, average, max values of the results
    */
-  real64_array evaluateStats( dataRepository::Group const * const group,
+  real64_array evaluateStats( dataRepository::Group const & group,
                               real64 const time,
                               SortedArray< localIndex > const & set ) const;
 
@@ -137,7 +137,7 @@ protected:
    * @param[out] result the results
    */
   template< typename LEAF >
-  void evaluateT( dataRepository::Group const * const group,
+  void evaluateT( dataRepository::Group const & group,
                   real64 const time,
                   SortedArrayView< localIndex const > const & set,
                   real64_array & result ) const;
@@ -147,7 +147,7 @@ protected:
 };
 
 template< typename LEAF >
-void FunctionBase::evaluateT( dataRepository::Group const * const group,
+void FunctionBase::evaluateT( dataRepository::Group const & group,
                               real64 const time,
                               SortedArrayView< localIndex const > const & set,
                               real64_array & result ) const
@@ -158,7 +158,7 @@ void FunctionBase::evaluateT( dataRepository::Group const * const group,
 
   arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
   localIndex const numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
-  localIndex groupSize = group->size();
+  localIndex groupSize = group.size();
   localIndex totalVarSize = 0;
   for( auto varIndex=0; varIndex<numVars; ++varIndex )
   {
@@ -174,10 +174,10 @@ void FunctionBase::evaluateT( dataRepository::Group const * const group,
     else if( groupSize > 0 )
     {
       // Should we throw a warning if the group is zero-length?
-      dataRepository::WrapperBase const * wrapper = group->getWrapperBase( varName );
-      input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper->voidPointer() );
+      dataRepository::WrapperBase const & wrapper = group.getWrapperBase( varName );
+      input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper.voidPointer() );
 
-      localIndex wrapperSize = LvArray::integerConversion< localIndex >( wrapper->size());
+      localIndex wrapperSize = LvArray::integerConversion< localIndex >( wrapper.size() );
       varSize[varIndex] = wrapperSize / groupSize;
       totalVarSize += varSize[varIndex];
     }

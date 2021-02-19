@@ -39,7 +39,7 @@ public:
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
@@ -56,9 +56,9 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto compressibilityString = "compressibility";
-    static constexpr auto referencePressureString = "referencePressure";
-  } viewKeys;
+    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * referencePressureString() { return "referencePressure"; }
+  };
 
 protected:
   virtual void postProcessInput() override;

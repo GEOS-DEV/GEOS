@@ -115,14 +115,14 @@ public:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString = "phaseMinVolumeFraction";
-    static constexpr auto waterOilRelPermTableNamesString = "waterOilRelPermTableNames";
-    static constexpr auto gasOilRelPermTableNamesString = "gasOilRelPermTableNames";
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * waterOilRelPermTableNamesString() { return "waterOilRelPermTableNames"; }
+    static constexpr char const * gasOilRelPermTableNamesString() { return "gasOilRelPermTableNames"; }
 
     using ViewKey = dataRepository::ViewKey;
-    ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString };
-    ViewKey waterOilRelPermTableNames = { waterOilRelPermTableNamesString };
-    ViewKey gasOilRelPermTableNames = { gasOilRelPermTableNamesString };
+    ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString() };
+    ViewKey waterOilRelPermTableNames = { waterOilRelPermTableNamesString() };
+    ViewKey gasOilRelPermTableNames = { gasOilRelPermTableNamesString() };
 
   } vieKeysTableRelativePermeability;
 
@@ -130,7 +130,7 @@ private:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups() override;
 
   /**
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)

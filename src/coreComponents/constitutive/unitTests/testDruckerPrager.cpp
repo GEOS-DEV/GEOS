@@ -91,8 +91,8 @@ void testDruckerPragerDriver()
   dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElem );
 
-  DruckerPrager & cm = *(constitutiveManager.getConstitutiveRelation< DruckerPrager >( "granite" ));
-  cm.allocateConstitutiveData( &disc, numQuad );
+  DruckerPrager & cm = constitutiveManager.getConstitutiveRelation< DruckerPrager >( "granite" );
+  cm.allocateConstitutiveData( disc, numQuad );
 
   // confirm allocation sizes
 
@@ -207,8 +207,8 @@ void testDruckerPragerExtendedDriver()
   dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElem );
 
-  DruckerPragerExtended & cm = *(constitutiveManager.getConstitutiveRelation< DruckerPragerExtended >( "granite" ));
-  cm.allocateConstitutiveData( &disc, numQuad );
+  DruckerPragerExtended & cm = constitutiveManager.getConstitutiveRelation< DruckerPragerExtended >( "granite" );
+  cm.allocateConstitutiveData( disc, numQuad );
 
   // confirm allocation sizes
 

@@ -170,14 +170,14 @@ TEST( VirtualElementBase, unitCube )
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager.getDomainPartition();
-  MeshManager * meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
-  meshManager->generateMeshLevels( domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->processInputFileRecursive( topLevelNode );
-  elementManager->postProcessInputRecursive();
+  DomainPartition & domain = problemManager.getDomainPartition();
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.generateMeshLevels( domain );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elementManager = mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.postProcessInputRecursive();
   problemManager.problemSetup();
 
   ConformingVirtualElementOrder1 vemElement;
@@ -188,11 +188,9 @@ TEST( VirtualElementBase, unitCube )
   checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
                                            vemElement.m_basisDerivativesIntegralMean );
 
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  CellElementRegion const & cellRegion =
-    *elementManager->getRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  CellElementRegion const & cellRegion = elementManager.getRegion< CellElementRegion >( 0 );
+  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( 0 );
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
@@ -240,22 +238,20 @@ TEST( VirtualElementBase, wedges )
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager.getDomainPartition();
-  MeshManager * meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
-  meshManager->generateMeshLevels( domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->processInputFileRecursive( topLevelNode );
-  elementManager->postProcessInputRecursive();
+  DomainPartition & domain = problemManager.getDomainPartition();
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.generateMeshLevels( domain );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elementManager = mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.postProcessInputRecursive();
   problemManager.problemSetup();
 
   ConformingVirtualElementOrder1 vemElement;
-  CellElementRegion const & cellRegion =
-    *elementManager->getRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
+  CellElementRegion const & cellRegion = elementManager.getRegion< CellElementRegion >( 0 );
+  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();

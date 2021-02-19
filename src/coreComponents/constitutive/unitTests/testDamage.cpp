@@ -64,8 +64,8 @@ TEST( DamageTests, testDamageSpectral )
   dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElem );
 
-  DamageSpectral< ElasticIsotropic > & cm = *(constitutiveManager.getConstitutiveRelation< DamageSpectral< ElasticIsotropic > >( "shale" ));
-  cm.allocateConstitutiveData( &disc, numQuad );
+  DamageSpectral< ElasticIsotropic > & cm = constitutiveManager.getConstitutiveRelation< DamageSpectral< ElasticIsotropic > >( "shale" );
+  cm.allocateConstitutiveData( disc, numQuad );
 
   // confirm allocation sizes
 

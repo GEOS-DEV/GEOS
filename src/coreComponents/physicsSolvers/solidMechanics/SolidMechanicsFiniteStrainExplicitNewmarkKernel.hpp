@@ -81,7 +81,7 @@ public:
                         FaceManager const & faceManager,
                         SUBREGION_TYPE const & elementSubRegion,
                         FE_TYPE const & finiteElementSpace,
-                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                         real64 const dt,
                         string const & elementListName ):
     Base( nodeManager,

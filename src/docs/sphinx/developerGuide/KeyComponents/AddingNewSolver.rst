@@ -269,8 +269,8 @@ an "input uniform diffusion coefficient for the Laplace equation".
                                   Group * const parent ):
   LaplaceFEM( name, parent ), m_diffusion(0.0)
   {
-    registerWrapper<string>(laplaceDiffFEMViewKeys.diffusionCoeff.Key())->
-      setInputFlag(InputFlags::REQUIRED)->
+    registerWrapper<string>(laplaceDiffFEMViewKeys.diffusionCoeff.Key()).
+      setInputFlag(InputFlags::REQUIRED).
       setDescription("input uniform diffusion coeff for the laplace equation");
   }
 

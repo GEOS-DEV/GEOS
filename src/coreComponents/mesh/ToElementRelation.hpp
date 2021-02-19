@@ -76,9 +76,9 @@ public:
    * @brief Set the ElementRegionManager.
    * @param input The ElementRegionManager to set.
    */
-  void setElementRegionManager( ElementRegionManager const * const input )
+  void setElementRegionManager( ElementRegionManager const & input )
   {
-    m_elemRegionManager = input;
+    m_elemRegionManager = &input;
   }
 
   /**

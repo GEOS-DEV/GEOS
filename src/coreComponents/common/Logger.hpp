@@ -24,6 +24,8 @@
 #include "LvArray/src/Macros.hpp"
 
 // System includes
+#include <stdexcept>
+
 #if defined(GEOSX_USE_MPI)
   #include <mpi.h>
 #endif
@@ -103,11 +105,15 @@
 #define GEOSX_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 #endif
 
+#define GEOSX_THROW_IF( EXP, msg, TYPE ) LVARRAY_THROW_IF( EXP, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
+
 /**
  * @brief Raise a hard error and terminate the program.
  * @param msg a message to log (any expression that can be stream inserted)
  */
 #define GEOSX_ERROR( msg ) GEOSX_ERROR_IF( true, msg )
+
+#define GEOSX_THROW( msg, TYPE ) GEOSX_THROW_IF( true, msg, TYPE )
 
 /**
  * @brief Assert a condition in debug builds.
@@ -171,12 +177,17 @@
  */
 #define GEOSX_ERROR_IF_NE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
+#define GEOSX_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
+
+
 /**
  * @brief Raise a hard error if two values are not equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOSX_ERROR_IF_NE( lhs, rhs ) GEOSX_ERROR_IF_NE_MSG( lhs, rhs, "" )
+
+#define GEOSX_THROW_IF_NE( lhs, rhs, TYPE ) GEOSX_THROW_IF_NE_MSG( lhs, rhs, "", TYPE )
 
 /**
  * @brief Raise a hard error if one value compares greater than the other.
@@ -335,6 +346,20 @@
 
 namespace geosx
 {
+
+struct InputError : public std::runtime_error
+{
+  InputError( std::string const & what ):
+    std::runtime_error( what )
+  {}
+
+  InputError( char const * const what ):
+    std::runtime_error( what )
+  {}
+};
+
+class NotAnError : public std::exception
+{};
 
 namespace logger
 {

@@ -24,7 +24,7 @@ namespace geosx
 namespace LAIHelperFunctions
 {
 
-void CreatePermutationMatrix( NodeManager const * const nodeManager,
+void CreatePermutationMatrix( NodeManager const & nodeManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
@@ -42,11 +42,11 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
   permutationMatrix.createWithLocalSize( nRows, nCols, 1, MPI_COMM_GEOSX );
   permutationMatrix.open();
 
-  arrayView1d< globalIndex const > const & DofNumber =  nodeManager->getReference< globalIndex_array >( dofKey );
+  arrayView1d< globalIndex const > const & DofNumber =  nodeManager.getReference< globalIndex_array >( dofKey );
 
-  arrayView1d< globalIndex const > const & localToGlobal = nodeManager->localToGlobalMap();
+  arrayView1d< globalIndex const > const & localToGlobal = nodeManager.localToGlobalMap();
 
-  for( localIndex a=0; a<nodeManager->size(); ++a )
+  for( localIndex a=0; a<nodeManager.size(); ++a )
   {
     if( DofNumber[a] >= 0 )
     {
@@ -63,7 +63,7 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
   permutationMatrix.set( 1 );
 }
 
-void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
+void CreatePermutationMatrix( ElementRegionManager const & elemManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerCell,
@@ -82,7 +82,7 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
   permutationMatrix.createWithLocalSize( nRows, nCols, 1, MPI_COMM_GEOSX );
   permutationMatrix.open();
 
-  elemManager->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
     arrayView1d< globalIndex const > const &

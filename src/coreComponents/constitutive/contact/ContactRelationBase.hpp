@@ -75,7 +75,7 @@ public:
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 
-  virtual void initializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups() override;
 
   virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const;
 
@@ -143,8 +143,8 @@ public:
    */
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto penaltyStiffnessString  = "penaltyStiffness";
-    static constexpr auto apertureToleranceString  = "apertureTolerance";
+    static constexpr char const * penaltyStiffnessString() { return "penaltyStiffness"; }
+    static constexpr char const * apertureToleranceString() { return "apertureTolerance"; }
   };
 
 private:

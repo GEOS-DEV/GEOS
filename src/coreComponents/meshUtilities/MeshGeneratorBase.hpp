@@ -71,7 +71,7 @@ public:
  * @brief Generate the mesh object the input mesh object.
  * @param[in] domain the domain partition from which to construct the mesh object
  */
-  virtual void generateMesh( DomainPartition * const domain ) = 0;
+  virtual void generateMesh( DomainPartition & domain ) = 0;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) = 0;
@@ -95,7 +95,7 @@ public:
  * @param[in] domain domain point whose mesh has to be remapped
  *
  */
-  virtual void remapMesh ( dataRepository::Group * const domain ) = 0;
+  virtual void remapMesh ( dataRepository::Group & domain ) = 0;
 
   /// Integer to trigger or not mesh re-mapping at the end of GenerateMesh call
   int m_delayMeshDeformation = 0;

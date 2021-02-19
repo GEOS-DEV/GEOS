@@ -26,6 +26,8 @@
 namespace geosx
 {
 
+class DomainPartition;
+
 /**
  * @class ExecutableGroup
  *
@@ -56,7 +58,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) = 0;
+                        DomainPartition & domain ) = 0;
 
   /**
    * @brief Inform the object that it expects to execute during the next timestep.
@@ -68,7 +70,7 @@ public:
   virtual void signalToPrepareForExecution( real64 const time_n,
                                             real64 const dt,
                                             integer const cycle,
-                                            dataRepository::Group * domain );
+                                            DomainPartition & domain );
   /**
    * @brief Called as the code exits the main run loop.
    * @param[in] time_n        current time level
@@ -81,7 +83,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain );
+                        DomainPartition & domain );
 
   /**
    * @brief Supplies the timestep request for this target to the event manager.

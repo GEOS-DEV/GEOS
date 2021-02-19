@@ -53,10 +53,10 @@ public:
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
-    static constexpr auto surfaceDensitiesString = "surfaceDensities";
-    static constexpr auto tableFilesString = "tableFiles";
-    static constexpr auto fluidTypeString = "fluidType";
-  } viewKeysBlackOilFluid;
+    static constexpr char const * surfaceDensitiesString() { return "surfaceDensities"; }
+    static constexpr char const * tableFilesString() { return "tableFiles"; }
+    static constexpr char const * fluidTypeString() { return "fluidType"; }
+  };
 
 protected:
   virtual void postProcessInput() override;

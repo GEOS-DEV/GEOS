@@ -27,19 +27,17 @@ namespace dataRepository
 
 
 WrapperBase::WrapperBase( string const & name,
-                          Group * const parent ):
+                          Group & parent ):
   m_name( name ),
-  m_parent( parent ),
+  m_parent( &parent ),
   m_sizedFromParent( 1 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_plotLevel( PlotLevel::NOPLOT ),
   m_inputFlag( InputFlags::INVALID ),
   m_description(),
   m_registeringObjects(),
-  m_conduitNode( parent->getConduitNode()[ name ] )
-{
-  GEOSX_ERROR_IF( parent == nullptr, "Cannot have a view with no parent." );
-}
+  m_conduitNode( parent.getConduitNode()[ name ] )
+{}
 
 
 WrapperBase::~WrapperBase()
@@ -52,7 +50,7 @@ void WrapperBase::resize()
 
 void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 {
-  GEOSX_ERROR_IF( source.m_name != this->m_name,
+  GEOSX_ERROR_IF( source.m_name != m_name,
                   "Tried to clone wrapper attributes from a wrapper with a different name" );
   m_sizedFromParent = source.m_sizedFromParent;
   m_restart_flags = source.m_restart_flags;
@@ -63,7 +61,10 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 
 string WrapperBase::getPath() const
 {
-  return m_conduitNode.path();
+  // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
+  // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
+  string const noProblem = m_conduitNode.path().substr( sizeof( "Problem" ) -1 );
+  return noProblem == "" ? "/" : noProblem;
 }
 
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
