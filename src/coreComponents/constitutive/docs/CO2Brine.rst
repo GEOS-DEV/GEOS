@@ -1,12 +1,28 @@
 .. _CO2-EOS:
 
 ##################################################################################
-CO2 and brine models 
+CO2-brine model 
 ##################################################################################
 
 
 Summary
 =================================
+
+The CO2-brine model currently implemented in GEOSX includes two chemical components (CO2 (c) and water (w) ) that are transported by one or two fluid phases (the gas (g) phase and the brine (b) phase). The water component is only present in the brine phase, while the CO2 component can present in the gas phase as well as in the brine phase. Thus, the following partition matrix determines the component distribution within the two phases:
+
+.. math::
+    \begin{bmatrix}
+    y_{cg} & y_{cb} \\
+         0 & 1      \\
+    \end{bmatrix}
+
+The update of the fluid properties is done in two steps:
+
+1) We compute the phase fractions and phase component fractions as a function of pressure, temperature, component fractions, and a constant salinity.
+
+2) We compute phase densities and phase viscosities as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
+    
+Thermodynamic and transport properties of CO2/brine fluids including density, viscosity, and CO2-brine solubility are calculated as a function of pressure, temperature, and CO2/brine concentration.
 
 The equation-of-state and viscosity of CO2 under both sub- and super-critical conditions are computed as a function of both pressure and temperature, using the empirical equations developed by Span and Wagner (1996) and Fenghour and Wakeman (1998), respectively.
 
@@ -28,16 +44,12 @@ on the pressure and the temperature as input data
 
  .. code-block:: c
 
-<<<<<<< HEAD
     void SpanWagnerCO2DensityFunction::Evaluation( EvalVarArgs const & pressure,
                                                    EvalVarArgs const & temperature,
                                                    arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM( phaseComposition ),
                                                    EvalVarArgs & value,
                                                    bool useMass ) const
 
-=======
-  double PVTPackage::CO2Model::computeMassDensity(double P, double T)
->>>>>>> develop
 
 ``input parameters:``
 
@@ -60,16 +72,12 @@ on the pressure and the temperature as input data.
 
  .. code-block:: c
 
-<<<<<<< HEAD
     virtual void FenghourCO2ViscosityFunction:Evaluation( EvalVarArgs const & pressure,
                                                           EvalVarArgs const & temperature,
                                                           arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM( phaseComposition ),
                                                           EvalVarArgs & value,
                                                           bool GEOSX_UNUSED_PARAM( useMass )) const:
 
-=======
-  double PVTPackage::CO2Model::computeVisc(double P, double T)
->>>>>>> develop
 
 ``input parameters:``
 
@@ -89,16 +97,12 @@ It is set and register in the object constructor. The evaluation is then interfa
 
  .. code-block:: c
 
-<<<<<<< HEAD
   void BrineCO2DensityFunction:Evaluation( EvalVarArgs const & pressure,
                                            EvalVarArgs const & temperature,
                                            arraySlice1d< EvalVarArgs const > const & phaseComposition,
                                            EvalVarArgs & value,
                                            bool useMass ) const
 
-=======
-  double PVTPackage::BrineModel::computeMassDensity(double P, double T, double salinity)
->>>>>>> develop
 
 ``input parameters:``
 
