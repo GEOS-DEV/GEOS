@@ -45,39 +45,39 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   m_nDims( 3 ),
   m_polylineHeadNodeId( -1 )
 {
-  registerWrapper( keys::nodeCoords, &m_polyNodeCoords )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::nodeCoords, &m_polyNodeCoords ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Physical coordinates of the well polyline nodes" );
 
-  registerWrapper( keys::segmentConn, &m_segmentToPolyNodeMap )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::segmentConn, &m_segmentToPolyNodeMap ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Connectivity of the polyline segments" );
 
-  registerWrapper( keys::radius, &m_radius )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::radius, &m_radius ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Radius of the well" );
 
-  registerWrapper( keys::nElems, &m_numElemsPerSegment )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::nElems, &m_numElemsPerSegment ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Number of well elements per polyline segment" );
 
-  registerWrapper( keys::wellRegionName, &m_wellRegionName )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::wellRegionName, &m_wellRegionName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Name of the well element region" );
 
-  registerWrapper( keys::wellControlsName, &m_wellControlsName )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::wellControlsName, &m_wellControlsName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
 
-  registerWrapper( keys::meshBodyName, &m_meshBodyName )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::meshBodyName, &m_meshBodyName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Name of the reservoir mesh associated with this well" );
 
 }
@@ -127,7 +127,7 @@ Group * InternalWellGenerator::createChild( string const & childKey, string cons
     // keep track of the perforations that have been added
     m_perforationList.emplace_back( childName );
 
-    return registerGroup< Perforation >( childName );
+    return &registerGroup< Perforation >( childName );
   }
   else
   {
@@ -141,7 +141,7 @@ void InternalWellGenerator::expandObjectCatalogs()
   createChild( keys::perforation, keys::perforation );
 }
 
-void InternalWellGenerator::generateMesh( DomainPartition * const domain )
+void InternalWellGenerator::generateMesh( DomainPartition & domain )
 {
   // count the number of well elements to create
   m_numElems = m_numElemsPerSegment * m_segmentToPolyNodeMap.size( 0 );
@@ -185,18 +185,15 @@ void InternalWellGenerator::generateMesh( DomainPartition * const domain )
   }
 
   // get the element (sub) region to populate and save the well generator and constraints names
-  MeshLevel * const meshLevel = domain->getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
-  WellElementRegion * const
-  wellRegion = elemManager->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup )->
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
+  WellElementRegion &
+  wellRegion = elemManager.getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() ).
                  getGroup< WellElementRegion >( this->m_wellRegionName );
 
-  GEOSX_ERROR_IF( wellRegion == nullptr,
-                  "Well region " << this->m_wellRegionName << " not found in well " << getName() );
-
-  wellRegion->setWellGeneratorName( this->getName() );
-  wellRegion->setWellControlsName( m_wellControlsName );
+  wellRegion.setWellGeneratorName( this->getName() );
+  wellRegion.setWellControlsName( m_wellControlsName );
 }
 
 
@@ -369,10 +366,9 @@ void InternalWellGenerator::connectPerforationsToWellElements()
   {
 
     // get the perforation and its properties
-    Perforation const * const perf =
-      this->getGroup< Perforation >( m_perforationList[iperf] );
-    m_perfDistFromHead[iperf]  = perf->getDistanceFromWellHead();
-    m_perfTransmissibility[iperf] = perf->getWellTransmissibility();
+    Perforation const & perf = this->getGroup< Perforation >( m_perforationList[iperf] );
+    m_perfDistFromHead[iperf]  = perf.getDistanceFromWellHead();
+    m_perfTransmissibility[iperf] = perf.getWellTransmissibility();
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
@@ -383,7 +379,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
       m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][NodeLocation::BOTTOM]];
 
     GEOSX_ERROR_IF( m_perfDistFromHead[iperf] > wellLength,
-                    "Distance from perforation " << perf->getName() << " to head is larger than well length for well " << getName() );
+                    "Distance from perforation " << perf.getName() << " to head is larger than well length for well " << getName() );
 
     // start binary search
     const globalIndex maxNumSteps = m_numElems + 1;
@@ -405,7 +401,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
       }
 
       GEOSX_ERROR_IF( currentNumSteps > maxNumSteps,
-                      "Perforation " << perf->getName() << " cannot be mapped to a well element in well " << getName() );
+                      "Perforation " << perf.getName() << " cannot be mapped to a well element in well " << getName() );
 
       currentNumSteps++;
     }

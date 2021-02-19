@@ -32,21 +32,21 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   m_oldStress( 0, 0, 6 ),
   m_density()
 {
-  registerWrapper( viewKeyStruct::stressString, &m_newStress )->
-    setPlotLevel( PlotLevel::LEVEL_0 )->
-    setApplyDefaultValue( 0 )-> // default to zero initial stress
+  registerWrapper( viewKeyStruct::stressString(), &m_newStress ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Current Material Stress" );
 
-  registerWrapper( viewKeyStruct::oldStressString, &m_oldStress )->
-    setApplyDefaultValue( 0 )-> // default to zero initial stress
+  registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
+    setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Previous Material Stress" );
 
-  registerWrapper( viewKeyStruct::densityString, &m_density )->
-    setApplyDefaultValue( -1 )-> // will be overwritten
+  registerWrapper( viewKeyStruct::densityString(), &m_density ).
+    setApplyDefaultValue( -1 ). // will be overwritten
     setDescription( "Material Density" );
 
-  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Material Density" );
 }
 
@@ -57,12 +57,12 @@ SolidBase::~SolidBase()
 
 void SolidBase::postProcessInput()
 {
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString )->
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
     setApplyDefaultValue( m_defaultDensity );
 }
 
 
-void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   m_density.resize( 0, numConstitutivePointsPerParentIndex );

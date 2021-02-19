@@ -33,39 +33,39 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
                                                                               Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Minimum volume fraction value for each phase" );
 
 
-  registerWrapper( viewKeyStruct::waterOilRelPermExponentInvString, &m_waterOilRelPermExponentInv )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::waterOilRelPermExponentInvString(), &m_waterOilRelPermExponentInv ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation\n"
                     "The expected format is \"{ waterExp, oilExp }\", in that order" );
 
-  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString, &m_waterOilRelPermMaxValue )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString(), &m_waterOilRelPermMaxValue ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation\n"
                     "The expected format is \"{ waterMax, oilMax }\", in that order" );
 
 
-  registerWrapper( viewKeyStruct::gasOilRelPermExponentInvString, &m_gasOilRelPermExponentInv )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::gasOilRelPermExponentInvString(), &m_gasOilRelPermExponentInv ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation\n"
                     "The expected format is \"{ gasExp, oilExp }\", in that order" );
 
-  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString, &m_gasOilRelPermMaxValue )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString(), &m_gasOilRelPermMaxValue ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation\n"
                     "The expected format is \"{ gasMax, oilMax }\", in that order" );
 
-  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
-    setApplyDefaultValue( 1.0 )->
+  registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 
 }
@@ -92,18 +92,18 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() )
 
   if( m_phaseOrder[PhaseType::WATER] >= 0 )
   {
-    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponentInv, 2, viewKeyStruct::waterOilRelPermExponentInvString )
-    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString )
+    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponentInv, 2, viewKeyStruct::waterOilRelPermExponentInvString() )
+    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString() )
   }
 
   if( m_phaseOrder[PhaseType::GAS] >= 0 )
   {
-    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponentInv, 2, viewKeyStruct::gasOilRelPermExponentInvString )
-    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString )
+    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponentInv, 2, viewKeyStruct::gasOilRelPermExponentInvString() )
+    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString() )
   }
 
 #undef COREY_CHECK_INPUT_LENGTH
