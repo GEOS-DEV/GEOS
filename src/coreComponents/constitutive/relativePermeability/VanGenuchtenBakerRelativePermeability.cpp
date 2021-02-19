@@ -42,23 +42,27 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
   registerWrapper( viewKeyStruct::waterOilRelPermExponentInvString, &m_waterOilRelPermExponentInv )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation" );
+    setDescription( "Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation\n"
+                    "The expected format is \"{ waterExp, oilExp }\", in that order" );
 
   registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString, &m_waterOilRelPermMaxValue )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation" );
+    setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation\n"
+                    "The expected format is \"{ waterMax, oilMax }\", in that order" );
 
 
   registerWrapper( viewKeyStruct::gasOilRelPermExponentInvString, &m_gasOilRelPermExponentInv )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation" );
+    setDescription( "Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation\n"
+                    "The expected format is \"{ gasExp, oilExp }\", in that order" );
 
   registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString, &m_gasOilRelPermMaxValue )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );
+    setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation\n"
+                    "The expected format is \"{ gasMax, oilMax }\", in that order" );
 
   registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
     setApplyDefaultValue( 1.0 )->
@@ -74,7 +78,7 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
 
-  localIndex const NP = numFluidPhases();
+  localIndex const numPhases = numFluidPhases();
 
   GEOSX_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
                   "VanGenuchtenBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
@@ -88,7 +92,7 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString )
 
   if( m_phaseOrder[PhaseType::WATER] >= 0 )
   {
@@ -105,7 +109,7 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
 #undef COREY_CHECK_INPUT_LENGTH
 
   m_volFracScale = 1.0;
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases; ++ip )
   {
     GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                     "VanGenuchtenBakerRelativePermeability: invalid phase min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
