@@ -59,12 +59,12 @@ To define a mechanics solver capable of including embedded fractures, we will
 define two solvers:
 
  - a ``SolidMechanicsEmbeddedFractures`` solver, called ``mechSolve``
- - a small-stress Lagrangian mechanics solver, of type ``SolidMechanicsLagrangianSSLE`` called here ``matrixSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`)
+ - a small-strain Lagrangian mechanics solver, of type ``SolidMechanicsLagrangianSSLE`` called here ``matrixSolver`` (see: :ref:`SolidMechanicsLagrangianFEM`)
 
 Note that the ``name`` attribute of these solvers is
 chosen by the user and is not imposed by GEOSX. It is important to make sure that the
 ``solidSolverName`` specified in the embedded fractures solver corresponds to the
-small-stress Lagrangian solver used in the matrix.
+small-strain Lagrangian solver used in the matrix.
 
 The two single-physics solvers are parameterized as explained
 in their respective documentation, each with their own tolerances,
