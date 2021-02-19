@@ -84,12 +84,12 @@
       referenceViscosity="5.0e-3"
       viscosibility="0.0"/>
 
-    <!--LinearElasticIsotropic name="rock"
+    <!--ElasticIsotropic name="rock"
                             defaultDensity="2700"
                             defaultBulkModulus="20.0e9"
                             defaultShearModulus="12.0e9"
                             /-->
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"

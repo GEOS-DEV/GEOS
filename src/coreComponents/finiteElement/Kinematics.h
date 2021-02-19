@@ -54,9 +54,9 @@ void HughesWinget( real64 ( & Rot )[ 3 ][ 3 ], real64 ( & Dadt )[ 6 ], real64 co
   Dadt[ 1 ] = G[ 1 ][ 1 ];
   Dadt[ 2 ] = G[ 2 ][ 2 ];
 
-  Dadt[ 3 ] = 0.5 * ( G[ 2 ][ 1 ] + G[ 1 ][ 2 ] );
-  Dadt[ 4 ] = 0.5 * ( G[ 2 ][ 0 ] + G[ 0 ][ 2 ] );
-  Dadt[ 5 ] = 0.5 * ( G[ 0 ][ 1 ] + G[ 1 ][ 0 ] );
+  Dadt[ 3 ] = G[ 2 ][ 1 ] + G[ 1 ][ 2 ]; // engineering strains
+  Dadt[ 4 ] = G[ 2 ][ 0 ] + G[ 0 ][ 2 ];
+  Dadt[ 5 ] = G[ 0 ][ 1 ] + G[ 1 ][ 0 ];
 
   //Omega = 0.5*(G - GT);
   real64 const w12 = 0.5*(G[ 0 ][ 1 ] - G[ 1 ][ 0 ]);

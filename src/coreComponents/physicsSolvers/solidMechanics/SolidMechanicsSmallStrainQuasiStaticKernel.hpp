@@ -243,29 +243,23 @@ public:
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     real64 strainInc[6] = {0};
+    real64 stress[6] = {0};
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
+
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-    m_constitutiveUpdate.smallStrain( k, q, strainInc );
-
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
-    m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
-
-    stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
-
-    real64 stress[6];
-
-    m_constitutiveUpdate.getStress( k, q, stress );
+    m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, stress, stiffness );
 
     stressModifier( stress );
-
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
-                                     m_gravityVector[1] * m_density( k, q )* detJ,
-                                     m_gravityVector[2] * m_density( k, q )* detJ };
-
     for( localIndex i=0; i<6; ++i )
     {
       stress[i] *= -detJ;
     }
+
+    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
+                                     m_gravityVector[1] * m_density( k, q )* detJ,
+                                     m_gravityVector[2] * m_density( k, q )* detJ };
 
     real64 N[numNodesPerElem];
     FE_TYPE::calcN( q, N );
@@ -274,6 +268,7 @@ public:
                                      N,
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
   }
 
   /**
@@ -287,13 +282,15 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
+    // TODO: Does this work if BTDB is non-symmetric?
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
-        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+        localIndex const dof =
+          LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,

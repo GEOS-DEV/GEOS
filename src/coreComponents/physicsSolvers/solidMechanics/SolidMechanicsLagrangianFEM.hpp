@@ -152,8 +152,6 @@ public:
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  void resetStressToBeginningOfStep( DomainPartition & domain );
-
   virtual void implicitStepComplete( real64 const & time,
                                      real64 const & dt,
                                      DomainPartition & domain ) override;
@@ -225,7 +223,6 @@ public:
     static constexpr auto maxNumResolvesString = "maxNumResolves";
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNamesString = "solidMaterialNames";
-    static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";
@@ -335,8 +332,6 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-  resetStressToBeginningOfStep( domain );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
