@@ -484,6 +484,13 @@ Element: Poroelastic
 .. include:: ../../coreComponents/fileIO/schema/docs/Poroelastic.rst
 
 
+.. _XML_PoroelasticEmbeddedFractures:
+
+Element: PoroelasticEmbeddedFractures
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticEmbeddedFractures.rst
+
+
 .. _XML_Problem:
 
 Element: Problem
@@ -503,6 +510,13 @@ Element: ProppantSlurryFluid
 Element: ProppantTransport
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
+
+
+.. _XML_Python:
+
+Element: Python
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/Python.rst
 
 
 .. _XML_Restart:
@@ -1216,6 +1230,13 @@ Datastructure: Poroelastic
 .. include:: ../../coreComponents/fileIO/schema/docs/Poroelastic_other.rst
 
 
+.. _DATASTRUCTURE_PoroelasticEmbeddedFractures:
+
+Datastructure: PoroelasticEmbeddedFractures
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticEmbeddedFractures_other.rst
+
+
 .. _DATASTRUCTURE_Problem:
 
 Datastructure: Problem
@@ -1235,6 +1256,13 @@ Datastructure: ProppantSlurryFluid
 Datastructure: ProppantTransport
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
+
+
+.. _DATASTRUCTURE_Python:
+
+Datastructure: Python
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Python_other.rst
 
 
 .. _DATASTRUCTURE_Restart:

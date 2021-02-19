@@ -46,11 +46,12 @@ public:
    * @param[in] eventCounter  index of event that triggered execution
    * @param[in] eventProgress fractional progress in current cycle
    * @param[in,out] domain    the physical domain up-casted to a Group.
+   * @return True iff this event requires exiting the event loop.
    *
-   * If the start criteria are satisfied, then the event manager
+   * @details If the start criteria are satisfied, then the event manager
    * will call this method.
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,

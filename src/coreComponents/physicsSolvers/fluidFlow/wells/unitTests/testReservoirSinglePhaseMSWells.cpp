@@ -19,6 +19,7 @@
 #include "managers/initialization.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
@@ -31,6 +32,8 @@ using namespace geosx;
 using namespace geosx::dataRepository;
 using namespace geosx::constitutive;
 using namespace geosx::testing;
+
+CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
@@ -57,14 +60,16 @@ char const * xmlInput =
   "                     targetRegions=\"{wellRegion1,wellRegion2}\">\n"
   "        <WellControls name=\"wellControls1\"\n"
   "                      type=\"producer\"\n"
+  "                      referenceElevation=\"2\"\n"
   "                      control=\"BHP\"\n"
   "                      targetBHP=\"5e5\"\n"
-  "                      targetRate=\"1e-3\"/>\n"
+  "                      targetTotalRate=\"1e-3\"/>\n"
   "        <WellControls name=\"wellControls2\"\n"
   "                      type=\"injector\"\n"
-  "                      control=\"liquidRate\" \n"
+  "                      referenceElevation=\"2\"\n"
+  "                      control=\"totalVolRate\" \n"
   "                      targetBHP=\"2e7\"\n"
-  "                      targetRate=\"1e-4\"/>\n"
+  "                      targetTotalRate=\"1e-4\"/>\n"
   "    </SinglePhaseWell>\n"
   "  </Solvers>\n"
   "  <Mesh>\n"
@@ -327,6 +332,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dConnRate.move( LvArray::MemorySpace::CPU, true );
         dConnRate[iwelem] = dRate;
 
+        // after perturbing, update the rate-dependent quantities in the well (well controls)
+        wellSolver.updateState( subRegion, targetIndex );
+
         residual.setValues< parallelDevicePolicy<> >( 0.0 );
         jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
         assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
@@ -356,18 +364,18 @@ class SinglePhaseReservoirSolverTest : public ::testing::Test
 {
 public:
 
-  SinglePhaseReservoirSolverTest()
-    : problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) )
+  SinglePhaseReservoirSolverTest():
+    state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
 protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( *problemManager, xmlInput );
-    solver = problemManager->getPhysicsSolverManager().getGroup< SinglePhaseReservoir >( "reservoirSystem" );
+    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    solver = state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoir >( "reservoirSystem" );
 
-    DomainPartition & domain = *problemManager->getDomainPartition();
+    DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
     solver->setupSystem( domain,
                          solver->getDofManager(),
@@ -382,7 +390,7 @@ protected:
   static real64 constexpr dt = 1e4;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
-  std::unique_ptr< ProblemManager > problemManager;
+  GeosxState state;
   SinglePhaseReservoir * solver;
 };
 
@@ -395,7 +403,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -410,7 +418,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -425,7 +433,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = *problemManager->getDomainPartition();
+  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -438,7 +446,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geosx::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;

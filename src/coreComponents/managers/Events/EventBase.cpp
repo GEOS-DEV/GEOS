@@ -210,19 +210,22 @@ void EventBase::signalToPrepareForExecution( real64 const time,
 }
 
 
-void EventBase::execute( real64 const time_n,
+bool EventBase::execute( real64 const time_n,
                          real64 const dt,
                          const integer cycleNumber,
                          integer const,
                          real64 const,
                          Group * domain )
 {
+  bool earlyReturn = false;
+
   // If m_targetExecFlag is set, then the code has resumed at a point
   // after the target has executed.
   if((m_target != nullptr) && (m_targetExecFlag == 0))
   {
     m_targetExecFlag = 1;
-    m_target->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
+    earlyReturn = earlyReturn ||
+                  m_target->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
   }
 
   // Iterate through the sub-event list using the managed integer m_currentSubEvent
@@ -238,7 +241,8 @@ void EventBase::execute( real64 const time_n,
 
     if( subEvent->isReadyForExec() )
     {
-      subEvent->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
+      earlyReturn = earlyReturn ||
+                    subEvent->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
     }
   }
 
@@ -247,6 +251,8 @@ void EventBase::execute( real64 const time_n,
   m_currentSubEvent = 0;
   m_lastTime = time_n;
   m_lastCycle = cycleNumber;
+
+  return earlyReturn;
 }
 
 

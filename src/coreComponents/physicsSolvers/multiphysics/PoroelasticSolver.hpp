@@ -43,7 +43,8 @@ public:
    */
   static string catalogName() { return "Poroelastic"; }
 
-  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+
+  virtual void registerDataOnMesh( dataRepository::Group * const meshBodies ) override;
 
 
   virtual void setupSystem( DomainPartition & domain,
@@ -60,7 +61,7 @@ public:
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition & domain ) override final;
+                     DomainPartition & domain ) override;
 
   virtual void
   assembleSystem( real64 const time,
@@ -104,7 +105,7 @@ public:
   virtual void
   implicitStepComplete( real64 const & time_n,
                         real64 const & dt,
-                        DomainPartition & domain ) override final;
+                        DomainPartition & domain ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -158,13 +159,9 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override final;
+  virtual void postProcessInput() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
-
-private:
-
-  void createPreconditioner();
+  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override;
 
   string m_solidSolverName;
   string m_flowSolverName;
@@ -176,6 +173,10 @@ private:
 
   // pointer to the solid mechanics sub-solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
+
+private:
+
+  void createPreconditioner();
 
 };
 

@@ -5,7 +5,7 @@
     gravityVector="0.0, 0.0, 0.0">
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
-      targetRegions="{ Region1, Fracture }"
+      targetRegions="{ Domain, Fracture }"
       fractureRegionName="Fracture"
       initialDt="10"
       solidSolverName="matrixSolver"
@@ -26,15 +26,15 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"/>
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       solidMaterialNames="{ rock }"
-      targetRegions="{ Region1, Fracture }"
+      targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
-      logLevel="2"/>
+      logLevel="1"/>
   </Solvers>
 
   <Mesh>
@@ -44,43 +44,13 @@
       xCoords="{ 0, 3 }"
       yCoords="{ 0, 3 }"
       zCoords="{ 0, 3 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
-      nz="{ 1 }"
+      nx="{ 11 }"
+      ny="{ 11 }"
+      nz="{ 11 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
-    <Box
-      name="xneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="0.01, 3.01, 3.01"/>
-
-    <Box
-      name="xpos"
-      xMin=" 2.99, -0.01, -0.01"
-      xMax="3.01, 3.01, 3.01"/>
-
-    <Box
-      name="yneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="3.01, 0.01, 3.01"/>
-
-    <Box
-      name="ypos"
-      xMin="-0.01, 2.99, -0.01"
-      xMax="3.01, 3.01, 3.01"/>
-
-    <Box
-      name="zneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="3.01, 3.01, 0.01"/>
-
-    <Box
-      name="zpos"
-      xMin="-0.01, -0.01, 2.99"
-      xMax="3.01, 3.01, 3.01"/>
-
     <BoundedPlane
       name="FracturePlane"
       normal="0, 1, 0"
@@ -124,7 +94,7 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region1"
+      name="Domain"
       cellBlocks="{ cb1 }"
       materialList="{ rock }"/>
 
@@ -141,6 +111,16 @@
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
+      
+    <Contact
+      name="fractureContact"
+      penaltyStiffness="0.0e8">
+      <TableFunction
+        name="aperTable"
+        coordinates="{ -1.0e-3, 0.0 }"
+        values="{ 1.0e-6, 1.0e-4 }"/>
+    </Contact>
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -175,6 +155,15 @@
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
+      
+      <FieldSpecification
+      name="Traction"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="fractureTraction"
+      component="0"
+      scale="-1.00e5"/>
+      
   </FieldSpecifications>
 
   <Functions/>
@@ -183,7 +172,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="Sneddon"
-      plotLevel="2"
+      plotLevel="3"
       writeBinaryData="0"/>
 
     <Restart
