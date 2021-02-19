@@ -528,7 +528,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key ) );
   fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal ) );
 
-  CommunicationTools::synchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
@@ -609,10 +609,10 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     modifiedObjects.clearNewFromModified();
 
     // 1) Assign new global indices to the new objects
-    CommunicationTools::assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
-    CommunicationTools::assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
-    CommunicationTools::assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
-//    CommunicationTools::AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
+    getGlobalState().getCommunicationTools().assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
+    getGlobalState().getCommunicationTools().assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
+    getGlobalState().getCommunicationTools().assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
+//    getGlobalState().getCommunicationTools().AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
     ModifiedObjectLists receivedObjects;
 
@@ -2838,10 +2838,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
     domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
+    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "BulkModulus", constitutiveManager );
+    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
   stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
@@ -3680,10 +3680,10 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
     domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
+    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "BulkModulus", constitutiveManager );
+    elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
   stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
@@ -4472,7 +4472,7 @@ void SurfaceGenerator::
     }
   }
 
-  elementManager.SetMaxGlobalIndex();
+  elementManager.setMaxGlobalIndex();
 }
 
 real64

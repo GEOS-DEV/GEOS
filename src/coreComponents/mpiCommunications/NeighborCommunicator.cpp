@@ -218,7 +218,7 @@ void NeighborCommunicator::addNeighborGroupToMesh( MeshLevel & mesh ) const
 
 int NeighborCommunicator::postSizeRecv( int const commID )
 {
-  int const recvTag = 101; //CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
+  int const recvTag = 101; //CommTag( m_neighborRank, MpiWrapper::commRank(), commID );
   return MpiWrapper::iRecv( &m_receiveBufferSize[commID],
                             1,
                             m_neighborRank,
@@ -234,7 +234,7 @@ MPI_Request NeighborCommunicator::getSizeRecvRequest( int const commID )
 
 int NeighborCommunicator::postSizeSend( int const commID )
 {
-  int const sendTag = 101; //CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
+  int const sendTag = 101; //CommTag( m_neighborRank, MpiWrapper::commRank(), commID );
   return MpiWrapper::iSend( &m_sendBufferSize[commID],
                             1,
                             m_neighborRank,
@@ -245,7 +245,7 @@ int NeighborCommunicator::postSizeSend( int const commID )
 
 int NeighborCommunicator::postRecv( int const commID )
 {
-  int const recvTag = 102; //CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
+  int const recvTag = 102; //CommTag( m_neighborRank, MpiWrapper::commRank(), commID );
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
   return MpiWrapper::iRecv( m_receiveBuffer[commID].data(),
                             m_receiveBufferSize[commID],
@@ -262,7 +262,7 @@ MPI_Request NeighborCommunicator::getRecvRequest( int const commID )
 
 int NeighborCommunicator::postSend( int const commID )
 {
-  int const sendTag = 102; //CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
+  int const sendTag = 102; //CommTag( m_neighborRank, MpiWrapper::commRank(), commID );
   return MpiWrapper::iSend( m_sendBuffer[commID].data(),
                             m_sendBufferSize[commID],
                             m_neighborRank,

@@ -32,6 +32,10 @@
 #include "common/GeosxMacros.hpp"
 #include "codingUtilities/traits.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "LvArray/src/python/python.hpp"
+#endif
+
 // TPL includes
 #include <conduit.hpp>
 
@@ -656,7 +660,8 @@ template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * &, T const & )
 {
-  GEOSX_ERROR( "Cannot pack " << LvArray::system::demangleType< T >() << " on device." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
+               ") on device but type is not packable on device." );
   return 0;
 }
 
@@ -669,7 +674,8 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * &, T const &, IDX & )
 {
-  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
+               ") on device but type is not packable by index." );
   return 0;
 }
 
@@ -731,6 +737,19 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX & )
 { return 0; }
+#if defined(GEOSX_USE_PYGEOSX)
+
+template< typename T >
+inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >
+createPythonObject( T & object )
+{ return LvArray::python::create( object ); }
+
+template< typename T >
+inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
+createPythonObject( T & )
+{ return nullptr; }
+
+#endif
 
 } // namespace WrapperHelpers
 } // namespace dataRepository
