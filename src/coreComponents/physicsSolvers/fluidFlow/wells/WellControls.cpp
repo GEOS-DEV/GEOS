@@ -40,59 +40,59 @@ WellControls::WellControls( string const & name, Group * const parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::typeString, &m_type )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::typeString(), &m_type ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::controlString, &m_currentControl )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::controlString(), &m_currentControl ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well control. Valid options:\n* " + EnumStrings< Control >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::targetBHPString, &m_targetBHP )->
-    setDefaultValue( -1 )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
+    setDefaultValue( -1 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Target bottom-hole pressure" );
 
-  registerWrapper( viewKeyStruct::targetTotalRateString, &m_targetTotalRate )->
-    setDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
+    setDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target total volumetric rate" );
 
-  registerWrapper( viewKeyStruct::targetPhaseRateString, &m_targetPhaseRate )->
-    setDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::targetPhaseRateString(), &m_targetPhaseRate ).
+    setDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target phase volumetric rate" );
 
-  registerWrapper( viewKeyStruct::targetPhaseNameString, &m_targetPhaseName )->
-    setDefaultValue( "" )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
+    setDefaultValue( "" ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the target phase" );
 
-  registerWrapper( viewKeyStruct::refElevString, &m_refElevation )->
-    setDefaultValue( -1 )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::refElevString(), &m_refElevation ).
+    setDefaultValue( -1 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference elevation where BHP control is enforced" );
 
-  registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream )->
-    setDefaultValue( -1 )->
-    setSizedFromParent( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::injectionStreamString(), &m_injectionStream ).
+    setDefaultValue( -1 ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Global component densities for the injection stream" );
 
-  registerWrapper( viewKeyStruct::useSurfaceConditionsString, &m_useSurfaceConditions )->
-    setDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::useSurfaceConditionsString(), &m_useSurfaceConditions ).
+    setDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
                     "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
 
-  registerWrapper( viewKeyStruct::surfacePressureString, &m_surfacePres )->
-    setDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::surfacePressureString(), &m_surfacePres ).
+    setDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used" );
 
-  registerWrapper( viewKeyStruct::surfaceTemperatureString, &m_surfaceTemp )->
-    setDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::surfaceTemperatureString(), &m_surfaceTemp ).
+    setDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used" );
 
 }
@@ -165,7 +165,7 @@ void WellControls::postProcessInput()
 
 }
 
-void WellControls::initializePostInitialConditionsPreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
+void WellControls::initializePostInitialConditionsPreSubGroups()
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
   if( getType() == Type::PRODUCER

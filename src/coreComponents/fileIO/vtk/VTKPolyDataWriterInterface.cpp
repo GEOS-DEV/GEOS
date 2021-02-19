@@ -273,10 +273,10 @@ void VTKPolyDataWriterInterface::writeField( WrapperBase const & wrapperBase,
   }
   rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                   true,
-                                  [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )->void
+                                  [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )
   {
     typedef decltype( array ) arrayType;
-    Wrapper< arrayType > const & wrapperT = Wrapper< arrayType >::cast( wrapperBase );
+    Wrapper< arrayType > const & wrapperT = dynamicCast< Wrapper< arrayType > const & >( wrapperBase );
     traits::ViewTypeConst< arrayType > const sourceArray = wrapperT.reference().toViewConst();
     if( typeID!=typeid(r1_array) )
     {
@@ -342,7 +342,7 @@ void VTKPolyDataWriterInterface::writeElementFields( vtkSmartPointer< vtkCellDat
     localIndex count = 0;
     er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
     {
-      auto const & wrapper = *esr.getWrapperBase( field );
+      WrapperBase const & wrapper = esr.getWrapperBase( field );
       writeField( wrapper, data, esr.size(), count );
     } );
     celldata->AddArray( data );
@@ -352,7 +352,7 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 time,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager ) const
 {
-  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & er )->void
+  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & er )
   {
     if( er.getNumberOfElements< CellElementSubRegion >() != 0 )
     {
@@ -371,11 +371,11 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 time,
 void VTKPolyDataWriterInterface::writeWellElementRegions( real64 time, ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager ) const
 {
-  elemManager.forElementRegions< WellElementRegion >( [&]( WellElementRegion const & er )->void
+  elemManager.forElementRegions< WellElementRegion >( [&]( WellElementRegion const & er )
   {
-    auto esr = er.getSubRegion( 0 )->groupCast< WellElementSubRegion const * >();
+    WellElementSubRegion const & esr = dynamicCast< WellElementSubRegion const & >( er.getSubRegion( 0 ) );
     vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
-    auto VTKWell = getWell( *esr, nodeManager );
+    auto VTKWell = getWell( esr, nodeManager );
     ug->SetPoints( VTKWell.first );
     ug->SetCells( VTK_LINE, VTKWell.second );
     writeElementFields< WellElementSubRegion >( ug->GetCellData(), er );
@@ -387,14 +387,14 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 time,
                                                              ElementRegionManager const & elemManager,
                                                              NodeManager const & nodeManager ) const
 {
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )->void
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )
   {
     vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
     if( er.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::embeddedElement )
     {
-      auto esr = er.getSubRegion( 0 )->groupCast< EmbeddedSurfaceSubRegion const * >();
+      EmbeddedSurfaceSubRegion const & esr = dynamicCast< EmbeddedSurfaceSubRegion const & >( er.getSubRegion( 0 ) );
 
-      auto VTKSurface = getEmbeddedSurface( *esr, nodeManager );
+      auto VTKSurface = getEmbeddedSurface( esr, nodeManager );
       ug->SetPoints( VTKSurface.first );
       ug->SetCells( VTK_POLYGON, VTKSurface.second );
 
@@ -402,22 +402,22 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 time,
     }
     else if( er.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
     {
-      auto esr = er.getSubRegion( 0 )->groupCast< FaceElementSubRegion const * >();
+      FaceElementSubRegion const & esr = dynamicCast< FaceElementSubRegion const & >( er.getSubRegion( 0 ) );
 
-      auto VTKSurface = getSurface( *esr, nodeManager );
+      auto VTKSurface = getSurface( esr, nodeManager );
 
       ug->SetPoints( VTKSurface.first );
-      if( esr->numNodesPerElement() == 8 )
+      if( esr.numNodesPerElement() == 8 )
       {
         ug->SetCells( VTK_HEXAHEDRON, VTKSurface.second );
       }
-      else if( esr->numNodesPerElement() == 6 )
+      else if( esr.numNodesPerElement() == 6 )
       {
         ug->SetCells( VTK_WEDGE, VTKSurface.second );
       }
       else
       {
-        GEOSX_ERROR( "Elements with " << esr->numNodesPerElement() << " nodes can't be output "
+        GEOSX_ERROR( "Elements with " << esr.numNodesPerElement() << " nodes can't be output "
                                       << "in the FaceElementRegion " << er.getName() );
       }
       writeElementFields< FaceElementSubRegion >( ug->GetCellData(), er );
@@ -518,8 +518,8 @@ string VTKPolyDataWriterInterface::getTimeStepSubFolder( real64 time ) const
 void VTKPolyDataWriterInterface::write( real64 time, integer cycle, DomainPartition const & domain )
 {
   createTimeStepSubFolder( time );
-  ElementRegionManager const & elemManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
-  NodeManager const & nodeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
+  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
   writeCellElementRegions( time, elemManager, nodeManager );
   writeWellElementRegions( time, elemManager, nodeManager );
   writeSurfaceElementRegions( time, elemManager, nodeManager );

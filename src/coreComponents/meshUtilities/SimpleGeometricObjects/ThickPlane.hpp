@@ -115,9 +115,9 @@ private:
 
   struct viewKeyStruct
   {
-    static constexpr auto originString = "origin";
-    static constexpr auto normalString = "normal";
-    static constexpr auto thicknessString = "thickness";
+    static constexpr char const * originString() { return "origin"; }
+    static constexpr char const * normalString() { return "normal"; }
+    static constexpr char const * thicknessString() { return "thickness"; }
   };
 
   /// @endcond

@@ -42,7 +42,7 @@ bool RestartOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                              integer const cycleNumber,
                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
                              real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                             Group * GEOSX_UNUSED_PARAM( domain ) )
+                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_MARK_FUNCTION;
 

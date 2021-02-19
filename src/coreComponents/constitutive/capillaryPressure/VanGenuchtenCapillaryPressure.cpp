@@ -32,29 +32,29 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( string const & nam
                                                               Group * const parent )
   : CapillaryPressureBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Minimum volume fraction value for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString, &m_phaseCapPressureExponentInv )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString(), &m_phaseCapPressureExponentInv ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Inverse of capillary power law exponent for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureMultiplierString, &m_phaseCapPressureMultiplier )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseCapPressureMultiplierString(), &m_phaseCapPressureMultiplier ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Entry pressure value for each phase" );
 
-  registerWrapper( viewKeyStruct::capPressureEpsilonString, &m_capPressureEpsilon )->
-    setApplyDefaultValue( 1e-6 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::capPressureEpsilonString(), &m_capPressureEpsilon ).
+    setApplyDefaultValue( 1e-6 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription(
     "Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1" );
 
-  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
-    setApplyDefaultValue( 1.0 )->
+  registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 
 }
@@ -77,9 +77,9 @@ void VanGenuchtenCapillaryPressure::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureMultiplier, NP, viewKeyStruct::phaseCapPressureMultiplierString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString() )
+  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString() )
+  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureMultiplier, NP, viewKeyStruct::phaseCapPressureMultiplierString() )
 
 #undef COREY_CHECK_INPUT_LENGTH
 

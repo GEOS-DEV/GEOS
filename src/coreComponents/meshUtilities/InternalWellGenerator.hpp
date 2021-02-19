@@ -119,7 +119,7 @@ public:
    * @brief Main function of the class that generates the well geometry
    * @param[in] domain the domain object
    */
-  virtual void generateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition & domain ) override;
 
   /// not implemented
   virtual void getElemToNodesRelationInBox ( string const &,
@@ -129,7 +129,7 @@ public:
                                              int const ) override {}
 
   /// not implemented
-  virtual void remapMesh ( dataRepository::Group * const ) override {}
+  virtual void remapMesh ( dataRepository::Group & ) override {}
 
   ///@}
 

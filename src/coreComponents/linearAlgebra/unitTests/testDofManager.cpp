@@ -79,8 +79,8 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( &state.getProblemManager(), xmlInput );
-    mesh = state.getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
-    dofManager.setMesh( *state.getProblemManager().getDomainPartition(), 0, 0 );
+    mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 );
+    dofManager.setMesh( state.getProblemManager().getDomainPartition(), 0, 0 );
   }
 
   GeosxState state;
@@ -101,9 +101,9 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
                            string_array const & regions,
                            array1d< globalIndex > & dofNumbers )
 {
-  ObjectManagerBase const * const manager =
-    mesh->getGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey );
-  arrayView1d< globalIndex const > dofIndex = manager->getReference< array1d< globalIndex > >( dofIndexKey );
+  ObjectManagerBase const & manager =
+    mesh->getGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey() );
+  arrayView1d< globalIndex const > dofIndex = manager.getReference< array1d< globalIndex > >( dofIndexKey );
 
   forLocalObjects< LOC >( mesh, regions, [&]( localIndex const idx )
   {
@@ -127,8 +127,8 @@ void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const
                                                          array1d< globalIndex > & dofNumbers )
 {
   // make a list of regions
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  auto const dofNumber = elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+  ElementRegionManager const & elemManager = mesh->getElemManager();
+  auto const dofNumber = elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
   forLocalObjects< DofManager::Location::Elem >( mesh, regions, [&]( auto const idx )
   {

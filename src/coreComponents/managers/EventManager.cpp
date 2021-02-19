@@ -43,30 +43,30 @@ EventManager::EventManager( string const & name,
   // This enables logLevel filtering
   enableLogLevelInput();
 
-  registerWrapper( viewKeyStruct::maxTimeString, &m_maxTime )->
-    setApplyDefaultValue( std::numeric_limits< real64 >::max())->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
+    setApplyDefaultValue( std::numeric_limits< real64 >::max()).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation time for the global event loop." );
 
-  registerWrapper( viewKeyStruct::maxCycleString, &m_maxCycle )->
-    setApplyDefaultValue( std::numeric_limits< integer >::max())->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::maxCycleString(), &m_maxCycle ).
+    setApplyDefaultValue( std::numeric_limits< integer >::max()).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation cycle for the global event loop." );
 
-  registerWrapper( viewKeyStruct::timeString, &m_time )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::timeString(), &m_time ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation time." );
 
-  registerWrapper( viewKeyStruct::dtString, &m_dt )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::dtString(), &m_dt ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation timestep." );
 
-  registerWrapper( viewKeyStruct::cycleString, &m_cycle )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::cycleString(), &m_cycle ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation cycle number." );
 
-  registerWrapper( viewKeyStruct::currentSubEventString, &m_currentSubEvent )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::currentSubEventString(), &m_currentSubEvent ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Index of the current subevent." );
 
 }
@@ -81,7 +81,7 @@ Group * EventManager::createChild( string const & childKey, string const & child
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
-  return this->registerGroup< EventBase >( childName, std::move( event ) );
+  return &this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
 
@@ -95,7 +95,7 @@ void EventManager::expandObjectCatalogs()
 }
 
 
-bool EventManager::run( dataRepository::Group * domain )
+bool EventManager::run( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 

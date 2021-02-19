@@ -340,7 +340,7 @@ public:
   virtual ~DruckerPragerExtended() override;
 
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   virtual void saveConvergedState() const override;
@@ -368,40 +368,40 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for default initial friction angle
-    static constexpr auto defaultInitialFrictionAngleString = "defaultInitialFrictionAngle";
+    static constexpr char const * defaultInitialFrictionAngleString() { return "defaultInitialFrictionAngle"; }
 
     /// string/key for default initial friction angle
-    static constexpr auto defaultResidualFrictionAngleString = "defaultResidualFrictionAngle";
+    static constexpr char const * defaultResidualFrictionAngleString() { return "defaultResidualFrictionAngle"; }
 
     /// string/key for default dilation angle
-    static constexpr auto defaultDilationRatioString = "defaultDilationRatio";
+    static constexpr char const * defaultDilationRatioString() { return "defaultDilationRatio"; }
 
     /// string/key for default hardening rate
-    static constexpr auto defaultHardeningString = "defaultHardening";
+    static constexpr char const * defaultHardeningString() { return "defaultHardening"; }
 
     /// string/key for default cohesion
-    static constexpr auto defaultCohesionString = "defaultCohesion";
+    static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
 
     /// string/key for initial friction angle
-    static constexpr auto initialFrictionString  = "initialFriction";
+    static constexpr char const * initialFrictionString() { return "initialFriction"; }
 
     /// string/key for final friction angle
-    static constexpr auto residualFrictionString  = "residualFriction";
+    static constexpr char const * residualFrictionString() { return "residualFriction"; }
 
     /// string/key for dilation angle
-    static constexpr auto dilationRatioString  = "dilationRatio";
+    static constexpr char const * dilationRatioString() { return "dilationRatio"; }
 
     /// string/key for pressure intercept
-    static constexpr auto pressureInterceptString  = "pressureIntercept";
+    static constexpr char const * pressureInterceptString() { return "pressureIntercept"; }
 
     /// string/key for cohesion
-    static constexpr auto hardeningString  = "hardening";
+    static constexpr char const * hardeningString() { return "hardening"; }
 
     /// string/key for state variable
-    static constexpr auto newStateString  = "stateVariable";
+    static constexpr char const * newStateString() { return "stateVariable"; }
 
     /// string/key for state variable
-    static constexpr auto oldStateString  = "oldStateVariable";
+    static constexpr char const * oldStateString() { return "oldStateVariable"; }
   };
 
   /**

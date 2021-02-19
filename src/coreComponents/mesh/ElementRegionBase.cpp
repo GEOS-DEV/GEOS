@@ -31,10 +31,10 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  this->registerGroup( viewKeyStruct::elementSubRegions );
+  this->registerGroup( viewKeyStruct::elementSubRegions() );
 
-  registerWrapper( viewKeyStruct::materialListString, &m_materialList )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::materialListString(), &m_materialList ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of materials present in this region" );
 
 }

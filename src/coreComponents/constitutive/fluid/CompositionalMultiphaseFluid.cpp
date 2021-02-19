@@ -52,32 +52,32 @@ pvt::EOS_TYPE getCompositionalEosType( string const & name )
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  getWrapperBase( viewKeyStruct::componentNamesString )->setInputFlag( InputFlags::REQUIRED );
-  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
-  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::componentNamesString() ).setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::componentMolarWeightString() ).setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::phaseNamesString() ).setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfState ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of equation of state types for each phase" );
 
-  registerWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical pressures" );
 
-  registerWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::componentCriticalTemperatureString(), &m_componentCriticalTemperature ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical temperatures" );
 
-  registerWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::componentAcentricFactorString(), &m_componentAcentricFactor ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component acentric factors" );
 
-  registerWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::componentVolumeShiftString(), &m_componentVolumeShift ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Component volume shifts" );
 
-  registerWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::componentBinaryCoeffString(), &m_componentBinaryCoeff ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
 }
 
@@ -111,10 +111,10 @@ void CompositionalMultiphaseFluid::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COMPFLUID_CHECK_INPUT_LENGTH( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString )
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString )
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString )
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() )
 
   if( m_componentVolumeShift.empty())
   {
@@ -122,14 +122,14 @@ void CompositionalMultiphaseFluid::postProcessInput()
     m_componentVolumeShift.setValues< serialPolicy >( 0.0 );
   }
 
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString() )
   //if (m_componentBinaryCoeff.empty()) TODO needs reading of 2D arrays
   {
     m_componentBinaryCoeff.resize( NC, NC );
     m_componentBinaryCoeff.setValues< serialPolicy >( 0.0 );
   }
 
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() )
 
 #undef COMPFLUID_CHECK_INPUT_LENGTH
 }

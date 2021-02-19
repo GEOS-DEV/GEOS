@@ -190,12 +190,7 @@ protected:
    */
   PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton );
 
-  /**
-   * @brief Called by Initialize() after to initializing sub-Groups.
-   * @param group A group that is passed in to the initialization functions
-   *              in order to facilitate the initialization.
-   */
-  virtual void initializePostSubGroups( dataRepository::Group * const group ) = 0;
+  virtual void initializePostSubGroups() = 0;
 
   /**
    * @brief Array of neighbor communicators.

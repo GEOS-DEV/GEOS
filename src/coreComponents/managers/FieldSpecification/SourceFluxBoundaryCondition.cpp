@@ -34,11 +34,11 @@ SourceFluxBoundaryCondition::~SourceFluxBoundaryCondition()
   // TODO Auto-generated destructor stub
 }
 
-void SourceFluxBoundaryCondition::initializePreSubGroups( Group * const rootGroup )
+void SourceFluxBoundaryCondition::initializePreSubGroups()
 {
-  this->setFieldName( viewKeyStruct::fluxBoundaryConditionString );
+  this->setFieldName( viewKeyStruct::fluxBoundaryConditionString() );
 
-  FieldSpecificationBase::initializePreSubGroups( rootGroup );
+  FieldSpecificationBase::initializePreSubGroups();
 }
 
 

@@ -57,6 +57,8 @@ class Geosx(CMakePackage, CudaPackage):
 
     version('develop', branch='develop', submodules='True')
 
+    # SPHINX_BEGIN_VARIANTS
+
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
     variant('mkl', default=False, description='Use the Intel MKL library.')
@@ -69,12 +71,16 @@ class Geosx(CMakePackage, CudaPackage):
             values=('trilinos', 'hypre', 'petsc'), multi=False)
     variant('pygeosx', default=False, description='Build the GEOSX python interface.')
 
+    # SPHINX_END_VARIANTS
+
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
     # variant('docs', default=False, description='Build docs')
     # variant('addr2line', default=True,
     #         description='Build support for addr2line.')
+
+    # SPHINX_BEGIN_DEPENDS
 
     depends_on('cmake@3.8:', type='build')
     depends_on('cmake@3.9:', when='+cuda', type='build')
@@ -159,6 +165,8 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('doxygen@1.8.13:', when='+docs', type='build')
     depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
+
+    # SPHINX_END_DEPENDS
 
     #
     # Conflicts

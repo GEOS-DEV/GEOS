@@ -36,9 +36,11 @@ void getAbsolutePath( std::string const & path, std::string & absolutePath )
   {
     char const * ret = getcwd( absFilePath, PATH_MAX + 1 );
     if( ret != nullptr )
-      GEOSX_ERROR( "Could not get the absolute path for " << path << " from " << absFilePath );
-    else
-      GEOSX_ERROR( "Could not get the absolute path for " << path );
+    {
+      GEOSX_THROW( "Could not get the absolute path for " << path << " from " << absFilePath, InputError );
+    }
+
+    GEOSX_THROW( "Could not get the absolute path for " << path, InputError );
   }
 }
 
@@ -105,7 +107,7 @@ void makeDirsForPath( std::string const & path )
     pos = path.find( '/', pos + 1 );
     std::string dir_name = path.substr( 0, pos );
     int const err = mkdir( dir_name.c_str(), mode );
-    LVARRAY_ERROR_IF( err && ( errno != EEXIST ), "Failed to create a directories for " << path );
+    GEOSX_THROW_IF( err && ( errno != EEXIST ), "Failed to create a directories for " << path, std::runtime_error );
   }
   while (pos != std::string::npos);
 

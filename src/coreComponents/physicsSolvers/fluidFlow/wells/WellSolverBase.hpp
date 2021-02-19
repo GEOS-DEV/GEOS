@@ -159,7 +159,7 @@ public:
    */
   /**@{*/
 
-  virtual void registerDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -249,15 +249,11 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
-    static constexpr auto gravityCoefString = FlowSolverBase::viewKeyStruct::gravityCoefString;
+    static constexpr char const * gravityCoefString() { return FlowSolverBase::viewKeyStruct::gravityCoefString(); }
 
     // misc inputs
-    static constexpr auto fluidNamesString  = "fluidNames";
-
-  } viewKeysWellSolverBase;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysWellSolverBase;
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
+  };
 
 private:
 
@@ -270,9 +266,9 @@ private:
 protected:
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Setup stored views into domain data for the current step

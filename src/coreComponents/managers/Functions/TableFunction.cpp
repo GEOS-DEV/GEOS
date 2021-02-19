@@ -55,25 +55,27 @@ TableFunction::TableFunction( const string & name,
   m_corners(),
   m_numCorners( 0 )
 {
-  registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Coordinates inputs for 1D tables" );
 
-  registerWrapper( keys::tableValues, &m_values )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::tableValues, &m_values ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Values for 1D tables" );
 
-  registerWrapper( keys::coordinateFiles, &m_coordinateFiles )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::coordinateFiles, &m_coordinateFiles ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "List of coordinate file names for ND Table" );
 
-  registerWrapper( keys::voxelFile, &m_voxelFile )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::voxelFile, &m_voxelFile ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Voxel file name for ND Table" );
 
-  registerWrapper( keys::tableInterpolation, &m_interpolationMethod )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Interpolation method. Valid options:\n* " + EnumStrings< InterpolationType >::concat( "\n* " ) )->
+  registerWrapper( keys::tableInterpolation, &m_interpolationMethod ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Interpolation method. Valid options:\n* " + EnumStrings< InterpolationType >::concat( "\n* " ) ).
     setApplyDefaultValue( m_interpolationMethod );
 }
 

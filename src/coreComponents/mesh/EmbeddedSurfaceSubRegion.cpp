@@ -39,25 +39,25 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_numOfJumpEnrichments( 3 ),
   m_connectivityIndex()
 {
-  registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector )->
+  registerWrapper( viewKeyStruct::normalVectorString(), &m_normalVector ).
     setDescription( "Unit normal vector to the embedded surface." );
 
-  registerWrapper( viewKeyStruct::t1VectorString, &m_tangentVector1 )->
+  registerWrapper( viewKeyStruct::t1VectorString(), &m_tangentVector1 ).
     setDescription( "Unit vector in the first tangent direction to the embedded surface." );
 
-  registerWrapper( viewKeyStruct::t2VectorString, &m_tangentVector2 )->
+  registerWrapper( viewKeyStruct::t2VectorString(), &m_tangentVector2 ).
     setDescription( "Unit vector in the second tangent direction to the embedded surface." );
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
+  registerWrapper( viewKeyStruct::elementCenterString(), &m_elementCenter ).
     setDescription( "The center of each EmbeddedSurface element." );
 
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
+  registerWrapper( viewKeyStruct::elementVolumeString(), &m_elementVolume ).
+    setApplyDefaultValue( -1.0 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "The volume of each EmbeddedSurface element." );
 
-  registerWrapper( viewKeyStruct::connectivityIndexString, &m_connectivityIndex )->
-    setApplyDefaultValue( 1 )->
+  registerWrapper( viewKeyStruct::connectivityIndexString(), &m_connectivityIndex ).
+    setApplyDefaultValue( 1 ).
     setDescription( "Connectivity index of each EmbeddedSurface." );
 
   m_normalVector.resizeDimension< 1 >( 3 );
@@ -239,9 +239,9 @@ void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< 
   }
 }
 
-void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {
-  this->m_toNodesRelation.setRelatedObject( mesh->getNodeManager() );
+  this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
 }
 
 } /* namespace geosx */

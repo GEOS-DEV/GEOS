@@ -106,7 +106,7 @@ public:
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
   /**
    * @brief Compute the center of each element in the subregion.
@@ -274,7 +274,7 @@ public:
   T & addProperty( string const & propertyName )
   {
     m_externalPropertyNames.emplace_back( propertyName );
-    return this->registerWrapper< T >( propertyName )->reference();
+    return this->registerWrapper< T >( propertyName ).reference();
   }
 
   /**
@@ -287,8 +287,7 @@ public:
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      dataRepository::WrapperBase * const wrapper = this->getWrapperBase( externalPropertyName );
-      lambda( wrapper );
+      lambda( this->getWrapperBase( externalPropertyName ) );
     }
   }
 

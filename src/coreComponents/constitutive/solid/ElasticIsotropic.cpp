@@ -31,32 +31,32 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   m_bulkModulus(),
   m_shearModulus()
 {
-  registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Bulk Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Shear Modulus Parameter" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Young's Modulus." );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Poisson's ratio" );
 
-  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Shear Modulus" );
 }
 
@@ -71,8 +71,8 @@ void ElasticIsotropic::postProcessInput()
 
   SolidBase::postProcessInput();
 
-  real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
-  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
+  real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString() );
+  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString() );
   real64 & K  = m_defaultBulkModulus;
   real64 & G  = m_defaultShearModulus;
 
@@ -140,10 +140,10 @@ void ElasticIsotropic::postProcessInput()
   }
 
   // set results as array default values
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString() ).
     setApplyDefaultValue( m_defaultBulkModulus );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
     setApplyDefaultValue( m_defaultShearModulus );
 }
 

@@ -96,14 +96,14 @@ public:
     m_cellBlockNames.emplace_back( cellBlockName );
   }
 
-  virtual void generateMesh( Group * const cellBlocks ) override;
+  virtual void generateMesh( Group & cellBlocks ) override;
 
   /**
    * @brief Generate the aggregates.
    * @param faceManager a pointer to the FaceManager
    * @param nodeManager a pointer to the NodeManager
    */
-  void generateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
+  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
 
   ///@}
 
@@ -114,10 +114,10 @@ public:
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     /// String key for the coarsening ratio
-    static constexpr auto coarseningRatioString = "coarseningRatio";
+    static constexpr char const * coarseningRatioString() {return "coarseningRatio"; }
 
     /// String key for the cell block names
-    static constexpr auto sourceCellBlockNames = "cellBlocks";
+    static constexpr char const * sourceCellBlockNamesString() {return "cellBlocks"; }
   };
 
 
