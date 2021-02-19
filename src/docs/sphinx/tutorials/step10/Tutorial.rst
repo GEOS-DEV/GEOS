@@ -180,7 +180,7 @@ times with the numerical solution (markers).
    def getMechanicalParametersFromXML( xmlFilePath ):
        tree = ElementTree.parse(xmlFilePath)
 
-       param = tree.find('Constitutive/LinearElasticIsotropic')
+       param = tree.find('Constitutive/ElasticIsotropic')
 
        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus"])
        mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
