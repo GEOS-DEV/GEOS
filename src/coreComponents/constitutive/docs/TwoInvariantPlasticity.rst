@@ -24,7 +24,7 @@ in which :math:`\dot{\lambda} \geq 0` is the magnitude of plastic strain rate an
 where :math:`\tensor{C}^e` is the fourth order elastic stiffness tensor. The Cauchy stress tensor is related to the total strain as
 
 .. math::
-  \dot{\boldsymbol{\sigma}} = \boldsymbol{C}^{ep} \cdot \dot{\boldsymbol{\epsilon}},
+  \dot{\boldsymbol{\sigma}} = \boldsymbol{C}^{ep} \cdot \dot{\boldsymbol{\epsilon}}, 
   
 in which :math:`\tensor{C}^{ep}` is the fourth order elasto-plastic stiffness tensor.
 
