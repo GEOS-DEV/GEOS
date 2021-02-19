@@ -40,7 +40,7 @@ Two-invariant plasticity models use the first invariant of the Cauchy stress ten
 
 Two-invariant decomposition 
 ===============================
-Here we use the following stress invariants to define the yield surface:  von Mises stress, :math:`q = \sqrt{3J_2} = \sqrt{3/2}\norm{\boldsymbol{s}}` and mean normal stress :math:`p = I_1/3`. :math:`I_1` and :math:`J_2` are the first invariant of the stress tensor and second invariant of the deviatoric stress, defined as
+Here we use the following stress invariants to define the yield surface:  von Mises stress, :math:`q = \sqrt{3J_2} = \sqrt{3/2} \|\boldsymbol{s}\|` and mean normal stress :math:`p = I_1/3`. :math:`I_1` and :math:`J_2` are the first invariant of the stress tensor and second invariant of the deviatoric stress, defined as
 
 .. math::
    I_1 = tr(\boldsymbol{\sigma})/3 \, , \quad J_2 = \frac{1}{2} \|\boldsymbol{s}\|^2 \, , \quad \boldsymbol{s}=\boldsymbol{\sigma}-p \boldsymbol{1} \, ,
@@ -60,7 +60,7 @@ Stress and strain tensors can then be recomposed from the invariants as:
 .. math::
    \boldsymbol{\epsilon} = \frac{1}{3} \epsilon_v \boldsymbol{1} + \sqrt{\frac{3}{2}}\epsilon_s \hat{\boldsymbol{n}}
 
-in which :math:`\hat{\boldsymbol{n}} = \boldsymbol{e}/{\|\boldsymbol{e}\|`.
+in which :math:`\hat{\boldsymbol{n}} = \boldsymbol{e}/\|\boldsymbol{e}\|`.
 
 Drucker-Prager 
 ========================
