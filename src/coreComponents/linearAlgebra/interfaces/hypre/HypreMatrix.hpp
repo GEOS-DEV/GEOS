@@ -395,9 +395,6 @@ private:
    */
   HYPRE_ParCSRMatrix m_parcsr_mat = nullptr;
 
-//  CRSMatrix< real64, globalIndex > & m_diagCRS;
-//  CRSMatrix< real64, globalIndex > & m_offDiagCRS;
-
 };
 
 } // namespace geosx

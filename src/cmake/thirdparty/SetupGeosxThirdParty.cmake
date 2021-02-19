@@ -409,16 +409,6 @@ endif()
 if(DEFINED HYPRE_DIR)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
-
-#    message( "CUDA_cusparse_LIBRARY=${CUDA_cusparse_LIBRARY}")
-#    message( "CUDA_curand_LIBRARY=${CUDA_curand_LIBRARY}")
-#
-#    blt_register_library( NAME hypre
-#                          DEPENDS_ON ${HYPRE_DEPENDS}
-#                          INCLUDES ${HYPRE_INCLUDE_DIRS}
-#                          LIBRARIES ${HYPRE_LIBRARY} ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY}
-#                          TREAT_INCLUDES_AS_SYSTEM ON )
-
     find_and_register(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
                       LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
