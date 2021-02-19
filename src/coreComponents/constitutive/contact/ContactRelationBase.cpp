@@ -108,15 +108,16 @@ void ContactRelationBase::initializePreSubGroups( Group * const )
   TableFunction * const apertureTable = dynamic_cast< TableFunction * >(m_apertureFunction);
   if( apertureTable!=nullptr )
   {
-    array1d< array1d< real64 > > & xvals0 = apertureTable->getCoordinates();
+    ArrayOfArraysView< real64 > xvals0 = apertureTable->getCoordinates();
     array1d< real64 > & yvals = apertureTable->getValues();
 
     GEOSX_ERROR_IF( xvals0.size() > 1,
                     "Aperture limiter table cannot be greater than a 1d table." );
 
-    array1d< real64 > & xvals = xvals0[0];
+    arraySlice1d< real64 > xvals = xvals0[0];
+    localIndex const size = xvals.size();
 
-    GEOSX_ERROR_IF( xvals.back() > 0.0 || xvals.back() < 0.0,
+    GEOSX_ERROR_IF( xvals0( 0, size-1 ) > 0.0 || xvals0( 0, size-1 ) < 0.0,
                     "Invalid aperture limiter table. Last coordinate must be zero!!" );
 
     GEOSX_ERROR_IF( xvals.size() < 2,
@@ -130,20 +131,15 @@ void ContactRelationBase::initializePreSubGroups( Group * const )
 
     real64 m_apertureTransition = (yvals[n] - slope * xvals[n] ) / ( 1.0 - slope );
 
-    xvals.emplace_back( m_apertureTransition );
+    xvals0.emplaceBack( 0, m_apertureTransition );
     yvals.emplace_back( m_apertureTransition );
 
-    xvals.emplace_back( m_apertureTransition*10e9 );
+    xvals0.emplaceBack( 0, m_apertureTransition*10e9 );
     yvals.emplace_back( m_apertureTransition*10e9 );
 
     apertureTable->reInitializeFunction();
   }
 
-//  for( int i=0 ; i<200 ; ++i )
-//  {
-//    real64 coord = 0.01*i-1.0;
-//    std::cout<<coord<<" "<<apertureTable->Evaluate( &coord )<<std::endl;
-//  }
 
 }
 
