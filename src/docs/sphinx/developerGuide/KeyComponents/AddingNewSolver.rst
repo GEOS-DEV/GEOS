@@ -100,12 +100,12 @@ and specialize every time step from the system matrix assembly to the solver sta
 
 
 Eventually, ``ApplyDirichletBC_implicit()`` is the working specialized member functions called
-when ``ApplyBoundaryConditions()`` is called in this particular class override.
+when ``applyBoundaryConditions()`` is called in this particular class override.
 
 Browsing the base class ``SolverBase``, it can be noted that most of the solver interface functions are called during
 either ``SolverBase::LinearImplicitStep()`` or ``SolverBase::NonLinearImplicitStep()`` depending on the solver strategy chosen.
 
-Switching to protected members, ``PostProcessInput()`` is a central member function and
+Switching to protected members, ``postProcessInput()`` is a central member function and
 will be called by ``Group`` object after input is read from XML entry file.
 It will set and dispatch solver variables from the base class ``BaseSolver`` to the most derived class.
 For *LaplaceFEM*, it will allow us to set the right time integration scheme based on the XML value
@@ -183,7 +183,7 @@ to writing our new *LaplaceDiffFEM* solver.
 
 .. note::
 
-  We might want to remove final keyword from ``PostProcessInput()`` as it will prevent you from overriding it.
+  We might want to remove final keyword from ``postProcessInput()`` as it will prevent you from overriding it.
 
 Start doing your own Physic solver
 ==================================
@@ -208,12 +208,12 @@ commented afterwards.
 
     LaplaceDiffFEM() = delete;
 
-    LaplaceDiffFEM( const std::string& name,
+    LaplaceDiffFEM( const string& name,
                     Group * const parent );
 
     virtual ~LaplaceDiffFEM() override;
 
-    static string CatalogName() { return "LaplaceDiffFEM"; }
+    static string catalogName() { return "LaplaceDiffFEM"; }
 
     virtual void
     AssembleSystem( real64 const time,
@@ -230,7 +230,7 @@ commented afterwards.
     } laplaceDiffFEMViewKeys;
 
     protected:
-    virtual void PostProcessInput() override final;
+    virtual void postProcessInput() override final;
 
   private:
     real64 m_diffusion;
@@ -249,7 +249,7 @@ Then as mentioned in :ref:`Implementation`, the diffusion coefficient is used wh
 we will have to override the ``AssembleSystem()`` function as detailed below.
 
 Moreover, if we want to introduce a new binding between the input XML and the code we will have to work on the three
-``struct viewKeyStruct`` , ``PostProcessInput()`` and the constructor.
+``struct viewKeyStruct`` , ``postProcessInput()`` and the constructor.
 
 Our new solver ``viewKeyStruct`` will have its own structure inheriting from the *LaplaceFEM* one to have the ``timeIntegrationOption``
 and ``fieldName`` field. It will also create a ``diffusionCoeff`` field to be bound to the user defined homogeneous coefficient on one hand
@@ -265,7 +265,7 @@ an "input uniform diffusion coefficient for the Laplace equation".
 
 .. code-block:: c++
 
-  LaplaceDiffFEM::LaplaceDiffFEM( const std::string& name,
+  LaplaceDiffFEM::LaplaceDiffFEM( const string& name,
                                   Group * const parent ):
   LaplaceFEM( name, parent ), m_diffusion(0.0)
   {
@@ -274,13 +274,13 @@ an "input uniform diffusion coefficient for the Laplace equation".
       setDescription("input uniform diffusion coeff for the laplace equation");
   }
 
-Another important spot for binding the value of the XML read parameter to our ``m_diffusion`` is in ``PostProcessInput()``.
+Another important spot for binding the value of the XML read parameter to our ``m_diffusion`` is in ``postProcessInput()``.
 
 .. code-block:: c++
 
-  void LaplaceDiffFEM::PostProcessInput()
+  void LaplaceDiffFEM::postProcessInput()
   {
-    LaplaceFEM::PostProcessInput();
+    LaplaceFEM::postProcessInput();
 
     string sDiffCoeff = this->getReference<string>(laplaceDiffFEMViewKeys.diffusionCoeff);
     this->m_diffusion = std::stof(sDiffCoeff);

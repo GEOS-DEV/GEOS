@@ -78,7 +78,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.1e-3"
       materialList="{ water, rock }"/>
@@ -95,7 +95,7 @@
       referenceViscosity="1.0e-5"
       viscosibility="0.0"/>
 
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"

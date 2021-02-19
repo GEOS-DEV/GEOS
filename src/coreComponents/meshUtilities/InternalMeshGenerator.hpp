@@ -82,7 +82,7 @@ public:
    * @param[in] name of the InternalMeshGenerator
    * @param[in] parent point to the parent Group of the InternalMeshGenerator
    */
-  InternalMeshGenerator( const std::string & name,
+  InternalMeshGenerator( const string & name,
                          Group * const parent );
 
   virtual ~InternalMeshGenerator() override;
@@ -91,13 +91,13 @@ public:
    * @brief Return the name of the InternalMeshGenerator in object Catalog.
    * @return string that contains the key name to InternalMeshGenerator in the Catalog
    */
-  static string CatalogName() { return "InternalMesh"; }
+  static string catalogName() { return "InternalMesh"; }
 
 //  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
 //
 //
 
-  virtual void GenerateElementRegions( DomainPartition & domain ) override;
+  virtual void generateElementRegions( DomainPartition & domain ) override;
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
@@ -105,26 +105,26 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition * const domain ) override;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( const string & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],
                                              const int size ) override;
 
-  virtual void RemapMesh ( dataRepository::Group * const domain ) override;
+  virtual void remapMesh ( dataRepository::Group * const domain ) override;
 
 //  int m_delayMeshDeformation;
 
 protected:
 
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 private:
 
@@ -145,9 +145,9 @@ private:
   string_array m_regionNames;
 
   /// Minimum extent of mesh dimensions
-  realT m_min[3];
+  real64 m_min[3];
   /// Maximum extent of mesh dimensions
-  realT m_max[3];
+  real64 m_max[3];
 
   //int m_numElems[3];
   /// Ndim x nBlock spatialized array of first elemnt index in the cellBlock
@@ -157,20 +157,20 @@ private:
 
 
 
-//  realT m_wExtensionMin[3];
-//  realT m_wExtensionMax[3];
+//  real64 m_wExtensionMin[3];
+//  real64 m_wExtensionMax[3];
 //  int m_nExtensionLayersMin[3];
 //  int m_nExtensionLayersMax[3];
-//  realT m_extendedMin[3];
-//  realT m_extendedMax[3]; // This is the domain size after we apply n layers
+//  real64 m_extendedMin[3];
+//  real64 m_extendedMax[3]; // This is the domain size after we apply n layers
 // of elements which are of the same size as the core elements.  We will move
 // these nodes to where they should be later when we finish the meshing.
 
   /// Array of number of elements per direction
   int m_numElemsTotal[3];
 
-//  realT m_commonRatioMin[3];
-//  realT m_commonRatioMax[3];
+//  real64 m_commonRatioMin[3];
+//  real64 m_commonRatioMax[3];
 
   // String array listing the element type present
   string_array m_elementType;
@@ -185,7 +185,7 @@ private:
   int m_trianglePattern;
 
   /// Node perturbation amplitude value
-  realT m_fPerturb=0.0;
+  real64 m_fPerturb=0.0;
   /// Random seed for generation of the node perturbation field
   int m_randSeed;
 
@@ -198,28 +198,28 @@ private:
   /// axis index for cartesian to radial coordinates mapping
   // internal temp var
   int m_meshAxis;
-  realT m_meshTheta;
-  realT m_meshPhi;
-  realT m_meshRout;
-  realT m_meshRact;
+  real64 m_meshTheta;
+  real64 m_meshPhi;
+  real64 m_meshRout;
+  real64 m_meshRact;
 /// @endcond
 
   /// skew angle in radians for skewed mesh generation
-  realT m_skewAngle = 0;
+  real64 m_skewAngle = 0;
   /// skew center for skew mesh generation
-  R1Tensor m_skewCenter = {0, 0, 0};
+  real64 m_skewCenter[3] = { 0, 0, 0 };
 
 
   ///@cond DO_NOT_DOCUMENT
   //unused
-  std::string m_meshDx, m_meshDy, m_meshDz;
+  string m_meshDx, m_meshDy, m_meshDz;
   ///@endcond
 
 /**
  * @brief Convert ndim node spatialized index to node global index.
  * @param[in] node ndim spatialized array index
  */
-  inline globalIndex NodeGlobalIndex( const int index[3] )
+  inline globalIndex nodeGlobalIndex( const int index[3] )
   {
     globalIndex rval = 0;
 
@@ -231,7 +231,7 @@ private:
  * @brief Convert ndim element spatialized index to element global index.
  * @param[in] element ndim spatialized array index
  */
-  inline globalIndex ElemGlobalIndex( const int index[3] )
+  inline globalIndex elemGlobalIndex( const int index[3] )
   {
     globalIndex rval = 0;
 
@@ -241,16 +241,17 @@ private:
 
   /**
    * @brief Construct the node position for a spatially indexed node.
+   * @tparam OUT_VECTOR type of output vector X
    * @param[in] a ndim spatial index for the considered node
    * @param[in] trianglePattern triangle pattern identifier
-   * @return coordinate of the input node
+   * @param[out] X the node coordinates
    *
    * @note In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
    */
-  inline R1Tensor NodePosition( const int a[3], int trianglePattern )
+  template< typename OUT_VECTOR >
+  inline void getNodePosition( int const * a, int trianglePattern, OUT_VECTOR && X )
   {
-    R1Tensor X;
-    realT xInterval( 0 );
+    real64 xInterval( 0 );
 
     int xPosIndex = 0;
     if( trianglePattern == 1 )
@@ -281,8 +282,8 @@ private:
           break;
         }
       }
-      realT min = m_vertices[i][block];
-      realT max = m_vertices[i][block+1];
+      real64 min = m_vertices[i][block];
+      real64 max = m_vertices[i][block+1];
 
 
       X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
@@ -296,11 +297,11 @@ private:
         {
           GEOSX_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
 
-          realT len = max -  min;
-          realT xmean = len / m_nElems[i][block];
-          realT x0 = xmean * double( a[i] - startingIndex );
-          realT chi = m_nElemBias[i][block]/(xmean/len - 1.0);
-          realT dx = -x0*chi + x0*x0*chi/len;
+          real64 len = max -  min;
+          real64 xmean = len / m_nElems[i][block];
+          real64 x0 = xmean * double( a[i] - startingIndex );
+          real64 chi = m_nElemBias[i][block]/(xmean/len - 1.0);
+          real64 dx = -x0*chi + x0*x0*chi/len;
           X[i] += dx;
         }
       }
@@ -310,25 +311,21 @@ private:
       if( trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex )
         X[0] -= xInterval * 0.5;
     }
-
-    return X;
   }
 
   /**
    * @brief
-   * @param[in]
-   * @return an array of the element center coordinates
+   * @tparam OUT_VECTOR type of output vector X
+   * @param[in] k the ijk-index of the element
+   * @param[out] X the element center coordinates
    */
-  inline R1Tensor ElemCenterPosition( const int k[3] )
+  template< typename OUT_VECTOR >
+  inline void getElemCenterPosition( const int k[3], OUT_VECTOR && X )
   {
-    R1Tensor X;
-
     for( int i=0; i<3; ++i )
     {
       X[i] = m_min[i] + (m_max[i]-m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
     }
-
-    return X;
   }
 
 public:

@@ -110,7 +110,7 @@ private:
    * @param[out] viscosity fluid viscosity
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & viscosity ) const = 0;
 
@@ -123,7 +123,7 @@ private:
    * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
@@ -136,7 +136,7 @@ private:
    * @param[in] pressure the target pressure value
    */
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const = 0;
 
@@ -154,7 +154,7 @@ public:
    * @param name name of the group
    * @param parent pointer to parent group
    */
-  SingleFluidBase( std::string const & name, Group * const parent );
+  SingleFluidBase( string const & name, Group * const parent );
 
   /**
    * @brief Destructor.
@@ -198,7 +198,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   real64 m_defaultDensity;
   real64 m_defaultViscosity;

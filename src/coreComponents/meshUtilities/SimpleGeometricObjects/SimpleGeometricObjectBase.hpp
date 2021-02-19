@@ -54,7 +54,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  explicit SimpleGeometricObjectBase( std::string const & name,
+  explicit SimpleGeometricObjectBase( string const & name,
                                       Group * const parent );
 
   /**
@@ -73,17 +73,17 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "SimpleGeometricObjectBase"; }
+  static string catalogName() { return "SimpleGeometricObjectBase"; }
 
   /**
    * @brief Type alias for catalog interface used by this class.
    */
-  using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, string const &, Group * const >;
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   ///@}
 
@@ -92,7 +92,7 @@ public:
    * @param[in] coord the coordinates to test
    * @return true if the coordinates are in the object, false otherwise
    */
-  virtual bool IsCoordInObject( const R1Tensor & coord ) const = 0;
+  virtual bool isCoordInObject( real64 const ( &coord ) [3] ) const = 0;
 
 };
 

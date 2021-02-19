@@ -27,8 +27,7 @@ IS_VALID_EXPRESSION( HasOperatorPlusEquals, T, std::declval< T & >() += T() );
 TEST( testGeosxTraits, HasOperatorPlusEquals )
 {
   static_assert( HasOperatorPlusEquals< int >, "Should be true." );
-  static_assert( HasOperatorPlusEquals< std::string >, "Should be true." );
-  static_assert( HasOperatorPlusEquals< R1Tensor >, "Should be true." );
+  static_assert( HasOperatorPlusEquals< string >, "Should be true." );
 
   static_assert( !HasOperatorPlusEquals< int const >, "Should be false." );
   static_assert( !HasOperatorPlusEquals< std::vector< int > >, "Should be false." );
@@ -39,26 +38,24 @@ TEST( testGeosxTraits, HasOperatorPlusEquals2 )
 {
   static_assert( HasOperatorPlusEquals2< double, int >, "Should be true." );
   static_assert( HasOperatorPlusEquals2< double, int const >, "Should be true." );
-  static_assert( HasOperatorPlusEquals2< R1Tensor, int >, "Should be true." );
-  static_assert( HasOperatorPlusEquals2< R1Tensor, R1Tensor >, "Should be true." );
-  static_assert( HasOperatorPlusEquals2< std::string, std::string >, "Should be true." );
+  static_assert( HasOperatorPlusEquals2< string, string >, "Should be true." );
 
   static_assert( !HasOperatorPlusEquals2< double const, int >, "Should be false." );
-  static_assert( !HasOperatorPlusEquals2< R1Tensor, std::string >, "Should be false." );
+  static_assert( !HasOperatorPlusEquals2< R1Tensor, string >, "Should be false." );
   static_assert( !HasOperatorPlusEquals2< std::vector< int >, int >, "Should be false." );
 }
 
 HAS_MEMBER_FUNCTION_NO_RTYPE( at, 55 );
 TEST( testGeosxTraits, HasMemberFunction_at )
 {
-  static_assert( HasMemberFunction_at< std::string >, "Should be true." );
+  static_assert( HasMemberFunction_at< string >, "Should be true." );
   static_assert( HasMemberFunction_at< std::vector< int > >, "Should be true." );
   static_assert( HasMemberFunction_at< std::vector< double > >, "Should be true." );
-  static_assert( HasMemberFunction_at< std::map< int, std::string > >, "Should be true." );
-  static_assert( HasMemberFunction_at< std::unordered_map< int, std::string > >, "Should be true." );
+  static_assert( HasMemberFunction_at< std::map< int, string > >, "Should be true." );
+  static_assert( HasMemberFunction_at< std::unordered_map< int, string > >, "Should be true." );
 
   static_assert( !HasMemberFunction_at< int >, "Should be false." );
-  static_assert( !HasMemberFunction_at< std::map< std::string, std::string > >, "Should be false." );
+  static_assert( !HasMemberFunction_at< std::map< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_at< array1d< localIndex > >, "Should be false." );
 }
 
@@ -68,7 +65,7 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( insert,
 TEST( testGeosxTraits, HasMemberFunction_insert )
 {
   static_assert( HasMemberFunction_insert< std::vector< int > >, "Should be true." );
-  static_assert( HasMemberFunction_insert< std::map< std::string, int > >, "Should be true." );
+  static_assert( HasMemberFunction_insert< std::map< string, int > >, "Should be true." );
   static_assert( HasMemberFunction_insert< std::list< std::vector< int > > >, "Should be true." );
 
   static_assert( !HasMemberFunction_insert< int >, "Should be false." );
@@ -93,15 +90,15 @@ TEST( testGeosxTraits, Pointer )
   static_assert( std::is_same< Pointer< int >, int * >::value, "Should be true." );
   static_assert( std::is_same< Pointer< R1Tensor >, R1Tensor * >::value, "Should be true." );
   static_assert( std::is_same< Pointer< std::vector< double > >, double * >::value, "Should be true." );
-  static_assert( std::is_same< Pointer< std::string >, char const * >::value, "Should be true." );
-  static_assert( std::is_same< Pointer< array3d< std::string > >, std::string * >::value, "Should be true." );
+  static_assert( std::is_same< Pointer< string >, char const * >::value, "Should be true." );
+  static_assert( std::is_same< Pointer< array3d< string > >, string * >::value, "Should be true." );
   static_assert( std::is_same< Pointer< SortedArray< float > >, float const * >::value, "Should be true." );
 
   static_assert( std::is_same< ConstPointer< int >, int const * >::value, "Should be true." );
   static_assert( std::is_same< ConstPointer< R1Tensor >, R1Tensor const * >::value, "Should be true." );
   static_assert( std::is_same< ConstPointer< std::vector< double > >, double const * >::value, "Should be true." );
-  static_assert( std::is_same< ConstPointer< std::string >, char const * >::value, "Should be true." );
-  static_assert( std::is_same< ConstPointer< array3d< std::string > >, std::string const * >::value, "Should be true." );
+  static_assert( std::is_same< ConstPointer< string >, char const * >::value, "Should be true." );
+  static_assert( std::is_same< ConstPointer< array3d< string > >, string const * >::value, "Should be true." );
   static_assert( std::is_same< ConstPointer< SortedArray< float > >, float const * >::value, "Should be true." );
 }
 
@@ -148,7 +145,7 @@ TEST( testGeosxTraits, CanStreamInto )
 {
   static_assert( CanStreamInto< std::istringstream, int >, "Should be true." );
   static_assert( CanStreamInto< std::istringstream, double >, "Should be true." );
-  static_assert( CanStreamInto< std::istringstream, std::string >, "Should be true." );
+  static_assert( CanStreamInto< std::istringstream, string >, "Should be true." );
 
   static_assert( !CanStreamInto< std::istringstream, array1d< double > >, "Should be false." );
   static_assert( !CanStreamInto< std::istringstream, std::vector< int > >, "Should be false." );

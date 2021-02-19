@@ -17,12 +17,13 @@
  */
 
 #include "ThickPlane.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-ThickPlane::ThickPlane( const std::string & name, Group * const parent ):
+ThickPlane::ThickPlane( const string & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_origin{ 0.0, 0.0, 0.0 },
   m_normal{ 0.0, 0.0, 1.0 },
@@ -45,17 +46,18 @@ ThickPlane::~ThickPlane()
 {}
 
 
-void ThickPlane::PostProcessInput()
+void ThickPlane::postProcessInput()
 {
   m_thickness *= 0.5; // actually store the half-thickness
   GEOSX_ERROR_IF( m_thickness <= 0, "Error: the plane appears to have zero or negative thickness" );
 
-  m_normal.Normalize();
-  GEOSX_ERROR_IF( std::fabs( m_normal.L2_Norm()-1.0 ) > 1e-15, "Error: could not properly normalize input normal." );
+  LvArray::tensorOps::normalize< 3 >( m_normal );
+  GEOSX_ERROR_IF( std::fabs( LvArray::tensorOps::l2Norm< 3 >( m_normal ) - 1.0 ) > 1e-15,
+                  "Error: could not properly normalize input normal." );
 }
 
 
-bool ThickPlane::IsCoordInObject( const R1Tensor & coord ) const
+bool ThickPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
 {
   real64 normalDistance = 0.0;
   for( int i=0; i<3; ++i )
@@ -66,6 +68,6 @@ bool ThickPlane::IsCoordInObject( const R1Tensor & coord ) const
   return std::fabs( normalDistance ) <= m_thickness;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, ThickPlane, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, ThickPlane, string const &, Group * const )
 
 } /* namespace geosx */

@@ -25,7 +25,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace LvArray;
 
-TasksManager::TasksManager( std::string const & name,
+TasksManager::TasksManager( string const & name,
                             Group * const parent ):
   Group( name, parent )
 {
@@ -35,18 +35,18 @@ TasksManager::TasksManager( std::string const & name,
 TasksManager::~TasksManager()
 { }
 
-Group * TasksManager::CreateChild( string const & childKey, string const & childName )
+Group * TasksManager::createChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr< TaskBase > task = TaskBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup< TaskBase >( childName, std::move( task ) );
+  std::unique_ptr< TaskBase > task = TaskBase::CatalogInterface::factory( childKey, childName, this );
+  return this->registerGroup< TaskBase >( childName, std::move( task ) );
 }
 
-void TasksManager::ExpandObjectCatalogs()
+void TasksManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from TaskBase here
-  for( auto & catalogIter: TaskBase::GetCatalog() )
+  for( auto & catalogIter: TaskBase::getCatalog() )
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 

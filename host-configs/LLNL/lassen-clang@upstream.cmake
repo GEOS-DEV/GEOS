@@ -16,3 +16,5 @@ set(MPI_HOME /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-u
 set(MPI_Fortran_COMPILER /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-xl-beta-2019.06.20/bin/mpifort CACHE PATH "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
+
+set(HYPRE_DIR ${GEOSX_TPL_ROOT_DIR}/2021-02-02/install-${CONFIG_NAME}-debug/hypre CACHE PATH "" FORCE)

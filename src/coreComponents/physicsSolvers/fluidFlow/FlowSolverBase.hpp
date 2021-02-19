@@ -45,7 +45,7 @@ public:
  * @param name the name of this instantiation of Group in the repository
  * @param parent the parent group of this instantiation of Group
  */
-  FlowSolverBase( const std::string & name,
+  FlowSolverBase( const string & name,
                   Group * const parent );
 
 
@@ -69,7 +69,7 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
 
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
@@ -114,7 +114,11 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void ResetViews( MeshLevel & mesh );
+  virtual void resetViews( MeshLevel & mesh );
+
+  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrix< real64, globalIndex > & localMatrix );
 
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
@@ -142,13 +146,13 @@ private:
 
 protected:
 
-  void PrecomputeData( MeshLevel & mesh );
+  void precomputeData( MeshLevel & mesh );
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
 
   /// name of the fluid constitutive model
   array1d< string > m_fluidModelNames;

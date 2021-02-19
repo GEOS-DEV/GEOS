@@ -43,27 +43,27 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
     GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
   dataRepository::Group * commandLine =
-    problemManager->GetGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
-  commandLine->registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.Key() )->
+    problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
+  commandLine->registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() )->
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-  problemManager->InitializePythonInterpreter();
-  problemManager->ProcessInputFileRecursive( xmlProblemNode );
+  problemManager->processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
   DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->GetGroup< MeshManager >( problemManager->groupKeys.meshManager );
-  meshManager->GenerateMeshLevels( domain );
+  MeshManager * meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
+  meshManager->generateMeshLevels( domain );
 
   ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->ProcessInputFileRecursive( topLevelNode );
-  elementManager->PostProcessInputRecursive();
+  elementManager->processInputFileRecursive( topLevelNode );
+  elementManager->postProcessInputRecursive();
 
-  problemManager->ProblemSetup();
+  problemManager->problemSetup();
+  problemManager->applyInitialConditions();
 }
 
 /**
@@ -139,7 +139,7 @@ struct forLocalObjectsImpl
                  LAMBDA lambda )
   {
     using helper = testMeshHelper< LOC >;
-    ObjectManagerBase const * const manager = mesh->GetGroup< ObjectManagerBase >( helper::managerKey );
+    ObjectManagerBase const * const manager = mesh->getGroup< ObjectManagerBase >( helper::managerKey );
 
     arrayView1d< integer const > ghostRank = manager->ghostRank();
 
@@ -250,7 +250,7 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
   FaceManager const * const faceManager = mesh->getFaceManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
-    elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+    elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
   // Make a set of target region indices to check face fluxes.
   SortedArray< localIndex > regionSet;
@@ -421,7 +421,7 @@ void makeSparsityMass( MeshLevel const * const mesh,
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
-    elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+    elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
   array1d< globalIndex > localDofIndex( numComp );
   array2d< real64 > localValues( numComp, numComp );

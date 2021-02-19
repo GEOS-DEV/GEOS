@@ -66,6 +66,9 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
+#if defined(__CUDA_ARCH__)
+#define GEOSX_LOG_RANK_IF( EXP, msg )
+#else
 #define GEOSX_LOG_RANK_IF( EXP, msg ) \
   do { \
     if( EXP ) \
@@ -75,6 +78,7 @@
       *logger::internal::rankStream << oss.str() << std::endl; \
     } \
   } while( false )
+#endif
 
 /**
  * @brief Log a message to the rank output stream.
@@ -93,7 +97,11 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
+#if defined(__CUDA_ARCH__)
+#define GEOSX_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, msg )
+#else
 #define GEOSX_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
+#endif
 
 /**
  * @brief Raise a hard error and terminate the program.

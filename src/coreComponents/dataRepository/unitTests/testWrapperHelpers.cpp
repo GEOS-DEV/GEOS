@@ -108,7 +108,7 @@ TEST( wrapperHelpers, size )
   checkNoSizeMethod( double() );
   checkNoSizeMethod( R1Tensor() );
 
-  checkSizeMethod( std::string( "hello" ) );
+  checkSizeMethod( string( "hello" ) );
   checkSizeMethod( std::set< int > { 1, 2, 3 } );
   checkSizeMethod( std::vector< int > { 1, 2, 3 } );
   checkSizeMethod( std::array< int, 5 > {} );
@@ -131,7 +131,6 @@ using ArrayTypes = ::testing::Types<
   , array2d< double, RAJA::PERM_JI >
   , array3d< double, RAJA::PERM_IJK >
   , array3d< int, RAJA::PERM_KJI >
-  , array3d< R1Tensor, RAJA::PERM_JIK >
   , array4d< int, RAJA::PERM_IJKL >
   , array4d< int, RAJA::PERM_LKJI >
   , array4d< int, RAJA::PERM_KJLI >

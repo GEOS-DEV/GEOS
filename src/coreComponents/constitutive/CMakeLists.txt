@@ -12,8 +12,8 @@ set( constitutive_headers
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
-     contact/MohrCoulomb.hpp
-     fluid/MultiPhaseMultiComponentFluid.hpp
+     contact/Coulomb.hpp
+     fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTFunctions/BrineCO2DensityFunction.hpp
      fluid/PVTFunctions/BrineViscosityFunction.hpp
      fluid/PVTFunctions/CO2SolubilityFunction.hpp
@@ -34,11 +34,16 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
      solid/Damage.hpp
-     solid/LinearElasticAnisotropic.hpp
-     solid/LinearElasticIsotropic.hpp
-     solid/LinearElasticTransverseIsotropic.hpp
+     solid/DamageVolDev.hpp
+     solid/DamageSpectral.hpp
+     solid/DamageSpectralUtilities.hpp
+     solid/DruckerPrager.hpp
+     solid/DruckerPragerExtended.hpp
+     solid/ElasticIsotropic.hpp
+     solid/ElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
+     solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
@@ -64,7 +69,7 @@ set( constitutive_sources
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactRelationBase.cpp
-     contact/MohrCoulomb.cpp
+     contact/Coulomb.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp     
      fluid/PVTFunctions/BrineCO2DensityFunction.cpp
@@ -81,9 +86,12 @@ set( constitutive_sources
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp               
      solid/Damage.cpp
-     solid/LinearElasticAnisotropic.cpp
-     solid/LinearElasticIsotropic.cpp
-     solid/LinearElasticTransverseIsotropic.cpp
+     solid/DamageVolDev.cpp
+     solid/DamageSpectral.cpp
+     solid/DruckerPrager.cpp
+     solid/DruckerPragerExtended.cpp
+     solid/ElasticIsotropic.cpp
+     solid/ElasticTransverseIsotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
      solid/SolidBase.cpp

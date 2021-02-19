@@ -14,6 +14,7 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
@@ -41,15 +42,18 @@
       <WellControls
         name="wellControls1"
         type="producer"
-        control="BHP"
+        control="phaseVolRate"
+        referenceElevation="12"
         targetBHP="1e6"
-        targetRate="1"/>
+        targetPhaseRate="1e-7"
+        targetPhaseName="water"/>
       <WellControls
         name="wellControls2"
         type="injector"
-        control="liquidRate"
-        targetBHP="1e8"
-        targetRate="1e-2"
+        control="totalVolRate"
+        referenceElevation="12" 
+        targetBHP="5e7"
+        targetTotalRate="7.5e-6"
         injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>

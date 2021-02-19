@@ -45,7 +45,7 @@ public:
   LinearSolverParametersInput() = delete;
 
   /// Constructor
-  LinearSolverParametersInput( std::string const & name, Group * const parent );
+  LinearSolverParametersInput( string const & name, Group * const parent );
 
   /// Copy constructor
   LinearSolverParametersInput( LinearSolverParametersInput && ) = default;
@@ -54,10 +54,10 @@ public:
   virtual ~LinearSolverParametersInput() override = default;
 
   /// Catalog name
-  static string CatalogName() { return "LinearSolverParameters"; }
+  static string catalogName() { return "LinearSolverParameters"; }
 
   /// Postprocessing of input
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   LinearSolverParameters const & get() const
   { return m_parameters; }
@@ -72,7 +72,7 @@ public:
     static constexpr auto preconditionerTypeString = "preconditionerType"; ///< Preconditioner type key
     static constexpr auto stopIfErrorString        = "stopIfError";        ///< stop if error key
 
-    static constexpr auto directCheckResTolString   = "directCheckResTol";    ///< direct solver check residual tolerance key
+    static constexpr auto directCheckResidualString = "directCheckResidual";  ///< direct solver check residual key
     static constexpr auto directEquilString         = "directEquil";          ///< direct solver equilibrate key
     static constexpr auto directColPermString       = "directColPerm";        ///< direct solver columns permutation key
     static constexpr auto directRowPermString       = "directRowPerm";        ///< direct solver rows permutation key
@@ -86,16 +86,16 @@ public:
     static constexpr auto krylovAdaptiveTolString = "krylovAdaptiveTol"; ///< Krylov adaptive tolerance key
     static constexpr auto krylovWeakTolString     = "krylovWeakestTol";  ///< Krylov weakest tolerance key
 
-    static constexpr auto amgNumSweepsString  = "amgNumSweeps";             ///< AMG number of sweeps key
-    static constexpr auto amgSmootherString   = "amgSmootherType";          ///< AMG smoother type key
-    static constexpr auto amgCoarseString     = "amgCoarseSolver";          ///< AMG coarse solver key
+    static constexpr auto amgNumSweepsString     = "amgNumSweeps";       ///< AMG number of sweeps key
+    static constexpr auto amgSmootherString      = "amgSmootherType";    ///< AMG smoother type key
+    static constexpr auto amgCoarseString        = "amgCoarseSolver";    ///< AMG coarse solver key
+    static constexpr auto amgThresholdString     = "amgThreshold";       ///< AMG threshold key
+    static constexpr auto amgNullSpaceTypeString = "amgNullSpaceType";   ///< AMG near null space type key
+
     static constexpr auto amgCoarseningString = "amgCoarseningType";        ///< AMG coarsening key
     static constexpr auto amgInterpolationString = "amgInterpolationType";        ///< AMG interpolation key
-    static constexpr auto amgThresholdString  = "amgThreshold";             ///< AMG threshold key
     static constexpr auto amgNumFunctionsString  = "amgNumFunctions";             ///< AMG threshold key
     static constexpr auto amgAggresiveNumLevelsString  = "amgAggresiveCoarseningLevels";             ///< AMG threshold key
-
-
 
     static constexpr auto iluFillString      = "iluFill";       ///< ILU fill key
     static constexpr auto iluThresholdString = "iluThreshold";  ///< ILU threshold key

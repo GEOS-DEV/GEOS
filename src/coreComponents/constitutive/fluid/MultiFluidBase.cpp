@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
+MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
   m_useMass( false )
 {
@@ -63,6 +63,15 @@ MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::dPhaseDensity_dGlobalCompFractionString, &m_dPhaseDensity_dGlobalCompFraction )->
     setRestartFlags( RestartFlags::NO_WRITE );
 
+  registerWrapper( viewKeyStruct::phaseMassDensityString, &m_phaseMassDensity )->
+    setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dPhaseMassDensity_dPressureString, &m_dPhaseMassDensity_dPressure )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseMassDensity_dTemperatureString, &m_dPhaseMassDensity_dTemperature )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseMassDensity_dGlobalCompFractionString, &m_dPhaseMassDensity_dGlobalCompFraction )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+
   registerWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity )->
     setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dPhaseViscosity_dPressureString, &m_dPhaseViscosity_dPressure )->
@@ -93,7 +102,7 @@ MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
 
 }
 
-void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPts )
+void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPts )
 {
   localIndex const NP = numFluidPhases();
   localIndex const NC = numFluidComponents();
@@ -107,6 +116,11 @@ void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPt
   m_dPhaseDensity_dPressure.resize( size, numPts, NP );
   m_dPhaseDensity_dTemperature.resize( size, numPts, NP );
   m_dPhaseDensity_dGlobalCompFraction.resize( size, numPts, NP, NC );
+
+  m_phaseMassDensity.resize( size, numPts, NP );
+  m_dPhaseMassDensity_dPressure.resize( size, numPts, NP );
+  m_dPhaseMassDensity_dTemperature.resize( size, numPts, NP );
+  m_dPhaseMassDensity_dGlobalCompFraction.resize( size, numPts, NP, NC );
 
   m_phaseViscosity.resize( size, numPts, NP );
   m_dPhaseViscosity_dPressure.resize( size, numPts, NP );
@@ -128,16 +142,16 @@ void MultiFluidBase::allocateConstitutiveData( dataRepository::Group * const par
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+  resizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
 MultiFluidBase::~MultiFluidBase()
 {}
 
 
-void MultiFluidBase::PostProcessInput()
+void MultiFluidBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
@@ -165,7 +179,7 @@ void MultiFluidBase::PostProcessInput()
                                  viewKeyStruct::componentMolarWeightString )
 
   // call to correctly set member array tertiary sizes on the 'main' material object
-  ResizeFields( 0, 0 );
+  resizeFields( 0, 0 );
 }
 
 bool MultiFluidBase::getMassFlag() const

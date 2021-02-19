@@ -45,7 +45,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseBase( const std::string & name,
+  SinglePhaseBase( const string & name,
                    Group * const parent );
 
 
@@ -69,9 +69,9 @@ public:
    */
   virtual ~SinglePhaseBase() override = default;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
 
-  virtual void SetupSystem( DomainPartition & domain,
+  virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
                             array1d< real64 > & localRhs,
@@ -79,7 +79,7 @@ public:
                             bool const setSparsity = true ) override;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  solverStep( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition & domain ) override;
@@ -92,12 +92,12 @@ public:
   ///@{
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
   virtual void
-  AssembleSystem( real64 const time_n,
+  assembleSystem( real64 const time_n,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
@@ -105,7 +105,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -113,39 +113,33 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  solveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
   template< bool ISPORO, typename POLICY >
-  void AccumulationLaunch( localIndex const targetIndex,
+  void accumulationLaunch( localIndex const targetIndex,
                            CellElementSubRegion & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
   template< bool ISPORO, typename POLICY >
-  void AccumulationLaunch( localIndex const targetIndex,
-                           FaceElementSubRegion const & subRegion,
+  void accumulationLaunch( localIndex const targetIndex,
+                           SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
-  template< bool ISPORO, typename POLICY >
-  void AccumulationLaunch( localIndex const targetIndex,
-                           EmbeddedSurfaceSubRegion const & subRegion,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs );
 
   ///@}
 
@@ -159,7 +153,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   template< bool ISPORO, typename POLICY >
-  void AssembleAccumulationTerms( DomainPartition & domain,
+  void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs );
@@ -174,7 +168,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const time_n,
+  assembleFluxTerms( real64 const time_n,
                      real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
@@ -182,15 +176,15 @@ public:
                      arrayView1d< real64 > const & localRhs ) = 0;
 
   void
-  ApplyDiricletBC( real64 const time_n,
-                   real64 const dt,
-                   DomainPartition & domain,
-                   DofManager const & dofManager,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs ) const;
+  applyDirichletBC( real64 const time_n,
+                    real64 const dt,
+                    DomainPartition & domain,
+                    DofManager const & dofManager,
+                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                    arrayView1d< real64 > const & localRhs ) const;
 
   void
-  ApplySourceFluxBC( real64 const time_n,
+  applySourceFluxBC( real64 const time_n,
                      real64 const dt,
                      DomainPartition & domain,
                      DofManager const & dofManager,
@@ -201,7 +195,7 @@ public:
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields
    */
-  virtual void UpdateState( Group & dataGroup, localIndex const targetIndex ) const;
+  virtual void updateState( Group & dataGroup, localIndex const targetIndex ) const;
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -239,21 +233,21 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void ResetViews( MeshLevel & mesh ) override;
+  virtual void resetViews( MeshLevel & mesh ) override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh the mesh to operate on
    */
-  void BackupFields( MeshLevel & mesh ) const;
+  void backupFields( MeshLevel & mesh ) const;
 
 protected:
 
-  virtual void ValidateFluidModels( DomainPartition const & domain ) const;
+  virtual void validateFluidModels( DomainPartition const & domain ) const;
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
@@ -296,19 +290,19 @@ protected:
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  void UpdateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
-  void UpdateMobility( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateMobility( Group & dataGroup, localIndex const targetIndex ) const;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
@@ -323,11 +317,11 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_transTMultiplier;
 
 private:
 
-  virtual void ResetViewsPrivate( ElementRegionManager const & elemManager );
+  virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
 
 };
 

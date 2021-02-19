@@ -20,10 +20,9 @@ set(managers_headers
     TimeHistory/HistoryIO.hpp
     TimeHistory/HistoryDataSpec.hpp
     Outputs/BlueprintOutput.hpp
+    Outputs/PythonOutput.hpp
     Functions/FunctionBase.hpp
-    Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
-    Functions/CompositeFunction.hpp
     Functions/FunctionManager.hpp
     ObjectManagerBase.hpp
     ProblemManager.hpp
@@ -33,6 +32,7 @@ set(managers_headers
     FieldSpecification/DirichletBoundaryCondition.hpp
     FieldSpecification/SourceFluxBoundaryCondition.hpp
     initialization.hpp
+    GeosxState.hpp
    )
 
 
@@ -56,10 +56,9 @@ set(managers_sources
     Tasks/TaskBase.cpp
     Tasks/TasksManager.cpp
     TimeHistory/PackCollection.cpp
+    Outputs/PythonOutput.cpp
     Functions/FunctionBase.cpp
-    Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
-    Functions/CompositeFunction.cpp
     Functions/FunctionManager.cpp
     ObjectManagerBase.cpp
     ProblemManager.cpp
@@ -69,7 +68,17 @@ set(managers_sources
     FieldSpecification/DirichletBoundaryCondition.cpp
     FieldSpecification/SourceFluxBoundaryCondition.cpp
     initialization.cpp
+    GeosxState.cpp
    )
+
+if( ENABLE_MATHPRESSO )
+  list( APPEND managers_headers
+        Functions/SymbolicFunction.hpp
+        Functions/CompositeFunction.hpp )
+  list( APPEND managers_sources
+        Functions/SymbolicFunction.cpp
+        Functions/CompositeFunction.cpp )
+endif()
 
 if( ENABLE_MPI )
     list( APPEND managers_headers Outputs/ChomboIO.hpp )
@@ -82,9 +91,9 @@ if( ENABLE_VTK )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit conduit_relay conduit_blueprint )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit conduit_relay conduit_blueprint )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit )
 endif()
 
 if( ENABLE_MATHPRESSO )
@@ -101,6 +110,10 @@ endif()
 
 if ( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper adiak )
+endif()
+
+if ( ENABLE_MKL )
+  set( dependencyList ${dependencyList} mkl )
 endif()
 
 blt_add_library( NAME                  managers

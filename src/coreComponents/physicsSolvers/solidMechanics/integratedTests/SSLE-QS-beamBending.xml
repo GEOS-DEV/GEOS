@@ -18,10 +18,9 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        logLevel="1"
-        solverType="gmres"
-        krylovTol="1.0e-12"
-        preconditionerType="amg"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -85,14 +84,14 @@
   </ElementRegions>
 
   <Constitutive>
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="granite"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
 
     <!-- SPHINX_Material -->
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"

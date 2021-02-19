@@ -19,9 +19,10 @@
 
 #include "PoroElastic.hpp"
 
-#include "LinearElasticAnisotropic.hpp"
-#include "LinearElasticIsotropic.hpp"
-#include "LinearElasticTransverseIsotropic.hpp"
+#include "ElasticIsotropic.hpp"
+#include "ElasticTransverseIsotropic.hpp"
+#include "DruckerPrager.hpp"
+#include "DruckerPragerExtended.hpp"
 
 namespace geosx
 {
@@ -70,18 +71,10 @@ PoroElastic< BASE >::~PoroElastic()
 {}
 
 template< typename BASE >
-void PoroElastic< BASE >::PostProcessInput()
+void PoroElastic< BASE >::postProcessInput()
 {
-  BASE::PostProcessInput();
-
-  if( m_compressibility <= 0 )
-  {
-//    string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2
-// constants!";
-//    GEOSX_ERROR( message );
-  }
-  m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
-
+  BASE::postProcessInput();
+  m_poreVolumeRelation.setCoefficients( m_referencePressure, 1.0, m_compressibility );
 }
 
 template< typename BASE >
@@ -106,7 +99,7 @@ void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group * cons
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+void PoroElastic< BASE >::stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                                     arrayView1d< real64 const > const & dPres )
 {
   localIndex const numElems = m_poreVolumeMultiplier.size( 0 );
@@ -124,18 +117,20 @@ void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > 
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      relation.Compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
+      relation.compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
     }
   } );
 }
 
-typedef PoroElastic< LinearElasticIsotropic > PoroLinearElasticIsotropic;
-typedef PoroElastic< LinearElasticAnisotropic > PoroLinearElasticAnisotropic;
-typedef PoroElastic< LinearElasticTransverseIsotropic > PoroLinearElasticTransverseIsotropic;
+typedef PoroElastic< ElasticIsotropic > PoroElasticIsotropic;
+typedef PoroElastic< ElasticTransverseIsotropic > PoroElasticTransverseIsotropic;
+typedef PoroElastic< DruckerPrager > PoroDruckerPrager;
+typedef PoroElastic< DruckerPragerExtended > PoroDruckerPragerExtended;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPrager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPragerExtended, string const &, Group * const )
 
 }
 } /* namespace geosx */

@@ -22,7 +22,6 @@
 
 using namespace geosx;
 using namespace geosx::SinglePhaseHybridFVMKernels;
-using namespace geosx::HybridFVMInnerProduct;
 using namespace geosx::testing;
 
 
@@ -46,23 +45,24 @@ void updateDensity( real64 const & refPres,
   dElemDens_dp = compressibility * elemDens;
 }
 
+template< localIndex NFACES >
 void updateUpwindedMobilities( globalIndex const elemDofNumber,
                                real64 const & elemDens,
                                real64 const & dElemDens_dp,
-                               arraySlice1d< real64 > const & upwMobility,
-                               arraySlice1d< real64 > const & dUpwMobility_dp,
-                               arraySlice1d< globalIndex > const & upwDofNumber )
+                               real64 (& upwMobility)[ NFACES ],
+                               real64 (& dUpwMobility_dp)[ NFACES ],
+                               globalIndex (& upwDofNumber)[ NFACES ] )
 {
   // we assume that viscosity is independent of pressure
   real64 const elemVisc = 0.001;
   real64 elemMobility = elemDens / elemVisc;
   real64 dElemMobility_dp = dElemDens_dp / elemVisc;
 
-  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NFACES; ++ifaceLoc )
   {
-    upwMobility( ifaceLoc ) = elemMobility;
-    dUpwMobility_dp( ifaceLoc ) = dElemMobility_dp;
-    upwDofNumber( ifaceLoc ) = elemDofNumber;
+    upwMobility[ifaceLoc] = elemMobility;
+    dUpwMobility_dp[ifaceLoc] = dElemMobility_dp;
+    upwDofNumber[ifaceLoc] = elemDofNumber;
   }
 }
 
@@ -218,15 +218,15 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                              rhs,
                              rhsPerturb );
 
-  stackArray1d< real64, NF > oneSidedVolFlux( NF );
-  stackArray1d< real64, NF > dOneSidedVolFlux_dp( NF );
-  stackArray2d< real64, NF *NF > dOneSidedVolFlux_dfp( NF, NF );
+  real64 oneSidedVolFlux[ NF ] = { 0.0 };
+  real64 dOneSidedVolFlux_dp[ NF ] = { 0.0 };
+  real64 dOneSidedVolFlux_dfp[ NF ][ NF ] = {{ 0.0 }};
 
   ///////////////////////////////////////
   // 2) Compute analytical derivatives //
   ///////////////////////////////////////
 
-  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+  AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                          dFacePres,
                                                          faceGravCoef,
                                                          elemToFaces,
@@ -244,7 +244,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   jacobian.setValues< parallelHostPolicy >( 0.0 );
   rhs.setValues< parallelHostPolicy >( 0 );
 
-  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+  AssemblerKernelHelper::assembleConstraints< NF >( faceDofNumber,
                                                     faceGhostRank,
                                                     elemToFaces,
                                                     elemDofNumber,
@@ -267,7 +267,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
   LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+  AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                          dFacePres,
                                                          faceGravCoef,
                                                          elemToFaces,
@@ -284,7 +284,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
   rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
 
-  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+  AssemblerKernelHelper::assembleConstraints< NF >( faceDofNumber,
                                                     faceGhostRank,
                                                     elemToFaces,
                                                     elemDofNumber,
@@ -319,7 +319,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
     LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
     LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-    AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+    AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                            dFacePres,
                                                            faceGravCoef,
                                                            elemToFaces,
@@ -336,7 +336,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
     jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
     rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
 
-    AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+    AssemblerKernelHelper::assembleConstraints< NF >( faceDofNumber,
                                                       faceGhostRank,
                                                       elemToFaces,
                                                       elemDofNumber,
@@ -412,27 +412,27 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                              rhs,
                              rhsPerturb );
 
-  stackArray1d< real64, NF > upwMobility( NF );
-  stackArray1d< real64, NF > dUpwMobility_dp( NF );
-  stackArray1d< globalIndex, NF > upwDofNumber( NF );
+  real64 upwMobility[ NF ] = { 0.0 };
+  real64 dUpwMobility_dp[ NF ] = { 0.0 };
+  globalIndex upwDofNumber[ NF ] = { 0 };
 
   // no upwinding to do since we are in a one-cell problem
-  updateUpwindedMobilities( elemDofNumber,
-                            elemDens,
-                            dElemDens_dp,
-                            upwMobility,
-                            dUpwMobility_dp,
-                            upwDofNumber );
+  updateUpwindedMobilities< NF >( elemDofNumber,
+                                  elemDens,
+                                  dElemDens_dp,
+                                  upwMobility,
+                                  dUpwMobility_dp,
+                                  upwDofNumber );
 
-  stackArray1d< real64, NF > oneSidedVolFlux( NF );
-  stackArray1d< real64, NF > dOneSidedVolFlux_dp( NF );
-  stackArray2d< real64, NF *NF > dOneSidedVolFlux_dfp( NF, NF );
+  real64 oneSidedVolFlux[ NF ] = { 0.0 };
+  real64 dOneSidedVolFlux_dp[ NF ] = { 0.0 };
+  real64 dOneSidedVolFlux_dfp[ NF ][ NF ] = {{ 0.0 }};
 
   ///////////////////////////////////////
   // 2) Compute analytical derivatives //
   ///////////////////////////////////////
 
-  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+  AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                          dFacePres,
                                                          faceGravCoef,
                                                          elemToFaces,
@@ -450,7 +450,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   jacobian.setValues< parallelHostPolicy >( 0.0 );
   rhs.setValues< parallelHostPolicy >( 0 );
 
-  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
+  AssemblerKernelHelper::assembleOneSidedMassFluxes< NF >( faceDofNumber,
                                                            elemToFaces,
                                                            elemDofNumber,
                                                            0,
@@ -471,13 +471,13 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   real64 const dElemPresPerturb = perturbParameter * (elemPres + perturbParameter);
   // we need to update density and mobility to account for the perturbation
   updateDensity( refPres, elemPres, dElemPresPerturb, elemDens, dElemDens_dp );
-  updateUpwindedMobilities( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
+  updateUpwindedMobilities< NF >( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
 
   LvArray::tensorOps::fill< NF >( oneSidedVolFlux, 0 );
   LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
   LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+  AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                          dFacePres,
                                                          faceGravCoef,
                                                          elemToFaces,
@@ -494,7 +494,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
   rhsPerturb.setValues< serialPolicy >( 0.0 );
 
-  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
+  AssemblerKernelHelper::assembleOneSidedMassFluxes< NF >( faceDofNumber,
                                                            elemToFaces,
                                                            elemDofNumber,
                                                            0,
@@ -522,7 +522,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   /////////////////////////////////////////////////////////////////////////////////
 
   updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
-  updateUpwindedMobilities( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
+  updateUpwindedMobilities< NF >( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     dFacePres.setValues< serialPolicy >( 0 );
@@ -532,7 +532,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
     LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
     LvArray::tensorOps::fill< NF, NF >( dOneSidedVolFlux_dfp, 0 );
 
-    AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+    AssemblerKernelHelper::computeOneSidedVolFluxes< NF >( facePres,
                                                            dFacePres,
                                                            faceGravCoef,
                                                            elemToFaces,
@@ -549,7 +549,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
     jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
     rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
 
-    AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
+    AssemblerKernelHelper::assembleOneSidedMassFluxes< NF >( faceDofNumber,
                                                              elemToFaces,
                                                              elemDofNumber,
                                                              0,

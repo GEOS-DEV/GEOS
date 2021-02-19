@@ -26,22 +26,18 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const variableNames = "variableNames";
-std::string const expression = "expression";
+string const variableNames = "variableNames";
+string const expression = "expression";
 }
 }
 
 using namespace dataRepository;
 
-
-
-SymbolicFunction::SymbolicFunction( const std::string & name,
+SymbolicFunction::SymbolicFunction( const string & name,
                                     Group * const parent ):
-  FunctionBase( name, parent )
-#ifdef GEOSX_USE_MATHPRESSO
-  , parserContext(),
+  FunctionBase( name, parent ),
+  parserContext(),
   parserExpression()
-#endif
 {
   registerWrapper( keys::variableNames, &m_variableNames )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -58,9 +54,8 @@ SymbolicFunction::SymbolicFunction( const std::string & name,
 SymbolicFunction::~SymbolicFunction()
 {}
 
-void SymbolicFunction::InitializeFunction()
+void SymbolicFunction::initializeFunction()
 {
-#ifdef GEOSX_USE_MATHPRESSO
   // Register variables
   for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
   {
@@ -72,12 +67,8 @@ void SymbolicFunction::InitializeFunction()
   parserContext.addBuiltIns();
   mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
-#else
-  GEOSX_ERROR( "GEOSX was not built with mathpresso!" );
-#endif
 }
 
-
-REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, string const &, Group * const )
 
 } /* namespace ANST */

@@ -55,22 +55,22 @@ public:
    *
    * Actually unused function, consider removing.
    */
-  void SetDomain( DomainPartition * domain );
+  void setDomain( DomainPartition * domain );
 
 
   /**
    * @brief Checks if the point located inside the current partition.
-   * @param elemCenter The point coordinates.
+   * @param coordinates The point coordinates.
    * @return The predicate result.
    */
-  virtual bool IsCoordInPartition( const R1Tensor & elemCenter ) = 0;
+  virtual bool isCoordInPartition( real64 const ( &coordinates )[ 3 ] ) = 0;
   /**
    * @brief Checks if the point located inside the current partition, taking in to account the distant partition.
-   * @param elemCenter The point coordinates.
+   * @param coordinates The point coordinates.
    * @param numDistPartition The number of distant partitions.
    * @return The predicate result.
    */
-  virtual bool IsCoordInPartition( const R1Tensor & elemCenter,
+  virtual bool isCoordInPartition( real64 const ( &coordinates )[ 3 ],
                                    const int numDistPartition ) = 0;
   /**
    * @brief Checks if the point located inside the current partition in the given direction dir.
@@ -78,14 +78,15 @@ public:
    * @param dir The considered direction.
    * @return The predicate result.
    */
-  virtual bool IsCoordInPartition( const realT & coord, const int dir ) = 0;
+  virtual bool isCoordInPartition( const real64 & coord, const int dir ) = 0;
 
   /**
    * @brief Defines the dimensions of the grid.
    * @param min Global minimum spatial dimensions.
    * @param max Global maximum spatial dimensions.
    */
-  virtual void setSizes( const R1Tensor & min, const R1Tensor & max ) = 0;
+  virtual void setSizes( real64 const ( &min )[ 3 ],
+                         real64 const ( &max )[ 3 ] ) = 0;
 
   /**
    * @brief Defines the number of partitions along the three (x, y, z) axis.
@@ -99,10 +100,10 @@ public:
 
   /**
    * @brief Checks if the point (as an element center) is in contact of a ghost.
-   * @param elemCenter The position of an element center.
+   * @param coordinates The position of an element center.
    * @return The predicate result.
    */
-  virtual bool IsCoordInContactGhostRange( const R1Tensor & elemCenter ) = 0;
+  virtual bool isCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] ) = 0;
 
 //  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
 
@@ -125,11 +126,11 @@ public:
 //  template< typename T >
 //  void SendReceive( const array1d< array1d< T > > & sendArray, array1d< array1d< T > > & recvArray );
 
-//  void SynchronizeFields( const std::map<std::string, string_array >& fieldNames,
+//  void SynchronizeFields( const std::map<string, string_array >& fieldNames,
 //                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
-//  void SetOwnedByRank( const std::map< std::string, globalIndex_array > & localBoundaryGlobalIndices,
-//                       std::map< std::string, std::map< globalIndex, int > > & boundaryOwnership );
+//  void SetOwnedByRank( const std::map< string, globalIndex_array > & localBoundaryGlobalIndices,
+//                       std::map< string, std::map< globalIndex, int > > & boundaryOwnership );
 
 //  void SetGhostArrays( DomainPartition * domain );
 
@@ -139,7 +140,7 @@ public:
    * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.
    * @param bufferSize The distance.
    */
-  virtual void SetContactGhostRange( const realT bufferSize ) = 0;
+  virtual void setContactGhostRange( const real64 bufferSize ) = 0;
 //
 //  void SetBufferSizes( const std::map<string, string_array >& fieldNames,
 //                       const CommRegistry::commID commID  );
@@ -159,7 +160,7 @@ public:
    *
    * @note The other Color member function.
    */
-  virtual int GetColor() = 0;
+  virtual int getColor() = 0;
 
   /**
    * @brief Returns the associated color.
@@ -167,12 +168,12 @@ public:
    *
    * @note The other GetColor member function.
    */
-  int Color() const {return m_color;}
+  int color() const {return m_color;}
   /**
    * @brief Returns the number of colors.
    * @return The number of associated colors.
    */
-  int NumColor() const {return m_numColors;}
+  int numColor() const {return m_numColors;}
 
 //  void DeleteExcessNeighbors();
 //  void GraphBasedColoring();
@@ -194,7 +195,7 @@ protected:
    * @param group A group that is passed in to the initialization functions
    *              in order to facilitate the initialization.
    */
-  virtual void InitializePostSubGroups( dataRepository::Group * const group ) = 0;
+  virtual void initializePostSubGroups( dataRepository::Group * const group ) = 0;
 
   /**
    * @brief Array of neighbor communicators.
@@ -213,11 +214,11 @@ protected:
   /**
    * @brief Ghost position (min).
    */
-  R1Tensor m_contactGhostMin;
+  real64 m_contactGhostMin[3];
   /**
    * @brief Ghost position (max).
    */
-  R1Tensor m_contactGhostMax;
+  real64 m_contactGhostMax[3];
 
   /**
    * @brief Associated color
@@ -235,23 +236,23 @@ protected:
 
 public:
   /// Unused parameter
-  realT m_t1;
+  real64 m_t1;
   /// Unused parameter
-  realT m_t2;
+  real64 m_t2;
   /// Unused parameter
-  realT m_t3;
+  real64 m_t3;
   /// Unused parameter
-  realT m_t4;
+  real64 m_t4;
   /// Unused parameter
   bool m_hasLocalGhosts;
   /// Unused parameter
-  std::map< std::string, localIndex_array > m_localGhosts;
+  std::map< string, localIndex_array > m_localGhosts;
   /// Unused parameter
-  std::map< std::string, localIndex_array > m_elementRegionsLocalGhosts;
+  std::map< string, localIndex_array > m_elementRegionsLocalGhosts;
   /// Unused parameter
-  std::map< std::string, localIndex_array > m_localGhostSources;
+  std::map< string, localIndex_array > m_localGhostSources;
   /// Unused parameter
-  std::map< std::string, localIndex_array > m_elementRegionsLocalGhostSources;
+  std::map< string, localIndex_array > m_elementRegionsLocalGhostSources;
   /// Unused parameter
   int m_ghostDepth;
 

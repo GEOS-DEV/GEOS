@@ -40,20 +40,20 @@ CellElementRegion::~CellElementRegion()
 {}
 
 
-void CellElementRegion::GenerateMesh( Group * const cellBlocks )
+void CellElementRegion::generateMesh( Group * const cellBlocks )
 {
-  Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+  Group * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
-    CellElementSubRegion * const subRegion = elementSubRegions->RegisterGroup< CellElementSubRegion >( cellBlockName );
-    CellBlock * const source = cellBlocks->GetGroup< CellBlock >( subRegion->getName() );
+    CellElementSubRegion * const subRegion = elementSubRegions->registerGroup< CellElementSubRegion >( cellBlockName );
+    CellBlock * const source = cellBlocks->getGroup< CellBlock >( subRegion->getName() );
     GEOSX_ERROR_IF( source == nullptr, "Cell block named " + subRegion->getName() + " does not exist" );
-    subRegion->CopyFromCellBlock( source );
+    subRegion->copyFromCellBlock( source );
   }
 }
 
-void CellElementRegion::GenerateAggregates( FaceManager const * const faceManager,
+void CellElementRegion::generateAggregates( FaceManager const * const faceManager,
                                             NodeManager const * const GEOSX_UNUSED_PARAM( nodeManager ) )
 {
   GEOSX_MARK_FUNCTION;
@@ -62,10 +62,10 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   {
     return;
   }
-  Group * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+  Group * elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
   localIndex regionIndex = getIndexInParent();
   AggregateElementSubRegion * const aggregateSubRegion =
-    elementSubRegions->RegisterGroup< AggregateElementSubRegion >( "coarse" );
+    elementSubRegions->registerGroup< AggregateElementSubRegion >( "coarse" );
 
   arrayView2d< localIndex const > const elemRegionList     = faceManager->elementRegionList();
   arrayView2d< localIndex const > const elemSubRegionList  = faceManager->elementSubRegionList();
@@ -97,10 +97,10 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   SparsityPattern< idx_t, idx_t > graph( LvArray::integerConversion< idx_t >( nbCellElements ),
                                          LvArray::integerConversion< idx_t >( nbCellElements ) );
   localIndex nbConnections = 0;
-  array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
+  array1d< localIndex > offsetSubRegions( this->getSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
   {
-    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->GetSubRegion( subRegionIndex )->size();
+    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->getSubRegion( subRegionIndex )->size();
   }
   for( localIndex kf = 0; kf < faceManager->size(); ++kf )
   {
@@ -123,7 +123,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
                             &nparts, nullptr, nullptr, options, &objval, parts.data() );
 
   // Compute Aggregate barycenters
-  array1d< R1Tensor > aggregateBarycenters( nparts );
+  array2d< real64 > aggregateBarycenters( nparts, 3 );
   array1d< real64 > aggregateVolumes( nparts );
   array1d< real64 > normalizeVolumes( nbCellElements );
 
@@ -157,9 +157,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   // Third, normalize the centers
   this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    arrayView1d< integer const > const ghostRank = elementSubRegion.ghostRank().toViewConst();
+    arrayView1d< integer const > const ghostRank = elementSubRegion.ghostRank();
     localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
-    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter().toViewConst();
+    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
 
     for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
@@ -167,15 +167,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
         continue;
 
       // TODO Change the rest of this to
-      // LvArray::tensorOps::scaledAdd< 3 >( aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ]
-      // ] ],
-      //                                     elemCenter[ cellIndex ],
-      //                                     normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] )
-      real64 const center[ 3 ] =
-        LVARRAY_TENSOROPS_INIT_LOCAL_3( normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] * elemCenter[ cellIndex ] );
-      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 0 ] += center[ 0 ];
-      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 1 ] += center[ 1 ];
-      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 2 ] += center[ 2 ];
+      LvArray::tensorOps::scaledAdd< 3 >( aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ],
+                                          elemCenter[ cellIndex ],
+                                          normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] );
     }
   } );
 
@@ -185,9 +179,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   {
     partsGEOS[fineCellIndex] = LvArray::integerConversion< localIndex >( parts[fineCellIndex] );
   }
-  aggregateSubRegion->CreateFromFineToCoarseMap( nbAggregates, partsGEOS, aggregateBarycenters );
+  aggregateSubRegion->createFromFineToCoarseMap( nbAggregates, partsGEOS, aggregateBarycenters );
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, string const &, Group * const )
 
 } /* namespace geosx */

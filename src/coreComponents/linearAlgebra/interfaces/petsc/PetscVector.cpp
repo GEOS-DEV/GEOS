@@ -291,6 +291,18 @@ void PetscVector::axpby( real64 const alpha,
   GEOSX_LAI_CHECK_ERROR( VecAXPY( m_vec, alpha, x.m_vec ) );
 }
 
+void PetscVector::pointwiseProduct( PetscVector const & x,
+                                    PetscVector & y ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
+  GEOSX_LAI_ASSERT( y.ready() );
+  GEOSX_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
+  GEOSX_LAI_ASSERT_EQ( globalSize(), y.globalSize() );
+
+  GEOSX_LAI_CHECK_ERROR( VecPointwiseMult( y.m_vec, m_vec, x.m_vec ) );
+}
+
 real64 PetscVector::norm1() const
 {
   GEOSX_LAI_ASSERT( ready() );
@@ -375,7 +387,7 @@ void PetscVector::write( string const & filename,
     GEOSX_LAI_CHECK_ERROR( VecScatterCreateToAll( m_vec, &scatter, &globalVec ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterBegin( scatter, m_vec, globalVec, INSERT_VALUES, SCATTER_FORWARD ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterEnd( scatter, m_vec, globalVec, INSERT_VALUES, SCATTER_FORWARD ) );
-    if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+    if( MpiWrapper::commRank( getComm() ) == 0 )
     {
       PetscScalar *v;
       GEOSX_LAI_CHECK_ERROR( VecGetArray( globalVec, &v ) );

@@ -22,6 +22,8 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/DofManager.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
@@ -189,6 +191,128 @@ void SeparateComponentFilter( MATRIX const & src,
 #endif
 
 //  dst.print(std::cout);
+}
+
+template< typename VECTOR >
+void ComputeRigidBodyModes( MeshLevel const & mesh,
+                            DofManager const & dofManager,
+                            std::vector< string > const & selection,
+                            array1d< VECTOR > & rigidBodyModes )
+{
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+
+  localIndex numComponents = 0;
+  array1d< globalIndex > globalNodeList;
+  for( localIndex k = 0; k < LvArray::integerConversion< localIndex >( selection.size() ); ++k )
+  {
+    if( dofManager.getLocation( selection[k] ) == DofManager::Location::Node )
+    {
+      string const & dispDofKey = dofManager.getKey( selection[k] );
+      arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+      localIndex const numComponentsField = dofManager.numComponents( selection[k] );
+      numComponents = numComponents > 0 ? numComponents : numComponentsField;
+      GEOSX_ERROR_IF( numComponents != numComponentsField, "Rigid body modes called with different number of components." );
+      globalIndex const globalOffset = dofManager.globalOffset( selection[k] );
+      globalIndex const numLocalDofs = LvArray::integerConversion< globalIndex >( dofManager.numLocalDofs( selection[k] ) );
+      for( globalIndex i = 0; i < dofNumber.size(); ++i )
+      {
+        if( dofNumber[i] >= globalOffset && ( dofNumber[i] - globalOffset ) < numLocalDofs )
+        {
+          globalNodeList.emplace_back( ( dofNumber[i]-globalOffset )/numComponentsField );
+        }
+      }
+    }
+  }
+  localIndex const numNodes = globalNodeList.size();
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  localIndex const numRidigBodyModes = numComponents * ( numComponents + 1 ) / 2;
+  rigidBodyModes.resize( numRidigBodyModes );
+  for( localIndex k = 0; k < numComponents; ++k )
+  {
+    rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
+    rigidBodyModes[k].open();
+    for( localIndex i = 0; i < numNodes; ++i )
+    {
+      rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+k ), 1.0 );
+    }
+    rigidBodyModes[k].close();
+    rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+  }
+  switch( numComponents )
+  {
+    case 2:
+    {
+      localIndex const k = 2;
+      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
+      rigidBodyModes[k].open();
+      for( localIndex i = 0; i < numNodes; ++i )
+      {
+        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), -nodePosition[globalNodeList[i]][1] );
+        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), +nodePosition[globalNodeList[i]][0] );
+      }
+      rigidBodyModes[k].close();
+      for( localIndex j = 0; j < k; ++j )
+      {
+        rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
+      }
+      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      break;
+    }
+    case 3:
+    {
+      localIndex k = 3;
+      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
+      rigidBodyModes[k].open();
+      for( localIndex i = 0; i < numNodes; ++i )
+      {
+        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), +nodePosition[globalNodeList[i]][1] );
+        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), -nodePosition[globalNodeList[i]][0] );
+      }
+      rigidBodyModes[k].close();
+      for( localIndex j = 0; j < k; ++j )
+      {
+        rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
+      }
+      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+
+      ++k;
+      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
+      rigidBodyModes[k].open();
+      for( localIndex i = 0; i < numNodes; ++i )
+      {
+        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), -nodePosition[globalNodeList[i]][2] );
+        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+2 ), +nodePosition[globalNodeList[i]][1] );
+      }
+      rigidBodyModes[k].close();
+      for( localIndex j = 0; j < k; ++j )
+      {
+        rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
+      }
+      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+
+      ++k;
+      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
+      rigidBodyModes[k].open();
+      for( localIndex i = 0; i < numNodes; ++i )
+      {
+        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), +nodePosition[globalNodeList[i]][2] );
+        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+2 ), -nodePosition[globalNodeList[i]][0] );
+      }
+      rigidBodyModes[k].close();
+      for( localIndex j = 0; j < k; ++j )
+      {
+        rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
+      }
+      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Rigid body modes computation unsupported for " << numComponents << " components." );
+    }
+  }
 }
 
 } // LAIHelperFunctions namespace

@@ -12,13 +12,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file CompositeFunction.cpp
- */
-
 #include "FunctionManager.hpp"
 #include "CompositeFunction.hpp"
 #include "common/DataTypes.hpp"
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -27,22 +24,20 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const functionNames = "functionNames";
-std::string const variableNames = "variableNames";
-std::string const expression = "expression";
+string const functionNames = "functionNames";
+string const variableNames = "variableNames";
+string const expression = "expression";
 }
 }
 
 using namespace dataRepository;
 
 
-CompositeFunction::CompositeFunction( const std::string & name,
+CompositeFunction::CompositeFunction( const string & name,
                                       Group * const parent ):
   FunctionBase( name, parent ),
-#ifdef GEOSX_USE_MATHPRESSO
   parserContext(),
   parserExpression(),
-#endif
   m_numSubFunctions(),
   m_subFunctions()
 {
@@ -59,14 +54,11 @@ CompositeFunction::CompositeFunction( const std::string & name,
     setDescription( "Composite math expression" );
 }
 
-
 CompositeFunction::~CompositeFunction()
 {}
 
-
-void CompositeFunction::InitializeFunction()
+void CompositeFunction::initializeFunction()
 {
-#ifdef GEOSX_USE_MATHPRESSO
   // Register variables
   for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
   {
@@ -80,31 +72,26 @@ void CompositeFunction::InitializeFunction()
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 
   // Grab pointers to sub functions
-  FunctionManager & functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
-    m_subFunctions.emplace_back( functionManager.GetGroup< FunctionBase >( m_functionNames[ii] ));
+    m_subFunctions.emplace_back( functionManager.getGroup< FunctionBase >( m_functionNames[ii] ));
   }
-#else
-  GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
-#endif
 }
 
-
-void CompositeFunction::Evaluate( dataRepository::Group const * const group,
+void CompositeFunction::evaluate( dataRepository::Group const * const group,
                                   real64 const time,
                                   SortedArrayView< localIndex const > const & set,
                                   real64_array & result ) const
 {
-#ifdef GEOSX_USE_MATHPRESSO
   // Evaluate each of the subFunctions independently and place the results into
   // a temporary field
   array1d< real64_array > subFunctionResults;
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
     real64_array tmp( result.size());
-    m_subFunctions[ii]->Evaluate( group, time, set, tmp );
+    m_subFunctions[ii]->evaluate( group, time, set, tmp );
     subFunctionResults.emplace_back( std::move( tmp ));
   }
 
@@ -119,30 +106,20 @@ void CompositeFunction::Evaluate( dataRepository::Group const * const group,
     }
     result[ii] = parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
   } );
-#else
-  GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
-#endif
 }
 
-
-real64 CompositeFunction::Evaluate( real64 const * const input ) const
+real64 CompositeFunction::evaluate( real64 const * const input ) const
 {
-#ifdef GEOSX_USE_MATHPRESSO
   real64 functionResults[m_maxNumSubFunctions];
 
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
-    functionResults[ii] = m_subFunctions[ii]->Evaluate( input );
+    functionResults[ii] = m_subFunctions[ii]->evaluate( input );
   }
 
   return parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
-#else
-  GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
-  return 0;
-#endif
 }
 
+REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, string const &, Group * const )
 
-REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, Group * const )
-
-} /* namespace ANST */
+} // namespace geosx

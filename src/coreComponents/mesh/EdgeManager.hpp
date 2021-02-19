@@ -22,6 +22,7 @@
 #include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 
 namespace geosx
@@ -56,7 +57,7 @@ public:
   /**
    * @return the string representing the edge manager name in the catalog
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EdgeManager"; }
 
 
@@ -65,7 +66,7 @@ public:
    * @return the edge manager catalog name
    */
   virtual const string getCatalogName() const override
-  { return EdgeManager::CatalogName(); }
+  { return EdgeManager::catalogName(); }
 
   ///@}
 
@@ -86,7 +87,7 @@ public:
    * @param[in] name the name of the EdgeManager object in the repository
    * @param[in] parent the parent group of the EdgeManager object being constructed
    */
-  EdgeManager( std::string const & name,
+  EdgeManager( string const & name,
                Group * const parent );
 
   /**
@@ -108,21 +109,21 @@ public:
    * @brief Set the node of the domain boundary object.
    * @param[in] referenceObject the reference of the face manager.
    */
-  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject = nullptr );
+  void setDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject = nullptr );
 
   /**
    * @brief Set external edges.
    * @details external edges are the edges on the faces which are external
    * @param[in] faceManager the face manager to obtain external face
    */
-  void SetIsExternal( FaceManager const * const faceManager );
+  void setIsExternal( FaceManager const * const faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
    * @param[in] faceManager manager of all faces in the DomainPartition
    * @param[in] nodeManager manager of all nodes in the DomainPartition
    */
-  void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
+  void buildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
@@ -130,7 +131,7 @@ public:
    * @param[in] faceToNodeMap manager face-to-nodes map
    * @param[in] faceToEdgeMap manager face-to-edges map
    */
-  void BuildEdges( localIndex const numNodes,
+  void buildEdges( localIndex const numNodes,
                    ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                    ArrayOfArrays< localIndex > & faceToEdgeMap );
 
@@ -143,7 +144,7 @@ public:
    * [ [global_index_node_0_edge_0, global_index_node1_edge_0], [global_index_node_0_edge_1, global_index_node1_edge_1] ....]
    */
   virtual void
-  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+  extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
                                                    std::vector< std::vector< globalIndex > > & globalEdgeNodes ) override;
 
   /**
@@ -152,7 +153,7 @@ public:
    * @param[in] packList the list of edge indices to be packed
    * @return The size of the packed list
    */
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   /**
    * @brief Pack an array of edge indices in a buffer.
@@ -161,7 +162,7 @@ public:
    * @param[in] packList the indices of edge to pack
    * @return The size of the packed array
    */
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   /**
@@ -173,16 +174,16 @@ public:
    * @param[in] overwriteDownMaps boolean to state if the Downs maps should be overwritten
    * @return The size of the unpacked array
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
   /**
-   * @brief Call FixUpDownMaps of the class ObjectManagerBase for nodes-to-edges and nodes-to-faces relation maps.
+   * @brief Call fixUpDownMaps of the class ObjectManagerBase for nodes-to-edges and nodes-to-faces relation maps.
    * @param[in] clearIfUnmapped boolean to indicate if the unmaped indices should be removed or not
    */
-  void FixUpDownMaps( bool const clearIfUnmapped );
+  void fixUpDownMaps( bool const clearIfUnmapped );
 
   /**
    * @brief Compress all nodes-to-faces relation maps
@@ -204,7 +205,7 @@ public:
    * @param[in] nodeGlobalToLocal map of the global to local nodes
    * @param[in] faceGlobalToLocal GEOX UNUSED PARAMETER
    */
-  void ConnectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
+  void connectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
                                       const map< globalIndex, localIndex > & nodeGlobalToLocal,
                                       const map< globalIndex, localIndex > & faceGlobalToLocal );
 
@@ -213,7 +214,7 @@ public:
    * @param[in] faceManager the FaceManager
    * @param[in] newFaceIndices the new face indices to be added
    */
-  void AddToEdgeToFaceMap( FaceManager const * const faceManager,
+  void addToEdgeToFaceMap( FaceManager const * const faceManager,
                            arrayView1d< localIndex const > const & newFaceIndices );
 
   /**
@@ -223,7 +224,7 @@ public:
    * @param[in] childNodeIndex index of the child node
    * @param[in] nodesToEdges array of nodes-to-edges list
    */
-  void SplitEdge( const localIndex indexToSplit,
+  void splitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
                   const localIndex childNodeIndex[2],
                   array1d< SortedArray< localIndex > > & nodesToEdges );
@@ -238,21 +239,27 @@ public:
 
   /**
    * @brief Calculate the center of an edge given its index.
+   * @tparam OUT_VECTOR type of output
    * @param edgeIndex index of the edge
    * @param X array view of nodes associated with the edge
-   * @return coordinate of the edge center
+   * @param edgeCenter output vector containing coordinate of the edge center
    */
-  R1Tensor calculateCenter( localIndex const edgeIndex,
-                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
+  template< typename OUT_VECTOR >
+  void calculateCenter( localIndex const edgeIndex,
+                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                        OUT_VECTOR && edgeCenter ) const;
 
   /**
-   * @brief Calculate the length of an edge.
+   * @brief Calculate the edge segment.
+   * @tparam OUT_VECTOR type of output
    * @param edgeIndex index of the edge
    * @param X array view of the nodes associated with the NodeManager of current domain
-   * @return length of the edge
+   * @param edgeVector output vector containing edge segment
    */
-  R1Tensor calculateLength( localIndex const edgeIndex,
-                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
+  template< typename OUT_VECTOR >
+  void calculateLength( localIndex const edgeIndex,
+                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                        OUT_VECTOR && edgeVector ) const;
 
   /**
    * @name viewKeyStruct/groupKeyStruct
@@ -390,26 +397,28 @@ private:
    * @return size of data packed in terms of number of chars
    */
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
 };
 
-inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
-                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+template< typename OUT_VECTOR >
+inline void EdgeManager::calculateCenter( localIndex const edgeIndex,
+                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                                          OUT_VECTOR && edgeCenter ) const
 {
-  R1Tensor center = X[m_toNodesRelation[edgeIndex][0]];
-  center += X[m_toNodesRelation[edgeIndex][1]];
-  center *= 0.5;
-  return center;
+  LvArray::tensorOps::copy< 3 >( edgeCenter, X[m_toNodesRelation[edgeIndex][0]] );
+  LvArray::tensorOps::add< 3 >( edgeCenter, X[m_toNodesRelation[edgeIndex][1]] );
+  LvArray::tensorOps::scale< 3 >( edgeCenter, 0.5 );
 }
 
-inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
-                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+template< typename OUT_VECTOR >
+inline void EdgeManager::calculateLength( localIndex const edgeIndex,
+                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                                          OUT_VECTOR && edgeSegment ) const
 {
-  R1Tensor length = X[m_toNodesRelation[edgeIndex][1]];
-  length -= X[m_toNodesRelation[edgeIndex][0]];
-  return length;
+  LvArray::tensorOps::copy< 3 >( edgeSegment, X[m_toNodesRelation[edgeIndex][1]] );
+  LvArray::tensorOps::subtract< 3 >( edgeSegment, X[m_toNodesRelation[edgeIndex][0]] );
 }
 
 }

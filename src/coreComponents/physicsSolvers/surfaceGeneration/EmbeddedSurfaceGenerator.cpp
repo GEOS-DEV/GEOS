@@ -25,7 +25,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -42,7 +42,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
+EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent )
 {
@@ -62,10 +62,10 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 {}
 
-void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
+void EmbeddedSurfaceGenerator::registerDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
 {}
 
-void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
+void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemManager )
 {
   /*
    * Here we generate embedded elements for fractures (or faults) that already exist in the domain and
@@ -73,26 +73,28 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
    */
 
   // Get domain
-  DomainPartition * domain = problemManager->GetGroup< DomainPartition >( dataRepository::keys::domain );
+  DomainPartition * domain = problemManager->getGroup< DomainPartition >( dataRepository::keys::domain );
   // Get geometric object manager
-  GeometricObjectManager * geometricObjManager = problemManager->GetGroup< GeometricObjectManager >( "Geometry" );
+  GeometricObjectManager * geometricObjManager = problemManager->getGroup< GeometricObjectManager >( "Geometry" );
 
   // Get meshLevel
   Group * const meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody   = meshBodies->GetGroup< MeshBody >( 0 );
-  MeshLevel * const meshLevel  = meshBody->GetGroup< MeshLevel >( 0 );
+  MeshBody * const meshBody   = meshBodies->getGroup< MeshBody >( 0 );
+  MeshLevel * const meshLevel  = meshBody->getGroup< MeshLevel >( 0 );
 
   // Get managers
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  ElementRegionManager & elemManager = *meshLevel->getElemManager();
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager->referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
-  EmbeddedSurfaceRegion * const embeddedSurfaceRegion =
-    elemManager->GetRegion< EmbeddedSurfaceRegion >( this->m_fractureRegionName );
-  EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion =
-    embeddedSurfaceRegion->GetSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+  SurfaceElementRegion & embeddedSurfaceRegion =
+    *( elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
+  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion =
+    *( embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 ) );
+
+  localIndex localNumberOfSurfaceElems         = 0;
 
   // Loop over all the fracture planes
   geometricObjManager->forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
@@ -103,84 +105,90 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
      * vector defining the plane. If two scalar products have different signs the plane cuts the
      * cell. If a nodes gives a 0 dot product it has to be neglected or the method won't work.
      */
-    R1Tensor planeCenter  = fracture.getCenter();
-    R1Tensor normalVector = fracture.getNormal();
+    real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getCenter() );
+    real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getNormal() );
     // Initialize variables
     globalIndex nodeIndex;
     integer isPositive, isNegative;
-    R1Tensor distVec;
+    real64 distVec[ 3 ];
 
-    elemManager->forElementSubRegionsComplete< CellElementSubRegion >(
+    elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
       FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
-      for( localIndex cellIndex =0; cellIndex<subRegion.size(); cellIndex++ )
-      {
-        isPositive = 0;
-        isNegative = 0;
-        for( localIndex kn =0; kn<subRegion.numNodesPerElement(); kn++ )
-        {
-          nodeIndex = cellToNodes[cellIndex][kn];
-          distVec  = nodesCoord[nodeIndex];
-          distVec -= planeCenter;
-          // check if the dot product is zero
-          if( Dot( distVec, normalVector ) > 0 )
-          {
-            isPositive = 1;
-          }
-          else if( Dot( distVec, normalVector ) < 0 )
-          {
-            isNegative = 1;
-          }
-        } // end loop over nodes
-        if( isPositive * isNegative == 1 )
-        {
 
-          bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
-                                                                        er,
-                                                                        esr,
-                                                                        *nodeManager,
-                                                                        *edgeManager,
-                                                                        cellToEdges,
-                                                                        &fracture );
-          if( added )
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+
+      for( localIndex cellIndex = 0; cellIndex < subRegion.size(); cellIndex++ )
+      {
+        if( ghostRank[cellIndex] < 0 )
+        {
+          isPositive = 0;
+          isNegative = 0;
+          for( localIndex kn = 0; kn < subRegion.numNodesPerElement(); kn++ )
           {
-            GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+            nodeIndex = cellToNodes[cellIndex][kn];
+            LvArray::tensorOps::copy< 3 >( distVec, nodesCoord[nodeIndex] );
+            LvArray::tensorOps::subtract< 3 >( distVec, planeCenter );
+            // check if the dot product is zero
+            if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) > 0 )
+            {
+              isPositive = 1;
+            }
+            else if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) < 0 )
+            {
+              isNegative = 1;
+            }
+          } // end loop over nodes
+          if( isPositive * isNegative == 1 )
+          {
+            bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
+                                                                         esr,
+                                                                         er,
+                                                                         *nodeManager,
+                                                                         *edgeManager,
+                                                                         cellToEdges,
+                                                                         &fracture );
+
+            if( added )
+            {
+              GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+
+
+              // Add the information to the CellElementSubRegion
+              subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
+              localNumberOfSurfaceElems++;
+            }
           }
         }
       } // end loop over cells
     } );// end loop over subregions
   } );// end loop over thick planes
 
+
+  // Set the ghostRank form the parent cell
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
-    elemManager->ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
+  embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
 
-  // Sum across all ranks
-  localIndex localNum = embeddedSurfaceSubRegion->size();
-  localIndex totalNum = 0;
-  MpiWrapper::allReduce( &localNum,
-                         &totalNum,
-                         1,
-                         MPI_SUM,
-                         MPI_COMM_GEOSX );
+  setGlobalIndices( elemManager, embeddedSurfaceSubRegion );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNum );
+  addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
   // Populate EdgeManager for embedded surfaces.
   EdgeManager & embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
 
-  EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion->edgeList();
-  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion->nodeList();
+  EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
+  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
   localIndex numOfPoints = nodeManager->embSurfNodesPosition().size( 0 );
 
-  embSurfEdgeManager.BuildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+  embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 }
 
-void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
+void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
 {
   // I don't think there is  much to do here.
 }
@@ -193,7 +201,7 @@ void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UN
 }
 
 
-real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
                                              DomainPartition & domain )
@@ -216,13 +224,13 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
-      FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
+      FluxApproximationBase * const fluxApprox = fvManager.getGroup< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addEDFracToFractureStencil( *meshLevel,
@@ -233,8 +241,81 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
 }
 
+void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemManager,
+                                                 EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
+{
+  // Add new globalIndices
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+
+  localIndex_array numberOfSurfaceElemsPerRank( commSize );
+  localIndex_array globalIndexOffset( commSize );
+  MpiWrapper::allGather( embeddedSurfaceSubRegion.size(), numberOfSurfaceElemsPerRank );
+
+  globalIndexOffset[0] = 0; // offSet for the globalIndex
+  localIndex totalNumberOfSurfaceElements = numberOfSurfaceElemsPerRank[ 0 ];  // Sum across all ranks
+  for( int rank = 1; rank < commSize; ++rank )
+  {
+    globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfSurfaceElemsPerRank[rank - 1];
+    totalNumberOfSurfaceElements += numberOfSurfaceElemsPerRank[rank];
+  }
+
+  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
+
+  arrayView1d< globalIndex > const & localToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
+
+  for( localIndex ei = 0; ei < embeddedSurfaceSubRegion.size(); ei++ )
+  {
+    localToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex() + 1;
+    embeddedSurfaceSubRegion.updateGlobalToLocalMap( ei );
+  }
+
+  embeddedSurfaceSubRegion.setMaxGlobalIndex();
+
+  elemManager.setMaxGlobalIndex();
+}
+
+void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager const & elemManager,
+                                                          EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
+{
+  // We want to create the sets for the embeddedSurfaceSubRegion which was empty when they
+  // were created for the other subRegions. This way, for example, if the parent cell belongs to the set "source"
+  // the embedded element will belong to the same set.
+
+  dataRepository::Group * setGroupEmbSurf =
+    embeddedSurfaceSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString );
+
+  elemManager.forElementSubRegions< CellElementSubRegion >(
+    [&]( CellElementSubRegion const & subRegion )
+  {
+    dataRepository::Group const * setGroupCell =
+      subRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString );
+
+    SortedArrayView< localIndex const > const fracturedElements = subRegion.fracturedElementsList();
+
+    ArrayOfArraysView< localIndex const > const cellToEmbSurf = subRegion.embeddedSurfacesList().toViewConst();
+
+    for( localIndex ei = 0; ei < fracturedElements.size(); ei++ )
+    {
+      localIndex const cellIndex    = fracturedElements[ei];
+      localIndex const embSurfIndex = cellToEmbSurf[cellIndex][0];
+      setGroupCell->forWrappers< SortedArray< localIndex > >( [&]( auto const & wrapper )
+      {
+        SortedArrayView< const localIndex > const & targetSetCell = wrapper.reference();
+        SortedArray< localIndex > & targetSetEmbSurf =
+          setGroupEmbSurf->getWrapper< SortedArray< localIndex > >( wrapper.getName() )->reference();
+
+        if( targetSetCell.contains( cellIndex ) )
+        {
+          targetSetEmbSurf.insert( embSurfIndex );
+        }
+      } );
+    }
+  } );
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase,
                         EmbeddedSurfaceGenerator,
-                        std::string const &, dataRepository::Group * const )
+                        string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

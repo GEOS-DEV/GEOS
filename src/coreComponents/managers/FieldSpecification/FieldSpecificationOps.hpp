@@ -116,7 +116,7 @@ struct FieldSpecificationOp
                      integer const component,
                      real64 const value )
   {
-    OP::template apply( field( index ).Data()[component], value );
+    OP::template apply( field( index )[component], value );
   }
 
   /**
@@ -133,7 +133,7 @@ struct FieldSpecificationOp
   template< typename T >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
-  ReadFieldValue( arrayView1d< T const > const & field,
+  readFieldValue( arrayView1d< T const > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
@@ -156,12 +156,12 @@ struct FieldSpecificationOp
   template< typename T >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
-  ReadFieldValue( arrayView1d< T const > const & field,
+  readFieldValue( arrayView1d< T const > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
   {
-    OP::template apply( value, field( index ).Data()[component] );
+    OP::template apply( value, field( index )[component] );
   }
 
   /**
@@ -222,16 +222,16 @@ struct FieldSpecificationOp
     {
       for( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        OP::template apply( field( index, a ).Data()[component], value );
+        OP::template apply( field( index, a )[component], value );
       }
     }
     else
     {
       for( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        for( localIndex c = 0; c < T::Length(); ++c )
+        for( localIndex c = 0; c < T::SIZE; ++c )
         {
-          OP::template apply( field( index, a ).Data()[c], value );
+          OP::template apply( field( index, a )[c], value );
         }
       }
     }
@@ -252,7 +252,7 @@ struct FieldSpecificationOp
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
-  ReadFieldValue( arrayView2d< T const, USD > const & field,
+  readFieldValue( arrayView2d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
@@ -274,7 +274,7 @@ struct FieldSpecificationOp
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
-  ReadFieldValue( arrayView2d< T const, USD > const & field,
+  readFieldValue( arrayView2d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
@@ -283,7 +283,7 @@ struct FieldSpecificationOp
     GEOSX_UNUSED_VAR( index );
     GEOSX_UNUSED_VAR( component );
     GEOSX_UNUSED_VAR( value );
-    GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
+    GEOSX_ERROR( "readFieldValue: unsupported operation" );
   }
 
   /**
@@ -352,7 +352,7 @@ struct FieldSpecificationOp
       {
         for( localIndex b = 0; b < field.size( 2 ); ++b )
         {
-          OP::template apply( field( index, a, b ).Data()[component], value );
+          OP::template apply( field( index, a, b )[component], value );
         }
       }
     }
@@ -362,9 +362,9 @@ struct FieldSpecificationOp
       {
         for( localIndex b = 0; b < field.size( 2 ); ++b )
         {
-          for( localIndex c = 0; c < T::Length(); ++c )
+          for( localIndex c = 0; c < T::size(); ++c )
           {
-            OP::template apply( field( index, a, b ).Data()[c], value );
+            OP::template apply( field( index, a, b )[c], value );
           }
         }
       }
@@ -383,7 +383,7 @@ struct FieldSpecificationOp
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline void
-  ReadFieldValue( arrayView3d< T const, USD > const & field,
+  readFieldValue( arrayView3d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
@@ -392,7 +392,7 @@ struct FieldSpecificationOp
     GEOSX_UNUSED_VAR( index );
     GEOSX_UNUSED_VAR( component );
     GEOSX_UNUSED_VAR( value );
-    GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
+    GEOSX_ERROR( "readFieldValue: unsupported operation" );
   }
 
 };
@@ -502,7 +502,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
    * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
    */
   template< typename LAI >
-  static inline void PrescribeRhsValues( typename LAI::ParallelVector & rhs,
+  static inline void prescribeRhsValues( typename LAI::ParallelVector & rhs,
                                          localIndex const num,
                                          globalIndex * const dof,
                                          real64 * const values )
@@ -525,7 +525,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
    * @param values a list of values corresponding to \p dof that will be added to \p rhs.
    */
   template< typename POLICY >
-  static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
+  static inline void prescribeRhsValues( arrayView1d< real64 > const & rhs,
                                          arrayView1d< globalIndex const > const & dof,
                                          globalIndex const dofRankOffset,
                                          arrayView1d< real64 const > const & values )
@@ -585,7 +585,7 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
    * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
    */
   template< typename LAI >
-  static inline void PrescribeRhsValues( typename LAI::ParallelVector & rhs,
+  static inline void prescribeRhsValues( typename LAI::ParallelVector & rhs,
                                          localIndex const num,
                                          globalIndex * const dof,
                                          real64 * const values )
@@ -602,7 +602,7 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
    * @param values a list of values corresponding to \p dof that will be added to \p rhs.
    */
   template< typename POLICY >
-  static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
+  static inline void prescribeRhsValues( arrayView1d< real64 > const & rhs,
                                          arrayView1d< globalIndex const > const & dof,
                                          globalIndex const dofRankOffset,
                                          arrayView1d< real64 const > const & values )

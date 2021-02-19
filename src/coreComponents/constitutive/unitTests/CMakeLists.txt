@@ -3,18 +3,20 @@
 #
 
 set( gtest_geosx_tests
-     testLinearElasticIsotropic.cpp
-     testLinearElasticAnisotropic.cpp
+     testDamage.cpp
+     testDamageUtilities.cpp
+     testDruckerPrager.cpp
+     testElasticIsotropic.cpp
+     testPropertyConversions.cpp
      testRelPerm.cpp
-     testCapillaryPressure.cpp 
    )
 
 set( dependencyList gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core)
+  set (dependencyList ${dependencyList} geosx_core conduit)
 else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+  set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)
 endif()
 
 if( ENABLE_MPI )

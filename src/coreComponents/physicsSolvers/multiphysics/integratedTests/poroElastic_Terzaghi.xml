@@ -11,10 +11,12 @@
       couplingTypeOption="SIM_FixedStress"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region2 }">
+      targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </Poroelastic>
 
@@ -23,14 +25,14 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ shale }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"
+        solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -38,15 +40,15 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain }"
       fluidNames="{ water }"
       solidNames="{ shale }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"
+        solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </SinglePhaseFVM>
   </Solvers>
@@ -131,14 +133,14 @@
   <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="Domain"
       cellBlocks="{ cb1 }"
       materialList="{ shale, water }"/>
   </ElementRegions>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="61.9e6"
@@ -163,7 +165,7 @@
       component="0"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="4.963e-14"/>
 
@@ -172,7 +174,7 @@
       component="1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="4.963e-14"/>
 
@@ -181,7 +183,7 @@
       component="2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="4.963e-14"/>
 
@@ -189,7 +191,7 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="referencePorosity"
       scale="0.3"/>
 
@@ -197,7 +199,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="2.125e6"/>
 
@@ -236,7 +238,7 @@
 
     <FieldSpecification
       name="boundaryPressure"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="2.125e6"
       setNames="{ boundaryBot, boundaryTop }"/>

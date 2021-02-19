@@ -22,7 +22,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-LinearSolverParametersInput::LinearSolverParametersInput( std::string const & name,
+LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                                                           Group * const parent )
   :
   Group( name, parent )
@@ -45,10 +45,10 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Whether to stop the simulation if the linear solver reports an error" );
 
-  registerWrapper( viewKeyStruct::directCheckResTolString, &m_parameters.direct.checkResidualTolerance )->
-    setApplyDefaultValue( m_parameters.direct.checkResidualTolerance )->
+  registerWrapper( viewKeyStruct::directCheckResidualString, &m_parameters.direct.checkResidual )->
+    setApplyDefaultValue( m_parameters.direct.checkResidual )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Tolerance used to check a direct solver solution" );
+    setDescription( "Whether to check the linear system solution residual" );
 
   registerWrapper( viewKeyStruct::directEquilString, &m_parameters.direct.equilibrate )->
     setApplyDefaultValue( m_parameters.direct.equilibrate )->
@@ -97,7 +97,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
                     "If the method converges, the iterative solution :math:`\\mathsf{x}_k` is such that\n"
                     "the relative residual norm satisfies:\n"
                     ":math:`\\left\\lVert \\mathsf{b} - \\mathsf{A} \\mathsf{x}_k \\right\\rVert_2` < ``" +
-                    std::string( viewKeyStruct::krylovTolString ) + "`` * :math:`\\left\\lVert\\mathsf{b}\\right\\rVert_2`" );
+                    string( viewKeyStruct::krylovTolString ) + "`` * :math:`\\left\\lVert\\mathsf{b}\\right\\rVert_2`" );
 
   registerWrapper( viewKeyStruct::krylovAdaptiveTolString, &m_parameters.krylov.useAdaptiveTol )->
     setApplyDefaultValue( m_parameters.krylov.useAdaptiveTol )->
@@ -155,6 +155,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "AMG strength-of-connection threshold" );
 
+  registerWrapper( viewKeyStruct::amgNullSpaceTypeString, &m_parameters.amg.nullSpaceType )->
+    setApplyDefaultValue( m_parameters.amg.nullSpaceType )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "AMG near null space approximation" );
+
   registerWrapper( viewKeyStruct::iluFillString, &m_parameters.ilu.fill )->
     setApplyDefaultValue( m_parameters.ilu.fill )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -166,20 +171,18 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setDescription( "ILU(T) threshold factor" );
 }
 
-void LinearSolverParametersInput::PostProcessInput()
+void LinearSolverParametersInput::postProcessInput()
 {
   m_parameters.logLevel = getLogLevel();
 
   static const std::set< integer > binaryOptions = { 0, 1 };
 
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0, viewKeyStruct::directCheckResidualString << " option can be either 0 (false) or 1 (true)" );
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString << " option can be either 0 (false) or 1 (true)" );
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString << " option can be either 0 (false) or 1 (true)" );
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString << " option can be either 0 (false) or 1 (true)" );
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0, viewKeyStruct::directParallelString << " option can be either 0 (false) or 1 (true)" );
-
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.direct.checkResidualTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString );
-  GEOSX_ERROR_IF_GT_MSG( m_parameters.direct.checkResidualTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString );
 
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString );
@@ -194,9 +197,12 @@ void LinearSolverParametersInput::PostProcessInput()
   GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0, "Invalid value of " << viewKeyStruct::amgThresholdString );
   GEOSX_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0, "Invalid value of " << viewKeyStruct::amgThresholdString );
 
+  static const std::set< string > nullSpaceOptions = { "constantModes", "rigidBodyModes" };
+  GEOSX_ERROR_IF( nullSpaceOptions.count( m_parameters.amg.nullSpaceType ) == 0, "Unsupported null space type: " << m_parameters.amg.nullSpaceType );
+
   // TODO input validation for other AMG parameters ?
 }
 
-REGISTER_CATALOG_ENTRY( Group, LinearSolverParametersInput, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( Group, LinearSolverParametersInput, string const &, Group * const )
 
 } // namespace geosx

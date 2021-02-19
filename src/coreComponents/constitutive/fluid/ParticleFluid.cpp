@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
+ParticleFluid::ParticleFluid( string const & name, Group * const parent ):
   ParticleFluidBase( name, parent )
 {
 
@@ -79,9 +79,9 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
 
 ParticleFluid::~ParticleFluid() = default;
 
-void ParticleFluid::PostProcessInput()
+void ParticleFluid::postProcessInput()
 {
-  ParticleFluidBase::PostProcessInput();
+  ParticleFluidBase::postProcessInput();
 
   GEOSX_ERROR_IF( m_proppantDensity < 500.0,
                   "Invalid proppantDensity in ParticleFluid, which must >= 500.0 " );
@@ -125,7 +125,7 @@ ParticleFluid::createKernelWrapper() const
                         m_proppantPackPermeability );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, string const &, Group * const )
 
 } /* namespace constitutive */
 

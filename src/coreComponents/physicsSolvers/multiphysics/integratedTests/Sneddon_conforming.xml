@@ -17,7 +17,7 @@
         newtonMaxIter="5"/>
       <LinearSolverParameters
         solverType="direct"
-        krylovTol="1.0e-10"
+        directParallel="0"
         logLevel="0"/>
     </Hydrofracture>
 
@@ -158,7 +158,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
       materialList="{ water, rock }"/>
@@ -175,7 +175,7 @@
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"

@@ -18,7 +18,7 @@
         lineSearchMaxCuts="10"/>
       <LinearSolverParameters
         logLevel="0"
-        solverType="gmres"
+        solverType="direct"
         preconditionerType="amg"/>
     </Hydrofracture>
 
@@ -34,7 +34,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         krylovTol="1.0e-10"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -50,7 +50,7 @@
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         krylovTol="1.0e-12"
         logLevel="0"/>
     </SinglePhaseFVM>
@@ -155,7 +155,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
       materialList="{ water, rock }"/>
@@ -172,7 +172,7 @@
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"

@@ -101,7 +101,7 @@ public:
    * @brief Return the data type in the data repository.
    * @return the data type in the data repository
    */
-  static typename CatalogInterface::CatalogType & GetCatalog();
+  static typename CatalogInterface::CatalogType & getCatalog();
 
   FluxApproximationBase() = delete;
 
@@ -179,6 +179,8 @@ public:
     static constexpr auto targetRegionsString         = "targetRegions";
     /// The key for areaRelTol
     static constexpr auto areaRelativeToleranceString = "areaRelTol";
+    /// The key for transMultiplier
+    static constexpr auto transMultiplierString       = "TransMultiplier";
 
     // Keys below are for wrappers registered on MeshLevel, not the current object
 
@@ -209,9 +211,9 @@ public:
 
 protected:
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group * const meshBodies ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
 
   /**
    * @brief Register the wrapper for cell stencil on a mesh.

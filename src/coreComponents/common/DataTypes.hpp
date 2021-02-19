@@ -27,19 +27,18 @@
 #include "common/GeosxMacros.hpp"
 #include "common/BufferAllocator.hpp"
 #include "common/DataLayouts.hpp"
-#include "Logger.hpp"
+#include "common/Tensor.hpp"
+#include "common/Logger.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
 #include "LvArray/src/ArrayOfSets.hpp"
 #include "LvArray/src/SparsityPattern.hpp"
 #include "LvArray/src/CRSMatrix.hpp"
-#include "LvArray/src/Macros.hpp"
 #include "LvArray/src/SortedArray.hpp"
 #include "LvArray/src/StackBuffer.hpp"
 #include "LvArray/src/ChaiBuffer.hpp"
 
-#include "math/TensorT/TensorT.h"
 #include "Path.hpp"
 
 // TPL includes
@@ -188,6 +187,9 @@ using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZ
  * @name Short-hand aliases for commonly used array types.
  */
 ///@{
+
+/// Alias for a local (stack-based) rank-1 tensor type
+using R1Tensor = Tensor< real64, 3 >;
 
 /// Alias for 1D array.
 template< typename T >
@@ -495,9 +497,9 @@ public:
    * @param key the std::type_index of the type
    * @return a hard coded string that is related to the std::type_index
    */
-  static std::string typeNames( std::type_index const key )
+  static string typeNames( std::type_index const key )
   {
-    const std::unordered_map< std::type_index, std::string > type_names =
+    const std::unordered_map< std::type_index, string > type_names =
     {
       {std::type_index( typeid(integer)), "integer"},
       {std::type_index( typeid(real32)), "real32"},
@@ -647,7 +649,7 @@ public:
 public:
 
     /// The type of map used to store the map of type parsing regular expressions
-    using regexMapType = std::map< std::string, std::string >;
+    using regexMapType = std::map< string, string >;
 
     /**
      * @brief Get an iterator to the beginning of regex map.
@@ -686,14 +688,14 @@ private:
      *       axes are given as a comma-separated list enclosed in a curly brace.
      *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
      */
-    std::string constructArrayRegex( std::string subPattern, integer dimension )
+    string constructArrayRegex( string subPattern, integer dimension )
     {
       if( dimension > 1 )
       {
         subPattern = constructArrayRegex( subPattern, dimension-1 );
       }
 
-      std::string arrayPattern;
+      string arrayPattern;
       if( dimension == 1 )
       {
         // Allow the bottom-level to be empty
@@ -709,10 +711,10 @@ private:
 
     // Define the component regexes:
     // Regex to match an unsigned int (123, etc.)
-    std::string ru = "[\\d]+";
+    string ru = "[\\d]+";
 
     // Regex to match an signed int (-123, 455, +789, etc.)
-    std::string ri = "[+-]?[\\d]+";
+    string ri = "[+-]?[\\d]+";
 
     // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
     // Explanation of parts:
@@ -721,13 +723,13 @@ private:
     // [\\d]*  matches any number of numbers following the decimal
     // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
     // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
-    std::string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
+    string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
     // Regex to match a string that does not contain the characters  ,{}
-    std::string rs = "[^,\\{\\}]*";
+    string rs = "[^,\\{\\}]*";
 
     // Regex to match a R1Tensor
-    std::string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
+    string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
 
     // Build master list of regexes
     regexMapType regexMap =
@@ -774,7 +776,7 @@ private:
    * @return the return type of lambda
    */
   template< typename LAMBDA >
-  static auto ApplyArrayTypeLambda1( const TypeIDs type,
+  static auto applyArrayTypeLambda1( const TypeIDs type,
                                      LAMBDA lambda )
   {
     switch( type )
@@ -830,7 +832,7 @@ private:
    * @return the return type of lambda
    */
   template< typename LAMBDA >
-  static auto ApplyArrayTypeLambda2( const TypeIDs type,
+  static auto applyArrayTypeLambda2( const TypeIDs type,
                                      bool const errorIfTypeNotFound,
                                      LAMBDA && lambda )
   {

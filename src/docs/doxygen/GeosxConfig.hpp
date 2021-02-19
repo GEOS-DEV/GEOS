@@ -42,7 +42,7 @@
 #define GEOSX_USE_CUDA
 
 /// Enables use of Python (CMake option ENABLE_PYTHON)
-#define GEOSX_USE_PYTHON
+#define GEOSX_USE_PYGEOSX
 
 /// Enables use of GEOSX PTP module (CMake option ENABLE_GEOSX_PTP)
 #define USE_GEOSX_PTP
@@ -68,9 +68,6 @@
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
 
-/// Enables use of SuiteSparse library (CMake option ENABLE_SUITESPARSE)
-#define GEOSX_USE_SUITESPARSE
-
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #define GEOSX_LA_INTERFACE Hypre
 /// Macro defined when Trilinos interface is selected
@@ -90,9 +87,9 @@
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
 
 #define GEOSX_LOCALINDEX_TYPE int
-#define GEOSX_GLOBALINDEX_TYPE long long int
+#define GEOSX_GLOBALINDEX_TYPE int
 #define GEOSX_LOCALINDEX_TYPE_FLAG 0
-#define GEOSX_GLOBALINDEX_TYPE_FLAG 2
+#define GEOSX_GLOBALINDEX_TYPE_FLAG 0
 
 
 #endif  /* GEOSX_CONFIG_HPP */

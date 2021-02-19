@@ -21,12 +21,13 @@
  */
 
 #include "Box.hpp"
+#include "LvArray/src/genericTensorOps.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-Box::Box( const std::string & name, Group * const parent ):
+Box::Box( const string & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_min{ 0.0, 0.0, 0.0 },
   m_max{ 0.0, 0.0, 0.0 },
@@ -58,11 +59,11 @@ Box::~Box()
 
 
 
-void Box::PostProcessInput()
+void Box::postProcessInput()
 {
-  m_boxCenter = m_min;
-  m_boxCenter += m_max;
-  m_boxCenter *= 0.5;
+  LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
+  LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );
+  LvArray::tensorOps::scale< 3 >( m_boxCenter, 0.5 );
 
   m_strikeAngle += 90; // Counterclockwise from x-axis
   if( std::fabs( m_strikeAngle ) > 1e-20 )
@@ -74,69 +75,31 @@ void Box::PostProcessInput()
     m_cosStrike = std::cos( m_strikeAngle / 180 *M_PI );
     m_sinStrike = std::sin( m_strikeAngle / 180 *M_PI );
   }
-
 }
 
-//void Box::ReadXML( xmlWrapper::xmlNode const & xmlNode )
-//{
-//  pugi::xml_attribute xmlatt =
-// targetNode.attribute(subDocNode.getStringKey().c_str());
-//  m_degree = targetNode.attribute("degree").as_int(1);
-//  as_type( xmlVal, xmlatt.value(), defVal );
-//
-//  m_min = xmlWrapper::as_type( xmlNode, "xMin", {-1e99,-1e99,-1e99});
-//  m_max = xmlWrapper::as_type( xmlNode, "xMax", { 1e99, 1e99, 1e99});
-//  m_strikeAngle = hdn.GetAttributeOrDefault<realT>("strikeAngle", -90.0); //
-// from North
-//  m_strikeAngle += 90; // Counterclockwise from x-axis
-//  if (std::fabs(m_strikeAngle) > 1e-20)
-//  {
-//    if ((m_max[0]-m_min[0]) < (m_max[1]-m_min[1]))
-//      throw GPException("Error: When a strike angle is specified, the box is
-// supposed to represent a plane normal to the y direction. This box seems to be
-// too thick.");
-//
-//    m_cosStrike = std::cos(m_strikeAngle / 180 *3.1415926535);
-//    m_sinStrike = std::sin(m_strikeAngle / 180 *3.1415926535);
-//    m_boxCenter = m_min;
-//    m_boxCenter += m_max;
-//    m_boxCenter *= 0.5;
-//  }
-//
-// }
-
-bool Box::IsCoordInObject( const R1Tensor & coord ) const
+bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
 {
-  bool rval = false;
-  if( std::fabs( m_strikeAngle ) < 1e-20 )
+  real64 coord0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
+  if( std::fabs( m_strikeAngle ) >= 1e-20 )
   {
-    if( coord <= m_max && coord >= m_min )
-    {
-      rval = true;
-    }
-  }
-  else
-  {
-    R1Tensor coordR, coord0( coord );
-    coord0 -= m_boxCenter;
-    coordR[0] = coord0[0] * m_cosStrike + coord0[1] * m_sinStrike;
+    real64 coordR[3];
+    LvArray::tensorOps::subtract< 3 >( coord0, m_boxCenter );
+    coordR[0] =  coord0[0] * m_cosStrike + coord0[1] * m_sinStrike;
     coordR[1] = -coord0[0] * m_sinStrike + coord0[1] * m_cosStrike;
     coordR[2] = coord0[2];
-//    if( coordR <= (m_max-m_boxCenter) && coordR >= (m_min-m_boxCenter) )
-//    {
-//      rval = true;
-//    }
-    coordR += m_boxCenter;
-    if( coordR <= (m_max) && coordR >= (m_min) )
-    {
-      rval = true;
-    }
-
+    LvArray::tensorOps::add< 3 >( coordR, m_boxCenter );
+    LvArray::tensorOps::copy< 3 >( coord0, coordR );
   }
-
-  return rval;
+  for( int i = 0; i < 3; ++i )
+  {
+    if( coord0[i] < m_min[i] || coord0[i] > m_max[i] )
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, string const &, Group * const )
 
 } /* namespace geosx */

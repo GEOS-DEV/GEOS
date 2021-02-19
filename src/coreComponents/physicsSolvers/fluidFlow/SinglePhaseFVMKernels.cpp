@@ -26,7 +26,7 @@ namespace SinglePhaseFVMKernels
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::Compute( localIndex const stencilSize,
+FluxKernel::compute( localIndex const stencilSize,
                      arraySlice1d< localIndex const > const & seri,
                      arraySlice1d< localIndex const > const & sesri,
                      arraySlice1d< localIndex const > const & sei,
@@ -77,7 +77,7 @@ FluxKernel::Compute( localIndex const stencilSize,
 
   // compute upwinding tolerance
   real64 constexpr upwRelTol = 1e-8;
-  real64 const upwAbsTol = fmax( potScale * upwRelTol, NumericTraits< real64 >::eps );
+  real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
 
   // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
   real64 const alpha = ( potDif + upwAbsTol ) / ( 2 * upwAbsTol );
@@ -122,7 +122,7 @@ FluxKernel::Compute( localIndex const stencilSize,
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::Compute( localIndex const stencilSize,
+FluxKernel::compute( localIndex const stencilSize,
                      arraySlice1d< localIndex const > const &,
                      arraySlice1d< localIndex const > const &,
                      arraySlice1d< localIndex const > const & sei,
@@ -171,7 +171,7 @@ FluxKernel::Compute( localIndex const stencilSize,
 
   // compute upwinding tolerance
   real64 constexpr upwRelTol = 1e-8;
-  real64 const upwAbsTol = fmax( potScale * upwRelTol, NumericTraits< real64 >::eps );
+  real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
 
   // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
   real64 const alpha = ( potDif + upwAbsTol ) / ( 2 * upwAbsTol );
@@ -216,7 +216,7 @@ FluxKernel::Compute( localIndex const stencilSize,
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::ComputeJunction( localIndex const numFluxElems,
+FluxKernel::computeJunction( localIndex const numFluxElems,
                              arraySlice1d< localIndex const > const & stencilElementIndices,
                              arraySlice1d< real64 const > const & stencilWeights,
                              arrayView1d< real64 const > const & pres,
@@ -359,7 +359,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
 
 template<>
 void FluxKernel::
-  Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
+  launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
                                     real64 const dt,
                                     globalIndex const rankOffset,
                                     ElementViewConst< arrayView1d< globalIndex > > const & dofNumber,
@@ -373,9 +373,9 @@ void FluxKernel::
                                     ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
-                                    ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
-                                    R1Tensor const,
-                                    real64 const,
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                    R1Tensor const & GEOSX_UNUSED_PARAM( gravityVector ),
+                                    real64 const GEOSX_UNUSED_PARAM( meanPermCoeff ),
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( s ),
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSdAper ),
@@ -401,7 +401,7 @@ void FluxKernel::
     stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
     stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
 
-    Compute( stencilSize,
+    compute( stencilSize,
              seri[iconn],
              sesri[iconn],
              sei[iconn],
@@ -444,7 +444,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  Launch< FaceElementStencil >( FaceElementStencil const & stencil,
+  launch< FaceElementStencil >( FaceElementStencil const & stencil,
                                 real64 const dt,
                                 globalIndex const rankOffset,
                                 ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -458,8 +458,8 @@ void FluxKernel::
                                 ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture0,
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture,
-                                ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
-                                R1Tensor const gravityVector,
+                                ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
+                                R1Tensor const & gravityVector,
                                 real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                 ElementViewConst< arrayView1d< real64 const > > const & s,
@@ -513,7 +513,7 @@ void FluxKernel::
 
         localIndex const ei = sei[iconn][k];
 
-        if( fabs( Dot( cellCenterToEdgeCenters[iconn][k], gravityVector )) > TINY )
+        if( fabs( LvArray::tensorOps::AiBi< 3 >( cellCenterToEdgeCenters[iconn][k], gravityVector ) ) > TINY )
         {
           effectiveWeights[k] *= transTMultiplier[er][esr][ei][1];
         }
@@ -524,7 +524,7 @@ void FluxKernel::
 
       }
 
-      ComputeJunction( numFluxElems,
+      computeJunction( numFluxElems,
                        sei[iconn],
                        effectiveWeights,
                        pres[er][esr],

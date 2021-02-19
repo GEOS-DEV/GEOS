@@ -84,13 +84,13 @@ struct ExplicitKernel
 {
 
   static inline real64
-  CalculateSingleNodalForce( localIndex const k,
+  calculateSingleNodalForce( localIndex const k,
                              localIndex const targetNode,
                              localIndex const numQuadraturePoints,
                              arrayView4d< real64 const > const & dNdX,
                              arrayView2d< real64 const > const & detJ,
                              arrayView3d< real64 const, solid::STRESS_USD > const & stress,
-                             R1Tensor & force )
+                             real64 ( & force )[ 3 ] )
   {
     GEOSX_MARK_FUNCTION;
     localIndex const & a = targetNode;

@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
 #define GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
 
-#include "ElementSubRegionBase.hpp"
+#include "SurfaceElementSubRegion.hpp"
 #include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
@@ -35,15 +35,9 @@ namespace geosx
  * The EmbeddedSurfaceSubRegion class contains the functionality to support the concept of an embedded
  * surface element. It consists of a 2D surface that cuts a 3D matrix cell.
  */
-class EmbeddedSurfaceSubRegion : public ElementSubRegionBase
+class EmbeddedSurfaceSubRegion : public SurfaceElementSubRegion
 {
 public:
-
-  /// Embedded surface element to nodes map type
-  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
-
-  /// Embedded surface element to edges map type
-  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Embedded surface element to faces map type
   using FaceMapType = FixedOneToManyRelation;
@@ -57,7 +51,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EmbeddedSurfaceSubRegion"; }
 
   /**
@@ -66,7 +60,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return EmbeddedSurfaceSubRegion::CatalogName();
+    return EmbeddedSurfaceSubRegion::catalogName();
   }
 
   ///@}
@@ -94,7 +88,7 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
   /**
@@ -102,7 +96,7 @@ public:
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
    * @param k index of the face element
    */
-  void CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
+  void CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
 
   /**
@@ -116,7 +110,7 @@ public:
    * @param fracture pointer to the bounded plane which is defining the embedded surface element
    * @return boolean defining whether the embedded element was added or not
    */
-  bool AddNewEmbeddedSurface( localIndex const cellIndex,
+  bool addNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
                               NodeManager & nodeManager,
@@ -136,7 +130,7 @@ public:
    * @param k embedded surface cell index
    * @return value of the Heaviside
    */
-  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
+  real64 computeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k ) const;
 
 
@@ -147,128 +141,49 @@ public:
    * @brief Struct containing the keys to all embedded surface element views.
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
+  struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// Embedded surface element aperture string
-    static constexpr auto elementApertureString        = "elementAperture";
-
-    /// Embedded surface element surface are string
-    static constexpr auto elementAreaString            = "elementArea";
-
-    /// Embedded surface element cell list string
-    static constexpr auto cellListString               = "fractureElementsToCellIndices";
-
-    /// Embedded surface element region list string
-    static constexpr auto regionListString             = "fractureElementsToRegionIndex";
-
-    /// Embedded surface element subregion list string
-    static constexpr auto subregionListString          = "fractureElementsToSubRegionIndex";
-
     /// Embedded surface element normal vector string
-    static constexpr auto normalVectorString           = "normalVector";
+    static constexpr auto normalVectorString        = "normalVector";
 
     /// Tangent vector 1 string
-    static constexpr auto t1VectorString           = "tangentVector1";
+    static constexpr auto t1VectorString            = "tangentVector1";
 
     /// Tangent vector 2 string
-    static constexpr auto t2VectorString           = "tangentVector2";
+    static constexpr auto t2VectorString            = "tangentVector2";
 
     /// Connectivity index string
-    static constexpr auto connectivityIndexString     = "connectivityIndex";
-  };
+    static constexpr auto connectivityIndexString   = "connectivityIndex";
+
+    /// Displacement jump string
+    static constexpr auto dispJumpString            = "displacementJump";
+
+    /// Delta displacement jump string
+    static constexpr auto deltaDispJumpString       = "deltaDisplacementJump";
+
+    static constexpr auto fractureTractionString    = "fractureTraction";
+
+    static constexpr auto dTraction_dJumpString     = "dTraction_dJump";
+
+    /// Displacement jump key
+    dataRepository::ViewKey dispJump                = {dispJumpString};
+
+    /// Delta displacement jump key
+    dataRepository::ViewKey deltaDispJump           = {deltaDispJumpString};
+
+    /// traction vector key
+    dataRepository::ViewKey tractionVector          = {fractureTractionString};
+
+    /// dTraction_dJump key
+    dataRepository::ViewKey dTraction_dJump         = {dTraction_dJumpString};
+
+  }
+  /// viewKey struct for the EmbeddedSurfaceSubRegion class
+  viewKeys;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
-  virtual string GetElementTypeString() const override { return "Embedded"; }
-
-
-  /**
-   * @name Relation Accessors
-   * @brief Accessor function for the various inter-object relations
-   */
-  ///@{
-
-  /**
-   * @brief Get the embedded surface element to nodes map.
-   * @return the embedded surface element to node map
-   */
-  NodeMapType const & nodeList() const
-  {
-    return m_toNodesRelation;
-  }
-  /**
-   * @copydoc nodeList() const
-   */
-  NodeMapType & nodeList()
-  {
-    return m_toNodesRelation;
-  }
-
-  /**
-   * @brief Get the local index of the a-th node of the k-th element.
-   * @param[in] k the index of the element
-   * @param[in] a the index of the node in the element
-   * @return a reference to the local index of the node
-   */
-  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
-
-  /**
-   * @copydoc nodeList( localIndex const k, localIndex a )
-   */
-  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
-
-
-  /**
-   * @brief Get the embedded surface element to edges map.
-   * @return the embedded surface element to node map
-   */
-  EdgeMapType & edgeList()
-  {
-    return m_toEdgesRelation;
-  }
-
-  /**
-   * @copydoc edgeList()
-   */
-  EdgeMapType const & edgeList() const
-  {
-    return m_toEdgesRelation;
-  }
-
-
-  /**
-   * @brief Get the embedded surface element to region map (background grid nodes).
-   * @return the embedded surface element to region map
-   */
-  arrayView1d< localIndex > getSurfaceToRegionList() { return m_embeddedSurfaceToRegion; }
-
-  /**
-   * @copydoc getSurfaceToRegionList()
-   */
-  arrayView1d< localIndex const > getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
-
-  /**
-   * @brief Get the embedded surface element to subregion map (of cell elemtns being cut).
-   * @return the embedded surface element to subregion map
-   */
-  arrayView1d< localIndex > getSurfaceToSubRegionList() { return m_embeddedSurfaceToSubRegion; }
-
-  /**
-   * @copydoc getSurfaceToSubRegionList()
-   */
-  arrayView1d< localIndex const > getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
-
-  /**
-   * @brief Get the embedded surface element to cell element map
-   * @return the embedded surface element to cell element map
-   */
-  arrayView1d< localIndex > getSurfaceToCellList() { return m_embeddedSurfaceToCell; }
-
-  /**
-   * @copydoc getSurfaceToCellList()
-   */
-  arrayView1d< localIndex const > getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
-  ///@}
+  virtual string getElementTypeString() const override final { return "Embedded"; }
 
   /**
    * @name Properties Getters
@@ -289,96 +204,73 @@ public:
   localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
 
   /**
-   * @brief Get face element aperture.
-   * @return the aperture of the embedded surface elements
-   */
-  arrayView1d< real64 > getElementAperture() { return m_elementAperture; }
-
-  /**
-   * @copydoc getElementAperture()
-   */
-  arrayView1d< real64 const > getElementAperture() const { return m_elementAperture; }
-
-  /**
-   * @brief Get the embedded surface elements surface area.
-   * @return the surface area of the embedded surface elements
-   */
-  arrayView1d< real64 > getElementArea() { return m_elementArea; }
-
-  /**
-   * @copydoc getElementArea()
-   */
-  arrayView1d< real64 const > getElementArea() const { return m_elementArea; }
-
-
-  /**
    * @brief Get normal vectors.
    * @return an array of normal vectors.
    */
-  array1d< R1Tensor > & getNormalVector() { return m_normalVector; }
+  array2d< real64 > & getNormalVector() { return m_normalVector; }
 
   /**
    * @copydoc getNormalVector()
    */
-  arrayView1d< R1Tensor const > getNormalVector() const { return m_normalVector; }
+  arrayView2d< real64 const > getNormalVector() const { return m_normalVector; }
 
   /**
    * @brief Get normal vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the normal vector of a specific embedded surface element
    */
-  R1Tensor & getNormalVector( localIndex k ) { return m_normalVector[k];}
+  arraySlice1d< real64 > getNormalVector( localIndex k ) { return m_normalVector[k]; }
 
   /**
    * @copydoc getNormalVector( localIndex k )
    */
-  R1Tensor const & getNormalVector( localIndex k ) const { return m_normalVector[k];}
+  arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
 
   /**
    * @brief Get an array of the first tangent vector of the embedded surface elements.
    * @return an array of the first tangent vector of the embedded surface elements
    */
-  array1d< R1Tensor > & getTangentVector1() { return m_tangentVector1; }
+  array2d< real64 > & getTangentVector1() { return m_tangentVector1; }
 
   /**
    * @copydoc getTangentVector1()
    */
-  arrayView1d< R1Tensor const > getTangentVector1() const { return m_tangentVector1; }
+  arrayView2d< real64 const > getTangentVector1() const { return m_tangentVector1; }
 
   /**
    * @brief Get the first tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the first tangent vector of a specific embedded surface element
    */
-  R1Tensor & getTangentVector1( localIndex k ) { return m_tangentVector1[k];}
+  arraySlice1d< real64 > getTangentVector1( localIndex k ) { return m_tangentVector1[k];}
 
   /**
    * @copydoc getTangentVector1( localIndex k )
    */
-  R1Tensor const & getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
+  arraySlice1d< real64 const > getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
 
   /**
    * @brief Get an array of the second tangent vector of the embedded surface elements.
    * @return an array of the second tangent vector of the embedded surface elements
    */
-  array1d< R1Tensor > & getTangentVector2() { return m_tangentVector2; }
+  array2d< real64 > & getTangentVector2() { return m_tangentVector2; }
 
   /**
    * @copydoc getTangentVector2()
    */
-  arrayView1d< R1Tensor const > getTangentVector2() const { return m_tangentVector2; }
+  arrayView2d< real64 const > getTangentVector2() const { return m_tangentVector2; }
 
   /**
    * @brief Get the second tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the second tangent vector of a specific embedded surface element
    */
-  R1Tensor & getTangentVector2( localIndex k ) { return m_tangentVector2[k];}
+  arraySlice1d< real64 > getTangentVector2( localIndex k ) { return m_tangentVector2[k];}
 
   /**
    * @copydoc getTangentVector2( localIndex k )
    */
-  R1Tensor const & getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
+  arraySlice1d< real64 const > getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
 
 
   /**
@@ -392,40 +284,83 @@ public:
    */
   array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
 
-  ///@}
 
+  /**
+   * @brief Get a mutable displacement jump array.
+   * @return the displacement jump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the displacement jump does not exist
+   */
+  array2d< real64 > & displacementJump()
+  { return getReference< array2d< real64 > >( viewKeys.dispJump ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the displacement jump array.
+   * @return immutable arrayView of the displacement jump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the displacement jump does not exist
+   */
+  arrayView2d< real64 const > displacementJump() const
+  {return getReference< array2d< real64 > >( viewKeys.dispJump ); }
+
+  /**
+   * @brief Get a mutable incremental displacement jump array.
+   * @return the incremental displacement jump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the incremental displacement jump does not exist
+   */
+  array2d< real64 > & incrementalDisplacementJump()
+  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the incremental displacement jump array.
+   * @return immutable arrayView of the incremental displacement jump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the incremental displacement jump does not exist
+   */
+  arrayView2d< real64 const > incrementalDisplacementJump() const
+  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
+
+  /**
+   * @brief Get a mutable traction array.
+   * @return the traction array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the traction does not exist
+   */
+  array2d< real64 > & tractionVector()
+  { return getReference< array2d< real64 > >( viewKeys.tractionVector ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the traction array.
+   * @return immutable arrayView of the traction array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the traction does not exist
+   */
+  arrayView2d< real64 const > tractionVector() const
+  {return getReference< array2d< real64 > >( viewKeys.tractionVector ); }
+
+  /**
+   * @brief Get a mutable dTraction_dJump array.
+   * @return the dTraction_dJump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the dTraction_dJump does not exist
+   */
+  array3d< real64 > & dTraction_dJump()
+  { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the dTraction_dJump array.
+   * @return immutable arrayView of the dTraction_dJump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the dTraction_dJump does not exist
+   */
+  arrayView3d< real64 const > dTraction_dJump() const
+  { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
+
+  ///@}
 
 private:
 
   /// normal vector to the embedded surface element
-  array1d< R1Tensor > m_normalVector;
+  array2d< real64 > m_normalVector;
 
   // tangential direction 1
-  array1d< R1Tensor > m_tangentVector1;
+  array2d< real64 > m_tangentVector1;
 
   // tangential direction 2
-  array1d< R1Tensor > m_tangentVector2;
-
-  /// list of regions
-  array1d< localIndex > m_embeddedSurfaceToRegion;
-
-  /// list of subregions
-  array1d< localIndex > m_embeddedSurfaceToSubRegion;
-
-  /// list of elements cut by the embedded surface elem
-  array1d< localIndex > m_embeddedSurfaceToCell;
-
-  /// list of nodes
-  NodeMapType m_toNodesRelation;
-
-  /// list of edges
-  EdgeMapType m_toEdgesRelation;
-
-  /// The member level field for the element center
-  array1d< real64 > m_elementAperture;
-
-  /// The member level field for the element center
-  array1d< real64 > m_elementArea;
+  array2d< real64 > m_tangentVector2;
 
   /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;

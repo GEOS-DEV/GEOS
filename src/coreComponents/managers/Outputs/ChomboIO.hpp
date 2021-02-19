@@ -33,8 +33,8 @@ namespace geosx
 class ChomboIO final : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  ChomboIO( std::string const & name, Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  ChomboIO( string const & name, Group * const parent );
 
   /// Destructor
   virtual ~ChomboIO() override;
@@ -43,14 +43,14 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName()
+  static string catalogName()
   { return "ChomboIO"; }
 
   /**
    * @brief Writes out a Chombo plot file.
-   * @copydetails EventBase::Execute()
+   * @copydetails EventBase::execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -59,16 +59,16 @@ public:
 
   /**
    * @brief Writes out a Chombo plot file at the end of the simulation.
-   * @copydetails ExecutableGroup::Cleanup()
+   * @copydetails ExecutableGroup::cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::Group * const domain ) override
   {
     m_waitForInput = 0;
-    Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+    execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
   /// @cond DO_NOT_DOCUMENT
@@ -90,9 +90,9 @@ public:
 
 private:
   ChomboCoupler * m_coupler;
-  std::string m_outputPath;
+  string m_outputPath;
   double m_beginCycle;
-  std::string m_inputPath;
+  string m_inputPath;
   integer m_waitForInput;
   integer m_useChomboPressures;
 };

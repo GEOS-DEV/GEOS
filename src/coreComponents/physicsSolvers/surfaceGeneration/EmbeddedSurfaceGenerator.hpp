@@ -55,23 +55,24 @@ class ElementRegionBase;
 class EmbeddedSurfaceGenerator : public SolverBase
 {
 public:
-  EmbeddedSurfaceGenerator( const std::string & name,
+  EmbeddedSurfaceGenerator( const string & name,
                             Group * const parent );
   ~EmbeddedSurfaceGenerator() override;
 
 
-  static string CatalogName() { return "EmbeddedSurfaceGenerator"; }
+  static string catalogName() { return "EmbeddedSurfaceGenerator"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 
-  virtual void Execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
-    SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
+    solverStep( time_n, dt, cycleNumber, *domain->groupCast< DomainPartition * >());
+    return false;
   }
 
   /**
@@ -82,7 +83,7 @@ public:
    * @return ...
    *
    */
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
@@ -99,7 +100,7 @@ protected:
    * @return ...
    *
    */
-  virtual void InitializePostSubGroups( Group * const problemManager ) override final;
+  virtual void initializePostSubGroups( Group * const problemManager ) override final;
   /**
    * @brief xxx
    * @param[in] ...
@@ -108,12 +109,18 @@ protected:
    * @return ...
    *
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const problemManager ) override final;
   virtual void postRestartInitialization( Group * const domain ) override final;
 
 private:
 
   void addToFractureStencil( DomainPartition & domain );
+
+  void setGlobalIndices( ElementRegionManager & elemManager,
+                         EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
+
+  void addEmbeddedElementsToSets( ElementRegionManager const & elemManager,
+                                  EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup

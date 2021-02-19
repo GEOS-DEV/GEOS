@@ -34,7 +34,7 @@ using namespace dataRepository;
 using namespace finiteElement;
 
 
-FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, Group * const parent ):
+FiniteElementDiscretization::FiniteElementDiscretization( string const & name, Group * const parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -56,7 +56,7 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 {}
 
 
-void FiniteElementDiscretization::PostProcessInput()
+void FiniteElementDiscretization::postProcessInput()
 {
   GEOSX_ERROR_IF( m_order!=1, "Higher order finite element spaces are currently not supported." );
   GEOSX_ERROR_IF( m_formulation!="default", "Only standard element formulations are currently supported." );
@@ -104,6 +104,6 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, string const &, Group * const )
 
 } /* namespace geosx */

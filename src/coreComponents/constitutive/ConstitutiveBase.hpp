@@ -59,11 +59,11 @@ public:
                                                             Group * const parent ) const;
 
 
-  virtual void StateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
+  virtual void stateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
                                          localIndex const GEOSX_UNUSED_PARAM( k ),
                                          localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
 
-  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                          arrayView1d< real64 const > const & dPres )
   {
     GEOSX_UNUSED_VAR( pres )
@@ -76,13 +76,13 @@ public:
   ///@{
 
   /// @typedef An alias for the ConstitutiveBase catalog
-  using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, string const &, Group * const >;
 
   /**
    * @brief Singleton accessor for catalog
    * @return
    */
-  static typename CatalogInterface::CatalogType & GetCatalog();
+  static typename CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief function to return the catalog name of the derived class

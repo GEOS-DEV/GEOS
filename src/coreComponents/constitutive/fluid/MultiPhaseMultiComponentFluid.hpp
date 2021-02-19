@@ -65,6 +65,10 @@ public:
                                        arrayView3d< real64 > const & dPhaseDensity_dPressure,
                                        arrayView3d< real64 > const & dPhaseDensity_dTemperature,
                                        arrayView4d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                                       arrayView3d< real64 > const & phaseMassDensity,
+                                       arrayView3d< real64 > const & dPhaseMassDensity_dPressure,
+                                       arrayView3d< real64 > const & dPhaseMassDensity_dTemperature,
+                                       arrayView4d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
                                        arrayView3d< real64 > const & phaseViscosity,
                                        arrayView3d< real64 > const & dPhaseViscosity_dPressure,
                                        arrayView3d< real64 > const & dPhaseViscosity_dTemperature,
@@ -87,6 +91,10 @@ public:
                             dPhaseDensity_dPressure,
                             dPhaseDensity_dTemperature,
                             dPhaseDensity_dGlobalCompFraction,
+                            phaseMassDensity,
+                            dPhaseMassDensity_dPressure,
+                            dPhaseMassDensity_dTemperature,
+                            dPhaseMassDensity_dGlobalCompFraction,
                             phaseViscosity,
                             dPhaseViscosity_dPressure,
                             dPhaseViscosity_dTemperature,
@@ -116,16 +124,17 @@ public:
   /// Deleted move assignment operator
   MultiPhaseMultiComponentFluidUpdate & operator=( MultiPhaseMultiComponentFluidUpdate && ) = delete;
 
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
                         arraySlice1d< real64 > const & phaseDensity,
+                        arraySlice1d< real64 > const & phaseMassDensity,
                         arraySlice1d< real64 > const & phaseViscosity,
                         arraySlice2d< real64 > const & phaseCompFraction,
                         real64 & totalDensity ) const override;
 
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
@@ -136,6 +145,10 @@ public:
                         arraySlice1d< real64 > const & dPhaseDensity_dPressure,
                         arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
                         arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                        arraySlice1d< real64 > const & phaseMassDensity,
+                        arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
+                        arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
+                        arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
                         arraySlice1d< real64 > const & phaseViscosity,
                         arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
                         arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
@@ -150,13 +163,13 @@ public:
                         arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const override;
 
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
                        arraySlice1d< real64 const > const & composition ) const override
   {
-    Compute( pressure,
+    compute( pressure,
              temperature,
              composition,
              m_phaseFraction[k][q],
@@ -167,6 +180,10 @@ public:
              m_dPhaseDensity_dPressure[k][q],
              m_dPhaseDensity_dTemperature[k][q],
              m_dPhaseDensity_dGlobalCompFraction[k][q],
+             m_phaseMassDensity[k][q],
+             m_dPhaseMassDensity_dPressure[k][q],
+             m_dPhaseMassDensity_dTemperature[k][q],
+             m_dPhaseMassDensity_dGlobalCompFraction[k][q],
              m_phaseViscosity[k][q],
              m_dPhaseViscosity_dPressure[k][q],
              m_dPhaseViscosity_dTemperature[k][q],
@@ -193,7 +210,7 @@ class MultiPhaseMultiComponentFluid : public MultiFluidBase
 {
 public:
 
-  MultiPhaseMultiComponentFluid( std::string const & name, Group * const parent );
+  MultiPhaseMultiComponentFluid( string const & name, Group * const parent );
 
   virtual ~MultiPhaseMultiComponentFluid() override;
 
@@ -202,9 +219,9 @@ public:
                 Group * const parent ) const override;
 
 
-  static std::string CatalogName() { return dataRepository::keys::multiPhaseMultiComponentFluid; }
+  static string catalogName() { return dataRepository::keys::multiPhaseMultiComponentFluid; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = MultiPhaseMultiComponentFluidUpdate;
@@ -228,6 +245,10 @@ public:
                           m_dPhaseDensity_dPressure,
                           m_dPhaseDensity_dTemperature,
                           m_dPhaseDensity_dGlobalCompFraction,
+                          m_phaseMassDensity,
+                          m_dPhaseMassDensity_dPressure,
+                          m_dPhaseMassDensity_dTemperature,
+                          m_dPhaseMassDensity_dGlobalCompFraction,
                           m_phaseViscosity,
                           m_dPhaseViscosity_dPressure,
                           m_dPhaseViscosity_dTemperature,
@@ -250,13 +271,13 @@ public:
 
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups( Group * const group ) override;
 
 private:
 
-  void CreatePVTModels();
+  void createPVTModels();
 
   // phase PVT parameter filenames
   path_array m_phasePVTParaFiles;

@@ -21,12 +21,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/Path.hpp"
 
-// PVTPackage includes
-#include "MultiphaseSystem/BlackOilMultiphaseSystem.hpp"
-#include "MultiphaseSystem/DeadOilMultiphaseSystem.hpp"
-
-
-using namespace PVTPackage;
+#include "pvt/pvt.hpp"
 
 namespace geosx
 {
@@ -36,7 +31,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
+BlackOilFluid::BlackOilFluid( string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
@@ -71,12 +66,12 @@ BlackOilFluid::deliverClone( string const & name,
   return clone;
 }
 
-void BlackOilFluid::PostProcessInput()
+void BlackOilFluid::postProcessInput()
 {
   // TODO maybe use different names?
   m_componentNames = m_phaseNames;
 
-  MultiFluidPVTPackageWrapper::PostProcessInput();
+  MultiFluidPVTPackageWrapper::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 
@@ -97,8 +92,8 @@ void BlackOilFluid::PostProcessInput()
 
 void BlackOilFluid::createFluid()
 {
-  std::vector< PVTPackage::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
-  std::vector< std::string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
+  std::vector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
+  std::vector< string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
   std::vector< double > densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector< double > molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
 
@@ -106,12 +101,12 @@ void BlackOilFluid::createFluid()
   {
     case FluidType::LiveOil:
     {
-      m_fluid = std::make_unique< BlackOilMultiphaseSystem >( phases, tableFiles, densities, molarWeights );
+      m_fluid = pvt::MultiphaseSystemBuilder::buildLiveOil( phases, tableFiles, densities, molarWeights );
       break;
     }
     case FluidType::DeadOil:
     {
-      m_fluid = std::make_unique< DeadOilMultiphaseSystem >( phases, tableFiles, densities, molarWeights );
+      m_fluid = pvt::MultiphaseSystemBuilder::buildDeadOil( phases, tableFiles, densities, molarWeights );
       break;
     }
     default:
@@ -121,7 +116,7 @@ void BlackOilFluid::createFluid()
   }
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

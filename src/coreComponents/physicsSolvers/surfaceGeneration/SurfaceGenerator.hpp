@@ -60,14 +60,14 @@ class ElementRegionBase;
 class SurfaceGenerator : public SolverBase
 {
 public:
-  SurfaceGenerator( const std::string & name,
+  SurfaceGenerator( const string & name,
                     Group * const parent );
   ~SurfaceGenerator() override;
 
 
-  static string CatalogName() { return "SurfaceGenerator"; }
+  static string catalogName() { return "SurfaceGenerator"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -76,17 +76,18 @@ public:
    */
   /**@{*/
 
-  virtual void Execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
-    SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
+    solverStep( time_n, dt, cycleNumber, *domain->groupCast< DomainPartition * >());
+    return false;
   }
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
@@ -94,20 +95,20 @@ public:
   /**@}*/
 
 
-  int SeparationDriver( DomainPartition & domain,
+  int separationDriver( DomainPartition & domain,
                         MeshLevel & mesh,
                         std::vector< NeighborCommunicator > & neighbors,
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
-                        const realT time_np1 );
+                        const real64 time_np1 );
 
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
    * @param[in/out] object A reference to the object that needs new global indices
    * @param[in] indexList the list of local indices that need new global indices
    */
-  void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
+  void assignNewGlobalIndicesSerial( ObjectManagerBase & object,
                                      std::set< localIndex > const & indexList );
 
 
@@ -117,7 +118,7 @@ public:
    * @param[in] indexList the list of local indices that need new global indices
    */
   void
-  AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
+  assignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
                                 map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & indexList );
 
   // SortedArray< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
@@ -126,7 +127,7 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const problemManager ) override final;
   virtual void postRestartInitialization( Group * const domain ) override final;
 
 private:
@@ -141,7 +142,7 @@ private:
    * @param partition
    * @param prefrac
    */
-  void IdentifyRupturedFaces( DomainPartition & domain,
+  void identifyRupturedFaces( DomainPartition & domain,
                               NodeManager & nodeManager,
                               EdgeManager & edgeManager,
                               FaceManager & faceManager,
@@ -160,15 +161,15 @@ private:
    * @param vecTip
    * @return
    */
-  realT CalculateEdgeSIF ( DomainPartition & domain,
-                           const localIndex edgeID,
-                           localIndex & trailFaceID,
-                           NodeManager & nodeManager,
-                           EdgeManager & edgeManager,
-                           FaceManager & faceManager,
-                           ElementRegionManager & elementManager,
-                           R1Tensor & vecTipNorm,
-                           R1Tensor & vecTip );
+  real64 calculateEdgeSif ( DomainPartition & domain,
+                            const localIndex edgeID,
+                            localIndex & trailFaceID,
+                            NodeManager & nodeManager,
+                            EdgeManager & edgeManager,
+                            FaceManager & faceManager,
+                            ElementRegionManager & elementManager,
+                            real64 ( &vecTipNorm )[ 3 ],
+                            real64 ( &vecTip )[ 3 ] );
 
   /**
    * @brief
@@ -178,7 +179,7 @@ private:
    * @param elementManager
    * @return
    */
-  void CalculateNodeAndFaceSIF ( DomainPartition & domain,
+  void calculateNodeAndFaceSif ( DomainPartition & domain,
                                  NodeManager & nodeManager,
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
@@ -198,16 +199,16 @@ private:
    * @param threeNodesPinched
    * @param calculatef_u. True: calculate f_u; False: calculate f_disconnect.
    */
-  int CalculateElementForcesOnEdge ( DomainPartition & domain,
+  int calculateElementForcesOnEdge ( DomainPartition & domain,
                                      const localIndex edgeID,
-                                     realT edgeLength,
+                                     real64 edgeLength,
                                      localIndex_array & nodeIndices,
                                      NodeManager & nodeManager,
                                      EdgeManager & edgeManager,
                                      ElementRegionManager & elementManager,
-                                     R1Tensor & vecTipNorm,
-                                     R1Tensor & fNode,
-                                     realT & GdivBeta,
+                                     real64 ( &vecTipNorm )[3],
+                                     real64 ( &fNode )[3],
+                                     real64 & GdivBeta,
                                      bool threeNodesPinched,
                                      bool calculatef_u );
 
@@ -223,26 +224,27 @@ private:
    * @param modifiedObjects
    * @param edgeMode
    */
-  void MarkRuptureFaceFromEdge ( const localIndex edgeID,
+  void markRuptureFaceFromEdge ( const localIndex edgeID,
                                  localIndex & trailFaceID,
                                  NodeManager & nodeManager,
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
                                  ElementRegionManager & elementManager,
-                                 R1Tensor & vecTipNorm,
-                                 R1Tensor & vecTip,
+                                 real64 ( &vecTipNorm )[ 3 ],
+                                 real64 ( &vecTip )[ 3 ],
                                  ModifiedObjectLists & modifiedObjects,
                                  const int edgeMode );
 
   /**
    * @brief
-   *    * @param nodeManager
+   * @param nodeIndex
+   * @param nodeManager
    * @param nodeManager
    * @param edgeManager
    * @param faceManager
    * @param modifiedObjects
    */
-  void MarkRuptureFaceFromNode ( const localIndex nodeIndex,
+  void markRuptureFaceFromNode ( const localIndex nodeIndex,
                                  NodeManager & nodeManager,
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
@@ -258,7 +260,7 @@ private:
    * @param nodesToRupturedFaces
    * @param edgesToRupturedFaces
    */
-  void PostUpdateRuptureStates( NodeManager & nodeManager,
+  void postUpdateRuptureStates( NodeManager & nodeManager,
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager,
                                 ElementRegionManager & elementManager,
@@ -271,7 +273,7 @@ private:
    * @param faceManager
    * @param iFace
    */
-  int CheckOrphanElement( ElementRegionManager & elementManager,
+  int checkOrphanElement( ElementRegionManager & elementManager,
                           FaceManager & faceManager,
                           localIndex iFace );
 
@@ -284,7 +286,7 @@ private:
    * @param prefrac
    * @return
    */
-  int CheckEdgeSplitability( const localIndex edgeID,
+  int checkEdgeSplitability( const localIndex edgeID,
                              NodeManager & nodeManager,
                              FaceManager & faceManager,
                              EdgeManager & edgeManager,
@@ -307,7 +309,7 @@ private:
    * @param prefrac
    * @return
    */
-  bool ProcessNode( const localIndex nodeID,
+  bool processNode( const localIndex nodeID,
                     real64 const time,
                     NodeManager & nodeManager,
                     EdgeManager & edgeManager,
@@ -334,7 +336,7 @@ private:
    * @param elemLocations
    * @return
    */
-  bool FindFracturePlanes( const localIndex nodeID,
+  bool findFracturePlanes( const localIndex nodeID,
                            const NodeManager & nodeManager,
                            const EdgeManager & edgeManager,
                            const FaceManager & faceManager,
@@ -362,7 +364,7 @@ private:
    * @param faceLocations
    * @param elemLocations
    */
-  void PerformFracture( const localIndex nodeID,
+  void performFracture( const localIndex nodeID,
                         real64 const time_np1,
                         NodeManager & nodeManager,
                         EdgeManager & edgeManager,
@@ -376,7 +378,7 @@ private:
                         const map< localIndex, int > & faceLocations,
                         const map< std::pair< CellElementSubRegion *, localIndex >, int > & elemLocations );
 
-  void MapConsistencyCheck( const localIndex nodeID,
+  void mapConsistencyCheck( const localIndex nodeID,
                             NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
@@ -395,7 +397,7 @@ private:
    * @param elemLocations
    * @return
    */
-  bool SetLocations( const std::set< localIndex > & separationPathFaces,
+  bool setLocations( const std::set< localIndex > & separationPathFaces,
                      ElementRegionManager & elemManager,
                      const FaceManager & faceManager,
                      const std::set< std::pair< CellElementSubRegion *, localIndex > > & nodesToElements,
@@ -418,7 +420,7 @@ private:
    * @param elemLocations
    * @return
    */
-  bool SetElemLocations( const int side,
+  bool setElemLocations( const int side,
                          const std::pair< CellElementSubRegion *, localIndex > & elem,
                          const std::set< localIndex > & separationPathFaces,
                          ElementRegionManager & elemManager,
@@ -437,10 +439,10 @@ private:
    * @param faceManager
    * @return
    */
-  realT CalculateKinkAngle ( const localIndex nodeID,
-                             const NodeManager & nodeManager,
-                             EdgeManager & edgeManager,
-                             FaceManager & faceManager );
+  real64 calculateKinkAngle ( const localIndex nodeID,
+                              const NodeManager & nodeManager,
+                              EdgeManager & edgeManager,
+                              FaceManager & faceManager );
 
   /**
    *
@@ -450,7 +452,7 @@ private:
    * @param modifiedObjects
    * @param prefrac
    */
-  void CalculateKinkAngles ( FaceManager & faceManager,
+  void calculateKinkAngles ( FaceManager & faceManager,
                              EdgeManager & edgeManager,
                              NodeManager & nodeManager,
                              ModifiedObjectLists & modifiedObjects,
@@ -460,7 +462,7 @@ private:
    *
    * @param ModifiedObjectLists
    */
-  void SynchronizeTipSets ( FaceManager & faceManager,
+  void synchronizeTipSets ( FaceManager & faceManager,
                             EdgeManager & edgeManager,
                             NodeManager & nodeManager,
                             ModifiedObjectLists & receivedObjects );
@@ -477,10 +479,10 @@ private:
    * @param faceManager
    * @return
    */
-  realT MinimumToughnessOnEdge( const localIndex edgeID,
-                                const NodeManager & nodeManager,
-                                EdgeManager & edgeManager,
-                                FaceManager & faceManager );
+  real64 minimumToughnessOnEdge( const localIndex edgeID,
+                                 const NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager );
 
   /**
    *
@@ -490,13 +492,13 @@ private:
    * @param faceManager
    * @return
    */
-  realT MinimumToughnessOnNode( const localIndex nodeID,
-                                const NodeManager & nodeManager,
-                                EdgeManager & edgeManager,
-                                FaceManager & faceManager );
+  real64 minimumToughnessOnNode( const localIndex nodeID,
+                                 const NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager );
 
 
-  real64 calculateRuptureRate( FaceElementRegion & faceElementRegion,
+  real64 calculateRuptureRate( SurfaceElementRegion & faceElementRegion,
                                EdgeManager const & edgeManager );
 
   /**
@@ -538,7 +540,7 @@ private:
 
   int m_nodeBasedSIF;
 
-  realT m_rockToughness;
+  real64 m_rockToughness;
 
   // Flag for consistent communication ordering
   int m_mpiCommOrder;

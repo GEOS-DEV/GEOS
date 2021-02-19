@@ -15,7 +15,6 @@
 import os
 import sys
 import shutil
-# sys.path.insert(0, os.path.abspath('.'))
 
 # Call doxygen in ReadtheDocs
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
@@ -48,7 +47,6 @@ if read_the_docs_build:
                   "coreComponents/mesh",
                   "coreComponents/managers",
                   "coreComponents/meshUtilities",
-                  "coreComponents/wells",
                   "coreComponents/finiteElement/kernelInterface",
                   "coreComponents/mesh/ExtrinsicMeshData.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
@@ -97,18 +95,13 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-#    'sphinx.ext.mathjax'
     'sphinx.ext.imgmath',
     'sphinx.ext.todo',
-    'matplotlib.sphinxext.only_directives',
-    'matplotlib.sphinxext.plot_directive',
-    'IPython.sphinxext.ipython_directive',
-    'IPython.sphinxext.ipython_console_highlighting',
-#    'sphinx.ext.mathjax',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
-#    'numpydoc'
+    'matplotlib.sphinxext.plot_directive',
+    'sphinx.ext.napoleon'
 ]
 plot_html_show_source_link = True
 plot_html_show_formats = False
@@ -158,7 +151,7 @@ else:
     html_theme = 'sphinx_rtd_theme'
     html_theme_options = {}
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-    
+
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 #html_title = None
@@ -296,7 +289,7 @@ latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\us
 imgmath_image_format='svg'
 imgmath_font_size=14
 #####################################################
-# add LaTeX macros 
+# add LaTeX macros
 
 f = open('docs/sphinx/latex_macros.sty')
 

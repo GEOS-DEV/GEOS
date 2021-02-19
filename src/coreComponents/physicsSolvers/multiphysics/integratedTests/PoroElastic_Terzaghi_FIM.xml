@@ -11,9 +11,10 @@
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }">
+      targetRegions="{ Domain }">
       <LinearSolverParameters
 	solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </Poroelastic>
 
@@ -22,7 +23,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ skeleton }">
     </SolidMechanicsLagrangianSSLE>
 
@@ -30,7 +31,7 @@
       name="SinglePhaseFlowSolver"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Region1 }"
+      targetRegions="{ Domain }"
       fluidNames="{ fluid }"
       solidNames="{ skeleton }">
     </SinglePhaseFVM>
@@ -126,14 +127,14 @@
   <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
   <ElementRegions>
     <CellElementRegion
-      name="Region1"
+      name="Domain"
       cellBlocks="{ cb1 }"
       materialList="{ skeleton, fluid }"/>
   </ElementRegions>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="skeleton"
       defaultDensity="0"
       defaultYoungsModulus="1.0e4"
@@ -157,7 +158,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="0.0"/>
 
@@ -193,7 +194,7 @@
       component="0"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="1.0e-4"/>
 
@@ -202,7 +203,7 @@
       component="1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="1.0e-4"/>
 
@@ -211,7 +212,7 @@
       component="2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="1.0e-4"/>
 
@@ -219,7 +220,7 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="referencePorosity"
       scale="0.3"/>
 
@@ -281,12 +282,12 @@
   <Tasks>
     <PackCollection
       name="pressureCollection"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"/>
 
     <PackCollection
       name="cellCentersCollection"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="elementCenter"/>
   </Tasks>
 

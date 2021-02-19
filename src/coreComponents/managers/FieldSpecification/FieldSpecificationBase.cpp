@@ -87,7 +87,7 @@ FieldSpecificationBase::~FieldSpecificationBase()
 {}
 
 FieldSpecificationBase::CatalogInterface::CatalogType &
-FieldSpecificationBase::GetCatalog()
+FieldSpecificationBase::getCatalog()
 {
   static FieldSpecificationBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -95,7 +95,7 @@ FieldSpecificationBase::GetCatalog()
 
 
 
-void FieldSpecificationBase::PostProcessInput()
+void FieldSpecificationBase::postProcessInput()
 {}
 
 

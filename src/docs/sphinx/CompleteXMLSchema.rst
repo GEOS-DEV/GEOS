@@ -134,6 +134,13 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
+.. _XML_Coulomb:
+
+Element: Coulomb
+================
+.. include:: ../../coreComponents/fileIO/schema/docs/Coulomb.rst
+
+
 .. _XML_Cylinder:
 
 Element: Cylinder
@@ -141,11 +148,25 @@ Element: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder.rst
 
 
-.. _XML_DamageLinearElasticIsotropic:
+.. _XML_DamageElasticIsotropic:
 
-Element: DamageLinearElasticIsotropic
+Element: DamageElasticIsotropic
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageElasticIsotropic.rst
+
+
+.. _XML_DamageSpectralElasticIsotropic:
+
+Element: DamageSpectralElasticIsotropic
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralElasticIsotropic.rst
+
+
+.. _XML_DamageVolDevElasticIsotropic:
+
+Element: DamageVolDevElasticIsotropic
 =====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic.rst
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic.rst
 
 
 .. _XML_Dirichlet:
@@ -155,18 +176,32 @@ Element: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet.rst
 
 
+.. _XML_DruckerPrager:
+
+Element: DruckerPrager
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/DruckerPrager.rst
+
+
+.. _XML_ElasticIsotropic:
+
+Element: ElasticIsotropic
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropic.rst
+
+
+.. _XML_ElasticTransverseIsotropic:
+
+Element: ElasticTransverseIsotropic
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticTransverseIsotropic.rst
+
+
 .. _XML_ElementRegions:
 
 Element: ElementRegions
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
-
-
-.. _XML_EmbeddedSurfaceElementRegion:
-
-Element: EmbeddedSurfaceElementRegion
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion.rst
 
 
 .. _XML_EmbeddedSurfaceGenerator:
@@ -183,11 +218,11 @@ Element: Events
 .. include:: ../../coreComponents/fileIO/schema/docs/Events.rst
 
 
-.. _XML_FaceElementRegion:
+.. _XML_ExtendedDruckerPrager:
 
-Element: FaceElementRegion
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/FaceElementRegion.rst
+Element: ExtendedDruckerPrager
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ExtendedDruckerPrager.rst
 
 
 .. _XML_FieldSpecification:
@@ -260,6 +295,13 @@ Element: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
 
 
+.. _XML_HybridMimeticDiscretization:
+
+Element: HybridMimeticDiscretization
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization.rst
+
+
 .. _XML_Hydrofracture:
 
 Element: Hydrofracture
@@ -302,27 +344,6 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/LaplaceFEM.rst
 
 
-.. _XML_LinearElasticAnisotropic:
-
-Element: LinearElasticAnisotropic
-=================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticAnisotropic.rst
-
-
-.. _XML_LinearElasticIsotropic:
-
-Element: LinearElasticIsotropic
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
-
-
-.. _XML_LinearElasticTransverseIsotropic:
-
-Element: LinearElasticTransverseIsotropic
-=========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic.rst
-
-
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -335,13 +356,6 @@ Element: LinearSolverParameters
 Element: Mesh
 =============
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
-
-
-.. _XML_MohrCoulomb:
-
-Element: MohrCoulomb
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb.rst
 
 
 .. _XML_MultiPhaseMultiComponentFluid:
@@ -449,25 +463,32 @@ Element: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
 
 
-.. _XML_PoroLinearElasticAnisotropic:
+.. _XML_PoroDruckerPrager:
 
-Element: PoroLinearElasticAnisotropic
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticAnisotropic.rst
-
-
-.. _XML_PoroLinearElasticIsotropic:
-
-Element: PoroLinearElasticIsotropic
-===================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
+Element: PoroDruckerPrager
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroDruckerPrager.rst
 
 
-.. _XML_PoroLinearElasticTransverseIsotropic:
+.. _XML_PoroElasticIsotropic:
 
-Element: PoroLinearElasticTransverseIsotropic
-=============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic.rst
+Element: PoroElasticIsotropic
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticIsotropic.rst
+
+
+.. _XML_PoroElasticTransverseIsotropic:
+
+Element: PoroElasticTransverseIsotropic
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticTransverseIsotropic.rst
+
+
+.. _XML_PoroExtendedDruckerPrager:
+
+Element: PoroExtendedDruckerPrager
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroExtendedDruckerPrager.rst
 
 
 .. _XML_Poroelastic:
@@ -475,6 +496,13 @@ Element: PoroLinearElasticTransverseIsotropic
 Element: Poroelastic
 ====================
 .. include:: ../../coreComponents/fileIO/schema/docs/Poroelastic.rst
+
+
+.. _XML_PoroelasticEmbeddedFractures:
+
+Element: PoroelasticEmbeddedFractures
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticEmbeddedFractures.rst
 
 
 .. _XML_Problem:
@@ -496,6 +524,13 @@ Element: ProppantSlurryFluid
 Element: ProppantTransport
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
+
+
+.. _XML_Python:
+
+Element: Python
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/Python.rst
 
 
 .. _XML_Restart:
@@ -594,6 +629,13 @@ Element: Solvers
 Element: SourceFlux
 ===================
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux.rst
+
+
+.. _XML_SurfaceElementRegion:
+
+Element: SurfaceElementRegion
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceElementRegion.rst
 
 
 .. _XML_SurfaceGenerator:
@@ -831,6 +873,13 @@ Datastructure: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
 
 
+.. _DATASTRUCTURE_Coulomb:
+
+Datastructure: Coulomb
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/Coulomb_other.rst
+
+
 .. _DATASTRUCTURE_Cylinder:
 
 Datastructure: Cylinder
@@ -838,11 +887,25 @@ Datastructure: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder_other.rst
 
 
-.. _DATASTRUCTURE_DamageLinearElasticIsotropic:
+.. _DATASTRUCTURE_DamageElasticIsotropic:
 
-Datastructure: DamageLinearElasticIsotropic
+Datastructure: DamageElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamageSpectralElasticIsotropic:
+
+Datastructure: DamageSpectralElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamageVolDevElasticIsotropic:
+
+Datastructure: DamageVolDevElasticIsotropic
 ===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic_other.rst
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:
@@ -852,18 +915,32 @@ Datastructure: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet_other.rst
 
 
+.. _DATASTRUCTURE_DruckerPrager:
+
+Datastructure: DruckerPrager
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/DruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ElasticIsotropic:
+
+Datastructure: ElasticIsotropic
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticTransverseIsotropic:
+
+Datastructure: ElasticTransverseIsotropic
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticTransverseIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_ElementRegions:
 
 Datastructure: ElementRegions
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
-
-
-.. _DATASTRUCTURE_EmbeddedSurfaceElementRegion:
-
-Datastructure: EmbeddedSurfaceElementRegion
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion_other.rst
 
 
 .. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
@@ -880,11 +957,11 @@ Datastructure: Events
 .. include:: ../../coreComponents/fileIO/schema/docs/Events_other.rst
 
 
-.. _DATASTRUCTURE_FaceElementRegion:
+.. _DATASTRUCTURE_ExtendedDruckerPrager:
 
-Datastructure: FaceElementRegion
-================================
-.. include:: ../../coreComponents/fileIO/schema/docs/FaceElementRegion_other.rst
+Datastructure: ExtendedDruckerPrager
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ExtendedDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:
@@ -964,6 +1041,13 @@ Datastructure: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
 
 
+.. _DATASTRUCTURE_HybridMimeticDiscretization:
+
+Datastructure: HybridMimeticDiscretization
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization_other.rst
+
+
 .. _DATASTRUCTURE_Hydrofracture:
 
 Datastructure: Hydrofracture
@@ -1013,27 +1097,6 @@ Datastructure: Level0
 .. include:: ../../coreComponents/fileIO/schema/docs/Level0_other.rst
 
 
-.. _DATASTRUCTURE_LinearElasticAnisotropic:
-
-Datastructure: LinearElasticAnisotropic
-=======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticAnisotropic_other.rst
-
-
-.. _DATASTRUCTURE_LinearElasticIsotropic:
-
-Datastructure: LinearElasticIsotropic
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_LinearElasticTransverseIsotropic:
-
-Datastructure: LinearElasticTransverseIsotropic
-===============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic_other.rst
-
-
 .. _DATASTRUCTURE_LinearSolverParameters:
 
 Datastructure: LinearSolverParameters
@@ -1053,13 +1116,6 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
-
-
-.. _DATASTRUCTURE_MohrCoulomb:
-
-Datastructure: MohrCoulomb
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
@@ -1167,25 +1223,32 @@ Datastructure: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
 
 
-.. _DATASTRUCTURE_PoroLinearElasticAnisotropic:
+.. _DATASTRUCTURE_PoroDruckerPrager:
 
-Datastructure: PoroLinearElasticAnisotropic
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticAnisotropic_other.rst
-
-
-.. _DATASTRUCTURE_PoroLinearElasticIsotropic:
-
-Datastructure: PoroLinearElasticIsotropic
-=========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic_other.rst
+Datastructure: PoroDruckerPrager
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroDruckerPrager_other.rst
 
 
-.. _DATASTRUCTURE_PoroLinearElasticTransverseIsotropic:
+.. _DATASTRUCTURE_PoroElasticIsotropic:
 
-Datastructure: PoroLinearElasticTransverseIsotropic
-===================================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic_other.rst
+Datastructure: PoroElasticIsotropic
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroElasticTransverseIsotropic:
+
+Datastructure: PoroElasticTransverseIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticTransverseIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroExtendedDruckerPrager:
+
+Datastructure: PoroExtendedDruckerPrager
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroExtendedDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_Poroelastic:
@@ -1193,6 +1256,13 @@ Datastructure: PoroLinearElasticTransverseIsotropic
 Datastructure: Poroelastic
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/Poroelastic_other.rst
+
+
+.. _DATASTRUCTURE_PoroelasticEmbeddedFractures:
+
+Datastructure: PoroelasticEmbeddedFractures
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroelasticEmbeddedFractures_other.rst
 
 
 .. _DATASTRUCTURE_Problem:
@@ -1214,6 +1284,13 @@ Datastructure: ProppantSlurryFluid
 Datastructure: ProppantTransport
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
+
+
+.. _DATASTRUCTURE_Python:
+
+Datastructure: Python
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Python_other.rst
 
 
 .. _DATASTRUCTURE_Restart:
@@ -1312,6 +1389,13 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux_other.rst
+
+
+.. _DATASTRUCTURE_SurfaceElementRegion:
+
+Datastructure: SurfaceElementRegion
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceElementRegion_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceGenerator:
@@ -1424,13 +1508,6 @@ Datastructure: cellManager
 Datastructure: commandLine
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/commandLine_other.rst
-
-
-.. _DATASTRUCTURE_default:
-
-Datastructure: default
-======================
-.. include:: ../../coreComponents/fileIO/schema/docs/default_other.rst
 
 
 .. _DATASTRUCTURE_domain:

@@ -42,7 +42,7 @@
 #cmakedefine GEOSX_USE_CUDA
 
 /// Enables use of Python (CMake option ENABLE_PYTHON)
-#cmakedefine GEOSX_USE_PYTHON
+#cmakedefine GEOSX_USE_PYGEOSX
 
 /// Enables use of GEOSX PTP module (CMake option ENABLE_GEOSX_PTP)
 #cmakedefine USE_GEOSX_PTP
@@ -67,9 +67,6 @@
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
-
-/// Enables use of SuiteSparse library (CMake option ENABLE_SUITESPARSE)
-#cmakedefine GEOSX_USE_SUITESPARSE
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@

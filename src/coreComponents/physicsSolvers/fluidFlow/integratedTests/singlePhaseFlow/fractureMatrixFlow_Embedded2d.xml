@@ -14,8 +14,9 @@
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SinglePhaseFVM>
 
     <EmbeddedSurfaceGenerator
@@ -99,10 +100,11 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <EmbeddedSurfaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="1e-3"
-      materialList="{ water, rock }"/>
+      defaultAperture = "1e-3"
+      materialList="{ water, rock }"
+      subRegionType="embeddedElement"/>
   </ElementRegions>
 
   <Constitutive>

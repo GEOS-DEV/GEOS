@@ -96,15 +96,15 @@ struct LinearSolverParameters
       mc64  ///< using HSL routine MC64
     };
 
-    real64 checkResidualTolerance = 1.e-12; ///< Tolerance used to check a direct solver solution
-    integer equilibrate = 1;                ///< Whether to scale the rows and columns of the matrix
-    ColPerm colPerm = ColPerm::metis;       ///< Columns permutation
-    RowPerm rowPerm = RowPerm::mc64;        ///< Rows permutation
-    integer replaceTinyPivot = 1;           ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
-    integer iterativeRefine = 1;            ///< Whether to perform iterative refinement
-    integer parallel = 1;                   ///< Whether to use a parallel solver (instead of a serial one)
+    integer checkResidual = 0;        ///< Whether to check the linear system solution residual
+    integer equilibrate = 1;          ///< Whether to scale the rows and columns of the matrix
+    ColPerm colPerm = ColPerm::metis; ///< Columns permutation
+    RowPerm rowPerm = RowPerm::mc64;  ///< Rows permutation
+    integer replaceTinyPivot = 1;     ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
+    integer iterativeRefine = 1;      ///< Whether to perform iterative refinement
+    integer parallel = 1;             ///< Whether to use a parallel solver (instead of a serial one)
   }
-  direct;                           ///< direct solver parameter struct
+  direct;                             ///< direct solver parameter struct
 
   /// Krylov-method parameters
   struct Krylov

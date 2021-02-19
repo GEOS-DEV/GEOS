@@ -9,9 +9,11 @@
       logLevel="1"
       targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
       <NonlinearSolverParameters
+        newtonTol="1e-8"  
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
@@ -33,25 +35,41 @@
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
       wellTemperature="297.15"
+      maxRelativePressureChange="0.1"
+      maxCompFractionChange="0.1"
       useMass="0">
       <WellControls
         name="wellControls1"
         type="producer"
         control="BHP"
+        referenceElevation="0.5"
+        useSurfaceConditions="1"
+        surfacePressure="101325"
+        surfaceTemperature="297.15"
         targetBHP="4e6"
-        targetRate="1"/>
+        targetPhaseRate="1e-3"
+        targetPhaseName="oil"/>
       <WellControls
         name="wellControls2"
         type="producer"
-        control="BHP"
-        targetBHP="4e6"
-        targetRate="1"/>
+        control="phaseVolRate"
+        referenceElevation="0.5"
+        useSurfaceConditions="1"
+        surfacePressure="101325"
+        surfaceTemperature="297.15"
+        targetBHP="3e6"
+        targetPhaseRate="1e-7"
+        targetPhaseName="oil"/>
       <WellControls
         name="wellControls3"
         type="injector"
-        control="liquidRate"
-        targetBHP="1e8"
-        targetRate="1e-1"
+        control="totalVolRate"
+        referenceElevation="0.5"
+        useSurfaceConditions="1"
+        surfacePressure="101325"
+        surfaceTemperature="297.15"     
+        targetBHP="4.5e7"
+        targetTotalRate="1e-5"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -134,21 +152,21 @@
   </Mesh>
 
   <Events
-    maxTime="1e6">
+    maxTime="5e5">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e4"
+      forceDt="5e3"
       target="/Solvers/reservoirSystem"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e5"
+      timeFrequency="5e4"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5e5"
+      timeFrequency="2.5e5"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>

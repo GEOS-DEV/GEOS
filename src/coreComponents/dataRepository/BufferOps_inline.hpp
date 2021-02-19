@@ -81,7 +81,7 @@ Unpack( buffer_unit_type const * & buffer, T * const GEOSX_RESTRICT var, INDEX_T
 }
 
 template< bool DO_PACKING >
-localIndex Pack( buffer_unit_type * & buffer, const std::string & var )
+localIndex Pack( buffer_unit_type * & buffer, const string & var )
 {
   const string::size_type varSize = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, varSize );
@@ -109,12 +109,11 @@ localIndex Pack( buffer_unit_type * & buffer, SortedArray< T > const & var )
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename T >
-typename std::enable_if< traits::is_tensorT< T >, localIndex >::type
-Pack( buffer_unit_type * & buffer, T const & var )
+template< bool DO_PACKING, typename T, int SIZE >
+localIndex Pack( buffer_unit_type * & buffer, Tensor< T, SIZE > const & var )
 {
   localIndex sizeOfPackedChars = 0;
-  sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, var.Data(), var.Length());
+  sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, var.data, SIZE );
   return sizeOfPackedChars;
 }
 
@@ -341,15 +340,13 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename T >
-typename std::enable_if< traits::is_tensorT< T >, localIndex >::type
+template< typename T, int SIZE >
+localIndex
 Unpack( buffer_unit_type const * & buffer,
-        T & var )
+        Tensor< T, SIZE > & var )
 {
   localIndex sizeOfUnpackedChars = 0;
-  real64 * const pVar = var.Data();
-  int const length = var.Length();
-  sizeOfUnpackedChars += UnpackPointer( buffer, pVar, length );
+  sizeOfUnpackedChars += UnpackPointer( buffer, var.data, SIZE );
   return sizeOfUnpackedChars;
 }
 

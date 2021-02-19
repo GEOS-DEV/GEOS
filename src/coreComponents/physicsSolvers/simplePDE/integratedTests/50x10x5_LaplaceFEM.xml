@@ -8,7 +8,12 @@
       timeIntegrationOption="SteadyState"
       fieldName="Temperature"
       logLevel="0"
-      targetRegions="{ Region1 }"/>
+      targetRegions="{ Region1 }">
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+	logLevel="0"/>
+    </LaplaceFEM>
   </Solvers>
 
   <Mesh>
@@ -65,13 +70,13 @@
   </ElementRegions>
 
   <Constitutive>
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="granite"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
 
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"

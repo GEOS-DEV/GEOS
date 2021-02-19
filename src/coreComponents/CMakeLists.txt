@@ -14,26 +14,9 @@ set( subdirs
      mpiCommunications
      physicsSolvers
      python
+     virtualElement
      )
 
-#set( subdirs
-#     codingUtilities
-#     common
-#     constitutive
-#     dataRepository
-#     fileIO
-#     finiteElement
-#     finiteVolume
-#     math
-#     mesh
-#     managers
-#     meshUtilities
-#     MPI_Communications
-#     physicsSolvers
-#     wells
-#     python
-#     linearAlgebra
-#     )
 
 set( coreLibLinkLine "" PARENT_SCOPE)
 set( geosx_core_include_dirs "" )
@@ -48,10 +31,14 @@ endif()
 list( APPEND coreLibs lvarray)
 add_subdirectory(LvArray)
 
+if( ENABLE_PYGEOSX )
+  list( APPEND coreLibs pylvarray )
+endif()
+
 foreach( lib ${subdirs} )
-    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
-      list( APPEND coreLibs ${lib})
-    endif()
+  if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
+    list( APPEND coreLibs ${lib})
+  endif()
 endforeach()
 
 if( NOT GEOSX_BUILD_SHARED_LIBS )
@@ -66,11 +53,7 @@ foreach( lib ${subdirs} )
     add_subdirectory(${lib})
 endforeach()
 
-# Python config
 set( extraComponentsLinkList "" )
-#if( ENABLE_PYTHON )
-#  set( extraComponentsLinkList ${extraComponentsLinkList} python_interp )
-#endif()
 
 if ( ENABLE_OPENMP )
   set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
@@ -83,11 +66,6 @@ endif()
 if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
-
-if( GEOSX_USE_ATK )
-  set( extraComponentsLinkList ${extraComponentsLinkList} axom )
-endif()
-
 
 if( GEOSX_BUILD_SHARED_LIBS )
   set( GEOSX_BUILD_SHARED_BOOL TRUE CACHE BOOL "" )
