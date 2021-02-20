@@ -1,10 +1,10 @@
 .. _LinearElastic:
 
 ############################################
-Linear elastic solid models
+Elasticity models
 ############################################
 
-Linear elastic isotropic model
+Linear elastic isotropic solid model
 ===============================
 
 Overview
@@ -95,7 +95,7 @@ Example
   </Constitutive>
   
   
-Linear elastic anisotropic model
+Linear elastic anisotropic solid model
 ===================================
 
 Overview
