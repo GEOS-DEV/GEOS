@@ -1,7 +1,7 @@
-Appendix: Compiling GEOSX on macOS using an Ubuntu Virtual Machine
+Appendix: Running an Ubuntu Virtual Machine on OSX
 ================================================================================
 
-This document summarizes the steps needed to compile GEOSX on a device running OSX via an Ubuntu Virtual Machine.
+This document summarizes the steps needed to install and run Ubuntu on a Virtual Machine on OSX.
 The virtualization layer provided by VirtualBox will be used.
 Many Mac users find this approach more straightforward than setting up a native OSX environment for GEOSX.
 

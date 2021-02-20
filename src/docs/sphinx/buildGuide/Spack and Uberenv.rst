@@ -25,7 +25,7 @@ Once you have these files setup you can run Uberenv again and instruct it to use
     When building ``pygeosx``, Spack will build various python packages, however by default they are not installed in python. There are various ways of accomplishing `this <https://spack.readthedocs.io/en/latest/basic_usage.html#extensions-python-support>`_, but the recommended approach is to use ``spack activate``. The command would look something like this ``./uberenv_libs/spack/bin/spack activate py-numpy py-scipy py-pip py-mpi4py``
 
 Build Configuration
-===================
+-------------------
 
 The GEOSX Spack package has a lot of options for controlling which dependencies you would like to build and how you'd like them built. The GEOSX Spack package file is at ```scripts/uberenv/packages/geosx/package.py <https://github.com/GEOSX/GEOSX/tree/develop/scripts/uberenv/packages/geosx/package.py>`_.`` The variants for the package are as follows
 
@@ -46,7 +46,7 @@ The GEOSX Spack package lists out the libraries that GEOSX depends ons. Currentl
 Using the Spack spec syntax you can inturn specify variants for each of the dependencies of GEOSX. So for example if you could modify the spec above to build RAJA in debug by using ``%gcc@8.3.1 ~caliper lai=petsc ^raja build_type=Debug``. When building with Uberenv Spack should print out a table containing the full spec for every dependency it will build. If you would like to look at the variants for say RAJA in more detail you can find the package file at ``uberenv_libs/spack/var/spack/repos/builtin/packages/raja/package.py``.
 
 Adding a Dependency (Advanced)
-==============================
+------------------------------
 
 Adding a dependency to GEOSX is straight forward if the dependency already builds with Spack. If that is the case then all you need to do is add a ``depends_on('cool-new-library')`` to the GEOSX ``package.py`` file. If however the dependency doesn't have a Spack package, you will have to add one by creating a ``cool-new-library/package.yaml`` file in the ``scripts/uberenv/packages`` directory and adding the logic to build it there.
 
