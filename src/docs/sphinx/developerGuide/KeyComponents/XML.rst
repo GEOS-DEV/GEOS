@@ -294,7 +294,7 @@ In this namespace, we define ``string`` s that correspond to the tags of XML att
 .. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: protected
+   :end-before: //END_SPHINX_INCLUDE_01
 
 *[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp]*
 
@@ -307,7 +307,7 @@ They will ultimately contain the data read from the XML file (other data members
 .. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
-   :end-before: m_satScale;
+   :end-before: //END_SPHINX_INCLUDE_02
 
 *[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp]*
 
