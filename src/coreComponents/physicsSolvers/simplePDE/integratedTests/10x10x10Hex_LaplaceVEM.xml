@@ -4,7 +4,6 @@
   <Solvers>
     <LaplaceVEM
         name="laplace"
-        discretization="FE1"
         timeIntegrationOption="SteadyState"
         fieldName="Temperature"
         logLevel="0"
@@ -59,14 +58,6 @@
         targetExactTimestep="1"
         target="/Outputs/vtkOutput"/>
   </Events>
-
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-          name="FE1"
-          order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
