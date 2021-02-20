@@ -22,7 +22,7 @@ Think about opening ports too.
 Getting a Docker container
 --------------------------
 
-To obtain a Docker image follows the following three steps:
+To obtain a Docker image follow the three steps below:
 
 1. `Install <https://docs.docker.com/get-docker/>`_ Docker on your machine
 2. `Select <https://hub.docker.com/u/geosx/>`_ your favorite image
