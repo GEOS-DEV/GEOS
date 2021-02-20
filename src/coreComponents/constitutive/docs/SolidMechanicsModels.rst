@@ -142,12 +142,8 @@ shear components.
 
    LinearElastic
    
-   LinearElasticIsotropic
-
-   LinearElasticAnisotropic
-
-   PoroLinearElasticIsotropic
-
-   PoroLinearElasticAnisotropic
-   
    TwoInvariantPlasticity
+
+   PoroElastic
+   
+   DamageModel
