@@ -140,6 +140,8 @@ shear components.
 .. toctree::
    :maxdepth: 1
 
+   LinearElastic
+   
    LinearElasticIsotropic
 
    LinearElasticAnisotropic
