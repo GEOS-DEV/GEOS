@@ -1,43 +1,57 @@
 .. _Dependencies:
 
-Third-party library dependencies
-================================
+Third-party dependencies
+========================
 
 GEOSX makes use of multiple third-party libraries (TPLs) and tools, some of which are mandatory and some optional.
 We only test against specific versions, and sometimes even require development snapshots (specific git commits).
 Not all of these guarantee backwards compatibility, so we strongly recommend building with these specific versions.
 
-List of third-party libraries
------------------------------
+List of third-party libraries and tools
+---------------------------------------
 
-The table below lists the dependencies with their specific versions and relevant CMake variables.
+The two tables below lists the dependencies with their specific versions and relevant CMake variables.
 Some of these libraries may have their own system prerequisites.
-For example, Doxygen depends on ``flex``/``bison``, ``latex``, ``ghostscript`` and ``graphviz``.
 
-============= ========== =========================== ============================= ========================================
-Name          Version    Enable option               Path variable                 Other options and comments
-============= ========== =========================== ============================= ========================================
-axom_         0.3.1      *mandatory*                 :code:`AXOM_DIR`
-Adiak_        0.2.0      :code:`ENABLE_CALIPER`      :code:`ADIAK_DIR`
-Caliper_      2.4.0      :code:`ENABLE_CALIPER`      :code:`CALIPER_DIR`
-conduit_      0.5.0      *mandatory*                 :code:`CONDUIT_DIR`
-CHAI_         2.2.2      *mandatory*                 :code:`CHAI_DIR`
-RAJA_         0.12.1     *mandatory*                 :code:`RAJA_DIR`
-hdf5_         1.10.5     *mandatory*                 :code:`HDF5_DIR`
-mathpresso_   2015-12-15 :code:`ENABLE_MATHPRESSO`   :code:`MATHPRESSO_DIR`
-pugixml_      1.8.0      *mandatory*                 :code:`PUGIXML_DIR`
-parmetis_     4.0.3      *mandatory* (with MPI)      :code:`PARMETIS_DIR`          built with 64-bit :code:`idx_t`
-suitesparse_  5.8.1      :code:`ENABLE_SUITESPARSE`  :code:`SUITESPARSE_DIR`
-superlu_dist_ 0f6efc3    :code:`ENABLE_SUPERLU_DIST` :code:`SUPERLU_DIST_DIR`
-hypre_        2186a8f    :code:`ENABLE_HYPRE`        :code:`HYPRE_DIR`
-PETSc_        3.13.0     :code:`ENABLE_PETSC`        :code:`PETSC_DIR`
-Trilinos_     12.18.1    :code:`ENABLE_TRILINOS`     :code:`TRILINOS_DIR`
-silo_         4.10.3     *mandatory*                 :code:`SILO_DIR`
-VTK_          9.0.0-rc3  :code:`ENABLE_VTK`          :code:`VTK_DIR`               only a small subset of modules required
-doxygen_      1.8.20     :code:`ENABLE_DOXYGEN`      :code:`DOXYGEN_EXECUTABLE`
-sphinx_       1.8.20     :code:`ENABLE_SPHINX`       :code:`SPHINX_EXECUTABLE`
-uncrustify_   401a409    :code:`ENABLE_UNCRUSTIFY`   :code:`UNCRUSTIFY_EXECUTABLE`
-============= ========== =========================== ============================= ========================================
+Libraries
+~~~~~~~~~
+
+The following libraries are linked to by GEOSX:
+
+============= ========== =========================== ============================= =====================================
+Name          Version    Enable option               Path variable                 Description
+============= ========== =========================== ============================= =====================================
+axom_         0.3.1      *mandatory*                 :code:`AXOM_DIR`              CS infrastructure components for HPC applications.
+Adiak_        0.2.0      :code:`ENABLE_CALIPER`      :code:`ADIAK_DIR`             Library for collecting metadata from HPC application runs, and distributing that metadata to subscriber tools.
+Caliper_      2.4.0      :code:`ENABLE_CALIPER`      :code:`CALIPER_DIR`           Instrumentation and performance profiling library.
+conduit_      0.5.0      *mandatory*                 :code:`CONDUIT_DIR`           Simplified Data Exchange for HPC Simulations.
+CHAI_         2.2.2      *mandatory*                 :code:`CHAI_DIR`              Copy-hiding array abstraction to automatically migrate data between memory spaces.
+RAJA_         0.12.1     *mandatory*                 :code:`RAJA_DIR`              Collection of C++ software abstractions that enable architecture portability for HPC applications.
+hdf5_         1.10.5     *mandatory*                 :code:`HDF5_DIR`              High-performance data management and storage suite.
+mathpresso_   2015-12-15 :code:`ENABLE_MATHPRESSO`   :code:`MATHPRESSO_DIR`        Mathematical Expression Parser and JIT Compiler.
+pugixml_      1.8.0      *mandatory*                 :code:`PUGIXML_DIR`           Light-weight, simple and fast XML parser for C++ with XPath support.
+parmetis_     4.0.3      *mandatory* (with MPI)      :code:`PARMETIS_DIR`          Parallel Graph Partitioning library. Should be built with 64-bit :code:`idx_t` type.
+suitesparse_  5.8.1      :code:`ENABLE_SUITESPARSE`  :code:`SUITESPARSE_DIR`       A suite of sparse matrix software.
+superlu_dist_ 0f6efc3    :code:`ENABLE_SUPERLU_DIST` :code:`SUPERLU_DIST_DIR`      General purpose library for the direct solution of large, sparse, nonsymmetric systems of linear equations.
+hypre_        2186a8f    :code:`ENABLE_HYPRE`        :code:`HYPRE_DIR`             Library of high performance preconditioners and solvers for large sparse linear systems on massively parallel computers.
+PETSc_        3.13.0     :code:`ENABLE_PETSC`        :code:`PETSC_DIR`             Suite of data structures and routines for the scalable (parallel) solution of scientific applications.
+Trilinos_     12.18.1    :code:`ENABLE_TRILINOS`     :code:`TRILINOS_DIR`          Collection of reusable scientific software libraries, known in particular for linear solvers.
+silo_         4.10.3     *mandatory*                 :code:`SILO_DIR`              A Mesh and Field I/O Library and Scientific Database.
+VTK_          9.0.0-rc3  :code:`ENABLE_VTK`          :code:`VTK_DIR`               Open source software for manipulating and displaying scientific data.
+============= ========== =========================== ============================= =====================================
+
+Tools
+~~~~~~~~~
+
+The following tools are used as part of the build process to support GEOSX development:
+
+============= ========== =========================== ============================= =====================================
+Name          Version    Enable option               Path variable                 Description
+============= ========== =========================== ============================= =====================================
+doxygen_      1.8.20     :code:`ENABLE_DOXYGEN`      :code:`DOXYGEN_EXECUTABLE`    De facto standard tool for generating documentation from annotated C++ sources.
+sphinx_       1.8.5      :code:`ENABLE_SPHINX`       :code:`SPHINX_EXECUTABLE`     A tool that makes it easy to create intelligent and beautiful documentation.
+uncrustify_   401a409    :code:`ENABLE_UNCRUSTIFY`   :code:`UNCRUSTIFY_EXECUTABLE` A source code beautifier for C, C++, C#, ObjectiveC, D, Java, Pawn and VALA.
+============= ========== =========================== ============================= =====================================
 
 .. _axom : https://github.com/LLNL/axom
 .. _Adiak : https://github.com/LLNL/Adiak

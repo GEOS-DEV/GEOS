@@ -13,8 +13,8 @@ Welcome to the GEOSX build guide.
 
    Dependencies
 
-   Building GEOSX
+   BuildProcess
 
-   Spack and Uberenv
+   SpackUberenv
 
    ContinuousIntegration

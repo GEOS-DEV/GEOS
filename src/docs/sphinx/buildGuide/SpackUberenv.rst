@@ -1,4 +1,4 @@
-.. _Spack and Uberenv:
+.. _SpackUberenv:
 
 Spack and Uberenv
 =================
