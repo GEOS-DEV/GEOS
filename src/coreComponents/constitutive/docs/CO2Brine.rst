@@ -8,25 +8,48 @@ CO2-brine model
 Summary
 =================================
 
-The CO2-brine model currently implemented in GEOSX includes two chemical components (CO2 (c) and water (w) ) that are transported by one or two fluid phases (the gas (g) phase and the brine (b) phase). The water component is only present in the brine phase, while the CO2 component can present in the gas phase as well as in the brine phase. Thus, the following partition matrix determines the component distribution within the two phases:
+The CO2-brine model currently implemented in GEOSX includes two chemical components (CO2 and water (w)) that are transported by one or two fluid phases (the gas (g) phase and the brine (l) phase).
+The water component is only present in the brine phase, while the CO2 component can be present in the gas phase as well as in the brine phase.
+Thus, considering the phase component fractions, ::math:`y_{c,p}` (i.e., the fraction of the mass of phase ::math:`p` represented by component ::math:`c`) the following partition matrix determines the component distribution within the two phases:
 
 .. math::
     \begin{bmatrix}
-    y_{cg} & y_{cb} \\
-         0 & 1      \\
+    y_{CO2,g} & y_{CO2,l} \\
+         0 & 1            \\
     \end{bmatrix}
 
 The update of the fluid properties is done in two steps:
 
-1) We compute the phase fractions and phase component fractions as a function of pressure, temperature, component fractions, and a constant salinity.
+1) We compute the phase fractions (::math:`\nu_p`) and phase component fractions (::math:`y_{c,p}`) as a function of pressure (::math:`p`), temperature (::math:`T`), component fractions (::math:`z_c`), and a constant salinity.
 
-2) We compute phase densities and phase viscosities as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
-    
-Thermodynamic and transport properties of CO2/brine fluids including density, viscosity, and CO2-brine solubility are calculated as a function of pressure, temperature, and CO2/brine concentration.
+2) We compute phase densities (::math:`\rho_p`) and phase viscosities (::math:`\mu_p`) as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
 
-The equation-of-state and viscosity of CO2 under both sub- and super-critical conditions are computed as a function of both pressure and temperature, using the empirical equations developed by Span and Wagner (1996) and Fenghour and Wakeman (1998), respectively.
+Once the phase fractions, phase component fractions, phase densities, phase viscosities--and their derivatives with respect to pressure, temperature, and component fractions--have been computed, the :ref:`CompositionalMultiphaseFlow` proceeds to the assembly of the accumulation and flux terms.
+Note that the current implementation of the flow solver is isothermal and that the derivatives with respect to temperature are therefore not used.
 
-The brine density, which depends on pressure, temperature, and salinity, is calculated based on the correlation developed by Phillips et al. (1981).
+The models that are used in steps 1) and 2) are reviewed in more details below.
+
+Step 1: Computation of the phase fractions and phase component fractions
+========================================================================
+
+At initialization, GEOSX constructs a two-dimensional table storing the values of CO2 solubility in brine as a function of pressure, temperature, and a constant salinity.
+The user can parameterize the construction of the table by specifying the lowest pressure, the largest pressure, and the spacing (::math:`\Delta p`).
+The temperature axis can be parameterized in a similar fashion.
+The user also provides the value of the constant salinity used in the computations.
+
+Then, during the simulation, Step 1 starts with a look-up in the pre-computed table to get the CO2 solubility as a function of pressure and temperature.
+
+Step 2: Computation of the phase densities and phase viscosities
+================================================================
+
+Gas density and viscosity
+-------------------------
+
+
+
+Brine density and viscosity 
+---------------------------
+
 
 
 Methods Description
