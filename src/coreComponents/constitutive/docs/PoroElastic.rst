@@ -1,7 +1,7 @@
 .. _PoroElastic:
 
 ############################################
-Linear poroelastic solid models
+Porous solids
 ############################################
 
 Linear isotropic poroelasticity
