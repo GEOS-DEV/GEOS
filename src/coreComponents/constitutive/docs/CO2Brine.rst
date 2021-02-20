@@ -6,7 +6,7 @@ CO2-brine model
 
 
 Summary
-=================================
+=======
 
 The CO2-brine model currently implemented in GEOSX includes two chemical components (CO2 and water (w)) that are transported by one or two fluid phases (the gas (g) phase and the brine (l) phase).
 The water component is only present in the brine phase, while the CO2 component can be present in the gas phase as well as in the brine phase.
@@ -32,11 +32,14 @@ The models that are used in steps 1) and 2) are reviewed in more details below.
 Step 1: Computation of the phase fractions and phase component fractions
 ========================================================================
 
-At initialization, GEOSX constructs a two-dimensional table storing the values of CO2 solubility in brine as a function of pressure, temperature, and a constant salinity.
-The user can parameterize the construction of the table by specifying the lowest pressure, the largest pressure, and the spacing (::math:`\Delta p`).
-The temperature axis can be parameterized in a similar fashion.
-The user also provides the value of the constant salinity used in the computations.
+At initialization, GEOSX performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine as a function of pressure, temperature, and a constant salinity.
+The user can parameterize the construction of the table by specifying the salinity and defining the pressure and temperature axis in the form:
 
++------------+---------------+------------+-----------+--------------+------------+-----------+---- ---------+----------+
+| FlashModel | CO2Solubility | First pres | Last pres | Pres spacing | First temp | Last temp | Temp spacing | Salinity | 
++------------+---------------+------------+-----------+--------------+------------+-----------+--------------+----------+
+
+Note that the pressures are in Pascal, and the temperatures are in degree Celsius. 
 Then, during the simulation, Step 1 starts with a look-up in the pre-computed table to get the CO2 solubility as a function of pressure and temperature.
 
 Step 2: Computation of the phase densities and phase viscosities
@@ -46,8 +49,19 @@ Gas density and viscosity
 -------------------------
 
 The computation of the gas density and viscosity is entirely based on tabulated correlations.
-The user defines the pressure and temperature axis of the tables in the form XXX.
+The user defines the pressure and temperature axis of the density and viscosity tables in the form:
 
++------------+----------------------+------------+-----------+--------------+------------+-----------+---- ---------+
+| DensityFun | SpanWagnerCO2Density | First pres | Last pres | Pres spacing | First temp | Last temp | Temp spacing |
++------------+----------------------+------------+-----------+--------------+------------+-----------+--------------+
+
+and:
+
++--------------+----------------------+------------+-----------+--------------+------------+-----------+---- ---------+
+| ViscosityFun | FenghourCO2Viscosity | First pres | Last pres | Pres spacing | First temp | Last temp | Temp spacing |
++--------------+----------------------+------------+-----------+--------------+------------+-----------+--------------+
+
+GEOSX expects pressures in Pascal, and temperatures in degree Celsius. 
 Using these parameters, GEOSX internally constructs two 2D tables storing respectively the values of density and viscosity as a function of pressure and temperature.
 These tables are populated using the correlation of Span and Wagner (1996) for the density and the correlation of Fenghour and Wakeman (1998) for the viscosity. 
 The construction of the tables is done as a preprocessing step.
@@ -57,14 +71,31 @@ Then, during the simulation, the update of CO2 gas density and viscosity is simp
 Brine density and viscosity 
 ---------------------------
 
-The brine density is defined by two parameters provided by the user in the form XXX.
+The brine density is defined by a parameter provided by the user in the form:
 
-Then, during the simulation, the brine viscosity is updated as a function of temperature using the analytical relationship XXX.
++--------------+----------------+-----+
+| ViscosityFun | BrineViscosity | val |
++--------------+----------------+-----+
 
+Then, during the simulation, the brine viscosity is updated as a function of temperature using the analytical relationship
+
+.. math::
+   \mu_l = a T + b
+
+where:
+
+.. math::
+   a = 0.00089 \times 0.000629 (1.0 - exp( -0.7 val ) ) \\
+   b = 0.00089 (1.0 + 0.0816 val + 0.0122 * val^2 + 0.000128 * val^3) 
+   
 The computation of the brine density involves a tabulated correlation.
-The user specifies the (constant) salinity and defines the pressure and temperature axis in the form XXX
+The user specifies the (constant) salinity and defines the pressure and temperature axis of the table in the form:
 
-Using these parameters, GEOSX constructs a 2D table storing the density of brine for the specified salinity as a function of pressure and temperature (correlation).
++------------+----------------------+------------+-----------+--------------+------------+-----------+---- ---------+----------+
+| DensityFun | BrineCO2Density      | First pres | Last pres | Pres spacing | First temp | Last temp | Temp spacing | Salinity |
++------------+----------------------+------------+-----------+--------------+------------+-----------+--------------+----------+
+
+Using these parameters, GEOSX performs a preprocessing step to construct a 2D table storing the density of brine for the specified salinity as a function of pressure and temperature (correlation).
 
 Then, during the simulation, the brine density update procees in two steps:
 First, a table lookup is performed to retrieve the value of density.
