@@ -45,12 +45,30 @@ Step 2: Computation of the phase densities and phase viscosities
 Gas density and viscosity
 -------------------------
 
+The computation of the gas density and viscosity is entirely based on tabulated correlations.
+The user defines the pressure and temperature axis of the tables in the form XXX.
 
+Using these parameters, GEOSX internally constructs two 2D tables storing respectively the values of density and viscosity as a function of pressure and temperature.
+These tables are populated using the correlation of Span and Wagner (1996) for the density and the correlation of Fenghour and Wakeman (1998) for the viscosity. 
+The construction of the tables is done as a preprocessing step.
+
+Then, during the simulation, the update of CO2 gas density and viscosity is simply done with a look-up in the precomputed tables. 
 
 Brine density and viscosity 
 ---------------------------
 
+The brine density is defined by two parameters provided by the user in the form XXX.
 
+Then, during the simulation, the brine viscosity is updated as a function of temperature using the analytical relationship XXX.
+
+The computation of the brine density involves a tabulated correlation.
+The user specifies the (constant) salinity and defines the pressure and temperature axis in the form XXX
+
+Using these parameters, GEOSX constructs a 2D table storing the density of brine for the specified salinity as a function of pressure and temperature (correlation).
+
+Then, during the simulation, the brine density update procees in two steps:
+First, a table lookup is performed to retrieve the value of density.
+Then, in a second step, the density is modified using the method of Garcia (2001) to account for the presence of CO2 dissolved in brine.
 
 Methods Description
 =================================
