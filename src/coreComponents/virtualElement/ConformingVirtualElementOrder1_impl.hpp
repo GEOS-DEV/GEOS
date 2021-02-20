@@ -20,13 +20,10 @@ namespace geosx
 namespace virtualElement
 {
 template< localIndex MCN, localIndex MFN >
-localIndex ConformingVirtualElementOrder1< MCN, MFN >::m_numQuadraturePoints;
-
-template< localIndex MCN, localIndex MFN >
 localIndex ConformingVirtualElementOrder1< MCN, MFN >::m_numSupportPoints;
 
 template< localIndex MCN, localIndex MFN >
-array1d< real64 > ConformingVirtualElementOrder1< MCN, MFN >::m_quadratureWeights;
+real64 ConformingVirtualElementOrder1< MCN, MFN >::m_quadratureWeight;
 
 template< localIndex MCN, localIndex MFN >
 real64 ConformingVirtualElementOrder1< MCN, MFN >::
@@ -60,6 +57,7 @@ ComputeProjectors( localIndex const & cellIndex,
   localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
   localIndex const numCellPoints = cellToNodeMap[cellIndex].size();
   m_numSupportPoints = numCellPoints;
+  m_quadratureWeight = cellVolume;
 
   // Compute cell diameter.
   real64 cellDiameter = ComputeDiameter< 3,
@@ -146,15 +144,6 @@ ComputeProjectors( localIndex const & cellIndex,
 
   // Compute non constant scaled monomials' integrals on the polyhedron.
   real64 monomInternalIntegrals[3] = { 0.0 };
-  m_numQuadraturePoints = 0;
-  for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
-  {
-    localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
-    arraySlice1d< localIndex const > faceToNodes = faceToNodeMap[faceIndex];
-    m_numQuadraturePoints += faceToNodes.size();
-  }
-  m_quadratureWeights.resize( m_numQuadraturePoints );
-  localIndex quadratureWeightPos = 0;           // index used to fill m_quadratureWeights.
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
   {
     localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
@@ -195,7 +184,6 @@ ComputeProjectors( localIndex const & cellIndex,
                               ( edgeTangentsMatrix[0][1] * edgeTangentsMatrix[1][2] -
                                 edgeTangentsMatrix[0][2] * edgeTangentsMatrix[1][1] )
                               ) / 6.0;
-      m_quadratureWeights[quadratureWeightPos++] = subTetVolume;
       for( localIndex i = 0; i < 3; ++i )
         monomInternalIntegrals[i] += monomialValues[i]*subTetVolume;
     }

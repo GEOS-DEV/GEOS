@@ -4,6 +4,7 @@
   <Solvers>
     <LaplaceVEM
         name="laplace"
+        discretization="FE1"
         timeIntegrationOption="SteadyState"
         fieldName="Temperature"
         logLevel="0"

@@ -30,6 +30,7 @@ class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
 public:
   static constexpr localIndex maxSupportPoints = MAXCELLNODES;
+  static constexpr localIndex numQuadraturePoints = 1;
 
 private:
   GEOSX_HOST_DEVICE
@@ -46,9 +47,8 @@ private:
                         real64 basisIntegrals[MAXFACENODES],
                         real64 threeDMonomialIntegrals[3] );
 
-  static localIndex m_numQuadraturePoints;
   static localIndex m_numSupportPoints;
-  static array1d< real64 > m_quadratureWeights;
+  static real64 m_quadratureWeight;
   static real64 m_basisFunctionsIntegralMean[maxSupportPoints];
   static real64 m_stabilizationMatrix[maxSupportPoints][maxSupportPoints];
   static real64 m_basisDerivativesIntegralMean[maxSupportPoints][3];
@@ -76,7 +76,7 @@ public:
   GEOSX_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {
-    return m_numQuadraturePoints;
+    return numQuadraturePoints;
   }
 
   GEOSX_HOST_DEVICE
@@ -111,9 +111,9 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  static real64 transformedQuadratureWeight( localIndex const q )
+  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ) )
   {
-    return m_quadratureWeights[q];
+    return m_quadratureWeight;
   }
 
 
