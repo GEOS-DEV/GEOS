@@ -62,7 +62,7 @@ public:
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
    * @param source the CellBlock whose properties (connectivity info) will be copied
    */
-  void copyFromCellBlock( CellBlock * source );
+  void copyFromCellBlock( CellBlock & source );
 
   /**
    * @brief Fill the CellElementSubRegion by querying a target set into the faceManager
@@ -132,22 +132,21 @@ public:
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
     /// String key for the constitutive point volume fraction
-    static constexpr auto constitutivePointVolumeFraction = "ConstitutivePointVolumeFraction";
+    static constexpr char const * constitutivePointVolumeFractionString() { return "ConstitutivePointVolumeFraction"; }
     /// String key for the derivatives of the shape functions with respect to the reference configuration
-    static constexpr auto dNdXString = "dNdX";
+    static constexpr char const * dNdXString() { return "dNdX"; }
     /// String key for the derivative of the jacobian.
-    static constexpr auto detJString = "detJ";
+    static constexpr char const * detJString() { return "detJ"; }
     /// String key for the constitutive grouping
-    static constexpr auto constitutiveGroupingString = "ConstitutiveGrouping";
+    static constexpr char const * constitutiveGroupingString() { return "ConstitutiveGrouping"; }
     /// String key for the constitutive map
-    static constexpr auto constitutiveMapString = "ConstitutiveMap";
+    static constexpr char const * constitutiveMapString() { return "ConstitutiveMap"; }
     /// String key to embSurfMap
-    static constexpr auto toEmbSurfString = "ToEmbeddedSurfaces";
-
+    static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
     /// ViewKey for the constitutive grouping
-    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
+    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
     /// ViewKey for the constitutive map
-    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
+    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString() };
   }
   /// viewKey struct for the CellElementSubRegion class
   m_CellBlockSubRegionViewKeys;

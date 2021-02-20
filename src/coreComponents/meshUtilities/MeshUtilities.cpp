@@ -41,31 +41,26 @@ MeshUtilities::~MeshUtilities()
 
 
 
-void MeshUtilities::generateNodesets( dataRepository::Group const * geometries,
-                                      NodeManager * const nodeManager )
+void MeshUtilities::generateNodesets( dataRepository::Group const & geometries,
+                                      NodeManager & nodeManager )
 {
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager->referencePosition();
-  localIndex const numNodes = nodeManager->size();
-  Group & sets = nodeManager->sets();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
+  localIndex const numNodes = nodeManager.size();
+  Group & sets = nodeManager.sets();
 
-  for( int i = 0; i < geometries->getSubGroups().size(); ++i )
+  geometries.forSubGroups< SimpleGeometricObjectBase >( [&] ( SimpleGeometricObjectBase const & object )
   {
-    SimpleGeometricObjectBase const * const object = geometries->getGroup< SimpleGeometricObjectBase >( i );
-    if( object!=nullptr )
+    string const & name = object.getName();
+    SortedArray< localIndex > & targetSet = sets.registerWrapper< SortedArray< localIndex > >( name ).reference();
+    for( localIndex a=0; a<numNodes; ++a )
     {
-      string name = object->getName();
-      SortedArray< localIndex > & targetSet = sets.registerWrapper< SortedArray< localIndex > >( name )->reference();
-      for( localIndex a=0; a<numNodes; ++a )
+      real64 nodeCoord[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[a] );
+      if( object.isCoordInObject( nodeCoord ))
       {
-        real64 nodeCoord[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[a] );
-        if( object->isCoordInObject( nodeCoord ))
-        {
-          targetSet.insert( a );
-        }
+        targetSet.insert( a );
       }
     }
-
-  }
+  } );
 }
 
 } /// namespace geosx

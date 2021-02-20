@@ -87,8 +87,8 @@ private:
 
   struct viewKeyStruct
   {
-    static constexpr auto orderString = "order";
-    static constexpr auto formulationString = "formulation";
+    static constexpr char const * orderString() { return "order"; }
+    static constexpr char const * formulationString() { return "formulation"; }
   };
 
   /// The order of the finite element basis

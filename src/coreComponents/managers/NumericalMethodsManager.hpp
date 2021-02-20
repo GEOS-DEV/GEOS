@@ -58,17 +58,16 @@ public:
   struct groupKeysStruct
   {
     /// Name for the basis function manager.
-    static constexpr auto basisFunctions = "BasisFunctions";
+    static constexpr char const * basisFunctionsString() { return "BasisFunctions"; }
 
     /// Name for the quadrature rule manager.
-    static constexpr auto quadratureRules = "QuadratureRules";
+    static constexpr char const * quadratureRulesString() { return "QuadratureRules"; }
 
     /// Name for the finite element discretization manager.
-    static constexpr auto finiteElementDiscretizations = "FiniteElements";
+    static constexpr char const * finiteElementDiscretizationsString() { return "FiniteElements"; }
 
     /// Name for the finite volume manager.
-    static constexpr auto finiteVolumeManager = "FiniteVolume";
-
+    static constexpr char const * finiteVolumeManagerString() { return "FiniteVolume"; }
   };
 
   /**
