@@ -47,7 +47,7 @@ public:
   static string catalogName() { return "LaplaceVEM"; }
 
   // This method ties properties with their supporting mesh
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
 //END_SPHINX_INCLUDE_02
 /**
@@ -147,7 +147,6 @@ public:
   {
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
-
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 

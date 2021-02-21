@@ -172,14 +172,14 @@ template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void testCellsInMeshLevel( MeshLevel const & mesh )
 {
   // Get managers.
-  ElementRegionManager const & elementManager = *mesh.getElemManager();
+  ElementRegionManager const & elementManager = mesh.getElemManager();
   CellElementRegion const & cellRegion =
-    *elementManager.getRegion< CellElementRegion >( 0 );
+    elementManager.getRegion< CellElementRegion >( 0 );
   CellElementSubRegion const & cellSubRegion =
-    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
-  EdgeManager const & edgeManager = *mesh.getEdgeManager();
+    cellRegion.getSubRegion< CellElementSubRegion >( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
 
   // Get geometric properties to be passed as inputs.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
@@ -260,14 +260,14 @@ TEST( VirtualElementBase, unitCube )
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager.getDomainPartition();
-  MeshManager * meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
-  meshManager->generateMeshLevels( domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->processInputFileRecursive( topLevelNode );
-  elementManager->postProcessInputRecursive();
+  DomainPartition & domain  = problemManager.getDomainPartition();
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.generateMeshLevels( domain );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elementManager = mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.postProcessInputRecursive();
   problemManager.problemSetup();
 
   // Test computed projectors for all cells in MeshLevel
@@ -312,15 +312,15 @@ TEST( VirtualElementBase, wedges )
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager.getDomainPartition();
-  MeshManager * meshManager = problemManager.getGroup< MeshManager >
+  DomainPartition & domain  = problemManager.getDomainPartition();
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >
                                 ( problemManager.groupKeys.meshManager );
-  meshManager->generateMeshLevels( domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->processInputFileRecursive( topLevelNode );
-  elementManager->postProcessInputRecursive();
+  meshManager.generateMeshLevels( domain );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elementManager = mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.postProcessInputRecursive();
   problemManager.problemSetup();
 
   // Test computed projectors for all cells in MeshLevel

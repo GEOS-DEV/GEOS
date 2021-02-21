@@ -25,16 +25,16 @@ using namespace constitutive;
 CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
   CellBlock( name, parent )
 {
-  registerWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping )->
+  registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::constitutivePointVolumeFraction, &m_constitutivePointVolumeFraction );
+  registerWrapper( viewKeyStruct::constitutivePointVolumeFractionString(), &m_constitutivePointVolumeFraction );
 
-  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX )->setSizedFromParent( 1 )->reference().resizeDimension< 3 >( 3 );
+  registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 
-  registerWrapper( viewKeyStruct::detJString, &m_detJ )->setSizedFromParent( 1 )->reference();
+  registerWrapper( viewKeyStruct::detJString(), &m_detJ ).setSizedFromParent( 1 ).reference();
 
-  registerWrapper( viewKeyStruct::toEmbSurfString, &m_toEmbeddedSurfaces )->setSizedFromParent( 1 );
+  registerWrapper( viewKeyStruct::toEmbSurfString(), &m_toEmbeddedSurfaces ).setSizedFromParent( 1 );
 }
 
 CellElementSubRegion::~CellElementSubRegion()
@@ -42,15 +42,15 @@ CellElementSubRegion::~CellElementSubRegion()
   // TODO Auto-generated destructor stub
 }
 
-void CellElementSubRegion::copyFromCellBlock( CellBlock * source )
+void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
 {
-  this->setElementType( source->getElementTypeString());
-  this->setNumNodesPerElement( source->numNodesPerElement() );
-  this->setNumFacesPerElement( source->numFacesPerElement() );
-  this->resize( source->size());
-  this->nodeList() = source->nodeList();
+  this->setElementType( source.getElementTypeString());
+  this->setNumNodesPerElement( source.numNodesPerElement() );
+  this->setNumFacesPerElement( source.numFacesPerElement() );
+  this->resize( source.size());
+  this->nodeList() = source.nodeList();
 
-  arrayView1d< globalIndex const > const sourceLocalToGlobal = source->localToGlobalMap();
+  arrayView1d< globalIndex const > const sourceLocalToGlobal = source.localToGlobalMap();
   this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
   for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
   {
@@ -58,20 +58,17 @@ void CellElementSubRegion::copyFromCellBlock( CellBlock * source )
   }
 
   this->constructGlobalToLocalMap();
-  source->forExternalProperties( [&]( dataRepository::WrapperBase * const wrapper )
+  source.forExternalProperties( [&]( dataRepository::WrapperBase & wrapper )
   {
-    std::type_index typeIndex = std::type_index( wrapper->getTypeId());
+    std::type_index typeIndex = std::type_index( wrapper.getTypeId());
     rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
                                     [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) )
     {
       using fieldType = decltype(type);
-      dataRepository::Wrapper< fieldType > & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
+      dataRepository::Wrapper< fieldType > & field = dynamicCast< dataRepository::Wrapper< fieldType > & >( wrapper );
       const fieldType & fieldref = field.reference();
-      this->registerWrapper( wrapper->getName(), &const_cast< fieldType & >( fieldref ) ); //TODO remove const_cast
-//      auto const & origFieldRef = field.reference();
-//      fieldType & fieldRef = this->registerWrapper<fieldType>( wrapper->getName() )->reference();
-//      fieldRef.resize( origFieldRef.size() );
+      this->registerWrapper( wrapper.getName(), &const_cast< fieldType & >( fieldref ) ); //TODO remove const_cast
     } );
   } );
 }
@@ -97,9 +94,9 @@ void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
 void CellElementSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
   ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
 //  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString() ));
 }
 
 
@@ -123,6 +120,7 @@ localIndex CellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buf
 
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > edgeLocalToGlobal = edgeList().relatedObjectLocalToGlobal();
   arrayView1d< globalIndex const > faceLocalToGlobal = faceList().relatedObjectLocalToGlobal();
 
 
@@ -132,6 +130,14 @@ localIndex CellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buf
                                                      packList,
                                                      localToGlobal,
                                                      nodeLocalToGlobal );
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer,
+                                           edgeList().base().toViewConst(),
+                                           m_unmappedGlobalIndicesInEdgelist,
+                                           packList,
+                                           localToGlobal,
+                                           edgeLocalToGlobal );
+
 
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            faceList().base().toViewConst(),
@@ -158,6 +164,13 @@ localIndex CellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
                                      nodeList().relatedObjectGlobalToLocal() );
 
   unPackedSize += bufferOps::Unpack( buffer,
+                                     edgeList().base(),
+                                     packList,
+                                     m_unmappedGlobalIndicesInEdgelist,
+                                     this->globalToLocalMap(),
+                                     edgeList().relatedObjectGlobalToLocal() );
+
+  unPackedSize += bufferOps::Unpack( buffer,
                                      faceList().base(),
                                      packList,
                                      m_unmappedGlobalIndicesInFacelist,
@@ -171,6 +184,10 @@ void CellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( nodeList(),
                                     m_unmappedGlobalIndicesInNodelist,
+                                    clearIfUnmapped );
+
+  ObjectManagerBase::fixUpDownMaps( edgeList(),
+                                    m_unmappedGlobalIndicesInEdgelist,
                                     clearIfUnmapped );
 
   ObjectManagerBase::fixUpDownMaps( faceList(),

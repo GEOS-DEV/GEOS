@@ -87,12 +87,12 @@ LaplaceVEM::LaplaceVEM( const string & name,
   m_fieldName( "primaryField" ),
   m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
 {
-  registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
-  registerWrapper( laplaceFEMViewKeys.fieldVarName.key(), &m_fieldName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( laplaceFEMViewKeys.fieldVarName.key(), &m_fieldName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of field variable" );
 }
 //END_SPHINX_INCLUDE_01
@@ -119,17 +119,17 @@ LaplaceVEM::~LaplaceVEM()
      The description here is simply an additional metadata for the newly mounted property.
  */
 //START_SPHINX_INCLUDE_02
-void LaplaceVEM::registerDataOnMesh( Group * const MeshBodies )
+void LaplaceVEM::registerDataOnMesh( Group & meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
+    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
 
-    nodes->registerWrapper< real64_array >( m_fieldName )->
-      setApplyDefaultValue( 0.0 )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
+    nodes.registerWrapper< real64_array >( m_fieldName ).
+      setApplyDefaultValue( 0.0 ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
       setDescription( "Primary field variable" );
-  }
+  } );
 }
 //END_SPHINX_INCLUDE_02
 
@@ -255,11 +255,11 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 {
   using VEM = virtualElement::ConformingVirtualElementOrder1< m_maxCellNodes, m_maxFaceNodes >;
 
-  MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elementManager = mesh->getElemManager();
-  NodeManager & nodeManager = *(mesh->getNodeManager());
-  FaceManager const & faceManager = *mesh->getFaceManager();
-  EdgeManager const & edgeManager = *mesh->getEdgeManager();
+  MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elementManager = mesh.getElemManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
 
   // Get geometric properties used to compute projectors.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
@@ -276,10 +276,10 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   real64 const diffusion = 1.0;
 
   // begin region loop
-  for( localIndex er=0; er<elementManager->numRegions(); ++er )
+  for( localIndex er=0; er<elementManager.numRegions(); ++er )
   {
-    CellElementRegion * const elementRegion = elementManager->getRegion< CellElementRegion >( er );
-    elementRegion->forElementSubRegions< CellElementSubRegion >
+    CellElementRegion const & elementRegion = elementManager.getRegion< CellElementRegion >( er );
+    elementRegion.forElementSubRegions< CellElementSubRegion >
       ( [&]( CellElementSubRegion const & elemSubRegion )
     {
       CellBlock::NodeMapType const & elemToNodeMap = elemSubRegion.nodeList();
@@ -371,7 +371,7 @@ void LaplaceVEM::applySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( m_fieldName );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
 }
@@ -420,23 +420,23 @@ void LaplaceVEM::applyDirichletBCImplicit( real64 const time,
   FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
 
   fsManager.apply( time,
-                   &domain,
+                   domain,
                    "nodeManager",
                    m_fieldName,
-                   [&]( FieldSpecificationBase const * const bc,
+                   [&]( FieldSpecificationBase const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
-                        Group * const targetGroup,
+                        Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc->applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
-                                                                                               time,
-                                                                                               targetGroup,
-                                                                                               m_fieldName,
-                                                                                               dofManager.getKey( m_fieldName ),
-                                                                                               dofManager.rankOffset(),
-                                                                                               localMatrix,
-                                                                                               localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
+                                                                                              time,
+                                                                                              targetGroup,
+                                                                                              m_fieldName,
+                                                                                              dofManager.getKey( m_fieldName ),
+                                                                                              dofManager.rankOffset(),
+                                                                                              localMatrix,
+                                                                                              localRhs );
   } );
 }
 

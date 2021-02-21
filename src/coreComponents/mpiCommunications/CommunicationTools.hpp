@@ -31,6 +31,7 @@ namespace geosx
 
 
 class ObjectManagerBase;
+class NodeManager;
 class NeighborCommunicator;
 class MeshLevel;
 class ElementRegionManager;
@@ -87,7 +88,7 @@ public:
   ~CommunicationTools();
 
   void assignGlobalIndices( ObjectManagerBase & object,
-                            ObjectManagerBase const & compositionObject,
+                            NodeManager const & compositionObject,
                             std::vector< NeighborCommunicator > & neighbors );
 
   void assignNewGlobalIndices( ObjectManagerBase & object,
@@ -103,27 +104,27 @@ public:
   CommID getCommID()
   { return CommID( m_freeCommIDs ); }
 
-  void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+  void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
   void synchronizeFields( const std::map< string, string_array > & fieldNames,
-                          MeshLevel * const mesh,
+                          MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & allNeighbors,
                           bool on_device = false );
 
   void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                     MeshLevel * const mesh,
+                                     MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
                                      bool on_device = false );
 
   void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                MeshLevel * const mesh,
+                                MeshLevel & mesh,
                                 std::vector< NeighborCommunicator > & allNeighbors,
                                 MPI_iCommData & icomm,
                                 bool on_device = false );
 
-  void synchronizeUnpack( MeshLevel * const mesh,
+  void synchronizeUnpack( MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & neighbors,
                           MPI_iCommData & icomm,
                           bool on_device = false );

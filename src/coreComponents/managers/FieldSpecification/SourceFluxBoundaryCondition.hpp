@@ -49,12 +49,7 @@ public:
    */
   virtual ~SourceFluxBoundaryCondition() override;
 
-  /**
-   * @brief Called by Initialize() after to initializing sub-Groups.
-   * @param[in] rootGroup A group that is passed in to the initialization functions
-   *                      in order to facilitate the initialization.
-   */
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
   /**
    * @brief Static Factory Catalog Functions
