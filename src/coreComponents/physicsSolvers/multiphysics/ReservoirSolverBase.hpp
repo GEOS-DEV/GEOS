@@ -174,19 +174,17 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-
     // solver that assembles the reservoir equations
-    constexpr static auto flowSolverNameString = "flowSolverName";
+    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
 
     // solver that assembles the well
-    constexpr static auto wellSolverNameString = "wellSolverName";
-
-  } reservoirWellsSolverViewKeys;
+    constexpr static char const * wellSolverNameString() { return "wellSolverName"; }
+  };
 
 
 protected:
 
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void postProcessInput() override;
 
@@ -207,7 +205,7 @@ protected:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void resetViews( DomainPartition * const domain );
+  virtual void resetViews( DomainPartition & domain );
 
   /// solver that assembles the reservoir equations
   string m_flowSolverName;

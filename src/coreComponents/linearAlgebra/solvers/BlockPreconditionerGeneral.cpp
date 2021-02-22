@@ -176,6 +176,8 @@ void BlockPreconditionerGeneral< LAI >::compute( Matrix const & mat,
   m_solvers[0]->compute( m_matBlocks( 0, 0 ), dofManager );
   computeSchurComplement( 0 );
 
+  m_matBlocks( 1, 1 ).write( "FIRST_S.petsc", LAIOutputFormat::NATIVE_BINARY );
+
   // Compute all Schur complements
   for( localIndex iBlock = 1; iBlock < m_numBlocks-1; ++iBlock )
   {
@@ -194,6 +196,8 @@ void BlockPreconditionerGeneral< LAI >::compute( Matrix const & mat,
     m_solvers[iBlock]->compute( m_matBlocks( iBlock, iBlock ), dofManager );
     computeSchurComplement( iBlock );
   }
+
+  m_matBlocks( 2, 2 ).write( "LAST_S.petsc", LAIOutputFormat::NATIVE_BINARY );
 
   // Last Schur complement
   if( newSize )

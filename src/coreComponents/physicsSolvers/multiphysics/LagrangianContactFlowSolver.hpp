@@ -44,11 +44,9 @@ public:
    */
   static string catalogName() { return "LagrangianContactWithFlow"; }
 
-  virtual void
-  initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void
-  registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   virtual void
   setupDofs( DomainPartition const & domain,
@@ -167,19 +165,17 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto contactSolverNameString = "contactSolverName";
-    constexpr static auto flowSolverNameString = "flowSolverName";
-    constexpr static auto stabilizationNameString = "stabilizationName";
+    constexpr static char const * contactSolverNameString() { return "contactSolverName"; }
+    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
+    constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
 
-    constexpr static auto defaultConductivityString = "defaultConductivity";
-
+    constexpr static char const * defaultConductivityString() { return "defaultConductivity"; }
   } LagrangianContactFlowSolverViewKeys;
 
 protected:
   virtual void postProcessInput() override final;
 
-  virtual void
-  initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -217,11 +213,11 @@ private:
 
   integer m_activeSetIter = 0;
 
-  string const m_tractionKey = LagrangianContactSolver::viewKeyStruct::tractionString;
-  string const m_fractureStateKey = LagrangianContactSolver::viewKeyStruct::fractureStateString;
-  string const m_localJumpKey = LagrangianContactSolver::viewKeyStruct::localJumpString;
-  string const m_pressureKey = FlowSolverBase::viewKeyStruct::pressureString;
-  string const m_deltaPressureKey = FlowSolverBase::viewKeyStruct::deltaPressureString;
+  string const m_tractionKey = LagrangianContactSolver::viewKeyStruct::tractionString();
+  string const m_fractureStateKey = LagrangianContactSolver::viewKeyStruct::fractureStateString();
+  string const m_localJumpKey = LagrangianContactSolver::viewKeyStruct::localJumpString();
+  string const m_pressureKey = FlowSolverBase::viewKeyStruct::pressureString();
+  string const m_deltaPressureKey = FlowSolverBase::viewKeyStruct::deltaPressureString();
 
   real64 m_initialResidual[4] = {0.0, 0.0, 0.0, 0.0};
 

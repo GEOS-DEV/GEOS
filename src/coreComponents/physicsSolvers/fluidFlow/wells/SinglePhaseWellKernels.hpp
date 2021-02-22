@@ -283,16 +283,16 @@ struct PressureRelationKernel
 
     // dynamic well control data
     real64 const & currentBHP =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
     real64 const & dCurrentBHP_dPres =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
 
     real64 const & currentVolRate =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
     real64 const & dCurrentVolRate_dPres =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString() );
     real64 const & dCurrentVolRate_dRate =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString() );
 
     RAJA::ReduceMax< REDUCE_POLICY, localIndex > switchControl( 0 );
 

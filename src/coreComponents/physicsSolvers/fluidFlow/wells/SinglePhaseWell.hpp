@@ -93,7 +93,7 @@ public:
    */
   static string catalogName() { return "SinglePhaseWell"; }
 
-  virtual void registerDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -129,9 +129,9 @@ public:
 
   /**@}*/
 
-  virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString; }
+  virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return SinglePhaseBase::viewKeyStruct::pressureString; }
+  virtual string resElementDofName() const override { return SinglePhaseBase::viewKeyStruct::pressureString(); }
 
   virtual localIndex numFluidComponents() const override { return 1; }
 
@@ -214,36 +214,33 @@ public:
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
-    static constexpr auto dofFieldString = "singlePhaseWellVars";
+    static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
 
     // primary solution field
-    static constexpr auto pressureString      = SinglePhaseBase::viewKeyStruct::pressureString;
-    static constexpr auto deltaPressureString = SinglePhaseBase::viewKeyStruct::deltaPressureString;
-    static constexpr auto connRateString      = "connectionRate";
-    static constexpr auto deltaConnRateString = "deltaConnectionRate";
+    static constexpr char const * pressureString() { return SinglePhaseBase::viewKeyStruct::pressureString(); }
+    static constexpr char const * deltaPressureString() { return SinglePhaseBase::viewKeyStruct::deltaPressureString(); }
+    static constexpr char const * connRateString() { return "connectionRate"; }
+    static constexpr char const * deltaConnRateString() { return "deltaConnectionRate"; }
 
     // perforation rates
-    static constexpr auto perforationRateString        = "perforationRate";
-    static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
+    static constexpr char const * perforationRateString() { return "perforationRate"; }
+    static constexpr char const * dPerforationRate_dPresString() { return "dPerforationRate_dPres"; }
 
     // control data
-    static constexpr auto currentBHPString = "currentBHP";
-    static constexpr auto dCurrentBHP_dPresString = "dCurrentBHP_dPres";
+    static constexpr char const * currentBHPString() { return "currentBHP"; }
+    static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
 
-    static constexpr auto currentVolRateString = "currentVolumetricRate";
-    static constexpr auto dCurrentVolRate_dPresString = "dCurrentVolumetricRate_dPres";
-    static constexpr auto dCurrentVolRate_dRateString = "dCurrentVolumetricRate_dRate";
+    static constexpr char const * currentVolRateString() { return "currentVolumetricRate"; }
+    static constexpr char const * dCurrentVolRate_dPresString() { return "dCurrentVolumetricRate_dPres"; }
+    static constexpr char const * dCurrentVolRate_dRateString() { return "dCurrentVolumetricRate_dRate"; }
 
-  } viewKeysSinglePhaseWell;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysSinglePhaseWell;
+  };
 
 protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
 private:
 
