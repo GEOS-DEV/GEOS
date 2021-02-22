@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
   <Solvers gravityVector="0.0, 0.0, 0.0">
     <CompositionalMultiphaseHybridFVM
       name="compflow"
@@ -15,17 +14,17 @@
       maxCompFractionChange="0.5"
       useMass="0">
       <NonlinearSolverParameters
-        newtonTol="1.0e-10"
+        newtonTol="1.0e-8"
         newtonMaxIter="30"
         maxTimeStepCuts="2"
-	lineSearchAction="None"/>
+        lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </CompositionalMultiphaseHybridFVM>
   </Solvers>
 
-  <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
-  <!-- START_SPHINX_INCLUDE_MESH_BLOCK -->
   <Mesh>
 
     <InternalMesh
@@ -41,8 +40,6 @@
     
   </Mesh>
 
-  <!-- END_SPHINX_INCLUDE_MESH_BLOCK -->
-  <!-- START_SPHINX_INCLUDE_GEOM_BLOCK -->
   <Geometry>
 
     <Box
@@ -56,13 +53,11 @@
       xMax="10.01, 1.01, 2.51"/>
   </Geometry>
 
-  <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
-  <!-- START_SPHINX_INCLUDE_EVENTS_BLOCK -->
   <Events
-    maxTime="1e7">
+    maxTime="2e8">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e6"
+      timeFrequency="1e7"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
@@ -82,13 +77,11 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="1e7"
+      timeFrequency="1e8"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
 
-  <!-- END_SPHINX_INCLUDE_EVENTS_BLOCK -->
-  <!-- START_SPHINX_INCLUDE_ELEMREG_BLOCK -->
   <ElementRegions>
 
     <CellElementRegion
@@ -102,19 +95,15 @@
       materialList="{ }"/>
   </ElementRegions>
 
-  <!-- END_SPHINX_INCLUDE_ELEMREG_BLOCK -->
-  <!-- START_SPHINX_INCLUDE_NUMMET_BLOCK -->
   <NumericalMethods>
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-	innerProductType="quasiTPFA"
+        innerProductType="beiraoDaVeigaLipnikovManzini"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
-  <!-- END_SPHINX_INCLUDE_NUMMET_BLOCK -->
-  <!-- START_SPHINX_INCLUDE_CONST_BLOCK -->
   <Constitutive>
     <BlackOilFluid
       name="fluid1"
@@ -137,8 +126,6 @@
       phaseRelPermMaxValue="{ 0.8, 0.9, 0.9 }"/>
   </Constitutive>
 
-  <!-- END_SPHINX_INCLUDE_CONST_BLOCK -->
-  <!-- START_SPHINX_INCLUDE_PERM_BLOCK -->
   <FieldSpecifications>
     <FieldSpecification
       name="permx_channel"
@@ -175,9 +162,7 @@
       fieldName="referencePorosity"
       scale="0.2"/>
 
-    <!-- END_SPHINX_INCLUDE_PERM_BLOCK -->
     <!-- Initial pressure: ~5 bar -->
-    <!-- START_SPHINX_INCLUDE_INIT_BLOCK -->
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -222,8 +207,6 @@
       component="2"
       scale="0.001"/>
 
-    <!-- END_SPHINX_INCLUDE_INIT_BLOCK -->
-    <!-- START_SPHINX_INCLUDE_BC_BLOCK -->
     <!-- Injection pressure: ~10 bar -->
     <FieldSpecification
       name="sourceTermPressure"
@@ -291,8 +274,6 @@
       scale="0.001"/>
   </FieldSpecifications>
 
-  <!-- END_SPHINX_INCLUDE_BC_BLOCK -->
-  <!-- START_SPHINX_INCLUDE_OUTPUT_BLOCK -->
   <Outputs>
     <Silo
       name="siloOutput"
@@ -302,5 +283,4 @@
       name="restartOutput"/>
   </Outputs>
 
-  <!-- END_SPHINX_INCLUDE_OUTPUT_BLOCK -->
 </Problem>

@@ -45,7 +45,7 @@ public:
     return "SolidMechanicsEmbeddedFractures";
   }
 
-  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -94,26 +94,13 @@ public:
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
+  void updateState( DomainPartition & domain );
+
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static auto solidSolverNameString = "solidSolverName";
-
-    constexpr static auto contactRelationNameString = "contactRelationName";
-
-    constexpr static auto dispJumpString = "displacementJump";
-
-    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
-
-    constexpr static auto fractureRegionNameString = "fractureRegionName";
-
-  } SolidMechanicsEmbeddedFracturesViewKeys;
-
-protected:
 
   void addCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,
@@ -129,6 +116,38 @@ protected:
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
+
+    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+
+    constexpr static char const * dispJumpString() { return "displacementJump"; }
+
+    constexpr static char const * deltaDispJumpString() { return "deltaDisplacementJump"; }
+
+    constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
+
+    constexpr static char const * fractureTractionString() { return "fractureTraction"; }
+
+    constexpr static char const * dTraction_dJumpString() { return "dTraction_dJump"; }
+
+  };
+
+  string const & getContactRelationName() const { return m_contactRelationName; }
+
+  string const & getFractureRegionName() const { return m_fractureRegionName; }
+
+  void applyTractionBC( real64 const time_n,
+                        real64 const dt,
+                        DomainPartition & domain );
+
+protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
+
+  virtual void postProcessInput() override final;
+
 private:
 
   /// Solid mechanics solver name
@@ -142,7 +161,6 @@ private:
 
   /// contact relation name string
   string m_contactRelationName;
-
 };
 
 

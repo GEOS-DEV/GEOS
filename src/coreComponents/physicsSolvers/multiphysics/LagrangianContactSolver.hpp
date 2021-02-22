@@ -45,11 +45,9 @@ public:
     return "LagrangianContact";
   }
 
-  virtual void
-  initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void
-  registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   virtual void
   setupDofs( DomainPartition const & domain,
@@ -163,26 +161,26 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto solidSolverNameString = "solidSolverName";
-    constexpr static auto stabilizationNameString = "stabilizationName";
-    constexpr static auto contactRelationNameString = "contactRelationName";
-    constexpr static auto activeSetMaxIterString = "activeSetMaxIter";
+    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
+    constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
+    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+    constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; }
 
-    constexpr static auto rotationMatrixString = "rotationMatrix";
+    constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
-    constexpr static auto tractionString = "traction";
-    constexpr static auto deltaTractionString = "deltaTraction";
-    constexpr static auto fractureStateString = "fractureState";
-    constexpr static auto previousFractureStateString = "previousFractureState";
-    constexpr static auto localJumpString = "localJump";
-    constexpr static auto previousLocalJumpString = "previousLocalJump";
+    constexpr static char const * tractionString() { return "traction"; }
+    constexpr static char const * deltaTractionString() { return "deltaTraction"; }
+    constexpr static char const * fractureStateString() { return "fractureState"; }
+    constexpr static char const * previousFractureStateString() { return "previousFractureState"; }
+    constexpr static char const * localJumpString() { return "localJump"; }
+    constexpr static char const * previousLocalJumpString() { return "previousLocalJump"; }
 
-    constexpr static auto slidingCheckToleranceString = "slidingCheckTolerance";
-    constexpr static auto normalDisplacementToleranceString = "normalDisplacementTolerance";
-    constexpr static auto normalTractionToleranceString = "normalTractionTolerance";
-    constexpr static auto slidingToleranceString = "slidingTolerance";
+    constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
+    constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
+    constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
+    constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
-  } LagrangianContactSolverViewKeys;
+  };
 
   string const & getContactRelationName() const { return m_contactRelationName; }
 
@@ -190,7 +188,7 @@ protected:
   virtual void postProcessInput() override final;
 
   virtual void
-  initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
+  initializePostInitialConditionsPreSubGroups() override final;
 
 private:
 
@@ -208,7 +206,7 @@ private:
 
   real64 const m_slidingCheckTolerance = 0.05;
 
-  string const m_tractionKey = viewKeyStruct::tractionString;
+  string const m_tractionKey = viewKeyStruct::tractionString();
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 

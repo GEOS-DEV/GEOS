@@ -12,6 +12,7 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"  
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
@@ -50,7 +51,7 @@
       <WellControls
         name="wellControls2"
         type="producer"
-        control="phaseVolRate"
+        control="BHP"
         referenceElevation="0.5"
         useSurfaceConditions="1"
         surfacePressure="101325"
@@ -150,21 +151,21 @@
   </Mesh>
 
   <Events
-    maxTime="1e6">
+    maxTime="5e5">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e4"
+      forceDt="5e3"
       target="/Solvers/reservoirSystem"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e5"
+      timeFrequency="5e4"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5e5"
+      timeFrequency="2.5e5"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -173,7 +174,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-        innerProductType="quasiTPFA"
+        innerProductType="beiraoDaVeigaLipnikovManzini"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>

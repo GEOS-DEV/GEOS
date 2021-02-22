@@ -78,8 +78,7 @@ public:
 
 //START_SPHINX_INCLUDE_01
 
-  virtual void
-  registerDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -241,55 +240,68 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    static constexpr auto elemDofFieldString = "compositionalVariables";
+    static constexpr char const * elemDofFieldString() { return "compositionalVariables"; }
 
     // inputs
-    static constexpr auto temperatureString = "temperature";
-    static constexpr auto useMassFlagString = "useMass";
+    static constexpr char const * temperatureString() { return "temperature"; }
 
-    static constexpr auto relPermNamesString  = "relPermNames";
-    static constexpr auto capPressureNamesString  = "capPressureNames";
+    static constexpr char const * useMassFlagString() { return "useMass"; }
 
-    static constexpr auto maxCompFracChangeString = "maxCompFractionChange";
-    static constexpr auto allowLocalCompDensChoppingString = "allowLocalCompDensityChopping";
+    static constexpr char const * relPermNamesString() { return "relPermNames"; }
 
-    static constexpr auto facePressureString  = "facePressure";
-    static constexpr auto bcPressureString    = "bcPressure";
+    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
 
-    static constexpr auto globalCompDensityString      = "globalCompDensity";
-    static constexpr auto deltaGlobalCompDensityString = "deltaGlobalCompDensity";
+    static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
+
+    static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+
+    static constexpr char const * facePressureString() { return "facePressure"; }
+
+    static constexpr char const * bcPressureString() { return "bcPressure"; }
+
+    static constexpr char const * globalCompDensityString() { return "globalCompDensity"; }
+
+    static constexpr char const * deltaGlobalCompDensityString() { return "deltaGlobalCompDensity"; }
 
     // intermediate values for constitutive model input
-    static constexpr auto globalCompFractionString                     = "globalCompFraction";
-    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dGlobalCompFraction_dGlobalCompDensity";
+    static constexpr char const * globalCompFractionString() { return "globalCompFraction"; }
+
+    static constexpr char const * dGlobalCompFraction_dGlobalCompDensityString() { return "dGlobalCompFraction_dGlobalCompDensity"; }
 
     // intermediate values for saturations
-    static constexpr auto phaseVolumeFractionString                     = "phaseVolumeFraction";
-    static constexpr auto dPhaseVolumeFraction_dPressureString          = "dPhaseVolumeFraction_dPressure";
-    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dPhaseVolumeFraction_dGlobalCompDensity";
+    static constexpr char const * phaseVolumeFractionString() { return "phaseVolumeFraction"; }
+
+    static constexpr char const * dPhaseVolumeFraction_dPressureString() { return "dPhaseVolumeFraction_dPressure"; }
+
+    static constexpr char const * dPhaseVolumeFraction_dGlobalCompDensityString() { return "dPhaseVolumeFraction_dGlobalCompDensity"; }
 
     // intermediate values for mobilities
-    static constexpr auto phaseMobilityString                     = "phaseMobility";
-    static constexpr auto dPhaseMobility_dPressureString          = "dPhaseMobility_dPressure";
-    static constexpr auto dPhaseMobility_dGlobalCompDensityString = "dPhaseMobility_dGlobalCompDensity";
+    static constexpr char const * phaseMobilityString() { return "phaseMobility"; }
+
+    static constexpr char const * dPhaseMobility_dPressureString() { return "dPhaseMobility_dPressure"; }
+
+    static constexpr char const * dPhaseMobility_dGlobalCompDensityString() { return "dPhaseMobility_dGlobalCompDensity"; }
 
     // these are used to store last converged time step values
-    static constexpr auto phaseVolumeFractionOldString     = "phaseVolumeFractionOld";
-    static constexpr auto totalDensityOldString            = "totalDensityOld";
-    static constexpr auto phaseDensityOldString            = "phaseDensityOld";
-    static constexpr auto phaseMobilityOldString           = "phaseMobilityOld";
-    static constexpr auto phaseComponentFractionOldString  = "phaseComponentFractionOld";
-    static constexpr auto porosityOldString                = "porosityOld";
+    static constexpr char const * phaseVolumeFractionOldString() { return "phaseVolumeFractionOld"; }
+
+    static constexpr char const * phaseDensityOldString() { return "phaseDensityOld"; }
+
+    static constexpr char const * totalDensityOldString() { return "totalDensityOld"; }
+
+    static constexpr char const * phaseComponentFractionOldString() { return "phaseComponentFractionOld"; }
+
+    static constexpr char const * phaseMobilityOldString() { return "phaseMobilityOld"; }
+
+    static constexpr char const * porosityOldString() { return "porosityOld"; }
 
     // these are allocated on faces for BC application until we can get constitutive models on faces
-    static constexpr auto phaseViscosityString             = "phaseViscosity";
-    static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
-    static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
+    static constexpr char const * phaseViscosityString() { return "phaseViscosity"; }
 
-  } viewKeysCompMultiphaseBase;
+    static constexpr char const * phaseRelativePermeabilityString() { return "phaseRelativePermeability"; }
 
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysCompMultiphaseBase;
+    static constexpr char const * phaseCapillaryPressureString() { return "phaseCapillaryPressure"; }
+  };
 
   /**
    * @brief Initialize all variables from initial conditions
@@ -349,9 +361,9 @@ protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Checks constitutive models for consistency
@@ -436,8 +448,6 @@ protected:
 
 };
 
-
 } // namespace geosx
-
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_

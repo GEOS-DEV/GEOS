@@ -346,7 +346,142 @@ UpwindingHelper::
   }
 }
 
-#define INST_UpwindingHelper( NC, NP ) \
+template< localIndex NC, localIndex NP >
+GEOSX_HOST_DEVICE
+void
+UpwindingHelper::
+  computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
+                                localIndex const (&neighborIds)[ 3 ],
+                                ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+                                ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
+                                real64 const (&phaseGravTerm)[ NP ][ NP-1 ],
+                                real64 & totalMob,
+                                real64 ( & dTotalMob_dPres )[ 2 ],
+                                real64 ( & dTotalMob_dCompDens )[ 2 ][ NC ] )
+{
+  localIndex totalMobIds[ NP ][ 3 ]{};
+  localIndex totalMobPos[ NP ]{};
+  setIndicesForTotalMobilityUpwinding< NP >( localIds,
+                                             neighborIds,
+                                             phaseGravTerm,
+                                             totalMobIds,
+                                             totalMobPos );
+  for( localIndex ip = 0; ip < NP; ++ip )
+  {
+    localIndex const er  = totalMobIds[ip][0];
+    localIndex const esr = totalMobIds[ip][1];
+    localIndex const ei  = totalMobIds[ip][2];
+    localIndex const pos = totalMobPos[ip];
+    totalMob = totalMob + phaseMob[er][esr][ei][ip];
+    dTotalMob_dPres[pos] = dTotalMob_dPres[pos] + dPhaseMob_dPres[er][esr][ei][pos];
+    for( localIndex ic = 0; ic < NC; ++ic )
+    {
+      dTotalMob_dCompDens[pos][ic] = dTotalMob_dCompDens[pos][ic] + dPhaseMob_dCompDens[er][esr][ei][ip][ic];
+    }
+  }
+  if( totalMob < 1e-12 )
+  {
+    totalMob = 1e-12;
+  }
+}
+
+GEOSX_HOST_DEVICE
+void
+UpwindingHelper::
+  setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
+                                       localIndex const (&neighborIds)[ 3 ],
+                                       real64 const & gravTerm,
+                                       localIndex & eru, localIndex & esru, localIndex & eiu, localIndex & posu,
+                                       localIndex & erd, localIndex & esrd, localIndex & eid, localIndex & posd )
+{
+  if( gravTerm > 0 )
+  {
+    eru  = localIds[0];
+    esru = localIds[1];
+    eiu  = localIds[2];
+    posu = Pos::LOCAL;
+    erd  = neighborIds[0];
+    esrd = neighborIds[1];
+    eid  = neighborIds[2];
+    posd = Pos::NEIGHBOR;
+  }
+  else
+  {
+    eru  = neighborIds[0];
+    esru = neighborIds[1];
+    eiu  = neighborIds[2];
+    posu = Pos::NEIGHBOR;
+    erd  = localIds[0];
+    esrd = localIds[1];
+    eid  = localIds[2];
+    posd = Pos::LOCAL;
+  }
+}
+
+template< localIndex NP >
+GEOSX_HOST_DEVICE
+void
+UpwindingHelper::
+  setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
+                                       localIndex const (&neighborIds)[ 3 ],
+                                       real64 const (&gravTerm)[ NP ][ NP-1 ],
+                                       localIndex ( & totalMobIds )[ NP ][ 3 ],
+                                       localIndex ( & totalMobPos )[ NP ] )
+{
+  if( NP == 2 )
+  {
+    if( gravTerm[0][0] > 0 )
+    {
+      totalMobIds[0][0] = localIds[0];
+      totalMobIds[0][1] = localIds[1];
+      totalMobIds[0][2] = localIds[2];
+      totalMobPos[0] = Pos::LOCAL;
+      totalMobIds[1][0] = neighborIds[0];
+      totalMobIds[1][1] = neighborIds[1];
+      totalMobIds[1][2] = neighborIds[2];
+      totalMobPos[1] = Pos::NEIGHBOR;
+    }
+    else
+    {
+      totalMobIds[0][0] = neighborIds[0];
+      totalMobIds[0][1] = neighborIds[1];
+      totalMobIds[0][2] = neighborIds[2];
+      totalMobPos[0] = Pos::NEIGHBOR;
+      totalMobIds[1][0] = localIds[0];
+      totalMobIds[1][1] = localIds[1];
+      totalMobIds[1][2] = localIds[2];
+      totalMobPos[1] = Pos::LOCAL;
+    }
+  }
+  else if( NP == 3 )
+  {
+    // TODO Francois: this should be improved
+    // currently this implements the algorithm proposed by SH Lee
+    for( localIndex ip = 0; ip < NP; ++ip )
+    {
+      if( ( gravTerm[ip][0] >= 0 && gravTerm[ip][1] >= 0 ) || // includes the no-buoyancy case
+          ( ( fabs( gravTerm[ip][0] ) >= fabs( gravTerm[ip][1] ) ) && gravTerm[ip][1] >= 0 ) ||
+          ( ( fabs( gravTerm[ip][1] ) >= fabs( gravTerm[ip][0] ) ) && gravTerm[ip][0] >= 0 ) )
+      {
+        totalMobIds[ip][0] = localIds[0];
+        totalMobIds[ip][1] = localIds[1];
+        totalMobIds[ip][2] = localIds[2];
+        totalMobPos[ip] = Pos::LOCAL;
+      }
+      else
+      {
+        totalMobIds[ip][0] = neighborIds[0];
+        totalMobIds[ip][1] = neighborIds[1];
+        totalMobIds[ip][2] = neighborIds[2];
+        totalMobPos[ip] = Pos::NEIGHBOR;
+      }
+    }
+  }
+}
+
+
+#define INST_UpwindingHelperNCNP( NC, NP ) \
   template \
   void \
   UpwindingHelper:: \
@@ -405,22 +540,48 @@ UpwindingHelper::
                                     ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens, \
                                     real64 ( &phaseGravTerm )[ NP ][ NP-1 ], \
                                     real64 ( &dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ], \
-                                    real64 ( &dPhaseGravTerm_dCompDens )[ NP ][ NP-1 ][ 2 ][ NC ] )
+                                    real64 ( &dPhaseGravTerm_dCompDens )[ NP ][ NP-1 ][ 2 ][ NC ] ); \
+  template \
+  void \
+  UpwindingHelper:: \
+    computeUpwindedTotalMobility< NC, NP >( localIndex const (&localIds)[ 3 ], \
+                                            localIndex const (&neighborIds)[ 3 ], \
+                                            ElementViewConst< arrayView2d< real64 const > > const & phaseMob, \
+                                            ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres, \
+                                            ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens, \
+                                            real64 const (&phaseGravTerm)[ NP ][ NP-1 ], \
+                                            real64 & totalMob,    \
+                                            real64 ( &dTotalMob_dPres )[ 2 ], \
+                                            real64 ( &dTotalMob_dCompDens )[ 2 ][ NC ] )
 
-INST_UpwindingHelper( 1, 2 );
-INST_UpwindingHelper( 2, 2 );
-INST_UpwindingHelper( 3, 2 );
-INST_UpwindingHelper( 4, 2 );
-INST_UpwindingHelper( 5, 2 );
+INST_UpwindingHelperNCNP( 1, 2 );
+INST_UpwindingHelperNCNP( 2, 2 );
+INST_UpwindingHelperNCNP( 3, 2 );
+INST_UpwindingHelperNCNP( 4, 2 );
+INST_UpwindingHelperNCNP( 5, 2 );
 
-INST_UpwindingHelper( 1, 3 );
-INST_UpwindingHelper( 2, 3 );
-INST_UpwindingHelper( 3, 3 );
-INST_UpwindingHelper( 4, 3 );
-INST_UpwindingHelper( 5, 3 );
+INST_UpwindingHelperNCNP( 1, 3 );
+INST_UpwindingHelperNCNP( 2, 3 );
+INST_UpwindingHelperNCNP( 3, 3 );
+INST_UpwindingHelperNCNP( 4, 3 );
+INST_UpwindingHelperNCNP( 5, 3 );
 
-#undef INST_UpwindingHelper
+#undef INST_UpwindingHelperNCNP
 
+#define INST_UpwindingHelperNP( NP ) \
+  template \
+  void \
+  UpwindingHelper:: \
+    setIndicesForTotalMobilityUpwinding< NP >( localIndex const (&localIds)[ 3 ], \
+                                               localIndex const (&neighborIds)[ 3 ], \
+                                               real64 const (&gravTerm)[ NP ][ NP-1 ], \
+                                               localIndex ( &totalMobIds )[ NP ][ 3 ], \
+                                               localIndex ( &totalMobPos )[ NP ] )
+
+INST_UpwindingHelperNP( 2 );
+INST_UpwindingHelperNP( 3 );
+
+#undef INST_UpwindingHelperNP
 
 /******************************** AssemblerKernelHelper ********************************/
 
@@ -1362,21 +1523,21 @@ FluxKernel::
 
   // get the cell-centered pressures
   arrayView1d< real64 const > const & elemPres  =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::pressureString );
+    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::pressureString() );
   arrayView1d< real64 const > const & dElemPres =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString );
+    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString() );
 
   // get the element data needed for transmissibility computation
   arrayView2d< real64 const > const & elemCenter =
-    subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
+    subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
   arrayView1d< real64 const > const & elemVolume =
-    subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+    subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
   arrayView2d< real64 const > const & elemPerm =
-    subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString );
+    subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString() );
 
   // get the cell-centered depth
   arrayView1d< real64 const > const & elemGravCoef =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::gravityCoefString );
+    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::gravityCoefString() );
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces

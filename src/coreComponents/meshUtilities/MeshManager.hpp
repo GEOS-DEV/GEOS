@@ -60,13 +60,13 @@ public:
    * @brief Generate the meshes of the physical DomainPartition.
    * @param[in] domain a pointer to the physical DomainPartition
    */
-  void generateMeshes( DomainPartition * const domain );
+  void generateMeshes( DomainPartition & domain );
 
   /**
    * @brief Generate the different mesh levels in a MeshBody of the domain.
    * @param[in] domain a pointer to the physical DomainPartition
    */
-  void generateMeshLevels( DomainPartition * const domain );
+  void generateMeshLevels( DomainPartition & domain );
 
 private:
 

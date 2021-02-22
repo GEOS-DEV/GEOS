@@ -143,14 +143,7 @@ public:
   virtual void
   updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
 
-
-  struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
-  {} viewKeysCompMultiphaseFVM;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysCompMultiphaseFVM;
-
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
 private:
 

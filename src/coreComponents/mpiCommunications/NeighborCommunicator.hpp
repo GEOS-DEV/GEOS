@@ -278,7 +278,7 @@ public:
   void sendRecvBuffers( int const commID );
 
   void unpackBufferForSync( std::map< string, string_array > const & fieldNames,
-                            MeshLevel * const meshLevel,
+                            MeshLevel & meshLevel,
                             int const commID,
                             bool on_device = false );
 

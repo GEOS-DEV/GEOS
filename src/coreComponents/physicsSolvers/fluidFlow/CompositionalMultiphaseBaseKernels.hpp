@@ -410,6 +410,8 @@ struct ResidualNormKernel
 
 };
 
+
+
 /******************************** SolutionCheckKernel ********************************/
 
 struct SolutionCheckKernel

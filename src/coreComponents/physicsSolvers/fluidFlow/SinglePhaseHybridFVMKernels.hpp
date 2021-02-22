@@ -551,21 +551,21 @@ struct FluxKernel
 
     // get the cell-centered pressures
     arrayView1d< real64 const > const elemPres  =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() );
     arrayView1d< real64 const > const dElemPres =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() );
 
     // get the element data needed for transmissibility computation
     arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
+      subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
     arrayView1d< real64 const > const elemVolume =
-      subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+      subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
     arrayView2d< real64 const > const elemPerm =
-      subRegion.getReference< array2d< real64 > >( SinglePhaseBase::viewKeyStruct::permeabilityString );
+      subRegion.getReference< array2d< real64 > >( SinglePhaseBase::viewKeyStruct::permeabilityString() );
 
     // get the cell-centered depth
     arrayView1d< real64 const > const elemGravCoef =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::gravityCoefString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::gravityCoefString() );
 
     // get the fluid data
     arrayView2d< real64 const > const elemDens = fluid.density();

@@ -191,42 +191,15 @@ struct UpwindingHelper
   template< localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
-                                localIndex const (&neighborIds)[ 3 ],
-                                ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-                                ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
-                                real64 const (&phaseGravTerm)[ NP ][ NP-1 ],
-                                real64 & totalMob,
-                                real64 ( & dTotalMob_dPres )[ 2 ],
-                                real64 ( & dTotalMob_dCompDens )[ 2 ][ NC ] )
-  {
-
-    localIndex totalMobIds[ NP ][ 3 ]{};
-    localIndex totalMobPos[ NP ]{};
-    setIndicesForTotalMobilityUpwinding< NP >( localIds,
-                                               neighborIds,
-                                               phaseGravTerm,
-                                               totalMobIds,
-                                               totalMobPos );
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      localIndex const er  = totalMobIds[ip][0];
-      localIndex const esr = totalMobIds[ip][1];
-      localIndex const ei  = totalMobIds[ip][2];
-      localIndex const pos = totalMobPos[ip];
-      totalMob = totalMob + phaseMob[er][esr][ei][ip];
-      dTotalMob_dPres[pos] = dTotalMob_dPres[pos] + dPhaseMob_dPres[er][esr][ei][pos];
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        dTotalMob_dCompDens[pos][ic] = dTotalMob_dCompDens[pos][ic] + dPhaseMob_dCompDens[er][esr][ei][ip][ic];
-      }
-    }
-    if( totalMob < 1e-12 )
-    {
-      totalMob = 1e-12;
-    }
-  }
+    computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
+                                  localIndex const (&neighborIds)[ 3 ],
+                                  ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+                                  ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+                                  ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
+                                  real64 const (&phaseGravTerm)[ NP ][ NP-1 ],
+                                  real64 & totalMob,
+                                  real64 ( &dTotalMob_dPres )[ 2 ],
+                                  real64 ( &dTotalMob_dCompDens )[ 2 ][ NC ] );
 
   /**
    * @brief Set the element indices used to evaluate the mobility ratios of the buoyancy term in hybrid upwinding
@@ -249,31 +222,7 @@ struct UpwindingHelper
                                        localIndex const (&neighborIds)[ 3 ],
                                        real64 const & gravTerm,
                                        localIndex & eru, localIndex & esru, localIndex & eiu, localIndex & posu,
-                                       localIndex & erd, localIndex & esrd, localIndex & eid, localIndex & posd )
-  {
-    if( gravTerm > 0 )
-    {
-      eru  = localIds[0];
-      esru = localIds[1];
-      eiu  = localIds[2];
-      posu = Pos::LOCAL;
-      erd  = neighborIds[0];
-      esrd = neighborIds[1];
-      eid  = neighborIds[2];
-      posd = Pos::NEIGHBOR;
-    }
-    else
-    {
-      eru  = neighborIds[0];
-      esru = neighborIds[1];
-      eiu  = neighborIds[2];
-      posu = Pos::NEIGHBOR;
-      erd  = localIds[0];
-      esrd = localIds[1];
-      eid  = localIds[2];
-      posd = Pos::LOCAL;
-    }
-  }
+                                       localIndex & erd, localIndex & esrd, localIndex & eid, localIndex & posd );
 
   /**
    * @brief Set the element indices used to evaluate the total mobility of the buoyancy term in hybrid upwinding
@@ -286,42 +235,11 @@ struct UpwindingHelper
   template< localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
-                                       localIndex const (&neighborIds)[ 3 ],
-                                       real64 const (&gravTerm)[ NP ][ NP-1 ],
-                                       localIndex ( & totalMobIds )[ NP ][ 3 ],
-                                       localIndex ( & totalMobPos )[ NP ] )
-  {
-    if( NP == 2 )
-    {
-      if( gravTerm[0][0] > 0 )
-      {
-        totalMobIds[0][0] = localIds[0];
-        totalMobIds[0][1] = localIds[1];
-        totalMobIds[0][2] = localIds[2];
-        totalMobPos[0] = Pos::LOCAL;
-        totalMobIds[1][0] = neighborIds[0];
-        totalMobIds[1][1] = neighborIds[1];
-        totalMobIds[1][2] = neighborIds[2];
-        totalMobPos[1] = Pos::NEIGHBOR;
-      }
-      else
-      {
-        totalMobIds[0][0] = neighborIds[0];
-        totalMobIds[0][1] = neighborIds[1];
-        totalMobIds[0][2] = neighborIds[2];
-        totalMobPos[0] = Pos::NEIGHBOR;
-        totalMobIds[1][0] = localIds[0];
-        totalMobIds[1][1] = localIds[1];
-        totalMobIds[1][2] = localIds[2];
-        totalMobPos[1] = Pos::LOCAL;
-      }
-    }
-    else if( NP == 3 )
-    {
-      // TODO: implement the upwinding here (in progress)
-    }
-  }
+    setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
+                                         localIndex const (&neighborIds)[ 3 ],
+                                         real64 const (&gravTerm)[ NP ][ NP-1 ],
+                                         localIndex ( &totalMobIds )[ NP ][ 3 ],
+                                         localIndex ( &totalMobPos )[ NP ] );
 
 };
 
@@ -1007,6 +925,10 @@ void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, local
     else if( numPhases == 3 )
     {
       if( numComps == 2 )
+      {
+        KERNELWRAPPER::template launch< NF(), 2, 3, IP_TYPE >( std::forward< ARGS >( args )... );
+      }
+      else if( numComps == 3 )
       {
         KERNELWRAPPER::template launch< NF(), 3, 3, IP_TYPE >( std::forward< ARGS >( args )... );
       }

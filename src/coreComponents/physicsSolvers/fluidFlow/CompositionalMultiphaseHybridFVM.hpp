@@ -79,7 +79,7 @@ public:
    */
   static string catalogName() { return "CompositionalMultiphaseHybridFVM"; }
 
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -162,26 +162,23 @@ public:
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {
-    static constexpr auto faceDofFieldString = "faceCenteredVariables";
+    static constexpr char const * faceDofFieldString() { return "faceCenteredVariables"; }
 
     // inputs
-    static constexpr auto maxRelativePresChangeString = "maxRelativePressureChange";
+    static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
 
     // primary face-based field
-    static constexpr auto deltaFacePressureString = "deltaFacePressure";
+    static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
 
     // auxiliary data for the buoyancy term
     // TODO: change the name
-    static constexpr auto mimGravityCoefString = "mimGravityCoefficient";
+    static constexpr char const * mimGravityCoefString() { return "mimGravityCoefficient"; }
 
-  } viewKeysCompMultiphaseHybridFVM;
+  };
 
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysCompMultiphaseHybridFVM;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
-
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
 protected:
 
@@ -204,8 +201,6 @@ private:
 
 };
 
-
 } // namespace geosx
-
 
 #endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVM_HPP_

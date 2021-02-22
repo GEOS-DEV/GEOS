@@ -1,20 +1,21 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      initialDt="1e2"
+      initialDt="5e2"
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        lineSearchAction="None"
+        lineSearchAction="Attempt"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"  
+        solverType="direct"
+        directParallel="0"  
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
@@ -28,6 +29,7 @@
       relPermNames="{ relperm }"
       temperature="368.15"
       maxCompFractionChange="0.2"
+      maxRelativePressureChange="0.2"
       useMass="1"/>
 
     <CompositionalMultiphaseWell
@@ -37,14 +39,15 @@
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
       wellTemperature="368.15"
-      maxCompFractionChange="0.2"      
+      maxCompFractionChange="0.2"
+      maxRelativePressureChange="0.2"            
       useMass="1">
       <WellControls
         name="wellControls1"
         type="producer"
-        control="phaseVolRate"
+        control="BHP"
         referenceElevation="12"
-        targetBHP="1e6"
+        targetBHP="2e6"
         targetPhaseRate="1e-7"
         targetPhaseName="water"/>
       <WellControls
@@ -95,7 +98,7 @@
   </Mesh>
 
   <Events
-    maxTime="5e6">
+    maxTime="2.5e5">
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e4"
@@ -205,6 +208,14 @@
       fieldName="pressure"
       scale="9e6"/>
 
+    <FieldSpecification
+      name="initialFacePressure_channel"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="faceManager"
+      fieldName="facePressure"
+      scale="9e6"/>
+    
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"

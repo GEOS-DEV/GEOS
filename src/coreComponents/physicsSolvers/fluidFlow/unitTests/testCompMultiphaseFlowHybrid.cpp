@@ -188,7 +188,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
   array1d< real64 > const & residual = solver.getLocalRhs();
   DofManager const & dofManager = solver.getDofManager();
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // assemble the analytical residual
   solver.resetStateToBeginningOfStep( domain );
@@ -206,7 +206,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.setValues< parallelDevicePolicy<> >( 0.0 );
 
-  string const elemDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::elemDofFieldString );
+  string const elemDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::elemDofFieldString() );
 
   solver.forTargetSubRegions( mesh, [&]( localIndex const,
                                          ElementSubRegionBase & subRegion )
@@ -216,16 +216,16 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
       subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
     arrayView1d< real64 const > const & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::pressureString() );
     pres.move( LvArray::MemorySpace::CPU, false );
     arrayView1d< real64 > const & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaPressureString() );
 
     arrayView2d< real64 const > const & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString() );
     compDens.move( LvArray::MemorySpace::CPU, false );
     arrayView2d< real64 > const & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaGlobalCompDensityString() );
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
@@ -291,16 +291,16 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
     }
   } );
 
-  FaceManager & faceManager = *mesh.getFaceManager();
+  FaceManager & faceManager = mesh.getFaceManager();
 
   // get the face-based pressure
   arrayView1d< real64 > const & facePres =
-    faceManager.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::facePressureString );
+    faceManager.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::facePressureString() );
   facePres.move( LvArray::MemorySpace::CPU, false );
   arrayView1d< real64 > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaFacePressureString );
+    faceManager.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaFacePressureString() );
 
-  string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString );
+  string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
   arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
@@ -352,9 +352,9 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseHybridFVM >( "compflow" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseHybridFVM >( "compflow" );
 
-    DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     solver->setupSystem( domain,
                          solver->getDofManager(),
@@ -381,9 +381,9 @@ real64 constexpr CompositionalMultiphaseHybridFlowTest::eps;
 TEST_F( CompositionalMultiphaseHybridFlowTest, jacobianNumericalCheck_flux )
 {
   real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
+  real64 const tol = 5e-3; // 10% error margin
 
-  DomainPartition & domain = *state.getProblemManager().getDomainPartition();
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,

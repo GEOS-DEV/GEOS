@@ -31,20 +31,20 @@ Coulomb::Coulomb( string const & name, Group * const parent ):
   m_frictionAngle(),
   m_frictionCoefficient()
 {
-  registerWrapper( viewKeyStruct::cohesionString, &m_cohesion )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::cohesionString(), &m_cohesion ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Cohesion" );
 
-  registerWrapper( viewKeyStruct::frictionAngleString, &m_frictionAngle )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  registerWrapper( viewKeyStruct::frictionAngleString(), &m_frictionAngle ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Friction Angle (in radians)" );
 
-  registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::frictionCoefficientString(), &m_frictionCoefficient ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Friction Coefficient" );
 }
 

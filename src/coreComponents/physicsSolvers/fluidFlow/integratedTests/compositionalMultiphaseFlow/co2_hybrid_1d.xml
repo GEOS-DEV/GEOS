@@ -6,19 +6,22 @@
       name="compflow"
       logLevel="1"
       discretization="fluidHM"
-      fluidNames="{ fluid1 }"
+      fluidNames="{ fluid }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
-      targetRegions="{ Region1 }">
+      initialDt="0.1"
+      targetRegions="{ region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="100"
         maxTimeStepCuts="5"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="direct"
+        directParallel="0"
+	logLevel="2"/>
     </CompositionalMultiphaseHybridFVM>
   </Solvers>
 
@@ -32,7 +35,7 @@
       nx="{ 10 }"
       ny="{ 1 }"
       nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
+      cellBlockNames="{ cb }"/>
   </Mesh>
 
   <Geometry>
@@ -54,7 +57,7 @@
       name="outputs"
       timeFrequency="1e4"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
     
     <PeriodicEvent
       name="solverApplications"
@@ -63,8 +66,8 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5e1"
-      targetExactTimestep="0"
+      timeFrequency="5e4"
+      targetExactTimestep="1"
       target="/Outputs/sidreRestart"/>
   </Events>
 
@@ -72,21 +75,21 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-	innerProductType="beiraoDaVeigaLipnikovManzini"
+        innerProductType="beiraoDaVeigaLipnikovManzini"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
-      name="Region1"
-      cellBlocks="{ cb1 }"
-      materialList="{ fluid1, rock, relperm }"/>
+      name="region"
+      cellBlocks="{ cb }"
+      materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
     <MultiPhaseMultiComponentFluid
-      name="fluid1"
+      name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
@@ -112,7 +115,7 @@
       component="0"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="permeability"
       scale="1.0e-13"/>
 
@@ -121,7 +124,7 @@
       component="1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="permeability"
       scale="1.0e-13"/>
 
@@ -130,7 +133,7 @@
       component="2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="permeability"
       scale="1.0e-13"/>
 
@@ -138,7 +141,7 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="referencePorosity"
       scale="0.2"/>
 
@@ -146,7 +149,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="pressure"
       scale="9e6"/>
 
@@ -162,7 +165,7 @@
       name="initialComposition_co2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="globalCompFraction"
       component="0"
       scale="0.005"/>
@@ -171,29 +174,29 @@
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="globalCompFraction"
       component="1"
       scale="0.995"/>
 
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="pressure"
-      scale="1e4"
+      scale="1e6"
       setNames="{ sink }"/>
 
     <FieldSpecification
       name="sourceTerm"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="pressure"
-      scale="1e8"
+      scale="5e7"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTermComposition_co2"
       setNames="{ sink }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="globalCompFraction"
       component="0"
       scale="0.005"/>
@@ -201,7 +204,7 @@
     <FieldSpecification
       name="sinkTermComposition_water"
       setNames="{ sink }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="globalCompFraction"
       component="1"
       scale="0.995"/>
@@ -209,7 +212,7 @@
     <FieldSpecification
       name="sourceTermComposition_co2"
       setNames="{ source }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="globalCompFraction"
       component="0"
       scale="0.995"/>
@@ -217,18 +220,16 @@
     <FieldSpecification
       name="sourceTermComposition_water"
       setNames="{ source }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cb"
       fieldName="globalCompFraction"
       component="1"
       scale="0.005"/>
   
   </FieldSpecifications>
 
-  <Functions/>
-
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
     <Restart
       name="sidreRestart"/>
   </Outputs>

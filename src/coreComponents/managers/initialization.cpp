@@ -213,21 +213,15 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
   bool const noXML = options[INPUT].count() == 0 && options[SCHEMA].count() == 0;
   if( parse.error() || options[HELP] || (argc == 0) || noXML )
   {
-    int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 80;
+    int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 120;
     option::printUsage( fwrite, stdout, usage, columns );
 
-    if( !options[HELP] )
+    if( options[HELP] )
     {
-      GEOSX_LOG_RANK_0( "Bad input arguments" );
+      throw NotAnError();
     }
 
-    if( noXML )
-    {
-      GEOSX_LOG_RANK_0( "An input xml must be specified!" );
-    }
-
-    MpiWrapper::finalize();
-    exit( !options[HELP] );
+    GEOSX_THROW( "Bad command line arguments.", InputError );
   }
 
   // Iterate over the remaining inputs
@@ -421,7 +415,11 @@ void setupOpenMP()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMPI( int argc, char * argv[] )
 {
-  MpiWrapper::init( &argc, &argv );
+  if( !MpiWrapper::initialized() )
+  {
+    MpiWrapper::init( &argc, &argv );
+  }
+
   MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
 }
 
@@ -511,13 +509,14 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   adiak::value( "CUDA runtime version", cudaRuntimeVersion );
   adiak::value( "CUDA driver version", cudaDriverVersion );
 }
+#endif // defined( GEOSX_USE_CALIPER )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeCaliper()
 {
+#if defined( GEOSX_USE_CALIPER )
   adiak::fini();
+#endif
 }
-
-#endif // defined( GEOSX_USE_CALIPER )
 
 } // namespace geosx

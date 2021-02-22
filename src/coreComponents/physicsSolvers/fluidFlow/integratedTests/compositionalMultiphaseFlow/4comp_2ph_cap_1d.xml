@@ -14,7 +14,7 @@
       temperature="297.15"
       useMass="0">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="5e-4"
         newtonMaxIter="15"/>
       <LinearSolverParameters
         solverType="direct"
