@@ -126,8 +126,8 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::conductivity0String() ).
         setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::
-                                                                         viewKeyStruct::
-                                                                         elementDefaultConductivityString() ).getDefaultValue() ).
+                                                                           viewKeyStruct::
+                                                                           elementDefaultConductivityString() ).getDefaultValue() ).
         setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
@@ -148,8 +148,8 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
         setDefaultValue( embSurfRegion.getDefaultAperture() );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString() ).
         setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( EmbeddedSurfaceSubRegion::
-                                                                         viewKeyStruct::
-                                                                         elementApertureString() ).getDefaultValue() ).
+                                                                           viewKeyStruct::
+                                                                           elementApertureString() ).getDefaultValue() ).
         setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
