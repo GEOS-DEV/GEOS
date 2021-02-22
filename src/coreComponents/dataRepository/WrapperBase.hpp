@@ -276,11 +276,11 @@ public:
    *                         events are finalized )
    * @return               the number of @p buffer_unit_type units packed
    */
-  virtual  localIndex packByIndex( buffer_unit_type * & buffer,
-                                   arrayView1d< localIndex const > const & packList,
-                                   bool withMetadata, 
-                                   bool onDevice,
-                                   parallelDeviceEvents & events ) const = 0;
+  virtual localIndex packByIndex( buffer_unit_type * & buffer,
+                                  arrayView1d< localIndex const > const & packList,
+                                  bool withMetadata,
+                                  bool onDevice,
+                                  parallelDeviceEvents & events ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the entire wrapped object.

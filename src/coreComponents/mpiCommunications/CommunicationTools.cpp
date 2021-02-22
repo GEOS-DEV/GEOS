@@ -761,7 +761,7 @@ void CommunicationTools::asyncPack( const std::map< string, string_array > & fie
   if( onDevice )
   {
     localIndex eventCount = 0;
-    for ( const auto & sa : fieldNames )
+    for( const auto & sa : fieldNames )
     {
       eventCount += sa.second.size( );
     }
@@ -829,12 +829,12 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
   if( onDevice )
   {
     size_t eventCount = 0;
-    for ( const auto & sa : icomm.fieldNames )
+    for( const auto & sa : icomm.fieldNames )
     {
       eventCount += sa.second.size( );
     }
     eventCount *= neighbors.size( );
-    if ( eventCount > events.size( ) )
+    if( eventCount > events.size( ) )
     {
       events.reserve( eventCount );
     }
@@ -862,15 +862,15 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
     }
   }
 
-  // we don't want to check if the request is complete, 
+  // we don't want to check if the request is complete,
   //  we want to check that we've processed the resulting buffer
-  //  which means that we've testany-d the request and it has been 
+  //  which means that we've testany-d the request and it has been
   //  deallocated and set to MPI_REQUEST_NULL
   int allDone = true;
   const MPI_Request * reqs = icomm.mpiRecvBufferRequest.data( );
-  for ( int idx = 0; idx < icomm.size; ++idx )
+  for( int idx = 0; idx < icomm.size; ++idx )
   {
-    if ( reqs[ idx ] != MPI_REQUEST_NULL )
+    if( reqs[ idx ] != MPI_REQUEST_NULL )
     {
       allDone = false;
       break;

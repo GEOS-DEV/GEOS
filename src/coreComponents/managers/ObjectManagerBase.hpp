@@ -362,7 +362,7 @@ public:
 
   /**
    * @brief Extract map from object and assign global indices.
-   * @param obj The instance.
+   * @param nodeManager The instance.
    * @param map The map.
    *
    * Dummy version, needs to be specialised by derived classes.
