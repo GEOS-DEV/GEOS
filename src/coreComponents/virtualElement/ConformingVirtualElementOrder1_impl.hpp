@@ -20,25 +20,31 @@ namespace geosx
 namespace virtualElement
 {
 template< localIndex MCN, localIndex MFN >
+GEOSX_HOST_DEVICE
 localIndex ConformingVirtualElementOrder1< MCN, MFN >::m_numSupportPoints;
 
 template< localIndex MCN, localIndex MFN >
+GEOSX_HOST_DEVICE
 real64 ConformingVirtualElementOrder1< MCN, MFN >::m_quadratureWeight;
 
 template< localIndex MCN, localIndex MFN >
+GEOSX_HOST_DEVICE
 real64 ConformingVirtualElementOrder1< MCN, MFN >::
 m_basisFunctionsIntegralMean[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints];
 
 template< localIndex MCN, localIndex MFN >
+GEOSX_HOST_DEVICE
 real64 ConformingVirtualElementOrder1< MCN, MFN >::
 m_stabilizationMatrix[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints]
 [ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints];
 
 template< localIndex MCN, localIndex MFN >
+GEOSX_HOST_DEVICE
 real64 ConformingVirtualElementOrder1< MCN, MFN >::
 m_basisDerivativesIntegralMean[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints][3];
 
 template< localIndex MCN, localIndex MFN >
+GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 ComputeProjectors( localIndex const & cellIndex,
                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
@@ -251,6 +257,7 @@ ComputeProjectors( localIndex const & cellIndex,
 }
 
 template< localIndex MCN, localIndex MFN >
+GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                       arraySlice1d< localIndex const > const & faceToNodes,
