@@ -47,10 +47,15 @@ private:
                         real64 basisIntegrals[MAXFACENODES],
                         real64 threeDMonomialIntegrals[3] );
 
+  GEOSX_HOST_DEVICE
   static localIndex m_numSupportPoints;
+  GEOSX_HOST_DEVICE
   static real64 m_quadratureWeight;
+  GEOSX_HOST_DEVICE
   static real64 m_basisFunctionsIntegralMean[maxSupportPoints];
+  GEOSX_HOST_DEVICE
   static real64 m_stabilizationMatrix[maxSupportPoints][maxSupportPoints];
+  GEOSX_HOST_DEVICE
   static real64 m_basisDerivativesIntegralMean[maxSupportPoints][3];
 
 public:
