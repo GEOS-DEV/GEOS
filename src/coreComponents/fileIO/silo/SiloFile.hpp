@@ -231,7 +231,7 @@ public:
    * @param writeArbitraryPolygon
    */
   void writeElementMesh( ElementRegionBase const & elementRegion,
-                         NodeManager const * const nodeManager,
+                         NodeManager const & nodeManager,
                          string const & meshName,
                          const localIndex nnodes,
                          real64 * coords[3],
@@ -248,7 +248,7 @@ public:
    * @param problemTime the current problem time
    * @param isRestart whether or not we want to write restart only data
    */
-  void writeMeshLevel( MeshLevel const * const meshLevel,
+  void writeMeshLevel( MeshLevel const & meshLevel,
                        int const cycleNum,
                        real64 const problemTime,
                        bool const isRestart );
@@ -323,7 +323,7 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void writeGroupSilo( dataRepository::Group const * group,
+  void writeGroupSilo( dataRepository::Group const & group,
                        string const & siloDirName,
                        string const & meshname,
                        int const centering,
@@ -675,7 +675,7 @@ private:
 
   string m_restartFileRoot;
 
-  string const m_siloDirectory = "siloFiles";
+  string const m_siloDirectory;
 
   string const m_siloDataSubDirectory = "data";
 

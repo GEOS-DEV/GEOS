@@ -91,7 +91,7 @@ public:
                           FaceManager const & faceManager,
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
-                          CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                          CONSTITUTIVE_TYPE & inputConstitutiveType,
                           arrayView1d< globalIndex const > const & inputDofNumber,
                           globalIndex const rankOffset,
                           CRSMatrixView< real64, globalIndex const > const & inputMatrix,
@@ -184,7 +184,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateActiveStrainEnergyDensity( k, q );
+    real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();

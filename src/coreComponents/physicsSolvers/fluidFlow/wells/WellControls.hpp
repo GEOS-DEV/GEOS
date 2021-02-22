@@ -58,10 +58,8 @@ public:
   enum class Control : integer
   {
     BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
-    GASRATE, /**< The well operates at a specified gas flow rate */
-    OILRATE, /**< The well operates at a specified oil flow rate */
-    WATERRATE, /**< The well operates at a specified water flow rate */
-    LIQUIDRATE /**< The well operates at a specified liquid flow rate (oil + water) */
+    PHASEVOLRATE, /**< The well operates at a specified phase volumetric flow rate */
+    TOTALVOLRATE, /**< The well operates at a specified total volumetric flow rate */
   };
 
 
@@ -118,44 +116,51 @@ public:
   ///@{
 
   /**
-   * @brief Set the reference well elem index where the control will be enforced.
-   * @param[in] refIndex reference well element index where the control will be enforced
-   */
-  void setReferenceWellElementIndex( localIndex refIndex )
-  {
-    m_refWellElemIndex = refIndex;
-  }
-
-  /**
-   * @brief Get the reference well element index where the control will be enforced.
-   * @return a localIndex value representing the reference well element index where the control will be enforced
-   */
-  localIndex const & getReferenceWellElementIndex() const
-  {
-    return m_refWellElemIndex;
-  }
-
-  /**
    * @brief Get the well type (injector or producer).
    * @return a well Type enum
    */
   Type getType() const { return m_type; }
 
+  /**
+   * @brief Set the control type to BHP and set a numerical value for the control.
+   * @param[in] val value for the BHP control
+   */
+  void switchToBHPControl( real64 const & val );
 
   /**
-   * @brief Set the control type and numerical value for a well.
-   * @param[in] control a Control enum with the type of control that is enforced
-   * @param[in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a
-   * minimum water rate...)
+   * @brief Set the control type to total rate and set a numerical value for the control.
+   * @param[in] val value for the total volumetric rate
    */
-  void setControl( Control control, real64 const & val );
+  void switchToTotalRateControl( real64 const & val );
 
+  /**
+   * @brief Set the control type to phase rate and set a numerical value for the control.
+   * @param[in] val value for the phase volumetric rate
+   */
+  void switchToPhaseRateControl( real64 const & val );
 
   /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
    */
   Control getControl() const { return m_currentControl; }
+
+  /**
+   * @brief Getter for the reference elevation where the BHP control is enforced
+   * @return the reference elevation
+   */
+  real64 getReferenceElevation() const { return m_refElevation; }
+
+  /**
+   * @brief Getter for the reference gravity coefficient
+   * @return the reference gravity coefficient
+   */
+  real64 getReferenceGravityCoef() const { return m_refGravCoef; }
+
+  /**
+   * @brief Setter for the reference gravity
+   */
+  void setReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
 
 
   /**
@@ -166,11 +171,22 @@ public:
 
 
   /**
-   * @brief Get the target rate
-   * @return the target rate
+   * @brief Get the target total rate
+   * @return the target total rate
    */
-  const real64 & getTargetRate() const { return m_targetRate; }
+  const real64 & getTargetTotalRate() const { return m_targetTotalRate; }
 
+  /**
+   * @brief Get the target phase rate
+   * @return the target phase rate
+   */
+  const real64 & getTargetPhaseRate() const { return m_targetPhaseRate; }
+
+  /**
+   * @brief Get the target phase name
+   * @return the target phase name
+   */
+  const string & getTargetPhaseName() const { return m_targetPhaseName; }
 
   /**
    * @brief Const accessor for the composition of the injection rate
@@ -178,11 +194,26 @@ public:
    */
   arrayView1d< real64 const > getInjectionStream() const { return m_injectionStream; }
 
-  ///@}
+  /**
+   * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
+   * @return 1 if we use surface conditions, and 0 otherwise
+   */
+  integer useSurfaceConditions() const { return m_useSurfaceConditions; }
 
-  /// @cond DO_NOT_DOCUMENT
-  void debug() const;
-  /// @endcond
+  /**
+   * @brief Getter for the surface pressure when m_useSurfaceConditions == 1
+   * @return the surface pressure
+   */
+  const real64 & getSurfacePressure() const { return m_surfacePres; }
+
+  /**
+   * @brief Getter for the surface temperature when m_useSurfaceConditions == 1
+   * @return the surface temperature
+   */
+  const real64 & getSurfaceTemperature() const { return m_surfaceTemp; }
+
+
+  ///@}
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -190,56 +221,71 @@ public:
    */
   struct viewKeyStruct
   {
-    /// String key for the reference index (currently unused)
-    static constexpr auto refWellElemIndexString = "referenceWellElementIndex";
+    /// String key for the well reference elevation (for BHP control)
+    static constexpr char const * refElevString() { return "referenceElevation"; }
     /// String key for the well type
-    static constexpr auto typeString             = "type";
+    static constexpr char const * typeString() { return "type"; }
     /// String key for the well control
-    static constexpr auto controlString          = "control";
+    static constexpr char const * controlString() { return "control"; }
     /// String key for the well target BHP
-    static constexpr auto targetBHPString        = "targetBHP";
+    static constexpr char const * targetBHPString() { return "targetBHP"; }
     /// String key for the well target rate
-    static constexpr auto targetRateString       = "targetRate";
+    static constexpr char const * targetTotalRateString() { return "targetTotalRate"; }
+    /// String key for the well target phase rate
+    static constexpr char const * targetPhaseRateString() { return "targetPhaseRate"; }
+    /// String key for the well target phase name
+    static constexpr char const * targetPhaseNameString() { return "targetPhaseName"; }
     /// String key for the well injection stream
-    static constexpr auto injectionStreamString  = "injectionStream";
-    /// ViewKey for the reference index (currently unused)
-    dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
+    static constexpr char const * injectionStreamString() { return "injectionStream"; }
+    /// String key for checking the rates at surface conditions
+    static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
+    /// String key for the surface pressure
+    static constexpr char const * surfacePressureString() { return "surfacePressure"; }
+    /// String key for the surface temperature
+    static constexpr char const * surfaceTemperatureString() { return "surfaceTemperature"; }
+    /// ViewKey for the reference elevation
+    dataRepository::ViewKey referenceElevation   = { refElevString() };
     /// ViewKey for the well type
-    dataRepository::ViewKey type            = { typeString };
+    dataRepository::ViewKey type                 = { typeString() };
     /// ViewKey for the well control
-    dataRepository::ViewKey control         = { controlString };
+    dataRepository::ViewKey control              = { controlString() };
     /// ViewKey for the well target BHP
-    dataRepository::ViewKey targetBHP       = { targetBHPString };
+    dataRepository::ViewKey targetBHP            = { targetBHPString() };
     /// ViewKey for the well target rate
-    dataRepository::ViewKey targetRate      = { targetRateString };
+    dataRepository::ViewKey targetTotalRate      = { targetTotalRateString() };
+    /// ViewKey for the well target phase rate
+    dataRepository::ViewKey targetPhaseRate      = { targetPhaseRateString() };
+    /// ViewKey for the well target phase name
+    dataRepository::ViewKey targetPhaseName      = { targetPhaseNameString() };
     /// ViewKey for the well injection stream
-    dataRepository::ViewKey injectionStream = { injectionStreamString };
+    dataRepository::ViewKey injectionStream      = { injectionStreamString() };
+    /// ViewKey for the surface conditions flag
+    dataRepository::ViewKey useSurfaceConditions = { useSurfaceConditionsString() };
+    /// ViewKey for the surface pressure
+    dataRepository::ViewKey surfacePressure      = { surfacePressureString() };
+    /// ViewKey for the surface temperature
+    dataRepository::ViewKey surfaceTemperature   = { surfaceTemperatureString() };
+
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
 
 protected:
 
-  /**
-   * @brief This function provides capability to post process input values prior to
-   * any other initialization operations.
-   */
   virtual void postProcessInput() override;
 
-  /**
-   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
-   * @param[in] rootGroup A group that is passed in to the initialization functions
-   *                  in order to facilitate the initialization.
-   */
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
 
   /// Well type (as Type enum)
   Type m_type;
 
-  /// Reference index (currently unused)
-  localIndex m_refWellElemIndex;
+  /// Reference elevation
+  real64 m_refElevation;
+
+  /// Gravity coefficient of the reference elevation
+  real64 m_refGravCoef;
 
   /// Well controls as a Control enum
   Control m_currentControl;
@@ -248,16 +294,31 @@ private:
   real64 m_targetBHP;
 
   /// Target rate value
-  real64 m_targetRate;
+  real64 m_targetTotalRate;
+
+  /// Target phase rate value
+  real64 m_targetPhaseRate;
+
+  /// Name of the targeted phase
+  string m_targetPhaseName;
 
   /// Vector with global component fractions at the injector
   array1d< real64 >  m_injectionStream;
+
+  /// Flag to decide whether rates are controlled at rates or surface conditions
+  integer m_useSurfaceConditions;
+
+  /// Surface pressure
+  real64 m_surfacePres;
+
+  /// Surface temperature
+  real64 m_surfaceTemp;
 
 };
 
 ENUM_STRINGS( WellControls::Type, "producer", "injector" )
 
-ENUM_STRINGS( WellControls::Control, "BHP", "gasRate", "oilRate", "waterRate", "liquidRate" )
+ENUM_STRINGS( WellControls::Control, "BHP", "phaseVolRate", "totalVolRate" )
 
 } //namespace geosx
 

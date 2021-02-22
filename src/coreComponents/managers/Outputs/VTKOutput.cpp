@@ -32,22 +32,22 @@ VTKOutput::VTKOutput( string const & name,
   m_plotLevel(),
   m_writer( name )
 {
-  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel )->
-    setApplyDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData )->
-    setApplyDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Output the data in binary format" );
 
 }
@@ -57,14 +57,13 @@ VTKOutput::~VTKOutput()
 
 
 
-void VTKOutput::execute( real64 const time_n,
+bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const cycleNumber,
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
                          real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
-                         Group * domain )
+                         DomainPartition & domain )
 {
-  DomainPartition * domainPartition = Group::groupCast< DomainPartition * >( domain );
   if( m_writeBinaryData )
   {
     m_writer.setOutputMode( vtk::VTKOutputMode::BINARY );
@@ -74,7 +73,9 @@ void VTKOutput::execute( real64 const time_n,
     m_writer.setOutputMode( vtk::VTKOutputMode::ASCII );
   }
   m_writer.setPlotLevel( m_plotLevel );
-  m_writer.write( time_n, cycleNumber, *domainPartition );
+  m_writer.write( time_n, cycleNumber, domain );
+
+  return false;
 }
 
 

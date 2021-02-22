@@ -21,6 +21,8 @@
 
 #include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 
@@ -88,29 +90,28 @@ BlueprintOutput::BlueprintOutput( string const & name,
                                   dataRepository::Group * const parent ):
   OutputBase( name, parent )
 {
-  registerWrapper( "plotLevel", &m_plotLevel )->
-    setApplyDefaultValue( dataRepository::PlotLevel::LEVEL_1 )->
-    setInputFlag( dataRepository::InputFlags::OPTIONAL )->
+  registerWrapper( "plotLevel", &m_plotLevel ).
+    setApplyDefaultValue( dataRepository::PlotLevel::LEVEL_1 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Determines which fields to write." );
 
-  registerWrapper( "outputFullQuadratureData", &m_outputFullQuadratureData )->
-    setApplyDefaultValue( false )->
-    setInputFlag( dataRepository::InputFlags::OPTIONAL )->
+  registerWrapper( "outputFullQuadratureData", &m_outputFullQuadratureData ).
+    setApplyDefaultValue( false ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "If true writes out data associated with every quadrature point." );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void BlueprintOutput::execute( real64 const time,
+bool BlueprintOutput::execute( real64 const time,
                                real64 const,
                                integer const cycle,
                                integer const,
                                real64 const,
-                               dataRepository::Group * group )
+                               DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition const & domain = dynamicCast< DomainPartition const & >( *group );
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   conduit::Node meshRoot;
   conduit::Node & mesh = meshRoot[ "mesh" ];
@@ -120,10 +121,10 @@ void BlueprintOutput::execute( real64 const time,
   mesh[ "state/time" ] = time;
   mesh[ "state/cycle" ] = cycle;
 
-  addNodalData( *meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
+  addNodalData( meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
 
   dataRepository::Group averagedElementData( "averagedElementData", this );
-  addElementData( *meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
+  addElementData( meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
 
   /// The Blueprint will complain if the fields node is present but empty.
   if( mesh[ "fields" ].number_of_children() == 0 )
@@ -149,6 +150,8 @@ void BlueprintOutput::execute( real64 const time,
   GEOSX_ERROR_IF_GE( snprintf( buffer, 128, "blueprintFiles/cycle_%07d", cycle ), 128 );
   string const filePathForRank = dataRepository::writeRootFile( fileRoot, buffer );
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
+
+  return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,8 +221,8 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
     writeOutWrappersAsFields( subRegion, fields, topologyName );
 
     /// Write out the quadrature averaged constitutive data and the full data if requested.
-    Group & averagedSubRegionData = *averagedElementData.registerGroup( topologyName );
-    subRegion.getConstitutiveModels()->forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
+    Group & averagedSubRegionData = averagedElementData.registerGroup( topologyName );
+    subRegion.getConstitutiveModels().forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
     {
       writeOutConstitutiveData( constitutiveModel, fields, topologyName, averagedSubRegionData );
 
@@ -265,7 +268,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
 {
   GEOSX_MARK_FUNCTION;
 
-  Group & averagedConstitutiveData = *averagedSubRegionData.registerGroup( constitutiveModel.getName() );
+  Group & averagedConstitutiveData = averagedSubRegionData.registerGroup( constitutiveModel.getName() );
 
   constitutiveModel.forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
   {
@@ -273,7 +276,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
     {
       string const fieldName = constitutiveModel.getName() + "-quadrature-averaged-" + wrapper.getName();
       averagedConstitutiveData.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
-        ->addBlueprintField( fields, fieldName, topology );
+        .addBlueprintField( fields, fieldName, topology );
     }
   } );
 }
