@@ -33,7 +33,7 @@ public:
   static constexpr localIndex numQuadraturePoints = 1;
 
 private:
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static void
   ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                         arraySlice1d< localIndex const > const & faceToNodes,
@@ -47,22 +47,17 @@ private:
                         real64 basisIntegrals[MAXFACENODES],
                         real64 threeDMonomialIntegrals[3] );
 
-  GEOSX_HOST_DEVICE
   static localIndex m_numSupportPoints;
-  GEOSX_HOST_DEVICE
   static real64 m_quadratureWeight;
-  GEOSX_HOST_DEVICE
   static real64 m_basisFunctionsIntegralMean[maxSupportPoints];
-  GEOSX_HOST_DEVICE
   static real64 m_stabilizationMatrix[maxSupportPoints][maxSupportPoints];
-  GEOSX_HOST_DEVICE
   static real64 m_basisDerivativesIntegralMean[maxSupportPoints][3];
 
 public:
   virtual ~ConformingVirtualElementOrder1() override
   {}
 
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static void
   ComputeProjectors( localIndex const & cellIndex,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
@@ -78,25 +73,25 @@ public:
                      real64 const & cellVolume
                      );
 
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
 
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static localIndex getNumSupportPoints()
   {
     return m_numSupportPoints;
   }
 
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static real64 calcStabilizationValue( localIndex const iBasisFunction,
                                         localIndex const jBasisFunction
                                         )
   { return m_stabilizationMatrix[iBasisFunction][jBasisFunction]; }
 
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
                            real64 ( & gradN )[maxSupportPoints][3] )
   {
@@ -106,7 +101,7 @@ public:
     return transformedQuadratureWeight( q );
   }
 
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static void calcN( localIndex const q,
                      real64 ( & N )[maxSupportPoints] )
   {
@@ -115,7 +110,7 @@ public:
       N[i] = m_basisFunctionsIntegralMean[i];
   }
 
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ) )
   {
     return m_quadratureWeight;
