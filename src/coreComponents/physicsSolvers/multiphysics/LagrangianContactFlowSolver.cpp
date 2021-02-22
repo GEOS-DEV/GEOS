@@ -1322,9 +1322,6 @@ void LagrangianContactFlowSolver::
   // Get the coordinates for all nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
-  std::ofstream H1file( "H1.coo" );
-  std::ofstream H2file( "H2.coo" );
-
   forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
                                                        [&]( localIndex const,
                                                             localIndex const,
@@ -1387,13 +1384,6 @@ void LagrangianContactFlowSolver::
                                                                     nodeDOF,
                                                                     dRdU.data(),
                                                                     2 * 3 * numNodesPerFace );
-
-          for( localIndex ii = 0; ii < 2 * 3 * numNodesPerFace; ++ii )
-          {
-            char str[100];
-            sprintf( str, "%10li %10lli %20.11e\n", localRow, nodeDOF[ii], dRdU( ii ));
-            H1file << str;
-          }
         }
 
         // flux derivative
@@ -1437,21 +1427,11 @@ void LagrangianContactFlowSolver::
                                                                       nodeDOF,
                                                                       dRdU.data(),
                                                                       2 * 3 * numNodesPerFace );
-
-            for( localIndex ii = 0; ii < 2 * 3 * numNodesPerFace; ++ii )
-            {
-              char str[100];
-              sprintf( str, "%10li %10lli %20.11e\n", localRow, nodeDOF[ii], dRdU( ii ));
-              H2file << str;
-            }
-
           }
         }
       } );
     }
   } );
-  H1file.close();
-  H2file.close();
 }
 
 void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const & domain,
