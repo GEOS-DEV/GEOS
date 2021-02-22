@@ -57,14 +57,14 @@ public:
    * @brief Const getter for the catalog name.
    * @return the name of this type in the catalog
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "CellBlock"; }
 
   /**
-   * @copydoc CatalogName()
+   * @copydoc catalogName()
    */
   virtual const string getCatalogName() const override final
-  { return CellBlock::CatalogName(); }
+  { return CellBlock::catalogName(); }
 
   ///@}
 
@@ -103,10 +103,10 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
   /**
    * @brief Compute the center of each element in the subregion.
@@ -134,7 +134,7 @@ public:
    * @param[in] k the index of the element in the subregion
    * @param[in] X an arrayView of (const) node positions
    */
-  inline void CalculateCellVolumesKernel( localIndex const k,
+  inline void calculateCellVolumesKernel( localIndex const k,
                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
     LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
@@ -177,7 +177,7 @@ public:
    */
   ///@{
 
-  virtual void SetElementType( string const & elementType ) override;
+  virtual void setElementType( string const & elementType ) override;
 
   /**
    * @brief Get the number of the nodes in a face of the element.
@@ -185,7 +185,7 @@ public:
    * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
    * @return the number of nodes of this face
    */
-  localIndex GetNumFaceNodes( localIndex const elementIndex,
+  localIndex getNumFaceNodes( localIndex const elementIndex,
                               localIndex const localFaceIndex ) const;
 
   /**
@@ -195,7 +195,7 @@ public:
    * @param nodeIndices a pointer to the node indices of the face
    * @return the number of nodes in the face
    */
-  localIndex GetFaceNodes( localIndex const elementIndex,
+  localIndex getFaceNodes( localIndex const elementIndex,
                            localIndex const localFaceIndex,
                            localIndex * const nodeIndices ) const;
 
@@ -206,7 +206,7 @@ public:
    * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
    * @param nodeIndices a reference to the array of node indices of the face
    */
-  void GetFaceNodes( localIndex const elementIndex,
+  void getFaceNodes( localIndex const elementIndex,
                      localIndex const localFaceIndex,
                      localIndex_array & nodeIndices ) const;
 
@@ -271,10 +271,10 @@ public:
    * @return a non-const reference to the property
    */
   template< typename T >
-  T & AddProperty( string const & propertyName )
+  T & addProperty( string const & propertyName )
   {
     m_externalPropertyNames.emplace_back( propertyName );
-    return this->registerWrapper< T >( propertyName )->reference();
+    return this->registerWrapper< T >( propertyName ).reference();
   }
 
   /**
@@ -287,8 +287,7 @@ public:
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      dataRepository::WrapperBase * const wrapper = this->getWrapperBase( externalPropertyName );
-      lambda( wrapper );
+      lambda( this->getWrapperBase( externalPropertyName ) );
     }
   }
 

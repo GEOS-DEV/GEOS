@@ -48,7 +48,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "FaceElementSubRegion"; }
 
   /**
@@ -57,7 +57,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return FaceElementSubRegion::CatalogName();
+    return FaceElementSubRegion::catalogName();
   }
 
   ///@}
@@ -86,7 +86,7 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) override;
   /**
    * @brief Function to compute the geometric quantities of a specific face element.
@@ -96,19 +96,19 @@ public:
   void CalculateElementGeometricQuantities( localIndex const index,
                                             arrayView1d< real64 const > const & faceArea );
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
 
-  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
   ///@}
 
@@ -117,7 +117,7 @@ public:
    * @param faceManager The face manager group
    * @param indices The list of indices to set value of ghostRank
    */
-  void inheritGhostRankFromParentFace( FaceManager const * const faceManager,
+  void inheritGhostRankFromParentFace( FaceManager const & faceManager,
                                        std::set< localIndex > const & indices );
 
   /**
@@ -127,23 +127,19 @@ public:
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
     /// String key for the derivatives of the shape functions with respect to the reference configuration
-    static constexpr auto dNdXString = "dNdX";
-
+    static constexpr char const * dNdXString() { return "dNdX"; }
     /// String key for the derivative of the jacobian.
-    static constexpr auto detJString = "detJ";
+    static constexpr char const * detJString() { return "detJ"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
-
     /// Separation coefficient string.
-    constexpr static auto separationCoeffString = "separationCoeff";
-
+    constexpr static char const * separationCoeffString() { return "separationCoeff"; }
     /// dSepCoeffdAper string.
-    constexpr static auto dSeparationCoeffdAperString = "dSeparationCoeffdAper";
+    constexpr static char const * dSeparationCoeffdAperString() { return "dSeparationCoeffdAper"; }
 #endif
-
   };
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
 
   /**
@@ -243,7 +239,7 @@ private:
    * @return the pack size
    */
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
   /// The array of shape function derivaties.

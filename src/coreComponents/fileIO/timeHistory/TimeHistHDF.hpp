@@ -28,7 +28,7 @@
 #include "managers/TimeHistory/HistoryIO.hpp"
 #include <hdf5.h>
 
-#include <string>
+
 
 namespace geosx
 {
@@ -51,7 +51,7 @@ public:
    * @param name The dataset/group name to check for.
    * @return Whether the dataset/group exists in the target.
    */
-  virtual bool CheckInTarget( const string & name )
+  virtual bool checkInTarget( const string & name )
   {
     htri_t exists = 0;
     H5E_BEGIN_TRY {

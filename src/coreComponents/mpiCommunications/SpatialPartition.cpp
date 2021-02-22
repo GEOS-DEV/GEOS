@@ -80,10 +80,10 @@ SpatialPartition::~SpatialPartition()
 //}
 
 
-void SpatialPartition::InitializePostSubGroups( Group * const )
+void SpatialPartition::initializePostSubGroups()
 {
   //get size of problem and decomposition
-  m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  m_size = MpiWrapper::commSize( MPI_COMM_GEOSX );
 
   //check to make sure our dimensions agree
   {
@@ -99,33 +99,33 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
   MPI_Comm cartcomm;
   {
     int reorder = 0;
-    MpiWrapper::Cart_create( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+    MpiWrapper::cartCreate( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
   }
-  m_rank = MpiWrapper::Comm_rank( cartcomm );
-  MpiWrapper::Cart_coords( cartcomm, m_rank, nsdof, m_coords.data());
+  m_rank = MpiWrapper::commRank( cartcomm );
+  MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
 
 
-  m_color = GetColor();
+  m_color = getColor();
 
   //add neighbors
   {
     int ncoords[nsdof];
     m_neighbors.clear();
-    AddNeighbors( 0, cartcomm, ncoords );
+    addNeighbors( 0, cartcomm, ncoords );
   }
 
-  MpiWrapper::Comm_free( cartcomm );
+  MpiWrapper::commFree( cartcomm );
 
   //initialize cached requests and status
   m_mpiRequest.resize( 2 * m_neighbors.size() );
   m_mpiStatus.resize( 2 * m_neighbors.size() );
 }
 
-void SpatialPartition::InitializeMetis()
+void SpatialPartition::initializeMetis()
 {
   //get size of problem and decomposition
-  m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
-  m_rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  m_size = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  m_rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   //check to make sure our dimensions agree
   GEOSX_ERROR_IF_NE( m_sizeMetis, m_size );
@@ -136,7 +136,7 @@ void SpatialPartition::InitializeMetis()
 
 }
 
-int SpatialPartition::GetColor()
+int SpatialPartition::getColor()
 {
   int color = 0;
 
@@ -162,7 +162,7 @@ int SpatialPartition::GetColor()
 
 
 
-void SpatialPartition::AddNeighbors( const unsigned int idim,
+void SpatialPartition::addNeighbors( const unsigned int idim,
                                      MPI_Comm & cartcomm,
                                      int * ncoords )
 {
@@ -182,8 +182,8 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
     {
       m_neighbors.push_back( NeighborCommunicator( ) );
       int rank;
-      rank = MpiWrapper::Cart_rank( cartcomm, ncoords );
-      m_neighbors.back().SetNeighborRank( rank );
+      rank = MpiWrapper::cartRank( cartcomm, ncoords );
+      m_neighbors.back().setNeighborRank( rank );
 //      m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
 
 //      array1d<int> nbrcoords(nsdof);
@@ -212,18 +212,18 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
       }
       if( ok )
       {
-        AddNeighbors( idim + 1, cartcomm, ncoords );
+        addNeighbors( idim + 1, cartcomm, ncoords );
       }
     }
   }
 }
 
-void SpatialPartition::AddNeighborsMetis( SortedArray< globalIndex > & neighborList )
+void SpatialPartition::addNeighborsMetis( SortedArray< globalIndex > & neighborList )
 {
   for( globalIndex const gid : neighborList )
   {
     m_neighbors.push_back( NeighborCommunicator());
-    m_neighbors.back().SetNeighborRank( LvArray::integerConversion< int >( gid ) );
+    m_neighbors.back().setNeighborRank( LvArray::integerConversion< int >( gid ) );
 
 //    m_neighbors.back().Initialize( LvArray::integerConversion<int>(gid), this->m_rank, this->m_size );
   }
@@ -236,7 +236,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
 
   {
     //get size of problem and decomposition
-    m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+    m_size = MpiWrapper::commSize( MPI_COMM_GEOSX );
 
     //check to make sure our dimensions agree
     {
@@ -252,22 +252,22 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::Cart_create( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
     }
-    m_rank = MpiWrapper::Comm_rank( cartcomm );
-    MpiWrapper::Cart_coords( cartcomm, m_rank, nsdof, m_coords.data());
+    m_rank = MpiWrapper::commRank( cartcomm );
+    MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
 
 
-    m_color = GetColor();
+    m_color = getColor();
 
     //add neighbors
     {
       int ncoords[nsdof];
       m_neighbors.clear();
-      AddNeighbors( 0, cartcomm, ncoords );
+      addNeighbors( 0, cartcomm, ncoords );
     }
 
-    MpiWrapper::Comm_free( cartcomm );
+    MpiWrapper::commFree( cartcomm );
   }
 
   // global values
@@ -335,7 +335,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
 //  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
 //}
 
-void SpatialPartition::SetPartitionGeometricalBoundary( real64 const ( &min )[ 3 ],
+void SpatialPartition::setPartitionGeometricalBoundary( real64 const ( &min )[ 3 ],
                                                         real64 const ( &max )[ 3 ] )
 {
   // We need this in mesh generator when we have extension zones.
@@ -344,7 +344,7 @@ void SpatialPartition::SetPartitionGeometricalBoundary( real64 const ( &min )[ 3
 }
 
 
-bool SpatialPartition::IsCoordInPartition( const real64 & coord, const int dir )
+bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir )
 {
   bool rval = true;
   const int i = dir;
@@ -365,7 +365,7 @@ bool SpatialPartition::IsCoordInPartition( const real64 & coord, const int dir )
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartition( real64 const ( &coordinates )[ 3 ] )
+bool SpatialPartition::isCoordInPartition( real64 const ( &coordinates )[ 3 ] )
 {
   bool rval = true;
   for( int i = 0; i < nsdof; i++ )
@@ -388,7 +388,7 @@ bool SpatialPartition::IsCoordInPartition( real64 const ( &coordinates )[ 3 ] )
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartition( real64 const ( &coordinates )[ 3 ], const int numDistPartition )
+bool SpatialPartition::isCoordInPartition( real64 const ( &coordinates )[ 3 ], const int numDistPartition )
 {
   bool rval = true;
   real64 m_xBoundingBoxMinTemp[3], m_xBoundingBoxMaxTemp[3];
@@ -419,7 +419,7 @@ bool SpatialPartition::IsCoordInPartition( real64 const ( &coordinates )[ 3 ], c
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartitionClosed( real64 const ( &coordinates )[ 3 ] )
+bool SpatialPartition::isCoordInPartitionClosed( real64 const ( &coordinates )[ 3 ] )
 // A variant with intervals closed at both ends
 {
   bool rval = true;
@@ -443,7 +443,7 @@ bool SpatialPartition::IsCoordInPartitionClosed( real64 const ( &coordinates )[ 
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartitionBoundingBox( real64 const ( &coordinates )[ 3 ] )
+bool SpatialPartition::isCoordInPartitionBoundingBox( real64 const ( &coordinates )[ 3 ] )
 
 {
   bool rval = true;
@@ -469,7 +469,7 @@ bool SpatialPartition::IsCoordInPartitionBoundingBox( real64 const ( &coordinate
 
 
 
-void SpatialPartition::SetContactGhostRange( const real64 bufferSize )
+void SpatialPartition::setContactGhostRange( const real64 bufferSize )
 {
   LvArray::tensorOps::copy< 3 >( m_contactGhostMin, m_min );
   LvArray::tensorOps::addScalar< 3 >( m_contactGhostMin, -bufferSize );
@@ -478,7 +478,7 @@ void SpatialPartition::SetContactGhostRange( const real64 bufferSize )
   LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
 }
 
-bool SpatialPartition::IsCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] )
+bool SpatialPartition::isCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] )
 {
   bool rval = true;
   for( int i = 0; i < nsdof; i++ )

@@ -45,13 +45,13 @@ public:
    * @brief The function is to return the name of the CellBlockManager in the object catalog
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
-  static string CatalogName()
+  static string catalogName()
   {
     return "CellBlockManager";
   }
 
   virtual const string getCatalogName() const override final
-  { return CellBlockManager::CatalogName(); }
+  { return CellBlockManager::catalogName(); }
 
 
   /**
@@ -66,7 +66,7 @@ public:
    */
   virtual ~CellBlockManager() override;
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   using Group::resize;
 
@@ -89,9 +89,9 @@ public:
    * @param regionName name of the element sub-region
    * @return pointer to the element sub-region
    */
-  CellBlock * GetRegion( string const & regionName )
+  CellBlock & getRegion( string const & regionName )
   {
-    return this->GetGroup( dataRepository::keys::cellBlocks )->GetGroup< CellBlock >( regionName );
+    return this->getGroup( dataRepository::keys::cellBlocks ).getGroup< CellBlock >( regionName );
   }
 
 
@@ -103,9 +103,9 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    Group * elementRegions = this->GetGroup( dataRepository::keys::cellBlocks );
-    elementRegions->forSubGroups< CellBlock >( lambda );
+    this->getGroup( dataRepository::keys::cellBlocks ).forSubGroups< CellBlock >( lambda );
   }
+
 private:
 
   /**

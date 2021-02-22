@@ -21,7 +21,7 @@
 namespace geosx
 {
 
-SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
+SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
                                                       Group * const parent ):
   Group( name, parent )
 {
@@ -33,7 +33,7 @@ SimpleGeometricObjectBase::~SimpleGeometricObjectBase()
 {}
 
 
-SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::GetCatalog()
+SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::getCatalog()
 {
   static SimpleGeometricObjectBase::CatalogInterface::CatalogType catalog;
   return catalog;

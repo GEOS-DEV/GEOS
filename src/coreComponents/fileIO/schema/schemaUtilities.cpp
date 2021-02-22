@@ -37,13 +37,13 @@ namespace schemaUtilities
 {
 
 
-void ConvertDocumentationToSchema( std::string const & fname,
+void ConvertDocumentationToSchema( string const & fname,
                                    Group * const group,
                                    integer documentationType )
 {
   GEOSX_LOG_RANK_0( "Generating XML Schema..." );
 
-  std::string schemaBase=
+  string schemaBase=
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
   <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\
   <xsd:annotation>\
@@ -61,7 +61,7 @@ void ConvertDocumentationToSchema( std::string const & fname,
 
   // Recursively build the schema from the data structure skeleton
   GEOSX_LOG_RANK_0( "  Data structure layout" );
-  SchemaConstruction( group, schemaRoot, schemaRoot, documentationType );
+  SchemaConstruction( *group, schemaRoot, schemaRoot, documentationType );
 
   // Write the schema to file
   GEOSX_LOG_RANK_0( "  Saving file" );
@@ -74,7 +74,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
                        string const & name,
                        string const & regex )
 {
-  std::string const advanced_match_string = ".*[\\[\\]`$].*|";
+  string const advanced_match_string = ".*[\\[\\]`$].*|";
 
   xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
   newNode.append_attribute( "name" ) = name.c_str();
@@ -90,7 +90,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
   }
   else
   {
-    std::string const patternString = advanced_match_string + regex;
+    string const patternString = advanced_match_string + regex;
     patternNode.append_attribute( "value" ) = patternString.c_str();
   }
 }
@@ -105,17 +105,17 @@ void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 }
 
 
-void SchemaConstruction( Group * const group,
+void SchemaConstruction( Group & group,
                          xmlWrapper::xmlNode schemaRoot,
                          xmlWrapper::xmlNode schemaParent,
                          integer documentationType )
 {
   // Get schema details
-  InputFlags schemaType = group->getInputFlags();
+  InputFlags schemaType = group.getInputFlags();
 
   if((schemaType != InputFlags::INVALID) || (documentationType == 1))
   {
-    string targetName = group->getName();
+    string const & targetName = group.getName();
     string typeName = targetName + "Type";
 
     // Insert the schema node if not present, then iterate over children
@@ -145,7 +145,7 @@ void SchemaConstruction( Group * const group,
       }
 
       // Add subgroups
-      if( group->numSubGroups() > 0 )
+      if( group.numSubGroups() > 0 )
       {
         // Children are defined in a choice node
         xmlWrapper::xmlNode targetChoiceNode = targetTypeDefNode.child( "xsd:choice" );
@@ -160,7 +160,7 @@ void SchemaConstruction( Group * const group,
         // Note: this is necessary because the order that objects
         //       are registered to catalogs may vary by compiler
         std::set< string > subGroupNames;
-        for( auto & subGroupPair : group->GetSubGroups())
+        for( auto & subGroupPair : group.getSubGroups())
         {
           subGroupNames.insert( subGroupPair.first );
         }
@@ -168,28 +168,28 @@ void SchemaConstruction( Group * const group,
         // Add children of the group
         for( string subName : subGroupNames )
         {
-          Group * const subGroup = group->GetGroup( subName );
+          Group & subGroup = group.getGroup( subName );
           SchemaConstruction( subGroup, schemaRoot, targetChoiceNode, documentationType );
         }
       }
 
       // Add schema deviations
-      group->SetSchemaDeviations( schemaRoot, targetTypeDefNode, documentationType );
+      group.setSchemaDeviations( schemaRoot, targetTypeDefNode, documentationType );
 
       // Add attributes
       // Note: wrappers that were added to this group by another group
       //       may end up in different order.  To avoid this, add them
       //       into the schema in alphabetic order.
       std::set< string > groupWrapperNames;
-      for( auto & wrapperPair : group->wrappers())
+      for( auto & wrapperPair : group.wrappers())
       {
         groupWrapperNames.insert( wrapperPair.first );
       }
 
       for( string attributeName : groupWrapperNames )
       {
-        WrapperBase * const wrapper = group->getWrapperBase( attributeName );
-        InputFlags flag = wrapper->getInputFlag();
+        WrapperBase & wrapper = group.getWrapperBase( attributeName );
+        InputFlags flag = wrapper.getInputFlag();
 
         if(( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
         {
@@ -198,7 +198,7 @@ void SchemaConstruction( Group * const group,
           {
             // Write any additional documentation that isn't expected by the .xsd format in a comment
             // Attribute description
-            string const description = wrapper->getDescription();
+            string const description = wrapper.getDescription();
             string commentString = attributeName + " => ";
 
             if( !description.empty())
@@ -211,7 +211,7 @@ void SchemaConstruction( Group * const group,
             }
 
             // List of objects that registered this field
-            std::set< string > const & registrars = wrapper->getRegisteringObjects();
+            std::set< string > const & registrars = wrapper.getRegisteringObjects();
             if( !registrars.empty() )
             {
               commentString += " => " + stringutilities::strjoin( registrars.begin(), registrars.end(), ", " );
@@ -226,8 +226,8 @@ void SchemaConstruction( Group * const group,
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
-            std::string const wrappedTypeName = rtTypes::typeNames( wrapper->get_typeid() );
-            std::string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
+            string const wrappedTypeName = rtTypes::typeNames( wrapper.getTypeId() );
+            string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
             GEOSX_LOG_VAR( wrappedTypeName );
             GEOSX_LOG_VAR( xmlSafeName );
             attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();
@@ -235,7 +235,7 @@ void SchemaConstruction( Group * const group,
             // Check if the attribute has a previously unseen non-simple type with a custom validation regex
             if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", xmlSafeName.c_str() ).empty() )
             {
-              string const regex = wrapper->typeRegex();
+              string const regex = wrapper.typeRegex();
               if( !regex.empty() )
               {
                 // Append a new simpleType with a custom regex
@@ -251,9 +251,9 @@ void SchemaConstruction( Group * const group,
             }
             else if( flag == InputFlags::OPTIONAL )
             {
-              if( wrapper->hasDefaultValue() )
+              if( wrapper.hasDefaultValue() )
               {
-                attributeNode.append_attribute( "default" ) = wrapper->getDefaultValueString().c_str();
+                attributeNode.append_attribute( "default" ) = wrapper.getDefaultValueString().c_str();
               }
             }
             else if( documentationType == 0 )

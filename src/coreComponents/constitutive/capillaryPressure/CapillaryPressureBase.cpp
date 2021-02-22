@@ -42,34 +42,34 @@ std::unordered_map< string, integer > const phaseDict =
 
 }
 
-CapillaryPressureBase::CapillaryPressureBase( std::string const & name,
+CapillaryPressureBase::CapillaryPressureBase( string const & name,
                                               Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames )->
-    setSizedFromParent( 0 )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
-  registerWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes )->
+  registerWrapper( viewKeyStruct::phaseTypesString(), &m_phaseTypes ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder )->
+  registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureString, &m_phaseCapPressure )->
+  registerWrapper( viewKeyStruct::phaseCapPressureString(), &m_phaseCapPressure ).
     setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString, &m_dPhaseCapPressure_dPhaseVolFrac );
+  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(), &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 CapillaryPressureBase::~CapillaryPressureBase()
 {}
 
 
-void CapillaryPressureBase::PostProcessInput()
+void CapillaryPressureBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 
@@ -98,10 +98,10 @@ void CapillaryPressureBase::PostProcessInput()
                   "CapillaryPressureBase: reference oil phase has not been defined and should be included in model" );
 
   // call to correctly set member array tertiary sizes on the 'main' material object
-  ResizeFields( 0, 0 );
+  resizeFields( 0, 0 );
 }
 
-void CapillaryPressureBase::ResizeFields( localIndex const size,
+void CapillaryPressureBase::resizeFields( localIndex const size,
                                           localIndex const numPts )
 {
   localIndex const NP = numFluidPhases();
@@ -111,10 +111,10 @@ void CapillaryPressureBase::ResizeFields( localIndex const size,
 }
 
 
-void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  ResizeFields( 0, numConstitutivePointsPerParentIndex );
+  resizeFields( 0, numConstitutivePointsPerParentIndex );
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

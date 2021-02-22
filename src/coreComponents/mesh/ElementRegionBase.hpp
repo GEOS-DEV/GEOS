@@ -79,7 +79,7 @@ public:
    * @brief Generate mesh.
    * @param cellBlocks cell blocks where the mesh is generated
    */
-  virtual void GenerateMesh( Group * const cellBlocks )
+  virtual void generateMesh( Group & cellBlocks )
   {
     GEOSX_UNUSED_VAR( cellBlocks );
     GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
@@ -93,84 +93,63 @@ public:
   ///@{
 
   /**
-   * @copydoc GetSubRegions() const
+   * @copydoc getSubRegions() const
    */
-  subGroupMap & GetSubRegions()
+  subGroupMap & getSubRegions()
   {
-    return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
   }
 
-/**
- * @brief Get a collection of the subregions.
- * @return a collection of the subregions
- */
-  subGroupMap const & GetSubRegions() const
+  /**
+   * @brief Get a collection of the subregions.
+   * @return a collection of the subregions
+   */
+  subGroupMap const & getSubRegions() const
   {
-    return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
   }
 
 
-/**
- * @brief Get a pointer to a subregion by specifying its name.
- * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
- * @param regionName the name of the subregion
- * @return a pointer to the subregion
- * @note
- */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE const * GetSubRegion( string const & regionName ) const
+  /**
+   * @brief Get a reference to a subregion.
+   * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
+   * @tparam KEY_TYPE The type of the key used to lookup the subregion.
+   * @param key The key to the subregion.
+   * @return A reference to the subregion
+   */
+  template< typename SUBREGIONTYPE=ElementSubRegionBase, typename KEY_TYPE=void >
+  SUBREGIONTYPE const & getSubRegion( KEY_TYPE const & key ) const
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( regionName );
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroup< SUBREGIONTYPE >( key );
   }
 
-/**
- * @copydoc GetSubRegion( string const & regionName ) const
- */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE * GetSubRegion( string const & regionName )
+  /**
+   * @copydoc getSubRegion( KEY_TYPE const & key ) const
+   */
+  template< typename SUBREGIONTYPE=ElementSubRegionBase, typename KEY_TYPE=void >
+  SUBREGIONTYPE & getSubRegion( KEY_TYPE const & key )
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( regionName );
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroup< SUBREGIONTYPE >( key );
   }
 
-/**
- * @brief Get a pointer to a subregion by specifying its index.
- * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
- * @param index the index of the subregion
- * @return a pointer to the subregion
- */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE const * GetSubRegion( localIndex const & index ) const
-  {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( index );
-  }
-
-/**
- * @copydoc GetSubRegion( localIndex const & index ) const
- */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE * GetSubRegion( localIndex const & index )
-  {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( index );
-  }
-
-/**
- * @brief Get the number of subregions in the region.
- * @return the number of subregions  in the region
- */
+  /**
+   * @brief Get the number of subregions in the region.
+   * @return the number of subregions  in the region
+   */
   localIndex numSubRegions() const
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups().size();
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups().size();
   }
 
-/**
- * @brief Get the number of elements  in the region
- *        for specific subregion types provided as template arguments.
- * @tparam SUBREGIONTYPE  the first type that will be used in the attempted casting of the subregion
- * @tparam SUBREGIONTYPES a variadic list of types that will be used in the attempted casting of the subregion
- * @return the number of elements contained in the element region
- * @note This function requires that the subRegion types specified
- *       in the variadic template argument can be casted to ElementSubRegionBase
- */
+  /**
+   * @brief Get the number of elements  in the region
+   *        for specific subregion types provided as template arguments.
+   * @tparam SUBREGIONTYPE  the first type that will be used in the attempted casting of the subregion
+   * @tparam SUBREGIONTYPES a variadic list of types that will be used in the attempted casting of the subregion
+   * @return the number of elements contained in the element region
+   * @note This function requires that the subRegion types specified
+   *       in the variadic template argument can be casted to ElementSubRegionBase
+   */
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
   localIndex getNumberOfElements() const
   {
@@ -237,8 +216,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    Group const * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+    this->getGroup( viewKeyStruct::elementSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
 /**
@@ -247,8 +225,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+    this->getGroup( viewKeyStruct::elementSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
 /**
@@ -284,7 +261,7 @@ public:
   {
     for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
     {
-      ElementSubRegionBase const & subRegion = *this->GetSubRegion( esr );
+      ElementSubRegionBase const & subRegion = this->getSubRegion( esr );
       applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
       {
         lambda( esr, castedSubRegion );
@@ -300,7 +277,7 @@ public:
   {
     for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
     {
-      ElementSubRegionBase & subRegion = *this->GetSubRegion( esr );
+      ElementSubRegionBase & subRegion = this->getSubRegion( esr );
       applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
       {
         lambda( esr, castedSubRegion );
@@ -310,20 +287,17 @@ public:
 
   ///@}
 
-/**
- * @brief Struct to serve as a container for variable strings and keys.
- * @struct viewKeyStruct
- */
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     /// String key for the material list
-    static constexpr auto materialListString = "materialList";
+    static constexpr char const * materialListString() { return "materialList"; }
     /// String key for the element subregions
-    static constexpr auto elementSubRegions = "elementSubRegions";
+    static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
   };
-
-
-protected:
 
 private:
 
@@ -355,8 +329,7 @@ string_array ElementRegionBase::getConstitutiveNames() const
   string_array rval;
   for( string const & matName : m_materialList )
   {
-    Group const * const matModel = this->GetSubRegion( 0 )->GetConstitutiveModels()->GetGroup( matName );
-    if( dynamic_cast< CONSTITUTIVE_TYPE const * >( matModel ) != nullptr )
+    if( this->getSubRegion( 0 ).getConstitutiveModels().hasGroup< CONSTITUTIVE_TYPE >( matName ) )
     {
       rval.emplace_back( matName );
     }

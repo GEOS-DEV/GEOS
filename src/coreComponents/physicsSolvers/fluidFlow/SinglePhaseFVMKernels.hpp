@@ -152,7 +152,7 @@ struct FluxKernel
    */
   template< typename STENCIL_TYPE >
   static void
-    Launch( STENCIL_TYPE const & stencil,
+    launch( STENCIL_TYPE const & stencil,
             real64 const dt,
             globalIndex const rankOffset,
             ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -186,7 +186,7 @@ struct FluxKernel
    */
   GEOSX_HOST_DEVICE
   static void
-  Compute( localIndex const stencilSize,
+  compute( localIndex const stencilSize,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
@@ -210,7 +210,7 @@ struct FluxKernel
    */
   GEOSX_HOST_DEVICE
   static void
-  Compute( localIndex const stencilSize,
+  compute( localIndex const stencilSize,
            arraySlice1d< localIndex const > const &,
            arraySlice1d< localIndex const > const &,
            arraySlice1d< localIndex const > const & sei,
@@ -234,7 +234,7 @@ struct FluxKernel
    */
   GEOSX_HOST_DEVICE
   static void
-    ComputeJunction( localIndex const numFluxElems,
+    computeJunction( localIndex const numFluxElems,
                      arraySlice1d< localIndex const > const & stencilElementIndices,
                      arraySlice1d< real64 const > const & stencilWeights,
                      arrayView1d< real64 const > const & pres,
@@ -266,7 +266,7 @@ struct FaceDirichletBCKernel
   template< typename FLUID_WRAPPER >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void Compute( arraySlice1d< localIndex const > const & seri,
+  static void compute( arraySlice1d< localIndex const > const & seri,
                        arraySlice1d< localIndex const > const & sesri,
                        arraySlice1d< localIndex const > const & sefi,
                        arraySlice1d< real64 const > const & trans,
@@ -297,10 +297,10 @@ struct FaceDirichletBCKernel
 
     // Get flow quantities on the elem/face
     real64 faceDens, faceVisc;
-    fluidWrapper.Compute( presFace[kf], faceDens, faceVisc );
+    fluidWrapper.compute( presFace[kf], faceDens, faceVisc );
 
     mobility[Order::ELEM] = mob[er][esr][ei];
-    SinglePhaseBaseKernels::MobilityKernel::Compute( faceDens, faceVisc, mobility[Order::FACE] );
+    SinglePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
 
     dMobility_dP[Order::ELEM] = dMob_dPres[er][esr][ei];
     dMobility_dP[Order::FACE] = 0.0;
@@ -323,7 +323,7 @@ struct FaceDirichletBCKernel
   }
 
   template< typename FLUID_WRAPPER >
-  static void Launch( BoundaryStencil::IndexContainerViewConstType const & seri,
+  static void launch( BoundaryStencil::IndexContainerViewConstType const & seri,
                       BoundaryStencil::IndexContainerViewConstType const & sesri,
                       BoundaryStencil::IndexContainerViewConstType const & sefi,
                       BoundaryStencil::WeightContainerViewConstType const & trans,
@@ -348,7 +348,7 @@ struct FaceDirichletBCKernel
     {
       real64 flux, fluxJacobian;
 
-      Compute( seri[iconn],
+      compute( seri[iconn],
                sesri[iconn],
                sefi[iconn],
                trans[iconn],

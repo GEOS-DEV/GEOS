@@ -97,14 +97,14 @@ public:
    * @brief Get the linear distance between the well head and the perforation.
    * @return the distance between the well head and the perforation
    */
-  real64 const & GetDistanceFromWellHead() const { return m_distanceFromHead; }
+  real64 const & getDistanceFromWellHead() const { return m_distanceFromHead; }
 
 
   /**
    * @brief Get the well Peaceman index at the perforation.
    * @return the well transmissibility
    */
-  real64 GetWellTransmissibility() const { return m_wellTransmissibility; }
+  real64 getWellTransmissibility() const { return m_wellTransmissibility; }
 
   ///@}
 
@@ -115,20 +115,20 @@ public:
   struct viewKeyStruct
   {
     /// String key for the linear distance from well head
-    static constexpr auto distanceFromHeadString  = "distanceFromHead";
+    static constexpr char const * distanceFromHeadString() { return "distanceFromHead"; }
     /// String key for the well transmissibility at this perforation
-    static constexpr auto wellTransmissibilityString = "transmissibility";
+    static constexpr char const * wellTransmissibilityString() { return "transmissibility"; }
     /// ViewKey for the linear distance from well head
-    dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString };
+    dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString() };
     /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString };
+    dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString() };
   }
   /// ViewKey struct for the Perforation class
   viewKeysPerforation;
 
 protected:
 
-  void PostProcessInput() override;
+  void postProcessInput() override;
 
 private:
 

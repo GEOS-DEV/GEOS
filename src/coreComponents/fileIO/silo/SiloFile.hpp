@@ -66,18 +66,18 @@ public:
   /**
    * @brief function to setup directories where silo files will be written
    */
-  void MakeSiloDirectories();
+  void makeSiloDirectories();
 
   /**
    * @brief Initializes silo for input/output
    * @param numGroups number of individual Silo files to generate
    */
-  void Initialize( int const numGroups=1 );
+  void initialize( int const numGroups=1 );
 
   /**
    * @brief finishes/closes up the silo interface
    */
-  void Finish();
+  void finish();
 
   /**
    *  @brief obtain the group number of the calling processor, indexed from zero.
@@ -96,7 +96,7 @@ public:
    * This function requests the write baton from silo PMPIO. The involves determining
    * the file names, and opening the file for write.
    */
-  void WaitForBatonWrite( int const domainNumber,
+  void waitForBatonWrite( int const domainNumber,
                           int const cycleNum,
                           integer const eventCounter,
                           bool const isRestart );
@@ -106,12 +106,12 @@ public:
    * @param domainNumber domain partition number
    * @param restartFileName base of the restart file to open
    */
-  void WaitForBaton( int const domainNumber, string const & restartFileName );
+  void waitForBaton( int const domainNumber, string const & restartFileName );
 
   /**
    * @brief Hand off the Baton when done writing to file
    */
-  void HandOffBaton();
+  void handOffBaton();
 
 
   /**
@@ -119,9 +119,9 @@ public:
    * @param subdir the new directory name
    * @param rootdir the root directory path
    */
-  void MakeSubDirectory( string const & subdir, string const & rootdir )
+  void makeSubDirectory( string const & subdir, string const & rootdir )
   {
-    int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
     // char dirname[100];
     if( rank == 0 )
@@ -155,7 +155,7 @@ public:
    * DBPutZonelist2, and calls those functions to create a silo mesh object. In addition
    * the MultiVar is written in the root file.
    */
-  void WriteMeshObject( string const & meshName,
+  void writeMeshObject( string const & meshName,
                         const localIndex nnodes,
                         real64 * coords[3],
                         const globalIndex * globalNodeNum,
@@ -189,7 +189,7 @@ public:
    * @param problemTime the current problem time
    * @param lnodelist
    */
-  void WritePolygonMeshObject( const std::string & meshName,
+  void writePolygonMeshObject( const string & meshName,
                                const localIndex nnodes,
                                real64 * coords[3],
                                const globalIndex * dummy1,
@@ -211,7 +211,7 @@ public:
  * @param problemTime the current problem time
  * @param isRestart whether or not we want to write restart only data
  */
-  void WriteDomainPartition( DomainPartition const & domain,
+  void writeDomainPartition( DomainPartition const & domain,
                              int const cycleNum,
                              real64 const problemTime,
                              bool const isRestart );
@@ -230,8 +230,8 @@ public:
    * @param problemTime the current problem time
    * @param writeArbitraryPolygon
    */
-  void WriteElementMesh( ElementRegionBase const & elementRegion,
-                         NodeManager const * const nodeManager,
+  void writeElementMesh( ElementRegionBase const & elementRegion,
+                         NodeManager const & nodeManager,
                          string const & meshName,
                          const localIndex nnodes,
                          real64 * coords[3],
@@ -248,7 +248,7 @@ public:
    * @param problemTime the current problem time
    * @param isRestart whether or not we want to write restart only data
    */
-  void WriteMeshLevel( MeshLevel const * const meshLevel,
+  void writeMeshLevel( MeshLevel const & meshLevel,
                        int const cycleNum,
                        real64 const problemTime,
                        bool const isRestart );
@@ -260,7 +260,7 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WritePointMesh( string const & meshName,
+  void writePointMesh( string const & meshName,
                        const localIndex numPoints,
                        real64 * coords[3],
                        int const cycleNumber,
@@ -276,7 +276,7 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WriteBeamMesh( string const & meshName,
+  void writeBeamMesh( string const & meshName,
                       const localIndex nnodes,
                       real64 * coords[3],
                       const localIndex_array & node1,
@@ -293,7 +293,7 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WriteBeamMesh( string const & meshName,
+  void writeBeamMesh( string const & meshName,
                       const localIndex nnodes,
                       real64 * coords[3],
                       integer_array & nodelist,
@@ -307,7 +307,7 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WriteMaterialMapsFullStorage( ElementRegionBase const & elementRegion,
+  void writeMaterialMapsFullStorage( ElementRegionBase const & elementRegion,
                                      string const & meshName,
                                      string_array const & regionMaterialList,
                                      int const cycleNumber,
@@ -323,7 +323,7 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void WriteGroupSilo( dataRepository::Group const * group,
+  void writeGroupSilo( dataRepository::Group const & group,
                        string const & siloDirName,
                        string const & meshname,
                        int const centering,
@@ -340,7 +340,7 @@ public:
    * @param problemTime current problem time
    * @param isRestart write restart only data
    */
-  void WriteElementRegionSilo( ElementRegionBase const & elemRegion,
+  void writeElementRegionSilo( ElementRegionBase const & elemRegion,
                                string const & siloDirName,
                                string const & meshName,
                                int const cycleNum,
@@ -359,7 +359,7 @@ public:
    * @param mask indices to write out to the silo file
    */
   template< typename OUTPUTTYPE >
-  void WriteWrappersToSilo( string const & meshname,
+  void writeWrappersToSilo( string const & meshname,
                             const dataRepository::Group::wrapperMap & wrappers,
                             int const centering,
                             int const cycleNum,
@@ -379,7 +379,7 @@ public:
    * @param multiRoot location to write the multivar entries
    */
   template< typename OUTTYPE, typename TYPE >
-  void WriteDataField( string const & meshName,
+  void writeDataField( string const & meshName,
                        string const & fieldName,
                        arrayView1d< TYPE const > const & field,
                        int const centering,
@@ -398,7 +398,7 @@ public:
    * @param multiRoot location to write the multivar entries
    */
   template< typename OUTTYPE, typename TYPE, int USD >
-  void WriteDataField( string const & meshName,
+  void writeDataField( string const & meshName,
                        string const & fieldName,
                        arrayView2d< TYPE const, USD > const & field,
                        int const centering,
@@ -416,7 +416,7 @@ public:
    * @param multiRoot location to write the multivar entries
    */
   template< typename OUTTYPE, typename TYPE, int USD >
-  void WriteDataField( string const & meshName,
+  void writeDataField( string const & meshName,
                        string const & fieldName,
                        arrayView3d< TYPE const, USD > const & field,
                        int const centering,
@@ -436,7 +436,7 @@ public:
    * @param multiRoot location to write the multivar entries
    */
   template< typename OUTTYPE, typename TYPE, int NDIM, int USD >
-  void WriteDataField( string const & meshName,
+  void writeDataField( string const & meshName,
                        string const & fieldName,
                        ArrayView< TYPE const, NDIM, USD > const & field,
                        int const siloTensorRank,
@@ -458,7 +458,7 @@ public:
    * @param materialNames material names
    */
   template< typename OUTTYPE, typename TYPE >
-  void WriteMaterialDataField( string const & meshName,
+  void writeMaterialDataField( string const & meshName,
                                string const & fieldName,
                                array1d< array1d< arrayView2d< TYPE const > > > const & field,
                                ElementRegionBase const & elemRegion,
@@ -480,7 +480,7 @@ public:
    * @param materialNames material names
    */
   template< typename OUTTYPE, typename TYPE >
-  void WriteMaterialDataField2d( string const & meshName,
+  void writeMaterialDataField2d( string const & meshName,
                                  string const & fieldName,
                                  ElementRegionBase const & elemRegion,
                                  int const centering,
@@ -501,7 +501,7 @@ public:
    * @param materialNames material names
    */
   template< typename OUTTYPE, typename TYPE >
-  void WriteMaterialDataField3d( string const & meshName,
+  void writeMaterialDataField3d( string const & meshName,
                                  string const & fieldName,
                                  ElementRegionBase const & elemRegion,
                                  int const centering,
@@ -522,7 +522,7 @@ public:
    * @param materialNames material names
    */
   template< typename OUTTYPE, typename TYPE >
-  void WriteMaterialDataField4d( string const & meshName,
+  void writeMaterialDataField4d( string const & meshName,
                                  string const & fieldName,
                                  ElementRegionBase const & elemRegion,
                                  int const centering,
@@ -538,7 +538,7 @@ public:
    * @param matIndex
    * @param fieldName
    */
-  void WriteMaterialVarDefinition( string const & subDir,
+  void writeMaterialVarDefinition( string const & subDir,
                                    string const & matDir,
                                    localIndex const matIndex,
                                    string const & fieldName );
@@ -547,14 +547,14 @@ public:
    * @todo Verify: documentation missing / incomplete
    * @param MatDir
    */
-  void WriteStressVarDefinition( string const & MatDir );
+  void writeStressVarDefinition( string const & MatDir );
 
   /**
    * @todo Verify: documentation missing / incomplete
    * @param fieldName vector field name
    * @param subDirectory
    */
-  void WriteVectorVarDefinition( string const & fieldName,
+  void writeVectorVarDefinition( string const & fieldName,
                                  string const & subDirectory );
 
   /**
@@ -562,7 +562,7 @@ public:
    * @param meshName the name of the mesh object we are attaching data to
    * @return integer that results from a call to DBInqMeshtype()
    */
-  int GetMeshType( string const & meshName ) const;
+  int getMeshType( string const & meshName ) const;
 
   /**
    * write out a multi mesh or multivar object assocaited with a mesh or var object.
@@ -575,7 +575,7 @@ public:
    * @param optlist the option list assocaited with the multiXXXX
    */
   template< typename CBF >
-  void WriteMultiXXXX( const DBObjectType type, CBF DBPutMultiCB,
+  void writeMultiXXXX( const DBObjectType type, CBF DBPutMultiCB,
                        int const centering, string const name, int const cycleNumber,
                        string const & multiRoot, const DBoptlist * optlist = nullptr );
 
@@ -588,7 +588,7 @@ public:
    * or multivar object on each domain. This is incorrect, so we must modify the rootfile to remove empty references
    * to the multivar or multimesh objects and replace their path with "EMPTY"
    */
-  void ClearEmptiesFromMultiObjects( int const cycleNum );
+  void clearEmptiesFromMultiObjects( int const cycleNum );
 
   /**
    * @brief Sets the number of individual Silo files to generate
@@ -675,7 +675,7 @@ private:
 
   string m_restartFileRoot;
 
-  string const m_siloDirectory = "siloFiles";
+  string const m_siloDirectory;
 
   string const m_siloDataSubDirectory = "data";
 
@@ -683,9 +683,9 @@ private:
 
   string m_baseFileName;
 
-  std::vector< std::string > m_emptyMeshes;
+  std::vector< string > m_emptyMeshes;
 //  string_array m_emptyMaterials;
-  std::vector< std::string > m_emptyVariables;
+  std::vector< string > m_emptyVariables;
 
   integer m_writeEdgeMesh;
   integer m_writeFaceMesh;

@@ -86,12 +86,12 @@ protected:
 private:
 
   GEOSX_HOST_DEVICE
-  virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseCapPres,
                         arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const = 0;
 
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const > const & phaseVolFraction ) const = 0;
 };
@@ -111,12 +111,12 @@ public:
   // choose the reference pressure to be the oil pressure for all models
   static constexpr integer REFERENCE_PHASE = PhaseType::OIL;
 
-  CapillaryPressureBase( std::string const & name,
+  CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
   virtual ~CapillaryPressureBase() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   localIndex numFluidPhases() const { return m_phaseNames.size(); }
@@ -128,24 +128,24 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto phaseNamesString = "phaseNames";
-    static constexpr auto phaseTypesString = "phaseTypes";
-    static constexpr auto phaseOrderString = "phaseOrder";
+    static constexpr char const * phaseNamesString() { return "phaseNames"; }
+    static constexpr char const * phaseTypesString() { return "phaseTypes"; }
+    static constexpr char const * phaseOrderString() { return "phaseOrder"; }
 
-    static constexpr auto phaseCapPressureString                    = "phaseCapPressure";                    // Pc_p
-    static constexpr auto dPhaseCapPressure_dPhaseVolFractionString = "dPhaseCapPressure_dPhaseVolFraction"; // dPc_p/dS_p
-  } viewKeysCapillaryPressureBase;
+    static constexpr char const * phaseCapPressureString() { return "phaseCapPressure"; }
+    static constexpr char const * dPhaseCapPressure_dPhaseVolFractionString() { return "dPhaseCapPressure_dPhaseVolFraction"; }
+  };
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /**
    * @brief Function called internally to resize member arrays
    * @param size primary dimension (e.g. number of cells)
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
-  void ResizeFields( localIndex const size, localIndex const numPts );
+  void resizeFields( localIndex const size, localIndex const numPts );
 
   // phase names read from input
   string_array m_phaseNames;

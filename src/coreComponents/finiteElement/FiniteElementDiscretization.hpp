@@ -54,7 +54,7 @@ public:
 
   FiniteElementDiscretization() = delete;
 
-  explicit FiniteElementDiscretization( std::string const & name, Group * const parent );
+  explicit FiniteElementDiscretization( string const & name, Group * const parent );
 
   ~FiniteElementDiscretization() override;
 
@@ -62,13 +62,13 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  static string CatalogName() { return "FiniteElementSpace"; }
+  static string catalogName() { return "FiniteElementSpace"; }
 
   ///@}
 
   template< typename SUBREGION_TYPE,
             typename FE_TYPE >
-  void CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+  void calculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                         SUBREGION_TYPE * const elementSubRegion,
                                         FE_TYPE & fe ) const;
 
@@ -87,8 +87,8 @@ private:
 
   struct viewKeyStruct
   {
-    static constexpr auto orderString = "order";
-    static constexpr auto formulationString = "formulation";
+    static constexpr char const * orderString() { return "order"; }
+    static constexpr char const * formulationString() { return "formulation"; }
   };
 
   /// The order of the finite element basis
@@ -97,7 +97,7 @@ private:
   /// Optional string indicating any specialized formulation type.
   string m_formulation;
 
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 };
 
@@ -105,7 +105,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 void
 FiniteElementDiscretization::
-  CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+  calculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                    SUBREGION_TYPE * const elementSubRegion,
                                    FE_TYPE & finiteElement ) const
 {
@@ -115,7 +115,7 @@ FiniteElementDiscretization::
   array2d< real64 > & detJ = elementSubRegion->detJ();
   auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
-  string const elementTypeString = elementSubRegion->GetElementTypeString();
+  string const elementTypeString = elementSubRegion->getElementTypeString();
 
   constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
   constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;

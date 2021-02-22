@@ -19,6 +19,7 @@
 // Source includes
 #include "managers/initialization.hpp"
 #include "managers/ProblemManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
@@ -29,75 +30,55 @@
 #endif
 
 // System includes
-#include <cmath>
-#include <iostream>
-#include <sys/time.h>
+#include <chrono>
 
 using namespace geosx;
 
 
 int main( int argc, char *argv[] )
 {
-  basicSetup( argc, argv, true );
-
-  GEOSX_MARK_FUNCTION_BEGIN;
-
-  printTypeSummary();
-
-  timeval tim;
-  gettimeofday( &tim, nullptr );
-  real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
-
-  std::string restartFileName;
-  bool restart = ProblemManager::ParseRestart( restartFileName );
-  if( restart )
+  try
   {
-    GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
-    dataRepository::loadTree( restartFileName );
-  }
+    std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
 
-  {
-    ProblemManager problemManager( "Problem", nullptr );
+    std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
 
-    problemManager.InitializePythonInterpreter();
-    problemManager.ParseCommandLineInput();
-
-    if( !problemManager.getSchemaFileName().empty() )
+    std::chrono::system_clock::duration initTime;
+    std::chrono::system_clock::duration runTime;
     {
-      problemManager.GenerateDocumentation();
-    }
-    else
-    {
-      problemManager.ParseInputFile();
+      GeosxState state( std::move( commandLineOptions ) );
 
-      problemManager.ProblemSetup();
-
-      if( restart )
+      bool const problemToRun = state.initializeDataRepository();
+      if( problemToRun )
       {
-        problemManager.ReadRestartOverwrite();
+        state.applyInitialConditions();
+        state.run();
+        LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
       }
 
-      MpiWrapper::Barrier( MPI_COMM_GEOSX );
-      GEOSX_LOG_RANK_0( "Running simulation" );
-
-      gettimeofday( &tim, nullptr );
-      const real64 t_initialize = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
-
-      problemManager.RunSimulation();
-
-      gettimeofday( &tim, nullptr );
-      const real64 t_run = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
-
-      GEOSX_LOG_RANK_0( "\ninit time = " << std::setprecision( 5 ) << t_initialize - t_start <<
-                        "s, run time = " << t_run - t_initialize << "s" );
+      initTime = state.getInitTime();
+      runTime = state.getRunTime();
     }
 
-    problemManager.ClosePythonInterpreter();
+    basicCleanup();
+
+    std::chrono::system_clock::duration const totalTime = std::chrono::system_clock::now() - startTime;
+
+    GEOSX_LOG_RANK_0( "total time          " << durationToString( totalTime ) );
+    GEOSX_LOG_RANK_0( "initialization time " << durationToString( initTime ) );
+    GEOSX_LOG_RANK_0( "run time            " << durationToString( runTime ) );
+
+    return 0;
   }
-
-  GEOSX_MARK_FUNCTION_END;
-
-  basicCleanup();
-
-  return 0;
+  // A NotAnError is thrown if "-h" or "--help" option is used.
+  catch( NotAnError const & )
+  {
+    return 0;
+  }
+  catch( std::exception const & e )
+  {
+    GEOSX_LOG( e.what() );
+    LvArray::system::callErrorHandler();
+    std::abort();
+  }
 }

@@ -39,7 +39,7 @@ using namespace dataRepository;
 class HistoryCollection : public TaskBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
   HistoryCollection( string const & name, Group * parent ):
     TaskBase( name, parent ),
     m_collectionCount( 1 ),
@@ -48,9 +48,8 @@ public:
   {   }
 
 
-  void InitializePostSubGroups( Group * const group ) override
+  void initializePostSubGroups() override
   {
-    GEOSX_UNUSED_VAR( group );
     m_bufferCalls.resize( m_collectionCount );
   }
 
@@ -84,14 +83,14 @@ public:
 
   /**
    * @brief Collects history data.
-   * @copydoc EventBase::Execute()
+   * @copydoc EventBase::execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        Group * domain ) override
+                        DomainPartition & domain ) override
   {
     GEOSX_UNUSED_VAR( cycleNumber );
     GEOSX_UNUSED_VAR( eventCounter );
@@ -105,16 +104,17 @@ public:
       // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
       // TODO : grab the metadata again, determine if the size has changed, update the buffer call if so...
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
-      DomainPartition & domainPart = dynamicCast< DomainPartition & >( *domain );
-      updateSetsIndices( domainPart );
-      collect( domainPart, time_n, dt, collectionIdx, buffer );
+      updateSetsIndices( domain );
+      collect( domain, time_n, dt, collectionIdx, buffer );
     }
-    int rank = MpiWrapper::Comm_rank();
+    int rank = MpiWrapper::commRank();
     if( rank == 0 && m_timeBufferCall )
     {
       buffer_unit_type * timeBuffer = m_timeBufferCall();
       memcpy( timeBuffer, &time_n, sizeof(time_n) );
     }
+
+    return false;
   }
 
   /**s
@@ -183,7 +183,7 @@ public:
 protected:
 
   /**
-   * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::Execute .
+   * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::execute .
    * @param domain The DomainPartition to collect time history on.
    * @param time_n The current simulation time.
    * @param dt The current simulation time delta.

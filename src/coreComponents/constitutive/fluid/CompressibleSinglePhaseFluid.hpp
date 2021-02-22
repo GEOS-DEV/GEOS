@@ -70,33 +70,33 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & viscosity ) const override
   {
-    m_densRelation.Compute( pressure, density );
-    m_viscRelation.Compute( pressure, viscosity );
+    m_densRelation.compute( pressure, density );
+    m_viscRelation.compute( pressure, viscosity );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const override
   {
-    m_densRelation.Compute( pressure, density, dDensity_dPressure );
-    m_viscRelation.Compute( pressure, viscosity, dViscosity_dPressure );
+    m_densRelation.compute( pressure, density, dDensity_dPressure );
+    m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const override
   {
-    Compute( pressure,
+    compute( pressure,
              m_density[k][q],
              m_dDens_dPres[k][q],
              m_viscosity[k][q],
@@ -113,15 +113,15 @@ class CompressibleSinglePhaseFluid : public SingleFluidBase
 {
 public:
 
-  CompressibleSinglePhaseFluid( std::string const & name, Group * const parent );
+  CompressibleSinglePhaseFluid( string const & name, Group * const parent );
 
   virtual ~CompressibleSinglePhaseFluid() override;
 
-  static std::string CatalogName() { return "CompressibleSinglePhaseFluid"; }
+  static string catalogName() { return "CompressibleSinglePhaseFluid"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
@@ -135,18 +135,18 @@ public:
 
   struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
   {
-    static constexpr auto compressibilityString      = "compressibility";
-    static constexpr auto viscosibilityString        = "viscosibility";
-    static constexpr auto referencePressureString    = "referencePressure";
-    static constexpr auto referenceDensityString     = "referenceDensity";
-    static constexpr auto referenceViscosityString   = "referenceViscosity";
-    static constexpr auto densityModelTypeString     = "densityModelType";
-    static constexpr auto viscosityModelTypeString   = "viscosityModelType";
+    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * viscosibilityString() { return "viscosibility"; }
+    static constexpr char const * referencePressureString() { return "referencePressure"; }
+    static constexpr char const * referenceDensityString() { return "referenceDensity"; }
+    static constexpr char const * referenceViscosityString() { return "referenceViscosity"; }
+    static constexpr char const * densityModelTypeString() { return "densityModelType"; }
+    static constexpr char const * viscosityModelTypeString() { return "viscosityModelType"; }
   };
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 

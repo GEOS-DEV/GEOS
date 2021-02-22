@@ -31,18 +31,18 @@ Perforation::Perforation( string const & name, Group * const parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::distanceFromHeadString, &m_distanceFromHead )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::distanceFromHeadString(), &m_distanceFromHead ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Linear distance from well head to the perforation" );
 
-  registerWrapper( viewKeyStruct::wellTransmissibilityString, &m_wellTransmissibility )->
-    setApplyDefaultValue( -1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::wellTransmissibilityString(), &m_wellTransmissibility ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Perforation transmissibility" );
 }
 
 
-void Perforation::PostProcessInput()
+void Perforation::postProcessInput()
 {
   GEOSX_ERROR_IF( m_distanceFromHead <= 0,
                   "Invalid distance well head to perforation " << getName() );

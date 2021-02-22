@@ -15,6 +15,7 @@ LaplaceFEM                       node               :ref:`XML_LaplaceFEM`
 PhaseFieldDamageFEM              node               :ref:`XML_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node               :ref:`XML_PhaseFieldFracture`               
 Poroelastic                      node               :ref:`XML_Poroelastic`                      
+PoroelasticEmbeddedFractures     node               :ref:`XML_PoroelasticEmbeddedFractures`     
 ProppantTransport                node               :ref:`XML_ProppantTransport`                
 SinglePhaseFVM                   node               :ref:`XML_SinglePhaseFVM`                   
 SinglePhaseHybridFVM             node               :ref:`XML_SinglePhaseHybridFVM`             

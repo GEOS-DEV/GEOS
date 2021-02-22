@@ -33,8 +33,8 @@ namespace geosx
 class OutputBase : public ExecutableGroup
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  explicit OutputBase( std::string const & name, Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  explicit OutputBase( string const & name, Group * const parent );
 
   /// Destructor
   virtual ~OutputBase() override;
@@ -43,15 +43,15 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "OutputBase"; }
+  static string catalogName() { return "OutputBase"; }
 
   /// Method for setting up output directories.
-  virtual void SetupDirectoryStructure();
+  virtual void setupDirectoryStructure();
 
   // Catalog interface
   /// @cond DO_NOT_DOCUMENT
-  using CatalogInterface = dataRepository::CatalogInterface< OutputBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType & GetCatalog();
+  using CatalogInterface = dataRepository::CatalogInterface< OutputBase, string const &, Group * const >;
+  static CatalogInterface::CatalogType & getCatalog();
 
   // Catalog view keys
   struct viewKeysStruct
@@ -79,7 +79,7 @@ protected:
    *        on the subgroups.
    * @param group The root group
    **/
-  virtual void InitializePreSubGroups( Group * const group ) override;
+  virtual void initializePreSubGroups() override;
 
 private:
   string m_childDirectory;

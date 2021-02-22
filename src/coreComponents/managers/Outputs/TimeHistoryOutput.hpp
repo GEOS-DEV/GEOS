@@ -37,7 +37,7 @@ namespace geosx
 class TimeHistoryOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
   TimeHistoryOutput( string const & name,
                      Group * const parent );
 
@@ -49,37 +49,35 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "TimeHistory"; }
+  static string catalogName() { return "TimeHistory"; }
 
   /**
    * @brief Perform initalization after all subgroups have been initialized.
-   *        Check for existing files and data spaces/sets on restart, else create the
-   *        file and data spaces/sets and output any set index metatata for the time
-   *        history.
-   * @param group The problem manager cast to a group.
+   *   Check for existing files and data spaces/sets on restart, else create the
+   *   file and data spaces/sets and output any set index metatata for the time history.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups() override;
 
   /**
    * @brief Writes out a time history file.
-   * @copydoc EventBase::Execute()
+   * @copydoc EventBase::execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
   /**
    * @brief Writes out a time history file at the end of the simulation.
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeys
@@ -98,7 +96,7 @@ private:
    * @param group The ProblemManager cast to a Group
    * @param collector The HistoryCollector to intialize
    */
-  void initCollectorParallel( ProblemManager & problemManager, HistoryCollection * collector );
+  void initCollectorParallel( ProblemManager & problemManager, HistoryCollection & collector );
 
   /// The paths of the collectors to collect history from.
   string_array m_collectorPaths;

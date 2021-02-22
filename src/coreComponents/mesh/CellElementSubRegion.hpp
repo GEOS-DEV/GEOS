@@ -62,14 +62,14 @@ public:
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
    * @param source the CellBlock whose properties (connectivity info) will be copied
    */
-  void CopyFromCellBlock( CellBlock * source );
+  void copyFromCellBlock( CellBlock & source );
 
   /**
    * @brief Fill the CellElementSubRegion by querying a target set into the faceManager
    * @param[in] faceManager a pointer to the faceManager
    * @param[in] setName a reference to string containing the name of the set
    */
-  void ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
+  void constructSubRegionFromFaceSet( FaceManager const * const faceManager,
                                       string const & setName );
 
   ///@}
@@ -87,19 +87,19 @@ public:
    */
   ///@{
 
-  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
+  virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   ///@}
 
@@ -132,22 +132,21 @@ public:
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
     /// String key for the constitutive point volume fraction
-    static constexpr auto constitutivePointVolumeFraction = "ConstitutivePointVolumeFraction";
+    static constexpr char const * constitutivePointVolumeFractionString() { return "ConstitutivePointVolumeFraction"; }
     /// String key for the derivatives of the shape functions with respect to the reference configuration
-    static constexpr auto dNdXString = "dNdX";
+    static constexpr char const * dNdXString() { return "dNdX"; }
     /// String key for the derivative of the jacobian.
-    static constexpr auto detJString = "detJ";
+    static constexpr char const * detJString() { return "detJ"; }
     /// String key for the constitutive grouping
-    static constexpr auto constitutiveGroupingString = "ConstitutiveGrouping";
+    static constexpr char const * constitutiveGroupingString() { return "ConstitutiveGrouping"; }
     /// String key for the constitutive map
-    static constexpr auto constitutiveMapString = "ConstitutiveMap";
+    static constexpr char const * constitutiveMapString() { return "ConstitutiveMap"; }
     /// String key to embSurfMap
-    static constexpr auto toEmbSurfString = "ToEmbeddedSurfaces";
-
+    static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
     /// ViewKey for the constitutive grouping
-    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
+    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
     /// ViewKey for the constitutive map
-    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
+    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString() };
   }
   /// viewKey struct for the CellElementSubRegion class
   m_CellBlockSubRegionViewKeys;
@@ -219,6 +218,9 @@ private:
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
 
   /// Map of unmapped global indices in the element-to-face map
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInEdgelist;
+
+  /// Map of unmapped global indices in the element-to-face map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
 
   /// List of fractured elements
@@ -235,7 +237,7 @@ private:
    * @return the pack size
    */
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
 };

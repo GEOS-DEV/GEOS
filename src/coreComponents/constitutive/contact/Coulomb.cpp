@@ -24,27 +24,27 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-Coulomb::Coulomb( std::string const & name, Group * const parent ):
+Coulomb::Coulomb( string const & name, Group * const parent ):
   ContactRelationBase( name, parent ),
   m_postProcessed( false ),
   m_cohesion(),
   m_frictionAngle(),
   m_frictionCoefficient()
 {
-  registerWrapper( viewKeyStruct::cohesionString, &m_cohesion )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::cohesionString(), &m_cohesion ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Cohesion" );
 
-  registerWrapper( viewKeyStruct::frictionAngleString, &m_frictionAngle )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  registerWrapper( viewKeyStruct::frictionAngleString(), &m_frictionAngle ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Friction Angle (in radians)" );
 
-  registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::frictionCoefficientString(), &m_frictionCoefficient ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Friction Coefficient" );
 }
 
@@ -64,7 +64,7 @@ real64 Coulomb::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX
 
 static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
-void Coulomb::PostProcessInput()
+void Coulomb::postProcessInput()
 {
   if( !m_postProcessed )
   {
@@ -105,6 +105,6 @@ void Coulomb::PostProcessInput()
   m_postProcessed = true;
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, string const &, Group * const )
 }
 } /* namespace geosx */

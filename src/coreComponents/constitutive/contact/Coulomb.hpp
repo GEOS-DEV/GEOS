@@ -27,9 +27,9 @@ namespace constitutive
 {
 
 /**
- * @class LinearElasticIsotropic
+ * @class MohrCoulomb
  *
- * Class to provide a linear elastic isotropic material response.
+ * Class to provide a Coulomb friction model.
  */
 class Coulomb : public ContactRelationBase
 {
@@ -62,9 +62,9 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string CatalogName() { return m_catalogNameString; }
+  static string catalogName() { return m_catalogNameString; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -76,19 +76,19 @@ public:
   struct viewKeyStruct : public ContactRelationBase::viewKeyStruct
   {
     /// string/key for default cohesion
-    static constexpr auto defaultCohesionString = "defaultCohesion";
+    static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
 
     /// string/key for default friction angle
-    static constexpr auto defaultFrictionAngleString = "defaultFrictionAngle";
+    static constexpr char const * defaultFrictionAngleString() { return "defaultFrictionAngle"; }
 
     /// string/key for cohesion
-    static constexpr auto cohesionString = "cohesion";
+    static constexpr char const * cohesionString() { return "cohesion"; }
 
     /// string/key for friction angle input (in radians)
-    static constexpr auto frictionAngleString = "frictionAngle";
+    static constexpr char const * frictionAngleString() { return "frictionAngle"; }
 
     /// string/key for friction coefficient
-    static constexpr auto frictionCoefficientString = "frictionCoefficient";
+    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
   };
 
   /**
@@ -120,7 +120,7 @@ public:
   real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 

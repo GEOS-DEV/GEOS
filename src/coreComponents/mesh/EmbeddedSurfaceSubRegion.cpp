@@ -19,6 +19,8 @@
 #include "EmbeddedSurfaceSubRegion.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
+#include "mpiCommunications/MpiWrapper.hpp"
+
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
@@ -37,25 +39,25 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_numOfJumpEnrichments( 3 ),
   m_connectivityIndex()
 {
-  registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector )->
+  registerWrapper( viewKeyStruct::normalVectorString(), &m_normalVector ).
     setDescription( "Unit normal vector to the embedded surface." );
 
-  registerWrapper( viewKeyStruct::t1VectorString, &m_tangentVector1 )->
+  registerWrapper( viewKeyStruct::t1VectorString(), &m_tangentVector1 ).
     setDescription( "Unit vector in the first tangent direction to the embedded surface." );
 
-  registerWrapper( viewKeyStruct::t2VectorString, &m_tangentVector2 )->
+  registerWrapper( viewKeyStruct::t2VectorString(), &m_tangentVector2 ).
     setDescription( "Unit vector in the second tangent direction to the embedded surface." );
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
+  registerWrapper( viewKeyStruct::elementCenterString(), &m_elementCenter ).
     setDescription( "The center of each EmbeddedSurface element." );
 
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
+  registerWrapper( viewKeyStruct::elementVolumeString(), &m_elementVolume ).
+    setApplyDefaultValue( -1.0 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "The volume of each EmbeddedSurface element." );
 
-  registerWrapper( viewKeyStruct::connectivityIndexString, &m_connectivityIndex )->
-    setApplyDefaultValue( 1 )->
+  registerWrapper( viewKeyStruct::connectivityIndexString(), &m_connectivityIndex ).
+    setApplyDefaultValue( 1 ).
     setDescription( "Connectivity index of each EmbeddedSurface." );
 
   m_normalVector.resizeDimension< 1 >( 3 );
@@ -68,7 +70,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
 EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
 {}
 
-void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
@@ -95,7 +97,7 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d<
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
 }
 
-bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
+bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellIndex,
                                                        localIndex const subRegionIndex,
                                                        localIndex const regionIndex,
                                                        NodeManager & nodeManager,
@@ -157,7 +159,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
                                                     point );
 
       // Check if the point is inside the fracture (bounded plane)
-      if( !(fracture->IsCoordInObject( point )) )
+      if( !(fracture->isCoordInObject( point )) )
       {
         addEmbeddedElem = false;
       }
@@ -166,6 +168,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       numPoints++;
     }
   } //end of edge loop
+
 
   if( addEmbeddedElem && intersectionPoints.size( 0 ) > 0 )
   {
@@ -236,9 +239,9 @@ void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< 
   }
 }
 
-void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {
-  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
+  this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
 }
 
 } /* namespace geosx */

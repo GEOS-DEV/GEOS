@@ -133,7 +133,7 @@ public:
   /// Deleted move assignment operator
   MultiFluidPVTPackageWrapperUpdate & operator=( MultiFluidPVTPackageWrapperUpdate && ) = delete;
 
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
@@ -143,7 +143,7 @@ public:
                         arraySlice2d< real64 > const & phaseCompFraction,
                         real64 & totalDensity ) const override;
 
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
@@ -180,13 +180,13 @@ public:
                         arraySlice2d< real64 > const & dPhaseInternalEnergy_dGlobalCompFraction ) const override;
 
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
                        arraySlice1d< real64 const > const & composition ) const override
   {
-    Compute( pressure,
+    compute( pressure,
              temperature,
              composition,
              m_phaseFraction[k][q],
@@ -235,7 +235,7 @@ class MultiFluidPVTPackageWrapper : public MultiFluidBase
 {
 public:
 
-  MultiFluidPVTPackageWrapper( std::string const & name, Group * const parent );
+  MultiFluidPVTPackageWrapper( string const & name, Group * const parent );
 
   virtual ~MultiFluidPVTPackageWrapper() override;
 
@@ -292,9 +292,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups() override;
 
   /// function that populates m_fluid ptr; to be overriden by derived classes
   virtual void createFluid() = 0;

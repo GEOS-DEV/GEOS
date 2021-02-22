@@ -41,13 +41,13 @@ public:
    * @brief Return the data type in the data repository.
    * @return the data type in the data repository
    */
-  static typename CatalogInterface::CatalogType & GetCatalog();
+  static typename CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
-  static std::string CatalogName() { return "HybridMimeticDiscretization"; }
+  static string catalogName() { return "HybridMimeticDiscretization"; }
 
   HybridMimeticDiscretization() = delete;
 
@@ -56,7 +56,7 @@ public:
    * @param name the name of the HybridMimeticDiscretization in the data repository
    * @param parent the parent group of this group.
    */
-  HybridMimeticDiscretization( std::string const & name, dataRepository::Group * const parent );
+  HybridMimeticDiscretization( string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief View keys.
@@ -64,20 +64,23 @@ public:
   struct viewKeyStruct
   {
     /// The key for coefficientName
-    static constexpr auto coeffNameString        = "coefficientName";
+    static constexpr char const * coeffNameString() { return "coefficientName"; }
+
     /// The key for transMultiplier
-    static constexpr auto transMultiplierString  = "TransMultiplier";
+    static constexpr char const * transMultiplierString() { return "TransMultiplier"; }
+
     /// The key for the type of inner product
-    static constexpr auto innerProductTypeString = "innerProductType";
+    static constexpr char const * innerProductTypeString() { return "innerProductType"; }
+
     /// The key for the inner product
-    static constexpr auto innerProductString     = "innerProduct";
+    static constexpr char const * innerProductString() { return "innerProduct"; }
   };
 
 protected:
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
 

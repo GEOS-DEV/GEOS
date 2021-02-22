@@ -25,7 +25,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-HaltEvent::HaltEvent( const std::string & name,
+HaltEvent::HaltEvent( const string & name,
                       Group * const parent ):
   EventBase( name, parent ),
   m_externalStartTime( 0.0 ),
@@ -38,8 +38,8 @@ HaltEvent::HaltEvent( const std::string & name,
   m_externalStartTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
   m_externalLastTime = m_externalStartTime;
 
-  registerWrapper( viewKeyStruct::maxRuntimeString, &m_maxRuntime )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::maxRuntimeString(), &m_maxRuntime ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The maximum allowable runtime for the job." );
 }
 
@@ -48,10 +48,10 @@ HaltEvent::~HaltEvent()
 {}
 
 
-void HaltEvent::EstimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
+void HaltEvent::estimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
                                      real64 const GEOSX_UNUSED_PARAM( dt ),
                                      integer const GEOSX_UNUSED_PARAM( cycle ),
-                                     Group * GEOSX_UNUSED_PARAM( domain ))
+                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ))
 {
   // Check run time
   timeval tim;
@@ -75,10 +75,10 @@ void HaltEvent::EstimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
 
   if( this->isReadyForExec() )
   {
-    this->SetExitFlag( 1 );
+    this->setExitFlag( 1 );
   }
 }
 
 
-REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, string const &, Group * const )
 } /* namespace geosx */

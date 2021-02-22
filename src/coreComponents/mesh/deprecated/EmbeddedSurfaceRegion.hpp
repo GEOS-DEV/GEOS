@@ -71,11 +71,11 @@ public:
    * @brief Get the key name for the EmbeddedSurfaceRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EmbeddedSurfaceElementRegion"; }
 
   virtual const string getCatalogName() const override final
-  { return EmbeddedSurfaceRegion::CatalogName(); }
+  { return EmbeddedSurfaceRegion::catalogName(); }
 
   ///@}
 
@@ -99,13 +99,13 @@ public:
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     /// Fracture set string
-    static constexpr auto fractureSetString = "fractureSet";
+    static constexpr char const * fractureSetString() { return "fractureSet"; }
     /// Default fracture aperture
-    static constexpr auto defaultApertureString = "defaultAperture";
+    static constexpr char const * defaultApertureString() { return "defaultAperture"; }
   };
 
 protected:
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups() override;
 
 private:
 

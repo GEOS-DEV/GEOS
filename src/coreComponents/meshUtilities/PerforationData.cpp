@@ -35,13 +35,13 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   m_numPerforationsGlobal( 0 ),
   m_location( 0, 3 )
 {
-  registerWrapper( viewKeyStruct::numPerforationsGlobalString, &m_numPerforationsGlobal );
-  registerWrapper( viewKeyStruct::reservoirElementRegionString, &m_toMeshElements.m_toElementRegion );
-  registerWrapper( viewKeyStruct::reservoirElementSubregionString, &m_toMeshElements.m_toElementSubRegion );
-  registerWrapper( viewKeyStruct::reservoirElementIndexString, &m_toMeshElements.m_toElementIndex );
-  registerWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex );
-  registerWrapper( viewKeyStruct::locationString, &m_location );
-  registerWrapper( viewKeyStruct::wellTransmissibilityString, &m_wellTransmissibility );
+  registerWrapper( viewKeyStruct::numPerforationsGlobalString(), &m_numPerforationsGlobal );
+  registerWrapper( viewKeyStruct::reservoirElementRegionString(), &m_toMeshElements.m_toElementRegion );
+  registerWrapper( viewKeyStruct::reservoirElementSubregionString(), &m_toMeshElements.m_toElementSubRegion );
+  registerWrapper( viewKeyStruct::reservoirElementIndexString(), &m_toMeshElements.m_toElementIndex );
+  registerWrapper( viewKeyStruct::wellElementIndexString(), &m_wellElementIndex );
+  registerWrapper( viewKeyStruct::locationString(), &m_location );
+  registerWrapper( viewKeyStruct::wellTransmissibilityString(), &m_wellTransmissibility );
 }
 
 PerforationData::~PerforationData()
@@ -110,16 +110,16 @@ void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
 
 }
 
-void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
-                                                   WellElementSubRegion const * const wellElemSubRegion,
+void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
+                                                   WellElementSubRegion const & wellElemSubRegion,
                                                    string const & permeabilityKey )
 {
 
   // get the permeability in the domain
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
-    mesh.getElemManager()->ConstructArrayViewAccessor< real64, 2 >( permeabilityKey );
+    mesh.getElemManager().constructArrayViewAccessor< real64, 2 >( permeabilityKey );
 
-  arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion->getElementCenter();
+  arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion.getElementCenter();
 
   // for all the local perforations on this well
   for( localIndex iperf = 0; iperf < size(); ++iperf )
@@ -143,7 +143,7 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 
     // get an approximate dx, dy, dz for the reservoir element
     // this is done by computing a bounding box
-    GetReservoirElementDimensions( mesh, er, esr, ei, dx, dy, dz );
+    getReservoirElementDimensions( mesh, er, esr, ei, dx, dy, dz );
 
     real64 d1 = 0;
     real64 d2 = 0;
@@ -180,7 +180,7 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
     real64 const kh = h * sqrt( k1 * k2 );
 
     arrayView1d< real64 const > const & wellElemRadius =
-      wellElemSubRegion->getReference< array1d< real64 > >( WellElementSubRegion::viewKeyStruct::radiusString );
+      wellElemSubRegion.getReference< array1d< real64 > >( WellElementSubRegion::viewKeyStruct::radiusString() );
 
     GEOSX_ERROR_IF( rEq < wellElemRadius[wellElemIndex],
                     "The equivalent radius r_eq = " << rEq <<
@@ -196,20 +196,20 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 }
 
 
-void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
+void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
                                                      localIndex const er, localIndex const esr, localIndex const ei,
                                                      real64 & dx, real64 & dy, real64 & dz ) const
 {
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
-  NodeManager const * const nodeManager          = mesh.getNodeManager();
-  CellElementRegion const * const region    = Group::group_cast< CellElementRegion const * >( elemManager->GetRegion( er ));
-  CellBlock const * const subRegion = Group::group_cast< CellElementSubRegion const * >( region->GetSubRegion( esr ));
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  CellElementRegion const & region = elemManager.getRegion< CellElementRegion >( er );
+  CellBlock const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];
   computationalGeometry::GetBoundingBox( ei,
-                                         subRegion->nodeList(),
-                                         nodeManager->referencePosition(),
+                                         subRegion.nodeList(),
+                                         nodeManager.referencePosition(),
                                          boxDims );
 
   // dx and dz from bounding box
@@ -217,7 +217,7 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
   dy = boxDims[ 1 ];
 
   // dz is computed as vol / (dx * dy)
-  dz  = subRegion->getElementVolume()[ei];
+  dz  = subRegion.getElementVolume()[ei];
   dz /= dx * dy;
 
   GEOSX_ERROR_IF( dx <= 0 || dy <= 0 || dz <= 0,
@@ -225,11 +225,11 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
 
 }
 
-void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellGeometry,
+void PerforationData::connectToWellElements( InternalWellGenerator const & wellGeometry,
                                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElemMap,
                                              globalIndex elemOffsetGlobal )
 {
-  arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.getPerfElemIndex();
 
   for( localIndex iperfLocal = 0; iperfLocal < size(); ++iperfLocal )
   {

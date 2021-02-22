@@ -26,27 +26,27 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const variableNames = "variableNames";
-std::string const expression = "expression";
+string const variableNames = "variableNames";
+string const expression = "expression";
 }
 }
 
 using namespace dataRepository;
 
-SymbolicFunction::SymbolicFunction( const std::string & name,
+SymbolicFunction::SymbolicFunction( const string & name,
                                     Group * const parent ):
   FunctionBase( name, parent ),
   parserContext(),
   parserExpression()
 {
-  registerWrapper( keys::variableNames, &m_variableNames )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::variableNames, &m_variableNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "List of variables in expression.  The order must match the evaluate argument" );
 
-  registerWrapper( keys::expression, &m_expression )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::expression, &m_expression ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Symbolic math expression" );
 }
 
@@ -54,7 +54,7 @@ SymbolicFunction::SymbolicFunction( const std::string & name,
 SymbolicFunction::~SymbolicFunction()
 {}
 
-void SymbolicFunction::InitializeFunction()
+void SymbolicFunction::initializeFunction()
 {
   // Register variables
   for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
@@ -69,6 +69,6 @@ void SymbolicFunction::InitializeFunction()
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, string const &, Group * const )
 
 } /* namespace ANST */

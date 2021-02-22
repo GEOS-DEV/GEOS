@@ -31,7 +31,7 @@ class FlowSolverBase;
 class FlowProppantTransportSolver : public SolverBase
 {
 public:
-  FlowProppantTransportSolver( const std::string & name,
+  FlowProppantTransportSolver( const string & name,
                                Group * const parent );
   ~FlowProppantTransportSolver() override;
 
@@ -39,38 +39,34 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "FlowProppantTransport"; }
-
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  static string catalogName() { return "FlowProppantTransport"; }
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  solverStep( real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
               DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto proppantSolverNameString = "proppantSolverName";
-    constexpr static auto flowSolverNameString = "flowSolverName";
+    constexpr static char const * proppantSolverNameString() { return "proppantSolverName"; }
+    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
+  };
 
-  } flowProppantTransportSolverViewKeys;
-
-
-  void PreStepUpdate( real64 const & time_n,
+  void preStepUpdate( real64 const & time_n,
                       real64 const & dt,
                       DomainPartition & domain );
 
-  void PostStepUpdate( real64 const & time_n,
+  void postStepUpdate( real64 const & time_n,
                        real64 const & dt,
                        DomainPartition & domain );
 
 protected:
 
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 

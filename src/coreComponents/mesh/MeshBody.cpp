@@ -38,9 +38,9 @@ MeshBody::~MeshBody()
 
 
 
-MeshLevel * MeshBody::CreateMeshLevel( localIndex const GEOSX_UNUSED_PARAM( newLevel ) )
+MeshLevel & MeshBody::createMeshLevel( localIndex const GEOSX_UNUSED_PARAM( newLevel ) )
 {
-  return this->RegisterGroup< MeshLevel >( "Level0" );
+  return this->registerGroup< MeshLevel >( "Level0" );
 }
 
 void MeshBody::setGlobalLengthScale( real64 scale )

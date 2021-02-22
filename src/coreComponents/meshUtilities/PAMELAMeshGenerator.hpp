@@ -45,7 +45,7 @@ public:
  * @param[in] name of the PAMELAMeshGenerator object
  * @param[in] parent the parent Group pointer for the MeshGenerator object
  */
-  PAMELAMeshGenerator( const std::string & name,
+  PAMELAMeshGenerator( const string & name,
                        Group * const parent );
 
   virtual ~PAMELAMeshGenerator() override;
@@ -54,20 +54,20 @@ public:
  * @brief Return the name of the PAMELAMeshGenerator in object Catalog.
  * @return string that contains the key name to PAMELAMeshGenerator in the Catalog
  */
-  static string CatalogName() { return "PAMELAMeshGenerator"; }
+  static string catalogName() { return "PAMELAMeshGenerator"; }
 
 ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    constexpr static auto filePathString = "file";
-    constexpr static auto scaleString = "scale";
-    constexpr static auto fieldsToImportString = "fieldsToImport";
-    constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
-    constexpr static auto reverseZString = "reverseZ";
+    constexpr static char const * filePathString() { return "file"; }
+    constexpr static char const * scaleString() { return "scale"; }
+    constexpr static char const * fieldsToImportString() { return "fieldsToImport"; }
+    constexpr static char const * fieldNamesInGEOSXString() { return "fieldNamesInGEOSX"; }
+    constexpr static char const * reverseZString() { return "reverseZ"; }
   };
 /// @endcond
 
-  virtual void GenerateElementRegions( DomainPartition & domain ) override;
+  virtual void generateElementRegions( DomainPartition & domain ) override;
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
@@ -75,17 +75,17 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( const string & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],
                                              const int size ) override;
 
-  virtual void RemapMesh ( dataRepository::Group * const domain ) override;
+  virtual void remapMesh ( dataRepository::Group & domain ) override;
 
 protected:
 
@@ -93,7 +93,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 
 private:
@@ -143,7 +143,7 @@ public:
      * @param[in] regionCellType the type of the cells (TETRA, HEX, WEDGE or PYRAMID)
      * @return the region label
      */
-    static string MakeRegionLabel( string const & regionName, string const & regionCellType )
+    static string makeRegionLabel( string const & regionName, string const & regionCellType )
     {
       return regionName + m_separator + regionCellType;
     }
@@ -154,7 +154,7 @@ public:
      * @param[in] pamelaLabel the surface or region label within PAMELA
      * @return the name of the surface or the region
      */
-    static string RetrieveSurfaceOrRegionName( string const & pamelaLabel )
+    static string retrieveSurfaceOrRegionName( string const & pamelaLabel )
     {
       string_array const splitLabel = stringutilities::Tokenize( pamelaLabel, m_separator );
       return splitLabel[splitLabel.size() -2 ];

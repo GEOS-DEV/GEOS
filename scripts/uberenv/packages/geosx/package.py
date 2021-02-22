@@ -57,6 +57,8 @@ class Geosx(CMakePackage, CudaPackage):
 
     version('develop', branch='develop', submodules='True')
 
+    # SPHINX_BEGIN_VARIANTS
+
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
     variant('mkl', default=False, description='Use the Intel MKL library.')
@@ -69,12 +71,16 @@ class Geosx(CMakePackage, CudaPackage):
             values=('trilinos', 'hypre', 'petsc'), multi=False)
     variant('pygeosx', default=False, description='Build the GEOSX python interface.')
 
+    # SPHINX_END_VARIANTS
+
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
     # variant('docs', default=False, description='Build docs')
     # variant('addr2line', default=True,
     #         description='Build support for addr2line.')
+
+    # SPHINX_BEGIN_DEPENDS
 
     depends_on('cmake@3.8:', type='build')
     depends_on('cmake@3.9:', when='+cuda', type='build')
@@ -134,7 +140,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
     # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
-    depends_on('hypre@2.20.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.21.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
  
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
@@ -143,10 +149,11 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Python
     #
-    depends_on('python +shared +pic ~sqlite3', when='+pygeosx')
+    depends_on('python +shared +pic', when='+pygeosx')
     depends_on('py-numpy@1.19: +blas +lapack +force-parallel-build', when='+pygeosx')
     depends_on('py-scipy@1.5.2: +force-parallel-build', when='+pygeosx')
     depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
+    depends_on('py-pip', when='+pygeosx')
 
     #
     # Dev tools
@@ -158,6 +165,8 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('doxygen@1.8.13:', when='+docs', type='build')
     depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
+
+    # SPHINX_END_DEPENDS
 
     #
     # Conflicts
@@ -404,10 +413,10 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('# Python\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
             if '+pygeosx' in spec:
-                cfg.write(cmake_cache_option('ENABLE_PYTHON', True))
+                cfg.write(cmake_cache_option('ENABLE_PYGEOSX', True))
                 cfg.write(cmake_cache_entry('Python3_EXECUTABLE', os.path.join(spec['python'].prefix.bin, 'python3')))
             else:
-                cfg.write(cmake_cache_option('ENABLE_PYTHON', False))
+                cfg.write(cmake_cache_option('ENABLE_PYGEOSX', False))
 
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Documentation\n')

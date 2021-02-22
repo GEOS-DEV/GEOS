@@ -57,7 +57,7 @@ public:
   /**
    * @return the string representing the edge manager name in the catalog
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EdgeManager"; }
 
 
@@ -66,7 +66,7 @@ public:
    * @return the edge manager catalog name
    */
   virtual const string getCatalogName() const override
-  { return EdgeManager::CatalogName(); }
+  { return EdgeManager::catalogName(); }
 
   ///@}
 
@@ -87,7 +87,7 @@ public:
    * @param[in] name the name of the EdgeManager object in the repository
    * @param[in] parent the parent group of the EdgeManager object being constructed
    */
-  EdgeManager( std::string const & name,
+  EdgeManager( string const & name,
                Group * const parent );
 
   /**
@@ -109,21 +109,21 @@ public:
    * @brief Set the node of the domain boundary object.
    * @param[in] referenceObject the reference of the face manager.
    */
-  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject = nullptr );
+  void setDomainBoundaryObjects( FaceManager const & referenceObject );
 
   /**
    * @brief Set external edges.
    * @details external edges are the edges on the faces which are external
    * @param[in] faceManager the face manager to obtain external face
    */
-  void SetIsExternal( FaceManager const * const faceManager );
+  void setIsExternal( FaceManager const & faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
    * @param[in] faceManager manager of all faces in the DomainPartition
    * @param[in] nodeManager manager of all nodes in the DomainPartition
    */
-  void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
+  void buildEdges( FaceManager & faceManager, NodeManager & nodeManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
@@ -131,7 +131,7 @@ public:
    * @param[in] faceToNodeMap manager face-to-nodes map
    * @param[in] faceToEdgeMap manager face-to-edges map
    */
-  void BuildEdges( localIndex const numNodes,
+  void buildEdges( localIndex const numNodes,
                    ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                    ArrayOfArrays< localIndex > & faceToEdgeMap );
 
@@ -144,7 +144,7 @@ public:
    * [ [global_index_node_0_edge_0, global_index_node1_edge_0], [global_index_node_0_edge_1, global_index_node1_edge_1] ....]
    */
   virtual void
-  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+  extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
                                                    std::vector< std::vector< globalIndex > > & globalEdgeNodes ) override;
 
   /**
@@ -153,7 +153,7 @@ public:
    * @param[in] packList the list of edge indices to be packed
    * @return The size of the packed list
    */
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   /**
    * @brief Pack an array of edge indices in a buffer.
@@ -162,7 +162,7 @@ public:
    * @param[in] packList the indices of edge to pack
    * @return The size of the packed array
    */
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   /**
@@ -174,16 +174,16 @@ public:
    * @param[in] overwriteDownMaps boolean to state if the Downs maps should be overwritten
    * @return The size of the unpacked array
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
   /**
-   * @brief Call FixUpDownMaps of the class ObjectManagerBase for nodes-to-edges and nodes-to-faces relation maps.
+   * @brief Call fixUpDownMaps of the class ObjectManagerBase for nodes-to-edges and nodes-to-faces relation maps.
    * @param[in] clearIfUnmapped boolean to indicate if the unmaped indices should be removed or not
    */
-  void FixUpDownMaps( bool const clearIfUnmapped );
+  void fixUpDownMaps( bool const clearIfUnmapped );
 
   /**
    * @brief Compress all nodes-to-faces relation maps
@@ -205,17 +205,9 @@ public:
    * @param[in] nodeGlobalToLocal map of the global to local nodes
    * @param[in] faceGlobalToLocal GEOX UNUSED PARAMETER
    */
-  void ConnectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
+  void connectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
                                       const map< globalIndex, localIndex > & nodeGlobalToLocal,
                                       const map< globalIndex, localIndex > & faceGlobalToLocal );
-
-  /**
-   * @brief Add new faces to the faces to edges map.
-   * @param[in] faceManager the FaceManager
-   * @param[in] newFaceIndices the new face indices to be added
-   */
-  void AddToEdgeToFaceMap( FaceManager const * const faceManager,
-                           arrayView1d< localIndex const > const & newFaceIndices );
 
   /**
    * @brief Split an edge (separate its two extremity nodes)
@@ -224,7 +216,7 @@ public:
    * @param[in] childNodeIndex index of the child node
    * @param[in] nodesToEdges array of nodes-to-edges list
    */
-  void SplitEdge( const localIndex indexToSplit,
+  void splitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
                   const localIndex childNodeIndex[2],
                   array1d< SortedArray< localIndex > > & nodesToEdges );
@@ -273,34 +265,24 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     /// @cond DO_NOT_DOCUMENT
-    static constexpr auto nodeListString              = "nodeList";
-    static constexpr auto faceListString              = "faceList";
-    static constexpr auto elementRegionListString     = "elemRegionList";
-    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
-    static constexpr auto elementListString           = "elemList";
-    static constexpr auto edgesTofractureConnectorsEdgesString = "edgesToFractureConnectors";
-    static constexpr auto fractureConnectorEdgesToEdgesString = "fractureConnectorsToEdges";
-    static constexpr auto fractureConnectorsEdgesToFaceElementsIndexString = "fractureConnectorsToElementIndex";
+    static constexpr char const * nodeListString() { return "nodeList"; }
+    static constexpr char const * faceListString() { return "faceList"; }
+    static constexpr char const * elementRegionListString() { return "elemRegionList"; }
+    static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
+    static constexpr char const * elementListString() { return "elemList"; }
+    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
+    static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
+    static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
 
-    dataRepository::ViewKey nodesList             = { nodeListString };
-    dataRepository::ViewKey faceList              = { faceListString };
-    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
-    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
-    dataRepository::ViewKey elementList           = { elementListString };
+    dataRepository::ViewKey nodesList             = { nodeListString() };
+    dataRepository::ViewKey faceList              = { faceListString() };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString() };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString() };
+    dataRepository::ViewKey elementList           = { elementListString() };
     /// @endcond
   }
   /// viewKeys
   viewKeys;
-
-
-  /**
-   * @struct groupKeyStruct
-   * @brief Container of keys needed to access the data of the class member
-   */
-  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {}
-  /// groupKeys
-  groupKeys;
 
   ///}@
 
@@ -397,7 +379,7 @@ private:
    * @return size of data packed in terms of number of chars
    */
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
 };

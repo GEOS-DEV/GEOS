@@ -12,23 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
 /**
  * @file ConstitutiveBase.cpp
  */
@@ -43,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ConstitutiveBase::ConstitutiveBase( std::string const & name,
+ConstitutiveBase::ConstitutiveBase( string const & name,
                                     Group * const parent ):
   Group( name, parent ),
   m_numQuadraturePoints( 1 ),
@@ -57,26 +40,26 @@ ConstitutiveBase::~ConstitutiveBase()
 
 
 
-ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::GetCatalog()
+ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::getCatalog()
 {
   static ConstitutiveBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
-  m_constitutiveDataGroup = parent;
+  m_constitutiveDataGroup = &parent;
 
-  for( auto & group : this->GetSubGroups() )
+  for( auto & group : this->getSubGroups() )
   {
     for( auto & wrapper : group.second->wrappers() )
     {
       if( wrapper.second->sizedFromParent() )
       {
-        string const wrapperName = wrapper.first;
-        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
+        string const & wrapperName = wrapper.first;
+        parent.registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
           setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
@@ -87,12 +70,12 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const p
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = wrapper.first;
-      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
+      parent.registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
         setRestartFlags( RestartFlags::NO_WRITE );
     }
   }
 
-  this->resize( parent->size() );
+  this->resize( parent.size() );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -100,11 +83,11 @@ ConstitutiveBase::deliverClone( string const & name,
                                 Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase >
-  newModel = ConstitutiveBase::CatalogInterface::Factory( this->getCatalogName(), name, parent );
+  newModel = ConstitutiveBase::CatalogInterface::factory( this->getCatalogName(), name, parent );
 
   newModel->forWrappers( [&]( WrapperBase & wrapper )
   {
-    wrapper.copyWrapper( *(this->getWrapperBase( wrapper.getName() ) ) );
+    wrapper.copyWrapper( this->getWrapperBase( wrapper.getName() ) );
   } );
 
   return newModel;

@@ -40,16 +40,16 @@ public:
  *
  * @note Unused
  */
-  virtual void InitializeMetis();
+  virtual void initializeMetis();
 
   /**
    * @brief Adds some neighbors to the neighbor communicators.
    * @param neighborList The neighbors to add.
    */
-  void AddNeighborsMetis( SortedArray< globalIndex > & neighborList );
-  virtual bool IsCoordInPartition( const real64 & coord, const int dir );
-  virtual bool IsCoordInPartition( real64 const ( &coordinates )[ 3 ] );
-  virtual bool IsCoordInPartition( real64 const ( &coordinates )[ 3 ],
+  void addNeighborsMetis( SortedArray< globalIndex > & neighborList );
+  virtual bool isCoordInPartition( const real64 & coord, const int dir );
+  virtual bool isCoordInPartition( real64 const ( &coordinates )[ 3 ] );
+  virtual bool isCoordInPartition( real64 const ( &coordinates )[ 3 ],
                                    const int numDistPartition );
   /**
    * @brief Variant of IsCoordInPartition with intervals closed at both ends
@@ -58,7 +58,7 @@ public:
    *
    * @note Unused.
    */
-  virtual bool IsCoordInPartitionClosed( real64 const ( &coordinates )[ 3 ] );
+  virtual bool isCoordInPartitionClosed( real64 const ( &coordinates )[ 3 ] );
 
   /**
    * @brief Checks if the point located inside the current partition bounding box.
@@ -67,9 +67,9 @@ public:
    *
    * @note Unused.
    */
-  virtual bool IsCoordInPartitionBoundingBox( real64 const ( &coordinates )[ 3 ] );
+  virtual bool isCoordInPartitionBoundingBox( real64 const ( &coordinates )[ 3 ] );
 
-  virtual bool IsCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] );
+  virtual bool isCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] );
 
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] );
@@ -82,7 +82,7 @@ public:
    * @param min The minimum.
    * @param max The maximum.
    */
-  void SetPartitionGeometricalBoundary( real64 const ( &min )[ 3 ],
+  void setPartitionGeometricalBoundary( real64 const ( &min )[ 3 ],
                                         real64 const ( &max )[ 3 ] );
 
   void setPartitions( unsigned int xPartitions,
@@ -96,7 +96,7 @@ public:
     m_size = 1;
     for( int i = 0; i < nsdof; i++ )
       m_size *= m_Partitions( i );
-    SetContactGhostRange( 0.0 );
+    setContactGhostRange( 0.0 );
   }
 
   /**
@@ -114,7 +114,7 @@ public:
     m_Periodic( 2 ) = zPeriodic;
   }
 
-  virtual void SetContactGhostRange( const real64 bufferSize );
+  virtual void setContactGhostRange( const real64 bufferSize );
 
 //  virtual void ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain);
 
@@ -126,10 +126,10 @@ public:
 //      const bool contactActive, const int elementGhostingDepth);
 //  void SetSinglePartitionGhostArrays(PhysicalDomainT& domain);
 
-  int GetColor();
+  int getColor();
 
 protected:
-  void InitializePostSubGroups( dataRepository::Group * const );
+  void initializePostSubGroups();
 
 public:
   /// number of partitions
@@ -180,7 +180,7 @@ public:
    *
    * @note Rough copy/paste of DomainPartition::AddNeighbors
    */
-  void AddNeighbors( const unsigned int idim, MPI_Comm & cartcomm,
+  void addNeighbors( const unsigned int idim, MPI_Comm & cartcomm,
                      int * ncoords );
 
 };

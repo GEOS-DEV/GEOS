@@ -33,8 +33,8 @@ namespace geosx
 class SiloOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  SiloOutput( std::string const & name,
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  SiloOutput( string const & name,
               Group * const parent );
 
   /// Destructor
@@ -44,30 +44,30 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "Silo"; }
+  static string catalogName() { return "Silo"; }
 
   /**
    * @brief Writes out a Silo plot file.
-   * @copydoc EventBase::Execute()
+   * @copydoc EventBase::execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Writes out a Silo plot file at the end of the simulation.
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
-    Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
+    execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
   /// @cond DO_NOT_DOCUMENT

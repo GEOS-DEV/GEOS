@@ -197,7 +197,7 @@ private:
    * @param[in] isProppantBoundary proppant boundary flag
    */
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const proppantConcentration,
@@ -214,7 +214,7 @@ private:
    * @param[in] shearRate shear rate for power-law fluid calculation
    */
   GEOSX_HOST_DEVICE
-  virtual void UpdateFluidProperty( localIndex const k,
+  virtual void updateFluidProperty( localIndex const k,
                                     localIndex const q,
                                     real64 const pressure,
                                     arraySlice1d< real64 const > const & componentConcentration,
@@ -228,7 +228,7 @@ private:
    * @param[in] componentconcentration fluid composition array
    */
   GEOSX_HOST_DEVICE
-  virtual void UpdateComponentDensity( localIndex const k,
+  virtual void updateComponentDensity( localIndex const k,
                                        localIndex const q,
                                        real64 const pressure,
                                        arraySlice1d< real64 const > const & componentConcentration ) const = 0;
@@ -242,19 +242,19 @@ class SlurryFluidBase : public ConstitutiveBase
 {
 public:
 
-  SlurryFluidBase( std::string const & name, Group * const parent );
+  SlurryFluidBase( string const & name, Group * const parent );
 
   virtual ~SlurryFluidBase() override;
 
   // *** ConstitutiveBase interface
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
 
   localIndex numFluidComponents() const;
 
-  arrayView1d< real64 > KIndex() const { return m_Ks; }
+  arrayView1d< real64 > kIndex() const { return m_Ks; }
   arrayView1d< real64 const > nIndex() const { return m_nIndices; }
 
   arrayView2d< real64 > density() { return m_density; }
@@ -314,41 +314,40 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr char const * componentNamesString() { return "componentNames"; }
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
 
-    static constexpr auto componentNamesString       = "componentNames";
-    static constexpr auto defaultDensityString      = "defaultDensity";
-    static constexpr auto defaultCompressibilityString      = "defaultCompressibility";
-    static constexpr auto defaultViscosityString      = "defaultViscosity";
+    static constexpr char const * densityString() { return "density"; }
+    static constexpr char const * dDens_dPresString() { return "dDens_dPres"; }
+    static constexpr char const * dDens_dProppantConcString() { return "dDens_dProppantConc"; }
+    static constexpr char const * dDens_dCompConcString() { return "dDens_dCompConc"; }
 
-    static constexpr auto densityString      = "density";
-    static constexpr auto dDens_dPresString  = "dDens_dPres";
-    static constexpr auto dDens_dProppantConcString  = "dDens_dProppantConc";
-    static constexpr auto dDens_dCompConcString  = "dDens_dCompConc";
+    static constexpr char const * componentDensityString() { return "componentDensity"; }
+    static constexpr char const * dCompDens_dPresString() { return "dCompDens_dPres"; }
+    static constexpr char const * dCompDens_dCompConcString() { return "dCompDens_dCompConc"; }
 
-    static constexpr auto componentDensityString      = "componentDensity";
-    static constexpr auto dCompDens_dPresString  = "dCompDens_dPres";
-    static constexpr auto dCompDens_dCompConcString  = "dCompDens_dCompConc";
+    static constexpr char const * fluidDensityString() { return "FluidDensity"; }
+    static constexpr char const * dFluidDens_dPresString() { return "dFluidDens_dPres"; }
+    static constexpr char const * dFluidDens_dCompConcString() { return "dFluidDens_dCompConc"; }
 
-    static constexpr auto fluidDensityString      = "FluidDensity";
-    static constexpr auto dFluidDens_dPresString  = "dFluidDens_dPres";
-    static constexpr auto dFluidDens_dCompConcString  = "dFluidDens_dCompConc";
+    static constexpr char const * fluidViscosityString() { return "FluidViscosity"; }
+    static constexpr char const * dFluidVisc_dPresString() { return "dFluidVisc_dPres"; }
+    static constexpr char const * dFluidVisc_dCompConcString() { return "dFluidVisc_dCompConc"; }
 
-    static constexpr auto fluidViscosityString      = "FluidViscosity";
-    static constexpr auto dFluidVisc_dPresString  = "dFluidVisc_dPres";
-    static constexpr auto dFluidVisc_dCompConcString  = "dFluidVisc_dCompConc";
+    static constexpr char const * viscosityString() { return "viscosity"; }
+    static constexpr char const * dVisc_dPresString() { return "dVisc_dPres"; }
+    static constexpr char const * dVisc_dProppantConcString() { return "dVisc_dProppantConc"; }
+    static constexpr char const * dVisc_dCompConcString() { return "dVisc_dCompConc"; }
+    static constexpr char const * flowBehaviorIndexString() { return "flowBehaviorIndex"; }
 
-    static constexpr auto viscosityString    = "viscosity";
-    static constexpr auto dVisc_dPresString  = "dVisc_dPres";
-    static constexpr auto dVisc_dProppantConcString  = "dVisc_dProppantConc";
-    static constexpr auto dVisc_dCompConcString  = "dVisc_dCompConc";
-    static constexpr auto flowBehaviorIndexString   = "flowBehaviorIndex";
-
-    static constexpr auto flowConsistencyIndexString   = "flowConsistencyIndex";
-  } viewKeysSlurryFluidBase;
+    static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
+  };
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   string_array m_componentNames;
 

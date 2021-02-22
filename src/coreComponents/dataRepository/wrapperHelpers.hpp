@@ -32,6 +32,10 @@
 #include "common/GeosxMacros.hpp"
 #include "codingUtilities/traits.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "LvArray/src/python/python.hpp"
+#endif
+
 // TPL includes
 #include <conduit.hpp>
 
@@ -51,10 +55,10 @@ namespace wrapperHelpers
 namespace internal
 {
 
-inline void logOutputType( std::string const & typeString, std::string const & msg )
+inline void logOutputType( string const & typeString, string const & msg )
 {
 #if RESTART_TYPE_LOGGING
-  static std::unordered_set< std::string > m_types;
+  static std::unordered_set< string > m_types;
 
   if( !m_types.count( typeString ) )
   {
@@ -68,14 +72,14 @@ inline void logOutputType( std::string const & typeString, std::string const & m
 }
 
 template< typename T, typename ... INDICES >
-std::string getIndicesToComponent( T const &, int const component, INDICES const ... existingIndices )
+string getIndicesToComponent( T const &, int const component, INDICES const ... existingIndices )
 {
   GEOSX_ERROR_IF_NE( component, 0 );
   return LvArray::indexing::getIndexString( existingIndices ... );
 }
 
 template< typename ... INDICES >
-std::string getIndicesToComponent( R1Tensor const &, int const component, INDICES const ... existingIndices )
+string getIndicesToComponent( R1Tensor const &, int const component, INDICES const ... existingIndices )
 { return LvArray::indexing::getIndexString( existingIndices ..., component ); }
 
 template< typename T >
@@ -108,7 +112,7 @@ size( T const & GEOSX_UNUSED_PARAM( value ) )
 
 
 inline char *
-dataPtr( std::string & var )
+dataPtr( string & var )
 { return const_cast< char * >( var.data() ); }
 
 inline char *
@@ -220,12 +224,12 @@ capacity( T const & value )
 
 template< typename T >
 std::enable_if_t< traits::HasMemberFunction_setName< T > >
-setName( T & value, std::string const & name )
+setName( T & value, string const & name )
 { value.setName( name ); }
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_setName< T > >
-setName( T & GEOSX_UNUSED_PARAM( value ), std::string const & GEOSX_UNUSED_PARAM( name ) )
+setName( T & GEOSX_UNUSED_PARAM( value ), string const & GEOSX_UNUSED_PARAM( name ) )
 {}
 
 template< typename T >
@@ -278,10 +282,10 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
   GEOSX_ERROR_IF_NE( bytesRead, byteSize );
 }
 
-// This is for an std::string since the type of char is different on different platforms :(.
+// This is for an string since the type of char is different on different platforms :(.
 inline
 void
-pushDataToConduitNode( std::string const & var, conduit::Node & node )
+pushDataToConduitNode( string const & var, conduit::Node & node )
 {
   internal::logOutputType( LvArray::system::demangleType( var ), "Output via external pointer: " );
 
@@ -292,12 +296,12 @@ pushDataToConduitNode( std::string const & var, conduit::Node & node )
   node[ "__values__" ].set_external( dtype, ptr );
 }
 
-// This is for Path since it derives from std::string. See overload for std::string.
+// This is for Path since it derives from string. See overload for string.
 inline
 void
 pushDataToConduitNode( Path const & var, conduit::Node & node )
 {
-  pushDataToConduitNode( static_cast< std::string const & >(var), node );
+  pushDataToConduitNode( static_cast< string const & >(var), node );
 }
 
 // This is for an object that doesn't need to be packed but isn't an LvArray.
@@ -447,12 +451,12 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
 template< typename T >
 void pushDataToConduitNode( InterObjectRelation< T > const & var,
                             conduit::Node & node )
-{return pushDataToConduitNode( var.Base(), node ); }
+{return pushDataToConduitNode( var.base(), node ); }
 
 template< typename T >
 void pullDataFromConduitNode( InterObjectRelation< T > & var,
                               conduit::Node const & node )
-{ return pullDataFromConduitNode( var.Base(), node ); }
+{ return pullDataFromConduitNode( var.base(), node ); }
 
 
 /// TODO: Remove this function once https://github.com/visit-dav/visit/issues/4637 is fixed and released.
@@ -460,9 +464,9 @@ template< typename T, int NDIM, int USD >
 std::enable_if_t< std::is_arithmetic< T >::value || traits::is_tensorT< T > >
 addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
                    conduit::Node & fields,
-                   std::string const & fieldName,
-                   std::string const & topology,
-                   std::vector< std::string > const & componentNames )
+                   string const & fieldName,
+                   string const & topology,
+                   std::vector< string > const & componentNames )
 {
   GEOSX_ERROR_IF_LE( var.size(), 0 );
 
@@ -487,14 +491,14 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
   {
     for( int i = 0; i < numComponentsPerValue; ++i )
     {
-      std::string name;
+      string name;
       if( totalNumberOfComponents == 1 )
       {
         name = fieldName;
       }
       else if( componentNames.empty() )
       {
-        std::string indexString = internal::getIndicesToComponent( val, i, indices ... );
+        string indexString = internal::getIndicesToComponent( val, i, indices ... );
         indexString.erase( indexString.begin() );
         indexString.pop_back();
         indexString.pop_back();
@@ -519,9 +523,9 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
 template< typename T >
 void addBlueprintField( T const &,
                         conduit::Node & fields,
-                        std::string const &,
-                        std::string const &,
-                        std::vector< std::string > const & )
+                        string const &,
+                        string const &,
+                        std::vector< string > const & )
 {
   GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
                "\nWas trying to write it to " << fields.path() );
@@ -531,7 +535,7 @@ template< typename T, int NDIM, int USD >
 std::enable_if_t< std::is_arithmetic< T >::value || traits::is_tensorT< T > >
 populateMCArray( ArrayView< T const, NDIM, USD > const & var,
                  conduit::Node & node,
-                 std::vector< std::string > const & componentNames )
+                 std::vector< string > const & componentNames )
 {
   GEOSX_ERROR_IF_LE( var.size(), 0 );
 
@@ -555,8 +559,8 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
   {
     for( int i = 0; i < numComponentsPerValue; ++i )
     {
-      std::string const name = componentNames.empty() ? internal::getIndicesToComponent( val, i, indices ... ) :
-                               componentNames[ curComponent++ ];
+      string const name = componentNames.empty() ? internal::getIndicesToComponent( val, i, indices ... ) :
+                          componentNames[ curComponent++ ];
 
       void const * pointer = internal::getPointerToComponent( val, i );
       node[ name ].set_external( dtype, const_cast< void * >( pointer ) );
@@ -567,7 +571,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
 template< typename T >
 void populateMCArray( T const &,
                       conduit::Node & node,
-                      std::vector< std::string > const & )
+                      std::vector< string > const & )
 {
   GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
                "\nWas trying to write it to " << node.path() );
@@ -656,7 +660,8 @@ template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * &, T const & )
 {
-  GEOSX_ERROR( "Cannot pack " << LvArray::system::demangleType< T >() << " on device." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
+               ") on device but type is not packable on device." );
   return 0;
 }
 
@@ -669,7 +674,8 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * &, T const &, IDX & )
 {
-  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
+               ") on device but type is not packable by index." );
   return 0;
 }
 
@@ -731,6 +737,19 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX & )
 { return 0; }
+#if defined(GEOSX_USE_PYGEOSX)
+
+template< typename T >
+inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >
+createPythonObject( T & object )
+{ return LvArray::python::create( object ); }
+
+template< typename T >
+inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
+createPythonObject( T & )
+{ return nullptr; }
+
+#endif
 
 } // namespace WrapperHelpers
 } // namespace dataRepository

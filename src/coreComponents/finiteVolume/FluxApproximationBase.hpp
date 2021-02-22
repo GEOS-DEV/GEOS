@@ -101,7 +101,7 @@ public:
    * @brief Return the data type in the data repository.
    * @return the data type in the data repository
    */
-  static typename CatalogInterface::CatalogType & GetCatalog();
+  static typename CatalogInterface::CatalogType & getCatalog();
 
   FluxApproximationBase() = delete;
 
@@ -172,22 +172,28 @@ public:
   struct viewKeyStruct
   {
     /// The key for fieldName
-    static constexpr auto fieldNameString             = "fieldName";
+    static constexpr char const * fieldNameString() { return "fieldName"; }
+
     /// The key for coefficientName
-    static constexpr auto coeffNameString             = "coefficientName";
+    static constexpr char const * coeffNameString() { return "coefficientName"; }
+
     /// The key for targetRegions
-    static constexpr auto targetRegionsString         = "targetRegions";
+    static constexpr char const * targetRegionsString() { return "targetRegions"; }
+
     /// The key for areaRelTol
-    static constexpr auto areaRelativeToleranceString = "areaRelTol";
+    static constexpr char const * areaRelativeToleranceString() { return "areaRelTol"; }
+
     /// The key for transMultiplier
-    static constexpr auto transMultiplierString       = "TransMultiplier";
+    static constexpr char const * transMultiplierString() { return "TransMultiplier"; }
+
 
     // Keys below are for wrappers registered on MeshLevel, not the current object
 
     /// The key for cellStencil
-    static constexpr auto cellStencilString           = "cellStencil";
+    static constexpr char const * cellStencilString() { return "cellStencil"; }
+
     /// The key for fractureStencil
-    static constexpr auto fractureStencilString       = "fractureStencil";
+    static constexpr char const * fractureStencilString() { return "fractureStencil"; }
   };
 
   /**
@@ -196,7 +202,7 @@ public:
   struct groupKeyStruct
   {
     /// Key under which the top-level group for all FV stencils will be registered on MeshLevel
-    static constexpr auto stencilMeshGroupString = "finiteVolumeStencils";
+    static constexpr auto stencilMeshGroupString() { return "finiteVolumeStencils"; }
   };
 
   /**
@@ -211,9 +217,9 @@ public:
 
 protected:
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Register the wrapper for cell stencil on a mesh.
@@ -271,14 +277,14 @@ protected:
 template< typename TYPE >
 TYPE const & FluxApproximationBase::getStencil( MeshLevel const & mesh, string const & name ) const
 {
-  Group const & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
+  Group const & stencilGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ).getGroup( getName() );
   return stencilGroup.getReference< TYPE >( name );
 }
 
 template< typename TYPE >
 TYPE & FluxApproximationBase::getStencil( MeshLevel & mesh, string const & name ) const
 {
-  Group & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
+  Group & stencilGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ).getGroup( getName() );
   return stencilGroup.getReference< TYPE >( name );
 }
 
@@ -292,7 +298,7 @@ void FluxApproximationBase::forAllStencils( MeshLevel const & mesh, LAMBDA && la
 template< typename TYPE, typename ... TYPES, typename LAMBDA >
 void FluxApproximationBase::forStencils( MeshLevel const & mesh, LAMBDA && lambda ) const
 {
-  Group const & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
+  Group const & stencilGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ).getGroup( getName() );
   stencilGroup.forWrappers< TYPE, TYPES... >( [&] ( auto const & wrapper )
   {
     lambda( wrapper.reference() );

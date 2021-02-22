@@ -124,7 +124,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,
                        real64 const dFluidDensity_dPressure,
@@ -133,7 +133,7 @@ public:
                        real64 const dFluidViscosity_dPressure,
                        arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration ) const override
   {
-    Compute( proppantConcentration,
+    compute( proppantConcentration,
              fluidDensity,
              dFluidDensity_dPressure,
              dFluidDensity_dComponentConcentration,
@@ -152,7 +152,7 @@ private:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void Compute( real64 const proppantConcentration,
+  void compute( real64 const proppantConcentration,
                 real64 const fluidDensity,
                 real64 const dFluidDensity_dPressure,
                 arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
@@ -185,15 +185,15 @@ class ParticleFluid : public ParticleFluidBase
 {
 public:
 
-  ParticleFluid( std::string const & name, Group * const parent );
+  ParticleFluid( string const & name, Group * const parent );
 
   virtual ~ParticleFluid() override;
 
   // *** ConstitutiveBase interface
 
-  static std::string CatalogName() { return "ParticleFluid"; }
+  static string catalogName() { return "ParticleFluid"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ParticleFluidUpdate;
@@ -208,22 +208,21 @@ public:
 
   struct viewKeyStruct : public ParticleFluidBase::viewKeyStruct
   {
-    static constexpr auto fluidViscosityString    = "fluidViscosity";
-    static constexpr auto proppantDiameterString    = "proppantDiameter";
-    static constexpr auto proppantDensityString    = "proppantDensity";
-    static constexpr auto hinderedSettlingCoefficientString    = "hinderedSettlingCoefficient";
-    static constexpr auto collisionAlphaString    = "collisionAlpha";
-    static constexpr auto slipConcentrationString    = "slipConcentration";
-    static constexpr auto collisionBetaString    = "collisionBeta";
-    static constexpr auto bridgingFactorString    = "bridgingFactor";
-    static constexpr auto sphericityString    = "sphericity";
-    static constexpr auto particleSettlingModelString    = "particleSettlingModel";
-
-  } viewKeysParticleFluid;
+    static constexpr char const * fluidViscosityString() { return "fluidViscosity"; }
+    static constexpr char const * proppantDiameterString() { return "proppantDiameter"; }
+    static constexpr char const * proppantDensityString() { return "proppantDensity"; }
+    static constexpr char const * hinderedSettlingCoefficientString() { return "hinderedSettlingCoefficient"; }
+    static constexpr char const * collisionAlphaString() { return "collisionAlpha"; }
+    static constexpr char const * slipConcentrationString() { return "slipConcentration"; }
+    static constexpr char const * collisionBetaString() { return "collisionBeta"; }
+    static constexpr char const * bridgingFactorString() { return "bridgingFactor"; }
+    static constexpr char const * sphericityString() { return "sphericity"; }
+    static constexpr char const * particleSettlingModelString() { return "particleSettlingModel"; }
+  };
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 
@@ -251,7 +250,7 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ParticleFluidUpdate::Compute( real64 const proppantConcentration,
+void ParticleFluidUpdate::compute( real64 const proppantConcentration,
                                    real64 const fluidDensity,
                                    real64 const GEOSX_UNUSED_PARAM( dFluidDensity_dPressure ),
                                    arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),

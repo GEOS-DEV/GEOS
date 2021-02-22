@@ -34,20 +34,20 @@ using namespace dataRepository;
  * @return
  */
 //START_SPHINX_REFPOS_REG
-NodeManager::NodeManager( std::string const & name,
+NodeManager::NodeManager( string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition( 0, 3 ),
   m_embeddedSurfNodesPosition( 0, 3 )
 {
-  registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition );
+  registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
   //END_SPHINX_REFPOS_REG
-  registerWrapper( viewKeyStruct::EmbSurfNodesPositionString, &m_embeddedSurfNodesPosition )->setSizedFromParent( 0 );
-  this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
-  this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
-  this->registerWrapper( viewKeyStruct::elementRegionListString, &elementRegionList() );
-  this->registerWrapper( viewKeyStruct::elementSubRegionListString, &elementSubRegionList() );
-  this->registerWrapper( viewKeyStruct::elementListString, &elementList() );
+  registerWrapper( viewKeyStruct::EmbSurfNodesPositionString(), &m_embeddedSurfNodesPosition ).setSizedFromParent( 0 );
+  this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
+  this->registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
+  this->registerWrapper( viewKeyStruct::elementRegionListString(), &elementRegionList() );
+  this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
+  this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
 
 }
 
@@ -67,15 +67,15 @@ void NodeManager::resize( localIndex const newSize )
 }
 
 
-void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
+void NodeManager::setEdgeMaps( EdgeManager const & edgeManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager->nodeList();
+  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList();
   localIndex const numEdges = edgeToNodeMap.size( 0 );
   localIndex const numNodes = size();
 
-  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager->maxEdgesPerNode() );
+  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager.maxEdgesPerNode() );
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
 
   forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
@@ -112,19 +112,19 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
     toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges );
   } );
 
-  m_toEdgesRelation.SetRelatedObject( edgeManager );
+  m_toEdgesRelation.setRelatedObject( edgeManager );
 }
 
 
-void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
+void NodeManager::setFaceMaps( FaceManager const & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
   localIndex const numFaces = faceToNodes.size();
   localIndex const numNodes = size();
 
-  ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager->maxFacesPerNode() );
+  ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager.maxFacesPerNode() );
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces = 0;
 
   forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
@@ -163,11 +163,11 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     m_toFacesRelation.insertIntoSet( nodeID, faces, faces + numUniqueFaces );
   } );
 
-  m_toFacesRelation.SetRelatedObject( faceManager );
+  m_toFacesRelation.setRelatedObject( faceManager );
 }
 
 
-void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
+void NodeManager::setElementMaps( ElementRegionManager const & elementRegionManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -182,7 +182,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   // The total number of elements, the sum of elemsPerNode.
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
 
-  elementRegionManager->
+  elementRegionManager.
     forElementSubRegions< CellElementSubRegion >( [&elemsPerNode, &totalNodeElems]( CellElementSubRegion const & subRegion )
   {
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
@@ -231,7 +231,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   // Populate the element maps.
   // Note that this can't be done in parallel because the three element lists must be in the same order.
   // If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
-  elementRegionManager->
+  elementRegionManager.
     forElementSubRegionsComplete< CellElementSubRegion >( [&toElementRegionList, &toElementSubRegionList, &toElementList]
                                                             ( localIndex const er, localIndex const esr, ElementRegionBase const &,
                                                             CellElementSubRegion const & subRegion )
@@ -253,7 +253,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 }
 
 
-void NodeManager::CompressRelationMaps()
+void NodeManager::compressRelationMaps()
 {
   m_toEdgesRelation.compress();
   m_toFacesRelation.compress();
@@ -263,14 +263,14 @@ void NodeManager::CompressRelationMaps()
 }
 
 
-void NodeManager::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+void NodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
-  ObjectManagerBase::ViewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString ));
+  ObjectManagerBase::viewPackingExclusionList( exclusionList );
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
 
   if( this->hasWrapper( "usedFaces" ) )
   {
@@ -279,43 +279,43 @@ void NodeManager::ViewPackingExclusionList( SortedArray< localIndex > & exclusio
 }
 
 
-localIndex NodeManager::PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+localIndex NodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return PackUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsPrivate< false >( junk, packList );
 }
 
 
-localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex NodeManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return PackUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsPrivate< true >( buffer, packList );
 }
 
 
 template< bool DOPACK >
-localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toEdgesRelation.toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToEdges,
                                            packList,
                                            this->localToGlobalMap(),
-                                           m_toEdgesRelation.RelatedObjectLocalToGlobal() );
+                                           m_toEdgesRelation.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toFacesRelation.toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToFaces,
                                            packList,
                                            this->localToGlobalMap(),
-                                           m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                           m_toFacesRelation.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            this->m_toElements,
                                            packList,
@@ -324,7 +324,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 }
 
 
-localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
                                           bool const )
@@ -333,27 +333,27 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString, "" );
+  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToEdges,
                                      this->globalToLocalMap(),
-                                     m_toEdgesRelation.RelatedObjectGlobalToLocal(),
+                                     m_toEdgesRelation.relatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString, "" );
+  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToFaces,
                                      this->globalToLocalMap(),
-                                     m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                     m_toFacesRelation.relatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString, "" );
+  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,
@@ -364,15 +364,15 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 }
 
 
-void NodeManager::FixUpDownMaps( bool const clearIfUnmapped )
+void NodeManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
-  ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
-                                    m_toEdgesRelation.RelatedObjectGlobalToLocal(),
+  ObjectManagerBase::fixUpDownMaps( m_toEdgesRelation,
+                                    m_toEdgesRelation.relatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToEdges,
                                     clearIfUnmapped );
 
-  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
-                                    m_toFacesRelation.RelatedObjectGlobalToLocal(),
+  ObjectManagerBase::fixUpDownMaps( m_toFacesRelation,
+                                    m_toFacesRelation.relatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
 
@@ -385,8 +385,8 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
                                     ElementRegionManager const & elemRegionManager )
 {
 
-  ObjectManagerBase::CleanUpMap( receivedNodes, m_toEdgesRelation.toView(), edgesToNodes );
-  ObjectManagerBase::CleanUpMap( receivedNodes, m_toFacesRelation.toView(), facesToNodes );
+  ObjectManagerBase::cleanUpMap( receivedNodes, m_toEdgesRelation.toView(), edgesToNodes );
+  ObjectManagerBase::cleanUpMap( receivedNodes, m_toFacesRelation.toView(), facesToNodes );
 
   for( auto const & targetIndex : receivedNodes )
   {
@@ -397,9 +397,9 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
       localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];
       localIndex const elemIndex          = m_toElements.m_toElementIndex[targetIndex][k];
 
-      CellElementSubRegion const * subRegion = elemRegionManager.GetRegion( elemRegionIndex )->
-                                                 GetSubRegion< CellElementSubRegion >( elemSubRegionIndex );
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const downmap = subRegion->nodeList();
+      CellElementSubRegion const & subRegion = elemRegionManager.getRegion( elemRegionIndex ).
+                                                 getSubRegion< CellElementSubRegion >( elemSubRegionIndex );
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const downmap = subRegion.nodeList();
       bool hasTargetIndex = false;
 
       for( localIndex a=0; a<downmap.size( 1 ); ++a )
@@ -422,6 +422,6 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, string const &, Group * const )
 
 }

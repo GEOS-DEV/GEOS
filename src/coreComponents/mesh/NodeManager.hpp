@@ -91,7 +91,7 @@ public:
    * @param [in] name the name of this instantiation of NodeManager
    * @param [in] parent the parent group of this instantiation of NodeManager
    */
-  NodeManager( std::string const & name,
+  NodeManager( string const & name,
                dataRepository::Group * const parent );
 
   /**
@@ -134,15 +134,15 @@ public:
    * @brief Return the name of the node manager in the object catalog.
    * @return string that contains the NodeManager catalog name
    */
-  static string CatalogName()
+  static string catalogName()
   { return "NodeManager"; }
 
   /**
-   * @brief Provide a virtual access to CatalogName().
+   * @brief Provide a virtual access to catalogName().
    * @return string that contains the NodeManager catalog name
    */
   const string getCatalogName() const override final
-  { return NodeManager::CatalogName(); }
+  { return NodeManager::catalogName(); }
 
   ///@}
 
@@ -150,25 +150,25 @@ public:
    * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager
    */
-  void SetEdgeMaps( EdgeManager const * const edgeManager );
+  void setEdgeMaps( EdgeManager const & edgeManager );
 
   /**
    * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
    * @param [in] faceManager the faceManager to assign this NodeManager
    */
-  void SetFaceMaps( FaceManager const * const faceManager );
+  void setFaceMaps( FaceManager const & faceManager );
 
   /**
    * @brief Assign the ElementRegionManager \p elementRegionManager to the NodeManager, and performs the node-to-element mapping
    * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
    */
-  void SetElementMaps( ElementRegionManager const * const elementRegionManager );
+  void setElementMaps( ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
    * @note The method used here on each arrays (compress) does not free any memory.
    */
-  void CompressRelationMaps();
+  void compressRelationMaps();
 
   /**
    * @name Packing methods
@@ -179,7 +179,7 @@ public:
    * @brief Creates an array listing all excluded local indices values.
    * @param [in,out] exclusionList Sorted array with excluded local indices
    */
-  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
@@ -188,7 +188,7 @@ public:
    * @return a localIndex value representing the size of packList if it were packed
    * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
    */
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   /**
    * @brief Packs an array of node indices into a buffer.
@@ -197,7 +197,7 @@ public:
    * @param [in] packList the indices of nodes that should be packed
    * @return a localIndex value representing the size of the packed data
    */
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   /**
@@ -209,17 +209,17 @@ public:
    * @param [in] overwriteDownMaps boolean: true to overwrite the previous Down maps
    * @return a localIndex value representing the size of the unpacked list
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
   /**
-   * @brief Call FixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
+   * @brief Call fixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
    * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
    */
-  void FixUpDownMaps( bool const clearIfUnmapped );
+  void fixUpDownMaps( bool const clearIfUnmapped );
 
   ///@}
 
@@ -248,73 +248,64 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     /// String to access the reference position
-    static constexpr auto referencePositionString       = "ReferencePosition";
+    static constexpr char const * referencePositionString() { return "ReferencePosition"; }
 
     /// String to access the location of the nodes
-    static constexpr auto EmbSurfNodesPositionString = "EmbSurfNodesPosition";
+    static constexpr char const * EmbSurfNodesPositionString() { return "EmbSurfNodesPosition"; }
 
     /// String to access the displacement
-    static constexpr auto totalDisplacementString       = "TotalDisplacement";
+    static constexpr char const * totalDisplacementString() { return "TotalDisplacement"; }
 
     /// String to access the incremental displacement
-    static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
+    static constexpr char const * incrementalDisplacementString() { return "IncrementalDisplacement"; }
 
     /// String to access the edge map
-    static constexpr auto edgeListString                = "edgeList";
+    static constexpr char const * edgeListString() { return "edgeList"; }
 
     /// String to access the face map
-    static constexpr auto faceListString                = "faceList";
+    static constexpr char const * faceListString() { return "faceList"; }
 
     /// String to access the element region map
-    static constexpr auto elementRegionListString       = "elemRegionList";
+    static constexpr char const * elementRegionListString() { return "elemRegionList"; }
 
     /// String to access the element subregion map
-    static constexpr auto elementSubRegionListString    = "elemSubRegionList";
+    static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
 
     /// String to access the element map
-    static constexpr auto elementListString             = "elemList";
+    static constexpr char const * elementListString() { return "elemList"; }
 
-    /// String to access the reference position
-    dataRepository::ViewKey referencePosition       = { referencePositionString };
+    /// Accessor to reference position
+    dataRepository::ViewKey referencePosition       = { referencePositionString() };
 
-    /// String to access the displacement
-    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString };
+    /// Accessor to displacement
+    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString() };
 
-    /// String to access the incremental displacement
-    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
+    /// Accessor to incremental displacement
+    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString() };
 
-    /// String to access the edge map
-    dataRepository::ViewKey edgeList                = { edgeListString };
+    /// Accessor to edge map
+    dataRepository::ViewKey edgeList                = { edgeListString() };
 
-    /// String to access the face map
-    dataRepository::ViewKey faceList                = { faceListString };
+    /// Accessor to face map
+    dataRepository::ViewKey faceList                = { faceListString() };
 
-    /// String to access the element region map
-    dataRepository::ViewKey elementRegionList       = { elementRegionListString };
+    /// Accessor to element region map
+    dataRepository::ViewKey elementRegionList       = { elementRegionListString() };
 
-    /// String to access the element subregion map
-    dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString };
+    /// Accessor to element subregion map
+    dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString() };
 
-    /// String to access the element map
-    dataRepository::ViewKey elementList             = { elementListString };
+    /// Accessor to element map
+    dataRepository::ViewKey elementList             = { elementListString() };
 
-    /// String to access the velocity
+    /// Accessor to velocity
     dataRepository::ViewKey velocity                = { dataRepository::keys::Velocity };
 
-    /// String to access the acceleration
+    /// Accessor to acceleration
     dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
   }
   /// viewKeys
   viewKeys;
-
-  /**
-   * @brief contains the added group access keys to be bound with class in group hierarchy
-   * @struct groupKeys
-   */
-  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {}
-  /// groupKeys
-  groupKeys;
 
   ///@}
 
@@ -507,7 +498,7 @@ private:
    * @return size of data packed in terms of number of chars
    */
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
 

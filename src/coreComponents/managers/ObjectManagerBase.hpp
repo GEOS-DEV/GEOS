@@ -26,6 +26,7 @@
 namespace geosx
 {
 class SiloFile;
+class NodeManager;
 
 /**
  * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
@@ -40,7 +41,7 @@ public:
    * @param[in] name Name of this object manager
    * @param[in] parent Parent Group
    */
-  explicit ObjectManagerBase( std::string const & name,
+  explicit ObjectManagerBase( string const & name,
                               dataRepository::Group * const parent );
 
   /**
@@ -54,15 +55,15 @@ public:
   ///@{
   /**
    * @brief Nested type for the `factory` pattern, defining the base class (ObjectManagerBase)
-   *        and the builder arguments (std::string const &, dataRepository::Group * const) of the derived products.
+   *        and the builder arguments (string const &, dataRepository::Group * const) of the derived products.
    */
-  using CatalogInterface = dataRepository::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ObjectManagerBase, string const &, dataRepository::Group * const >;
 
   /**
    * @brief Acessing the unique instance of this catalog.
    * @return A reference to the singleton.
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Get the name of the catalog.
@@ -71,21 +72,21 @@ public:
   virtual const string getCatalogName() const = 0;
   ///@}
 
-  using dataRepository::Group::PackSize;
-  using dataRepository::Group::Pack;
+  using dataRepository::Group::packSize;
+  using dataRepository::Group::pack;
 
-  virtual localIndex PackSize( string_array const & wrapperNames,
+  virtual localIndex packSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
                                bool on_device = false ) const override;
 
-  virtual localIndex Pack( buffer_unit_type * & buffer,
+  virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
                            bool on_device = false )  const override;
 
-  virtual localIndex Unpack( buffer_unit_type const * & buffer,
+  virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool on_device = false ) override;
@@ -100,7 +101,7 @@ public:
    * Note that the returned value does not depend on parameter @p DOPACK.
    */
   template< bool DOPACK >
-  localIndex PackSets( buffer_unit_type * & buffer,
+  localIndex packSets( buffer_unit_type * & buffer,
                        arrayView1d< localIndex const > const & packList ) const;
 
   /**
@@ -108,7 +109,7 @@ public:
    * @param buffer The buffer containing the packed data.
    * @return The unpacked size.
    */
-  localIndex UnpackSets( buffer_unit_type const * & buffer );
+  localIndex unpackSets( buffer_unit_type const * & buffer );
 
   /**
    * @brief Inserts in @p exclusionList the data that shall not be packed.
@@ -117,7 +118,7 @@ public:
    * Note that data will be inserted into @p exclusionList
    * and that data previously present in @p exclusionList may remain.
    */
-  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const;
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const;
 
   /**
    * @brief Computes the pack size of the global maps elements in the @ packList.
@@ -125,7 +126,7 @@ public:
    * @param recursive Boolean like integer for sub-groups packing.
    * @return The packed size.
    */
-  virtual localIndex PackGlobalMapsSize( arrayView1d< localIndex const > const & packList,
+  virtual localIndex packGlobalMapsSize( arrayView1d< localIndex const > const & packList,
                                          integer const recursive ) const;
 
   /**
@@ -135,21 +136,21 @@ public:
    * @param recursive Boolean like integer for sub-groups packing.
    * @return The packed size.
    */
-  virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
+  virtual localIndex packGlobalMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList,
                                      integer const recursive ) const;
 
   /**
    * @brief Clear and redefines the ghosts to receive.
    */
-  void SetReceiveLists();
+  void setReceiveLists();
 
   /**
    * @brief Computes the pack size of the specific elements in the @ packList.
    * @param packList The element we want packed.
    * @return The packed size.
    */
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
   {
     GEOSX_UNUSED_VAR( packList );
     return 0;
@@ -161,7 +162,7 @@ public:
    * @param packList The element we want packed.
    * @return The packed size.
    */
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const
   {
     GEOSX_UNUSED_VAR( buffer );
@@ -177,7 +178,7 @@ public:
    * @param overwriteDownMaps Clear the down maps provided.
    * @return The packed size.
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps )
@@ -196,7 +197,7 @@ public:
    * @param recursive Boolean like integer for sub-groups unpacking.
    * @return The unpacked size.
    */
-  virtual localIndex UnpackGlobalMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackGlobalMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        integer const recursive );
 
@@ -205,10 +206,10 @@ public:
    * @param packList The indices we want packed.
    * @return The packed size.
    */
-  localIndex PackParentChildMapsSize( arrayView1d< localIndex const > const & packList ) const
+  localIndex packParentChildMapsSize( arrayView1d< localIndex const > const & packList ) const
   {
     buffer_unit_type * buffer = nullptr;
-    return PackParentChildMapsPrivate< false >( buffer, packList );
+    return packParentChildMapsPrivate< false >( buffer, packList );
   }
 
   /**
@@ -217,10 +218,10 @@ public:
    * @param packList The indices we want packed.
    * @return The packed size.
    */
-  localIndex PackParentChildMaps( buffer_unit_type * & buffer,
+  localIndex packParentChildMaps( buffer_unit_type * & buffer,
                                   arrayView1d< localIndex const > const & packList ) const
   {
-    return PackParentChildMapsPrivate< true >( buffer, packList );
+    return packParentChildMapsPrivate< true >( buffer, packList );
   }
 
   /**
@@ -229,7 +230,7 @@ public:
    * @param packList The unpacked indices.
    * @return
    */
-  localIndex UnpackParentChildMaps( buffer_unit_type const * & buffer,
+  localIndex unpackParentChildMaps( buffer_unit_type const * & buffer,
                                     localIndex_array & packList );
 
 private:
@@ -245,7 +246,7 @@ private:
    * @return The packed size.
    */
   template< bool DOPACK >
-  localIndex PackPrivate( buffer_unit_type * & buffer,
+  localIndex packPrivate( buffer_unit_type * & buffer,
                           string_array const & wrapperNames,
                           arrayView1d< localIndex const > const & packList,
                           integer const recursive,
@@ -260,7 +261,7 @@ private:
    * @return The packed size.
    */
   template< bool DOPACK >
-  localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packGlobalMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList,
                                     integer const recursive ) const;
 
@@ -272,7 +273,7 @@ private:
    * @return The packed size.
    */
   template< bool DOPACK >
-  localIndex PackParentChildMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packParentChildMapsPrivate( buffer_unit_type * & buffer,
                                          arrayView1d< localIndex const > const & packList ) const;
 
   //**********************************************************************************************************************
@@ -304,7 +305,7 @@ public:
    * @brief Creates a new set.
    * @param newSetName The set name.
    */
-  void CreateSet( const std::string & newSetName );
+  void createSet( const string & newSetName );
 
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
@@ -312,32 +313,32 @@ public:
    * @param map The map between the newly created set and the @p inputSet.
    * @param setName The newly created set name.
    */
-  void ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
+  void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   const array2d< localIndex > & map,
-                                  const std::string & setName );
+                                  const string & setName );
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
    * @param inputSet The input set.
    * @param map The map between the newly created set and the @p inputSet.
    * @param setName The newly created set name.
    */
-  void ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
+  void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   const array1d< localIndex_array > & map,
-                                  const std::string & setName );
+                                  const string & setName );
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
    * @param inputSet The input set.
    * @param map The map between the newly created set and the @p inputSet.
    * @param setName The newly created set name.
    */
-  void ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
+  void constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                   ArrayOfArraysView< localIndex const > const & map,
-                                  const std::string & setName );
+                                  const string & setName );
 
   /**
    * @brief Constructs the global to local map.
    */
-  void ConstructGlobalToLocalMap();
+  void constructGlobalToLocalMap();
 
   /**
    * @brief Computes the (local) index list that are domain boundaries.
@@ -345,7 +346,7 @@ public:
    *
    * Note that @p objectList is not cleared and domain boundary indices are only appended.
    */
-  void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
+  void constructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
 
   /**
    * @brief Computes the (global) index list that are domain boundaries.
@@ -353,7 +354,7 @@ public:
    *
    * Note that @p objectList is not cleared and domain boundary indices are only appended.
    */
-  void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
+  void constructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
   /**
    * @brief Extract map from object and assign global indices.
@@ -362,10 +363,10 @@ public:
    *
    * Dummy version, needs to be specialised by derived classes.
    */
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const obj,
+  virtual void extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
                                                                 std::vector< std::vector< globalIndex > > & map )
   {
-    GEOSX_UNUSED_VAR( obj );
+    GEOSX_UNUSED_VAR( nodeManager );
     GEOSX_UNUSED_VAR( map );
   }
 
@@ -373,7 +374,7 @@ public:
    * @brief Defines @p neighborRank ownership for ghost objects.
    * @param neighborRank The rank that owns the ghost objects.
    */
-  void SetGhostRankForSenders( int const neighborRank )
+  void setGhostRankForSenders( int const neighborRank )
   {
     arrayView1d< localIndex const > const ghostsToSend = getNeighborData( neighborRank ).ghostsToSend();
     array1d< std::pair< globalIndex, int > > & nonLocalGhosts = getNeighborData( neighborRank ).nonLocalGhosts();
@@ -397,13 +398,13 @@ public:
    * @brief Get the number of ghost objects.
    * @return The number of ghost objects.
    */
-  localIndex GetNumberOfGhosts() const;
+  localIndex getNumberOfGhosts() const;
 
   /**
    * @brief Get the number of locally owned objects.
    * @return The number of locally owned objects.
    */
-  localIndex GetNumberOfLocalIndices() const;
+  localIndex getNumberOfLocalIndices() const;
 
   /**
    * @brief Split object to deal with topology changes.
@@ -412,7 +413,7 @@ public:
    * @param newIndex At which index the we'll have the new split instance.
    * @return Always 1.
    */
-  integer SplitObject( localIndex const indexToSplit,
+  integer splitObject( localIndex const indexToSplit,
                        int const rank,
                        localIndex & newIndex );
 
@@ -430,12 +431,12 @@ public:
    * @param source The source index.
    * @param destination The destination index.
    */
-  void CopyObject( localIndex const source, localIndex const destination );
+  void copyObject( localIndex const source, localIndex const destination );
 
   /**
    * @brief Computes the maximum global index allong all the MPI ranks.
    */
-  void SetMaxGlobalIndex();
+  virtual void setMaxGlobalIndex();
 
   /**
    * @brief Fixing the up/down maps by mapping the unmapped indices.
@@ -445,7 +446,7 @@ public:
    * @param clearIfUnmapped Shall we clear the unmapped indices. Here unused.
    */
   template< typename TYPE_RELATION >
-  static void FixUpDownMaps( TYPE_RELATION & relation,
+  static void fixUpDownMaps( TYPE_RELATION & relation,
                              map< localIndex, array1d< globalIndex > > & unmappedIndices,
                              bool const clearIfUnmapped );
 
@@ -457,7 +458,7 @@ public:
    * @param clearIfUnmapped Shall we clear the unmapped indices.
    */
   template< typename TYPE_RELATION >
-  static void FixUpDownMaps( TYPE_RELATION & relation,
+  static void fixUpDownMaps( TYPE_RELATION & relation,
                              map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                              bool const clearIfUnmapped );
 
@@ -468,7 +469,7 @@ public:
    * @param unmappedIndices Unmapped indices we will map during this function call.
    * @param clearIfUnmapped Shall we clear the unmapped indices. Here unused.
    */
-  static void FixUpDownMaps( ArrayOfSets< localIndex > & relation,
+  static void fixUpDownMaps( ArrayOfSets< localIndex > & relation,
                              unordered_map< globalIndex, localIndex > const & globalToLocal,
                              map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                              bool const clearIfUnmapped );
@@ -480,7 +481,7 @@ public:
    * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
-  static void CleanUpMap( std::set< localIndex > const & targetIndices,
+  static void cleanUpMap( std::set< localIndex > const & targetIndices,
                           array1d< SortedArray< localIndex > > & upmap,
                           arrayView2d< localIndex const > const & downmap );
 
@@ -491,7 +492,7 @@ public:
    * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
-  static void CleanUpMap( std::set< localIndex > const & targetIndices,
+  static void cleanUpMap( std::set< localIndex > const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
                           arrayView2d< localIndex const > const & downmap );
 
@@ -502,7 +503,7 @@ public:
    * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
-  static void CleanUpMap( std::set< localIndex > const & targetIndices,
+  static void cleanUpMap( std::set< localIndex > const & targetIndices,
                           array1d< SortedArray< localIndex > > & upmap,
                           arrayView1d< arrayView1d< localIndex const > const > const & downmap );
   /**
@@ -512,7 +513,7 @@ public:
    * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
-  static void CleanUpMap( std::set< localIndex > const & targetIndices,
+  static void cleanUpMap( std::set< localIndex > const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
                           arrayView1d< arrayView1d< localIndex const > const > const & downmap );
   /**
@@ -522,7 +523,7 @@ public:
    * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
-  static void CleanUpMap( std::set< localIndex > const & targetIndices,
+  static void cleanUpMap( std::set< localIndex > const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
                           ArrayOfArraysView< localIndex const > const & downmap );
 
@@ -541,7 +542,7 @@ public:
    * Get the upmost parent (i.e. parent of parent of parent...) of @p lookup
    * that has no more valid parent in @p parentIndices.
    */
-  static localIndex GetParentRecusive( arraySlice1d< localIndex const > const & parentIndices,
+  static localIndex getParentRecusive( arraySlice1d< localIndex const > const & parentIndices,
                                        localIndex const lookup )
   {
     localIndex rval = lookup;
@@ -575,12 +576,12 @@ public:
     // This is required for the Tensor classes.
     typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue );
 
-    return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->
-               setApplyDefaultValue( defaultValue )->
-               setPlotLevel( MESH_DATA_TRAIT::plotLevel )->
-               setRestartFlags( MESH_DATA_TRAIT::restartFlag )->
-               setDescription( MESH_DATA_TRAIT::description )->
-               setRegisteringObjects( nameOfRegisteringObject ) );
+    return this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).
+             setApplyDefaultValue( defaultValue ).
+             setPlotLevel( MESH_DATA_TRAIT::plotLevel ).
+             setRestartFlags( MESH_DATA_TRAIT::restartFlag ).
+             setDescription( MESH_DATA_TRAIT::description ).
+             setRegisteringObjects( nameOfRegisteringObject );
   }
 
   /**
@@ -612,7 +613,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData() const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->reference();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).reference();
   }
 
   /**
@@ -624,7 +625,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData()
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->reference();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).reference();
   }
 
   /**
@@ -636,10 +637,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   bool hasExtrinsicData() const
   {
-    // FIXME c++17 We copy paste the Group::hasWrapper implementation for linking reasons
-    //             (the key needs to be defined/declared).
-    //             C++17 introduces inline variables and should remove this problem.
-    return this->wrappers()[MESH_DATA_TRAIT::key] != nullptr;
+    return this->hasWrapper( MESH_DATA_TRAIT::key() );
   }
 
 #if 0
@@ -659,10 +657,10 @@ public:
     // This is required for the Tensor classes.
     typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue );
 
-    return *(this->registerWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->
-               setApplyDefaultValue( defaultValue )->
-               setPlotLevel( plotLevel )->
-               setDescription( description )->
+    return *(this->registerWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).
+               setApplyDefaultValue( defaultValue ).
+               setPlotLevel( plotLevel ).
+               setDescription( description ).
                setRegisteringObjects( nameOfRegisteringObject ) );
   }
 
@@ -682,49 +680,59 @@ public:
   template< typename MESH_DATA_TRAIT >
   auto const & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait ) const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).referenceAsView();
   }
 
   template< typename MESH_DATA_TRAIT >
   auto & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait )
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).referenceAsView();
   }
 #endif
 
   //**********************************************************************************************************************
 
   /**
-   * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
+   * @brief struct to serve as a container for variable strings and keys
    */
   struct viewKeyStruct
   {
     /// String key to adjacency list
-    static constexpr auto adjacencyListString = "adjacencyList";
+    static constexpr char const * adjacencyListString() { return "adjacencyList"; }
+
     /// String key to domain boundary indicator
-    static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+    static constexpr char const * domainBoundaryIndicatorString() { return "domainBoundaryIndicator"; }
+
     /// String key to external set
-    static constexpr auto externalSetString = "externalSet";
+    static constexpr char const * externalSetString() { return "externalSet"; }
+
     /// String key to ghost ranks
-    static constexpr auto ghostRankString = "ghostRank";
+    static constexpr char const * ghostRankString() { return "ghostRank"; }
+
     /// String key to ghosts to receive
-    static constexpr auto ghostsToReceiveString = "ghostsToReceive";
+    static constexpr char const * ghostsToReceiveString() { return "ghostsToReceive"; }
+
     /// String key to global->local mao
-    static constexpr auto globalToLocalMapString = "globalToLocalMap";
+    static constexpr char const * globalToLocalMapString() { return "globalToLocalMap"; }
+
     /// String key to the 'is external' vector
-    static constexpr auto isExternalString = "isExternal";
+    static constexpr char const * isExternalString() { return "isExternal"; }
+
     /// String key to the local->global map
-    static constexpr auto localToGlobalMapString = "localToGlobalMap";
+    static constexpr char const * localToGlobalMapString() { return "localToGlobalMap"; }
 
     /// View key to external set
-    dataRepository::ViewKey externalSet = { externalSetString };
+    dataRepository::ViewKey externalSet = { externalSetString() };
+
     /// View key to ghost ranks
-    dataRepository::ViewKey ghostRank = { ghostRankString };
+    dataRepository::ViewKey ghostRank = { ghostRankString() };
+
     /// View key to global->local map
-    dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
+    dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString() };
+
     /// View key to the local->global map
-    dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
+    dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString() };
   }
   /// viewKey struct for the ObjectManagerBase class
   m_ObjectManagerBaseViewKeys;
@@ -736,11 +744,15 @@ public:
   struct groupKeyStruct
   {
     /// String key to the Group holding the object sets
-    static constexpr auto setsString = "sets";
+    static constexpr char const * setsString() { return "sets"; }
+
     /// String key to the Groupholding all the NeighborData objects
-    static constexpr auto neighborDataString = "neighborData";
+    static constexpr char const * neighborDataString() { return "neighborData"; }
+
     /// View key to the Group holding the object sets
-    dataRepository::GroupKey sets = { setsString };
+    dataRepository::GroupKey sets = { setsString() };
+
+    dataRepository::GroupKey neighborData{ neighborDataString() };
   }
   /// groupKey struct for the ObjectManagerBase class
   m_ObjectManagerBaseGroupKeys;
@@ -885,9 +897,9 @@ public:
    */
   void addNeighbor( int const rank )
   {
-    std::string const & rankString = std::to_string( rank );
+    string const & rankString = std::to_string( rank );
     m_neighborData.emplace( std::piecewise_construct, std::make_tuple( rank ), std::make_tuple( rankString, &m_neighborGroup ) );
-    m_neighborGroup.RegisterGroup( rankString, &getNeighborData( rank ) );
+    m_neighborGroup.registerGroup( rankString, &getNeighborData( rank ) );
   }
 
   /**
@@ -901,11 +913,19 @@ public:
   }
 
   /**
+   * @brief Get the local maximum global index on this rank.
+   * @return The index.
+   */
+  globalIndex localMaxGlobalIndex() const
+  { return m_localMaxGlobalIndex; }
+
+  /**
    * @brief Get the maximum global index of all objects across all rank. See @see #m_maxGlobalIndex
    * @return The index.
    */
   globalIndex maxGlobalIndex() const
   { return m_maxGlobalIndex; }
+
 
   /**
    * @brief Get the domain boundary indicator
@@ -966,14 +986,14 @@ protected:
 
 
 template< typename TYPE_RELATION >
-void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
+void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d< globalIndex > > & unmappedIndices,
                                        bool const )
 {
   GEOSX_MARK_FUNCTION;
 
   bool allValuesMapped = true;
-  unordered_map< globalIndex, localIndex > const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  unordered_map< globalIndex, localIndex > const & globalToLocal = relation.relatedObjectGlobalToLocal();
   for( map< localIndex, array1d< globalIndex > >::iterator iter = unmappedIndices.begin();
        iter != unmappedIndices.end();
        ++iter )
@@ -1002,7 +1022,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
 
 
 template< typename TYPE_RELATION >
-void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
+void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
@@ -1038,7 +1058,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
 }
 
 inline
-void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
+void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
                                        unordered_map< globalIndex, localIndex > const & globalToLocal,
                                        map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )

@@ -43,7 +43,7 @@ namespace geosx
  */
 template< typename T,
           typename T_PTR=T *,
-          typename KEY_TYPE=std::string,
+          typename KEY_TYPE=string,
           typename INDEX_TYPE = int >
 class MappedVector
 {
@@ -194,11 +194,11 @@ public:
    */
   inline T const * operator[]( KeyIndex const & keyIndex ) const
   {
-    INDEX_TYPE index = keyIndex.Index();
+    INDEX_TYPE index = keyIndex.index();
 
     if( index==KeyIndex::invalid_index )
     {
-      index = getIndex( keyIndex.Key() );
+      index = getIndex( keyIndex.key() );
       keyIndex.setIndex( index );
     }
 #ifdef MAPPED_VECTOR_RANGE_CHECKING
@@ -514,11 +514,11 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
         m_constKeyValues[index].second = rawPtr( index );
         m_constValues[index].second = rawPtr( index );
       }
-      else if( source->get_typeid() != m_values[index].second->get_typeid() )
+      else if( typeid( source ) != typeid( m_values[index].second ) )
       {
-        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
-                     ") with a different type without overwrite flag\n"<<" "<<source->get_typeid().name()<<" != "<<
-                     m_values[index].second->get_typeid().name() );
+        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
+                     ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
+                     " != " << LvArray::system::demangleType( m_values[ index ].second ) );
       }
       else
       {

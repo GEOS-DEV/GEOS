@@ -53,7 +53,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "SurfaceElementSubRegion"; }
 
   /**
@@ -62,7 +62,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return SurfaceElementSubRegion::CatalogName();
+    return SurfaceElementSubRegion::catalogName();
   }
 
   ///@}
@@ -196,24 +196,23 @@ public:
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
     /// Face element to cell regions map string.
-    static constexpr auto surfaceElementsToCellRegionsString    = "fractureElementsToCellRegions";
+    static constexpr char const * surfaceElementsToCellRegionsString() { return "fractureElementsToCellRegions"; }
 
     /// Face element to cell subregions map string.
-    static constexpr auto surfaceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
+    static constexpr char const * surfaceElementsToCellSubRegionsString() { return "fractureElementsToCellSubRegions"; }
 
     /// Face element to cell indices map string.
-    static constexpr auto surfaceElementsToCellIndexString    = "fractureElementsToCellIndices";
+    static constexpr char const * surfaceElementsToCellIndexString() { return "fractureElementsToCellIndices"; }
 
 
     /// Embedded surface element aperture string
-    static constexpr auto elementApertureString        = "elementAperture";
+    static constexpr char const * elementApertureString() { return "elementAperture"; }
 
     /// Embedded surface element surface are string
-    static constexpr auto elementAreaString            = "elementArea";
+    static constexpr char const * elementAreaString() { return "elementArea"; }
 
     /// Mass creation string.
-    constexpr static auto creationMassString = "creationMass";
-
+    constexpr static char const * creationMassString() { return "creationMass"; }
   };
 
   /// Map between the face elements and the cells

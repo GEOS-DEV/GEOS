@@ -72,8 +72,8 @@ public:
    * @param name name of the object
    * @param parent parent group which owns the Wrapper
    */
-  explicit Wrapper( std::string const & name,
-                    Group * const parent ):
+  explicit Wrapper( string const & name,
+                    Group & parent ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
     m_data( new T() ),
@@ -81,7 +81,7 @@ public:
   {
     if( traits::is_tensorT< T > || std::is_arithmetic< T >::value || traits::is_string< T > )
     {
-      this->setSizedFromParent( 0 );
+      setSizedFromParent( 0 );
     }
 
     setName();
@@ -93,8 +93,8 @@ public:
    * @param parent parent group that owns the Wrapper
    * @param object object that is being wrapped by the Wrapper
    */
-  explicit Wrapper( std::string const & name,
-                    Group * const parent,
+  explicit Wrapper( string const & name,
+                    Group & parent,
                     std::unique_ptr< T > object ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
@@ -103,7 +103,7 @@ public:
   {
     if( traits::is_tensorT< T > || std::is_arithmetic< T >::value || traits::is_string< T > )
     {
-      this->setSizedFromParent( 0 );
+      setSizedFromParent( 0 );
     }
 
     setName();
@@ -115,8 +115,8 @@ public:
    * @param parent parent group that owns the Wrapper
    * @param object object that is being wrapped by the Wrapper
    */
-  explicit Wrapper( std::string const & name,
-                    Group * const parent,
+  explicit Wrapper( string const & name,
+                    Group & parent,
                     T * object ):
     WrapperBase( name, parent ),
     m_ownsData( false ),
@@ -125,7 +125,7 @@ public:
   {
     if( traits::is_tensorT< T > || std::is_arithmetic< T >::value || traits::is_string< T > )
     {
-      this->setSizedFromParent( 0 );
+      setSizedFromParent( 0 );
     }
 
     setName();
@@ -177,10 +177,10 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
-                                                Group * const parent ) override
+                                                Group & parent ) override
   {
     std::unique_ptr< WrapperBase >
-    clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, this->m_data );
+    clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, m_data );
     clonedWrapper->copyWrapperAttributes( *this );
 
     return clonedWrapper;
@@ -188,9 +188,9 @@ public:
 
   virtual void copyWrapper( WrapperBase const & source ) override
   {
-    GEOSX_ERROR_IF( source.getName() != this->m_name, "Tried to clone wrapper of with different name" );
+    GEOSX_ERROR_IF( source.getName() != m_name, "Tried to clone wrapper of with different name" );
     WrapperBase::copyWrapperAttributes( source );
-    Wrapper< T > const & castedSource = *cast( &source );
+    Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
     copyData( source );
@@ -201,65 +201,15 @@ public:
   virtual void copyWrapperAttributes( WrapperBase const & source ) override
   {
     WrapperBase::copyWrapperAttributes( source );
-    Wrapper< T > const & castedSource = *cast( &source );
+    Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual const std::type_info & get_typeid() const noexcept override
+  virtual const std::type_info & getTypeId() const noexcept override
   {
     return typeid(T);
-  }
-
-  ///@}
-
-  /**
-   * @name Type-casting static functions
-   */
-  ///@{
-
-  /**
-   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
-   *
-   * @param base
-   * @return casted Wrapper<T>
-   */
-  static Wrapper< T > * cast( WrapperBase * const base )
-  {
-    return dynamicCast< Wrapper< T > * >( base );
-  }
-
-  /**
-   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
-   *
-   * @param base
-   * @return casted reference to const Wrapper<T>
-   */
-  static Wrapper< T > const * cast( WrapperBase const * const base )
-  {
-    return dynamicCast< Wrapper< T > const * >( base );
-  }
-
-  /**
-   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
-   *
-   * @param base
-   * @return casted Wrapper<T>
-   */
-  static Wrapper< T > & cast( WrapperBase & base )
-  {
-    return dynamicCast< Wrapper< T > & >( base );
-  }
-
-  /**
-   * Static function to cast a Wrapper base to a derived Wrapper<T>
-   * @param base
-   * @return casted reference to const Wrapper<T>
-   */
-  static Wrapper< T > const & cast( WrapperBase const & base )
-  {
-    return dynamicCast< Wrapper< T > const & >( base );
   }
 
   ///@}
@@ -268,7 +218,7 @@ public:
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
-    return geosx::getHistoryMetadata( getName(), this->referenceAsView( ), packCount );
+    return geosx::getHistoryMetadata( getName(), referenceAsView( ), packCount );
   }
 
   /**
@@ -293,12 +243,12 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::Pack
+  /// @copydoc geosx::WrapperBase::pack
   virtual
-  localIndex Pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
+  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
     if( onDevice )
     {
       if( withMetadata )
@@ -318,14 +268,14 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackByIndex
+  /// @copydoc geosx::WrapperBase::packByIndex
   virtual
-  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
+  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
     {
-      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
       if( onDevice )
       {
         if( withMetadata )
@@ -346,13 +296,13 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackSize
+  /// @copydoc geosx::WrapperBase::packSize
   virtual
-  localIndex PackSize( bool withMetadata, bool onDevice ) const override final
+  localIndex packSize( bool withMetadata, bool onDevice ) const override final
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
+    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
     if( onDevice )
     {
       if( withMetadata )
@@ -372,15 +322,15 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::PackByIndexSize
+  /// @copydoc geosx::WrapperBase::packByIndexSize
   virtual
-  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
+  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     buffer_unit_type * buffer = nullptr;
     if( sizedFromParent() == 1 )
     {
-      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
+      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
       if( onDevice )
       {
         if( withMetadata )
@@ -401,16 +351,16 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::Unpack
+  /// @copydoc geosx::WrapperBase::unpack
   virtual
-  localIndex Unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
+  localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
     if( withMetadata )
     {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
     }
     if( onDevice )
     {
@@ -431,9 +381,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::UnpackByIndex
+  /// @copydoc geosx::WrapperBase::unpackByIndex
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) override final
+  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
@@ -442,7 +392,7 @@ public:
       {
         string name;
         unpackedSize += bufferOps::Unpack( buffer, name );
-        GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+        GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
       }
       if( onDevice )
       {
@@ -531,27 +481,23 @@ public:
     {}
 
     template< typename U=T >
-    static
-    typename std::enable_if< traits::hasCopyAssignmentOp< U >, void >::type
+    static std::enable_if_t< traits::hasCopyAssignmentOp< U > >
     copyData( U & destinationData, U const & sourceData )
     {
       destinationData = sourceData;
     }
 
     template< typename U=T >
-    static
-    typename std::enable_if< !traits::hasCopyAssignmentOp< U >, void >::type
+    static std::enable_if_t< !traits::hasCopyAssignmentOp< U > >
     copyData( U &, U const & )
     {}
-
-
   };
   /// @endcond
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override
   {
-    if( this->sizedFromParent() )
+    if( sizedFromParent() )
     {
       copy_wrapper::copy( reference(), sourceIndex, destIndex );
     }
@@ -561,7 +507,7 @@ public:
 
   virtual void copyData( WrapperBase const & source ) override
   {
-    Wrapper< T > const & castedSource = *cast( &source );
+    Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     copy_wrapper::copyData( *m_data, *castedSource.m_data );
   }
 
@@ -661,7 +607,7 @@ public:
    * @return reference to const T
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, typename DefaultValue< U >::value_type const & >::type
+  std::enable_if_t< DefaultValue< U >::has_default_value, typename DefaultValue< U >::value_type const & >
   getDefaultValue() const
   {
     return m_default.value;
@@ -673,11 +619,11 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  std::enable_if_t< DefaultValue< U >::has_default_value, Wrapper< T > & >
   setDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
-    return this;
+    return *this;
   }
 
   /**
@@ -686,12 +632,12 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< !traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  std::enable_if_t< !traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > & >
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
     *m_data = m_default.value;
-    return this;
+    return *this;
   }
 
   /**
@@ -700,31 +646,31 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  std::enable_if_t< traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > & >
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
     m_data->template setValues< serialPolicy >( m_default.value );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::getDefaultValueString()
    */
-  virtual std::string getDefaultValueString() const override
+  virtual string getDefaultValueString() const override
   {
     // Find the dimensionality of the wrapper value
-    std::string wrapper_type = rtTypes::typeNames( std::type_index( get_typeid()));
+    string wrapper_type = rtTypes::typeNames( std::type_index( getTypeId()));
     integer value_dim = 0;
-    if( wrapper_type.find( "array3d" ) != std::string::npos )
+    if( wrapper_type.find( "array3d" ) != string::npos )
     {
       value_dim = 3;
     }
-    else if( wrapper_type.find( "array2d" ) != std::string::npos )
+    else if( wrapper_type.find( "array2d" ) != string::npos )
     {
       value_dim = 2;
     }
-    else if( wrapper_type.find( "array" ) != std::string::npos )
+    else if( wrapper_type.find( "array" ) != string::npos )
     {
       value_dim = 1;
     }
@@ -754,21 +700,20 @@ public:
     {
       if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
       {
-        bool const readSuccess = xmlWrapper::ReadAttributeAsType( reference(),
+        bool const readSuccess = xmlWrapper::readAttributeAsType( reference(),
                                                                   getName(),
                                                                   targetNode,
                                                                   inputFlag == InputFlags::REQUIRED );
-        GEOSX_ERROR_IF( !readSuccess,
-                        "Input variable " + getName() + " is required in " + targetNode.path()
-                        + ". Available options are: \n"+ dumpInputOptions( true )
-                        + "\nFor more details, please refer to documentation at: \n"
-                        + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
-
-
+        GEOSX_THROW_IF( !readSuccess,
+                        "Input variable " << getName() << " is required in " << targetNode.path() <<
+                        ". Available options are: \n" << dumpInputOptions( true ) <<
+                        "\nFor more details, please refer to documentation at: \n" <<
+                        "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n",
+                        InputError );
       }
       else
       {
-        xmlWrapper::ReadAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
+        xmlWrapper::readAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
       }
 
       return true;
@@ -781,7 +726,7 @@ public:
 
   /**
    * @brief Associate the path to this wrapper with the object being held.
-   * @note This calls T::setName( std::string ) if it exists and is a no-op if not.
+   * @note This calls T::setName( string ) if it exists and is a no-op if not.
    *       LvArray objects implement this method.
    */
   void setName()
@@ -790,24 +735,24 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   void addBlueprintField( conduit::Node & fields,
-                          std::string const & name,
-                          std::string const & topology,
-                          std::vector< std::string > const & componentNames = {} ) const override
+                          string const & name,
+                          string const & topology,
+                          std::vector< string > const & componentNames = {} ) const override
   { wrapperHelpers::addBlueprintField( reference(), fields, name, topology, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void populateMCArray( conduit::Node & node, std::vector< std::string > const & componentNames = {} ) const override
+  void populateMCArray( conduit::Node & node, std::vector< string > const & componentNames = {} ) const override
   { wrapperHelpers::populateMCArray( reference(), node, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  std::unique_ptr< WrapperBase > averageOverSecondDim( std::string const & name, Group & group ) const override
+  std::unique_ptr< WrapperBase > averageOverSecondDim( string const & name, Group & group ) const override
   {
     auto ptr = wrapperHelpers::averageOverSecondDim( reference() );
     using U = typename decltype( ptr )::element_type;
 
     GEOSX_ERROR_IF( ptr == nullptr, "Failed to average over the second dimension of." );
 
-    return std::make_unique< Wrapper< U > >( name, &group, std::move( ptr ) );
+    return std::make_unique< Wrapper< U > >( name, group, std::move( ptr ) );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -866,55 +811,55 @@ public:
   /**
    * @copydoc WrapperBase::setSizedFromParent(int)
    */
-  Wrapper< T > * setSizedFromParent( int val )
+  Wrapper< T > & setSizedFromParent( int val )
   {
     WrapperBase::setSizedFromParent( val );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setRestartFlags(RestartFlags)
    */
-  Wrapper< T > * setRestartFlags( RestartFlags flags )
+  Wrapper< T > & setRestartFlags( RestartFlags flags )
   {
     WrapperBase::setRestartFlags( flags );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setPlotLevel(PlotLevel const)
    */
-  Wrapper< T > * setPlotLevel( PlotLevel const flag )
+  Wrapper< T > & setPlotLevel( PlotLevel const flag )
   {
     WrapperBase::setPlotLevel( flag );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setInputFlag(InputFlags const)
    */
-  Wrapper< T > * setInputFlag( InputFlags const input )
+  Wrapper< T > & setInputFlag( InputFlags const input )
   {
     WrapperBase::setInputFlag( input );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setDescription(string const &)
    */
-  Wrapper< T > * setDescription( string const & description )
+  Wrapper< T > & setDescription( string const & description )
   {
     WrapperBase::setDescription( description );
-    return this;
+    return *this;
   }
 
   /**
    * @copydoc WrapperBase::setRegisteringObjects(string const &)
    */
-  Wrapper< T > * setRegisteringObjects( string const & objectName )
+  Wrapper< T > & setRegisteringObjects( string const & objectName )
   {
     WrapperBase::setRegisteringObjects( objectName );
-    return this;
+    return *this;
   }
 
   ///@}
@@ -935,6 +880,11 @@ public:
     return 0;
   }
 //  void tvTemplateInstantiation();
+#endif
+
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyObject * createPythonObject( ) override
+  { return wrapperHelpers::createPythonObject( reference() ); }
 #endif
 
 private:

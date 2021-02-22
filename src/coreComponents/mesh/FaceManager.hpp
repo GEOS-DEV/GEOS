@@ -59,15 +59,15 @@ public:
    * @brief Return the name of the FaceManager in the object catalog.
    * @return string that contains the catalog name of the FaceManager
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "FaceManager"; }
 
   /**
-   * @brief Provide a virtual access to CatalogName().
+   * @brief Provide a virtual access to catalogName().
    * @return string that contains the catalog name of the FaceManager
    */
   virtual const string getCatalogName() const override
-  { return FaceManager::CatalogName(); }
+  { return FaceManager::catalogName(); }
   ///@}
 
   /**
@@ -131,13 +131,13 @@ public:
    * @param[in] nodeManager mesh node manager
    * @param[in] elemManager element manager
    */
-  void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
+  void buildFaces( NodeManager & nodeManager, ElementRegionManager & elemManager );
 
   /**
    * @brief Compute faces center, area and normal.
    * @param[in] nodeManager NodeManager associated with the current DomainPartition
    */
-  void computeGeometry( NodeManager const * const nodeManager );
+  void computeGeometry( NodeManager const & nodeManager );
 
   /**
    * @brief Return the number of nodes of the faces with the greatest number of nodes.
@@ -150,8 +150,8 @@ public:
    * @param[in] nodeManager node manager allowing access to face nodes coordinates
    * @param[in] elemManager element manager allowing access to the cell elements
    */
-  void SortAllFaceNodes( NodeManager const * const nodeManager,
-                         ElementRegionManager const * const elemManager );
+  void sortAllFaceNodes( NodeManager const & nodeManager,
+                         ElementRegionManager const & elemManager );
 
   /**
    * @brief Reorder face nodes to be labeled counter-clockwise resulting in outgoing normal.
@@ -160,7 +160,7 @@ public:
    * @param[in,out] faceNodes reordered local label list of nodes
    * @param[in] numFaceNodes number of nodes for the face
    */
-  void SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+  void sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                       arraySlice1d< real64 const > const elementCenter,
                       localIndex * const faceNodes,
                       localIndex const numFaceNodes );
@@ -169,12 +169,12 @@ public:
    * @brief Flag face and nodes'face with at least one element on the boundary.
    * @param[in] nodeManager manager of mesh nodes
    */
-  void SetDomainBoundaryObjects( NodeManager * const nodeManager );
+  void setDomainBoundaryObjects( NodeManager & nodeManager );
 
   /**
    * @brief Flag faces on boundary or external to the DomainPartition.
    */
-  void SetIsExternal();
+  void setIsExternal();
 
   /**
    * @name Packing methods
@@ -186,7 +186,7 @@ public:
    * @brief Create an array listing all excluded local face indices values.
    * @param [in,out] exclusionList Sorted array with excluded local faces indices
    */
-  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
@@ -195,7 +195,7 @@ public:
    * @return the size of packList if it were packed
    * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
    */
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   /**
    * @brief Pack an array of node indices into a buffer.
@@ -204,7 +204,7 @@ public:
    * @param[in] packList the indices of nodes that should be packed
    * @return a localIndex value representing the size of the packed data
    */
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   /**
@@ -216,17 +216,17 @@ public:
    * @param [in] overwriteDownMaps boolean: true to overwrite the previous Down maps
    * @return a localIndex value representing the size of the unpacked list
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
   /**
-   * @brief Call FixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
+   * @brief Call fixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
    * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
    */
-  void FixUpDownMaps( bool const clearIfUnmapped );
+  void fixUpDownMaps( bool const clearIfUnmapped );
 
   ///@}
 
@@ -260,7 +260,7 @@ public:
    * @param[in] nodeManager mesh nodeManager
    * @param[out] faceToNodes face-to-node map
    */
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+  virtual void extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
                                                                 std::vector< std::vector< globalIndex > > & faceToNodes ) override;
 
   /**
@@ -275,35 +275,24 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     /// @cond DO_NOT_DOCUMENT
-    static constexpr auto nodeListString              = "nodeList";
-    static constexpr auto edgeListString              = "edgeList";
-    static constexpr auto elementRegionListString     = "elemRegionList";
-    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
-    static constexpr auto elementListString           = "elemList";
-    constexpr static auto faceAreaString = "faceArea";
-    constexpr static auto faceCenterString = "faceCenter";
-    constexpr static auto faceNormalString = "faceNormal";
+    static constexpr char const * nodeListString() { return "nodeList"; }
+    static constexpr char const * edgeListString() { return "edgeList"; }
+    static constexpr char const * elementRegionListString() { return "elemRegionList"; }
+    static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
+    static constexpr char const * elementListString() { return "elemList"; }
+    constexpr static char const * faceAreaString() { return "faceArea"; }
+    constexpr static char const * faceCenterString() { return "faceCenter"; }
+    constexpr static char const * faceNormalString() { return "faceNormal"; }
 
-    dataRepository::ViewKey nodeList              = { nodeListString };
-    dataRepository::ViewKey edgeList              = { edgeListString };
-    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
-    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
-    dataRepository::ViewKey elementList           = { elementListString };
+    dataRepository::ViewKey nodeList              = { nodeListString() };
+    dataRepository::ViewKey edgeList              = { edgeListString() };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString() };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString() };
+    dataRepository::ViewKey elementList           = { elementListString() };
     /// @endcond
   }
   /// viewKeys
   viewKeys;
-
-
-
-  /**
-   * @struct groupKeyStruct
-   * @brief  contains added group access keys to be bound with class in group hierarchy
-   */
-  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {}
-  /// groupKeys
-  groupKeys;
 
   ///@}
 
@@ -441,7 +430,7 @@ private:
    * @return size of data packed in terms of number of chars
    */
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
   /// face keyed map containing face-to-node relation

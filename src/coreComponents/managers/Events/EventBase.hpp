@@ -39,7 +39,7 @@ public:
    * @param name The name of the object in the data repository.
    * @param parent The parent of this object in the data repository.
    **/
-  explicit EventBase( std::string const & name,
+  explicit EventBase( string const & name,
                       Group * const parent );
 
   /// Destructor
@@ -49,7 +49,7 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "EventBase"; }
+  static string catalogName() { return "EventBase"; }
 
   /**
    * @brief If the event forecast is equal to 1, then signal the targets to prepare for execution
@@ -59,20 +59,20 @@ public:
    * @param cycle The current cycle.
    * @param domain The DomainPartition the event is occuring on up-casted to a Group.
    */
-  virtual void SignalToPrepareForExecution( real64 const time,
+  virtual void signalToPrepareForExecution( real64 const time,
                                             real64 const dt,
                                             integer const cycle,
-                                            dataRepository::Group * domain ) override;
+                                            DomainPartition & domain ) override;
   /**
    * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
-   * @copydoc ExecutableGroup::Execute()
+   * @copydoc ExecutableGroup::execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Call the execute method on the target and/or children if present.
@@ -81,13 +81,13 @@ public:
    * @param cycle The current simulation cycle.
    * @param domain The DomainPartition up-casted to a Group.
    */
-  void Step( real64 const time,
+  void step( real64 const time,
              real64 const dt,
              integer const cycle,
              dataRepository::Group * domain );
 
   /**
-   * @copydoc dataRepository::Group::CreateChild()
+   * @copydoc dataRepository::Group::createChild()
    *
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
    * e.g.:
@@ -100,21 +100,21 @@ public:
    * </Events>
    * @endcode
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Expand any catalogs in the data structure.
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Process input data to retrieve targeted objects internally.
    * The target object for an event may be specified via the keyword "target" in the input xml.
-   * This string is empty by default and uses GetGroupByPath() method in Group, which returns
+   * This string is empty by default and uses getGroupByPath() method in Group, which returns
    * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
    * This involves a lot of string parsing, so we do it once during initialization.
    */
-  void GetTargetReferences();
+  void getTargetReferences();
 
   /**
    * @brief Events are triggered based upon their forecast values, which are defined
@@ -126,10 +126,10 @@ public:
    * @param cycle the current simulation cycle.
    * @param domain The problem domain up-cast to a Group.
    */
-  virtual void CheckEvents( real64 const time,
+  virtual void checkEvents( real64 const time,
                             real64 const dt,
                             integer const cycle,
-                            dataRepository::Group * domain );
+                            DomainPartition & domain );
 
   /**
    * @brief Perform the calculations to estimate the timing of the event.
@@ -138,24 +138,24 @@ public:
    * @param cycle the current simulation cycle.
    * @param domain The problem domain up-cast to a Group.
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
-                                    dataRepository::Group * domain ) = 0;
+                                    DomainPartition & domain ) = 0;
 
   /**
    * @brief Collect time-step size requests from targets and/or children.
    * @param time The current simulation time.
    * @return The requested time step.
    */
-  virtual real64 GetTimestepRequest( real64 const time ) override;
+  virtual real64 getTimestepRequest( real64 const time ) override;
 
   /**
    * @brief Get event-specifit dt requests.
    * @param time The current simulation time.
    * @return The requested time step.
    */
-  virtual real64 GetEventTypeDtRequest( real64 const time )
+  virtual real64 getEventTypeDtRequest( real64 const time )
   {
     GEOSX_UNUSED_VAR( time );
     return std::numeric_limits< real64 >::max();
@@ -166,7 +166,7 @@ public:
    * @brief Count the number of events/sub-events
    * @param[out] eventCounters The event count for each event/sub-event.
    */
-  void GetExecutionOrder( array1d< integer > & eventCounters );
+  void getExecutionOrder( array1d< integer > & eventCounters );
 
   /**
    * @brief Update the event progress for the event/sub-events.
@@ -176,60 +176,60 @@ public:
    *       will be time + dt.
    * @param eventCounters The event count for each event/sub-event.
    */
-  void SetProgressIndicator( array1d< integer > & eventCounters );
+  void setProgressIndicator( array1d< integer > & eventCounters );
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto eventTargetString = "target";
-    static constexpr auto beginTimeString = "beginTime";
-    static constexpr auto endTimeString = "endTime";
-    static constexpr auto forceDtString = "forceDt";
-    static constexpr auto maxEventDtString = "maxEventDt";
-    static constexpr auto lastTimeString = "lastTime";
-    static constexpr auto lastCycleString = "lastCycle";
-    static constexpr auto eventForecastString = "eventForecast";
-    static constexpr auto targetExactStartStopString = "targetExactStartStop";
-    static constexpr auto currentSubEventString = "currentSubEvent";
-    static constexpr auto isTargetExecutingString = "isTargetExecuting";
-    static constexpr auto finalDtStretchString = "finalDtStretch";
+    static constexpr char const * eventTargetString() { return "target"; }
+    static constexpr char const * beginTimeString() { return "beginTime"; }
+    static constexpr char const * endTimeString() { return "endTime"; }
+    static constexpr char const * forceDtString() { return "forceDt"; }
+    static constexpr char const * maxEventDtString() { return "maxEventDt"; }
+    static constexpr char const * lastTimeString() { return "lastTime"; }
+    static constexpr char const * lastCycleString() { return "lastCycle"; }
+    static constexpr char const * eventForecastString() { return "eventForecast"; }
+    static constexpr char const * targetExactStartStopString() { return "targetExactStartStop"; }
+    static constexpr char const * currentSubEventString() { return "currentSubEvent"; }
+    static constexpr char const * isTargetExecutingString() { return "isTargetExecuting"; }
+    static constexpr char const * finalDtStretchString() { return "finalDtStretch"; }
 
-    dataRepository::ViewKey eventTarget = { "target" };
-    dataRepository::ViewKey beginTime = { "beginTime" };
-    dataRepository::ViewKey endTime = { "endTime" };
-    dataRepository::ViewKey forceDt = { "forceDt" };
-    dataRepository::ViewKey maxEventDt = { "maxEventDt" };
-    dataRepository::ViewKey lastTime = { "lastTime" };
-    dataRepository::ViewKey lastCycle = { "lastCycle" };
-    dataRepository::ViewKey eventForecast = { "eventForecast" };
-    dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
-    dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
-    dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
+    dataRepository::ViewKey eventTarget = { eventTargetString() };
+    dataRepository::ViewKey beginTime = { beginTimeString() };
+    dataRepository::ViewKey endTime = { endTimeString() };
+    dataRepository::ViewKey forceDt = { forceDtString() };
+    dataRepository::ViewKey maxEventDt = { maxEventDtString() };
+    dataRepository::ViewKey lastTime = { lastTimeString() };
+    dataRepository::ViewKey lastCycle = { lastCycleString() };
+    dataRepository::ViewKey eventForecast = { eventForecastString() };
+    dataRepository::ViewKey targetExactStartStop = { targetExactStartStopString() };
+    dataRepository::ViewKey currentSubEvent = { currentSubEventString() };
+    dataRepository::ViewKey isTargetExecuting = { isTargetExecutingString() };
   } viewKeys;
   /// @endcond
 
   /// Catalog interface
-  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
-  /// @copydoc dataRepository::Group::GetCatalog()
-  static CatalogInterface::CatalogType & GetCatalog();
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, string const &, Group * const >;
+  /// @copydoc dataRepository::Group::getCatalog()
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Get the sum of the exit flags for the event/sub-events from the last execution.
    * @return The sum of the exit flags for the event/sub-events.
    */
-  integer GetExitFlag();
+  integer getExitFlag();
 
   /**
    * @brief Set this event objects exit flag.
    * @param flag The exit flag value.
    */
-  void SetExitFlag( integer flag ){ m_exitFlag = flag; }
+  void setExitFlag( integer flag ){ m_exitFlag = flag; }
 
   /**
    * @brief Get the current time increment request for this event.
    * @return The current time increment request.
    */
-  real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
+  real64  getCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
   /**
    * @brief Get the forecast of the current event.
@@ -305,7 +305,7 @@ protected:
    * @brief Get the target of this event.
    * @return The target of this event.
    */
-  ExecutableGroup * GetEventTarget() const
+  ExecutableGroup * getEventTarget() const
   { return m_target; }
 
   /// The last time the event occurred.

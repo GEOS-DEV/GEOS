@@ -43,7 +43,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  Cylinder( const std::string & name,
+  Cylinder( const string & name,
             Group * const parent );
 
   /**
@@ -62,11 +62,11 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "Cylinder"; }
+  static string catalogName() { return "Cylinder"; }
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
+  bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
 
 private:
@@ -82,10 +82,9 @@ private:
 
   struct viewKeyStruct
   {
-    static constexpr auto point1String = "point1";
-    static constexpr auto point2String = "point2";
-    static constexpr auto radiusString = "radius";
-
+    static constexpr char const * point1String() { return "point1"; }
+    static constexpr char const * point2String() { return "point2"; }
+    static constexpr char const * radiusString() { return "radius"; }
   };
 
   /// @endcond

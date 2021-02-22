@@ -110,7 +110,7 @@ private:
    * @param[out] viscosity fluid viscosity
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & viscosity ) const = 0;
 
@@ -123,7 +123,7 @@ private:
    * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
@@ -136,7 +136,7 @@ private:
    * @param[in] pressure the target pressure value
    */
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const = 0;
 
@@ -154,7 +154,7 @@ public:
    * @param name name of the group
    * @param parent pointer to parent group
    */
-  SingleFluidBase( std::string const & name, Group * const parent );
+  SingleFluidBase( string const & name, Group * const parent );
 
   /**
    * @brief Destructor.
@@ -163,7 +163,7 @@ public:
 
   // *** ConstitutiveBase interface
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluid-specific interface
@@ -187,18 +187,18 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto defaultDensityString = "defaultDensity";
-    static constexpr auto densityString        = "density";
-    static constexpr auto dDens_dPresString    = "dDensity_dPressure";
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * densityString() { return "density"; }
+    static constexpr char const * dDens_dPresString() { return "dDensity_dPressure"; }
 
-    static constexpr auto defaultViscosityString = "defaultViscosity";
-    static constexpr auto viscosityString        = "viscosity";
-    static constexpr auto dVisc_dPresString      = "dViscosity_dPressure";
-  } viewKeysSingleFluidBase;
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
+    static constexpr char const * viscosityString() { return "viscosity"; }
+    static constexpr char const * dVisc_dPresString() { return "dViscosity_dPressure"; }
+  };
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   real64 m_defaultDensity;
   real64 m_defaultViscosity;

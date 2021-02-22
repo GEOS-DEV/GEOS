@@ -205,8 +205,6 @@ void BrineEnthalpyFunction::CalculateBrineEnthalpy( real64_array const & pressur
   
 void BrineEnthalpyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition );
-
   localIndex const numComponents = phaseComposition.size();  
   
   EvalArgs2D P, T, enthalpy, CO2Enthalpy;

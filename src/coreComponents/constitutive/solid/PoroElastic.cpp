@@ -19,9 +19,10 @@
 
 #include "PoroElastic.hpp"
 
-#include "LinearElasticAnisotropic.hpp"
-#include "LinearElasticIsotropic.hpp"
-#include "LinearElasticTransverseIsotropic.hpp"
+#include "ElasticIsotropic.hpp"
+#include "ElasticTransverseIsotropic.hpp"
+#include "DruckerPrager.hpp"
+#include "DruckerPragerExtended.hpp"
 
 namespace geosx
 {
@@ -40,28 +41,28 @@ PoroElastic< BASE >::PoroElastic( string const & name, Group * const parent ):
   m_dPVMult_dPressure(),
   m_poreVolumeRelation()
 {
-  this->registerWrapper( viewKeyStruct::biotCoefficientString, &m_biotCoefficient )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  this->registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Biot's coefficient" );
 
-  this->registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  this->registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Pore volume compressibilty" );
 
-  this->registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure )->
-    setApplyDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  this->registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ReferencePressure" );
 
 
-  this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier )->
-    setApplyDefaultValue( 1.0 )->
+  this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "" );
 
-  this->registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure )->
-    setApplyDefaultValue( -1 )->
+  this->registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure ).
+    setApplyDefaultValue( -1 ).
     setDescription( "" );
 }
 
@@ -70,18 +71,10 @@ PoroElastic< BASE >::~PoroElastic()
 {}
 
 template< typename BASE >
-void PoroElastic< BASE >::PostProcessInput()
+void PoroElastic< BASE >::postProcessInput()
 {
-  BASE::PostProcessInput();
-
-  if( m_compressibility <= 0 )
-  {
-//    string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2
-// constants!";
-//    GEOSX_ERROR( message );
-  }
-  m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
-
+  BASE::postProcessInput();
+  m_poreVolumeRelation.setCoefficients( m_referencePressure, 1.0, m_compressibility );
 }
 
 template< typename BASE >
@@ -97,7 +90,7 @@ PoroElastic< BASE >::deliverClone( string const & name,
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group * const parent,
+void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
   m_poreVolumeMultiplier.resize( 0, numConstitutivePointsPerParentIndex );
@@ -106,7 +99,7 @@ void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group * cons
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+void PoroElastic< BASE >::stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                                     arrayView1d< real64 const > const & dPres )
 {
   localIndex const numElems = m_poreVolumeMultiplier.size( 0 );
@@ -124,18 +117,20 @@ void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > 
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      relation.Compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
+      relation.compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
     }
   } );
 }
 
-typedef PoroElastic< LinearElasticIsotropic > PoroLinearElasticIsotropic;
-typedef PoroElastic< LinearElasticAnisotropic > PoroLinearElasticAnisotropic;
-typedef PoroElastic< LinearElasticTransverseIsotropic > PoroLinearElasticTransverseIsotropic;
+typedef PoroElastic< ElasticIsotropic > PoroElasticIsotropic;
+typedef PoroElastic< ElasticTransverseIsotropic > PoroElasticTransverseIsotropic;
+typedef PoroElastic< DruckerPrager > PoroDruckerPrager;
+typedef PoroElastic< DruckerPragerExtended > PoroDruckerPragerExtended;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPrager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPragerExtended, string const &, Group * const )
 
 }
 } /* namespace geosx */

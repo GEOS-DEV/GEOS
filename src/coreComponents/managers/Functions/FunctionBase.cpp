@@ -26,16 +26,16 @@ using namespace dataRepository;
 
 
 
-FunctionBase::FunctionBase( const std::string & name,
+FunctionBase::FunctionBase( const string & name,
                             Group * const parent ):
   Group( name, parent ),
   m_inputVarNames()
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::inputVarNames, &m_inputVarNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::inputVarNames, &m_inputVarNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
     setDescription( "Name of fields are input to function." );
 }
 
@@ -71,13 +71,13 @@ integer FunctionBase::isFunctionOfTime() const
 }
 
 
-real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const group,
+real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
                                           real64 const time,
                                           SortedArray< localIndex > const & set ) const
 {
   localIndex N = set.size();
   real64_array sub( N );
-  Evaluate( group, time, set.toViewConst(), sub );
+  evaluate( group, time, set.toViewConst(), sub );
 
   real64_array result( 3 );
   result[0] = 1e10;   // min

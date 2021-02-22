@@ -81,7 +81,7 @@ public:
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               CONSTITUTIVE_TYPE & inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
                arrayView1d< globalIndex const > const & uDofNumber,
                arrayView1d< globalIndex const > const & wDofNumber,
@@ -102,6 +102,8 @@ public:
           inputGravityVector ),
     m_wDofNumber( wDofNumber ),
     m_w( embeddedSurfSubRegion.displacementJump() ),
+    m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
+    m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
     m_nVec( embeddedSurfSubRegion.getNormalVector() ),
     m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
     m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
@@ -184,6 +186,13 @@ public:
 
     /// local nodal coordinates
     real64 X[ numNodesPerElem ][ 3 ];
+
+    /// Stack storage for the traction
+    real64 tractionVec[3];
+
+    /// Stack storage for the derivative of the traction
+    real64 dTractiondw[3][3];
+
   };
   //***************************************************************************
 
@@ -259,6 +268,11 @@ public:
       stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
       stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
       stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
+      stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
+      for( int ii=0; ii < 3; ++ii )
+      {
+        stack.dTractiondw[ i ][ ii ] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
+      }
     }
   }
 
@@ -328,7 +342,10 @@ public:
 
     int Heaviside[ numNodesPerElem ];
 
-    m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
+    // TODO: asking for the stiffness here will only work for elastic models.  most other models
+    //       need to know the strain increment to compute the current stiffness value.
+
+    m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.X,
@@ -385,12 +402,9 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
 
-    // Evaluate tranction
-    real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
-    SolidMechanicsEFEMKernelsHelper::computeTraction( stack.wLocal, contactCoeff, tractionVec, dTractiondw );
-    LvArray::tensorOps::add< 3 >( stack.localRw, tractionVec );
-    LvArray::tensorOps::scale< 3, 3 >( dTractiondw, -1 );
-    LvArray::tensorOps::add< 3, 3 >( stack.localKww, dTractiondw );
+    // Add traction contribution tranction
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.tractionVec, -1 );
+    LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
@@ -436,6 +450,10 @@ protected:
   arrayView1d< globalIndex const > const m_wDofNumber;
 
   arrayView2d< real64 const > const m_w;
+
+  arrayView2d< real64 const > const m_tractionVec;
+
+  arrayView3d< real64 const > const m_dTraction_dJump;
 
   arrayView2d< real64 const > const m_nVec;
 

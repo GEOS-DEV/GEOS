@@ -57,7 +57,7 @@ public:
    * @param[out] elementAdjacencyList the elements adjacent to the input nodes of seedNodeList
    * @param[in] depth the depth of the search for adjacent quantities (first-order neighbors, neighbors of neighbors, etc)
    */
-  void GenerateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
+  void generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                localIndex_array & nodeAdjacencyList,
                                localIndex_array & edgeAdjacencyList,
                                localIndex_array & faceAdjacencyList,
@@ -65,7 +65,7 @@ public:
                                integer const depth );
 
 
-  virtual void InitializePostInitialConditions_PostSubGroups( Group * const ) override;
+  virtual void initializePostInitialConditionsPostSubGroups() override;
 
   /// @cond DO_NOT_DOCUMENT
 
@@ -104,54 +104,68 @@ public:
 
   /**
    * @brief Get the node manager.
-   * @return a pointer to the nodeManager object
+   * @return a reference to the nodeManager object
    */
-  NodeManager const * getNodeManager() const { return &m_nodeManager; }
+  NodeManager const & getNodeManager() const
+  { return m_nodeManager; }
+
   /**
    * @copydoc getNodeManager() const
    */
-  NodeManager * getNodeManager()             { return &m_nodeManager; }
+  NodeManager & getNodeManager()
+  { return m_nodeManager; }
 
   /**
    * @brief Get the edge manager.
-   * @return a pointer to the edgeManager object
+   * @return a reference to the edgeManager object
    */
-  EdgeManager const * getEdgeManager() const { return &m_edgeManager; }
+  EdgeManager const & getEdgeManager() const
+  { return m_edgeManager; }
+
   /**
    * @copydoc getEdgeManager() const
    */
-  EdgeManager * getEdgeManager()             { return &m_edgeManager; }
+  EdgeManager & getEdgeManager()
+  { return m_edgeManager; }
 
   /**
    * @brief Get the face manager.
-   * @return a pointer to the faceManager object
+   * @return a reference to the faceManager object
    */
-  FaceManager const * getFaceManager() const { return &m_faceManager; }
+  FaceManager const & getFaceManager() const
+  { return m_faceManager; }
+
   /**
    * @copydoc getFaceManager() const
    */
-  FaceManager * getFaceManager()             { return &m_faceManager; }
+  FaceManager & getFaceManager()
+  { return m_faceManager; }
 
   /**
    * @brief Get the element region manager.
-   * @return a pointer to the elementRegionManager object
+   * @return a reference to the elementRegionManager object
    */
-  ElementRegionManager const * getElemManager() const { return &m_elementManager; }
+  ElementRegionManager const & getElemManager() const
+  { return m_elementManager; }
+
   /**
    * @copydoc getElemManager() const
    */
-  ElementRegionManager * getElemManager()             { return &m_elementManager; }
+  ElementRegionManager & getElemManager()
+  { return m_elementManager; }
 
   /**
    * @brief Get the edge Manager related to the embedded surfaces grid.
    * @return a pointer to the edgeManager related to the embedded surfaces grid
    */
-  EdgeManager const & getEmbdSurfEdgeManager() const { return m_embSurfEdgeManager; }
+  EdgeManager const & getEmbdSurfEdgeManager() const
+  { return m_embSurfEdgeManager; }
 
   /**
    * @copydoc getEmbdSurfEdgeManager() const
    */
-  EdgeManager & getEmbdSurfEdgeManager()             { return m_embSurfEdgeManager; }
+  EdgeManager & getEmbdSurfEdgeManager()
+  { return m_embSurfEdgeManager; }
 
   ///@}
 

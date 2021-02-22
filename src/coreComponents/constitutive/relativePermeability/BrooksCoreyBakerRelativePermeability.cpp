@@ -29,39 +29,43 @@ namespace constitutive
 {
 
 
-BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std::string const & name,
+BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( string const & name,
                                                                             Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Minimum volume fraction value for each phase" );
 
 
-  registerWrapper( viewKeyStruct::waterOilRelPermExponentString, &m_waterOilRelPermExponent )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation" );
+  registerWrapper( viewKeyStruct::waterOilRelPermExponentString(), &m_waterOilRelPermExponent ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation\n"
+                    "The expected format is \"{ waterExp, oilExp }\", in that order" );
 
-  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString, &m_waterOilRelPermMaxValue )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation" );
+  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString(), &m_waterOilRelPermMaxValue ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation\n"
+                    "The expected format is \"{ waterMax, oilMax }\", in that order" );
 
 
-  registerWrapper( viewKeyStruct::gasOilRelPermExponentString, &m_gasOilRelPermExponent )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation" );
+  registerWrapper( viewKeyStruct::gasOilRelPermExponentString(), &m_gasOilRelPermExponent ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation\n"
+                    "The expected format is \"{ gasExp, oilExp }\", in that order" );
 
-  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString, &m_gasOilRelPermMaxValue )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );
+  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString(), &m_gasOilRelPermMaxValue ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation\n"
+                    "The expected format is \"{ gasMax, oilMax }\", in that order" );
 
-  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
-    setApplyDefaultValue( 1.0 )->
+  registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 
 }
@@ -69,11 +73,11 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std:
 BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 {}
 
-void BrooksCoreyBakerRelativePermeability::PostProcessInput()
+void BrooksCoreyBakerRelativePermeability::postProcessInput()
 {
-  RelativePermeabilityBase::PostProcessInput();
+  RelativePermeabilityBase::postProcessInput();
 
-  localIndex const NP = numFluidPhases();
+  localIndex const numPhases = numFluidPhases();
 
   GEOSX_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
                   "BrooksCoreyBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
@@ -87,24 +91,24 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() )
 
   if( m_phaseOrder[PhaseType::WATER] >= 0 )
   {
-    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString )
-    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString )
+    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString() )
+    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString() )
   }
 
   if( m_phaseOrder[PhaseType::GAS] >=0 )
   {
-    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent, 2, viewKeyStruct::gasOilRelPermExponentString )
-    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString )
+    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent, 2, viewKeyStruct::gasOilRelPermExponentString() )
+    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString() )
   }
 
 #undef COREY_CHECK_INPUT_LENGTH
 
   m_volFracScale = 1.0;
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases; ++ip )
   {
     GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                     "BrooksCoreyBakerRelativePermeability: invalid phase min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
@@ -155,7 +159,7 @@ BrooksCoreyBakerRelativePermeability::KernelWrapper BrooksCoreyBakerRelativePerm
                         m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyBakerRelativePermeability, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyBakerRelativePermeability, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

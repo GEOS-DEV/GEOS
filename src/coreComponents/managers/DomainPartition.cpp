@@ -32,35 +32,28 @@ namespace geosx
 {
 using namespace dataRepository;
 
-DomainPartition::DomainPartition( std::string const & name,
+DomainPartition::DomainPartition( string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  this->registerWrapper( "Neighbors", &m_neighbors )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  this->registerWrapper( "Neighbors", &m_neighbors ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
-  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
-  RegisterGroup( groupKeys.meshBodies );
-  RegisterGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
-  RegisterGroup< CellBlockManager >( keys::cellManager );
+  registerGroup( groupKeys.meshBodies );
+  registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
+  registerGroup< CellBlockManager >( keys::cellManager );
 }
 
 
 DomainPartition::~DomainPartition()
 {}
 
-
-void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
-{
-  Group::RegisterDataOnMeshRecursive( getMeshBodies() );
-}
-
-
-void DomainPartition::InitializationOrder( string_array & order )
+void DomainPartition::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
   {
@@ -69,12 +62,12 @@ void DomainPartition::InitializationOrder( string_array & order )
   }
 
   {
-    order.emplace_back( string( groupKeysStruct::meshBodiesString ) );
-    usedNames.insert( groupKeysStruct::meshBodiesString );
+    order.emplace_back( string( groupKeysStruct::meshBodiesString() ) );
+    usedNames.insert( groupKeysStruct::meshBodiesString() );
   }
 
 
-  for( auto const & subGroup : this->GetSubGroups() )
+  for( auto const & subGroup : this->getSubGroups() )
   {
     if( usedNames.count( subGroup.first ) == 0 )
     {
@@ -84,14 +77,14 @@ void DomainPartition::InitializationOrder( string_array & order )
 }
 
 
-void DomainPartition::GenerateSets()
+void DomainPartition::generateSets()
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * const mesh = this->getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  MeshLevel & mesh = this->getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
-  dataRepository::Group const & nodeSets = nodeManager->sets();
+  dataRepository::Group const & nodeSets = nodeManager.sets();
 
   map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
@@ -99,14 +92,14 @@ void DomainPartition::GenerateSets()
   // loop over all wrappers and fill the nodeIndSet arrays for each set
   for( auto & wrapper : nodeSets.wrappers() )
   {
-    string name = wrapper.second->getName();
-    nodeInSet[name].resize( nodeManager->size() );
+    string const & name = wrapper.second->getName();
+    nodeInSet[name].resize( nodeManager.size() );
     nodeInSet[name].setValues< serialPolicy >( false );
-    Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets.getWrapper< SortedArray< localIndex > >( name );
-    if( setPtr!=nullptr )
+
+    if( nodeSets.hasWrapper( name ) )
     {
       setNames.emplace_back( name );
-      SortedArrayView< localIndex const > const & set = setPtr->reference();
+      SortedArrayView< localIndex const > const & set = nodeSets.getReference< SortedArray< localIndex > >( name );
       for( localIndex const a : set )
       {
         nodeInSet[name][a] = true;
@@ -115,18 +108,18 @@ void DomainPartition::GenerateSets()
   }
 
 
-  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  elementRegionManager->forElementSubRegions( [&]( auto & subRegion )
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
+  elementRegionManager.forElementSubRegions( [&]( auto & subRegion )
   {
     dataRepository::Group & elementSets = subRegion.sets();
 
     auto const & elemToNodeMap = subRegion.nodeList();
 
-    for( std::string const & setName : setNames )
+    for( string const & setName : setNames )
     {
       arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
-      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName )->reference();
+      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );
@@ -151,7 +144,7 @@ void DomainPartition::GenerateSets()
 }
 
 
-void DomainPartition::SetupCommunications( bool use_nonblocking )
+void DomainPartition::setupCommunications( bool use_nonblocking )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -168,15 +161,15 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
       MPI_Cart_create( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
       GEOSX_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
-    int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     int nsdof = 3;
 
     MPI_Cart_coords( cartcomm, rank, nsdof, partition.m_coords.data());
 
     int ncoords[3];
-    AddNeighbors( 0, cartcomm, ncoords );
+    addNeighbors( 0, cartcomm, ncoords );
 
-    MpiWrapper::Comm_free( cartcomm );
+    MpiWrapper::commFree( cartcomm );
   }
   else
   {
@@ -190,7 +183,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
   array1d< int > firstNeighborRanks;
   for( NeighborCommunicator const & neighbor : m_neighbors )
   {
-    firstNeighborRanks.emplace_back( neighbor.NeighborRank() );
+    firstNeighborRanks.emplace_back( neighbor.neighborRank() );
   }
 
   int neighborsTag = 54;
@@ -199,7 +192,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
   std::vector< MPI_Request > requests( m_neighbors.size() );
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
-    MpiWrapper::iSend( firstNeighborRanks.toViewConst(), m_neighbors[ i ].NeighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
+    MpiWrapper::iSend( firstNeighborRanks.toViewConst(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
   }
 
   // This set will contain the second (neighbor of) neighbors ranks.
@@ -208,17 +201,17 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
   array1d< int > neighborOfNeighborRanks;
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
-    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].NeighborRank(), neighborsTag, MPI_COMM_GEOSX, MPI_STATUS_IGNORE );
+    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, MPI_STATUS_IGNORE );
 
     // Insert the neighbors of the current neighbor into the set of second neighbors.
     secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );
   }
 
   // Remove yourself and all the first neighbors from the second neighbors.
-  secondNeighborRanks.erase( MpiWrapper::Comm_rank() );
+  secondNeighborRanks.erase( MpiWrapper::commRank() );
   for( NeighborCommunicator const & neighbor : m_neighbors )
   {
-    secondNeighborRanks.erase( neighbor.NeighborRank() );
+    secondNeighborRanks.erase( neighbor.neighborRank() );
   }
 
   for( integer const neighborRank : secondNeighborRanks )
@@ -226,42 +219,40 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
     m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
   }
 
-  MpiWrapper::Waitall( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
+  MpiWrapper::waitall( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
 
 #endif
 
-  Group * const meshBodies = getMeshBodies();
-  MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( 0 );
-  MeshLevel & meshLevel = *meshBody->GetGroup< MeshLevel >( 0 );
+  MeshLevel & meshLevel = getMeshBody( 0 ).getMeshLevel( 0 );
 
   for( NeighborCommunicator const & neighbor : m_neighbors )
   {
-    neighbor.AddNeighborGroupToMesh( meshLevel );
+    neighbor.addNeighborGroupToMesh( meshLevel );
   }
 
-  NodeManager * const nodeManager = meshLevel.getNodeManager();
-  FaceManager * const faceManager = meshLevel.getFaceManager();
-  EdgeManager * const edgeManager = meshLevel.getEdgeManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
-  nodeManager->SetMaxGlobalIndex();
+  nodeManager.setMaxGlobalIndex();
 
-  CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, m_neighbors );
+  getGlobalState().getCommunicationTools().assignGlobalIndices( faceManager, nodeManager, m_neighbors );
 
-  CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, m_neighbors );
+  getGlobalState().getCommunicationTools().assignGlobalIndices( edgeManager, nodeManager, m_neighbors );
 
-  CommunicationTools::FindMatchedPartitionBoundaryObjects( faceManager,
-                                                           m_neighbors );
+  getGlobalState().getCommunicationTools().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                                m_neighbors );
 
-  CommunicationTools::FindMatchedPartitionBoundaryObjects( nodeManager,
-                                                           m_neighbors );
+  getGlobalState().getCommunicationTools().findMatchedPartitionBoundaryObjects( nodeManager,
+                                                                                m_neighbors );
 
-  CommunicationTools::FindGhosts( meshLevel, m_neighbors, use_nonblocking );
+  getGlobalState().getCommunicationTools().findGhosts( meshLevel, m_neighbors, use_nonblocking );
 
-  faceManager->SortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-  faceManager->computeGeometry( nodeManager );
+  faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+  faceManager.computeGeometry( nodeManager );
 }
 
-void DomainPartition::AddNeighbors( const unsigned int idim,
+void DomainPartition::addNeighbors( const unsigned int idim,
                                     MPI_Comm & cartcomm,
                                     int * ncoords )
 {
@@ -281,7 +272,7 @@ void DomainPartition::AddNeighbors( const unsigned int idim,
     }
     if( !me )
     {
-      int const neighborRank = MpiWrapper::Cart_rank( cartcomm, ncoords );
+      int const neighborRank = MpiWrapper::cartRank( cartcomm, ncoords );
       m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
     }
   }
@@ -306,7 +297,7 @@ void DomainPartition::AddNeighbors( const unsigned int idim,
       }
       if( ok )
       {
-        AddNeighbors( idim + 1, cartcomm, ncoords );
+        addNeighbors( idim + 1, cartcomm, ncoords );
       }
     }
   }

@@ -59,11 +59,11 @@ public:
                                                             Group * const parent ) const;
 
 
-  virtual void StateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
+  virtual void stateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
                                          localIndex const GEOSX_UNUSED_PARAM( k ),
                                          localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
 
-  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
                                          arrayView1d< real64 const > const & dPres )
   {
     GEOSX_UNUSED_VAR( pres )
@@ -76,13 +76,13 @@ public:
   ///@{
 
   /// @typedef An alias for the ConstitutiveBase catalog
-  using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, string const &, Group * const >;
 
   /**
    * @brief Singleton accessor for catalog
    * @return
    */
-  static typename CatalogInterface::CatalogType & GetCatalog();
+  static typename CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief function to return the catalog name of the derived class
@@ -94,21 +94,20 @@ public:
 
   /**
    * @brief Allocate constitutive data and make views to data on parent objects
-   * @param[in] parent pointer to the group that holds the constitutive relation
+   * @param[in] parent reference to the group that holds the constitutive relation
    * @param[in] numConstitutivePointsPerParentIndex number of quadrature points
    *
    * This function does 2 things:
    *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
   {
-    static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
-    static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
-
+    static constexpr char const * poreVolumeMultiplierString() { return "poreVolumeMultiplier"; }
+    static constexpr char const * dPVMult_dPresString() { return "dPVMult_dDensity"; }
   };
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }

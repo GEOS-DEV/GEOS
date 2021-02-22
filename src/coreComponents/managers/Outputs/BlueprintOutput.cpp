@@ -21,6 +21,8 @@
 
 #include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 
@@ -38,9 +40,9 @@ namespace internal
  * @brief @return The Blueprint shape from the GEOSX element type string.
  * @param elementType the elementType to look up.
  */
-std::string toBlueprintShape( std::string const & elementType )
+string toBlueprintShape( string const & elementType )
 {
-  static std::unordered_map< std::string, std::string > const map =
+  static std::unordered_map< string, string > const map =
   {
     { "C3D8", "hex" },
     { "C3D4", "tet" }
@@ -84,33 +86,32 @@ void reorderElementToNodeMap( CellElementSubRegion const & subRegion, conduit::N
 } /// namespace internal;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-BlueprintOutput::BlueprintOutput( std::string const & name,
+BlueprintOutput::BlueprintOutput( string const & name,
                                   dataRepository::Group * const parent ):
   OutputBase( name, parent )
 {
-  registerWrapper( "plotLevel", &m_plotLevel )->
-    setApplyDefaultValue( dataRepository::PlotLevel::LEVEL_1 )->
-    setInputFlag( dataRepository::InputFlags::OPTIONAL )->
+  registerWrapper( "plotLevel", &m_plotLevel ).
+    setApplyDefaultValue( dataRepository::PlotLevel::LEVEL_1 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Determines which fields to write." );
 
-  registerWrapper( "outputFullQuadratureData", &m_outputFullQuadratureData )->
-    setApplyDefaultValue( false )->
-    setInputFlag( dataRepository::InputFlags::OPTIONAL )->
+  registerWrapper( "outputFullQuadratureData", &m_outputFullQuadratureData ).
+    setApplyDefaultValue( false ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "If true writes out data associated with every quadrature point." );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void BlueprintOutput::Execute( real64 const time,
+bool BlueprintOutput::execute( real64 const time,
                                real64 const,
                                integer const cycle,
                                integer const,
                                real64 const,
-                               dataRepository::Group * group )
+                               DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition const & domain = dynamicCast< DomainPartition const & >( *group );
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   conduit::Node meshRoot;
   conduit::Node & mesh = meshRoot[ "mesh" ];
@@ -120,10 +121,10 @@ void BlueprintOutput::Execute( real64 const time,
   mesh[ "state/time" ] = time;
   mesh[ "state/cycle" ] = cycle;
 
-  addNodalData( *meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
+  addNodalData( meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
 
   dataRepository::Group averagedElementData( "averagedElementData", this );
-  addElementData( *meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
+  addElementData( meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
 
   /// The Blueprint will complain if the fields node is present but empty.
   if( mesh[ "fields" ].number_of_children() == 0 )
@@ -138,7 +139,7 @@ void BlueprintOutput::Execute( real64 const time,
   /// Generate the Blueprint index.
   conduit::Node fileRoot;
   conduit::Node & index = fileRoot[ "blueprint_index/mesh" ];
-  conduit::blueprint::mesh::generate_index( mesh, "mesh", MpiWrapper::Comm_size(), index );
+  conduit::blueprint::mesh::generate_index( mesh, "mesh", MpiWrapper::commSize(), index );
 
   /// Verify that the index conforms to the Blueprint.
   info.reset();
@@ -147,8 +148,10 @@ void BlueprintOutput::Execute( real64 const time,
   /// Write out the root index file, then write out the mesh.
   char buffer[ 128 ];
   GEOSX_ERROR_IF_GE( snprintf( buffer, 128, "blueprintFiles/cycle_%07d", cycle ), 128 );
-  std::string const filePathForRank = dataRepository::writeRootFile( fileRoot, buffer );
+  string const filePathForRank = dataRepository::writeRootFile( fileRoot, buffer );
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
+
+  return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,7 +169,7 @@ void BlueprintOutput::addNodalData( NodeManager const & nodeManager,
                                                    { "x", "y", "z" } );
 
   /// Create the points topology
-  std::string const coordsetName = coordset.name();
+  string const coordsetName = coordset.name();
   conduit::Node & nodeTopology = topologies[ coordsetName ];
   nodeTopology[ "coordset" ] = coordsetName;
 
@@ -205,21 +208,21 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
   elemRegionManager.forElementSubRegionsComplete< CellElementSubRegion >(
     [&] ( localIndex, localIndex, ElementRegionBase const & region, CellElementSubRegion const & subRegion )
   {
-    std::string const topologyName = region.getName() + "-" + subRegion.getName();
+    string const topologyName = region.getName() + "-" + subRegion.getName();
 
     /// Create the topology representing the sub-region.
     conduit::Node & topology = topologies[ topologyName ];
     topology[ "coordset" ] = coordset.name();
     topology[ "type" ] = "unstructured";
-    topology[ "elements/shape" ] = internal::toBlueprintShape( subRegion.GetElementTypeString() );
+    topology[ "elements/shape" ] = internal::toBlueprintShape( subRegion.getElementTypeString() );
     internal::reorderElementToNodeMap( subRegion, topology[ "elements/connectivity" ] );
 
     /// Write out the fields.
     writeOutWrappersAsFields( subRegion, fields, topologyName );
 
     /// Write out the quadrature averaged constitutive data and the full data if requested.
-    Group & averagedSubRegionData = *averagedElementData.RegisterGroup( topologyName );
-    subRegion.GetConstitutiveModels()->forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
+    Group & averagedSubRegionData = averagedElementData.registerGroup( topologyName );
+    subRegion.getConstitutiveModels().forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
     {
       writeOutConstitutiveData( constitutiveModel, fields, topologyName, averagedSubRegionData );
 
@@ -234,8 +237,8 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void BlueprintOutput::writeOutWrappersAsFields( Group const & group,
                                                 conduit::Node & fields,
-                                                std::string const & topology,
-                                                std::string const & prefix )
+                                                string const & topology,
+                                                string const & prefix )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -243,7 +246,7 @@ void BlueprintOutput::writeOutWrappersAsFields( Group const & group,
   {
     if( wrapper.getPlotLevel() <= m_plotLevel && wrapper.sizedFromParent() )
     {
-      std::string const name = prefix.empty() ? wrapper.getName() : prefix + "-" + wrapper.getName();
+      string const name = prefix.empty() ? wrapper.getName() : prefix + "-" + wrapper.getName();
 
       // conduit::Node & field = fields[ name ];
       // field[ "association" ] = "element";
@@ -260,26 +263,26 @@ void BlueprintOutput::writeOutWrappersAsFields( Group const & group,
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & constitutiveModel,
                                                 conduit::Node & fields,
-                                                std::string const & topology,
+                                                string const & topology,
                                                 dataRepository::Group & averagedSubRegionData )
 {
   GEOSX_MARK_FUNCTION;
 
-  Group & averagedConstitutiveData = *averagedSubRegionData.RegisterGroup( constitutiveModel.getName() );
+  Group & averagedConstitutiveData = averagedSubRegionData.registerGroup( constitutiveModel.getName() );
 
   constitutiveModel.forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
   {
     if( wrapper.getPlotLevel() <= m_plotLevel && wrapper.sizedFromParent() )
     {
-      std::string const fieldName = constitutiveModel.getName() + "-quadrature-averaged-" + wrapper.getName();
+      string const fieldName = constitutiveModel.getName() + "-quadrature-averaged-" + wrapper.getName();
       averagedConstitutiveData.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
-        ->addBlueprintField( fields, fieldName, topology );
+        .addBlueprintField( fields, fieldName, topology );
     }
   } );
 }
 
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, BlueprintOutput, std::string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( OutputBase, BlueprintOutput, string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

@@ -72,11 +72,11 @@ public:
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return a string containing the key name.
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "FaceElementRegion"; }
 
   virtual const string getCatalogName() const override final
-  { return FaceElementRegion::CatalogName(); }
+  { return FaceElementRegion::catalogName(); }
 
   ///@}
 
@@ -85,7 +85,9 @@ public:
    */
   ///@{
 
+  /// @cond DO_NOT_DOCUMENT
   virtual void GenerateMesh( Group * ) override {}
+  /// @endcond
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
@@ -126,14 +128,14 @@ public:
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     /// Fracture set string
-    static constexpr auto fractureSetString = "fractureSet";
+    static constexpr char const * fractureSetString() { return "fractureSet"; }
 
     /// Default aperture string
-    static constexpr auto defaultApertureString = "defaultAperture";
+    static constexpr char const * defaultApertureString() { return "defaultAperture"; }
   };
 
 protected:
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups() override;
 
 
 private:

@@ -87,7 +87,7 @@ int SuiteSparse::setup()
 
   if( m_subComm != MPI_COMM_NULL )
   {
-    int const rank = MpiWrapper::Comm_rank( m_subComm );
+    int const rank = MpiWrapper::commRank( m_subComm );
     if( rank == m_subCommWorkingRank )
     {
       // symbolic factorization
@@ -207,7 +207,7 @@ void SuiteSparse::destroy()
 {
   if( m_subComm != MPI_COMM_NULL )
   {
-    int const rank = MpiWrapper::Comm_rank( m_subComm );
+    int const rank = MpiWrapper::commRank( m_subComm );
     if( rank == m_subCommWorkingRank )
     {
       umfpack_dl_free_symbolic( &m_Symbolic );
@@ -215,7 +215,7 @@ void SuiteSparse::destroy()
     }
     if( m_subComm != m_comm )
     {
-      MpiWrapper::Comm_free( m_subComm );
+      MpiWrapper::commFree( m_subComm );
     }
   }
 }

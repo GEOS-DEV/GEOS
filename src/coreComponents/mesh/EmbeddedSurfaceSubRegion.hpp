@@ -51,7 +51,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName()
+  static const string catalogName()
   { return "EmbeddedSurfaceSubRegion"; }
 
   /**
@@ -60,7 +60,7 @@ public:
    */
   virtual const string getCatalogName() const override
   {
-    return EmbeddedSurfaceSubRegion::CatalogName();
+    return EmbeddedSurfaceSubRegion::catalogName();
   }
 
   ///@}
@@ -88,7 +88,7 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
   /**
@@ -110,7 +110,7 @@ public:
    * @param fracture pointer to the bounded plane which is defining the embedded surface element
    * @return boolean defining whether the embedded element was added or not
    */
-  bool AddNewEmbeddedSurface( localIndex const cellIndex,
+  bool addNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
                               NodeManager & nodeManager,
@@ -130,7 +130,7 @@ public:
    * @param k embedded surface cell index
    * @return value of the Heaviside
    */
-  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
+  real64 computeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k ) const;
 
 
@@ -144,36 +144,46 @@ public:
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
     /// Embedded surface element normal vector string
-    static constexpr auto normalVectorString           = "normalVector";
+    static constexpr char const * normalVectorString()      { return "normalVector"; }
 
     /// Tangent vector 1 string
-    static constexpr auto t1VectorString           = "tangentVector1";
+    static constexpr char const * t1VectorString()          { return "tangentVector1"; }
 
     /// Tangent vector 2 string
-    static constexpr auto t2VectorString           = "tangentVector2";
+    static constexpr char const * t2VectorString()          { return "tangentVector2"; }
 
     /// Connectivity index string
-    static constexpr auto connectivityIndexString     = "connectivityIndex";
+    static constexpr char const * connectivityIndexString() { return "connectivityIndex"; }
 
     /// Displacement jump string
-    static constexpr auto dispJumpString             = "displacementJump";
+    static constexpr char const * dispJumpString()          { return "displacementJump"; }
 
     /// Delta displacement jump string
-    static constexpr auto deltaDispJumpString        = "deltaDisplacementJump";
+    static constexpr char const * deltaDispJumpString()     { return "deltaDisplacementJump"; }
+
+    static constexpr char const * fractureTractionString()  { return "fractureTraction"; }
+
+    static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
 
     /// Displacement jump key
-    dataRepository::ViewKey dispJump                  = {dispJumpString};
+    dataRepository::ViewKey dispJump        = { dispJumpString() };
 
     /// Delta displacement jump key
-    dataRepository::ViewKey deltaDispJump             = {deltaDispJumpString};
+    dataRepository::ViewKey deltaDispJump   = { deltaDispJumpString() };
+
+    /// traction vector key
+    dataRepository::ViewKey tractionVector  = { fractureTractionString() };
+
+    /// dTraction_dJump key
+    dataRepository::ViewKey dTraction_dJump = { dTraction_dJumpString() };
 
   }
   /// viewKey struct for the EmbeddedSurfaceSubRegion class
   viewKeys;
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
-  virtual string GetElementTypeString() const override final { return "Embedded"; }
+  virtual string getElementTypeString() const override final { return "Embedded"; }
 
   /**
    * @name Properties Getters
@@ -276,24 +286,24 @@ public:
 
 
   /**
-   * @brief Get a mutable total displacement array.
-   * @return the total displacement array if it exists, or an error is thrown if it does not exist
+   * @brief Get a mutable displacement jump array.
+   * @return the displacement jump array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the displacement jump does not exist
    */
   array2d< real64 > & displacementJump()
   { return getReference< array2d< real64 > >( viewKeys.dispJump ); }
 
   /**
-   * @brief Provide an immutable arrayView to the total displacement array.
-   * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
+   * @brief Provide an immutable arrayView to the displacement jump array.
+   * @return immutable arrayView of the displacement jump array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the displacement jump does not exist
    */
   arrayView2d< real64 const > displacementJump() const
   {return getReference< array2d< real64 > >( viewKeys.dispJump ); }
 
   /**
-   * @brief Get a mutable incremental displacement array.
-   * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
+   * @brief Get a mutable incremental displacement jump array.
+   * @return the incremental displacement jump array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the incremental displacement jump does not exist
    */
   array2d< real64 > & incrementalDisplacementJump()
@@ -301,11 +311,43 @@ public:
 
   /**
    * @brief Provide an immutable arrayView to the incremental displacement jump array.
-   * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
+   * @return immutable arrayView of the incremental displacement jump array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the incremental displacement jump does not exist
    */
   arrayView2d< real64 const > incrementalDisplacementJump() const
   { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
+
+  /**
+   * @brief Get a mutable traction array.
+   * @return the traction array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the traction does not exist
+   */
+  array2d< real64 > & tractionVector()
+  { return getReference< array2d< real64 > >( viewKeys.tractionVector ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the traction array.
+   * @return immutable arrayView of the traction array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the traction does not exist
+   */
+  arrayView2d< real64 const > tractionVector() const
+  {return getReference< array2d< real64 > >( viewKeys.tractionVector ); }
+
+  /**
+   * @brief Get a mutable dTraction_dJump array.
+   * @return the dTraction_dJump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the dTraction_dJump does not exist
+   */
+  array3d< real64 > & dTraction_dJump()
+  { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the dTraction_dJump array.
+   * @return immutable arrayView of the dTraction_dJump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the dTraction_dJump does not exist
+   */
+  arrayView3d< real64 const > dTraction_dJump() const
+  { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
 
   ///@}
 

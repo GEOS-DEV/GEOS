@@ -33,8 +33,8 @@ class PeriodicEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  PeriodicEvent( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  PeriodicEvent( const string & name,
                  Group * const parent );
 
   /// Destructor
@@ -44,10 +44,10 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "PeriodicEvent"; }
+  static string catalogName() { return "PeriodicEvent"; }
 
   /**
-   * @copydoc EventBase::EstimateEventTiming()
+   * @copydoc EventBase::estimateEventTiming()
    * @note Estimate the expected number of cycles until an event is expected to trigger.
    *       The event frequency can be specified in terms of:
    *        - time (timeFrequency > 0, units = seconds)
@@ -55,10 +55,10 @@ public:
    * @note In addition, there is an optional function input that will be called if the
    * the nominal forecast (based on timing) is zero.
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
-                                    dataRepository::Group * domain ) override;
+                                    DomainPartition & domain ) override;
 
   /**
    * @brief Determine if an optional function f should be called, and call it if so.
@@ -81,26 +81,26 @@ public:
    *   - functionStatOption selects the statistic to compare against the eventThreshold (0 = min, 1 = average, 2 = max)
    *   - The event will be executed if f(object, arguments)[stat] >= eventThreshold
    */
-  void CheckOptionalFunctionThreshold( real64 const time,
+  void checkOptionalFunctionThreshold( real64 const time,
                                        real64 const dt,
                                        integer const cycle,
-                                       dataRepository::Group * domain );
+                                       DomainPartition & domain );
 
   /**
-   * @copydoc EventBase::GetEventTypeDtRequest()
+   * @copydoc EventBase::getEventTypeDtRequest()
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the time frequency
    */
-  virtual real64 GetEventTypeDtRequest( real64 const time ) override;
+  virtual real64 getEventTypeDtRequest( real64 const time ) override;
 
   /**
-   * @copydoc ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
 
   /// A pointer to an optional function
@@ -109,25 +109,25 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto timeFrequencyString = "timeFrequency";
-    static constexpr auto cycleFrequencyString = "cycleFrequency";
-    static constexpr auto targetExactTimestepString = "targetExactTimestep";
-    static constexpr auto functionNameString = "function";
-    static constexpr auto functionInputObjectString = "object";
-    static constexpr auto functionInputSetnameString = "set";
-    static constexpr auto functionSetNamesString = "setNames";
-    static constexpr auto functionStatOptionString = "stat";
-    static constexpr auto eventThresholdString = "threshold";
+    static constexpr char const * timeFrequencyString() { return "timeFrequency"; }
+    static constexpr char const * cycleFrequencyString() { return "cycleFrequency"; }
+    static constexpr char const * targetExactTimestepString() { return "targetExactTimestep"; }
+    static constexpr char const * functionNameString() { return "function"; }
+    static constexpr char const * functionInputObjectString() { return "object"; }
+    static constexpr char const * functionInputSetnameString() { return "set"; }
+    static constexpr char const * functionSetNamesString() { return "setNames"; }
+    static constexpr char const * functionStatOptionString() { return "stat"; }
+    static constexpr char const * eventThresholdString() { return "threshold"; }
 
-    dataRepository::ViewKey timeFrequency = { "timeFrequency" };
-    dataRepository::ViewKey cycleFrequency = { "cycleFrequency" };
-    dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
-    dataRepository::ViewKey functionName = { "function" };
-    dataRepository::ViewKey functionInputObject = { "object" };
-    dataRepository::ViewKey functionInputSetname = { "set" };
-    dataRepository::ViewKey functionSetNames = { "setNames" };
-    dataRepository::ViewKey functionStatOption = { "stat" };
-    dataRepository::ViewKey eventThreshold = { "threshold" };
+    dataRepository::ViewKey timeFrequency = { timeFrequencyString() };
+    dataRepository::ViewKey cycleFrequency = { cycleFrequencyString() };
+    dataRepository::ViewKey targetExactTimestep = { targetExactTimestepString() };
+    dataRepository::ViewKey functionName = { functionNameString() };
+    dataRepository::ViewKey functionInputObject = { functionInputObjectString() };
+    dataRepository::ViewKey functionInputSetname = { functionInputSetnameString() };
+    dataRepository::ViewKey functionSetNames = { functionSetNamesString() };
+    dataRepository::ViewKey functionStatOption = { functionStatOptionString() };
+    dataRepository::ViewKey eventThreshold = { eventThresholdString() };
   } periodicEventViewKeys;
   /// @endcond
 

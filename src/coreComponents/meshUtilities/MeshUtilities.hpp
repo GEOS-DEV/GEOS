@@ -65,8 +65,8 @@ public:
    * @param[in] geometry a pointer to the group in the data repository
    * @param[in] nodeManager pointer to the NodeManager object in the DomainPartition
    */
-  static void GenerateNodesets( dataRepository::Group const * geometry,
-                                NodeManager * const nodeManager );
+  static void generateNodesets( dataRepository::Group const & geometry,
+                                NodeManager & nodeManager );
 
 //  static void GenerateFasesetsAndAssociatedNodesets( xmlWrapper const & hdn,
 //                                                     Group&

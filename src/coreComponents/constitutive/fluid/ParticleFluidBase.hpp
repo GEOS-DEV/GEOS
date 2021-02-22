@@ -127,7 +127,7 @@ private:
    * @param[in] dFluidViscosity_dComponentConcentration derivatives of the fluid viscosity wrt the composition
    */
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,
                        real64 const dFluidDensity_dPressure,
@@ -144,12 +144,12 @@ class ParticleFluidBase : public ConstitutiveBase
 {
 public:
 
-  ParticleFluidBase( std::string const & name, Group * const parent );
+  ParticleFluidBase( string const & name, Group * const parent );
 
   virtual ~ParticleFluidBase() override;
 
   // *** ConstitutiveBase interface
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 4;
@@ -158,25 +158,24 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr char const * settlingFactorString() { return "settlingFactor"; }
+    static constexpr char const * dSettlingFactor_dPressureString() { return "dSettlingFactor_dPressure"; }
+    static constexpr char const * dSettlingFactor_dProppantConcentrationString() { return "dSettlingFactor_dProppantConcentration"; }
+    static constexpr char const * dSettlingFactor_dComponentConcentrationString() { return "dSettlingFactor_dComponentConcentration"; }
 
-    static constexpr auto settlingFactorString    = "settlingFactor";
-    static constexpr auto dSettlingFactor_dPressureString  = "dSettlingFactor_dPressure";
-    static constexpr auto dSettlingFactor_dProppantConcentrationString  = "dSettlingFactor_dProppantConcentration";
-    static constexpr auto dSettlingFactor_dComponentConcentrationString  = "dSettlingFactor_dComponentConcentration";
+    static constexpr char const * collisionFactorString() { return "collisionFactor"; }
+    static constexpr char const * dCollisionFactor_dProppantConcentrationString() { return "dCollisionFactor_dProppantConcentration"; }
 
-    static constexpr auto collisionFactorString    = "collisionFactor";
-    static constexpr auto dCollisionFactor_dProppantConcentrationString  = "dCollisionFactor_dProppantConcentration";
+    static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
 
-    static constexpr auto maxProppantConcentrationString    = "maxProppantConcentration";
+    static constexpr char const * isCollisionalSlipString() { return "isCollisionalSlip"; }
 
-    static constexpr auto isCollisionalSlipString    = "isCollisionalSlip";
-
-    static constexpr auto proppantPackPermeabilityString    = "proppantPackPermeability";
-  } viewKeysParticleFluidBase;
+    static constexpr char const * proppantPackPermeabilityString() { return "proppantPackPermeability"; }
+  };
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   array1d< real64 > m_settlingFactor;
   array1d< real64 > m_dSettlingFactor_dPressure;
