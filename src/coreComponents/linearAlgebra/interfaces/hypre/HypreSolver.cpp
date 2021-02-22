@@ -62,10 +62,8 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
 
-#if !defined(OVERRIDE_CREATE)
-#if defined(GEOSX_USE_CUDA)
-  hypre_HandleDefaultExecPolicy(hypre_handle()) = HYPRE_EXEC_DEVICE;
-#endif
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  hypre_HandleDefaultExecPolicy( hypre_handle()) = HYPRE_EXEC_DEVICE;
 #endif
 
   if( rhs.norm2() > 0.0 )
@@ -87,10 +85,8 @@ void HypreSolver::solve( HypreMatrix & mat,
     m_result.solveTime = 0.0;
   }
 
-#if !defined(OVERRIDE_CREATE)
-#if defined(GEOSX_USE_CUDA)
-  hypre_HandleDefaultExecPolicy(hypre_handle()) = HYPRE_EXEC_HOST;
-#endif
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  hypre_HandleDefaultExecPolicy( hypre_handle()) = HYPRE_EXEC_HOST;
 #endif
 
 }

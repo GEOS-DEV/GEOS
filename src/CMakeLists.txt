@@ -82,7 +82,7 @@ if( ENABLE_OPENMP )
 endif()
 
 if( ENABLE_CUDA )
-  set( extraComponentsLinkList ${extraComponentsLinkList} cuda ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY}) 
+  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
 endif()
 
 if ( GEOSX_BUILD_SHARED_LIBS )

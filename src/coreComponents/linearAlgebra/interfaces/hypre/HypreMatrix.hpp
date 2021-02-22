@@ -104,8 +104,8 @@ public:
   using MatrixBase::ready;
   using MatrixBase::residual;
 
-#if defined(GEOSX_LA_INTERFACE_HYPRE) && defined(GEOSX_USE_CUDA)
-#define OVERRIDE_CREATE
+#if defined(GEOSX_LA_INTERFACE_HYPRE) && defined(GEOSX_USE_HYPRE_CUDA)
+  #define OVERRIDE_CREATE
 #endif
 
 #if defined(OVERRIDE_CREATE)

@@ -228,16 +228,16 @@ protected:
     localMatrix.move( LvArray::MemorySpace::CPU, false );
 
 #if 0
-  int const numRanks = MpiWrapper::Comm_size();
-  int const rank = MpiWrapper::Comm_rank();
-  for( int kRank = 0; kRank<numRanks; ++kRank )
-  {
-    if( rank==kRank )
+    int const numRanks = MpiWrapper::Comm_size();
+    int const rank = MpiWrapper::Comm_rank();
+    for( int kRank = 0; kRank<numRanks; ++kRank )
     {
-      LvArray::print< parallelDevicePolicy<32> >( localMatrix.toViewConst() );
+      if( rank==kRank )
+      {
+        LvArray::print< parallelDevicePolicy< 32 > >( localMatrix.toViewConst() );
+      }
+      MpiWrapper::Barrier();
     }
-    MpiWrapper::Barrier();
-  }
 
 #endif
 

@@ -43,6 +43,8 @@ option( ENABLE_HYPRE "Enables HYPRE" ON )
 option( ENABLE_PETSC "Enables PETSC" OFF )
 option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
+option( ENABLE_HYPRE_CUDA "Enables cuda capabilities in Hypre" OFF )
+
 #if ( "${CMAKE_HOST_APPLE}" )
 #  option( ENABLE_PETSC "Enables PETSC" OFF )
 #else()
@@ -124,7 +126,8 @@ else()
     set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "")
 endif()
 
-set( GEOSX_LOCALINDEX_TYPE "long int" CACHE STRING "" )
+
+set( GEOSX_LOCALINDEX_TYPE "std::ptrdiff_t" CACHE STRING "" )
 set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
 
 if( GEOSX_LOCALINDEX_TYPE STREQUAL "int" )
@@ -133,9 +136,13 @@ elseif( GEOSX_LOCALINDEX_TYPE STREQUAL "long int" )
     set( GEOSX_LOCALINDEX_TYPE_FLAG "1" CACHE STRING "" FORCE )
 elseif( GEOSX_LOCALINDEX_TYPE STREQUAL "long long int" )
     set( GEOSX_LOCALINDEX_TYPE_FLAG "2" CACHE STRING "" FORCE )
+elseif( GEOSX_LOCALINDEX_TYPE STREQUAL "std::ptrdiff_t" )
+    set( GEOSX_LOCALINDEX_TYPE_FLAG "3" CACHE STRING "" FORCE )
 else( TRUE )
     message( FATAL_ERROR "GEOSX_LOCALINDEX_TYPE_FLAG not set for ${GEOSX_LOCALINDEX_TYPE}" )
 endif()
+
+
 
 if( GEOSX_GLOBALINDEX_TYPE STREQUAL "int" )
     set( GEOSX_GLOBALINDEX_TYPE_FLAG "0" CACHE STRING "" FORCE )

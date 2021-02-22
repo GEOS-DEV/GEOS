@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
-#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+#if defined(GEOSX_USE_HYPRE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
 #define SuiteSparse_long int
 #define SuiteSparse_long_max 2147483647
 #define SuiteSparse_long_idd "d"

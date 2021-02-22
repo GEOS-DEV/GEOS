@@ -162,8 +162,8 @@ void SeparateComponentFilter( MATRIX const & src,
   dst.close();
 #else
 
-  array2d< globalIndex > srcIndices( localRows, maxEntries);;
-  array2d< real64 > srcValues( localRows, maxEntries);
+  array2d< globalIndex > srcIndices( localRows, maxEntries );;
+  array2d< real64 > srcValues( localRows, maxEntries );
 
   CRSMatrix< real64 > tempMat;
   tempMat.resize( localRows, src.numGlobalCols(), maxDstEntries );
@@ -178,10 +178,10 @@ void SeparateComponentFilter( MATRIX const & src,
 
     for( localIndex col=0; col<rowLength; ++col )
     {
-      const globalIndex colComponent = srcIndices(r,col) % dofsPerNode;
+      const globalIndex colComponent = srcIndices( r, col ) % dofsPerNode;
       if( rowComponent == colComponent )
       {
-        tempMat.insertNonZero( r, srcIndices(r,col), srcValues(r,col) );
+        tempMat.insertNonZero( r, srcIndices( r, col ), srcValues( r, col ) );
       }
     }
   }

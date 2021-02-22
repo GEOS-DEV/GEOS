@@ -65,6 +65,9 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOSX_USE_HYPRE
 
+/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_CUDA)
+#cmakedefine GEOSX_USE_HYPRE_CUDA
+
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
 
@@ -76,6 +79,7 @@
 #cmakedefine GEOSX_LA_INTERFACE_HYPRE
 /// Macro defined when PETSc interface is selected
 #cmakedefine GEOSX_LA_INTERFACE_PETSC
+
 
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE

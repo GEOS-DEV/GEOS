@@ -4,7 +4,11 @@
 
 macro(find_and_register)
     set(singleValueArgs NAME HEADER)
-    set(multiValueArgs INCLUDE_DIRECTORIES LIBRARY_DIRECTORIES LIBRARIES DEPENDS)
+    set(multiValueArgs INCLUDE_DIRECTORIES 
+                       LIBRARY_DIRECTORIES
+                       LIBRARIES 
+                       EXTRA_LIBRARIES 
+                       DEPENDS )
 
     ## parse the arguments
     cmake_parse_arguments(arg
@@ -49,7 +53,7 @@ macro(find_and_register)
 
     blt_register_library(NAME ${arg_NAME}
                          INCLUDES ${${arg_NAME}_INCLUDE_DIR}
-                         LIBRARIES ${${arg_NAME}_LIBRARIES}
+                         LIBRARIES ${${arg_NAME}_LIBRARIES} ${arg_EXTRA_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON
                          DEPENDS_ON ${arg_DEPENDS})
 
@@ -409,21 +413,16 @@ endif()
 if(DEFINED HYPRE_DIR)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
-
-#    message( "CUDA_cusparse_LIBRARY=${CUDA_cusparse_LIBRARY}")
-#    message( "CUDA_curand_LIBRARY=${CUDA_curand_LIBRARY}")
-#
-#    blt_register_library( NAME hypre
-#                          DEPENDS_ON ${HYPRE_DEPENDS}
-#                          INCLUDES ${HYPRE_INCLUDE_DIRS}
-#                          LIBRARIES ${HYPRE_LIBRARY} ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY}
-#                          TREAT_INCLUDES_AS_SYSTEM ON )
+    if( ENABLE_HYPRE_CUDA )
+        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
+    endif()
 
     find_and_register(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
+                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib 
                       HEADER HYPRE.h
                       LIBRARIES HYPRE
+                      EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS blas lapack superlu_dist)
 
     set(ENABLE_HYPRE ON CACHE BOOL "" FORCE)
@@ -454,7 +453,9 @@ if(DEFINED TRILINOS_DIR)
                          LIBRARIES ${Trilinos_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
-#    set(ENABLE_TRILINOS ON CACHE BOOL "" FORCE)
+    if( !ENABLE_HYPRE_CUDA )
+        set(ENABLE_TRILINOS ON CACHE BOOL "" FORCE)
+    endif()
     set(thirdPartyLibs ${thirdPartyLibs} trilinos)
 else()
     if(ENABLE_TRILINOS)

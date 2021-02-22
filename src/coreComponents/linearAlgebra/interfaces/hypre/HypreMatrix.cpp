@@ -179,17 +179,17 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
 
 #if defined(OVERRIDE_CREATE)
 
-#define cudaCheckErrors(msg) \
-    do { \
-        cudaError_t __err = cudaGetLastError(); \
-        if (__err != cudaSuccess) { \
-            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
-                msg, cudaGetErrorString(__err), \
-                __FILE__, __LINE__); \
-            fprintf(stderr, "*** FAILED - ABORTING\n"); \
-            exit(1); \
-        } \
-    } while (0)
+#define cudaCheckErrors( msg ) \
+  do { \
+    cudaError_t __err = cudaGetLastError(); \
+    if( __err != cudaSuccess ) { \
+      fprintf( stderr, "Fatal error: %s (%s at %s:%d)\n", \
+               msg, cudaGetErrorString( __err ), \
+               __FILE__, __LINE__ ); \
+      fprintf( stderr, "*** FAILED - ABORTING\n" ); \
+      exit( 1 ); \
+    } \
+  } while (0)
 
 void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                           MPI_Comm const & comm )
@@ -207,9 +207,9 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
 
   globalIndex const rankOffset = ilower();
 
-  array1d<globalIndex> rows( localMatrix.numRows() );
-  array1d<HYPRE_Int> sizes( localMatrix.numRows() );
-  array1d<HYPRE_Int> offsets( localMatrix.numRows() );
+  array1d< globalIndex > rows( localMatrix.numRows() );
+  array1d< HYPRE_Int > sizes( localMatrix.numRows() );
+  array1d< HYPRE_Int > offsets( localMatrix.numRows() );
   localIndex const * const pSizes = localMatrix.getSizes();
   localIndex const * const pOffsets = localMatrix.getOffsets();
 
@@ -220,38 +220,37 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
     offsets[row] = pOffsets[row];
   }
 
-#if defined(GEOSX_USE_CUDA)
   localMatrix.move( LvArray::MemorySpace::GPU, false );
   rows.move( LvArray::MemorySpace::GPU, false );
   sizes.move( LvArray::MemorySpace::GPU, false );
   offsets.move( LvArray::MemorySpace::GPU, false );
-#endif
+
   open();
 
 
 #if 0
-  int const numRanks = MpiWrapper::Comm_size();
-  int const rank = MpiWrapper::Comm_rank();
+  int const numRanks = MpiWrapper::commSize();
+  int const rank = MpiWrapper::commRank();
   for( int kRank = 0; kRank<numRanks; ++kRank )
   {
     if( rank==kRank )
     {
-      LvArray::print< parallelDevicePolicy<32> >( localMatrix.toViewConst() );
+      LvArray::print< parallelDevicePolicy< 32 > >( localMatrix.toViewConst() );
     }
-    MpiWrapper::Barrier();
+    MpiWrapper::barrier();
   }
 
 #endif
 
 
-  cudaCheckErrors( "you have a cuda error");
-    GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues2( m_ij_mat,
-                                                      localMatrix.numRows(),
-                                                      sizes.data(),
-                                                      rows.data(),
-                                                      offsets.data(),
-                                                      localMatrix.getColumns(),
-                                                      localMatrix.getEntries() ) );
+  cudaCheckErrors( "you have a cuda error" );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues2( m_ij_mat,
+                                                     localMatrix.numRows(),
+                                                     sizes.data(),
+                                                     rows.data(),
+                                                     offsets.data(),
+                                                     localMatrix.getColumns(),
+                                                     localMatrix.getEntries() ) );
 
   close();
 }
@@ -445,8 +444,8 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   GEOSX_LAI_ASSERT( insertable() );
 
 #if defined(GEOSX_USE_CUDA) && defined(OVERRIDE_CREATE)
-  array1d< globalIndex > rowIndexDevice(1);
-  array1d< HYPRE_Int > ncolsDevice(1);
+  array1d< globalIndex > rowIndexDevice( 1 );
+  array1d< HYPRE_Int > ncolsDevice( 1 );
 
   rowIndexDevice[0] = rowIndex0;
   ncolsDevice[0] = LvArray::integerConversion< HYPRE_Int >( size );
@@ -458,7 +457,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   HYPRE_Int * const ncols = ncolsDevice.data();
 #else
   globalIndex const * const rowIndex = &rowIndex0;
-  HYPRE_Int * const ncols = reinterpret_cast<HYPRE_Int *>(&size);
+  HYPRE_Int * const ncols = reinterpret_cast< HYPRE_Int * >(&size);
 #endif
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
