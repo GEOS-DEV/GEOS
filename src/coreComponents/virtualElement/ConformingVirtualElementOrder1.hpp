@@ -119,8 +119,8 @@ public:
 
 public:
 
-  GEOSX_HOST_DEVICE
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
+  GEOSX_HOST_DEVICE
   static real64 ComputeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
@@ -133,8 +133,8 @@ public:
                                                              numPoints );
   }
 
-  GEOSX_HOST_DEVICE
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
+  GEOSX_HOST_DEVICE
   static real64 ComputeDiameter( POINT_COORDS_TYPE points,
                                  POINT_SELECTION_TYPE selectedPoints,
                                  localIndex const & numSelectedPoints )
@@ -158,7 +158,6 @@ public:
     }
     return diameter;
   }
-
 
 };
 }
