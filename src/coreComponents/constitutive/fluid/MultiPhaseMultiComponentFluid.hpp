@@ -265,15 +265,15 @@ public:
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
-    static constexpr auto flashModelParaFileString = "flashModelParaFile";
-    static constexpr auto phasePVTParaFilesString = "phasePVTParaFiles";
-  } viewKeysMultiPhaseMultiComponentFluid;
+    static constexpr char const * flashModelParaFileString() { return "flashModelParaFile"; }
+    static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
+  };
 
 
 protected:
   virtual void postProcessInput() override;
 
-  virtual void initializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups() override;
 
 private:
 

@@ -178,6 +178,8 @@ public:
     return size;
   }
 
+  static bool initialized();
+
   static int init( int * argc, char * * * argv );
 
   static void finalize();

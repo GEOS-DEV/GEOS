@@ -115,6 +115,16 @@ std::size_t MpiWrapper::getSizeofMpiType( MPI_Datatype const type )
   return 0;
 }
 
+bool MpiWrapper::initialized()
+{
+#ifdef GEOSX_USE_MPI
+  int ret = false;
+  MPI_CHECK_ERROR( MPI_Initialized( &ret ) );
+  return ret;
+#else
+  return false;
+#endif
+}
 
 int MpiWrapper::init( int * argc, char * * * argv )
 {

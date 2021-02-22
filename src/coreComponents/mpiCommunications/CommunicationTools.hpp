@@ -32,6 +32,7 @@ namespace geosx
 
 
 class ObjectManagerBase;
+class NodeManager;
 class NeighborCommunicator;
 class MeshLevel;
 class ElementRegionManager;
@@ -88,7 +89,7 @@ public:
   ~CommunicationTools();
 
   void assignGlobalIndices( ObjectManagerBase & object,
-                            ObjectManagerBase const & compositionObject,
+                            NodeManager const & compositionObject,
                             std::vector< NeighborCommunicator > & neighbors );
 
   void assignNewGlobalIndices( ObjectManagerBase & object,
@@ -104,25 +105,28 @@ public:
   CommID getCommID()
   { return CommID( m_freeCommIDs ); }
 
+  void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
+                                            std::vector< NeighborCommunicator > & allNeighbors );
+
   void synchronizeFields( const std::map< string, string_array > & fieldNames,
-                          MeshLevel * const mesh,
+                          MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & allNeighbors,
                           bool onDevice );
 
   void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                     MeshLevel * const mesh,
+                                     MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
                                      bool onDevice );
 
   void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                MeshLevel * const mesh,
+                                MeshLevel & mesh,
                                 std::vector< NeighborCommunicator > & allNeighbors,
                                 MPI_iCommData & icomm,
                                 bool onDevice );
 
   void asyncPack( const std::map< string, string_array > & fieldNames,
-                  MeshLevel * const mesh,
+                  MeshLevel & mesh,
                   std::vector< NeighborCommunicator > & neighbors,
                   MPI_iCommData & icomm,
                   bool onDevice,
@@ -133,25 +137,22 @@ public:
                       bool onDevice,
                       parallelDeviceEvents & events );
 
-  void synchronizeUnpack( MeshLevel * const mesh,
+  void synchronizeUnpack( MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & neighbors,
                           MPI_iCommData & icomm,
                           bool onDevice );
 
-  bool asyncUnpack( MeshLevel * const mesh,
+  bool asyncUnpack( MeshLevel & mesh,
                     std::vector< NeighborCommunicator > & neighbors,
                     MPI_iCommData & icomm,
                     bool onDevice,
                     parallelDeviceEvents & events );
 
-  void finalizeUnpack( MeshLevel * const mesh,
+  void finalizeUnpack( MeshLevel & mesh,
                        std::vector< NeighborCommunicator > & neighbors,
                        MPI_iCommData & icomm,
                        bool onDevice,
                        parallelDeviceEvents & events );
-
-  void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                            std::vector< NeighborCommunicator > & allNeighbors );
 
 private:
   std::set< int > m_freeCommIDs;

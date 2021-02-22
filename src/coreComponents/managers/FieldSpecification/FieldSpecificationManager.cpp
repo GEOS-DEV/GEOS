@@ -35,7 +35,7 @@ FieldSpecificationManager::~FieldSpecificationManager()
 Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
 {
   std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::factory( childKey, childName, this );
-  return this->registerGroup( childName, std::move( bc ) );
+  return &this->registerGroup( childName, std::move( bc ) );
 }
 
 
@@ -49,17 +49,16 @@ void FieldSpecificationManager::expandObjectCatalogs()
 }
 
 
-void FieldSpecificationManager::applyInitialConditions( Group * domain ) const
+void FieldSpecificationManager::applyInitialConditions( DomainPartition & domain ) const
 {
-
   apply( 0.0, domain, "", "",
-         [&]( FieldSpecificationBase const * const bc,
+         [&]( FieldSpecificationBase const & bc,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
-              Group * const targetGroup,
+              Group & targetGroup,
               string const fieldName )
   {
-    bc->applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+    bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
   } );
 }
 
