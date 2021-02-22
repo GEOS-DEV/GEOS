@@ -19,6 +19,8 @@
 
 #include "FluxApproximationBase.hpp"
 
+#include "managers/GeosxState.hpp"
+#include "managers/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 
@@ -33,21 +35,21 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::fieldNameString, &m_fieldName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of primary solution field" );
 
-  registerWrapper( viewKeyStruct::coeffNameString, &m_coeffName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::coeffNameString(), &m_coeffName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of coefficient field" );
 
-  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegions )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegions ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of regions to build the stencil for" );
 
-  registerWrapper( viewKeyStruct::areaRelativeToleranceString, &m_areaRelTol )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( 1.0e-8 )->
+  registerWrapper( viewKeyStruct::areaRelativeToleranceString(), &m_areaRelTol ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0e-8 ).
     setDescription( "Relative tolerance for area calculations." );
 }
 
@@ -58,58 +60,58 @@ FluxApproximationBase::getCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::registerDataOnMesh( Group * const meshBodies )
+void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
 {
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
     meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
     {
       // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-      Group & stencilParentGroup = mesh.hasGroup( groupKeyStruct::stencilMeshGroupString ) ?
-                                   mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ) :
-                                   *mesh.registerGroup( groupKeyStruct::stencilMeshGroupString );
+      Group & stencilParentGroup = mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) ?
+                                   mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ) :
+                                   mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
 
       Group & stencilGroup = stencilParentGroup.hasGroup( getName() ) ?
-                             stencilParentGroup.getGroupReference( getName() ) :
-                             *stencilParentGroup.registerGroup( getName() );
+                             stencilParentGroup.getGroup( getName() ) :
+                             stencilParentGroup.registerGroup( getName() );
 
       registerCellStencil( stencilGroup );
       registerFractureStencil( stencilGroup );
       // For each face-based boundary condition on target field, create a boundary stencil
       fsManager.apply( 0.0,
-                       meshBodies->getParent(), // TODO: Apply() should take a MeshLevel directly
+                       dynamicCast< DomainPartition & >( meshBodies.getParent() ), // TODO: Apply() should take a MeshLevel directly
                        "faceManager",
                        m_fieldName,
-                       [&] ( FieldSpecificationBase const *,
+                       [&] ( FieldSpecificationBase const &,
                              string const & setName,
                              SortedArrayView< localIndex const > const &,
-                             Group const *,
+                             Group const &,
                              string const & )
       {
         registerBoundaryStencil( stencilGroup, setName );
       } );
 
-      FaceManager & faceManager = *mesh.getFaceManager();
-      faceManager.registerWrapper< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString )->
-        setApplyDefaultValue( 1.0 )->
-        setPlotLevel( PlotLevel::LEVEL_0 )->
-        setRegisteringObjects( this->getName() )->
+      FaceManager & faceManager = mesh.getFaceManager();
+      faceManager.registerWrapper< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() ).
+        setApplyDefaultValue( 1.0 ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the transmissibility multipliers" );
 
     } );
   } );
 }
 
-void FluxApproximationBase::initializePostInitialConditionsPreSubGroups( Group * const rootGroup )
+void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
-  domain.getMeshBodies()->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
     m_lengthScale = meshBody.getGlobalLengthScale();
 
@@ -120,13 +122,13 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups( Group *
 
       // For each face-based boundary condition on target field, create a boundary stencil
       fsManager.apply( 0.0,
-                       &domain,
+                       domain,
                        "faceManager",
                        m_fieldName,
-                       [&] ( FieldSpecificationBase const *,
+                       [&] ( FieldSpecificationBase const &,
                              string const & setName,
                              SortedArrayView< localIndex const > const & faceSet,
-                             Group const *,
+                             Group const &,
                              string const & )
       {
         computeBoundaryStencil( mesh, setName, faceSet );

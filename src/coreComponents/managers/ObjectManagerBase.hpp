@@ -26,6 +26,7 @@
 namespace geosx
 {
 class SiloFile;
+class NodeManager;
 
 /**
  * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
@@ -362,10 +363,10 @@ public:
    *
    * Dummy version, needs to be specialised by derived classes.
    */
-  virtual void extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const obj,
+  virtual void extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
                                                                 std::vector< std::vector< globalIndex > > & map )
   {
-    GEOSX_UNUSED_VAR( obj );
+    GEOSX_UNUSED_VAR( nodeManager );
     GEOSX_UNUSED_VAR( map );
   }
 
@@ -435,7 +436,7 @@ public:
   /**
    * @brief Computes the maximum global index allong all the MPI ranks.
    */
-  void setMaxGlobalIndex();
+  virtual void setMaxGlobalIndex();
 
   /**
    * @brief Fixing the up/down maps by mapping the unmapped indices.
@@ -575,12 +576,12 @@ public:
     // This is required for the Tensor classes.
     typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue );
 
-    return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->
-               setApplyDefaultValue( defaultValue )->
-               setPlotLevel( MESH_DATA_TRAIT::plotLevel )->
-               setRestartFlags( MESH_DATA_TRAIT::restartFlag )->
-               setDescription( MESH_DATA_TRAIT::description )->
-               setRegisteringObjects( nameOfRegisteringObject ) );
+    return this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).
+             setApplyDefaultValue( defaultValue ).
+             setPlotLevel( MESH_DATA_TRAIT::plotLevel ).
+             setRestartFlags( MESH_DATA_TRAIT::restartFlag ).
+             setDescription( MESH_DATA_TRAIT::description ).
+             setRegisteringObjects( nameOfRegisteringObject );
   }
 
   /**
@@ -612,7 +613,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData() const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->reference();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).reference();
   }
 
   /**
@@ -624,7 +625,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData()
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->reference();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).reference();
   }
 
   /**
@@ -636,10 +637,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   bool hasExtrinsicData() const
   {
-    // FIXME c++17 We copy paste the Group::hasWrapper implementation for linking reasons
-    //             (the key needs to be defined/declared).
-    //             C++17 introduces inline variables and should remove this problem.
-    return this->wrappers()[MESH_DATA_TRAIT::key] != nullptr;
+    return this->hasWrapper( MESH_DATA_TRAIT::key() );
   }
 
 #if 0
@@ -659,10 +657,10 @@ public:
     // This is required for the Tensor classes.
     typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue );
 
-    return *(this->registerWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->
-               setApplyDefaultValue( defaultValue )->
-               setPlotLevel( plotLevel )->
-               setDescription( description )->
+    return *(this->registerWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).
+               setApplyDefaultValue( defaultValue ).
+               setPlotLevel( plotLevel ).
+               setDescription( description ).
                setRegisteringObjects( nameOfRegisteringObject ) );
   }
 
@@ -682,49 +680,59 @@ public:
   template< typename MESH_DATA_TRAIT >
   auto const & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait ) const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).referenceAsView();
   }
 
   template< typename MESH_DATA_TRAIT >
   auto & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait )
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).referenceAsView();
   }
 #endif
 
   //**********************************************************************************************************************
 
   /**
-   * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
+   * @brief struct to serve as a container for variable strings and keys
    */
   struct viewKeyStruct
   {
     /// String key to adjacency list
-    static constexpr auto adjacencyListString = "adjacencyList";
+    static constexpr char const * adjacencyListString() { return "adjacencyList"; }
+
     /// String key to domain boundary indicator
-    static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+    static constexpr char const * domainBoundaryIndicatorString() { return "domainBoundaryIndicator"; }
+
     /// String key to external set
-    static constexpr auto externalSetString = "externalSet";
+    static constexpr char const * externalSetString() { return "externalSet"; }
+
     /// String key to ghost ranks
-    static constexpr auto ghostRankString = "ghostRank";
+    static constexpr char const * ghostRankString() { return "ghostRank"; }
+
     /// String key to ghosts to receive
-    static constexpr auto ghostsToReceiveString = "ghostsToReceive";
+    static constexpr char const * ghostsToReceiveString() { return "ghostsToReceive"; }
+
     /// String key to global->local mao
-    static constexpr auto globalToLocalMapString = "globalToLocalMap";
+    static constexpr char const * globalToLocalMapString() { return "globalToLocalMap"; }
+
     /// String key to the 'is external' vector
-    static constexpr auto isExternalString = "isExternal";
+    static constexpr char const * isExternalString() { return "isExternal"; }
+
     /// String key to the local->global map
-    static constexpr auto localToGlobalMapString = "localToGlobalMap";
+    static constexpr char const * localToGlobalMapString() { return "localToGlobalMap"; }
 
     /// View key to external set
-    dataRepository::ViewKey externalSet = { externalSetString };
+    dataRepository::ViewKey externalSet = { externalSetString() };
+
     /// View key to ghost ranks
-    dataRepository::ViewKey ghostRank = { ghostRankString };
+    dataRepository::ViewKey ghostRank = { ghostRankString() };
+
     /// View key to global->local map
-    dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
+    dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString() };
+
     /// View key to the local->global map
-    dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
+    dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString() };
   }
   /// viewKey struct for the ObjectManagerBase class
   m_ObjectManagerBaseViewKeys;
@@ -736,11 +744,15 @@ public:
   struct groupKeyStruct
   {
     /// String key to the Group holding the object sets
-    static constexpr auto setsString = "sets";
+    static constexpr char const * setsString() { return "sets"; }
+
     /// String key to the Groupholding all the NeighborData objects
-    static constexpr auto neighborDataString = "neighborData";
+    static constexpr char const * neighborDataString() { return "neighborData"; }
+
     /// View key to the Group holding the object sets
-    dataRepository::GroupKey sets = { setsString };
+    dataRepository::GroupKey sets = { setsString() };
+
+    dataRepository::GroupKey neighborData{ neighborDataString() };
   }
   /// groupKey struct for the ObjectManagerBase class
   m_ObjectManagerBaseGroupKeys;
@@ -901,11 +913,19 @@ public:
   }
 
   /**
+   * @brief Get the local maximum global index on this rank.
+   * @return The index.
+   */
+  globalIndex localMaxGlobalIndex() const
+  { return m_localMaxGlobalIndex; }
+
+  /**
    * @brief Get the maximum global index of all objects across all rank. See @see #m_maxGlobalIndex
    * @return The index.
    */
   globalIndex maxGlobalIndex() const
   { return m_maxGlobalIndex; }
+
 
   /**
    * @brief Get the domain boundary indicator

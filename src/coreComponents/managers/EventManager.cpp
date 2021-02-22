@@ -43,30 +43,30 @@ EventManager::EventManager( string const & name,
   // This enables logLevel filtering
   enableLogLevelInput();
 
-  registerWrapper( viewKeyStruct::maxTimeString, &m_maxTime )->
-    setApplyDefaultValue( std::numeric_limits< real64 >::max())->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
+    setApplyDefaultValue( std::numeric_limits< real64 >::max()).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation time for the global event loop." );
 
-  registerWrapper( viewKeyStruct::maxCycleString, &m_maxCycle )->
-    setApplyDefaultValue( std::numeric_limits< integer >::max())->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::maxCycleString(), &m_maxCycle ).
+    setApplyDefaultValue( std::numeric_limits< integer >::max()).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation cycle for the global event loop." );
 
-  registerWrapper( viewKeyStruct::timeString, &m_time )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::timeString(), &m_time ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation time." );
 
-  registerWrapper( viewKeyStruct::dtString, &m_dt )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::dtString(), &m_dt ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation timestep." );
 
-  registerWrapper( viewKeyStruct::cycleString, &m_cycle )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::cycleString(), &m_cycle ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation cycle number." );
 
-  registerWrapper( viewKeyStruct::currentSubEventString, &m_currentSubEvent )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::currentSubEventString(), &m_currentSubEvent ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Index of the current subevent." );
 
 }
@@ -81,7 +81,7 @@ Group * EventManager::createChild( string const & childKey, string const & child
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
-  return this->registerGroup< EventBase >( childName, std::move( event ) );
+  return &this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
 
@@ -95,7 +95,7 @@ void EventManager::expandObjectCatalogs()
 }
 
 
-void EventManager::run( dataRepository::Group * domain )
+bool EventManager::run( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -118,7 +118,7 @@ void EventManager::run( dataRepository::Group * domain )
   // Inform user if it appears this is a mid-loop restart
   if((m_currentSubEvent > 0))
   {
-    GEOSX_LOG_RANK_0( "The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point." );
+    GEOSX_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
   }
 
   // Run problem
@@ -163,19 +163,26 @@ void EventManager::run( dataRepository::Group * domain )
                               subEvent->getForecast() );
 
       // Execute, signal events
+      bool earlyReturn = false;
       if( subEvent->hasToPrepareForExec() )
       {
         subEvent->signalToPrepareForExecution( m_time, m_dt, m_cycle, domain );
       }
       else if( subEvent->isReadyForExec() )
       {
-        subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
+        earlyReturn = subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
       }
 
       // Check the exit flag
       // Note: Currently, this is only being used by the HaltEvent
       //       If it starts being used elsewhere it may need to be synchronized
       exitFlag += subEvent->getExitFlag();
+
+      if( earlyReturn )
+      {
+        ++m_currentSubEvent;
+        return true;
+      }
     }
 
     // Increment time/cycle, reset the subevent counter
@@ -191,6 +198,8 @@ void EventManager::run( dataRepository::Group * domain )
   {
     subEvent.cleanup( m_time, m_cycle, 0, 0, domain );
   } );
+
+  return false;
 }
 
 } /* namespace geosx */

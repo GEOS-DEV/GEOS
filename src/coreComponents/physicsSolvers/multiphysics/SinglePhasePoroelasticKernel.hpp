@@ -94,7 +94,7 @@ public:
                localIndex const targetRegionIndex,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               CONSTITUTIVE_TYPE & inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDispDofNumber,
                string const & inputFlowDofKey,
                globalIndex const rankOffset,
@@ -120,12 +120,12 @@ public:
     m_gravityAcceleration( sqrt( inputGravityVector[0] * inputGravityVector[0] +
                                  inputGravityVector[1] * inputGravityVector[1] +
                                  inputGravityVector[2] * inputGravityVector[2] ) ),
-    m_solidDensity( inputConstitutiveType->getDensity() ),
-    m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] )->density() ),
+    m_solidDensity( inputConstitutiveType.getDensity() ),
+    m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] ).density() ),
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString ) ),
-    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString ) )
+    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
+    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
+    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString() ) )
   {}
 
   //*****************************************************************************
@@ -235,13 +235,13 @@ public:
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     // Evaluate total stress tensor
+    real64 strainInc[6] = {0};
     real64 totalStress[6];
 
     // --- Update effective stress tensor (stored in totalStress)
-    real64 strainInc[6] = {0};
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
-    m_constitutiveUpdate.smallStrain( k, q, strainInc );
-    m_constitutiveUpdate.getStress( k, q, totalStress );
+    m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, totalStress, stiffness );
 
     // --- Subtract pressure term
     real64 const biotTimesPressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
@@ -284,9 +284,7 @@ public:
     // Assemble local jacobian
 
     // ---
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
-    m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
-    stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 
     if( m_gravityAcceleration > 0.0 )
     {

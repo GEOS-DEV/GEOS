@@ -38,14 +38,14 @@ MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( string const & nam
   MultiFluidBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::phasePVTParaFilesString, &m_phasePVTParaFiles )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "List of the names of the files including PVT function parameters" );
 
-  registerWrapper( viewKeyStruct::flashModelParaFileString, &m_flashModelParaFile )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "name of the filen including flash calculation function parameters" );
 
 }
@@ -96,9 +96,9 @@ void MultiPhaseMultiComponentFluid::postProcessInput()
 
 }
 
-void MultiPhaseMultiComponentFluid::initializePostSubGroups( Group * const group )
+void MultiPhaseMultiComponentFluid::initializePostSubGroups()
 {
-  MultiFluidBase::initializePostSubGroups( group );
+  MultiFluidBase::initializePostSubGroups();
 
   //  CreatePVTModels();
 
@@ -308,7 +308,7 @@ void MultiPhaseMultiComponentFluidUpdate::compute( real64 pressure,
   EvalVarArgs P =  pressure;
   P.m_der[0] = 1.0;
 
-  static real64 TK = 273.15;
+  constexpr real64 TK = 273.15;
   EvalVarArgs T =  temperature - TK;
 
   stackArray1d< EvalVarArgs, maxNumPhase > phaseFractionTemp( NP );

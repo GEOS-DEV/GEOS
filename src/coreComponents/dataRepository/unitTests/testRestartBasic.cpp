@@ -15,6 +15,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
+#include "managers/GeosxState.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "dataRepository/ConduitRestart.hpp"
@@ -29,6 +30,9 @@
 
 namespace geosx
 {
+
+CommandLineOptions g_commandLineOptions;
+
 namespace dataRepository
 {
 namespace testing
@@ -39,20 +43,16 @@ class SingleWrapperTest : public ::testing::Test
 {
 public:
 
-  virtual void SetUp() override
+  SingleWrapperTest():
+    m_state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ),
+    m_node( std::make_unique< conduit::Node >() ),
+    m_group( std::make_unique< Group >( m_groupName, *m_node ) ),
+    m_groupSize( rand( 0, 100 ) )
   {
-    m_group = new Group( m_groupName, nullptr );
-    m_groupSize = rand( 0, 100 );
     m_group->resize( m_groupSize );
-
-    m_wrapper = m_group->registerWrapper< T >( m_wrapperName );
+    m_wrapper = &m_group->registerWrapper< T >( m_wrapperName );
     m_wrapperSizedFromParent = rand( 0, 100 );
     m_wrapper->setSizedFromParent( m_wrapperSizedFromParent );
-  }
-
-  virtual void TearDown() override
-  {
-    delete m_group;
   }
 
   void test()
@@ -65,17 +65,17 @@ public:
 
     // Write out the tree
     m_group->prepareToWrite();
-    writeTree( m_fileName );
+    writeTree( m_fileName, *m_node );
     m_group->finishWriting();
 
     // Delete geosx tree and reset the conduit tree.
-    delete m_group;
-    rootConduitNode.reset();
+    m_group = nullptr;
+    m_node = std::make_unique< conduit::Node >();
 
     // Load in the tree
-    loadTree( m_fileName );
-    m_group = new Group( m_groupName, nullptr );
-    m_wrapper = m_group->registerWrapper< T >( m_wrapperName );
+    loadTree( m_fileName, *m_node );
+    m_group = std::make_unique< Group >( m_groupName, *m_node );
+    m_wrapper = &m_group->registerWrapper< T >( m_wrapperName );
     m_group->loadFromConduit();
 
     // Compare metadata
@@ -91,7 +91,9 @@ private:
   string const m_wrapperName = "wrapper";
   string const m_fileName = "testRestartBasic_SingleWrapperTest";
 
-  Group * m_group;
+  GeosxState m_state;
+  std::unique_ptr< conduit::Node > m_node;
+  std::unique_ptr< Group > m_group;
   int m_groupSize;
   Wrapper< T > * m_wrapper;
   int m_wrapperSizedFromParent;
@@ -140,7 +142,7 @@ int main( int argc, char * argv[] )
 {
   testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geosx::g_commandLineOptions = *geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 

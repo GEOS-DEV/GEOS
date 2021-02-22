@@ -18,6 +18,7 @@
 #include "virtualElement/VirtualElementBase.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "meshUtilities/MeshManager.hpp"
 
 // TPL includes
@@ -25,6 +26,8 @@
 
 using namespace geosx;
 using namespace virtualElement;
+
+CommandLineOptions g_commandLineOptions;
 
 static void checkIntegralMeanConsistency( localIndex numBasisFunctions,
                                           array1d< real64 > const & basisFunctionsIntegralMean )
@@ -150,6 +153,7 @@ TEST( VirtualElementBase, unitCube )
     "                       materialList=\"{dummy_material}\" />"
     "  </ElementRegions>"
     "</Problem>";
+
   xmlWrapper::xmlDocument inputFile;
   xmlWrapper::xmlResult xmlResult = inputFile.load_buffer( inputStream.c_str(), inputStream.size());
   if( !xmlResult )
@@ -160,21 +164,21 @@ TEST( VirtualElementBase, unitCube )
   }
   xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
 
-  ProblemManager * problemManager = new ProblemManager( "Problem", nullptr );
-  problemManager->initializePythonInterpreter();
-  problemManager->processInputFileRecursive( xmlProblemNode );
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+
+  ProblemManager & problemManager = state.getProblemManager();
+  problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->getGroup< MeshManager >
-                                ( problemManager->groupKeys.meshManager );
-  meshManager->generateMeshLevels( domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->processInputFileRecursive( topLevelNode );
-  elementManager->postProcessInputRecursive();
-  problemManager->problemSetup();
+  DomainPartition & domain = problemManager.getDomainPartition();
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.generateMeshLevels( domain );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elementManager = mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.postProcessInputRecursive();
+  problemManager.problemSetup();
 
   ConformingVirtualElementOrder1 vemElement;
   vemElement.computeProjectors( mesh, 0, 0, 0 );
@@ -184,11 +188,9 @@ TEST( VirtualElementBase, unitCube )
   checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
                                            vemElement.m_basisDerivativesIntegralMean );
 
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  CellElementRegion const & cellRegion =
-    *elementManager->getRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  CellElementRegion const & cellRegion = elementManager.getRegion< CellElementRegion >( 0 );
+  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( 0 );
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
@@ -196,8 +198,6 @@ TEST( VirtualElementBase, unitCube )
   localIndex const cellIndex = 0;
   checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
                                        vemElement.m_stabilizationMatrix );
-
-  delete problemManager;
 }
 
 TEST( VirtualElementBase, wedges )
@@ -232,28 +232,26 @@ TEST( VirtualElementBase, wedges )
   }
   xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
 
-  ProblemManager * problemManager = new ProblemManager( "Problem", nullptr );
-  problemManager->initializePythonInterpreter();
-  problemManager->processInputFileRecursive( xmlProblemNode );
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+
+  ProblemManager & problemManager = state.getProblemManager();
+  problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->getGroup< MeshManager >
-                                ( problemManager->groupKeys.meshManager );
-  meshManager->generateMeshLevels( domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-  elementManager->processInputFileRecursive( topLevelNode );
-  elementManager->postProcessInputRecursive();
-  problemManager->problemSetup();
+  DomainPartition & domain = problemManager.getDomainPartition();
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.generateMeshLevels( domain );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elementManager = mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.postProcessInputRecursive();
+  problemManager.problemSetup();
 
   ConformingVirtualElementOrder1 vemElement;
-  CellElementRegion const & cellRegion =
-    *elementManager->getRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion =
-    *cellRegion.getSubRegion< CellElementSubRegion >( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
+  CellElementRegion const & cellRegion = elementManager.getRegion< CellElementRegion >( 0 );
+  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
@@ -271,18 +269,13 @@ TEST( VirtualElementBase, wedges )
     checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
                                          vemElement.m_stabilizationMatrix );
   }
-  delete problemManager;
 }
 
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-
-  geosx::basicSetup( argc, argv );
-
+  g_commandLineOptions = *geosx::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-
   geosx::basicCleanup();
-
   return result;
 }

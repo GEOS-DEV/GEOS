@@ -20,16 +20,7 @@
 #ifndef GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
-#ifdef GEOSX_USE_PYTHON
-// Note: the python header must be included first to avoid conflicting
-// definitions of _posix_c_source
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <Python.h>
-#include <numpy/arrayobject.h>
-#endif
-
 #include "EventManager.hpp"
-#include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
 
 namespace geosx
@@ -41,6 +32,10 @@ namespace constitutive
 {
 class ConstitutiveManager;
 }
+class FunctionManager;
+class FieldSpecificationManager;
+struct CommandLineOptions;
+
 /**
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOSX
@@ -50,11 +45,10 @@ class ProblemManager : public dataRepository::Group
 public:
 
   /**
-   * @param name the name of this object manager
-   * @param parent the parent Group
+   * @brief Create a new ProblemManager, it must be created from the root conduit node.
+   * @param root The root conduit node.
    */
-  explicit ProblemManager( const string & name,
-                           Group * const parent );
+  explicit ProblemManager( conduit::Node & root );
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group
@@ -91,25 +85,12 @@ public:
   void parseCommandLineInput();
 
   /**
-   * @brief Parses a restart file
-   * @param restartFileName the name of the restart file
-   * @return flag indicating beginFromRestart status
+   * @brief Parses a restart file.
+   * @param restartFileName The name of the restart file.
+   * @param options The command line options.
+   * @return Flag indicating beginFromRestart status
    */
-  static bool parseRestart( string & restartFileName );
-
-  /**
-   * @brief Initializes a python interpreter within GEOSX
-   * @note This is not regularly used or tested, and may be removed in future versions.
-   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
-   */
-  void initializePythonInterpreter();
-
-  /**
-   * @brief Closes the internal python interpreter
-   * @note This is not regularly used or tested, and may be removed in future versions.
-   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
-   */
-  void closePythonInterpreter();
+  static bool parseRestart( string & restartFileName, CommandLineOptions const & options );
 
   /**
    * @brief Generates the xml schema documentation
@@ -151,8 +132,9 @@ public:
 
   /**
    * @brief Run the events in the scheduler.
+   * @return True iff the simulation exited early, and needs to be run again to completion.
    */
-  void runSimulation();
+  bool runSimulation();
 
   /**
    * @brief After initialization, overwrites data using a restart file
@@ -168,41 +150,41 @@ public:
    * @brief Returns a pointer to the DomainPartition
    * @return Pointer to the DomainPartition
    */
-  DomainPartition * getDomainPartition();
+  DomainPartition & getDomainPartition();
 
   /**
    * @brief Returns a pointer to the DomainPartition
    * @return Const pointer to the DomainPartition
    */
-  DomainPartition const * getDomainPartition() const;
+  DomainPartition const & getDomainPartition() const;
 
   /**
    * @brief Returns the problem name
    * @return The problem name
    */
-  const string & getProblemName() const
-  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
+  string const & getProblemName() const
+  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
-  const string & getInputFileName() const
-  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
+  string const & getInputFileName() const
+  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
-  const string & getRestartFileName() const
-  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
+  string const & getRestartFileName() const
+  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
-  const string & getSchemaFileName() const
-  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
+  string const & getSchemaFileName() const
+  { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.schemaFileName ); }
 
   /// Input file xml document handle
   xmlWrapper::xmlDocument xmlDocument;
@@ -238,7 +220,8 @@ public:
   /// Child group viewKeys
   struct groupKeysStruct
   {
-    static constexpr auto numericalMethodsManagerString = "NumericalMethods";             ///< Numerical methods string
+    ///< Numerical methods string
+    static constexpr char const * numericalMethodsManagerString() { return "NumericalMethods"; }
     dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key
     dataRepository::GroupKey domain    = { "domain" };                                    ///< Domain key
@@ -247,7 +230,7 @@ public:
     dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
     dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
-    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString }; ///< Numerical methods key
+    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
     dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
     dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
@@ -269,6 +252,46 @@ public:
   PhysicsSolverManager const & getPhysicsSolverManager() const
   {
     return *m_physicsSolverManager;
+  }
+
+  /**
+   * @brief Returns the FunctionManager.
+   * @return The FunctionManager.
+   */
+  FunctionManager & getFunctionManager()
+  {
+    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    return *m_functionManager;
+  }
+
+  /**
+   * @brief Returns the const FunctionManager.
+   * @return The const FunctionManager.
+   */
+  FunctionManager const & getFunctionManager() const
+  {
+    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    return *m_functionManager;
+  }
+
+  /**
+   * @brief Returns the FieldSpecificationManager.
+   * @return The FieldSpecificationManager.
+   */
+  FieldSpecificationManager & getFieldSpecificationManager()
+  {
+    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    return *m_fieldSpecificationManager;
+  }
+
+  /**
+   * @brief Returns the const FunctionManager.
+   * @return The const FunctionManager.
+   */
+  FieldSpecificationManager const & getFieldSpecificationManager() const
+  {
+    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    return *m_fieldSpecificationManager;
   }
 
 protected:
@@ -310,6 +333,9 @@ private:
 
   /// The FunctionManager
   FunctionManager * m_functionManager;
+
+  /// The FieldSpecificationManager
+  FieldSpecificationManager * m_fieldSpecificationManager;
 };
 
 } /* namespace geosx */

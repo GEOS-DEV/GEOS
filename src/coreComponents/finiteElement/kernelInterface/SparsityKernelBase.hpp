@@ -81,7 +81,7 @@ public:
                       localIndex const targetRegionIndex,
                       SUBREGION_TYPE const & elementSubRegion,
                       FE_TYPE const & finiteElementSpace,
-                      CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                      CONSTITUTIVE_TYPE & inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
                       SparsityPattern< globalIndex > & inputSparsity ):

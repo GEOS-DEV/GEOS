@@ -208,7 +208,7 @@ commented afterwards.
 
     LaplaceDiffFEM() = delete;
 
-    LaplaceDiffFEM( const std::string& name,
+    LaplaceDiffFEM( const string& name,
                     Group * const parent );
 
     virtual ~LaplaceDiffFEM() override;
@@ -265,12 +265,12 @@ an "input uniform diffusion coefficient for the Laplace equation".
 
 .. code-block:: c++
 
-  LaplaceDiffFEM::LaplaceDiffFEM( const std::string& name,
+  LaplaceDiffFEM::LaplaceDiffFEM( const string& name,
                                   Group * const parent ):
   LaplaceFEM( name, parent ), m_diffusion(0.0)
   {
-    registerWrapper<string>(laplaceDiffFEMViewKeys.diffusionCoeff.Key())->
-      setInputFlag(InputFlags::REQUIRED)->
+    registerWrapper<string>(laplaceDiffFEMViewKeys.diffusionCoeff.Key()).
+      setInputFlag(InputFlags::REQUIRED).
       setDescription("input uniform diffusion coeff for the laplace equation");
   }
 
