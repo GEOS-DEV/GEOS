@@ -61,7 +61,8 @@ ComputeProjectors( localIndex const & cellIndex,
   m_quadratureWeight = cellVolume;
 
   // Compute cell diameter.
-  real64 cellDiameter = ComputeDiameter< 3,
+  real64 cellDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
+                        ComputeDiameter< 3,
                                          arrayView2d< real64 const,
                                                       nodes::REFERENCE_POSITION_USD >
                                          const &,
@@ -267,7 +268,7 @@ ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
                       real64 threeDMonomialIntegrals[3] )
 {
   // Get pre-computed geometrical properties.
-  localIndex const numFaceVertices = faceToNodes.size();         // also equal to n. face's edges.
+  localIndex const numFaceVertices = faceToNodes.size();           // also equal to n. face's edges.
 
   // Compute other geometrical properties.
   //  - compute rotation matrix.
@@ -290,7 +291,8 @@ ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
       faceRotationMatrix( 1, 2 )*nodesCoords( faceToNodes( numVertex ), 1 ) +
       faceRotationMatrix( 2, 2 )*nodesCoords( faceToNodes( numVertex ), 2 );
   }
-  faceDiameter = ComputeDiameter< 2,
+  faceDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
+                 ComputeDiameter< 2,
                                   array2d< real64 > const & >( faceRotatedVertices,
                                                                numFaceVertices );
   real64 const invFaceDiameter = 1.0/faceDiameter;
@@ -389,7 +391,7 @@ ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
                                   cellCenter[i] ) * invCellDiameter;
     // compute quadrature weight associated to the quadrature point (the area of the
     // sub-triangle).
-    real64 edgesTangents[2][2];             // used to compute the area of the sub-triangle
+    real64 edgesTangents[2][2];               // used to compute the area of the sub-triangle
     for( localIndex i = 0; i < 2; ++i )
       edgesTangents[0][i] = faceRotatedVertices[numSubTriangle][i] - faceRotatedCentroid[i];
     for( localIndex i = 0; i < 2; ++i )
