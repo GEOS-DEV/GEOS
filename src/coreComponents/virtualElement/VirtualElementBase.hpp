@@ -48,7 +48,7 @@ public:
    * getNumSupportPoints() x 3.
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static real64 getGradN( localIndex const q,
                           real64 ( & gradN )[LEAF::maxSupportPoints][3] )
   {
@@ -62,7 +62,7 @@ public:
    * @return The requested value.
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   static real64 getStabilizationValue( localIndex const iBasisFunction,
                                        localIndex const jBasisFunction
                                        )
@@ -75,7 +75,7 @@ public:
    * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
+  // GEOSX_HOST_DEVICE
   void getN( localIndex const q,
              real64 ( & N )[LEAF::maxSupportPoints] )
   {
