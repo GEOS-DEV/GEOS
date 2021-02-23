@@ -89,7 +89,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <DamageVolDevLinearElasticIsotropic name="shale"
+    <DamageVolDevElasticIsotropic name="shale"
                                   defaultDensity="2700"
                                   defaultBulkModulus="1.750e5"
                                   defaultShearModulus="8.077e4"

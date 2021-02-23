@@ -185,13 +185,13 @@ class ParticleFluid : public ParticleFluidBase
 {
 public:
 
-  ParticleFluid( std::string const & name, Group * const parent );
+  ParticleFluid( string const & name, Group * const parent );
 
   virtual ~ParticleFluid() override;
 
   // *** ConstitutiveBase interface
 
-  static std::string catalogName() { return "ParticleFluid"; }
+  static string catalogName() { return "ParticleFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -208,18 +208,17 @@ public:
 
   struct viewKeyStruct : public ParticleFluidBase::viewKeyStruct
   {
-    static constexpr auto fluidViscosityString    = "fluidViscosity";
-    static constexpr auto proppantDiameterString    = "proppantDiameter";
-    static constexpr auto proppantDensityString    = "proppantDensity";
-    static constexpr auto hinderedSettlingCoefficientString    = "hinderedSettlingCoefficient";
-    static constexpr auto collisionAlphaString    = "collisionAlpha";
-    static constexpr auto slipConcentrationString    = "slipConcentration";
-    static constexpr auto collisionBetaString    = "collisionBeta";
-    static constexpr auto bridgingFactorString    = "bridgingFactor";
-    static constexpr auto sphericityString    = "sphericity";
-    static constexpr auto particleSettlingModelString    = "particleSettlingModel";
-
-  } viewKeysParticleFluid;
+    static constexpr char const * fluidViscosityString() { return "fluidViscosity"; }
+    static constexpr char const * proppantDiameterString() { return "proppantDiameter"; }
+    static constexpr char const * proppantDensityString() { return "proppantDensity"; }
+    static constexpr char const * hinderedSettlingCoefficientString() { return "hinderedSettlingCoefficient"; }
+    static constexpr char const * collisionAlphaString() { return "collisionAlpha"; }
+    static constexpr char const * slipConcentrationString() { return "slipConcentration"; }
+    static constexpr char const * collisionBetaString() { return "collisionBeta"; }
+    static constexpr char const * bridgingFactorString() { return "bridgingFactor"; }
+    static constexpr char const * sphericityString() { return "sphericity"; }
+    static constexpr char const * particleSettlingModelString() { return "particleSettlingModel"; }
+  };
 
 protected:
 

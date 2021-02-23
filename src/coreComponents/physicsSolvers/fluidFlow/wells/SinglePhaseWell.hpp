@@ -93,7 +93,7 @@ public:
    */
   static string catalogName() { return "SinglePhaseWell"; }
 
-  virtual void registerDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -129,17 +129,34 @@ public:
 
   /**@}*/
 
-  virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString; }
+  virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return SinglePhaseBase::viewKeyStruct::pressureString; }
+  virtual string resElementDofName() const override { return SinglePhaseBase::viewKeyStruct::pressureString(); }
 
   virtual localIndex numFluidComponents() const override { return 1; }
 
   virtual localIndex numFluidPhases() const override { return 1; }
 
   /**
+   * @brief Recompute the volumetric rate that are used in the well constraints
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion,
+                                           localIndex const targetIndex );
+
+  /**
+   * @brief Recompute the BHP pressure that is used in the well constraints
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  virtual void updateBHPForConstraint( WellElementSubRegion & subRegion,
+                                       localIndex const targetIndex );
+
+  /**
    * @brief Update fluid constitutive model state
    * @param dataGroup group that contains the fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   virtual void updateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
 
@@ -147,6 +164,7 @@ public:
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   virtual void updateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
@@ -196,28 +214,33 @@ public:
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
-    static constexpr auto dofFieldString = "singlePhaseWellVars";
+    static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
 
     // primary solution field
-    static constexpr auto pressureString      = SinglePhaseBase::viewKeyStruct::pressureString;
-    static constexpr auto deltaPressureString = SinglePhaseBase::viewKeyStruct::deltaPressureString;
-    static constexpr auto connRateString      = "connectionRate";
-    static constexpr auto deltaConnRateString = "deltaConnectionRate";
+    static constexpr char const * pressureString() { return SinglePhaseBase::viewKeyStruct::pressureString(); }
+    static constexpr char const * deltaPressureString() { return SinglePhaseBase::viewKeyStruct::deltaPressureString(); }
+    static constexpr char const * connRateString() { return "connectionRate"; }
+    static constexpr char const * deltaConnRateString() { return "deltaConnectionRate"; }
 
     // perforation rates
-    static constexpr auto perforationRateString        = "perforationRate";
-    static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
-  } viewKeysSinglePhaseWell;
+    static constexpr char const * perforationRateString() { return "perforationRate"; }
+    static constexpr char const * dPerforationRate_dPresString() { return "dPerforationRate_dPres"; }
 
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysSinglePhaseWell;
+    // control data
+    static constexpr char const * currentBHPString() { return "currentBHP"; }
+    static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
+
+    static constexpr char const * currentVolRateString() { return "currentVolumetricRate"; }
+    static constexpr char const * dCurrentVolRate_dPresString() { return "dCurrentVolumetricRate_dPres"; }
+    static constexpr char const * dCurrentVolRate_dRateString() { return "dCurrentVolumetricRate_dRate"; }
+
+  };
 
 protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
-
+  virtual void initializePreSubGroups() override;
 
 private:
 
@@ -238,6 +261,12 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void initializeWells( DomainPartition & domain ) override;
+
+  /**
+   * @brief Make sure that the well constraints are compatible
+   * @param meshLevel the mesh level object (to loop over wells)
+   */
+  void validateWellConstraints( MeshLevel const & meshLevel ) const;
 
 private:
 

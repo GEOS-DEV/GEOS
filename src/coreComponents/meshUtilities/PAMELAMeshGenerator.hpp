@@ -45,7 +45,7 @@ public:
  * @param[in] name of the PAMELAMeshGenerator object
  * @param[in] parent the parent Group pointer for the MeshGenerator object
  */
-  PAMELAMeshGenerator( const std::string & name,
+  PAMELAMeshGenerator( const string & name,
                        Group * const parent );
 
   virtual ~PAMELAMeshGenerator() override;
@@ -59,11 +59,11 @@ public:
 ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    constexpr static auto filePathString = "file";
-    constexpr static auto scaleString = "scale";
-    constexpr static auto fieldsToImportString = "fieldsToImport";
-    constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
-    constexpr static auto reverseZString = "reverseZ";
+    constexpr static char const * filePathString() { return "file"; }
+    constexpr static char const * scaleString() { return "scale"; }
+    constexpr static char const * fieldsToImportString() { return "fieldsToImport"; }
+    constexpr static char const * fieldNamesInGEOSXString() { return "fieldNamesInGEOSX"; }
+    constexpr static char const * reverseZString() { return "reverseZ"; }
   };
 /// @endcond
 
@@ -77,15 +77,15 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void generateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void getElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( const string & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],
                                              const int size ) override;
 
-  virtual void remapMesh ( dataRepository::Group * const domain ) override;
+  virtual void remapMesh ( dataRepository::Group & domain ) override;
 
 protected:
 

@@ -45,7 +45,7 @@ public:
  * @param name the name of this instantiation of Group in the repository
  * @param parent the parent group of this instantiation of Group
  */
-  FlowSolverBase( const std::string & name,
+  FlowSolverBase( const string & name,
                   Group * const parent );
 
 
@@ -69,7 +69,7 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
@@ -87,29 +87,23 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // input data
-    static constexpr auto referencePorosityString = "referencePorosity";
-    static constexpr auto permeabilityString      = "permeability";
+    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
+    static constexpr char const * permeabilityString() { return "permeability"; }
 
     // gravity term precomputed values
-    static constexpr auto gravityCoefString = "gravityCoefficient";
+    static constexpr char const * gravityCoefString() { return "gravityCoefficient"; }
 
     // misc inputs
-    static constexpr auto fluidNamesString = "fluidNames";
-    static constexpr auto solidNamesString = "solidNames";
-
-    static constexpr auto pressureString = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
-    static constexpr auto deltaVolumeString = "deltaVolume";
-
-    static constexpr auto aperture0String  = "aperture_n";
-    static constexpr auto effectiveApertureString = "effectiveAperture";
-
-    static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
-    static constexpr auto meanPermCoeffString  = "meanPermCoeff";
-  } viewKeysFlowSolverBase;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysFlowSolverBase;
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    static constexpr char const * solidNamesString() { return "solidNames"; }
+    static constexpr char const * pressureString() { return "pressure"; }
+    static constexpr char const * deltaPressureString() { return "deltaPressure"; }
+    static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
+    static constexpr char const * aperture0String() { return "aperture_n"; }
+    static constexpr char const * effectiveApertureString() { return "effectiveAperture"; }
+    static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
+    static constexpr char const * meanPermCoeffString() { return "meanPermCoeff"; }
+  };
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -150,9 +144,9 @@ protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /// name of the fluid constitutive model
   array1d< string > m_fluidModelNames;

@@ -33,8 +33,8 @@ class SoloEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  SoloEvent( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  SoloEvent( const string & name,
              Group * const parent );
 
   /// Destructor
@@ -52,7 +52,7 @@ public:
   virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
-                                    dataRepository::Group * domain ) override;
+                                    DomainPartition & domain ) override;
 
   /**
    * @copydoc EventBase::getEventTypeDtRequest()
@@ -62,13 +62,13 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto targetTimeString = "targetTime";
-    static constexpr auto targetCycleString = "targetCycle";
-    static constexpr auto targetExactTimestepString = "targetExactTimestep";
+    static constexpr char const * targetTimeString() { return "targetTime"; }
+    static constexpr char const * targetCycleString() { return "targetCycle"; }
+    static constexpr char const * targetExactTimestepString() { return "targetExactTimestep"; }
 
-    dataRepository::ViewKey targetTime = { "targetTime" };
-    dataRepository::ViewKey targetCycle = { "targetCycle" };
-    dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
+    dataRepository::ViewKey targetTime = { targetTimeString() };
+    dataRepository::ViewKey targetCycle = { targetCycleString() };
+    dataRepository::ViewKey targetExactTimestep = { targetExactTimestepString() };
   } SoloEventViewKeys;
   /// @endcond
 

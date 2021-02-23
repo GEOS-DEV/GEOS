@@ -26,7 +26,7 @@
 #include "common/TimingMacros.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
-
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 
 namespace geosx
 {
@@ -34,7 +34,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
+SinglePhaseReservoir::SinglePhaseReservoir( const string & name,
                                             Group * const parent ):
   ReservoirSolverBase( name, parent )
 {}
@@ -42,14 +42,37 @@ SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
 SinglePhaseReservoir::~SinglePhaseReservoir()
 {}
 
+void SinglePhaseReservoir::setupSystem( DomainPartition & domain,
+                                        DofManager & dofManager,
+                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                        array1d< real64 > & localRhs,
+                                        array1d< real64 > & localSolution,
+                                        bool const setSparsity )
+{
+  ReservoirSolverBase::setupSystem( domain,
+                                    dofManager,
+                                    localMatrix,
+                                    localRhs,
+                                    localSolution,
+                                    setSparsity );
+
+  // we need to set the dR_dAper CRS matrix in SinglePhaseFVM to handle the presence of fractures
+  if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( m_flowSolver ) )
+  {
+    SinglePhaseFVM< SinglePhaseBase > * fvmSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( m_flowSolver );
+    fvmSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+  }
+}
+
+
 void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        SparsityPatternView< globalIndex > const & pattern ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   // TODO: remove this and just call SolverBase::setupSystem when DofManager can handle the coupling
 
@@ -76,15 +99,15 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
 
     // get the well element indices corresponding to each perforation
     arrayView1d< localIndex const > const & perfWellElemIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
 
     // get the element region, subregion, index
     arrayView1d< localIndex const > const & resElementRegion =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
     arrayView1d< localIndex const > const & resElementSubRegion =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
     arrayView1d< localIndex const > const & resElementIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
     // Insert the entries corresponding to reservoir-well perforations
     // This will fill J_WR, and J_RW
@@ -137,8 +160,8 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
@@ -160,20 +183,20 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
 
     // get well variables on perforations
     arrayView1d< real64 const > const perfRate =
-      perforationData->getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::perforationRateString );
+      perforationData->getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::perforationRateString() );
     arrayView2d< real64 const > const dPerfRate_dPres =
-      perforationData->getReference< array2d< real64 > >( SinglePhaseWell::viewKeyStruct::dPerforationRate_dPresString );
+      perforationData->getReference< array2d< real64 > >( SinglePhaseWell::viewKeyStruct::dPerforationRate_dPresString() );
 
     arrayView1d< localIndex const > const perfWellElemIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
 
     // get the element region, subregion, index
     arrayView1d< localIndex const > const resElementRegion =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
     arrayView1d< localIndex const > const resElementSubRegion =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
     arrayView1d< localIndex const > const resElementIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
     // loop over the perforations and add the rates to the residual and jacobian
     forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
@@ -231,6 +254,6 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoir, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoir, string const &, Group * const )
 
 } /* namespace geosx */

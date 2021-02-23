@@ -82,7 +82,7 @@ public:
    * @param[in] name of the InternalMeshGenerator
    * @param[in] parent point to the parent Group of the InternalMeshGenerator
    */
-  InternalMeshGenerator( const std::string & name,
+  InternalMeshGenerator( const string & name,
                          Group * const parent );
 
   virtual ~InternalMeshGenerator() override;
@@ -107,18 +107,18 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void generateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition & domain ) override;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
 
-  virtual void getElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( const string & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],
                                              const int size ) override;
 
-  virtual void remapMesh ( dataRepository::Group * const domain ) override;
+  virtual void remapMesh ( dataRepository::Group & domain ) override;
 
 //  int m_delayMeshDeformation;
 
@@ -212,7 +212,7 @@ private:
 
   ///@cond DO_NOT_DOCUMENT
   //unused
-  std::string m_meshDx, m_meshDy, m_meshDz;
+  string m_meshDx, m_meshDy, m_meshDz;
   ///@endcond
 
 /**

@@ -24,7 +24,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-MeshManager::MeshManager( std::string const & name,
+MeshManager::MeshManager( string const & name,
                           Group * const parent ):
   Group( name, parent )
 {
@@ -38,7 +38,7 @@ Group * MeshManager::createChild( string const & childKey, string const & childN
 {
   GEOSX_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
   std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
-  return this->registerGroup< MeshGeneratorBase >( childName, std::move( solver ) );
+  return &this->registerGroup< MeshGeneratorBase >( childName, std::move( solver ) );
 }
 
 
@@ -52,7 +52,7 @@ void MeshManager::expandObjectCatalogs()
 }
 
 
-void MeshManager::generateMeshes( DomainPartition * const domain )
+void MeshManager::generateMeshes( DomainPartition & domain )
 {
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
@@ -61,16 +61,16 @@ void MeshManager::generateMeshes( DomainPartition * const domain )
 }
 
 
-void MeshManager::generateMeshLevels( DomainPartition * const domain )
+void MeshManager::generateMeshLevels( DomainPartition & domain )
 {
   this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    string meshName = meshGen.getName();
+    string const & meshName = meshGen.getName();
 
     // THIS IS A HACK
-    if( meshName.find( "well" ) == std::string::npos )
+    if( meshName.find( "well" ) == string::npos )
     {
-      domain->getMeshBodies()->registerGroup< MeshBody >( meshName )->createMeshLevel( 0 );
+      domain.getMeshBodies().registerGroup< MeshBody >( meshName ).createMeshLevel( 0 );
     }
   } );
 }

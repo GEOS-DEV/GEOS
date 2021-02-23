@@ -25,7 +25,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace LvArray;
 
-TasksManager::TasksManager( std::string const & name,
+TasksManager::TasksManager( string const & name,
                             Group * const parent ):
   Group( name, parent )
 {
@@ -38,7 +38,7 @@ TasksManager::~TasksManager()
 Group * TasksManager::createChild( string const & childKey, string const & childName )
 {
   std::unique_ptr< TaskBase > task = TaskBase::CatalogInterface::factory( childKey, childName, this );
-  return this->registerGroup< TaskBase >( childName, std::move( task ) );
+  return &this->registerGroup< TaskBase >( childName, std::move( task ) );
 }
 
 void TasksManager::expandObjectCatalogs()

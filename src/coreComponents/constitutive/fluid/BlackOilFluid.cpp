@@ -31,23 +31,23 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
+BlackOilFluid::BlackOilFluid( string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
-  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::componentMolarWeightString() ).setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::phaseNamesString() ).setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::surfaceDensitiesString(), &m_surfaceDensities ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of surface densities for each phase" );
 
-  registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  registerWrapper( viewKeyStruct::tableFilesString(), &m_tableFiles ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "List of filenames with input PVT tables" );
 
-  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidType )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::fluidTypeString(), &m_fluidType ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of black-oil fluid. Valid options:\n* " + EnumStrings< FluidType >::concat( "\n* " ) );
 }
 
@@ -84,8 +84,8 @@ void BlackOilFluid::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString )
-  BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString )
+  BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString() )
+  BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString() )
 
   #undef BOFLUID_CHECK_INPUT_LENGTH
 }
@@ -93,7 +93,7 @@ void BlackOilFluid::postProcessInput()
 void BlackOilFluid::createFluid()
 {
   std::vector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
-  std::vector< std::string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
+  std::vector< string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
   std::vector< double > densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector< double > molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
 
@@ -116,7 +116,7 @@ void BlackOilFluid::createFluid()
   }
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

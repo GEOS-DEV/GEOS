@@ -46,7 +46,7 @@ public:
    * @param[in] name of the MeshGenerator object
    * @param[in] parent the parent Group pointer for the MeshGenerator object
    */
-  explicit MeshGeneratorBase( std::string const & name,
+  explicit MeshGeneratorBase( string const & name,
                               Group * const parent );
 
   /**
@@ -71,7 +71,7 @@ public:
  * @brief Generate the mesh object the input mesh object.
  * @param[in] domain the domain partition from which to construct the mesh object
  */
-  virtual void generateMesh( DomainPartition * const domain ) = 0;
+  virtual void generateMesh( DomainPartition & domain ) = 0;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) = 0;
@@ -85,7 +85,7 @@ public:
  * @param[in] size the number of node on the element
  *
  */
-  virtual void getElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void getElemToNodesRelationInBox ( const string & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],
@@ -95,13 +95,13 @@ public:
  * @param[in] domain domain point whose mesh has to be remapped
  *
  */
-  virtual void remapMesh ( dataRepository::Group * const domain ) = 0;
+  virtual void remapMesh ( dataRepository::Group & domain ) = 0;
 
   /// Integer to trigger or not mesh re-mapping at the end of GenerateMesh call
   int m_delayMeshDeformation = 0;
 
   /// using alias for templated Catalog meshGenerator type
-  using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
 
 /**
  * @brief Accessor for the singleton Catalog object

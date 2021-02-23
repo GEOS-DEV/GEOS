@@ -105,12 +105,12 @@ class VanGenuchtenCapillaryPressure : public CapillaryPressureBase
 {
 public:
 
-  VanGenuchtenCapillaryPressure( std::string const & name,
+  VanGenuchtenCapillaryPressure( string const & name,
                                  dataRepository::Group * const parent );
 
   virtual ~VanGenuchtenCapillaryPressure() override;
 
-  static std::string catalogName() { return "VanGenuchtenCapillaryPressure"; }
+  static string catalogName() { return "VanGenuchtenCapillaryPressure"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -125,13 +125,12 @@ public:
 
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString      = "phaseMinVolumeFraction";
-    static constexpr auto phaseCapPressureExponentInvString = "phaseCapPressureExponentInv";
-    static constexpr auto phaseCapPressureMultiplierString  = "phaseCapPressureMultiplier";
-    static constexpr auto capPressureEpsilonString          = "capPressureEpsilon";
-    static constexpr auto volFracScaleString                = "volFracScale";
-
-  } viewKeysVanGenuchtenCapillaryPressure;
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * phaseCapPressureExponentInvString() { return "phaseCapPressureExponentInv"; }
+    static constexpr char const * phaseCapPressureMultiplierString() { return "phaseCapPressureMultiplier"; }
+    static constexpr char const * capPressureEpsilonString() { return "capPressureEpsilon"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
+  };
 
 protected:
 

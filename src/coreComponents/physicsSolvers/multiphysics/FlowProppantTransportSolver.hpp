@@ -31,7 +31,7 @@ class FlowSolverBase;
 class FlowProppantTransportSolver : public SolverBase
 {
 public:
-  FlowProppantTransportSolver( const std::string & name,
+  FlowProppantTransportSolver( const string & name,
                                Group * const parent );
   ~FlowProppantTransportSolver() override;
 
@@ -40,8 +40,6 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string catalogName() { return "FlowProppantTransport"; }
-
-  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual real64
   solverStep( real64 const & time_n,
@@ -54,11 +52,9 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto proppantSolverNameString = "proppantSolverName";
-    constexpr static auto flowSolverNameString = "flowSolverName";
-
-  } flowProppantTransportSolverViewKeys;
-
+    constexpr static char const * proppantSolverNameString() { return "proppantSolverName"; }
+    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
+  };
 
   void preStepUpdate( real64 const & time_n,
                       real64 const & dt,

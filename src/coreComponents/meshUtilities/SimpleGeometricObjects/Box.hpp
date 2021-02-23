@@ -43,7 +43,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  Box( const std::string & name,
+  Box( const string & name,
        Group * const parent );
 
   /**
@@ -95,15 +95,15 @@ private:
 
   struct viewKeyStruct
   {
-    static constexpr auto xMinString = "xMin";
-    static constexpr auto xMaxString = "xMax";
-    static constexpr auto strikeAngleString = "strike";
-    static constexpr auto boxCenterString = "center";
-    static constexpr auto cosStrikeString = "cosStrike";
-    static constexpr auto sinStrikeString = "sinStrike";
+    static constexpr char const * xMinString() { return "xMin"; }
+    static constexpr char const * xMaxString() { return "xMax"; }
+    static constexpr char const * strikeAngleString() { return "strike"; }
+    static constexpr char const * boxCenterString() { return "center"; }
+    static constexpr char const * cosStrikeString() { return "cosStrike"; }
+    static constexpr char const * sinStrikeString() { return "sinStrike"; }
 
-    dataRepository::ViewKey xmin = { "xMin" };
-    dataRepository::ViewKey xmax = { "xMax" };
+    dataRepository::ViewKey xmin = { xMinString() };
+    dataRepository::ViewKey xmax = { xMaxString() };
   } viewKeys;
 
   /// @endcond

@@ -27,7 +27,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Box::Box( const std::string & name, Group * const parent ):
+Box::Box( const string & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_min{ 0.0, 0.0, 0.0 },
   m_max{ 0.0, 0.0, 0.0 },
@@ -36,22 +36,22 @@ Box::Box( const std::string & name, Group * const parent ):
   m_cosStrike{ 0.0 },
   m_sinStrike{ 0.0 }
 {
-  registerWrapper( viewKeyStruct::xMinString, &m_min )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::xMinString(), &m_min ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Minimum (x,y,z) coordinates of the box" );
 
-  registerWrapper( viewKeyStruct::xMaxString, &m_max )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::xMaxString(), &m_max ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum (x,y,z) coordinates of the box" );
 
-  registerWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle )->
-    setApplyDefaultValue( -90.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::strikeAngleString(), &m_strikeAngle ).
+    setApplyDefaultValue( -90.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The strike angle of the box" );
 
-  registerWrapper( viewKeyStruct::boxCenterString, &m_boxCenter );
-  registerWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike );
-  registerWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike );
+  registerWrapper( viewKeyStruct::boxCenterString(), &m_boxCenter );
+  registerWrapper( viewKeyStruct::cosStrikeString(), &m_cosStrike );
+  registerWrapper( viewKeyStruct::sinStrikeString(), &m_sinStrike );
 }
 
 Box::~Box()
@@ -100,6 +100,6 @@ bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
   return true;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, string const &, Group * const )
 
 } /* namespace geosx */

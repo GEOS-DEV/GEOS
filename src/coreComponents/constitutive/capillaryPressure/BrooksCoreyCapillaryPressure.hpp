@@ -105,12 +105,12 @@ class BrooksCoreyCapillaryPressure : public CapillaryPressureBase
 {
 public:
 
-  BrooksCoreyCapillaryPressure( std::string const & name,
+  BrooksCoreyCapillaryPressure( string const & name,
                                 dataRepository::Group * const parent );
 
   virtual ~BrooksCoreyCapillaryPressure() override;
 
-  static std::string catalogName() { return "BrooksCoreyCapillaryPressure"; }
+  static string catalogName() { return "BrooksCoreyCapillaryPressure"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -125,12 +125,12 @@ public:
 
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString      = "phaseMinVolumeFraction";
-    static constexpr auto phaseCapPressureExponentInvString = "phaseCapPressureExponentInv";
-    static constexpr auto phaseEntryPressureString          = "phaseEntryPressure";
-    static constexpr auto capPressureEpsilonString          = "capPressureEpsilon";
-    static constexpr auto volFracScaleString                = "volFracScale";
-  } viewKeysBrooksCoreyCapillaryPressure;
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * phaseCapPressureExponentInvString() { return "phaseCapPressureExponentInv"; }
+    static constexpr char const * phaseEntryPressureString() { return "phaseEntryPressure"; }
+    static constexpr char const * capPressureEpsilonString() { return "capPressureEpsilon"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
+  };
 
 protected:
 

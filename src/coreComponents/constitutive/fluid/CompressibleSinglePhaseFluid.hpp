@@ -113,15 +113,15 @@ class CompressibleSinglePhaseFluid : public SingleFluidBase
 {
 public:
 
-  CompressibleSinglePhaseFluid( std::string const & name, Group * const parent );
+  CompressibleSinglePhaseFluid( string const & name, Group * const parent );
 
   virtual ~CompressibleSinglePhaseFluid() override;
 
-  static std::string catalogName() { return "CompressibleSinglePhaseFluid"; }
+  static string catalogName() { return "CompressibleSinglePhaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
@@ -135,13 +135,13 @@ public:
 
   struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
   {
-    static constexpr auto compressibilityString      = "compressibility";
-    static constexpr auto viscosibilityString        = "viscosibility";
-    static constexpr auto referencePressureString    = "referencePressure";
-    static constexpr auto referenceDensityString     = "referenceDensity";
-    static constexpr auto referenceViscosityString   = "referenceViscosity";
-    static constexpr auto densityModelTypeString     = "densityModelType";
-    static constexpr auto viscosityModelTypeString   = "viscosityModelType";
+    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * viscosibilityString() { return "viscosibility"; }
+    static constexpr char const * referencePressureString() { return "referencePressure"; }
+    static constexpr char const * referenceDensityString() { return "referenceDensity"; }
+    static constexpr char const * referenceViscosityString() { return "referenceViscosity"; }
+    static constexpr char const * densityModelTypeString() { return "densityModelType"; }
+    static constexpr char const * viscosityModelTypeString() { return "viscosityModelType"; }
   };
 
 protected:

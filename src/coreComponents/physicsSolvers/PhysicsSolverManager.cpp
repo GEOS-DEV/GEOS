@@ -25,16 +25,16 @@ namespace geosx
 
 using namespace dataRepository;
 
-PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
+PhysicsSolverManager::PhysicsSolverManager( string const & name,
                                             Group * const parent ):
   Group( name, parent ),
   m_gravityVector( { 0.0, 0.0, -9.81 } )
 {
   setInputFlags( InputFlags::REQUIRED );
 
-  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector )->
-    setDefaultValue( m_gravityVector )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  this->registerWrapper( viewKeyStruct::gravityVectorString(), &m_gravityVector ).
+    setDefaultValue( m_gravityVector ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Gravity vector used in the physics solvers" );
 }
 
@@ -49,8 +49,8 @@ Group * PhysicsSolverManager::createChild( string const & childKey, string const
   if( SolverBase::CatalogInterface::hasKeyName( childKey ) )
   {
     GEOSX_LOG_RANK_0( "Adding Solver of type " << childKey << ", named " << childName );
-    rval = registerGroup( childName,
-                          SolverBase::CatalogInterface::factory( childKey, childName, this ) );
+    rval = &registerGroup( childName,
+                           SolverBase::CatalogInterface::factory( childKey, childName, this ) );
   }
   return rval;
 }

@@ -39,7 +39,7 @@ public:
    * @param[in] name the name of the MeshManager object in the repository
    * @param[in] parent the parent group of the MeshManager object being constructed
    */
-  MeshManager( std::string const & name,
+  MeshManager( string const & name,
                Group * const parent );
 
   virtual ~MeshManager() override;
@@ -60,13 +60,13 @@ public:
    * @brief Generate the meshes of the physical DomainPartition.
    * @param[in] domain a pointer to the physical DomainPartition
    */
-  void generateMeshes( DomainPartition * const domain );
+  void generateMeshes( DomainPartition & domain );
 
   /**
    * @brief Generate the different mesh levels in a MeshBody of the domain.
    * @param[in] domain a pointer to the physical DomainPartition
    */
-  void generateMeshLevels( DomainPartition * const domain );
+  void generateMeshLevels( DomainPartition & domain );
 
 private:
 

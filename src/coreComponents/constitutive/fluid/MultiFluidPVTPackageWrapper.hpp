@@ -203,7 +203,7 @@ class MultiFluidPVTPackageWrapper : public MultiFluidBase
 {
 public:
 
-  MultiFluidPVTPackageWrapper( std::string const & name, Group * const parent );
+  MultiFluidPVTPackageWrapper( string const & name, Group * const parent );
 
   virtual ~MultiFluidPVTPackageWrapper() override;
 
@@ -254,7 +254,7 @@ protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups() override;
 
   /// function that populates m_fluid ptr; to be overriden by derived classes
   virtual void createFluid() = 0;

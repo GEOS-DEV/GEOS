@@ -189,7 +189,7 @@ public:
    * @param problemTime the current problem time
    * @param lnodelist
    */
-  void writePolygonMeshObject( const std::string & meshName,
+  void writePolygonMeshObject( const string & meshName,
                                const localIndex nnodes,
                                real64 * coords[3],
                                const globalIndex * dummy1,
@@ -231,7 +231,7 @@ public:
    * @param writeArbitraryPolygon
    */
   void writeElementMesh( ElementRegionBase const & elementRegion,
-                         NodeManager const * const nodeManager,
+                         NodeManager const & nodeManager,
                          string const & meshName,
                          const localIndex nnodes,
                          real64 * coords[3],
@@ -248,7 +248,7 @@ public:
    * @param problemTime the current problem time
    * @param isRestart whether or not we want to write restart only data
    */
-  void writeMeshLevel( MeshLevel const * const meshLevel,
+  void writeMeshLevel( MeshLevel const & meshLevel,
                        int const cycleNum,
                        real64 const problemTime,
                        bool const isRestart );
@@ -323,7 +323,7 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void writeGroupSilo( dataRepository::Group const * group,
+  void writeGroupSilo( dataRepository::Group const & group,
                        string const & siloDirName,
                        string const & meshname,
                        int const centering,
@@ -675,7 +675,7 @@ private:
 
   string m_restartFileRoot;
 
-  string const m_siloDirectory = "siloFiles";
+  string const m_siloDirectory;
 
   string const m_siloDataSubDirectory = "data";
 
@@ -683,9 +683,9 @@ private:
 
   string m_baseFileName;
 
-  std::vector< std::string > m_emptyMeshes;
+  std::vector< string > m_emptyMeshes;
 //  string_array m_emptyMaterials;
-  std::vector< std::string > m_emptyVariables;
+  std::vector< string > m_emptyVariables;
 
   integer m_writeEdgeMesh;
   integer m_writeFaceMesh;

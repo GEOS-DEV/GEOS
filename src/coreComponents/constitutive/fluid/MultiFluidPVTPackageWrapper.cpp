@@ -28,7 +28,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( std::string const & name,
+MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( string const & name,
                                                           Group * const parent )
   :
   MultiFluidBase( name, parent ),
@@ -63,9 +63,9 @@ void MultiFluidPVTPackageWrapper::postProcessInput()
   std::transform( m_phaseNames.begin(), m_phaseNames.end(), m_phaseTypes.begin(), getPVTPackagePhaseType );
 }
 
-void MultiFluidPVTPackageWrapper::initializePostSubGroups( Group * const group )
+void MultiFluidPVTPackageWrapper::initializePostSubGroups()
 {
-  MultiFluidBase::initializePostSubGroups( group );
+  MultiFluidBase::initializePostSubGroups();
   createFluid();
 }
 

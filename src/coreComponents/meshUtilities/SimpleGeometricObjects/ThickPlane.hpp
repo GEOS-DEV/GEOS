@@ -42,7 +42,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  ThickPlane( const std::string & name,
+  ThickPlane( const string & name,
               Group * const parent );
 
   /**
@@ -115,9 +115,9 @@ private:
 
   struct viewKeyStruct
   {
-    static constexpr auto originString = "origin";
-    static constexpr auto normalString = "normal";
-    static constexpr auto thicknessString = "thickness";
+    static constexpr char const * originString() { return "origin"; }
+    static constexpr char const * normalString() { return "normal"; }
+    static constexpr char const * thicknessString() { return "thickness"; }
   };
 
   /// @endcond

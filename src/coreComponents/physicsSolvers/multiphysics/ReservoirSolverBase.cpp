@@ -24,6 +24,8 @@
 #include "ReservoirSolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
@@ -33,21 +35,21 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-ReservoirSolverBase::ReservoirSolverBase( const std::string & name,
+ReservoirSolverBase::ReservoirSolverBase( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_flowSolverName(),
   m_wellSolverName()
 {
-  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::flowSolverNameString(), &m_flowSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the flow solver to use in the reservoir-well system solver" );
 
-  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::wellSolverNameString(), &m_wellSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the well solver to use in the reservoir-well system solver" );
 
-  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 
 }
@@ -59,42 +61,36 @@ void ReservoirSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  m_flowSolver = this->getParent()->getGroup< FlowSolverBase >( m_flowSolverName );
-  m_wellSolver = this->getParent()->getGroup< WellSolverBase >( m_wellSolverName );
-
-  GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
-  GEOSX_ERROR_IF( m_wellSolver == nullptr, "Well solver not found or invalid type: " << m_wellSolverName );
+  m_flowSolver = &this->getParent().getGroup< FlowSolverBase >( m_flowSolverName );
+  m_wellSolver = &this->getParent().getGroup< WellSolverBase >( m_wellSolverName );
 
   m_wellSolver->setFlowSolverName( m_flowSolverName );
   m_flowSolver->setReservoirWellsCoupling();
 }
 
-void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups( Group * const rootGroup )
+void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
 {
-  SolverBase::initializePostInitialConditionsPreSubGroups( rootGroup );
+  SolverBase::initializePostInitialConditionsPreSubGroups( );
 
-  DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = getGlobalState().getProblemManager().getGroup< DomainPartition >( keys::domain );
 
-  MeshLevel * const meshLevel = domain->getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   // loop over the wells
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
     // get the string to access the permeability
-    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString;
+    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString();
 
     PerforationData * const perforationData = subRegion.getPerforationData();
 
     // compute the Peaceman index (if not read from XML)
-    perforationData->computeWellTransmissibility( *meshLevel,
-                                                  &subRegion,
-                                                  permeabilityKey );
+    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeabilityKey );
   } );
 
   // bind the stored reservoir views to the current domain
   resetViews( domain );
-
 }
 
 
@@ -137,8 +133,8 @@ void ReservoirSolverBase::addCouplingNumNonzeros( DomainPartition & domain,
   localIndex const resNDOF = m_wellSolver->numDofPerResElement();
   localIndex const wellNDOF = m_wellSolver->numDofPerWellElement();
 
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
   string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
@@ -147,7 +143,7 @@ void ReservoirSolverBase::addCouplingNumNonzeros( DomainPartition & domain,
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & resElemGhostRank =
-    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
@@ -162,7 +158,7 @@ void ReservoirSolverBase::addCouplingNumNonzeros( DomainPartition & domain,
 
     // get the well element indices corresponding to each perforation
     arrayView1d< localIndex const > const & perfWellElemIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
 
     // get the element region, subregion, index
     arrayView1d< localIndex const > const & resElementRegion = perforationData->getMeshElements().m_toElementRegion;
@@ -391,7 +387,7 @@ void ReservoirSolverBase::implicitStepComplete( real64 const & time_n,
   m_wellSolver->implicitStepComplete( time_n, dt, domain );
 }
 
-void ReservoirSolverBase::resetViews( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+void ReservoirSolverBase::resetViews( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 real64 ReservoirSolverBase::scalingForSystemSolution( DomainPartition const & domain,

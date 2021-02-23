@@ -36,7 +36,7 @@ public:
   LaplaceFEM() = delete;
 
   // The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
-  LaplaceFEM( const std::string & name,
+  LaplaceFEM( const string & name,
               Group * const parent );
 
   // Destructor
@@ -47,7 +47,7 @@ public:
   static string catalogName() { return "LaplaceFEM"; }
 
   // This method ties properties with their supporting mesh
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
 //END_SPHINX_INCLUDE_02
 /**
@@ -147,7 +147,6 @@ public:
   {
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
-
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 

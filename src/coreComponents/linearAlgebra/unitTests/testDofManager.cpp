@@ -57,6 +57,8 @@ char const * xmlInput =
   "  </ElementRegions>"
   "</Problem>";
 
+CommandLineOptions g_commandLineOptions;
+
 /**
  * @brief Base class for all DofManager test fixtures.
  */
@@ -68,7 +70,7 @@ public:
 
   DofManagerTestBase():
     Base(),
-    problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) ),
+    state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ),
     dofManager( "test" )
   {}
 
@@ -76,12 +78,12 @@ protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( problemManager.get(), xmlInput );
-    mesh = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
-    dofManager.setMesh( *problemManager->getDomainPartition(), 0, 0 );
+    setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 );
+    dofManager.setMesh( state.getProblemManager().getDomainPartition(), 0, 0 );
   }
 
-  std::unique_ptr< ProblemManager > const problemManager;
+  GeosxState state;
   MeshLevel * mesh;
   DofManager dofManager;
 };
@@ -99,9 +101,9 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
                            string_array const & regions,
                            array1d< globalIndex > & dofNumbers )
 {
-  ObjectManagerBase const * const manager =
-    mesh->getGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey );
-  arrayView1d< globalIndex const > dofIndex = manager->getReference< array1d< globalIndex > >( dofIndexKey );
+  ObjectManagerBase const & manager =
+    mesh->getGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey() );
+  arrayView1d< globalIndex const > dofIndex = manager.getReference< array1d< globalIndex > >( dofIndexKey );
 
   forLocalObjects< LOC >( mesh, regions, [&]( localIndex const idx )
   {
@@ -125,8 +127,8 @@ void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const
                                                          array1d< globalIndex > & dofNumbers )
 {
   // make a list of regions
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  auto const dofNumber = elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+  ElementRegionManager const & elemManager = mesh->getElemManager();
+  auto const dofNumber = elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
   forLocalObjects< DofManager::Location::Elem >( mesh, regions, [&]( auto const idx )
   {
@@ -978,7 +980,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerRestrictorTest, PetscInterface,
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
+  g_commandLineOptions = *geosx::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;

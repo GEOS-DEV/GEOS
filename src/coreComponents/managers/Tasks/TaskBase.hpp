@@ -19,7 +19,7 @@
 #ifndef TASKBASE_HPP_
 #define TASKBASE_HPP_
 
-#include <string>
+
 #include <limits>
 
 #include "dataRepository/ExecutableGroup.hpp"
@@ -34,8 +34,8 @@ namespace geosx
 class TaskBase : public ExecutableGroup
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  explicit TaskBase( std::string const & name,
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  explicit TaskBase( string const & name,
                      Group * const parent );
   virtual ~TaskBase( ) override;
 
@@ -46,7 +46,7 @@ public:
   static string catalogName() { return "TaskBase"; }
 
   /// The catalog interface type for TaskBase
-  using CatalogInterface = dataRepository::CatalogInterface< TaskBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< TaskBase, string const &, Group * const >;
   /**
    * @brief Get the catalog interface for the TaskBase
    * @return the Catalog for TaskBase.
@@ -54,12 +54,12 @@ public:
   static CatalogInterface::CatalogType & getCatalog();
 
   /// @copydoc geosx::ExecutableGroup::execute
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
     GEOSX_UNUSED_VAR( time_n );
     GEOSX_UNUSED_VAR( dt );
@@ -68,6 +68,7 @@ public:
     GEOSX_UNUSED_VAR( eventProgress );
     GEOSX_UNUSED_VAR( domain );
     GEOSX_ERROR( "NOT IMPLEMENTED" );
+    return false;
   }
 
   /// @copydoc geosx::dataRepository::Group::postProcessInput( )

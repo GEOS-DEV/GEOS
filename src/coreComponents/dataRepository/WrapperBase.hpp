@@ -24,6 +24,10 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "LvArray/src/python/python.hpp"
+#endif
+
 #include <string>
 #include <memory>
 #include <set>
@@ -60,7 +64,7 @@ public:
    * @param[in] parent pointer to Group that holds this WrapperBase
    */
   explicit WrapperBase( string const & name,
-                        Group * const parent );
+                        Group & parent );
 
   /// @cond DO_NOT_DOCUMENT
   WrapperBase() = delete;
@@ -163,7 +167,7 @@ public:
    * @brief Return a string representing the default value.
    * @return A string representing the default value.
    */
-  virtual std::string getDefaultValueString() const = 0;
+  virtual string getDefaultValueString() const = 0;
 
   /**
    * @brief Initialize the wrapper from the input xml node.
@@ -181,9 +185,9 @@ public:
    * @note This wrapper must hold an LvArray::Array.
    */
   virtual void addBlueprintField( conduit::Node & fields,
-                                  std::string const & name,
-                                  std::string const & topology,
-                                  std::vector< std::string > const & componentNames = {} ) const = 0;
+                                  string const & name,
+                                  string const & topology,
+                                  std::vector< string > const & componentNames = {} ) const = 0;
 
   /**
    * @brief Push the data in the wrapper into a Conduit Blueprint mcarray.
@@ -191,7 +195,7 @@ public:
    * @param componentNames The names of the components, if not specified they are auto generated.
    * @note This wrapper must hold an LvArray::Array.
    */
-  virtual void populateMCArray( conduit::Node & node, std::vector< std::string > const & componentNames = {} ) const = 0;
+  virtual void populateMCArray( conduit::Node & node, std::vector< string > const & componentNames = {} ) const = 0;
 
   /**
    * @brief Create a new Wrapper with values averaged over the second dimension.
@@ -201,7 +205,7 @@ public:
    * @note This Wrapper must hold an LvArray::Array of dimension 2 or greater.
    * @note The new Wrapper is not registered with @p group.
    */
-  virtual std::unique_ptr< WrapperBase > averageOverSecondDim( std::string const & name, Group & group ) const = 0;
+  virtual std::unique_ptr< WrapperBase > averageOverSecondDim( string const & name, Group & group ) const = 0;
 
   /**
    * @name Restart output methods
@@ -245,31 +249,31 @@ public:
    * @param[in] onDevice    determine whether the wrapper is packable on host vs device
    * @return @p true if @p T is packable, @p false otherwise
    */
-  virtual
-  bool isPackable( bool onDevice ) const = 0;
+  virtual bool isPackable( bool onDevice ) const = 0;
 
   /**
    * @brief Pack the entire wrapped object into a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
    * @param[in] withMetadata whether to pack string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
-   * @return               the number of @p buffer_unit_type units packed
+   * @param[in] onDevice whether to use device-based packing functions
+   *   (buffer must be either pinned or a device pointer)
+   * @return The number of @p buffer_unit_type units packed
    */
-  virtual
-  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const = 0;
+  virtual localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const = 0;
 
   /**
    * @brief For indexable types, pack selected indices of wrapped object into a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
-   * @param[in] packList   the list of indices to pack
+   * @param[in] packList the list of indices to pack
    * @param[in] withMetadata whether to pack string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
-   * @return               the number of @p buffer_unit_type units packed
+   * @param[in] onDevice whether to use device-based packing functions
+   *    (buffer must be either pinned or a device pointer)
+   * @return The number of @p buffer_unit_type units packed
    */
-  virtual
-  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const = 0;
+  virtual localIndex packByIndex( buffer_unit_type * & buffer,
+                                  arrayView1d< localIndex const > const & packList,
+                                  bool withMetadata,
+                                  bool onDevice ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the entire wrapped object.
@@ -279,42 +283,43 @@ public:
    *                         as we pack less metadata on device
    * @return the number of @p buffer_unit_type units needed to pack
    */
-  virtual
-  localIndex packSize( bool withMetadata, bool onDevice ) const = 0;
+  virtual localIndex packSize( bool withMetadata, bool onDevice ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the selected indices wrapped object.
    * @param[in] packList the list of indices to pack
    * @param[in] withMetadata whether to pack string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
-   * @return             the number of @p buffer_unit_type units needed to pack
+   * @param[in] onDevice whether to use device-based packing functions
+   *    (buffer must be either pinned or a device pointer)
+   * @return The number of @p buffer_unit_type units needed to pack
    */
-  virtual
-  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const = 0;
+  virtual localIndex packByIndexSize( arrayView1d< localIndex const > const & packList,
+                                      bool withMetadata,
+                                      bool onDevice ) const = 0;
 
   /**
    * @brief Unpack the entire wrapped object from a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
    * @param[in] withMetadata whether to expect string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
-   * @return               the number of @p buffer_unit_type units unpacked
+   * @param[in] onDevice whether to use device-based packing functions
+   *   (buffer must be either pinned or a device pointer)
+   * @return the number of @p buffer_unit_type units unpacked
    */
-  virtual
-  localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) = 0;
+  virtual localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) = 0;
 
   /**
    * @brief For indexable types, unpack selected indices of wrapped object from a buffer.
-   * @param[in,out] buffer    the binary buffer pointer, advanced upon completion
+   * @param[in,out] buffer the binary buffer pointer, advanced upon completion
    * @param[in] unpackIndices the list of indices to pack
    * @param[in] withMetadata whether to include metadata in the packing
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
-   * @return                  the number of @p buffer_unit_type units unpacked
+   * @param[in] onDevice whether to use device-based packing functions
+   *   (buffer must be either pinned or a device pointer)
+   * @return the number of @p buffer_unit_type units unpacked
    */
-  virtual
-  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) = 0;
+  virtual localIndex unpackByIndex( buffer_unit_type const * & buffer,
+                                    arrayView1d< localIndex const > const & unpackIndices,
+                                    bool withMetadata,
+                                    bool onDevice ) = 0;
 
   ///@}
 
@@ -337,10 +342,10 @@ public:
    * @param val an int that is converted into a bool
    * @return a pointer to this wrapper
    */
-  WrapperBase * setSizedFromParent( int val )
+  WrapperBase & setSizedFromParent( int val )
   {
     m_sizedFromParent = val;
-    return this;
+    return *this;
   }
 
   /**
@@ -354,10 +359,10 @@ public:
    * @param flags the new RestartFlags value
    * @return a pointer to this wrapper
    */
-  WrapperBase * setRestartFlags( RestartFlags flags )
+  WrapperBase & setRestartFlags( RestartFlags flags )
   {
     m_restart_flags = flags;
-    return this;
+    return *this;
   }
 
   /**
@@ -371,10 +376,10 @@ public:
    * @param flag the new PlotLevel value
    * @return a pointer to this wrapper
    */
-  WrapperBase * setPlotLevel( PlotLevel const flag )
+  WrapperBase & setPlotLevel( PlotLevel const flag )
   {
     m_plotLevel = flag;
-    return this;
+    return *this;
   }
 
   /**
@@ -387,11 +392,17 @@ public:
   }
 
   /**
+   * @brief Return the path to this Wrapper in the data repository.
+   * @return The path to this Wrapper in the data repository.
+   */
+  string getPath() const;
+
+  /**
    * @brief Set the InputFlag of the wrapper.
    * @param input the new InputFlags value
    * @return a pointer to this wrapper
    */
-  WrapperBase * setInputFlag( InputFlags const input )
+  WrapperBase & setInputFlag( InputFlags const input )
   {
     if( input == InputFlags::OPTIONAL || input == InputFlags::REQUIRED )
     {
@@ -399,7 +410,8 @@ public:
       m_restart_flags = RestartFlags::WRITE;
     }
     m_inputFlag = input;
-    return this;
+
+    return *this;
   }
 
   /**
@@ -416,10 +428,10 @@ public:
    * @param description the description
    * @return a pointer to this wrapper
    */
-  WrapperBase * setDescription( string const & description )
+  WrapperBase & setDescription( string const & description )
   {
     m_description = description;
-    return this;
+    return *this;
   }
 
   /**
@@ -453,10 +465,10 @@ public:
    * @param objectName name of the registering object
    * @return pointer to this wrapper
    */
-  WrapperBase * setRegisteringObjects( string const & objectName )
+  WrapperBase & setRegisteringObjects( string const & objectName )
   {
     m_registeringObjects.insert( objectName );
-    return this;
+    return *this;
   }
 
   ///@}
@@ -481,8 +493,7 @@ public:
    * The overridden function will create a copy of the derived Wrapper<T> the using the provided
    * values of name and parent to differentiate itself from the source.
    */
-  virtual std::unique_ptr< WrapperBase > clone( string const & name,
-                                                Group * const parent ) = 0;
+  virtual std::unique_ptr< WrapperBase > clone( string const & name, Group & parent ) = 0;
 
   /**
    * @brief Copy the the data contained in another wrapper into this wrapper.
@@ -519,6 +530,14 @@ public:
    */
   virtual int setTotalviewDisplay() const;
 //  static int TV_ttf_display_type( const WrapperBase * wrapper);
+#endif
+
+#if defined(GEOSX_USE_PYGEOSX)
+  /**
+   * @brief Return a Python object representing the wrapped object.
+   * @return A Python object representing the wrapped object.
+   */
+  virtual PyObject * createPythonObject( ) = 0;
 #endif
 
 protected:

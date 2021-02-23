@@ -32,16 +32,16 @@ namespace geosx
 {
 using namespace dataRepository;
 
-DomainPartition::DomainPartition( std::string const & name,
+DomainPartition::DomainPartition( string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  this->registerWrapper( "Neighbors", &m_neighbors )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  this->registerWrapper( "Neighbors", &m_neighbors ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
-  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
   registerGroup( groupKeys.meshBodies );
@@ -53,13 +53,6 @@ DomainPartition::DomainPartition( std::string const & name,
 DomainPartition::~DomainPartition()
 {}
 
-
-void DomainPartition::registerDataOnMeshRecursive( Group * const )
-{
-  Group::registerDataOnMeshRecursive( getMeshBodies() );
-}
-
-
 void DomainPartition::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
@@ -69,8 +62,8 @@ void DomainPartition::initializationOrder( string_array & order )
   }
 
   {
-    order.emplace_back( string( groupKeysStruct::meshBodiesString ) );
-    usedNames.insert( groupKeysStruct::meshBodiesString );
+    order.emplace_back( string( groupKeysStruct::meshBodiesString() ) );
+    usedNames.insert( groupKeysStruct::meshBodiesString() );
   }
 
 
@@ -88,10 +81,10 @@ void DomainPartition::generateSets()
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * const mesh = this->getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  MeshLevel & mesh = this->getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
-  dataRepository::Group const & nodeSets = nodeManager->sets();
+  dataRepository::Group const & nodeSets = nodeManager.sets();
 
   map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
@@ -99,14 +92,14 @@ void DomainPartition::generateSets()
   // loop over all wrappers and fill the nodeIndSet arrays for each set
   for( auto & wrapper : nodeSets.wrappers() )
   {
-    string name = wrapper.second->getName();
-    nodeInSet[name].resize( nodeManager->size() );
+    string const & name = wrapper.second->getName();
+    nodeInSet[name].resize( nodeManager.size() );
     nodeInSet[name].setValues< serialPolicy >( false );
-    Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets.getWrapper< SortedArray< localIndex > >( name );
-    if( setPtr!=nullptr )
+
+    if( nodeSets.hasWrapper( name ) )
     {
       setNames.emplace_back( name );
-      SortedArrayView< localIndex const > const & set = setPtr->reference();
+      SortedArrayView< localIndex const > const & set = nodeSets.getReference< SortedArray< localIndex > >( name );
       for( localIndex const a : set )
       {
         nodeInSet[name][a] = true;
@@ -115,18 +108,18 @@ void DomainPartition::generateSets()
   }
 
 
-  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  elementRegionManager->forElementSubRegions( [&]( auto & subRegion )
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
+  elementRegionManager.forElementSubRegions( [&]( auto & subRegion )
   {
     dataRepository::Group & elementSets = subRegion.sets();
 
     auto const & elemToNodeMap = subRegion.nodeList();
 
-    for( std::string const & setName : setNames )
+    for( string const & setName : setNames )
     {
       arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
-      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName )->reference();
+      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );
@@ -230,35 +223,33 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
 #endif
 
-  Group * const meshBodies = getMeshBodies();
-  MeshBody * const meshBody = meshBodies->getGroup< MeshBody >( 0 );
-  MeshLevel & meshLevel = *meshBody->getGroup< MeshLevel >( 0 );
+  MeshLevel & meshLevel = getMeshBody( 0 ).getMeshLevel( 0 );
 
   for( NeighborCommunicator const & neighbor : m_neighbors )
   {
     neighbor.addNeighborGroupToMesh( meshLevel );
   }
 
-  NodeManager * const nodeManager = meshLevel.getNodeManager();
-  FaceManager * const faceManager = meshLevel.getFaceManager();
-  EdgeManager * const edgeManager = meshLevel.getEdgeManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
-  nodeManager->setMaxGlobalIndex();
+  nodeManager.setMaxGlobalIndex();
 
-  CommunicationTools::assignGlobalIndices( *faceManager, *nodeManager, m_neighbors );
+  getGlobalState().getCommunicationTools().assignGlobalIndices( faceManager, nodeManager, m_neighbors );
 
-  CommunicationTools::assignGlobalIndices( *edgeManager, *nodeManager, m_neighbors );
+  getGlobalState().getCommunicationTools().assignGlobalIndices( edgeManager, nodeManager, m_neighbors );
 
-  CommunicationTools::findMatchedPartitionBoundaryObjects( faceManager,
-                                                           m_neighbors );
+  getGlobalState().getCommunicationTools().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                                m_neighbors );
 
-  CommunicationTools::findMatchedPartitionBoundaryObjects( nodeManager,
-                                                           m_neighbors );
+  getGlobalState().getCommunicationTools().findMatchedPartitionBoundaryObjects( nodeManager,
+                                                                                m_neighbors );
 
-  CommunicationTools::findGhosts( meshLevel, m_neighbors, use_nonblocking );
+  getGlobalState().getCommunicationTools().findGhosts( meshLevel, m_neighbors, use_nonblocking );
 
-  faceManager->sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-  faceManager->computeGeometry( nodeManager );
+  faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+  faceManager.computeGeometry( nodeManager );
 }
 
 void DomainPartition::addNeighbors( const unsigned int idim,

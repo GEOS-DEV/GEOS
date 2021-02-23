@@ -41,7 +41,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseHybridFVM( const std::string & name,
+  SinglePhaseHybridFVM( const string & name,
                         Group * const parent );
 
 
@@ -72,7 +72,7 @@ public:
   static string catalogName()
   { return "SinglePhaseHybridFVM"; }
 
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -147,28 +147,12 @@ public:
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
     // primary face-based field
-    static constexpr auto deltaFacePressureString = "deltaFacePressure";
+    static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
+  };
 
-  } viewKeysSinglePhaseHybridFVM;
+  virtual void initializePreSubGroups() override;
 
-  viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseHybridFVM; }
-
-  viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseHybridFVM; }
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysSinglePhaseHybridFVM;
-
-  groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseHybridFVM; }
-
-  groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseHybridFVM; }
-
-  virtual void initializePreSubGroups( dataRepository::Group * const rootGroup ) override;
-
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
 

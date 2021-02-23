@@ -34,18 +34,18 @@ using namespace dataRepository;
 using namespace finiteElement;
 
 
-FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, Group * const parent ):
+FiniteElementDiscretization::FiniteElementDiscretization( string const & name, Group * const parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::orderString, &m_order )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::orderString(), &m_order ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The order of the finite element basis." );
 
-  registerWrapper( viewKeyStruct::formulationString, &m_formulation )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( "default" )->
+  registerWrapper( viewKeyStruct::formulationString(), &m_formulation ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "default" ).
     setDescription( "Specifier to indicate any specialized formuations. "
                     "For instance, one of the many enhanced assumed strain "
                     "methods of the Hexahedron parent shape would be indicated "
@@ -104,6 +104,6 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, string const &, Group * const )
 
 } /* namespace geosx */

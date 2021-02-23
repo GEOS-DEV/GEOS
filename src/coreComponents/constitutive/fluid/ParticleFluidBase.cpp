@@ -26,29 +26,29 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ParticleFluidBase::ParticleFluidBase( std::string const & name, Group * const parent )
+ParticleFluidBase::ParticleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::settlingFactorString, &m_settlingFactor );
-  registerWrapper( viewKeyStruct::dSettlingFactor_dPressureString, &m_dSettlingFactor_dPressure );
-  registerWrapper( viewKeyStruct::dSettlingFactor_dProppantConcentrationString, &m_dSettlingFactor_dProppantConcentration );
-  registerWrapper( viewKeyStruct::dSettlingFactor_dComponentConcentrationString, &m_dSettlingFactor_dComponentConcentration );
+  registerWrapper( viewKeyStruct::settlingFactorString(), &m_settlingFactor );
+  registerWrapper( viewKeyStruct::dSettlingFactor_dPressureString(), &m_dSettlingFactor_dPressure );
+  registerWrapper( viewKeyStruct::dSettlingFactor_dProppantConcentrationString(), &m_dSettlingFactor_dProppantConcentration );
+  registerWrapper( viewKeyStruct::dSettlingFactor_dComponentConcentrationString(), &m_dSettlingFactor_dComponentConcentration );
 
-  registerWrapper( viewKeyStruct::collisionFactorString, &m_collisionFactor );
-  registerWrapper( viewKeyStruct::dCollisionFactor_dProppantConcentrationString, &m_dCollisionFactor_dProppantConcentration );
+  registerWrapper( viewKeyStruct::collisionFactorString(), &m_collisionFactor );
+  registerWrapper( viewKeyStruct::dCollisionFactor_dProppantConcentrationString(), &m_dCollisionFactor_dProppantConcentration );
 
-  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration )->
-    setApplyDefaultValue( 0.6 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::maxProppantConcentrationString(), &m_maxProppantConcentration ).
+    setApplyDefaultValue( 0.6 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Max proppant concentration" );
 
-  registerWrapper( viewKeyStruct::isCollisionalSlipString, &m_isCollisionalSlip )->
-    setApplyDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::isCollisionalSlipString(), &m_isCollisionalSlip ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Whether the collisional component of the slip velocity is considered" );
 
-  registerWrapper( viewKeyStruct::proppantPackPermeabilityString, &m_proppantPackPermeability );
+  registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
 
 }
 
@@ -59,13 +59,13 @@ void ParticleFluidBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 }
 
-void ParticleFluidBase::allocateConstitutiveData( Group * const parent,
+void ParticleFluidBase::allocateConstitutiveData( Group & parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  this->resize( parent->size() );
-  m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS );
+  this->resize( parent.size() );
+  m_dSettlingFactor_dComponentConcentration.resize( parent.size(), MAX_NUM_COMPONENTS );
 }
 
 } //namespace constitutive

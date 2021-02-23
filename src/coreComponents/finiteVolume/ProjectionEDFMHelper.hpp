@@ -9,7 +9,7 @@ namespace geosx {
 class ProjectionEDFMHelper {
  public:
   ProjectionEDFMHelper( MeshLevel const & mesh,
-                        GeometricObjectManager const * geometricObjManager,
+                        GeometricObjectManager const & geometricObjManager,
                         std::string const & coeffName,
                         CellElementStencilTPFA & stencil );
 
@@ -70,11 +70,11 @@ class ProjectionEDFMHelper {
 
   // Private variables
   MeshLevel const & m_mesh;
-  GeometricObjectManager const * m_geometricObjManager;
-  ElementRegionManager const * const m_elementManager;
-  FaceManager const * const m_faceManager;
-  NodeManager const * const m_nodeManager;
-  EdgeManager const * const m_edgeManager;
+  GeometricObjectManager const & m_geometricObjManager;
+  ElementRegionManager const & m_elementManager;
+  FaceManager const & m_faceManager;
+  NodeManager const & m_nodeManager;
+  EdgeManager const & m_edgeManager;
   // ArrayOfArraysView< localIndex const > const & m_faceToEdges;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodesCoord;
   arrayView2d< localIndex const > const m_edgeToNodes;

@@ -30,28 +30,28 @@ namespace constitutive
 
 //START_SPHINX_INCLUDE_00
 
-BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string const & name,
+BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const & name,
                                                                   Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Minimum volume fraction value for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseRelPermExponentString, &m_phaseRelPermExponent )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseRelPermExponentString(), &m_phaseRelPermExponent ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "MinimumRel perm power law exponent for each phase" );
 
 
-  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString, &m_phaseRelPermMaxValue )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString(), &m_phaseRelPermMaxValue ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum rel perm value for each phase" );
 
-  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
-    setApplyDefaultValue( 1.0 )->
+  registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 
 }
@@ -64,7 +64,7 @@ void BrooksCoreyRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
 
-  localIndex const NP = numFluidPhases();
+  localIndex const numPhases = numFluidPhases();
 
   #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
     if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
@@ -75,14 +75,14 @@ void BrooksCoreyRelativePermeability::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermExponent, NP, viewKeyStruct::phaseRelPermExponentString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermMaxValue, NP, viewKeyStruct::phaseRelPermMaxValueString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() )
+  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermExponent, numPhases, viewKeyStruct::phaseRelPermExponentString() )
+  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermMaxValue, numPhases, viewKeyStruct::phaseRelPermMaxValueString() )
 
 #undef COREY_CHECK_INPUT_LENGTH
 
   m_volFracScale = 1.0;
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases; ++ip )
   {
     GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                     "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
@@ -111,7 +111,7 @@ BrooksCoreyRelativePermeability::KernelWrapper BrooksCoreyRelativePermeability::
 }
 
 //START_SPHINX_INCLUDE_01
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, string const &, Group * const )
 
 } // namespace constitutive
 

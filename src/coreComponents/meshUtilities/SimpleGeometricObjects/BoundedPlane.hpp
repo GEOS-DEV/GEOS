@@ -42,7 +42,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  BoundedPlane( const std::string & name,
+  BoundedPlane( const string & name,
                 Group * const parent );
 
   /**
@@ -151,12 +151,12 @@ private:
 
   struct viewKeyStruct
   {
-    static constexpr auto originString = "origin";
-    static constexpr auto normalString = "normal";
-    static constexpr auto dimensionsString    = "dimensions";
-    static constexpr auto mLengthVectorString = "lengthVector";
-    static constexpr auto mWidthVectorString  = "widthVector";
-    static constexpr auto toleranceString     = "tolerance";
+    static constexpr char const * originString() { return "origin"; }
+    static constexpr char const * normalString() { return "normal"; }
+    static constexpr char const * dimensionsString() { return "dimensions"; }
+    static constexpr char const * mLengthVectorString() { return "lengthVector"; }
+    static constexpr char const * mWidthVectorString() { return "widthVector"; }
+    static constexpr char const * toleranceString() { return "tolerance"; }
   };
 
   /// @endcond

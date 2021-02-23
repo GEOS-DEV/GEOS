@@ -15,6 +15,7 @@
 #include "FunctionManager.hpp"
 #include "CompositeFunction.hpp"
 #include "common/DataTypes.hpp"
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -23,16 +24,16 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const functionNames = "functionNames";
-std::string const variableNames = "variableNames";
-std::string const expression = "expression";
+string const functionNames = "functionNames";
+string const variableNames = "variableNames";
+string const expression = "expression";
 }
 }
 
 using namespace dataRepository;
 
 
-CompositeFunction::CompositeFunction( const std::string & name,
+CompositeFunction::CompositeFunction( const string & name,
                                       Group * const parent ):
   FunctionBase( name, parent ),
   parserContext(),
@@ -40,16 +41,16 @@ CompositeFunction::CompositeFunction( const std::string & name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  registerWrapper( keys::functionNames, &m_functionNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::functionNames, &m_functionNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of source functions. The order must match the variableNames argument." );
 
-  registerWrapper( keys::variableNames, &m_variableNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::variableNames, &m_variableNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of variables in expression" );
 
-  registerWrapper( keys::expression, &m_expression )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( keys::expression, &m_expression ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Composite math expression" );
 }
 
@@ -71,15 +72,15 @@ void CompositeFunction::initializeFunction()
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 
   // Grab pointers to sub functions
-  FunctionManager & functionManager = FunctionManager::instance();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
-    m_subFunctions.emplace_back( functionManager.getGroup< FunctionBase >( m_functionNames[ii] ));
+    m_subFunctions.emplace_back( &functionManager.getGroup< FunctionBase >( m_functionNames[ii] ) );
   }
 }
 
-void CompositeFunction::evaluate( dataRepository::Group const * const group,
+void CompositeFunction::evaluate( dataRepository::Group const & group,
                                   real64 const time,
                                   SortedArrayView< localIndex const > const & set,
                                   real64_array & result ) const
@@ -119,6 +120,6 @@ real64 CompositeFunction::evaluate( real64 const * const input ) const
   return parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, string const &, Group * const )
 
 } // namespace geosx

@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-FunctionManager::FunctionManager( const std::string & name,
+FunctionManager::FunctionManager( const string & name,
                                   Group * const parent ):
   Group( name, parent )
 {
@@ -46,7 +46,7 @@ Group * FunctionManager::createChild( string const & functionCatalogKey,
 {
   GEOSX_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
   std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::factory( functionCatalogKey, functionName, this );
-  return this->registerGroup< FunctionBase >( functionName, std::move( function ) );
+  return &this->registerGroup< FunctionBase >( functionName, std::move( function ) );
 }
 
 

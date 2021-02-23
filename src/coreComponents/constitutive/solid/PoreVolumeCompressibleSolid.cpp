@@ -27,21 +27,21 @@ namespace constitutive
 {
 
 
-PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, Group * const parent ):
+PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Solid compressibility" );
 
-  registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference pressure for fluid compressibility" );
 
-  registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier )->
+  registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
     setDefaultValue( 1.0 );
 
-  registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure );
+  registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure );
 }
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;
@@ -60,15 +60,15 @@ PoreVolumeCompressibleSolid::deliverClone( string const & name,
   return clone;
 }
 
-void PoreVolumeCompressibleSolid::allocateConstitutiveData( dataRepository::Group * const parent,
+void PoreVolumeCompressibleSolid::allocateConstitutiveData( dataRepository::Group & parent,
                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  this->resize( parent->size() );
+  this->resize( parent.size() );
 
-  m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_poreVolumeMultiplier.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dPVMult_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
 }
 
@@ -112,6 +112,6 @@ void PoreVolumeCompressibleSolid::stateUpdateBatchPressure( arrayView1d< real64 
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, string const &, Group * const )
 }
 } /* namespace geosx */

@@ -26,7 +26,7 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 
-#include <string>
+
 #include <limits>
 
 namespace geosx
@@ -38,7 +38,7 @@ class SolverBase : public ExecutableGroup
 {
 public:
 
-  explicit SolverBase( std::string const & name,
+  explicit SolverBase( string const & name,
                        Group * const parent );
 
   SolverBase( SolverBase && ) = default;
@@ -59,12 +59,12 @@ public:
   /**
    * This method is called when its host event is triggered
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Getter for system matrix
@@ -515,24 +515,23 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, string const &, Group * const >;
   static CatalogInterface::CatalogType & getCatalog();
 
   struct viewKeyStruct
   {
-    constexpr static auto cflFactorString = "cflFactor";
-    constexpr static auto initialDtString = "initialDt";
-    constexpr static auto maxStableDtString = "maxStableDt";
-    static constexpr auto discretizationString = "discretization";
-    constexpr static auto targetRegionsString = "targetRegions";
-
-  } viewKeys;
+    static constexpr char const * cflFactorString() { return "cflFactor"; }
+    static constexpr char const * initialDtString() { return "initialDt"; }
+    static constexpr char const * maxStableDtString() { return "maxStableDt"; }
+    static constexpr char const * discretizationString() { return "discretization"; }
+    static constexpr char const * targetRegionsString() { return "targetRegions"; }
+  };
 
   struct groupKeyStruct
   {
-    constexpr static auto linearSolverParametersString = "LinearSolverParameters";
-    constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
-  } groupKeys;
+    static constexpr char const * linearSolverParametersString() { return "LinearSolverParameters"; }
+    static constexpr char const * nonlinearSolverParametersString() { return "NonlinearSolverParameters"; }
+  };
 
 
   /**
@@ -603,60 +602,62 @@ public:
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forTargetRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->
+    mesh.getElemManager().
       template forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forTargetRegions( MeshLevel & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->
+    mesh.getElemManager().
       template forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forTargetRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->
+    mesh.getElemManager().
       template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forTargetRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->
+    mesh.getElemManager().
       template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forTargetSubRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->
+    mesh.getElemManager().
       template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forTargetSubRegions( MeshLevel & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->
+    mesh.getElemManager().
       template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forTargetSubRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->
+    mesh.getElemManager().
       template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forTargetSubRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->
+    mesh.getElemManager().
       template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
   string getDiscretizationName() const {return m_discretizationName;}
+
+  virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
 protected:
 
@@ -733,6 +734,8 @@ protected:
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
 
+  std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
+
 private:
 
   /// List of names of regions the solver will be applied to
@@ -743,27 +746,19 @@ private:
 template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
 {
-  Group const * const constitutiveModels =
-    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  Group const & constitutiveModels =
+    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 
-  BASETYPE const * const model = constitutiveModels->getGroup< BASETYPE >( key );
-  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
-
-  return *model;
+  return constitutiveModels.getGroup< BASETYPE >( key );
 }
 
 template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
 {
-  Group * const constitutiveModels =
-    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  Group & constitutiveModels =
+    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 
-  BASETYPE * const model = constitutiveModels->getGroup< BASETYPE >( key );
-  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
-
-  return *model;
+  return constitutiveModels.getGroup< BASETYPE >( key );
 }
 
 template< typename MODEL_TYPE >
@@ -773,13 +768,11 @@ void SolverBase::validateModelMapping( ElementRegionManager const & elemRegionMa
   GEOSX_ERROR_IF_NE( modelNames.size(), m_targetRegionNames.size() );
   for( localIndex k = 0; k < modelNames.size(); ++k )
   {
-    ElementRegionBase const & region = *elemRegionManager.getRegion( m_targetRegionNames[k] );
+    ElementRegionBase const & region = elemRegionManager.getRegion( m_targetRegionNames[k] );
     for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
     {
-      ElementSubRegionBase const & subRegion = *region.getSubRegion( esr );
-      MODEL_TYPE const * const model = subRegion.getConstitutiveModels()->getGroup< MODEL_TYPE >( modelNames[k] );
-      GEOSX_ERROR_IF( model == nullptr,
-                      getName() << ": constitutive model " << modelNames[k] << " not found in " << region.getName() << '/' << subRegion.getName() );
+      ElementSubRegionBase const & subRegion = region.getSubRegion( esr );
+      subRegion.getConstitutiveModel< MODEL_TYPE >( modelNames[ k ] );
     }
   }
 }

@@ -122,11 +122,11 @@ public:
     static constexpr integer OIL   = 1; // second oil phase property
   };
 
-  RelativePermeabilityBase( std::string const & name, dataRepository::Group * const parent );
+  RelativePermeabilityBase( string const & name, dataRepository::Group * const parent );
 
   virtual ~RelativePermeabilityBase() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   localIndex numFluidPhases() const { return m_phaseNames.size(); }
@@ -138,13 +138,13 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto phaseNamesString = "phaseNames";
-    static constexpr auto phaseTypesString = "phaseTypes";
-    static constexpr auto phaseOrderString = "phaseOrder";
+    static constexpr char const * phaseNamesString() { return "phaseNames"; }
+    static constexpr char const * phaseTypesString() { return "phaseTypes"; }
+    static constexpr char const * phaseOrderString() { return "phaseOrder"; }
 
-    static constexpr auto phaseRelPermString                    = "phaseRelPerm";                    // Kr
-    static constexpr auto dPhaseRelPerm_dPhaseVolFractionString = "dPhaseRelPerm_dPhaseVolFraction"; // dKr_p/dS_p
-  } viewKeysRelativePermeabilityBase;
+    static constexpr char const * phaseRelPermString() { return "phaseRelPerm"; }                                       // Kr
+    static constexpr char const * dPhaseRelPerm_dPhaseVolFractionString() { return "dPhaseRelPerm_dPhaseVolFraction"; } // dKr_p/dS_p
+  };
 
 protected:
 

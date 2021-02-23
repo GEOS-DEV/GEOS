@@ -38,7 +38,7 @@ public:
    * @param name The name of the object in the data repository.
    * @param parent The parent of this object in the data repository.
    **/
-  HaltEvent( const std::string & name,
+  HaltEvent( const string & name,
              Group * const parent );
 
   /// Destructor
@@ -59,7 +59,7 @@ public:
   virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
-                                    dataRepository::Group * domain ) override;
+                                    DomainPartition & domain ) override;
   /// External start time
   real64 m_externalStartTime;
   /// External last time
@@ -72,9 +72,9 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto maxRuntimeString = "maxRuntime";
+    static constexpr char const * maxRuntimeString() { return "maxRuntime"; }
 
-    dataRepository::ViewKey maxRuntime = { "maxRuntime" };
+    dataRepository::ViewKey maxRuntime = { maxRuntimeString() };
   } haltEventViewKeys;
   /// @endcond
 

@@ -95,7 +95,7 @@ public:
    */
   static string catalogName() { return "CompositionalMultiphaseWell"; }
 
-  virtual void registerDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
 
   /**
@@ -145,14 +145,32 @@ public:
   void updateComponentFraction( WellElementSubRegion & subRegion ) const;
 
   /**
+   * @brief Recompute the volumetric rates that are used in the well constraints
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  void updateVolRatesForConstraint( WellElementSubRegion & subRegion,
+                                    localIndex const targetIndex );
+
+  /**
+   * @brief Recompute the current BHP pressure
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  void updateBHPForConstraint( WellElementSubRegion & subRegion,
+                               localIndex const targetIndex );
+
+  /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   void updateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   void updatePhaseVolumeFraction( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
 
@@ -166,12 +184,13 @@ public:
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   virtual void updateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
-  virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString; }
+  virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString; }
+  virtual string resElementDofName() const override { return CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString(); }
 
   virtual localIndex numFluidComponents() const override { return m_numComponents; }
 
@@ -232,58 +251,69 @@ public:
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
-    static constexpr auto dofFieldString = "compositionalWellVars";
+    static constexpr char const * dofFieldString() { return "compositionalWellVars"; }
 
     // inputs
-    static constexpr auto temperatureString = "wellTemperature";
-    static constexpr auto useMassFlagString = CompositionalMultiphaseFlow::viewKeyStruct::useMassFlagString;
+    static constexpr char const * temperatureString() { return "wellTemperature"; }
+    static constexpr char const * useMassFlagString() { return CompositionalMultiphaseFlow::viewKeyStruct::useMassFlagString(); }
 
-    static constexpr auto relPermNamesString  = CompositionalMultiphaseFlow::viewKeyStruct::relPermNamesString;
+    static constexpr char const * relPermNamesString() { return CompositionalMultiphaseFlow::viewKeyStruct::relPermNamesString(); }
 
-    static constexpr auto maxCompFracChangeString = CompositionalMultiphaseFlow::viewKeyStruct::maxCompFracChangeString;
-    static constexpr auto allowLocalCompDensChoppingString = CompositionalMultiphaseFlow::viewKeyStruct::allowLocalCompDensChoppingString;
+    static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseFlow::viewKeyStruct::maxCompFracChangeString(); }
+    static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
+    static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseFlow::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
     // primary solution field
-    static constexpr auto pressureString = CompositionalMultiphaseFlow::viewKeyStruct::pressureString;
-    static constexpr auto deltaPressureString = CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString;
-    static constexpr auto globalCompDensityString = CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString;
-    static constexpr auto deltaGlobalCompDensityString = CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString;
-    static constexpr auto mixtureConnRateString = "wellElementMixtureConnectionRate";
-    static constexpr auto deltaMixtureConnRateString = "deltaWellElementMixtureConnectionRate";
+    static constexpr char const * pressureString() { return CompositionalMultiphaseFlow::viewKeyStruct::pressureString(); }
+    static constexpr char const * deltaPressureString() { return CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString(); }
+    static constexpr char const * globalCompDensityString() { return CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString(); }
+    static constexpr char const * deltaGlobalCompDensityString() { return CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString(); }
+    static constexpr char const * mixtureConnRateString() { return "wellElementMixtureConnectionRate"; }
+    static constexpr char const * deltaMixtureConnRateString() { return "deltaWellElementMixtureConnectionRate"; }
 
     // saturations
-    static constexpr auto phaseVolumeFractionString = CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString;
-    static constexpr auto dPhaseVolumeFraction_dPressureString = CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString;
-    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString =
-      CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
+    static constexpr char const * phaseVolumeFractionString() { return CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString(); }
+    static constexpr char const * dPhaseVolumeFraction_dPressureString() { return CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString(); }
+    static constexpr char const * dPhaseVolumeFraction_dGlobalCompDensityString() { return CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(); }
 
     // global component fractions
-    static constexpr auto globalCompFractionString = CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString;
-    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString =
-      CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString;
+    static constexpr char const * globalCompFractionString() { return CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString(); }
+    static constexpr char const * dGlobalCompFraction_dGlobalCompDensityString() { return CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(); }
 
     // total mass densities
-    static constexpr auto totalMassDensityString = "totalMassDensity";
-    static constexpr auto dTotalMassDensity_dPressureString = "dTotalMassDensity_dPressure";
-    static constexpr auto dTotalMassDensity_dGlobalCompDensityString = "dTotalMassDensity_dComp";
+    static constexpr char const * totalMassDensityString() { return "totalMassDensity"; }
+    static constexpr char const * dTotalMassDensity_dPressureString() { return "dTotalMassDensity_dPressure"; }
+    static constexpr char const * dTotalMassDensity_dGlobalCompDensityString() { return "dTotalMassDensity_dComp"; }
 
     // perforation rates and derivatives
-    static constexpr auto compPerforationRateString = "compPerforationRate";
-    static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
-    static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
+    static constexpr char const * compPerforationRateString() { return "compPerforationRate"; }
+    static constexpr char const * dCompPerforationRate_dPresString() { return "dCompPerforationRate_dPres"; }
+    static constexpr char const * dCompPerforationRate_dCompString() { return "dCompPerforationRate_dComp"; }
+
+    // control data
+    static constexpr char const * currentBHPString() { return "currentBHP"; }
+    static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
+    static constexpr char const * dCurrentBHP_dCompDensString() { return "dCurrentBHP_dCompDens"; }
+
+    static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
+    static constexpr char const * dCurrentPhaseVolRate_dPresString() { return "dCurrentPhaseVolumetricRate_dPres"; }
+    static constexpr char const * dCurrentPhaseVolRate_dCompDensString() { return "dCurrentPhaseVolumetricRate_dCompDens"; }
+    static constexpr char const * dCurrentPhaseVolRate_dRateString() { return "dCurrentPhaseVolumetricRate_dRate"; }
+
+    static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
+    static constexpr char const * dCurrentTotalVolRate_dPresString() { return "dCurrentTotalVolumetricRate_dPres"; }
+    static constexpr char const * dCurrentTotalVolRate_dCompDensString() { return "dCurrentTotalVolumetricRate_dCompDens"; }
+    static constexpr char const * dCurrentTotalVolRate_dRateString() { return "dCurrentTotalVolumetricRate_dRate"; }
 
   } viewKeysCompMultiphaseWell;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysCompMultiphaseWell;
 
 protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Checks constitutive models for consistency
@@ -301,6 +331,13 @@ protected:
    * @param meshLevel reference to the mesh
    */
   void validateInjectionStreams( MeshLevel const & meshLevel ) const;
+
+  /**
+   * @brief Make sure that the well constraints are compatible
+   * @param meshLevel the mesh level object (to loop over wells)
+   * @param fluid the fluid model (to get the target phase index)
+   */
+  void validateWellConstraints( MeshLevel const & meshLevel, constitutive::MultiFluidBase const & fluid );
 
 private:
 
@@ -345,11 +382,17 @@ private:
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
 
+  /// maximum (relative) change in pressure between two Newton iterations
+  real64 m_maxRelativePresChange;
+
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  /// index of the target phase, used to impose the phase rate constraint
+  localIndex m_targetPhaseIndex;
 
   /// views into reservoir primary variable fields
 

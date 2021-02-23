@@ -38,7 +38,7 @@ public:
     LiveOil
   };
 
-  BlackOilFluid( std::string const & name, Group * const parent );
+  BlackOilFluid( string const & name, Group * const parent );
 
   virtual ~BlackOilFluid() override;
 
@@ -46,17 +46,17 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static std::string catalogName() { return "BlackOilFluid"; }
+  static string catalogName() { return "BlackOilFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
-    static constexpr auto surfaceDensitiesString = "surfaceDensities";
-    static constexpr auto tableFilesString = "tableFiles";
-    static constexpr auto fluidTypeString = "fluidType";
-  } viewKeysBlackOilFluid;
+    static constexpr char const * surfaceDensitiesString() { return "surfaceDensities"; }
+    static constexpr char const * tableFilesString() { return "tableFiles"; }
+    static constexpr char const * fluidTypeString() { return "fluidType"; }
+  };
 
 protected:
   virtual void postProcessInput() override;

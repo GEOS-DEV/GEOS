@@ -41,7 +41,7 @@ namespace LAIHelperFunctions
  * @param[in]  dofKey            DofManager key used to access dof index array
  * @param[out] permutationMatrix the target matrix
  */
-void CreatePermutationMatrix( NodeManager const * const nodeManager,
+void CreatePermutationMatrix( NodeManager const & nodeManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
@@ -57,7 +57,7 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
  * @param[in]  dofKey            DofManager key used to access dof index array
  * @param[out] permutationMatrix the target matrix
  */
-void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
+void CreatePermutationMatrix( ElementRegionManager const & elemManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
@@ -162,10 +162,10 @@ void SeparateComponentFilter( MATRIX const & src,
 template< typename VECTOR >
 void ComputeRigidBodyModes( MeshLevel const & mesh,
                             DofManager const & dofManager,
-                            std::vector< std::string > const & selection,
+                            std::vector< string > const & selection,
                             array1d< VECTOR > & rigidBodyModes )
 {
-  NodeManager const & nodeManager = *mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   localIndex numComponents = 0;
   array1d< globalIndex > globalNodeList;

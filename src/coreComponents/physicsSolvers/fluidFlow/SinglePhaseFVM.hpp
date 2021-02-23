@@ -101,7 +101,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseFVM( const std::string & name,
+  SinglePhaseFVM( const string & name,
                   dataRepository::Group * const parent );
 
 
@@ -206,25 +206,7 @@ public:
 
   /**@}*/
 
-  virtual void initializePreSubGroups( dataRepository::Group * const rootGroup ) override;
-
-  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-  {} viewKeysSinglePhaseFVM;
-
-  viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseFVM; }
-
-  viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseFVM; }
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysSinglePhaseFVM;
-
-  groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseFVM; }
-
-  groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseFVM; }
+  virtual void initializePreSubGroups() override;
 
 private:
 

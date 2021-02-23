@@ -33,8 +33,8 @@ class PeriodicEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  PeriodicEvent( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  PeriodicEvent( const string & name,
                  Group * const parent );
 
   /// Destructor
@@ -58,7 +58,7 @@ public:
   virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
-                                    dataRepository::Group * domain ) override;
+                                    DomainPartition & domain ) override;
 
   /**
    * @brief Determine if an optional function f should be called, and call it if so.
@@ -84,7 +84,7 @@ public:
   void checkOptionalFunctionThreshold( real64 const time,
                                        real64 const dt,
                                        integer const cycle,
-                                       dataRepository::Group * domain );
+                                       DomainPartition & domain );
 
   /**
    * @copydoc EventBase::getEventTypeDtRequest()
@@ -100,7 +100,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
 
   /// A pointer to an optional function
@@ -109,25 +109,25 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto timeFrequencyString = "timeFrequency";
-    static constexpr auto cycleFrequencyString = "cycleFrequency";
-    static constexpr auto targetExactTimestepString = "targetExactTimestep";
-    static constexpr auto functionNameString = "function";
-    static constexpr auto functionInputObjectString = "object";
-    static constexpr auto functionInputSetnameString = "set";
-    static constexpr auto functionSetNamesString = "setNames";
-    static constexpr auto functionStatOptionString = "stat";
-    static constexpr auto eventThresholdString = "threshold";
+    static constexpr char const * timeFrequencyString() { return "timeFrequency"; }
+    static constexpr char const * cycleFrequencyString() { return "cycleFrequency"; }
+    static constexpr char const * targetExactTimestepString() { return "targetExactTimestep"; }
+    static constexpr char const * functionNameString() { return "function"; }
+    static constexpr char const * functionInputObjectString() { return "object"; }
+    static constexpr char const * functionInputSetnameString() { return "set"; }
+    static constexpr char const * functionSetNamesString() { return "setNames"; }
+    static constexpr char const * functionStatOptionString() { return "stat"; }
+    static constexpr char const * eventThresholdString() { return "threshold"; }
 
-    dataRepository::ViewKey timeFrequency = { "timeFrequency" };
-    dataRepository::ViewKey cycleFrequency = { "cycleFrequency" };
-    dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
-    dataRepository::ViewKey functionName = { "function" };
-    dataRepository::ViewKey functionInputObject = { "object" };
-    dataRepository::ViewKey functionInputSetname = { "set" };
-    dataRepository::ViewKey functionSetNames = { "setNames" };
-    dataRepository::ViewKey functionStatOption = { "stat" };
-    dataRepository::ViewKey eventThreshold = { "threshold" };
+    dataRepository::ViewKey timeFrequency = { timeFrequencyString() };
+    dataRepository::ViewKey cycleFrequency = { cycleFrequencyString() };
+    dataRepository::ViewKey targetExactTimestep = { targetExactTimestepString() };
+    dataRepository::ViewKey functionName = { functionNameString() };
+    dataRepository::ViewKey functionInputObject = { functionInputObjectString() };
+    dataRepository::ViewKey functionInputSetname = { functionInputSetnameString() };
+    dataRepository::ViewKey functionSetNames = { functionSetNamesString() };
+    dataRepository::ViewKey functionStatOption = { functionStatOptionString() };
+    dataRepository::ViewKey eventThreshold = { eventThresholdString() };
   } periodicEventViewKeys;
   /// @endcond
 

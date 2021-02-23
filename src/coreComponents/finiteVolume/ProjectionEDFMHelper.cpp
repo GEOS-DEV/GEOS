@@ -6,21 +6,21 @@ namespace geosx {
 using std::ref;
 
 ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
-                                            GeometricObjectManager const * geometricObjManager,
+                                            GeometricObjectManager const & geometricObjManager,
                                             std::string const & coeffName,
                                             CellElementStencilTPFA & stencil )
     : m_mesh( mesh ), m_geometricObjManager( geometricObjManager ),
       m_elementManager( mesh.getElemManager() ), m_faceManager( mesh.getFaceManager() ),
       m_nodeManager( mesh.getNodeManager() ), m_edgeManager( mesh.getEdgeManager() ),
-      m_nodesCoord( m_nodeManager->referencePosition() ),
-      m_edgeToNodes( m_edgeManager->nodeList() ),
-      m_facesToCells( m_faceManager->elementList() ),
-      m_facesToRegions( m_faceManager->elementRegionList() ),
-      m_facesToSubRegions( m_faceManager->elementSubRegionList() ),
-      m_facesToNodes( m_faceManager->nodeList().toViewConst() ),
-      m_nodeReferencePosition( m_nodeManager->referencePosition() ),
-      m_cellCenters( m_elementManager->constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString ) ),
-      m_permTensor( m_elementManager->constructArrayViewAccessor< real64, 2 >( coeffName ) ),
+      m_nodesCoord( m_nodeManager.referencePosition() ),
+      m_edgeToNodes( m_edgeManager.nodeList() ),
+      m_facesToCells( m_faceManager.elementList() ),
+      m_facesToRegions( m_faceManager.elementRegionList() ),
+      m_facesToSubRegions( m_faceManager.elementSubRegionList() ),
+      m_facesToNodes( m_faceManager.nodeList().toViewConst() ),
+      m_nodeReferencePosition( m_nodeManager.referencePosition() ),
+      m_cellCenters( m_elementManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() ) ),
+      m_permTensor( m_elementManager.constructArrayViewAccessor< real64, 2 >( coeffName ) ),
       m_stencil( stencil )
 {}
 
@@ -40,18 +40,18 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
       CellDescriptor cellID( hostCellRegionIdx, hostCellSubRegionIdx, hostCellIdx );
 
       // get host cell faces
-      CellElementRegion const * cellRegion = m_elementManager->getRegion< CellElementRegion >( hostCellRegionIdx );
-      CellElementSubRegion const * cellSubRegion = cellRegion->getSubRegion< CellElementSubRegion >(hostCellSubRegionIdx);
+      CellElementRegion const & cellRegion = m_elementManager.getRegion< CellElementRegion >( hostCellRegionIdx );
+      CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >(hostCellSubRegionIdx);
 
       // pick faces for non-neighboring pEDFM connections
-      std::list<localIndex> const faces = selectFaces(cellSubRegion->faceList(), cellID, fracElement, fractureSubRegion);
+      std::list<localIndex> const faces = selectFaces(cellSubRegion.faceList(), cellID, fracElement, fractureSubRegion);
       for (localIndex const faceIdx : faces)
       {
         CellDescriptor neighborCell = otherCell(faceIdx, cellID);
         real64 transFM = fractureMatrixTransmissilibility( ref(neighborCell), fracElement,
                                                            ref(fractureSubRegion), faceIdx );
 
-        addNonNeighboringConnection(fracElement, std::ref(neighborCell), transFM, ref(fractureSubRegion));
+        addNonNeighboringConnection(fracElement, ref(neighborCell), transFM, ref(fractureSubRegion));
 
         // zero out matrix-matrix connections that are replaced by fracture-matrix connections
         // I assume that the m-m connection index is equal to the face id
@@ -173,11 +173,11 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
 
   // get fracture normal and origin in the neighbor cells:
   // they might be different than those in the host cell
-  CellElementRegion const * neighborRegion =
-      m_elementManager->getRegion< CellElementRegion >( neighborCellID.region );
-  CellElementSubRegion const * neighborSubRegion =
-      neighborRegion->getSubRegion< CellElementSubRegion >( neighborCellID.subRegion );
-  auto const & efracSurfaces = neighborSubRegion->embeddedSurfacesList();
+  CellElementRegion const & neighborRegion =
+      m_elementManager.getRegion< CellElementRegion >( neighborCellID.region );
+  CellElementSubRegion const & neighborSubRegion =
+      neighborRegion.getSubRegion< CellElementSubRegion >( neighborCellID.subRegion );
+  auto const & efracSurfaces = neighborSubRegion.embeddedSurfacesList();
 
   // embedded fracture elements hosted in the neighbor cell
   // (there could be more than one)
@@ -223,7 +223,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
   // frac data
   // subregion->parent is elementSubRegions (mind s in the end)
   // subregion->parent->parent is Fracture
-  stencilCellsRegionIndex[1] = fractureSubRegion.getParent()->getParent()->getIndexInParent();
+  stencilCellsRegionIndex[1] = fractureSubRegion.getParent().getParent().getIndexInParent();
   stencilCellsSubRegionIndex[1] = fractureSubRegion.getIndexInParent();
   stencilCellsIndex[1] = fracElement;
   stencilWeights[1] = -transmissibility;

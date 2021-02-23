@@ -150,7 +150,7 @@ public:
 
   /// Defines a static constexpr bool canParseVariable that is true iff the template parameter T
   /// is a valid argument to StringToInputVariable.
-  IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), std::string() ) );
+  IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string() ) );
 
   /**
    * @name Attribute extraction from XML nodes.
@@ -257,7 +257,7 @@ public:
   static std::enable_if_t< !canParseVariable< T >, bool >
   readAttributeAsType( T &, string const &, xmlNode const &, U const & )
   {
-    GEOSX_ERROR( "Cannot parse the given type " << LvArray::system::demangleType< T >() );
+    GEOSX_THROW( "Cannot parse the given type " << LvArray::system::demangleType< T >(), InputError );
     return false;
   }
 

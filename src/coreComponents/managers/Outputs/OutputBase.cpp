@@ -25,7 +25,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-OutputBase::OutputBase( std::string const & name,
+OutputBase::OutputBase( string const & name,
                         Group * const parent ):
   ExecutableGroup( name, parent ),
   m_childDirectory(),
@@ -33,13 +33,13 @@ OutputBase::OutputBase( std::string const & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeysStruct::childDirectoryString, &m_childDirectory )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::childDirectoryString, &m_childDirectory ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Child directory path" );
 
-  registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads )->
-    setApplyDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Number of plot files." );
 
 }
@@ -54,7 +54,7 @@ OutputBase::CatalogInterface::CatalogType & OutputBase::getCatalog()
 }
 
 
-void OutputBase::initializePreSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
+void OutputBase::initializePreSubGroups()
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();

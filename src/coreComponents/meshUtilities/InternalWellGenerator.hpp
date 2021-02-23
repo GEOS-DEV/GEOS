@@ -68,7 +68,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  InternalWellGenerator( const std::string & name,
+  InternalWellGenerator( const string & name,
                          Group * const parent );
 
   /**
@@ -119,17 +119,17 @@ public:
    * @brief Main function of the class that generates the well geometry
    * @param[in] domain the domain object
    */
-  virtual void generateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition & domain ) override;
 
   /// not implemented
-  virtual void getElemToNodesRelationInBox ( std::string const &,
+  virtual void getElemToNodesRelationInBox ( string const &,
                                              int const *,
                                              int const &,
                                              int *,
                                              int const ) override {}
 
   /// not implemented
-  virtual void remapMesh ( dataRepository::Group * const ) override {}
+  virtual void remapMesh ( dataRepository::Group & ) override {}
 
   ///@}
 

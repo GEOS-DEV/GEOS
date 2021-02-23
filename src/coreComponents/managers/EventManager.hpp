@@ -19,9 +19,11 @@
 #include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
 
-
 namespace geosx
 {
+
+class DomainPartition;
+
 namespace dataRepository
 {
 namespace keys
@@ -43,7 +45,7 @@ public:
    * @param[in] name the name of the EventManager
    * @param[in] parent group this EventManager
    */
-  EventManager( std::string const & name,
+  EventManager( string const & name,
                 Group * const parent );
 
   /**
@@ -66,15 +68,16 @@ public:
 
   /**
    * @brief The main execution loop for the code.
+   * @param[in] domain the current DomainPartition on which the Event will be ran.
+   * @return True iff the simulation exited early, and needs to be run again to completion.
    * @details During each cycle, it will:
    *   - Calculate the event forecast (number of cycles until its expected execution)
    *   - Signal an event to prepare (forecast == 1)
    *   - Execute an event (forecast == 0)
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
-   * @param[in] domain the current DomainPartition on which the Event will be ran
    */
-  void run( dataRepository::Group * domain );
+  bool run( DomainPartition & domain );
 
   /**
    * @name viewKeyStruct/groupKeyStruct
@@ -83,13 +86,13 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto maxTimeString = "maxTime";
-    static constexpr auto maxCycleString = "maxCycle";
+    static constexpr char const * maxTimeString() { return "maxTime"; }
+    static constexpr char const * maxCycleString() { return "maxCycle"; }
 
-    static constexpr auto timeString = "time";
-    static constexpr auto dtString = "dt";
-    static constexpr auto cycleString = "cycle";
-    static constexpr auto currentSubEventString = "currentSubEvent";
+    static constexpr char const * timeString() { return "time"; }
+    static constexpr char const * dtString() { return "dt"; }
+    static constexpr char const * cycleString() { return "cycle"; }
+    static constexpr char const * currentSubEventString() { return "currentSubEvent"; }
 
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };
@@ -102,7 +105,7 @@ public:
   ///@}
 
   /// Alias to access the object catalog for EventBase derived types.
-  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, string const &, Group * const >;
 
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();

@@ -34,8 +34,8 @@ namespace geosx
 class CompositeFunction : public FunctionBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  CompositeFunction( const std::string & name,
+  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  CompositeFunction( const string & name,
                      dataRepository::Group * const parent );
 
   /**
@@ -61,7 +61,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void evaluate( dataRepository::Group const * const group,
+  virtual void evaluate( dataRepository::Group const & group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const override final;

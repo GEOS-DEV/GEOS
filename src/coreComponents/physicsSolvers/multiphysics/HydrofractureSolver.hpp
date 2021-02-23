@@ -32,7 +32,7 @@ class SolidMechanicsLagrangianFEM;
 class HydrofractureSolver : public SolverBase
 {
 public:
-  HydrofractureSolver( const std::string & name,
+  HydrofractureSolver( const string & name,
                        Group * const parent );
 
   ~HydrofractureSolver() override;
@@ -47,7 +47,7 @@ public:
   }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( Group & MeshBodies ) override final;
 #endif
 
   virtual void setupDofs( DomainPartition const & domain,
@@ -145,30 +145,29 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto couplingTypeOptionString = "couplingTypeOptionEnum";
-    constexpr static auto couplingTypeOptionStringString = "couplingTypeOption";
+    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
+    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
 
-    constexpr static auto totalMeanStressString = "totalMeanStress";
-    constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
+    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
+    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
 
-    constexpr static auto solidSolverNameString = "solidSolverName";
-    constexpr static auto fluidSolverNameString = "fluidSolverName";
+    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
+    constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
 
-    constexpr static auto contactRelationNameString = "contactRelationName";
-    constexpr static auto maxNumResolvesString = "maxNumResolves";
+    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+    constexpr static char const * maxNumResolvesString() { return "maxNumResolves"; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-    constexpr static auto separationCoeff0String = "separationCoeff0";
-    constexpr static auto apertureAtFailureString = "apertureAtFailure";
+    constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
+    constexpr static char const * apertureAtFailureString() { return "apertureAtFailure"; }
 #endif
-
-  } HydrofractureSolverViewKeys;
+  };
 
 protected:
   virtual void postProcessInput() override final;
 
   virtual void
-  initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
+  initializePostInitialConditionsPreSubGroups() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling

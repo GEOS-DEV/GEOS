@@ -38,7 +38,7 @@ public:
    * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
-  static std::string catalogName() { return "TwoPointFluxApproximation"; }
+  static string catalogName() { return "TwoPointFluxApproximation"; }
 
   TwoPointFluxApproximation() = delete;
 
@@ -47,10 +47,10 @@ public:
    * @param name the name of the TwoPointFluxApproximation in the data repository
    * @param parent the parent group of this group.
    */
-  TwoPointFluxApproximation( std::string const & name, dataRepository::Group * const parent );
+  TwoPointFluxApproximation( string const & name, dataRepository::Group * const parent );
 
 protected:
-  virtual void initializePreSubGroups( Group * const group ) override final;
+  virtual void initializePreSubGroups() override final;
 
   virtual void registerCellStencil( Group & stencilGroup ) const override;
 
@@ -82,7 +82,8 @@ protected:
 
   struct viewKeyStruct : FluxApproximationBase::viewKeyStruct
   {
-    constexpr static auto useProjectionEmbeddedFractureMethodString = "useProjectionEmbeddedFractureMethod";
+    // constexpr static auto useProjectionEmbeddedFractureMethodString = "useProjectionEmbeddedFractureMethod";
+    static constexpr char const * useProjectionEmbeddedFractureMethodString() { return "useProjectionEmbeddedFractureMethod"; }
   };
 
   int m_useProjectionEmbeddedFractureMethod;  // whether or not to do projection EDFM

@@ -210,7 +210,7 @@ class MultiPhaseMultiComponentFluid : public MultiFluidBase
 {
 public:
 
-  MultiPhaseMultiComponentFluid( std::string const & name, Group * const parent );
+  MultiPhaseMultiComponentFluid( string const & name, Group * const parent );
 
   virtual ~MultiPhaseMultiComponentFluid() override;
 
@@ -219,7 +219,7 @@ public:
                 Group * const parent ) const override;
 
 
-  static std::string catalogName() { return dataRepository::keys::multiPhaseMultiComponentFluid; }
+  static string catalogName() { return dataRepository::keys::multiPhaseMultiComponentFluid; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -265,15 +265,15 @@ public:
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
-    static constexpr auto flashModelParaFileString = "flashModelParaFile";
-    static constexpr auto phasePVTParaFilesString = "phasePVTParaFiles";
-  } viewKeysMultiPhaseMultiComponentFluid;
+    static constexpr char const * flashModelParaFileString() { return "flashModelParaFile"; }
+    static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
+  };
 
 
 protected:
   virtual void postProcessInput() override;
 
-  virtual void initializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups() override;
 
 private:
 

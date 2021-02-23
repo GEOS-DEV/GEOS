@@ -33,8 +33,8 @@ namespace geosx
 class SiloOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  SiloOutput( std::string const & name,
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  SiloOutput( string const & name,
               Group * const parent );
 
   /// Destructor
@@ -50,12 +50,12 @@ public:
    * @brief Writes out a Silo plot file.
    * @copydoc EventBase::execute()
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Writes out a Silo plot file at the end of the simulation.
@@ -65,7 +65,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
     execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }

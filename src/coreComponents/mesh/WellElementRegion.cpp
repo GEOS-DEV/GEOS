@@ -31,11 +31,10 @@ WellElementRegion::WellElementRegion( string const & name, Group * const parent 
   m_wellControlsName( "" ),
   m_wellGeneratorName( "" )
 {
-  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName );
-  registerWrapper( viewKeyStruct::wellGeneratorString, &m_wellGeneratorName );
+  registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
+  registerWrapper( viewKeyStruct::wellGeneratorString(), &m_wellGeneratorName );
 
-  this->getGroup( viewKeyStruct::elementSubRegions )
-    ->registerGroup< WellElementSubRegion >( m_subRegionName );
+  this->getGroup( viewKeyStruct::elementSubRegions() ).registerGroup< WellElementSubRegion >( m_subRegionName );
 
 }
 
@@ -49,22 +48,20 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
                                       globalIndex elemOffsetGlobal )
 {
   // get the (unique) subregion
-  WellElementSubRegion * const
-  subRegion = this->getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
-                ->getGroup< WellElementSubRegion >( m_subRegionName );
+  WellElementSubRegion &
+  subRegion = this->getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                .getGroup< WellElementSubRegion >( m_subRegionName );
 
-  GEOSX_ERROR_IF( subRegion == nullptr,
-                  "Well subRegion " << this->m_subRegionName << " not found in well region " << getName() );
-  subRegion->setWellControlsName( m_wellControlsName );
+  subRegion.setWellControlsName( m_wellControlsName );
 
-  PerforationData * const perforationData = subRegion->getPerforationData();
+  PerforationData * const perforationData = subRegion.getPerforationData();
   perforationData->setNumPerforationsGlobal( wellGeometry.getNumPerforations() );
 
   globalIndex const numElemsGlobal        = wellGeometry.getNumElements();
   globalIndex const numPerforationsGlobal = wellGeometry.getNumPerforations();
 
   // 1) select the local perforations based on connectivity to the local reservoir elements
-  subRegion->connectPerforationsToMeshElements( mesh, wellGeometry );
+  subRegion.connectPerforationsToMeshElements( mesh, wellGeometry );
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
   GEOSX_ERROR_IF( matchedPerforations != numPerforationsGlobal,
@@ -96,18 +93,18 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
 
   // 3) select the local well elements and mark boundary nodes (for ghosting)
-  subRegion->generate( mesh,
-                       wellGeometry,
-                       elemStatusGlobal,
-                       nodeOffsetGlobal,
-                       elemOffsetGlobal );
+  subRegion.generate( mesh,
+                      wellGeometry,
+                      elemStatusGlobal,
+                      nodeOffsetGlobal,
+                      elemOffsetGlobal );
 
 
   // 4) find out which rank is the owner of the top segment
-  localIndex const refElemIdLocal = subRegion->getTopWellElementIndex();
+  localIndex const topElemIdLocal = subRegion.getTopWellElementIndex();
 
   array1d< localIndex > allRankTopElem;
-  MpiWrapper::allGather( refElemIdLocal, allRankTopElem );
+  MpiWrapper::allGather( topElemIdLocal, allRankTopElem );
   int topRank = -1;
   for( int irank = 0; irank < allRankTopElem.size(); ++irank )
   {
@@ -118,16 +115,16 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
     }
   }
   GEOSX_ASSERT( topRank >= 0 );
-  subRegion->setTopRank( topRank );
+  subRegion.setTopRank( topRank );
 
 
   // 5) construct the local perforation to well element map
   perforationData->connectToWellElements( wellGeometry,
-                                          subRegion->globalToLocalMap(),
+                                          subRegion.globalToLocalMap(),
                                           elemOffsetGlobal );
 
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, string const &, Group * const )
 
 } /* namespace geosx */

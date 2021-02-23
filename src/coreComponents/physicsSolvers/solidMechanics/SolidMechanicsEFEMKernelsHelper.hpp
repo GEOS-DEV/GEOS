@@ -147,38 +147,6 @@ void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
   LvArray::tensorOps::scale< 3, 6 >( eqMatrix, -hInv );
 }
 
-/*
- * @brief Computes traction and derivative on each fracture segment.
- * @param constitutiveManager constant pointer to the constitutive mamanger
- * @param dispJump displacement jump
- * @param tractionVector traction vector
- * @param dTdw Derivative of the traction w.r.t. the jump.
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void computeTraction( real64 ( & dispJump )[3],
-                      real64 contactCoeff,
-                      real64 ( & tractionVector )[3],
-                      real64 ( & dTractiondw )[3][3] )
-{
-  // check if fracture is open
-  bool open = dispJump[0] >= 0 ? true : false;
-
-  LvArray::tensorOps::fill< 3 >( tractionVector, 0 );
-  LvArray::tensorOps::fill< 3, 3 >( dTractiondw, 0 );
-
-  if( open )
-  {
-    tractionVector[0] = 1.0e5;
-  }
-  else
-  {
-    // Contact through penalty condition.
-    tractionVector[0] = contactCoeff * dispJump[0];
-    dTractiondw[0][0] = contactCoeff;
-  }
-}
-
 }
 } // geosx
 
