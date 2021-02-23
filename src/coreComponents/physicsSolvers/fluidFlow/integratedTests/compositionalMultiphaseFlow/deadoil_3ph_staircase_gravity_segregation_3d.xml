@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers>
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
@@ -21,7 +21,8 @@
         solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </CompositionalMultiphaseFlow>
+    </CompositionalMultiphaseFVM>
+
   </Solvers>
 
   <Mesh>

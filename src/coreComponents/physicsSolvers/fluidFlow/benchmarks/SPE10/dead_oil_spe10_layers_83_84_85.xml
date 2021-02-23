@@ -22,7 +22,7 @@
         solverType="direct"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
