@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
+  <Solvers gravityVector="0.0, 0.0, -9.81">
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
@@ -9,18 +9,17 @@
       logLevel="1"
       targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
       <NonlinearSolverParameters
-        newtonTol="1e-8"  
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
-        directParallel="0"
+        directParallel="0"  
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFVM
+    <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
-      discretization="fluidTPFA"
+      discretization="fluidHM"
       targetRegions="{ Region1 }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
@@ -52,7 +51,7 @@
       <WellControls
         name="wellControls2"
         type="producer"
-        control="phaseVolRate"
+        control="BHP"
         referenceElevation="0.5"
         useSurfaceConditions="1"
         surfacePressure="101325"
@@ -173,9 +172,9 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
+      <HybridMimeticDiscretization
+        name="fluidHM"
+        innerProductType="beiraoDaVeigaLipnikovManzini"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -213,11 +212,12 @@
       referencePressure="0.0"
       compressibility="1e-9"/>
 
-    <TableRelativePermeability
+    <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas, water }"
-      waterOilRelPermTableNames="{ waterRelPermTable, oilRelPermTableForOW }"
-      gasOilRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"/>
+      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
+      phaseRelPermExponent="{ 2.0, 2.0, 1.5 }"
+      phaseRelPermMaxValue="{ 0.8, 0.9, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -265,6 +265,14 @@
       fieldName="pressure"
       scale="5e6"/>
 
+    <FieldSpecification
+      name="initialFacePressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="faceManager"
+      fieldName="facePressure"
+      scale="5e6"/>
+    
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
       name="initialComposition_oil"
@@ -294,33 +302,7 @@
       scale="0.001"/>
   </FieldSpecifications>
 
-  <Functions>
-
-    <TableFunction
-      name="waterRelPermTable"
-      coordinateFiles="{ satw.txt }"
-      voxelFile="krw.txt"
-      interpolation="linear"/>
-
-    <TableFunction
-      name="oilRelPermTableForOW"
-      coordinateFiles="{ sato.txt }"
-      voxelFile="krow.txt"
-      interpolation="linear"/>
-
-    <TableFunction
-      name="gasRelPermTable"
-      coordinateFiles="{ satg.txt }"
-      voxelFile="krg.txt"
-      interpolation="linear"/>
-
-    <TableFunction
-      name="oilRelPermTableForOG"
-      coordinateFiles="{ sato.txt }"
-      voxelFile="krog.txt"
-      interpolation="linear"/>
-  
-  </Functions>
+  <Functions/>
 
   <Outputs>
     <Silo
@@ -329,5 +311,4 @@
     <Restart
       name="restartOutput"/>
   </Outputs>
-  
 </Problem>

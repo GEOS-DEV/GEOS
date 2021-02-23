@@ -7,27 +7,29 @@
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
+      initialDt="5e2"
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
-        lineSearchAction="None"
+        newtonTol="1.0e-6"
+        lineSearchAction="Attempt"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
-        directParallel="0"
+        directParallel="0"  
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFVM
+    <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
-      discretization="fluidTPFA"
+      discretization="fluidHM"
       targetRegions="{ Channel }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       temperature="368.15"
       maxCompFractionChange="0.2"
+      maxRelativePressureChange="0.2"
       useMass="1"/>
 
     <CompositionalMultiphaseWell
@@ -38,13 +40,14 @@
       relPermNames="{ relperm }"
       wellTemperature="368.15"
       maxCompFractionChange="0.2"
+      maxRelativePressureChange="0.2"            
       useMass="1">
       <WellControls
         name="wellControls1"
         type="producer"
-        control="phaseVolRate"
+        control="BHP"
         referenceElevation="12"
-        targetBHP="1e6"
+        targetBHP="2e6"
         targetPhaseRate="1e-7"
         targetPhaseName="water"/>
       <WellControls
@@ -59,16 +62,9 @@
   </Solvers>
 
   <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 5, 10 }"
-      yCoords="{ 0, 5, 10 }"
-      zCoords="{ 0, 2.5, 5, 7.5, 10 }"
-      nx="{ 5, 5 }"
-      ny="{ 5, 5 }"
-      nz="{ 3, 3, 3, 3 }"
-      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
+
+    <PAMELAMeshGenerator name="mesh1"
+                         file="staircase3d_tet.msh"/>
 
     <InternalWell
       name="well_producer1"
@@ -111,7 +107,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="5e4"
+      maxEventDt="5e4"
       target="/Solvers/reservoirSystem"/>
 
     <PeriodicEvent
@@ -122,16 +118,12 @@
   </Events>
 
   <ElementRegions>
+
     <CellElementRegion
       name="Channel"
-      cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
+      cellBlocks="{ DEFAULT_TETRA }"
       materialList="{ fluid1, rock, relperm }"/>
-
-    <CellElementRegion
-      name="Barrier"
-      cellBlocks="{ b04, b12, b13, b09, b10, b02, b03, b07 }"
-      materialList="{ }"/>
-
+    
     <WellElementRegion
       name="wellRegion1"
       materialList="{ fluid1, relperm }"/>
@@ -143,9 +135,9 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
+      <HybridMimeticDiscretization
+        name="fluidHM"
+        innerProductType="beiraoDaVeigaLipnikovManzini"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -216,6 +208,14 @@
       fieldName="pressure"
       scale="9e6"/>
 
+    <FieldSpecification
+      name="initialFacePressure_channel"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="faceManager"
+      fieldName="facePressure"
+      scale="9e6"/>
+    
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"
