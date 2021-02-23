@@ -521,12 +521,12 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
-      setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+//      setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
-      dtReturn = nonlinearImplicitStep( time_n,
-                                        dt,
-                                        cycleNumber,
-                                        domain );
+//      dtReturn = nonlinearImplicitStep( time_n,
+//                                        dt,
+//                                        cycleNumber,
+//                                        domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -549,7 +549,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
         GEOSX_LOG_RANK_0( "Fracture Occurred. Resolve" );
       }
     }
-    implicitStepComplete( time_n, dt, domain );
+//    implicitStepComplete( time_n, dt, domain );
   }
 
   return dtReturn;
@@ -822,6 +822,7 @@ SolidMechanicsLagrangianFEM::
                      real64 const & dt,
                      DomainPartition & domain )
 {
+  GEOSX_LOG_RANK( "SolidMechanicsLagrangianFEM::implicitStepSetup" );
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
@@ -830,6 +831,10 @@ SolidMechanicsLagrangianFEM::
   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
 
   localIndex const numNodes = nodeManager.size();
+  GEOSX_LOG_RANK( "numNodes = "<<numNodes );
+  GEOSX_LOG_RANK( "uhat size = "<<uhat.size(0)<<", "<<uhat.size(1) );
+
+
 
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
@@ -866,6 +871,7 @@ SolidMechanicsLagrangianFEM::
     }
     else
     {
+      GEOSX_LOG_RANK( "updating uhat" );
       forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
         for( int i=0; i<3; ++i )
@@ -873,20 +879,29 @@ SolidMechanicsLagrangianFEM::
           uhat( a, i ) = 0.0;
         }
       } );
+
+      GEOSX_LOG_RANK( "done with uhat" );
+
     }
   }
+  GEOSX_LOG_RANK( "updating constitutive" );
 
   ElementRegionManager * const elementRegionManager = mesh.getElemManager();
   ConstitutiveManager * const constitutiveManager = domain.getConstitutiveManager();
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
   constitutiveRelations = elementRegionManager->constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
 
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & subRegion )
-  {
-    SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-    constitutiveRelation.saveConvergedState();
-  } );
+//  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+//                                                          CellElementSubRegion & subRegion )
+//  {
+//    SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+//    constitutiveRelation.saveConvergedState();
+//  } );
+
+  GEOSX_LOG_RANK( "done with constitutive" );
+
+
+  GEOSX_LOG_RANK( "Leaving SolidMechanicsLagrangianFEM::implicitStepSetup" );
 
 }
 
