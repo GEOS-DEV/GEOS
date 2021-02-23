@@ -81,7 +81,7 @@ public:
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               CONSTITUTIVE_TYPE & inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
                arrayView1d< globalIndex const > const & uDofNumber,
                arrayView1d< globalIndex const > const & wDofNumber,

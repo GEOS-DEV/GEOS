@@ -38,8 +38,8 @@ HaltEvent::HaltEvent( const string & name,
   m_externalStartTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
   m_externalLastTime = m_externalStartTime;
 
-  registerWrapper( viewKeyStruct::maxRuntimeString, &m_maxRuntime )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::maxRuntimeString(), &m_maxRuntime ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The maximum allowable runtime for the job." );
 }
 
@@ -51,7 +51,7 @@ HaltEvent::~HaltEvent()
 void HaltEvent::estimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
                                      real64 const GEOSX_UNUSED_PARAM( dt ),
                                      integer const GEOSX_UNUSED_PARAM( cycle ),
-                                     Group * GEOSX_UNUSED_PARAM( domain ))
+                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ))
 {
   // Check run time
   timeval tim;
