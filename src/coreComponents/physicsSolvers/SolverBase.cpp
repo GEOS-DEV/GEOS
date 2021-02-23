@@ -33,8 +33,8 @@ SolverBase::SolverBase( string const & name,
   m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
   m_dofManager( name ),
-  m_linearSolverParameters( groupKeyStruct::linearSolverParametersString, this ),
-  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString, this )
+  m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
+  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -44,39 +44,39 @@ SolverBase::SolverBase( string const & name,
   // This sets a flag to indicate that this object increments time
   this->setTimestepBehavior( 1 );
 
-  registerWrapper( viewKeyStruct::cflFactorString, &m_cflFactor )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::cflFactorString(), &m_cflFactor ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
 
-  registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::FALSE )->
+  registerWrapper( viewKeyStruct::maxStableDtString(), &m_maxStableDt ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
-  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
                     "solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` "
                     "should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` "
                     "discretization should be specified." );
 
-  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegionNames )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
 
-  registerWrapper( viewKeyStruct::initialDtString, &m_nextDt )->
-    setApplyDefaultValue( 1e99 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::initialDtString(), &m_nextDt ).
+    setApplyDefaultValue( 1e99 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
-  registerGroup( groupKeyStruct::linearSolverParametersString, &m_linearSolverParameters );
-  registerGroup( groupKeyStruct::nonlinearSolverParametersString, &m_nonlinearSolverParameters );
+  registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
+  registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_localRhs.setName( this->getName() + "/localRhs" );
@@ -124,6 +124,17 @@ localIndex SolverBase::targetRegionIndex( string const & regionName ) const
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
+bool SolverBase::registerCallback( void * func, const std::type_info & funcType )
+{
+  if( std::type_index( funcType ) == std::type_index( typeid( std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > ) ) )
+  {
+    m_assemblyCallback = *reinterpret_cast< std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > * >( func );
+    return true;
+  }
+
+  return false;
+}
+
 real64 SolverBase::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                real64 const & GEOSX_UNUSED_PARAM( dt ),
                                const integer GEOSX_UNUSED_PARAM( cycleNumber ),
@@ -132,12 +143,12 @@ real64 SolverBase::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
   return 0;
 }
 
-void SolverBase::execute( real64 const time_n,
+bool SolverBase::execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const GEOSX_UNUSED_PARAM( eventCounter ),
                           real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                          Group * const domain )
+                          DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtRemaining = dt;
@@ -151,7 +162,7 @@ void SolverBase::execute( real64 const time_n,
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
-                                          *domain->groupCast< DomainPartition * >() );
+                                          domain );
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
@@ -177,6 +188,8 @@ void SolverBase::execute( real64 const time_n,
 
   // Decide what to do with the next Dt for the event running the solver.
   setNextDt( nextDt, m_nextDt );
+
+  return false;
 }
 
 void SolverBase::setNextDt( real64 const & currentDt,
@@ -238,6 +251,11 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
                            m_dofManager,
                            m_localMatrix.toViewConstSizes(),
                            m_localRhs.toView() );
+
+  if( m_assemblyCallback )
+  {
+    m_assemblyCallback( m_localMatrix, m_localRhs );
+  }
 
   // Compose parallel LA matrix/rhs out of local LA matrix/rhs
   m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
@@ -460,6 +478,11 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
                                m_dofManager,
                                m_localMatrix.toViewConstSizes(),
                                m_localRhs.toView() );
+
+      if( m_assemblyCallback )
+      {
+        m_assemblyCallback( m_localMatrix, m_localRhs );
+      }
 
       // TODO: maybe add scale function here?
       // Scale()
@@ -859,9 +882,9 @@ void SolverBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time )
 R1Tensor const SolverBase::gravityVector() const
 {
   R1Tensor rval;
-  if( getParent()->groupCast< PhysicsSolverManager const * >() != nullptr )
+  if( dynamicCast< PhysicsSolverManager const * >( &getParent() ) != nullptr )
   {
-    rval = getParent()->getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString );
+    rval = getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() );
   }
   else
   {

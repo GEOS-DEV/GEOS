@@ -24,7 +24,7 @@
 namespace geosx
 {
 
-/// Forward declarations
+// Forward declarations
 class MeshLevel;
 class NodeManager;
 class ElementRegionManager;
@@ -61,12 +61,12 @@ public:
    * @brief Writes out a Blueprint plot file.
    * @copydetails EventBase::execute()
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Writes out a Blueprint plot file at the end of the simulation.
@@ -76,7 +76,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   { execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain ); }
 
 private:
@@ -123,14 +123,14 @@ private:
                                  string const & topology,
                                  dataRepository::Group & averagedElementData );
 
-  /// Used to determine which fields to write out.
+  // Used to determine which fields to write out.
   dataRepository::PlotLevel m_plotLevel = dataRepository::PlotLevel::LEVEL_1;
 
-  /// If true will write out the full quadrature data, otherwise it is averaged over.
+  // If true will write out the full quadrature data, otherwise it is averaged over.
   int m_outputFullQuadratureData = 0;
 };
 
 
-} /// namespace geosx
+} // namespace geosx
 
-#endif /// GEOSX_MANAGERS_OUTPUTS_BLUEPRINTOUTPUT_HPP_
+#endif // GEOSX_MANAGERS_OUTPUTS_BLUEPRINTOUTPUT_HPP_

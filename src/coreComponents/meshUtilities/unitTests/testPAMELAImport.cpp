@@ -21,7 +21,7 @@
 
 // TPL includes
 #include <gtest/gtest.h>
-
+#include <conduit.hpp>
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -30,7 +30,9 @@ void TestMeshImport( string const & inputStringMesh,
                      string const & inputStringRegion,
                      string const & propertyToTest )
 {
-  MeshManager meshManager( "mesh", nullptr );
+  conduit::Node node;
+  Group root( "root", node );
+  MeshManager meshManager( "mesh", &root );
 
   // Load the mesh
   xmlWrapper::xmlDocument xmlDocument;
@@ -41,34 +43,33 @@ void TestMeshImport( string const & inputStringMesh,
   meshManager.postProcessInputRecursive();
 
   // Create the domain and generate the Mesh
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
-  meshManager.generateMeshes( domain.get() );
+  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", &root ) );
+  meshManager.generateMeshes( *domain );
 
-  Group * const meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody = meshBodies->getGroup< MeshBody >( 0 );
-  MeshLevel * const meshLevel = meshBody->getGroup< MeshLevel >( 0 );
-  NodeManager const & nodeManager = *meshLevel->getNodeManager();
-  FaceManager const & faceManager = *meshLevel->getFaceManager();
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshBody & meshBody = domain->getMeshBody( 0 );
+  MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+  NodeManager const & nodeManager = meshLevel.getNodeManager();
+  FaceManager const & faceManager = meshLevel.getFaceManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   // Create the ElementRegions
   xmlDocument.load_buffer( inputStringRegion.c_str(), inputStringRegion.size() );
 
   xmlWrapper::xmlNode xmlRegionNode = xmlDocument.child( "ElementRegions" );
-  elemManager->processInputFileRecursive( xmlRegionNode );
-  elemManager->postProcessInputRecursive();
+  elemManager.processInputFileRecursive( xmlRegionNode );
+  elemManager.postProcessInputRecursive();
 
-  Group * const cellBlockManager = domain->getGroup( keys::cellManager );
+  Group & cellBlockManager = domain->getGroup( keys::cellManager );
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
-  elemManager->generateMesh( cellBlockManager );
+  elemManager.generateMesh( cellBlockManager );
 
 
   // Check if the computed center match with the imported center
   if( !propertyToTest.empty() )
   {
-    auto centerProperty = elemManager->constructArrayViewAccessor< real64, 2 >( propertyToTest );
-    elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
+    auto centerProperty = elemManager.constructArrayViewAccessor< real64, 2 >( propertyToTest );
+    elemManager.forElementSubRegionsComplete< ElementSubRegionBase >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion )
     {
       elemSubRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
@@ -77,7 +78,7 @@ void TestMeshImport( string const & inputStringMesh,
       {
         real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[ ei ] );
         LvArray::tensorOps::subtract< 3 >( center, centerProperty[er][esr][ei] );
-        GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
+        GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody.getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
       }
     } );
   }
@@ -85,7 +86,9 @@ void TestMeshImport( string const & inputStringMesh,
 
 TEST( PAMELAImport, testGMSH )
 {
-  MeshManager meshManager( "mesh", nullptr );
+  conduit::Node node;
+  Group root( "root", node );
+  MeshManager meshManager( "mesh", &root );
 
   std::stringstream inputStreamMesh;
   inputStreamMesh <<
@@ -113,7 +116,9 @@ TEST( PAMELAImport, testGMSH )
 
 TEST( PAMELAImport, testECLIPSE )
 {
-  MeshManager meshManager( "mesh", nullptr );
+  conduit::Node node;
+  Group root( "root", node );
+  MeshManager meshManager( "mesh", &root );
 
   std::stringstream inputStreamMesh;
   inputStreamMesh <<

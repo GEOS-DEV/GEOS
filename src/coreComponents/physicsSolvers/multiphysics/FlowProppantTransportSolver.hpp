@@ -41,8 +41,6 @@ public:
    */
   static string catalogName() { return "FlowProppantTransport"; }
 
-  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
-
   virtual real64
   solverStep( real64 const & time_n,
               real64 const & dt,
@@ -54,11 +52,9 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto proppantSolverNameString = "proppantSolverName";
-    constexpr static auto flowSolverNameString = "flowSolverName";
-
-  } flowProppantTransportSolverViewKeys;
-
+    constexpr static char const * proppantSolverNameString() { return "proppantSolverName"; }
+    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
+  };
 
   void preStepUpdate( real64 const & time_n,
                       real64 const & dt,

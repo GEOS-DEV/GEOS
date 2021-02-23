@@ -62,17 +62,17 @@ public:
   virtual void signalToPrepareForExecution( real64 const time,
                                             real64 const dt,
                                             integer const cycle,
-                                            dataRepository::Group * domain ) override;
+                                            DomainPartition & domain ) override;
   /**
    * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
    * @copydoc ExecutableGroup::execute()
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Call the execute method on the target and/or children if present.
@@ -110,7 +110,7 @@ public:
   /**
    * @brief Process input data to retrieve targeted objects internally.
    * The target object for an event may be specified via the keyword "target" in the input xml.
-   * This string is empty by default and uses GetGroupByPath() method in Group, which returns
+   * This string is empty by default and uses getGroupByPath() method in Group, which returns
    * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
    * This involves a lot of string parsing, so we do it once during initialization.
    */
@@ -129,7 +129,7 @@ public:
   virtual void checkEvents( real64 const time,
                             real64 const dt,
                             integer const cycle,
-                            dataRepository::Group * domain );
+                            DomainPartition & domain );
 
   /**
    * @brief Perform the calculations to estimate the timing of the event.
@@ -141,7 +141,7 @@ public:
   virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
-                                    dataRepository::Group * domain ) = 0;
+                                    DomainPartition & domain ) = 0;
 
   /**
    * @brief Collect time-step size requests from targets and/or children.
@@ -181,30 +181,30 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto eventTargetString = "target";
-    static constexpr auto beginTimeString = "beginTime";
-    static constexpr auto endTimeString = "endTime";
-    static constexpr auto forceDtString = "forceDt";
-    static constexpr auto maxEventDtString = "maxEventDt";
-    static constexpr auto lastTimeString = "lastTime";
-    static constexpr auto lastCycleString = "lastCycle";
-    static constexpr auto eventForecastString = "eventForecast";
-    static constexpr auto targetExactStartStopString = "targetExactStartStop";
-    static constexpr auto currentSubEventString = "currentSubEvent";
-    static constexpr auto isTargetExecutingString = "isTargetExecuting";
-    static constexpr auto finalDtStretchString = "finalDtStretch";
+    static constexpr char const * eventTargetString() { return "target"; }
+    static constexpr char const * beginTimeString() { return "beginTime"; }
+    static constexpr char const * endTimeString() { return "endTime"; }
+    static constexpr char const * forceDtString() { return "forceDt"; }
+    static constexpr char const * maxEventDtString() { return "maxEventDt"; }
+    static constexpr char const * lastTimeString() { return "lastTime"; }
+    static constexpr char const * lastCycleString() { return "lastCycle"; }
+    static constexpr char const * eventForecastString() { return "eventForecast"; }
+    static constexpr char const * targetExactStartStopString() { return "targetExactStartStop"; }
+    static constexpr char const * currentSubEventString() { return "currentSubEvent"; }
+    static constexpr char const * isTargetExecutingString() { return "isTargetExecuting"; }
+    static constexpr char const * finalDtStretchString() { return "finalDtStretch"; }
 
-    dataRepository::ViewKey eventTarget = { "target" };
-    dataRepository::ViewKey beginTime = { "beginTime" };
-    dataRepository::ViewKey endTime = { "endTime" };
-    dataRepository::ViewKey forceDt = { "forceDt" };
-    dataRepository::ViewKey maxEventDt = { "maxEventDt" };
-    dataRepository::ViewKey lastTime = { "lastTime" };
-    dataRepository::ViewKey lastCycle = { "lastCycle" };
-    dataRepository::ViewKey eventForecast = { "eventForecast" };
-    dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
-    dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
-    dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
+    dataRepository::ViewKey eventTarget = { eventTargetString() };
+    dataRepository::ViewKey beginTime = { beginTimeString() };
+    dataRepository::ViewKey endTime = { endTimeString() };
+    dataRepository::ViewKey forceDt = { forceDtString() };
+    dataRepository::ViewKey maxEventDt = { maxEventDtString() };
+    dataRepository::ViewKey lastTime = { lastTimeString() };
+    dataRepository::ViewKey lastCycle = { lastCycleString() };
+    dataRepository::ViewKey eventForecast = { eventForecastString() };
+    dataRepository::ViewKey targetExactStartStop = { targetExactStartStopString() };
+    dataRepository::ViewKey currentSubEvent = { currentSubEventString() };
+    dataRepository::ViewKey isTargetExecuting = { isTargetExecutingString() };
   } viewKeys;
   /// @endcond
 

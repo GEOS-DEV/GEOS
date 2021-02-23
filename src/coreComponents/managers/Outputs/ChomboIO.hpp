@@ -50,12 +50,12 @@ public:
    * @brief Writes out a Chombo plot file.
    * @copydetails EventBase::execute()
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Writes out a Chombo plot file at the end of the simulation.
@@ -65,7 +65,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) override
+                        DomainPartition & domain ) override
   {
     m_waitForInput = 0;
     execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
@@ -74,17 +74,17 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto outputPathString = "outputPath";
-    static constexpr auto beginCycleString = "beginCycle";
-    static constexpr auto inputPathString = "inputPath";
-    static constexpr auto waitForInputString = "waitForInput";
-    static constexpr auto useChomboPressuresString = "useChomboPressures";
+    static constexpr char const * outputPathString() { return "outputPath"; }
+    static constexpr char const * beginCycleString() { return "beginCycle"; }
+    static constexpr char const * inputPathString() { return "inputPath"; }
+    static constexpr char const * waitForInputString() { return "waitForInput"; }
+    static constexpr char const * useChomboPressuresString() { return "useChomboPressures"; }
 
-    dataRepository::ViewKey outputPath = { outputPathString };
-    dataRepository::ViewKey beginCycle = { beginCycleString };
-    dataRepository::ViewKey inputPath = { inputPathString };
-    dataRepository::ViewKey waitForInput = { waitForInputString };
-    dataRepository::ViewKey useChomboPressures = { useChomboPressuresString };
+    dataRepository::ViewKey outputPath = { outputPathString() };
+    dataRepository::ViewKey beginCycle = { beginCycleString() };
+    dataRepository::ViewKey inputPath = { inputPathString() };
+    dataRepository::ViewKey waitForInput = { waitForInputString() };
+    dataRepository::ViewKey useChomboPressures = { useChomboPressuresString() };
   } viewKeys;
   /// @endcond
 

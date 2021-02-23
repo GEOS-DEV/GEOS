@@ -30,6 +30,7 @@ namespace constitutive
 
 /**
  * @brief Kernel wrapper class for DeadOilFluild
+ *        This kernel can be called on the GPU (after adding GEOSX_HOST_DEVICE flags in this class and in MultiFluidBase)
  */
 class DeadOilFluidUpdate final : public MultiFluidBaseUpdate
 {
@@ -120,8 +121,8 @@ public:
 
   /// Deleted move assignment operator
   DeadOilFluidUpdate & operator=( DeadOilFluidUpdate && ) = delete;
-
-  GEOSX_HOST_DEVICE
+  
+  //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
@@ -133,7 +134,7 @@ public:
                         arraySlice2d< real64 > const & phaseCompFraction,
                         real64 & totalDensity ) const override;
 
-  GEOSX_HOST_DEVICE
+  //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
@@ -163,7 +164,7 @@ public:
                         real64 & dTotalDensity_dTemperature,
                         arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const override;
 
-  GEOSX_HOST_DEVICE
+  //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
@@ -202,24 +203,24 @@ public:
 
 private:
 
-  GEOSX_HOST_DEVICE
+  //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void computeDensities( real64 pressure,
                          arraySlice1d< real64, 0 > const & phaseMassDens ) const;
 
-  GEOSX_HOST_DEVICE
+  //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void computeDensities( real64 pressure,
                          arraySlice1d< real64 > const & phaseMassDens,
                          arraySlice1d< real64 > const & dPhaseMassDens_dPres,
                          arraySlice2d< real64 > const & dPhaseMassDens_dGlobalCompFrac ) const;
 
-  GEOSX_HOST_DEVICE
+  //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void computeViscosities( real64 pressure,
                            arraySlice1d< real64, 0 > const & phaseVisc ) const;
 
-  GEOSX_HOST_DEVICE
+  //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void computeViscosities( real64 pressure,
                            arraySlice1d< real64 > const & phaseVisc,
@@ -269,7 +270,7 @@ public:
 
   DeadOilFluid( string const & name, Group * const parent );
 
-  virtual ~DeadOilFluid() override;
+  virtual ~DeadOilFluid() override = default;
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
@@ -328,22 +329,22 @@ public:
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
-    static constexpr auto surfacePhaseMassDensitiesString       = "surfacePhaseMassDensities";
-    static constexpr auto formationVolumeFactorTableNamesString = "hydrocarbonFormationVolFactorTableNames";
-    static constexpr auto viscosityTableNamesString             = "hydrocarbonViscosityTableNames";
-    static constexpr auto waterRefPressureString                = "waterReferencePressure";
-    static constexpr auto waterFormationVolumeFactorString      = "waterFormationVolumeFactor";
-    static constexpr auto waterCompressibilityString            = "waterCompressibility";
-    static constexpr auto waterViscosityString                  = "waterViscosity";
+    static constexpr char const * surfacePhaseMassDensitiesString() { return "surfaceDensities"; }
+    static constexpr char const * formationVolumeFactorTableNamesString() { return "hydrocarbonFormationVolFactorTableNames"; }
+    static constexpr char const * viscosityTableNamesString() { return "hydrocarbonViscosityTableNames"; }
+    static constexpr char const * waterRefPressureString() { return "waterReferencePressure"; }
+    static constexpr char const * waterFormationVolumeFactorString() { return "waterFormationVolumeFactor"; }
+    static constexpr char const * waterCompressibilityString() { return "waterCompressibility"; }
+    static constexpr char const * waterViscosityString() { return "waterViscosity"; }
 
-  } viewKeysDeadOilFluid;
+  };
 
 
 protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups() override;
 
 private:
 
@@ -392,7 +393,7 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
+//GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::computeDensities( real64 pressure,
                                            arraySlice1d< real64, 0 > const & phaseMassDens ) const
@@ -427,7 +428,7 @@ void DeadOilFluidUpdate::computeDensities( real64 pressure,
   }
 }
 
-GEOSX_HOST_DEVICE
+//GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::computeDensities( real64 pressure,
                                            arraySlice1d< real64 > const & phaseMassDens,
@@ -476,7 +477,7 @@ void DeadOilFluidUpdate::computeDensities( real64 pressure,
   }
 }
 
-GEOSX_HOST_DEVICE
+//GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::computeViscosities( real64 pressure,
                                              arraySlice1d< real64, 0 > const & phaseVisc ) const
@@ -507,7 +508,7 @@ void DeadOilFluidUpdate::computeViscosities( real64 pressure,
   }
 }
 
-GEOSX_HOST_DEVICE
+//GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::computeViscosities( real64 pressure,
                                              arraySlice1d< real64 > const & phaseVisc,
@@ -543,7 +544,7 @@ void DeadOilFluidUpdate::computeViscosities( real64 pressure,
   }
 }
 
-GEOSX_HOST_DEVICE
+//GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::compute( real64 pressure,
                                   real64 temperature,
@@ -556,25 +557,25 @@ void DeadOilFluidUpdate::compute( real64 pressure,
                                   real64 & totalDens ) const
 {
   GEOSX_UNUSED_VAR( temperature );
-  localIndex const NC = m_componentMolarWeight.size();
-  localIndex const NP = m_phaseTypes.size();
+  localIndex const nComps = m_componentMolarWeight.size();
+  localIndex const nPhases = m_phaseTypes.size();
 
   // 1. Read viscosities and formation volume factors from tables, update mass densities
   computeViscosities( pressure, phaseVisc );
   computeDensities( pressure, phaseMassDens );
 
   // 2. Update phaseDens (mass density if useMass == 1, molar density otherwise)
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < nPhases; ++ip )
   {
     real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ip];
     phaseDens[ip] = phaseMassDens[ip] * mult;
   }
 
   // 3. Update remaining variables: phaseFrac, phaseCompFrac using Dead-Oil assumptions
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < nPhases; ++ip )
   {
     phaseFrac[ip] = composition[ip];
-    for( localIndex ic = 0; ic < NC; ++ic )
+    for( localIndex ic = 0; ic < nComps; ++ic )
     {
       phaseCompFrac[ip][ic] = (ip == ic) ? 1.0 : 0.0;
     }
@@ -584,7 +585,7 @@ void DeadOilFluidUpdate::compute( real64 pressure,
   totalDens = 0.0;
 
   // 4.1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < nPhases; ++ip )
   {
     totalDens += phaseFrac[ip] / phaseDens[ip];
   }
@@ -592,7 +593,7 @@ void DeadOilFluidUpdate::compute( real64 pressure,
   totalDens = 1.0 / totalDens;
 }
 
-GEOSX_HOST_DEVICE
+//GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::compute( real64 pressure,
                                   real64 temperature,
@@ -630,8 +631,8 @@ void DeadOilFluidUpdate::compute( real64 pressure,
   GEOSX_UNUSED_VAR( dPhaseCompFraction_dTemperature );
   GEOSX_UNUSED_VAR( dTotalDensity_dTemperature );
 
-  localIndex const NC = numComponents();
-  localIndex const NP = numPhases();
+  localIndex const nComps = numComponents();
+  localIndex const nPhases = numPhases();
 
   // 1. Read viscosities and formation volume factors from tables, update mass densities
   computeViscosities( pressure,
@@ -644,29 +645,29 @@ void DeadOilFluidUpdate::compute( real64 pressure,
                     dPhaseMassDensity_dGlobalCompFraction );
 
   // 2. Update phaseDens (mass density if useMass == 1, molar density otherwise)
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < nPhases; ++ip )
   {
     real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ip];
     phaseDensity[ip] = phaseMassDensity[ip] * mult;
     dPhaseDensity_dPressure[ip] = dPhaseMassDensity_dPressure[ip] * mult;
-    for( localIndex ic = 0; ic < NC; ++ic )
+    for( localIndex ic = 0; ic < nComps; ++ic )
     {
       dPhaseDensity_dGlobalCompFraction[ip][ic] = 0.0;
     }
   }
 
   // 3. Update remaining variables: phaseFrac, phaseCompFrac using Dead-Oil assumptions
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < nPhases; ++ip )
   {
     phaseFraction[ip] = composition[ip];
     dPhaseFraction_dPressure[ip] = 0.0;
-    for( localIndex ic = 0; ic < NC; ++ic )
+    for( localIndex ic = 0; ic < nComps; ++ic )
     {
       dPhaseFraction_dGlobalCompFraction[ip][ic] = (ip == ic) ? 1-composition[ip] : -composition[ip];
 
       phaseCompFraction[ip][ic] = (ip == ic) ? 1.0 : 0.0;
       dPhaseCompFraction_dPressure[ip][ic] = 0.0;
-      for( localIndex jc = 0; jc < NC; ++jc )
+      for( localIndex jc = 0; jc < nComps; ++jc )
       {
         dPhaseCompFraction_dGlobalCompFraction[ip][ic][jc] = 0.0;
       }
@@ -676,20 +677,20 @@ void DeadOilFluidUpdate::compute( real64 pressure,
   // 4. Compute total fluid mass/molar density and derivatives
   totalDensity = 0.0;
   dTotalDensity_dPressure = 0.0;
-  for( localIndex ic = 0; ic < NC; ++ic )
+  for( localIndex ic = 0; ic < nComps; ++ic )
   {
     dTotalDensity_dGlobalCompFraction[ic] = 0.0;
   }
 
   // 4.1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < nPhases; ++ip )
   {
     real64 const densInv = 1.0 / phaseDensity[ip];
     real64 const value = phaseFraction[ip] * densInv;
 
     totalDensity += value;
     dTotalDensity_dPressure += ( dPhaseFraction_dPressure[ip] - value * dPhaseDensity_dPressure[ip] ) * densInv;
-    for( localIndex ic = 0; ic < NC; ++ic )
+    for( localIndex ic = 0; ic < nComps; ++ic )
     {
       dTotalDensity_dGlobalCompFraction[ic] += ( dPhaseFraction_dGlobalCompFraction[ip][ic]
                                                  - value * dPhaseDensity_dGlobalCompFraction[ip][ic] ) * densInv;
@@ -700,12 +701,11 @@ void DeadOilFluidUpdate::compute( real64 pressure,
   totalDensity = 1.0 / totalDensity;
   real64 const minusDens2 = -totalDensity * totalDensity;
   dTotalDensity_dPressure *= minusDens2;
-  for( localIndex ic = 0; ic < NC; ++ic )
+  for( localIndex ic = 0; ic < nComps; ++ic )
   {
     dTotalDensity_dGlobalCompFraction[ic] *= minusDens2;
   }
 }
-
 
 } //namespace constitutive
 

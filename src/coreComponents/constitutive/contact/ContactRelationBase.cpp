@@ -17,6 +17,7 @@
  */
 
 #include "ContactRelationBase.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/TableFunction.hpp"
 
@@ -39,14 +40,14 @@ ContactRelationBase::ContactRelationBase( string const & name,
   m_apertureFunction( nullptr ),
   m_apertureTolerance( 1.0e-99 )
 {
-  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness )->
-    //setInputFlag( InputFlags::REQUIRED )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::penaltyStiffnessString(), &m_penaltyStiffness ).
+    //setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 
-  registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance )->
-    setApplyDefaultValue( 1.0e-9 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::apertureToleranceString(), &m_apertureTolerance ).
+    setApplyDefaultValue( 1.0e-9 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value to be used to avoid floating point errors in expressions involving aperture. "
                     "For example in the case of dividing by the actual aperture (not the effective aperture "
                     "that results from the aperture function) this value may be used to avoid 1/0 errors. "
@@ -77,7 +78,7 @@ ContactRelationBase::createChild( string const & catalogKey, string const & chil
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::getCatalog();
   GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
 
-  m_apertureFunction = FunctionManager::instance().registerGroup( childName, FunctionBase::CatalogInterface::factory( catalogKey, childName, this ) );
+  m_apertureFunction = &getGlobalState().getFunctionManager().registerGroup( childName, FunctionBase::CatalogInterface::factory( catalogKey, childName, this ) );
 
   return m_apertureFunction;
 }
@@ -102,7 +103,7 @@ void ContactRelationBase::setSchemaDeviations( xmlWrapper::xmlNode,
 
 
 
-void ContactRelationBase::initializePreSubGroups( Group * const )
+void ContactRelationBase::initializePreSubGroups()
 {
   TableFunction * const apertureTable = dynamic_cast< TableFunction * >(m_apertureFunction);
   if( apertureTable!=nullptr )
@@ -140,6 +141,14 @@ void ContactRelationBase::initializePreSubGroups( Group * const )
   }
 
 
+}
+
+void ContactRelationBase::computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                           arraySlice1d< real64 > const & tractionVector ) const
+{
+  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
+  tractionVector[1] = 0.0;
+  tractionVector[2] = 0.0;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, Group * const )
