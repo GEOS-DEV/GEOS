@@ -62,11 +62,7 @@ ComputeProjectors( localIndex const & cellIndex,
 
   // Compute cell diameter.
   real64 cellDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
-                        ComputeDiameter< 3,
-                                         arrayView2d< real64 const,
-                                                      nodes::REFERENCE_POSITION_USD >
-                                         const &,
-                                         arraySlice1d< localIndex const > const & >
+                        ComputeDiameter< 3 >
                           ( nodesCoords, cellToNodeMap[cellIndex], numCellPoints );
   real64 const invCellDiameter = 1.0/cellDiameter;
 
