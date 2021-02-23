@@ -33,9 +33,9 @@ public:
 
   static string catalogName() { return "AcousticSEM"; }
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
 
   /**
@@ -97,7 +97,7 @@ protected:
 
   virtual void postProcessInput() override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
 private:
 

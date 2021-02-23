@@ -10,6 +10,7 @@
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/ProblemManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
@@ -23,55 +24,55 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
               parent )
 {
 
-  registerWrapper( viewKeyStruct::sourceCoordinatesString, &m_sourceCoordinates )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::sourceCoordinatesString, &m_sourceCoordinates ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the sources" );
 
-  registerWrapper( viewKeyStruct::sourceNodeIdsString, &m_sourceNodeIds )->
-    setInputFlag( InputFlags::FALSE )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::sourceNodeIdsString, &m_sourceNodeIds ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each source point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString, &m_sourceConstants )->
-    setInputFlag( InputFlags::FALSE )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::sourceConstantsString, &m_sourceConstants ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
 
-  registerWrapper( viewKeyStruct::sourceIsLocalString, &m_sourceIsLocal )->
-    setInputFlag( InputFlags::FALSE )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::sourceIsLocalString, &m_sourceIsLocal ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the source is local to this MPI rank" );
 
 
-  registerWrapper( viewKeyStruct::timeSourceFrequencyString, &m_timeSourceFrequency )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::timeSourceFrequencyString, &m_timeSourceFrequency ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Central frequency for the time source" );
 
 
-  registerWrapper( viewKeyStruct::receiverCoordinatesString, &m_receiverCoordinates )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::receiverCoordinatesString, &m_receiverCoordinates ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the receivers" );
 
-  registerWrapper( viewKeyStruct::receiverNodeIdsString, &m_receiverNodeIds )->
-    setInputFlag( InputFlags::FALSE )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::receiverNodeIdsString, &m_receiverNodeIds ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each receiver point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString, &m_sourceConstants )->
-    setInputFlag( InputFlags::FALSE )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::sourceConstantsString, &m_sourceConstants ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
     setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
 
-  registerWrapper( viewKeyStruct::receiverIsLocalString, &m_receiverIsLocal )->
-    setInputFlag( InputFlags::FALSE )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::receiverIsLocalString, &m_receiverIsLocal ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
-  registerWrapper( viewKeyStruct::pressureNp1AtReceiversString, &m_pressureNp1AtReceivers )->
-    setInputFlag( InputFlags::FALSE )->
-    setSizedFromParent( 0 )->
+  registerWrapper( viewKeyStruct::pressureNp1AtReceiversString, &m_pressureNp1AtReceivers ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
     setDescription( "Pressure value at each receiver for each timestep" );
 
 
@@ -109,14 +110,15 @@ void AcousticWaveEquationSEM::postProcessInput()
 
 }
 
-void AcousticWaveEquationSEM::registerDataOnMesh( Group * const MeshBodies )
+void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  //for( auto & mesh : MeshBodies->getSubGroups() )
+  meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
+    
+    MeshLevel & meshLevel =  meshBody.getMeshLevel( 0 );
 
-    MeshLevel & meshLevel = *(mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 ));
-
-    NodeManager & nodes = *(meshLevel.getNodeManager());
+    NodeManager & nodes = meshLevel.getNodeManager();
 
     nodes.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
                                  extrinsicMeshData::Pressure_n,
@@ -127,21 +129,20 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group * const MeshBodies )
                                  extrinsicMeshData::StiffnessVector >( this->getName() );
 
 
-    ElementRegionManager & elemManager = *(meshLevel.getElemManager());
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
     } );
 
-
-  }
+  });
 }
 
 
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 {
-  NodeManager & nodeManager = *(mesh.getNodeManager());
+  NodeManager & nodeManager = mesh.getNodeManager();
 
   // get the position of the nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
@@ -464,32 +465,32 @@ void AcousticWaveEquationSEM::saveSismo( localIndex isismo, real64 val_pressure,
 }
 
 
-void AcousticWaveEquationSEM::initializePreSubGroups( Group * const rootGroup )
+void AcousticWaveEquationSEM::initializePreSubGroups()
 {
-  SolverBase::initializePreSubGroups( rootGroup );
+  SolverBase::initializePreSubGroups();
 
-  DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
+  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOSX_ERROR_IF( feDiscretization == nullptr, getName() << ": FE discretization not found: " << m_discretizationName );
 }
 
 
-void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups( Group * const problemManager )
+void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition * domain = problemManager->getGroup< DomainPartition >( keys::domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   precomputeSourceAndReceiverTerm( mesh );
 
-  NodeManager & nodeManager = *mesh.getNodeManager();
-  FaceManager & faceManager = *mesh.getFaceManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
 
   /// get the array of indicators: 1 if the node is on the boundary; 0 otherwise
   arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
@@ -700,9 +701,9 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  MeshLevel & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager & nodes = *mesh.getNodeManager();
+  NodeManager & nodes = mesh.getNodeManager();
 
   arrayView1d< real64 > const mass = nodes.getExtrinsicData< extrinsicMeshData::MassVector >();
   arrayView1d< real64 > const damping = nodes.getExtrinsicData< extrinsicMeshData::DampingVector >();
@@ -820,8 +821,10 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   /// Synchronize pressure fields
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( "pressure_np1" );
-  CommunicationTools::synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+  
+  CommunicationTools syncFields;
+  syncFields.synchronizeFields( fieldNames,
+                                         domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                          domain.getNeighbors(),
                                          true );
 
