@@ -49,11 +49,11 @@ CO2EnthalpyFunction::CO2EnthalpyFunction( string_array const & inputPara,
 
   GEOSX_ERROR_IF( notFound, "Component CO2 is not found!" );
 
-  MakeTable( inputPara );
+  makeTable( inputPara );
 
 } 
 
-void CO2EnthalpyFunction::MakeTable( string_array const & inputPara )
+void CO2EnthalpyFunction::makeTable( string_array const & inputPara )
 {
 
   real64_array pressures;
@@ -117,16 +117,16 @@ void CO2EnthalpyFunction::MakeTable( string_array const & inputPara )
   real64_array2d enthalpies( nP, nT );
   real64_array2d densities( nP, nT );
 
-  SpanWagnerCO2DensityFunction::CalculateCO2Density( pressures, temperatures, densities );
+  SpanWagnerCO2DensityFunction::calculateCO2Density( pressures, temperatures, densities );
 
-  CalculateCO2Enthalpy( pressures, temperatures, densities, enthalpies );
+  calculateCO2Enthalpy( pressures, temperatures, densities, enthalpies );
 
   m_CO2EnthalpyTable = std::make_shared< XYTable >( "CO2EnthalpyTable", pressures, temperatures, enthalpies );
 
 
 }
   
-void CO2EnthalpyFunction::CalculateCO2Enthalpy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density, real64_array2d const & enthalpy )
+void CO2EnthalpyFunction::calculateCO2Enthalpy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density, real64_array2d const & enthalpy )
 {
 
     static const real64 dc = 467.6;
@@ -295,7 +295,7 @@ void CO2EnthalpyFunction::CalculateCO2Enthalpy( real64_array const & pressure, r
 }
 
   
-void CO2EnthalpyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
+void CO2EnthalpyFunction::evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
 {
 
   localIndex const numComponents = phaseComposition.size();
@@ -307,7 +307,7 @@ void CO2EnthalpyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs 
   T.m_var = temperature.m_var;
   T.m_der[1] = 1.0;
 
-  enth = m_CO2EnthalpyTable->Value( P, T );
+  enth = m_CO2EnthalpyTable->value( P, T );
 
   if( !useMass )
   {

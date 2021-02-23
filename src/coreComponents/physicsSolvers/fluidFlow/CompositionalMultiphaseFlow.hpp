@@ -279,7 +279,7 @@ public:
 
     static constexpr char const * temperatureString() { return "temperature"; }
 
-    static constexpr char const * deltaTemperatureString() { "deltaTemperature"; }
+    static constexpr char const * deltaTemperatureString() { return "deltaTemperature"; }
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 

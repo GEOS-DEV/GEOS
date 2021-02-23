@@ -32,7 +32,7 @@ BrineInternalEnergyFunction::BrineInternalEnergyFunction( string_array const & i
   PVTFunction( inputPara[1], componentNames, componentMolarWeight )
 {}
 
-void BrineInternalEnergyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature,
+void BrineInternalEnergyFunction::evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature,
                                               arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
 {
   GEOSX_UNUSED_VAR( phaseComposition );

@@ -38,23 +38,23 @@ public:
 
 
   static constexpr auto m_catalogName = "BrineEnthalpy";
-  static string CatalogName()                    { return m_catalogName; }
-  virtual string getCatalogName() const override final { return CatalogName(); }
+  static string catalogName()                    { return m_catalogName; }
+  virtual string getCatalogName() const override final { return catalogName(); }
 
 
-  virtual PVTFuncType FunctionType() const override
+  virtual PVTFuncType functionType() const override
   {
     return PVTFuncType::ENTHALPY;
   }
 
-  virtual void Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
+  virtual void evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value, bool useMass = 0 ) const override;
 
 private:
 
-  void MakeTable( string_array const & inputPara );  
+  void makeTable( string_array const & inputPara );
 
-  void CalculateBrineEnthalpy( real64_array const & pressure, real64_array const & temperature, real64 const & m, real64_array2d const & enthalpy );
+  void calculateBrineEnthalpy( real64_array const & pressure, real64_array const & temperature, real64 const & m, real64_array2d const & enthalpy );
 
   TableFunctionPtr m_BrineEnthalpyTable;
   TableFunctionPtr m_CO2EnthalpyTable;  

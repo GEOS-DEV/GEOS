@@ -100,26 +100,24 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper( viewKeyStruct::phaseEnthalpyString(), &m_phaseEnthalpy )->
+  registerWrapper( viewKeyStruct::phaseEnthalpyString(), &m_phaseEnthalpy ).
     setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseEnthalpy_dPressureString(), &m_dPhaseEnthalpy_dPressure )->
+  registerWrapper( viewKeyStruct::dPhaseEnthalpy_dPressureString(), &m_dPhaseEnthalpy_dPressure ).
     setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseEnthalpy_dTemperatureString(), &m_dPhaseEnthalpy_dTemperature )->
+  registerWrapper( viewKeyStruct::dPhaseEnthalpy_dTemperatureString(), &m_dPhaseEnthalpy_dTemperature ).
     setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseEnthalpy_dGlobalCompFractionString(), &m_dPhaseEnthalpy_dGlobalCompFraction )->
+  registerWrapper( viewKeyStruct::dPhaseEnthalpy_dGlobalCompFractionString(), &m_dPhaseEnthalpy_dGlobalCompFraction ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
 
-  registerWrapper( viewKeyStruct::phaseInternalEnergyString(), &m_phaseInternalEnergy )->
+  registerWrapper( viewKeyStruct::phaseInternalEnergyString(), &m_phaseInternalEnergy ).
     setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseInternalEnergy_dPressureString(), &m_dPhaseInternalEnergy_dPressure )->
+  registerWrapper( viewKeyStruct::dPhaseInternalEnergy_dPressureString(), &m_dPhaseInternalEnergy_dPressure ).
     setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseInternalEnergy_dTemperatureString(), &m_dPhaseInternalEnergy_dTemperature )->
+  registerWrapper( viewKeyStruct::dPhaseInternalEnergy_dTemperatureString(), &m_dPhaseInternalEnergy_dTemperature ).
     setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseInternalEnergy_dGlobalCompFractionString(), &m_dPhaseInternalEnergy_dGlobalCompFraction )->
+  registerWrapper( viewKeyStruct::dPhaseInternalEnergy_dGlobalCompFractionString(), &m_dPhaseInternalEnergy_dGlobalCompFraction ).
     setRestartFlags( RestartFlags::NO_WRITE );
-  
-
   
 }
 

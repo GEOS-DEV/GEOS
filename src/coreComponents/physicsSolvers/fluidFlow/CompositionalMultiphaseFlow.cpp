@@ -62,13 +62,13 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   m_allowCompDensChopping( 1 )
 {
 //START_SPHINX_INCLUDE_00
-  this->registerWrapper( viewKeyStruct::uniformTemperatureString(), &m_uniformTemperature )->
-    setInputFlag( InputFlags::REQUIRED )->
+  this->registerWrapper( viewKeyStruct::uniformTemperatureString(), &m_uniformTemperature ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Uniform temperature for isothermal simulations." );
 
-  this->registerWrapper( viewKeyStruct::isothermalFlagString(), &m_isothermalFlag )->
-    setApplyDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  this->registerWrapper( viewKeyStruct::isothermalFlagString(), &m_isothermalFlag ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem  is isothermal or not." );
 
   this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
@@ -160,22 +160,22 @@ void CompositionalMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 
       if( m_isothermalFlag == 0 )
       {
-        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString() )->
+        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString() ).
           setPlotLevel( PlotLevel::LEVEL_0 );
 
-        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() )->
+        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() ).
           setRestartFlags( RestartFlags::NO_WRITE );
 
-        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() )->
+        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() ).
           setRestartFlags( RestartFlags::NO_WRITE );
 
-        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dTemperatureString() )->
+        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dTemperatureString() ).
           setRestartFlags( RestartFlags::NO_WRITE );
 
-        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseInternalEnergyOldString() )->
+        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseInternalEnergyOldString() ).
           setRestartFlags( RestartFlags::NO_WRITE );
 
-        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::rockInternalEnergyOldString() )->
+        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::rockInternalEnergyOldString() ).
           setRestartFlags( RestartFlags::NO_WRITE );
       }
     } );
@@ -329,9 +329,9 @@ void CompositionalMultiphaseFlow::resizeFields( MeshLevel & meshLevel ) const
   {
     forTargetSubRegions( meshLevel, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString ).resizeDimension< 1 >( NP );
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dTemperatureString ).resizeDimension< 1 >( NP );
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseInternalEnergyOldString ).resizeDimension< 1 >( NP );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() ).resizeDimension< 1 >( NP );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dTemperatureString() ).resizeDimension< 1 >( NP );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseInternalEnergyOldString() ).resizeDimension< 1 >( NP );
     } );
   }
 }
@@ -427,7 +427,7 @@ void CompositionalMultiphaseFlow::updatePhaseVolumeFraction( Group & dataGroup,
     arrayView3d< real64 const > const & dPhaseDens_dTemp = fluid.dPhaseDensity_dTemperature();
 
     arrayView2d< real64 > const dPhaseVolFrac_dTemp =
-      dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
+      dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() );
 
     CompositionalMultiphaseFlowKernels::KernelLaunchSelector2
     < CompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel >( m_numComponents, m_numPhases,
@@ -519,10 +519,10 @@ void CompositionalMultiphaseFlow::updatePhaseMobility( Group & dataGroup, localI
     arrayView3d< real64 const > const & dPhaseVisc_dTemp = fluid.dPhaseViscosity_dTemperature();
 
     arrayView2d< real64 > const dPhaseMob_dTemp =
-      dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dTemperatureString );
+      dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dTemperatureString() );
 
     arrayView2d< real64 const > const dPhaseVolFrac_dTemp =
-      dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
+      dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() );
 
     CompositionalMultiphaseFlowKernels::KernelLaunchSelector2
     < CompositionalMultiphaseFlowKernels::PhaseMobilityKernel >( m_numComponents, m_numPhases,
@@ -575,8 +575,8 @@ void CompositionalMultiphaseFlow::updateFluidModel( Group & dataGroup, localInde
     }
     else
     {
-      arrayView1d< real64 const > const temperature  = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::temperatureString );
-      arrayView1d< real64 const > const dTemperature = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString );
+      arrayView1d< real64 const > const temperature  = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
+      arrayView1d< real64 const > const dTemperature = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() );
 
       CompositionalMultiphaseFlowKernels::FluidUpdateKernel::launch< serialPolicy >( dataGroup.size(),
                                                                                      fluidWrapper,
@@ -799,8 +799,8 @@ void CompositionalMultiphaseFlow::backupFields( MeshLevel & mesh ) const
   {
     forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
     {
-      MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
-      SolidBase const & solid = GetConstitutiveModel< SolidBase >( subRegion, solidModelNames()[targetIndex] );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+      SolidBase const & solid = getConstitutiveModel< SolidBase >( subRegion, solidModelNames()[targetIndex] );
 
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
 
@@ -974,20 +974,20 @@ void CompositionalMultiphaseFlow::assembleAccumulationTerms( DomainPartition con
     {
 
       arrayView2d< real64 const > const & dPhaseVolFrac_dTemp =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
+        subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() );
 
       arrayView3d< real64 const > const & dPhaseDens_dTemp = fluid.dPhaseDensity_dTemperature();
       arrayView4d< real64 const > const & dPhaseCompFrac_dTemp = fluid.dPhaseCompFraction_dTemperature();
 
       arrayView2d< real64 const > const & phaseInternalEnergyOld =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseInternalEnergyOldString );
+        subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseInternalEnergyOldString() );
       arrayView3d< real64 const > const & phaseInternalEnergy = fluid.phaseInternalEnergy();
       arrayView3d< real64 const > const & dPhaseInternalEnergy_dPres = fluid.dPhaseInternalEnergy_dPressure();
       arrayView3d< real64 const > const & dPhaseInternalEnergy_dTemp = fluid.dPhaseInternalEnergy_dTemperature();
       arrayView4d< real64 const > const & dPhaseInternalEnergy_dComp = fluid.dPhaseInternalEnergy_dGlobalCompFraction();
 
       arrayView1d< real64 const > const & rockInternalEnergyOld =
-        subRegion.getReference< array1d< real64 > >( viewKeyStruct::rockInternalEnergyOldString );
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::rockInternalEnergyOldString() );
       arrayView2d< real64 const > const & rockInternalEnergy = solid.internalEnergy();
       arrayView2d< real64 const > const & dRockInternalEnergy_dTemp = solid.dInternalEnergy_dTemperature();
       arrayView2d< real64 const > const & rockDensity = solid.getDensity();
@@ -1228,7 +1228,7 @@ void CompositionalMultiphaseFlow::assembleVolumeBalanceTerms( DomainPartition co
     else
     {
       arrayView2d< real64 const > const & dPhaseVolFrac_dTemp =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
+        subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() );
 
       CompositionalMultiphaseFlowKernels::KernelLaunchSelector2
       < CompositionalMultiphaseFlowKernels::VolumeBalanceKernel >( m_numComponents, m_numPhases,
@@ -1486,7 +1486,7 @@ real64 CompositionalMultiphaseFlow::calculateResidualNorm( DomainPartition const
                                                            arrayView1d< real64 const > const & localRhs )
 {
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString() );
@@ -1501,7 +1501,7 @@ real64 CompositionalMultiphaseFlow::calculateResidualNorm( DomainPartition const
 
     forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
     {
-      MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
       arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
@@ -1548,12 +1548,12 @@ real64 CompositionalMultiphaseFlow::calculateResidualNorm( DomainPartition const
 
     forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
     {
-      MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
       arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
+      arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
       arrayView2d< real64 const > const & totalDens = fluid.totalDensity();
 
       RAJA::ReduceSum< parallelDeviceReduce, real64 > localFlowSum( 0.0 );
@@ -1580,8 +1580,8 @@ real64 CompositionalMultiphaseFlow::calculateResidualNorm( DomainPartition const
     } );
 
     // compute global residual norm
-    real64 const flowResidual   = std::sqrt( MpiWrapper::Sum( localFlowResidualNorm ) );
-    real64 const energyResidual = std::sqrt( MpiWrapper::Sum( localEnergyResidualNorm ) );
+    real64 const flowResidual   = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
+    real64 const energyResidual = std::sqrt( MpiWrapper::sum( localEnergyResidualNorm ) );
 
     residual = ( flowResidual + energyResidual ) / 2;
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
@@ -1785,10 +1785,10 @@ void CompositionalMultiphaseFlow::applySystemSolution( DofManager const & dofMan
 
   if( m_isothermalFlag == 0 )
   {
-    fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTemperatureString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTemperatureString() ) );
   }
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
@@ -1850,11 +1850,11 @@ void CompositionalMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition &
     forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 > const & dPres =
-        subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
       arrayView2d< real64 > const & dCompDens =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+        subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString() );
       arrayView1d< real64 > const & dTemp =
-        subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString );
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() );
 
       dPres.setValues< parallelDevicePolicy<> >( 0.0 );
       dCompDens.setValues< parallelDevicePolicy<> >( 0.0 );
@@ -1900,9 +1900,9 @@ void CompositionalMultiphaseFlow::implicitStepComplete( real64 const & GEOSX_UNU
     forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 const > const dTemp =
-        subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString );
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() );
       arrayView1d< real64 > const temp =
-        subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString );
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
@@ -1930,8 +1930,8 @@ void CompositionalMultiphaseFlow::resetViews( MeshLevel & mesh )
   m_dCompFrac_dCompDens.setName( getName() + "/accessors/" + viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
   m_phaseVolFrac.clear();
-  m_phaseVolFrac = elemManager.ConstructArrayViewAccessor< real64, 2 >( viewKeyStruct::phaseVolumeFractionString );
-  m_phaseVolFrac.setName( getName() + "/accessors/" + viewKeyStruct::phaseVolumeFractionString );
+  m_phaseVolFrac = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::phaseVolumeFractionString() );
+  m_phaseVolFrac.setName( getName() + "/accessors/" + viewKeyStruct::phaseVolumeFractionString() );
 
   m_dPhaseVolFrac_dPres.clear();
   m_dPhaseVolFrac_dPres = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
@@ -2013,58 +2013,58 @@ void CompositionalMultiphaseFlow::resetViews( MeshLevel & mesh )
     using keys = MultiFluidBase::viewKeyStruct;
 
     m_temperature.clear();
-    m_temperature = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::temperatureString );
+    m_temperature = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::temperatureString() );
     m_temperature.setName( getName() + "/accessors/" + viewKeyStruct::temperatureString() );
 
     m_deltaTemperature.clear();
-    m_deltaTemperature = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::deltaTemperatureString );
+    m_deltaTemperature = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::deltaTemperatureString() );
     m_deltaTemperature.setName( getName() + "/accessors/" + viewKeyStruct::deltaTemperatureString() );
 
     m_dPhaseVolFrac_dTemp.clear();
-    m_dPhaseVolFrac_dTemp = elemManager.ConstructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
+    m_dPhaseVolFrac_dTemp = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() );
     m_dPhaseVolFrac_dTemp.setName( getName() + "/accessors/" + viewKeyStruct::dPhaseVolumeFraction_dTemperatureString() );
 
     m_dPhaseMob_dTemp.clear();
-    m_dPhaseMob_dTemp = elemManager.ConstructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPhaseMobility_dTemperatureString );
+    m_dPhaseMob_dTemp = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPhaseMobility_dTemperatureString() );
     m_dPhaseMob_dTemp.setName( getName() + "/accessors/" + viewKeyStruct::dPhaseMobility_dTemperatureString() );
 
     m_dPhaseMassDens_dTemp.clear();
-    m_dPhaseMassDens_dTemp = elemManager.ConstructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseMassDensity_dTemperatureString,
+    m_dPhaseMassDens_dTemp = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseMassDensity_dTemperatureString(),
                                                                                           targetRegionNames(),
                                                                                           fluidModelNames() );
     m_dPhaseMassDens_dTemp.setName( getName() + "/accessors/" + keys::dPhaseMassDensity_dTemperatureString() );
 
     m_dPhaseCompFrac_dTemp.clear();
-    m_dPhaseCompFrac_dTemp = elemManager.ConstructMaterialArrayViewAccessor< real64, 4 >( keys::dPhaseCompFraction_dTemperatureString,
+    m_dPhaseCompFrac_dTemp = elemManager.constructMaterialArrayViewAccessor< real64, 4 >( keys::dPhaseCompFraction_dTemperatureString(),
                                                                                           targetRegionNames(),
                                                                                           fluidModelNames() );
     m_dPhaseCompFrac_dTemp.setName( getName() + "/accessors/" + keys::dPhaseCompFraction_dTemperatureString() );
 
     m_dPhaseMob_dTemp.clear();
-    m_dPhaseMob_dTemp = elemManager.ConstructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPhaseMobility_dTemperatureString );
+    m_dPhaseMob_dTemp = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPhaseMobility_dTemperatureString() );
     m_dPhaseMob_dTemp.setName( getName() + "/accessors/" + viewKeyStruct::dPhaseMobility_dTemperatureString() );
 
 
     m_phaseEnthalpy.clear();
-    m_phaseEnthalpy = elemManager.ConstructMaterialArrayViewAccessor< real64, 3 >( keys::phaseEnthalpyString(),
+    m_phaseEnthalpy = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::phaseEnthalpyString(),
                                                                                    targetRegionNames(),
                                                                                    fluidModelNames() );
     m_phaseEnthalpy.setName( getName() + "/accessors/" + keys::phaseEnthalpyString() );
 
     m_dPhaseEnthalpy_dPres.clear();
-    m_dPhaseEnthalpy_dPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseEnthalpy_dPressureString(),
+    m_dPhaseEnthalpy_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseEnthalpy_dPressureString(),
                                                                                           targetRegionNames(),
                                                                                           fluidModelNames() );
     m_dPhaseEnthalpy_dPres.setName( getName() + "/accessors/" + keys::dPhaseEnthalpy_dPressureString() );
 
     m_dPhaseEnthalpy_dTemp.clear();
-    m_dPhaseEnthalpy_dTemp = elemManager.ConstructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseEnthalpy_dTemperatureString(),
+    m_dPhaseEnthalpy_dTemp = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseEnthalpy_dTemperatureString(),
                                                                                           targetRegionNames(),
                                                                                           fluidModelNames() );
     m_dPhaseEnthalpy_dTemp.setName( getName() + "/accessors/" + keys::dPhaseEnthalpy_dTemperatureString() );
 
     m_dPhaseEnthalpy_dComp.clear();
-    m_dPhaseEnthalpy_dComp = elemManager.ConstructMaterialArrayViewAccessor< real64, 4 >( keys::dPhaseEnthalpy_dGlobalCompFractionString(),
+    m_dPhaseEnthalpy_dComp = elemManager.constructMaterialArrayViewAccessor< real64, 4 >( keys::dPhaseEnthalpy_dGlobalCompFractionString(),
                                                                                           targetRegionNames(),
                                                                                           fluidModelNames() );
     m_dPhaseEnthalpy_dComp.setName( getName() + "/accessors/" + keys::dPhaseEnthalpy_dGlobalCompFractionString() );

@@ -38,19 +38,19 @@ public:
 
 
   static constexpr auto m_catalogName = "BrineInternalEnergy";
-  static string CatalogName()                    { return m_catalogName; }
-  virtual string getCatalogName() const override final { return CatalogName(); }
+  static string catalogName()                    { return m_catalogName; }
+  virtual string getCatalogName() const override final { return catalogName(); }
 
 
-  virtual PVTFuncType FunctionType() const override
+  virtual PVTFuncType functionType() const override
   {
     return PVTFuncType::INTERNALENR;
   }
 
-  virtual void Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
+  virtual void evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value, bool useMass = 0 ) const override;
 
-  static void CalculateBrineInternalEnergy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & internalEnergy );
+  static void calculateBrineInternalEnergy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & internalEnergy );
 
 private:
 

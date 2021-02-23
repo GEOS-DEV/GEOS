@@ -137,7 +137,7 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
       }
       else if( strs[0] == "EnthalpyFun" )
       {
-        m_phaseEnthalpyFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
+        m_phaseEnthalpyFuns.emplace_back( PVTFunction::CatalogInterface::factory( strs[ 1 ],
                                                                                   strs,
                                                                                   m_componentNames,
                                                                                   m_componentMolarWeight ) );

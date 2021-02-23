@@ -165,7 +165,7 @@ struct FluidUpdateKernel
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -183,7 +183,7 @@ struct FluidUpdateKernel
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -202,7 +202,7 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -220,7 +220,7 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -436,7 +436,7 @@ void KernellaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 } // namespace helpers
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernellaunchSelector1( localIndex numComp, ARGS && ... args )
+void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 {
   internal::KernellaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
@@ -445,7 +445,7 @@ void KernellaunchSelector1( localIndex numComp, ARGS && ... args )
 }
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernellaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
+void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
 {
   internal::KernellaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {

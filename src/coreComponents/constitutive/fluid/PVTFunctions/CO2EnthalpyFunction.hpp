@@ -38,25 +38,25 @@ public:
 
 
   static constexpr auto m_catalogName = "CO2Enthalpy";
-  static string CatalogName()                    { return m_catalogName; }
-  virtual string getCatalogName() const override final { return CatalogName(); }
+  static string catalogName()                    { return m_catalogName; }
+  virtual string getCatalogName() const override final { return catalogName(); }
 
 
-  virtual PVTFuncType FunctionType() const override
+  virtual PVTFuncType functionType() const override
   {
     return PVTFuncType::ENTHALPY;
   }
 
-  virtual void Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
+  virtual void evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value, bool useMass = 0 ) const override;
 
 
-  static void CalculateCO2Enthalpy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density,  real64_array2d const & enthalpy );
+  static void calculateCO2Enthalpy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density,  real64_array2d const & enthalpy );
 
   
 private:
 
-  void MakeTable( string_array const & inputPara );
+  void makeTable( string_array const & inputPara );
 
   
   TableFunctionPtr m_CO2EnthalpyTable;

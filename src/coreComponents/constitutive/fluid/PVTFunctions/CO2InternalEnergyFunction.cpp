@@ -32,7 +32,7 @@ CO2InternalEnergyFunction::CO2InternalEnergyFunction( string_array const & input
   PVTFunction( inputPara[1], componentNames, componentMolarWeight )
 {}
 
-void CO2InternalEnergyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature,
+void CO2InternalEnergyFunction::evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature,
                                             arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
 {
   GEOSX_UNUSED_VAR( phaseComposition );

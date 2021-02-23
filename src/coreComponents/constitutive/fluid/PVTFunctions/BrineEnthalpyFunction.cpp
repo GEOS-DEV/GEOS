@@ -67,13 +67,13 @@ BrineEnthalpyFunction::BrineEnthalpyFunction( string_array const & inputPara,
   GEOSX_ERROR_IF( notFound, "Component Water/Brine is not found!" );
 
 
-  MakeTable( inputPara );
+  makeTable( inputPara );
   
-  MakeTable( inputPara );
+  makeTable( inputPara );
 
 }
 
-void BrineEnthalpyFunction::MakeTable( string_array const & inputPara )
+void BrineEnthalpyFunction::makeTable( string_array const & inputPara )
 {
   real64_array pressures;
   real64_array temperatures;
@@ -138,7 +138,7 @@ void BrineEnthalpyFunction::MakeTable( string_array const & inputPara )
 
   real64_array2d enthalpies( nP, nT );
 
-  CalculateBrineEnthalpy( pressures, temperatures, m, enthalpies );
+  calculateBrineEnthalpy( pressures, temperatures, m, enthalpies );
 
   m_BrineEnthalpyTable = std::make_shared< XYTable >( "BrineEnthalpyTable", pressures, temperatures, enthalpies );
 
@@ -146,15 +146,15 @@ void BrineEnthalpyFunction::MakeTable( string_array const & inputPara )
   real64_array2d CO2Enthalpies( nP, nT );
   real64_array2d CO2Densities( nP, nT );
 
-  SpanWagnerCO2DensityFunction::CalculateCO2Density( pressures, temperatures, CO2Densities );
+  SpanWagnerCO2DensityFunction::calculateCO2Density( pressures, temperatures, CO2Densities );
 
-  CO2EnthalpyFunction::CalculateCO2Enthalpy( pressures, temperatures, CO2Densities, CO2Enthalpies );
+  CO2EnthalpyFunction::calculateCO2Enthalpy( pressures, temperatures, CO2Densities, CO2Enthalpies );
 
   m_CO2EnthalpyTable = std::make_shared< XYTable >( "CO2EnthalpyTable", pressures, temperatures, CO2Enthalpies );
   
 }
 
-void BrineEnthalpyFunction::CalculateBrineEnthalpy( real64_array const & pressure, real64_array const & temperature, real64 const & m, real64_array2d const & enthalpy )
+void BrineEnthalpyFunction::calculateBrineEnthalpy( real64_array const & pressure, real64_array const & temperature, real64 const & m, real64_array2d const & enthalpy )
 {
 
   GEOSX_UNUSED_VAR( pressure );
@@ -203,7 +203,7 @@ void BrineEnthalpyFunction::CalculateBrineEnthalpy( real64_array const & pressur
   }
 }
   
-void BrineEnthalpyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
+void BrineEnthalpyFunction::evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
 {
   localIndex const numComponents = phaseComposition.size();  
   
@@ -214,9 +214,9 @@ void BrineEnthalpyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArg
   T.m_var = temperature.m_var;
   T.m_der[1] = 1.0;
 
-  enthalpy = m_BrineEnthalpyTable->Value( P, T );
+  enthalpy = m_BrineEnthalpyTable->value( P, T );
 
-  CO2Enthalpy = m_CO2EnthalpyTable->Value( P, T );  
+  CO2Enthalpy = m_CO2EnthalpyTable->value( P, T );
 
   
   //assume there are only CO2 and brine here.
