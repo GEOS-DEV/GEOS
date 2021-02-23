@@ -64,9 +64,7 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 
     // primary variables: face pressures changes
     faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the accumulated pressure updates at the faces." );
+      setRestartFlags( RestartFlags::NO_WRITE );
   } );
 }
 
@@ -164,7 +162,6 @@ void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
   forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
   {
     facePres[iface] += dFacePres[iface];
-    dFacePres[iface] = 0.0;
   } );
 }
 

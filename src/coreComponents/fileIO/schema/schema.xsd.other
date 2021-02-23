@@ -1362,7 +1362,7 @@
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
-		<!--deltaFacePressure => An array that holds the accumulated phase pressure updates at the faces. => CompositionalMultiphaseHybridFVM, SinglePhaseHybridFVM-->
+		<!--deltaFacePressure => (no description available)-->
 		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />

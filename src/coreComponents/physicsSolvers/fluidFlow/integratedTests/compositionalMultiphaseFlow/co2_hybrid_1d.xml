@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="0.0, 0.0, 0.0">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
     <CompositionalMultiphaseHybridFVM
       name="compflow"
       logLevel="1"
@@ -11,17 +11,18 @@
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
-      initialDt="0.1"
+      maxCompFractionChange="0.5"
+      maxRelativePressureChange="0.5"
       targetRegions="{ region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="100"
         maxTimeStepCuts="5"
-        lineSearchAction="None"/>
+        lineSearchAction="Attempt"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"
-	logLevel="2"/>
+	logLevel="0"/>
     </CompositionalMultiphaseHybridFVM>
   </Solvers>
 
@@ -29,10 +30,10 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 30 }"
+      xCoords="{ 0, 15 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
+      nx="{ 5 }"
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb }"/>
@@ -41,8 +42,8 @@
   <Geometry>
     <Box
       name="sink"
-      xMin="27.99, -0.01, -0.01"
-      xMax="30.01,  1.01,  1.01"/>
+      xMin="11.99, -0.01, -0.01"
+      xMax="15.01,  1.01,  1.01"/>
 
     <Box
       name="source"

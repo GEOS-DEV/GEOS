@@ -655,6 +655,7 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOSX_UNUSED_PARA
                               dofManager,
                               localMatrix,
                               localRhs );
+
 }
 
 void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition const & domain,

@@ -947,6 +947,7 @@ AssemblerKernelHelper::
       dDivMassFluxes_dElemVars[ic][elemVarsOffset] = dDivMassFluxes_dElemVars[ic][elemVarsOffset]
                                                      + ( elemDofNumber != upwViscDofNumber )
                                                      * dt * dUpwPhaseViscCoef_dPres[ip][ic] * oneSidedVolFlux[ifaceLoc];
+
       for( localIndex jc = 0; jc < NC; ++jc )
       {
         dDivMassFluxes_dElemVars[ic][elemVarsOffset+jc+1] = dDivMassFluxes_dElemVars[ic][elemVarsOffset+jc+1]

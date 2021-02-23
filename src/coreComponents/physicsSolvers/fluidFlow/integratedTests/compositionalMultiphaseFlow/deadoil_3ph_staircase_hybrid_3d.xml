@@ -76,6 +76,12 @@
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
+      name="solverApplications3"
+      forceDt="1e7"
+      beginTime="1e7"
+      target="/Solvers/compflow"/>
+    
+    <PeriodicEvent
       name="restarts"
       timeFrequency="1e8"
       targetExactTimestep="0"

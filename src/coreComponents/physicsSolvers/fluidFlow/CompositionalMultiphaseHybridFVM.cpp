@@ -75,9 +75,7 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 
     // primary variables: face pressure changes
     faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the accumulated phase pressure updates at the faces." );
+      setRestartFlags( RestartFlags::NO_WRITE );
 
     // auxiliary data for the buoyancy coefficient
     faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::mimGravityCoefString() );
@@ -265,7 +263,6 @@ void CompositionalMultiphaseHybridFVM::implicitStepComplete( real64 const & time
   forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
   {
     facePres[iface] += dFacePres[iface];
-    dFacePres[iface] = 0.0;
   } );
 }
 
@@ -822,7 +819,8 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString() ) );
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
                                                               mesh,
-                                                              domain.getNeighbors() );
+                                                              domain.getNeighbors(),
+                                                              true );
 
   // 4. update secondary variables
 
