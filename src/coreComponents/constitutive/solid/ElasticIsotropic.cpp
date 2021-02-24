@@ -49,7 +49,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Poisson's ratio Parameter" );
+    setDescription( "Default Poisson's Ratio" );
 
   registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
     setApplyDefaultValue( -1 )->
