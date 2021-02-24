@@ -44,7 +44,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Young's Modulus Parameter" );
+    setDescription( "Default Young's Modulus" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString )->
     setApplyDefaultValue( -1 )->
