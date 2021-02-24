@@ -85,11 +85,11 @@ Element: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction.rst
 
 
-.. _XML_CompositionalMultiphaseFlow:
+.. _XML_CompositionalMultiphaseFVM:
 
-Element: CompositionalMultiphaseFlow
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow.rst
+Element: CompositionalMultiphaseFVM
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM.rst
 
 
 .. _XML_CompositionalMultiphaseFluid:
@@ -97,6 +97,13 @@ Element: CompositionalMultiphaseFlow
 Element: CompositionalMultiphaseFluid
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
+
+
+.. _XML_CompositionalMultiphaseHybridFVM:
+
+Element: CompositionalMultiphaseHybridFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM.rst
 
 
 .. _XML_CompositionalMultiphaseReservoir:
@@ -659,6 +666,13 @@ Element: TableFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction.rst
 
 
+.. _XML_TableRelativePermeability:
+
+Element: TableRelativePermeability
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TableRelativePermeability.rst
+
+
 .. _XML_Tasks:
 
 Element: Tasks
@@ -817,11 +831,11 @@ Datastructure: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction_other.rst
 
 
-.. _DATASTRUCTURE_CompositionalMultiphaseFlow:
+.. _DATASTRUCTURE_CompositionalMultiphaseFVM:
 
-Datastructure: CompositionalMultiphaseFlow
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow_other.rst
+Datastructure: CompositionalMultiphaseFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseFluid:
@@ -829,6 +843,13 @@ Datastructure: CompositionalMultiphaseFlow
 Datastructure: CompositionalMultiphaseFluid
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseHybridFVM:
+
+Datastructure: CompositionalMultiphaseHybridFVM
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseReservoir:
@@ -1417,6 +1438,13 @@ Datastructure: SymbolicFunction
 Datastructure: TableFunction
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
+
+
+.. _DATASTRUCTURE_TableRelativePermeability:
+
+Datastructure: TableRelativePermeability
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TableRelativePermeability_other.rst
 
 
 .. _DATASTRUCTURE_Tasks:
