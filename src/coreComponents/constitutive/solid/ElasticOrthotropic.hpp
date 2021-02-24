@@ -214,7 +214,6 @@ ElasticOrthotropicUpdates::smallStrainNoState( localIndex const k,
   stress[5] = m_c66[k] * voigtStrain[5];
 }
 
-
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
@@ -269,7 +268,6 @@ ElasticOrthotropicUpdates::
 }
 
 
-
 /**
  * @class ElasticOrthotropic
  *
@@ -316,85 +314,85 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for Young's modulus E1
-    static constexpr auto defaultE1 = "defaultE1";
+    static constexpr char const * defaultE1String() { return "defaultE1" };
 
     /// string/key for Young's modulus E2
-    static constexpr auto defaultE2 = "defaultE2";
+    static constexpr char const * defaultE2String() { return "defaultE2" };
 
     /// string/key for Young's modulus E3
-    static constexpr auto defaultE3 = "defaultE3";
+    static constexpr char const * defaultE3String() { return "defaultE3" };
 
     /// string/key for Poisson's ratio Nu12
-    static constexpr auto defaultNu12 = "defaultNu12";
+    static constexpr char const * defaultNu12String() { return "defaultNu12" };
 
     /// string/key for Poisson's ratio Nu13
-    static constexpr auto defaultNu13 = "defaultNu13";
+    static constexpr char const * defaultNu13String() { return "defaultNu13" };
 
     /// string/key for Poisson's ratio Nu23
-    static constexpr auto defaultNu23 = "defaultNu23";
+    static constexpr char const * defaultNu23String() { return "defaultNu23" };
 
     /// string/key for shear modulus G12
-    static constexpr auto defaultG12 = "defaultG12";
+    static constexpr char const * defaultG12String() { return "defaultG12" };
 
     /// string/key for shear modulus G13
-    static constexpr auto defaultG13 = "defaultG13";
+    static constexpr char const * defaultG13String() { return "defaultG13" };
 
     /// string/key for shear modulus G23
-    static constexpr auto defaultG23 = "defaultG23";
+    static constexpr char const * defaultG23String() { return "defaultG23" };
 
     /// string/key for default c11 component of Voigt stiffness tensor
-    static constexpr auto defaultC11 = "defaultC11";
+    static constexpr char const * defaultC11String() { return "defaultC11" };
 
     /// string/key for default c12 component of Voigt stiffness tensor
-    static constexpr auto defaultC12 = "defaultC12";
+    static constexpr char const * defaultC12String() { return "defaultC12" };
 
     /// string/key for default c13 component of Voigt stiffness tensor
-    static constexpr auto defaultC13 = "defaultC13";
+    static constexpr char const * defaultC13String() { return "defaultC13" };
 
     /// string/key for default c22 component of Voigt stiffness tensor
-    static constexpr auto defaultC22 = "defaultC22";
+    static constexpr char const * defaultC22String() { return "defaultC22" };
 
     /// string/key for default c23 component of Voigt stiffness tensor
-    static constexpr auto defaultC23 = "defaultC23";
+    static constexpr char const * defaultC23String() { return "defaultC23" };
 
     /// string/key for default c33 component of Voigt stiffness tensor
-    static constexpr auto defaultC33 = "defaultC33";
+    static constexpr char const * defaultC33String() { return "defaultC33" };
 
     /// string/key for default c44 component of Voigt stiffness tensor
-    static constexpr auto defaultC44 = "defaultC44";
+    static constexpr char const * defaultC44String() { return "defaultC44" };
 
     /// string/key for default c55 component of Voigt stiffness tensor
-    static constexpr auto defaultC55 = "defaultC55";
+    static constexpr char const * defaultC55String() { return "defaultC55" };
 
     /// string/key for default c66 component of Voigt stiffness tensor
-    static constexpr auto defaultC66 = "defaultC66";
+    static constexpr char const * defaultC66String() { return "defaultC66" };
 
     /// string/key for c11 component of Voigt stiffness tensor
-    static constexpr auto c11 = "c11";
+    static constexpr char const * c11String() { return "c11" };
 
     /// string/key for c12 component of Voigt stiffness tensor
-    static constexpr auto c12 = "c12";
+    static constexpr char const * c12String() { return "c12" };
 
     /// string/key for c13 component of Voigt stiffness tensor
-    static constexpr auto c13 = "c13";
+    static constexpr char const * c13String() { return "c13" };
 
     /// string/key for c22 component of Voigt stiffness tensor
-    static constexpr auto c22 = "c22";
+    static constexpr char const * c22String() { return "c22" };
 
     /// string/key for c23 component of Voigt stiffness tensor
-    static constexpr auto c23 = "c23";
+    static constexpr char const * c23String() { return "c23" };
 
     /// string/key for c33 component of Voigt stiffness tensor
-    static constexpr auto c33 = "c33";
+    static constexpr char const * c33String() { return "c33" };
 
     /// string/key for c44 component of Voigt stiffness tensor
-    static constexpr auto c44 = "c44";
+    static constexpr char const * c44String() { return "c44" };
 
     /// string/key for c55 component of Voigt stiffness tensor
-    static constexpr auto c55 = "c55";
+    static constexpr char const * c55String() { return "c55" };
 
     /// string/key for c66 component of Voigt stiffness tensor
-    static constexpr auto c66 = "c66";
+    static constexpr char const * c66String() { return "c66" };
   };
 
   /**
@@ -580,7 +578,6 @@ public:
    */
   arrayView1d< real64 > getC11() { return m_c11; }
 
-
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
    * @return reference to immutable 13 component of Voigt stiffness tensor.
@@ -673,7 +670,6 @@ public:
                           m_stress );
   }
 
-
 protected:
   virtual void postProcessInput() override;
 
@@ -714,44 +710,6 @@ private:
   /// The default value of the Shear modulus G23 for any new
   /// allocations.
   real64 m_defaultG23;
-
-/**
-  /// The default value of the 11 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC11;
-
-  /// The default value of the 12 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC12;
-
-  /// The default value of the 13 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC13;
-
-  /// The default value of the 22 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC22;
-
-  /// The default value of the 23 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC23;
-
-  /// The default value of the 33 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC33;
-
-  /// The default value of the 44 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC44;
-
-  /// The default value of the 55 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC55;
-
-  /// The default value of the 66 component of the Voigt stiffness tensor
-  /// for any new allocations.
-  real64 m_defaultC66;
-*/
 
   /// The 11 component of the Voigt stiffness tensor.
   array1d< real64 > m_c11;
