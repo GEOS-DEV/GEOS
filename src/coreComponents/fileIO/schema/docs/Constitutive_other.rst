@@ -27,6 +27,7 @@ PoroElasticIsotropic                  node :ref:`DATASTRUCTURE_PoroElasticIsotro
 PoroElasticTransverseIsotropic        node :ref:`DATASTRUCTURE_PoroElasticTransverseIsotropic`        
 PoroExtendedDruckerPrager             node :ref:`DATASTRUCTURE_PoroExtendedDruckerPrager`             
 ProppantSlurryFluid                   node :ref:`DATASTRUCTURE_ProppantSlurryFluid`                   
+TableRelativePermeability             node :ref:`DATASTRUCTURE_TableRelativePermeability`             
 VanGenuchtenBakerRelativePermeability node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability` 
 VanGenuchtenCapillaryPressure         node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`         
 ===================================== ==== ========================================================== 

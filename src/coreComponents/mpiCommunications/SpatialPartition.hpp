@@ -129,7 +129,7 @@ public:
   int getColor();
 
 protected:
-  void initializePostSubGroups( dataRepository::Group * const );
+  void initializePostSubGroups();
 
 public:
   /// number of partitions

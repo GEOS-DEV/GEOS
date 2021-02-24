@@ -29,16 +29,16 @@ ThickPlane::ThickPlane( const string & name, Group * const parent ):
   m_normal{ 0.0, 0.0, 1.0 },
   m_thickness{ 0.0 }
 {
-  registerWrapper( viewKeyStruct::originString, &m_origin )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::originString(), &m_origin ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Origin point (x,y,z) of the plane (basically, any point on the plane)" );
 
-  registerWrapper( viewKeyStruct::normalString, &m_normal )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::normalString(), &m_normal ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)" );
 
-  registerWrapper( viewKeyStruct::thicknessString, &m_thickness )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::thicknessString(), &m_thickness ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The total thickness of the plane (with half to each side)" );
 }
 

@@ -196,7 +196,7 @@ public:
 
   virtual void postProcessInput() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
@@ -211,15 +211,14 @@ public:
 
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
-    static constexpr auto damageString =  "damage";
-    static constexpr auto strainEnergyDensityString =  "strainEnergyDensity";
+    static constexpr char const * damageString() { return "damage"; }
+    static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
     /// string/key for regularization length
-    static constexpr auto lengthScaleString  = "lengthScale";
+    static constexpr char const * lengthScaleString() { return "lengthScale"; }
     /// string/key for Gc
-    static constexpr auto criticalFractureEnergyString = "criticalFractureEnergy";
+    static constexpr char const * criticalFractureEnergyString() { return "criticalFractureEnergy"; }
     /// string/key for sigma_c
-    static constexpr auto criticalStrainEnergyString = "criticalStrainEnergy";
-
+    static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
   };
 
 
