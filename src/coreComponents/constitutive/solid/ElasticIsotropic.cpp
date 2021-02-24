@@ -41,7 +41,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Shear Modulus Parameter" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString() ).
+  registerWrapper< real64 >( viewKeyStruct::defaultYoungModulusString() ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Young's Modulus" );
@@ -70,7 +70,7 @@ void ElasticIsotropic::postProcessInput()
   SolidBase::postProcessInput();
 
   real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString() );
-  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString() );
+  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungModulusString() );
   real64 & K  = m_defaultBulkModulus;
   real64 & G  = m_defaultShearModulus;
 
