@@ -19,7 +19,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "managers/ProblemManager.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geosx
 {
