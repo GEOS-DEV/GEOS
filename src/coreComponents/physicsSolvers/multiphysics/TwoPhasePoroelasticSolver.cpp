@@ -1,0 +1,296 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file PoroelasticSolver.cpp
+ *
+ */
+
+
+#include "TwoPhasePoroelasticSolver.hpp"
+
+#include "../solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
+#include "common/DataLayouts.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/solid/PoroElastic.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "managers/NumericalMethodsManager.hpp"
+#include "finiteElement/Kinematics.h"
+#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
+#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/ProblemManager.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
+//#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+
+#include "TwoPhasePoroelasticKernel.hpp"
+
+
+
+
+namespace geosx
+{
+
+using namespace dataRepository;
+using namespace constitutive;
+
+TwoPhasePoroelasticSolver::TwoPhasePoroelasticSolver( const string & name,
+                                                      Group * const parent ):
+  SolverBase( name, parent ),
+  m_solidSolverName(),
+  m_flowSolverName(),
+  m_couplingTypeOption( CouplingTypeOption::FIM )
+
+{
+  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the solid mechanics solver to use in the poroelastic solver" );
+
+  registerWrapper( viewKeyStruct::fluidSolverNameString(), &m_flowSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
+
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
+
+  m_linearSolverParameters.get().mgr.strategy = "TwoPhasePoroelastic";
+  m_linearSolverParameters.get().mgr.separateComponents = true;
+  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().dofsPerNode = 3;
+}
+
+void TwoPhasePoroelasticSolver::registerDataOnMesh( Group & meshBodies )
+{
+  GEOSX_UNUSED_VAR( meshBodies );
+}
+
+void TwoPhasePoroelasticSolver::setupDofs( DomainPartition const & domain,
+                                   DofManager & dofManager ) const
+{
+  GEOSX_MARK_FUNCTION;
+  m_solidSolver->setupDofs( domain, dofManager );
+  m_flowSolver->setupDofs( domain, dofManager );
+
+  dofManager.addCoupling( keys::TotalDisplacement,
+                          CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString(),
+                          DofManager::Connector::Elem );
+}
+
+void TwoPhasePoroelasticSolver::setupSystem( DomainPartition & domain,
+                                     DofManager & dofManager,
+                                     CRSMatrix< real64, globalIndex > & localMatrix,
+                                     array1d< real64 > & localRhs,
+                                     array1d< real64 > & localSolution,
+                                     bool const setSparsity )
+{
+//  if( m_precond )
+//  {
+//    m_precond->clear();
+//  }
+
+  // setup monolithic coupled system
+  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+
+//  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
+//  {
+//    createPreconditioner();
+//  }
+}
+
+void TwoPhasePoroelasticSolver::implicitStepSetup( real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition & domain )
+{
+  m_flowSolver->implicitStepSetup( time_n, dt, domain );
+  m_solidSolver->implicitStepSetup( time_n, dt, domain );
+
+}
+
+void TwoPhasePoroelasticSolver::implicitStepComplete( real64 const & time_n,
+                                              real64 const & dt,
+                                              DomainPartition & domain )
+{
+  m_solidSolver->implicitStepComplete( time_n, dt, domain );
+  m_flowSolver->implicitStepComplete( time_n, dt, domain );
+}
+
+void TwoPhasePoroelasticSolver::postProcessInput()
+{
+  SolverBase::postProcessInput();
+
+  m_flowSolver = &this->getParent().getGroup< CompositionalMultiphaseFlow >( m_flowSolverName );
+  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+
+  m_solidSolver->setEffectiveStress( 1 );
+
+}
+
+void TwoPhasePoroelasticSolver::initializePostInitialConditionsPreSubGroups()
+{}
+
+TwoPhasePoroelasticSolver::~TwoPhasePoroelasticSolver()
+{
+  // TODO Auto-generated destructor stub
+}
+
+void TwoPhasePoroelasticSolver::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  m_flowSolver->resetStateToBeginningOfStep( domain );
+  m_solidSolver->resetStateToBeginningOfStep( domain );
+}
+
+real64 TwoPhasePoroelasticSolver::solverStep( real64 const & time_n,
+                                      real64 const & dt,
+                                      int const cycleNumber,
+                                      DomainPartition & domain )
+{
+  real64 dt_return = dt;
+
+  if( m_couplingTypeOption == CouplingTypeOption::FIM )
+  {
+    setupSystem( domain,
+                 m_dofManager,
+                 m_localMatrix,
+                 m_localRhs,
+                 m_localSolution );
+
+    implicitStepSetup( time_n, dt, domain );
+
+    dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+
+    implicitStepComplete( time_n, dt_return, domain );
+  }
+  return dt_return;
+}
+
+void TwoPhasePoroelasticSolver::assembleSystem( real64 const time_n,
+                                        real64 const dt,
+                                        DomainPartition & domain,
+                                        DofManager const & dofManager,
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs )
+{
+
+  GEOSX_MARK_FUNCTION;
+  MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+
+  NodeManager const & nodeManager = mesh.getNodeManager();
+
+  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+
+  string const compVarDofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString() );
+
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  int const numComponents = LvArray::integerConversion<int>( dofManager.numComponents( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString() ) - 1);
+
+  // Cell-based contributions (except pressure-dependent terms in the accumulation term of the mass balance equation)
+  m_solidSolver->getMaxForce() =
+      finiteElement::
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                    constitutive::PoroElasticBase,
+                                    CellElementSubRegion,
+                                    PoroelasticKernels::TwoPhase >( mesh,
+                                                                    targetRegionNames(),
+                                                                    this->getDiscretizationName(),
+                                                                    m_solidSolver->solidMaterialNames(),
+                                                                    dispDofNumber,
+                                                                    compVarDofKey,
+                                                                    numComponents,
+                                                                    dofManager.rankOffset(),
+                                                                    localMatrix,
+                                                                    localRhs,
+                                                                    gravityVectorData,
+                                                                    m_flowSolver->fluidModelNames() ) ;
+
+  // Face-based contributions (including pressure-dependent terms in the accumulation term of the mass balance equation)
+  m_flowSolver->assembleSystem( time_n, dt,
+                                domain,
+                                dofManager,
+                                localMatrix,
+                                localRhs );
+
+}
+
+void TwoPhasePoroelasticSolver::applyBoundaryConditions( real64 const time_n,
+                                                 real64 const dt,
+                                                 DomainPartition & domain,
+                                                 DofManager const & dofManager,
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs )
+{
+  m_solidSolver->applyBoundaryConditions( time_n, dt,
+                                          domain,
+                                          dofManager,
+                                          localMatrix,
+                                          localRhs );
+
+  m_flowSolver->applyBoundaryConditions( time_n, dt,
+                                         domain,
+                                         dofManager,
+                                         localMatrix,
+                                         localRhs );
+}
+
+real64 TwoPhasePoroelasticSolver::calculateResidualNorm( DomainPartition const & domain,
+                                                 DofManager const & dofManager,
+                                                 arrayView1d< real64 const > const & localRhs )
+{
+  // compute norm of momentum balance residual equations
+  real64 const momementumResidualNorm = m_solidSolver->calculateResidualNorm( domain, dofManager, localRhs );
+
+  // compute norm of mass balance residual equations
+  real64 const massResidualNorm = m_flowSolver->calculateResidualNorm( domain, dofManager, localRhs );
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output, "    ( Rsolid, Rfluid ) = ( %4.2e, %4.2e )", momementumResidualNorm, massResidualNorm );
+    std::cout << output << std::endl;
+  }
+
+  return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
+}
+
+void TwoPhasePoroelasticSolver::solveSystem( DofManager const & dofManager,
+                                     ParallelMatrix & matrix,
+                                     ParallelVector & rhs,
+                                     ParallelVector & solution )
+{
+  solution.zero();
+  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+}
+
+void TwoPhasePoroelasticSolver::applySystemSolution( DofManager const & dofManager,
+                                             arrayView1d< real64 const > const & localSolution,
+                                             real64 const scalingFactor,
+                                             DomainPartition & domain )
+{
+  // update displacement field
+  m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+  // update pressure field
+  m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
+}
+
+REGISTER_CATALOG_ENTRY( SolverBase, TwoPhasePoroelasticSolver, string const &, Group * const )
+
+} /* namespace geosx */

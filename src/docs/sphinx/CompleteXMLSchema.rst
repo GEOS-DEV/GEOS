@@ -687,6 +687,13 @@ Element: TimeHistory
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
 
 
+.. _XML_TwoPhasePoroelastic:
+
+Element: TwoPhasePoroelastic
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/TwoPhasePoroelastic.rst
+
+
 .. _XML_TwoPointFluxApproximation:
 
 Element: TwoPointFluxApproximation
@@ -1452,6 +1459,13 @@ Datastructure: ThickPlane
 Datastructure: TimeHistory
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
+
+
+.. _DATASTRUCTURE_TwoPhasePoroelastic:
+
+Datastructure: TwoPhasePoroelastic
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TwoPhasePoroelastic_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:

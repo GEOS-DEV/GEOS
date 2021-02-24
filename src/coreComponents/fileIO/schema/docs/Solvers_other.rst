@@ -25,6 +25,7 @@ SolidMechanicsEmbeddedFractures  node :ref:`DATASTRUCTURE_SolidMechanicsEmbedded
 SolidMechanicsLagrangianSSLE     node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`     
 SolidMechanics_LagrangianFEM     node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`     
 SurfaceGenerator                 node :ref:`DATASTRUCTURE_SurfaceGenerator`                 
+TwoPhasePoroelastic              node :ref:`DATASTRUCTURE_TwoPhasePoroelastic`              
 ================================ ==== ===================================================== 
 
 
