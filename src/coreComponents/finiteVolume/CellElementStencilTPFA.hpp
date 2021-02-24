@@ -49,13 +49,54 @@ struct CellElementStencilTPFA_Traits
   /// The array view to const type for the stencil weights
   using WeightContainerViewConstType = arrayView2d< real64 const >;
 
-
   /// Number of points the flux is between (always 2 for TPFA)
   static constexpr localIndex NUM_POINT_IN_FLUX = 2;
 
   /// Maximum number of points in a stencil (this is 2 for TPFA)
   static constexpr localIndex MAX_STENCIL_SIZE = 2;
 };
+
+class CellElementStencilTPFAWrapper : public StencilWrapperBase< CellElementStencilTPFA_Traits >,
+   public CellElementStencilTPFA_Traits
+{
+public:
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+  template< typename VIEWTYPE >
+  using PermeabilityViewAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
+
+  CellElementStencilTPFAWrapper( IndexContainerViewConstType  elementRegionIndices,
+                                 IndexContainerViewConstType  elementSubRegionIndices,
+                                 IndexContainerViewConstType  elementIndices,
+                                 WeightContainerViewConstType weights, )
+
+  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
+   m_permeability()
+  {
+
+  }
+
+  /// Default copy constructor
+  CellElementStencilTPFAWrapper( CellElementStencilTPFAWrapper const & ) = default;
+
+  /// Default move constructor
+  CellElementStencilTPFAWrapper( CellElementStencilTPFAWrapper && ) = default;
+
+  /// Deleted copy assignment operator
+  CellElementStencilTPFAWrapper & operator=( CellElementStencilTPFAWrapper const & ) = delete;
+
+  /// Deleted move assignment operator
+  CellElementStencilTPFAWrapper & operator=( CellElementStencilTPFAWrapper && ) = delete;
+
+  void computeTransmissibility( localIndex iconn,
+                                real64 (& transmissibility)[2] );
+
+private:
+  PermeabilityViewAccessor< array1d< real64 > > m_permeability;
+
+  PermeabilityViewAccessor< array1d< real64 > > m_dPerm_dPressure;
+};
+
 
 /**
  * @class CellElementStencilTPFA
@@ -66,6 +107,9 @@ class CellElementStencilTPFA : public StencilBase< CellElementStencilTPFA_Traits
   public CellElementStencilTPFA_Traits
 {
 public:
+
+  template< typename VIEWTYPE >
+  using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
 
   /**
    * @brief Default constructor.
@@ -96,6 +140,21 @@ public:
     GEOSX_UNUSED_VAR( index );
     return MAX_STENCIL_SIZE;
   }
+
+  /// Type of kernel wrapper for in-kernel update
+   using StencilWrapper = CellElementStencilTPFAWrapper;
+
+   /**
+    * @brief Create an update kernel wrapper.
+    * @return the wrapper
+    */
+   StencilWrapper createStencilWrapper()
+   {
+     return StencilWrapper( m_elementRegionIndices,
+                            m_elementSubRegionIndices,
+                            m_elementIndices,
+                            m_weights );
+   }
 
 };
 

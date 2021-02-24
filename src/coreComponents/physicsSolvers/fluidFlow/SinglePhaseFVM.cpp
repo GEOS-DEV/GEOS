@@ -178,16 +178,6 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 {
   GEOSX_MARK_FUNCTION;
 
-#if 1 // TODO why is this even here???
-  if( !m_derivativeFluxResidual_dAperture )
-  {
-    m_derivativeFluxResidual_dAperture =
-      std::make_unique< CRSMatrix< real64, localIndex > >( localMatrix.numRows(), localMatrix.numColumns() );
-    m_derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-  }
-  m_derivativeFluxResidual_dAperture->template setValues< serialPolicy >( 0.0 );
-#endif
-
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -199,9 +189,15 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   elemDofNumber = mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+  permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::permeability,
+                                                                              targetRegionNames(),
+                                                                              capPresModelNames() );
   fluxApprox.forAllStencils( mesh, [&]( auto const & stencil )
   {
-    FluxKernel::launch( stencil,
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
+    FluxKernel::launch( stencilWrapper,
                         dt,
                         dofManager.rankOffset(),
                         elemDofNumber.toNestedViewConst(),
@@ -213,15 +209,9 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                         m_dDens_dPres.toNestedViewConst(),
                         m_mobility.toNestedViewConst(),
                         m_dMobility_dPres.toNestedViewConst(),
-                        m_elementAperture0.toNestedViewConst(),
-                        m_effectiveAperture.toNestedViewConst(),
                         m_transTMultiplier.toNestedViewConst(),
                         this->gravityVector(),
                         this->m_meanPermCoeff,
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                        m_elementSeparationCoefficient.toNestedViewConst(),
-                        m_element_dSeparationCoefficient_dAperture.toNestedViewConst(),
-#endif
                         localMatrix,
                         localRhs,
                         m_derivativeFluxResidual_dAperture->toViewConstSizes() );

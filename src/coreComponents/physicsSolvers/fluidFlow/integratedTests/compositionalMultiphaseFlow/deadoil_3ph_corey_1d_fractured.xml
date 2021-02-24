@@ -133,7 +133,7 @@
       phaseRelPermExponent="{ 1.5, 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9, 0.9 }"/>
       
-    <FracturePermeability
+    <ParallelPlatesPermeability
       name="fracPerm"/>
       
   </Constitutive>
@@ -182,6 +182,14 @@
       objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
       scale="5e6"/>
+      
+    <FieldSpecification
+      name="initialFracturePressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="pressure"
+      scale="5e6"/>
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
@@ -192,6 +200,15 @@
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
+      
+    <FieldSpecification
+      name="initialCompositionFracture_oil"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.6"/>      
 
     <FieldSpecification
       name="initialComposition_gas"
@@ -201,12 +218,30 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
-
+      
+    <FieldSpecification
+      name="initialCompositionFracture_gas"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.399"/>
+      
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/block1"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.001"/>
+      
+    <FieldSpecification
+      name="initialCompositionFracture_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="globalCompFraction"
       component="2"
       scale="0.001"/>

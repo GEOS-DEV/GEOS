@@ -21,9 +21,73 @@
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
+
+template< typename LEAFCLASSTRAITS >
+class StencilWrapperBase
+{
+public:
+  StencilWrapperBase( typename LEAFCLASSTRAITS::IndexContainerViewConstType elementRegionIndices,
+                      typename LEAFCLASSTRAITS::IndexContainerViewConstType elementSubRegionIndices,
+                      typename LEAFCLASSTRAITS::IndexContainerViewConstType elementIndices,
+                      typename LEAFCLASSTRAITS::WeightContainerViewConstTypem_weights weights ):
+  m_elementRegionIndices( elementRegionIndices ),
+  m_elementSubRegionIndices( elementSubRegionIndices ),
+  m_elementIndices( elementIndices ),
+  m_weights( weights )
+  {
+  };
+
+  /// Default copy constructor
+  StencilWrapperBase( FaceElementStencilWrapper const & ) = default;
+
+  /// Default move constructor
+  StencilWrapperBase( FaceElementStencilWrapper && ) = default;
+
+  /// Deleted copy assignment operator
+  StencilWrapperBase & operator=( FaceElementStencilWrapper const & ) = delete;
+
+  /// Deleted move assignment operator
+  StencilWrapperBase & operator=( FaceElementStencilWrapper && ) = delete;
+
+  /**
+   * @brief Const access to the element regions indices.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementRegionIndices() const { return m_elementRegionIndices; }
+
+  /**
+   * @brief Const access to the element subregions indices.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementSubRegionIndices() const { return m_elementSubRegionIndices; }
+
+  /**
+   * @brief Const access to the element indices.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementIndices() const { return m_elementIndices; }
+
+  /**
+   * @brief Const access to the stencil weights.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType getWeights() const { return m_weights; }
+
+protected:
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementRegionIndices;
+
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementSubRegionIndices;
+
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementIndices;
+
+  typename LEAFCLASSTRAITS::WeightContainerViewConstTypem_weights m_weights;
+
+};
+
 
 /**
  * @class StencilBase

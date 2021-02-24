@@ -20,7 +20,6 @@
 #define GEOSX_FINITEVOLUME_FACEELEMENTSTENCIL_HPP_
 
 #include "StencilBase.hpp"
-#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -76,6 +75,48 @@ struct FaceElementStencil_Traits
   static localIndex constexpr MAX_STENCIL_SIZE = 6;
 };
 
+
+class FaceElementStencilWrapper : public StencilWrapperBase< FaceElementStencil_Traits >,
+   public FaceElementStencil_Traits
+{
+public:
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+  template< typename VIEWTYPE >
+  using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
+
+  FaceElementStencilWrapper( IndexContainerViewConstType  elementRegionIndices,
+                             IndexContainerViewConstType  elementSubRegionIndices,
+                             IndexContainerViewConstType  elementIndices,
+                             WeightContainerViewConstType weights, )
+
+  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
+   m_permeability()
+  {
+
+  }
+
+  /// Default copy constructor
+  FaceElementStencilWrapper( FaceElementStencilWrapper const & ) = default;
+
+  /// Default move constructor
+  FaceElementStencilWrapper( FaceElementStencilWrapper && ) = default;
+
+  /// Deleted copy assignment operator
+  FaceElementStencilWrapper & operator=( FaceElementStencilWrapper const & ) = delete;
+
+  /// Deleted move assignment operator
+  FaceElementStencilWrapper & operator=( FaceElementStencilWrapper && ) = delete;
+
+  void computeTransmissibility( localIndex iconn,
+                                real64 (& transmissibility)[2] );
+
+private:
+  ElementViewConst< array1d< real64 > > m_aperture;
+
+  CoefficientAccessor< array1d< real64 > > m_permeability;
+};
+
 /**
  * @class FaceElementStencil
  *
@@ -85,9 +126,6 @@ class FaceElementStencil : public StencilBase< FaceElementStencil_Traits, FaceEl
   public FaceElementStencil_Traits
 {
 public:
-
-  template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Default constructor.
@@ -114,13 +152,21 @@ public:
             localIndex const connectorIndex );
 
 
+  /// Type of kernel wrapper for in-kernel update
+  using StencilWrapper = FaceElementStencilWrapper;
+
   /**
-   * @brief Add an entry to the stencil.
-   * @param[in] coefficient the coefficient (e.g., permeability contained in the stencil to be updated)
-   * @param[in] aperture elementViewAccessor to the aperture of the fracture elements.
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
    */
-  void updateWeights( ElementViewConst< arrayView1d< real64 const > > const & coefficient,
-                      ElementViewConst< arrayView1d< real64 const > > const & aperture );
+  StencilWrapper createStencilWrapper()
+  {
+    return StencilWrapper( m_elementRegionIndices,
+                           m_elementSubRegionIndices,
+                           m_elementIndices,
+                           m_weights );
+  }
+
 
   /**
    * @brief Return the stencil size.
@@ -140,7 +186,7 @@ public:
   /**
    * @brief Give the array of vectors pointing from the cell center to the edge center.
    * @return The array of vectors pointing from the cell center to the edge center
-   */
+   */oui
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
