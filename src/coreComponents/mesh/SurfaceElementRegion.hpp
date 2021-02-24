@@ -98,7 +98,7 @@ public:
    */
   ///@{
 
-  virtual void generateMesh( Group * ) override;
+  virtual void generateMesh( Group & ) override;
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
@@ -147,18 +147,20 @@ public:
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     /// subRegion type string
-    static constexpr auto subRegionTypeString = "subRegionType";
+    static constexpr char const * subRegionTypeString() { return "subRegionType"; }
 
     /// Fracture set string
-    static constexpr auto fractureSetString = "fractureSet";
+    static constexpr char const * fractureSetString() { return "fractureSet"; }
+
     /// Default fracture aperture
-    static constexpr auto defaultApertureString = "defaultAperture";
+    static constexpr char const * defaultApertureString() { return "defaultAperture"; }
+
     /// Rupture time string
-    static constexpr auto ruptureTimeString = "ruptureTime";
+    static constexpr char const * ruptureTimeString() { return "ruptureTime"; }
   };
 
 protected:
-  virtual void initializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups() override;
 
 private:
 

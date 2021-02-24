@@ -121,19 +121,19 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   localIndex const NC = fluid.numFluidComponents();
   localIndex const NP = fluid.numFluidPhases();
 
-  auto const & components = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
-  auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  auto const & components = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+  auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
 
   // create a clone of the fluid to run updates on
   std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", &parent );
-  MultiFluidBase & fluidCopy = *fluidCopyPtr->groupCast< MultiFluidBase * >();
+  MultiFluidBase & fluidCopy = dynamicCast< MultiFluidBase & >( *fluidCopyPtr );
 
   fluid.allocateConstitutiveData( fluid.getParent(), 1 );
   fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
 
   // extract data views from both fluids
   #define GET_FLUID_DATA( FLUID, DIM, KEY ) \
-    FLUID.getReference< Array< real64, DIM > >( MultiFluidBase::viewKeyStruct::KEY )[0][0]
+    FLUID.getReference< Array< real64, DIM > >( MultiFluidBase::viewKeyStruct::KEY() )[0][0]
 
   CompositionalVarContainer< 1 > phaseFrac {
     GET_FLUID_DATA( fluid, 3, phaseFractionString ),
@@ -269,41 +269,41 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   } );
 }
 
-MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
+MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
 {
-  auto fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
+  CompositionalMultiphaseFluid & fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
-  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 4 );
   compNames[0] = "N2"; compNames[1] = "C10"; compNames[2] = "C20"; compNames[3] = "H20";
 
-  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  auto & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   molarWgt.resize( 4 );
   molarWgt[0] = 28e-3; molarWgt[1] = 134e-3; molarWgt[2] = 275e-3; molarWgt[3] = 18e-3;
 
-  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  auto & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  auto & eqnOfState = fluid->getReference< string_array >( CompositionalMultiphaseFluid::viewKeyStruct::equationsOfStateString );
+  auto & eqnOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluid::viewKeyStruct::equationsOfStateString() );
   eqnOfState.resize( 2 );
   eqnOfState[0] = "PR"; eqnOfState[1] = "PR";
 
-  auto & critPres = fluid->getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalPressureString );
+  auto & critPres = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalPressureString() );
   critPres.resize( 4 );
   critPres[0] = 34e5; critPres[1] = 25.3e5; critPres[2] = 14.6e5; critPres[3] = 220.5e5;
 
-  auto & critTemp = fluid->getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalTemperatureString );
+  auto & critTemp = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalTemperatureString() );
   critTemp.resize( 4 );
   critTemp[0] = 126.2; critTemp[1] = 622.0; critTemp[2] = 782.0; critTemp[3] = 647.0;
 
-  auto & acFactor = fluid->getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentAcentricFactorString );
+  auto & acFactor = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentAcentricFactorString() );
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
-  fluid->postProcessInputRecursive();
+  fluid.postProcessInputRecursive();
   return fluid;
 }
 
@@ -327,10 +327,10 @@ public:
   CompositionalFluidTest()
   {
     parent.resize( 1 );
-    fluid = makeCompositionalFluid( "fluid", parent );
+    fluid = &makeCompositionalFluid( "fluid", parent );
 
-    parent.initialize( &parent );
-    parent.initializePostInitialConditions( &parent );
+    parent.initialize();
+    parent.initializePostInitialConditions();
   }
 };
 
@@ -366,69 +366,69 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
   testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
 }
 
-MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
+MultiFluidBase & makeLiveOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->registerGroup< BlackOilFluid >( name );
+  BlackOilFluid & fluid = parent->registerGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
-  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 3 );
   compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
 
-  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   molarWgt.resize( 3 );
   molarWgt[0] = 114e-3; molarWgt[1] = 16e-3; molarWgt[2] = 18e-3;
 
-  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  auto & surfaceDens = fluid->getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString );
+  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString() );
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  auto & tableNames = fluid->getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString );
+  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString() );
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
-  auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  BlackOilFluid::FluidType & fluidType = fluid.getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString() );
   fluidType = BlackOilFluid::FluidType::LiveOil;
 
-  fluid->postProcessInputRecursive();
+  fluid.postProcessInputRecursive();
   return fluid;
 }
 
-MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
+MultiFluidBase & makeDeadOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->registerGroup< BlackOilFluid >( name );
+  BlackOilFluid & fluid = parent->registerGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
-  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 3 );
   compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
 
-  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   molarWgt.resize( 3 );
   molarWgt[0] = 114e-3; molarWgt[1] = 16e-3; molarWgt[2] = 18e-3;
 
-  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  auto & surfaceDens = fluid->getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString );
+  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString() );
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  auto & tableNames = fluid->getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString );
+  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString() );
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvdw.txt";
 
-  auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  BlackOilFluid::FluidType & fluidType = fluid.getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString() );
   fluidType = BlackOilFluid::FluidType::DeadOil;
 
-  fluid->postProcessInputRecursive();
+  fluid.postProcessInputRecursive();
   return fluid;
 }
 
@@ -456,10 +456,10 @@ public:
     writeTableToFile( "pvtw.txt", pvtw_str );
 
     parent.resize( 1 );
-    fluid = makeLiveOilFluid( "fluid", &parent );
+    fluid = &makeLiveOilFluid( "fluid", &parent );
 
-    parent.initialize( &parent );
-    parent.initializePostInitialConditions( &parent );
+    parent.initialize();
+    parent.initializePostInitialConditions();
   }
 
   ~LiveOilFluidTest()
@@ -514,10 +514,10 @@ public:
     writeTableToFile( "pvdw.txt", pvdw_str );
 
     parent.resize( 1 );
-    fluid = makeDeadOilFluid( "fluid", &parent );
+    fluid = &makeDeadOilFluid( "fluid", &parent );
 
-    parent.initialize( &parent );
-    parent.initializePostInitialConditions( &parent );
+    parent.initialize();
+    parent.initializePostInitialConditions();
   }
 
   ~DeadOilFluidTest()
