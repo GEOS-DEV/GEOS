@@ -23,6 +23,8 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
+#include "CompositionalMultiphaseFlowUpwindHelperKernels.hpp"
+
 namespace geosx
 {
 

@@ -16,10 +16,12 @@
  * @file CompositionalMultiphaseFlowKernels.cpp
  */
 
+#include <physicsSolvers/multiphysics/CompositionalMultiphaseReservoir.hpp>
 #include "CompositionalMultiphaseFlowKernels.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FaceElementStencil.hpp"
+#include "CompositionalMultiphaseFlow.hpp"
 
 namespace geosx
 {
@@ -754,9 +756,9 @@ compute( localIndex const numPhases,
            ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
            ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
            ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
-           ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-           ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
+           ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseDens),
+           ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseDens_dPres),
+           ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseDens_dComp),
            ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
            ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
            ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
@@ -770,186 +772,30 @@ compute( localIndex const numPhases,
            arraySlice1d< real64 > const localFlux,
            arraySlice2d< real64 > const localFluxJacobian )
 {
-
   localIndex constexpr NDOF = NC + 1;
   localIndex const NP = numPhases;
 
-  bool const is_ppu = false;
-  bool const is_pu = false;//!is_ppu
-  bool const is_hu = true;//!(is_pu || is_ppu);
-  real64 phase_eps = 0;
+  //useful alias for upwind scheme templateing of fractional flow and mobility upwind
+  using term = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::term;
+  using UpwindV = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::PU<NC,NUM_ELEMS,term::Viscous>;
+  using UpwindG = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::PU<NC,NUM_ELEMS,term::Gravity>;
+//  using UpwindPc = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::PU<NC,NUM_ELEMS,term::Capillary>;
 
   real64 compFlux[NC]{};
   real64 dCompFlux_dP[MAX_STENCIL][NC]{};
   real64 dCompFlux_dC[MAX_STENCIL][NC][NC]{};
 
-  //real64 totFlux{};
   real64 totFlux_unw{};
   real64 dTotFlux_dP[MAX_STENCIL]{};
   real64 dTotFlux_dC[MAX_STENCIL][NC]{};
 
-  //useful lambdas
-  // helpers lambda definition to avoid too much dulpication
-  // agnostic of upwind direction (unless want to introduce fancy density face def)
-  auto dGravHead_dX =
-    [&seri,&sesri,&sei,&phaseMassDens,&dPhaseMassDens_dPres,&dPhaseMassDens_dComp,&dCompFrac_dCompDens,&stencilSize,&stencilWeights,&gravCoef]
-    (real64& GH, real64 dGH_dP[NUM_ELEMS], real64 dGH_dC[NUM_ELEMS][NC], real64 dPr_dC[NC], int kp)
-    {
-      real64 densMean {};
-      real64 dDensMean_dP [NUM_ELEMS]{};
-      real64 dDensMean_dC [NUM_ELEMS][NC]{};
-
-
-      //init
-      GH = 0.0;
-      for( localIndex i = 0; i < NUM_ELEMS; ++i )
-      {
-        dGH_dP[i] = 0.0;
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dGH_dC[i][jc] = 0.0;
-          dPr_dC[jc] = 0.0;
-        }
-      }
-
-
-      for( localIndex i = 0; i < NUM_ELEMS; ++i )
-      {
-        localIndex const er  = seri[i];
-        localIndex const esr = sesri[i];
-        localIndex const ei  = sei[i];
-
-        // density
-        real64 const density  = phaseMassDens[er][esr][ei][0][kp];
-        real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][kp];
-
-        applyChainRule( NC,
-                        dCompFrac_dCompDens[er][esr][ei],
-                        dPhaseMassDens_dComp[er][esr][ei][0][kp],
-                        dPr_dC );
-
-        // average density and derivatives
-        densMean += 0.5 * density;
-        dDensMean_dP[i] = 0.5 * dDens_dP;
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dDensMean_dC[i][jc] = 0.5 * dPr_dC[jc];
-        }
-      }
-
-      // compute potential difference MPFA-style
-      for( localIndex i = 0; i < stencilSize; ++i )
-      {
-        localIndex const er  = seri[i];
-        localIndex const esr = sesri[i];
-        localIndex const ei  = sei[i];
-        real64 const weight  = stencilWeights[i];
-
-        real64 const gravD = weight * gravCoef[er][esr][ei];
-        GH += densMean * gravD;
-
-        // need to add contributions from both cells the mean density depends on
-        for( localIndex j = 0; j < NUM_ELEMS; ++j )
-        {
-          dGH_dP[j] += dDensMean_dP[j] * gravD;
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dGH_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-          }
-        }
-      }
-    };
-
-  //rescale mobilities and their derivatives without molar densities as prefactor
-  auto dMob_dX =
-    [&seri,&sesri,&sei,&phaseMob,&dPhaseMob_dPres,&dPhaseMob_dComp,&phaseDens,&dPhaseDens_dPres,&dPhaseDens_dComp,&dCompFrac_dCompDens,&stencilSize]
-    (real64 mob[MAX_STENCIL], real64 dMob_dP[MAX_STENCIL], real64 dMob_dC[MAX_STENCIL][NC], int kp)
-    {
-
-   //init
-      for( localIndex j = 0; j < stencilSize; ++j )
-      {
-        mob[j] = 0.0;
-        dMob_dP[j] = 0.0;
-
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dMob_dC[j][jc] = 0.0;
-        }
-      }
-
-
-      for( localIndex j = 0; j < stencilSize; ++j )
-      {
-        localIndex er_i_  = seri[j];
-        localIndex esr_i_ = sesri[j];
-        localIndex ei_i_  = sei[j];
-
-        real64 const mobility = phaseMob[er_i_][esr_i_][ei_i_][kp];
-        real64 const PD = (phaseDens[er_i_][esr_i_][ei_i_][0][kp] > 1e-20) ? phaseDens[er_i_][esr_i_][ei_i_][0][kp] : 1e-20;
-
-        mob[j] = mobility / PD;
-//        mob[j] = mobility;
-
-        real64 dPD_dP = dPhaseDens_dPres[er_i_][esr_i_][ei_i_][0][kp];
-        real64 dPD_dC[NC] {};
-        applyChainRule( NC, dCompFrac_dCompDens[er_i_][esr_i_][ei_i_], dPhaseDens_dComp[er_i_][esr_i_][ei_i_][0][kp], dPD_dC );
-
-        real64 const dMMob_dP = dPhaseMob_dPres[er_i_][esr_i_][ei_i_][kp];
-        arraySlice1d< real64 const > dMMob_dC = dPhaseMob_dComp[er_i_][esr_i_][ei_i_][kp];
-
-        dMob_dP[j] = ( dMMob_dP - dPD_dP * mob[j] ) / PD;
-//        dMob_dP[j] =  dMMob_dP;
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dMob_dC[j][jc] = ( dMMob_dC[jc] - dPD_dC[jc] * mob[j] ) / PD;
-//          dMob_dC[j][jc] = dMMob_dC[jc];
-        }
-      }
-
-    };
-
-  //re-multiply by phaseDens and derivatives wrt to upwind direction
-  auto densMult =
-    [&seri,&sesri,&sei,&phaseDens,&dPhaseDens_dPres,&dPhaseDens_dComp,&dCompFrac_dCompDens,&stencilSize]
-    (real64& pF, real64 dPF_dP[MAX_STENCIL], real64 dPF_dC[MAX_STENCIL][NC], int kp, int k_up_)
-    {
-
-/*          pF *=1;
-          dPF_dP[k_up_] *=1;
-          dPF_dC[k_up_][0] *=1;
-          kp +=0;*/
-
-      localIndex const er_up_  = seri[k_up_];
-      localIndex const esr_up_ = sesri[k_up_];
-      localIndex const ei_up_  = sei[k_up_];
-
-      for( localIndex ks = 0; ks < stencilSize; ++ks )
-      {
-        dPF_dP[ks] *= phaseDens[er_up_][esr_up_][ei_up_][0][kp];
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dPF_dC[ks][jc] *= phaseDens[er_up_][esr_up_][ei_up_][0][kp];
-        }
-      }
-        dPF_dP[k_up_] += dPhaseDens_dPres[er_up_][esr_up_][ei_up_][0][kp] * pF;
-        real64 dPD_dC[NC]{};
-        applyChainRule( NC, dCompFrac_dCompDens[er_up_][esr_up_][ei_up_], dPhaseDens_dComp[er_up_][esr_up_][ei_up_][0][kp],
-                        dPD_dC );
-
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dPF_dC[k_up_][jc] += dPD_dC[jc] * pF;
-        }
-
-      //last as multiplicative use in the second part of derivatives
-      pF *= phaseDens[er_up_][esr_up_][ei_up_][0][kp];
-
-    };
-
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
   for( localIndex ip = 0; ip < NP; ++ip )
   {
+    // clear working arrays
+    real64 densMean{};
+    real64 dDensMean_dP[NUM_ELEMS]{};
+    real64 dDensMean_dC[NUM_ELEMS][NC]{};
 
     // create local work arrays
     real64 phaseFlux{};
@@ -970,7 +816,29 @@ compute( localIndex const numPhases,
     real64 dProp_dC[NC]{};
 
     // calculate quantities on primary connected cells
-    dGravHead_dX(gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip);
+    for( localIndex i = 0; i < NUM_ELEMS; ++i )
+    {
+      localIndex const er  = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei  = sei[i];
+
+      // density
+      real64 const density  = phaseMassDens[er][esr][ei][0][ip];
+      real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][ip];
+
+      applyChainRule( NC,
+                      dCompFrac_dCompDens[er][esr][ei],
+                      dPhaseMassDens_dComp[er][esr][ei][0][ip],
+                      dProp_dC );
+
+      // average density and derivatives
+      densMean += 0.5 * density;
+      dDensMean_dP[i] = 0.5 * dDens_dP;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
+      }
+    }
 
     //***** calculation of flux *****
     // compute potential difference MPFA-style
@@ -1012,35 +880,41 @@ compute( localIndex const numPhases,
       {
         dPresGrad_dC[i][jc] += -weight * dCapPressure_dC[jc];
       }
+
+      real64 const gravD = weight * gravCoef[er][esr][ei];
+
+      // the density used in the potential difference is always a mass density
+      // unlike the density used in the phase mobility, which is a mass density
+      // if useMass == 1 and a molar density otherwise
+      gravHead += densMean * gravD;
+
+      // need to add contributions from both cells the mean density depends on
+      for( localIndex j = 0; j < NUM_ELEMS; ++j )
+      {
+        dGravHead_dP[j] += dDensMean_dP[j] * gravD;
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
+        }
+      }
     }
 
     // *** upwinding ***
-
-    // use PPU currently; advanced stuff like IHU would go here
-    // TODO isolate into a kernel?
-
     // compute phase potential gradient
     real64 const potGrad = presGrad - gravHead;
 
     // choose upstream cell
     localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
-//    std::cerr << " " << k_up <<  " " ;
-
     localIndex er_up  = seri[k_up];
     localIndex esr_up = sesri[k_up];
     localIndex ei_up  = sei[k_up];
 
-    /**** tentative correction of mobility ****/
-    real64 mob_unw[MAX_STENCIL] {};
-    real64 dMob_unw_dP[MAX_STENCIL] {};
-    real64 dMob_unw_dC[MAX_STENCIL][NC] {};
-
-    dMob_dX(mob_unw,dMob_unw_dP,dMob_unw_dC,ip);
+    real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 
     //adding totMob update for UT -  formulation
     // skip the phase flux if phase not present or immobile upstream
-    if( std::fabs( mob_unw[k_up] ) < 1e-20 ) // TODO better constant
+    if( std::fabs( mobility ) < 1e-20 ) // TODO better constant
     {
       continue;
     }
@@ -1067,37 +941,37 @@ compute( localIndex const numPhases,
     }
 
     // compute the phase flux and derivatives using upstream cell mobility
-    phaseFlux = mob_unw[k_up] * potGrad;
-//    phase_eps = (phase_eps > 0.01*std::fabs(phaseFlux)) ? phase_eps : 0.01*std::fabs(phaseFlux);
+    phaseFlux = mobility * potGrad;
     //adding totflux for UT formulation
     totFlux_unw += phaseFlux;
 
       for( localIndex ke = 0; ke < stencilSize; ++ke )
       {
-        dPhaseFlux_dP[ke] *= mob_unw[k_up];
+        dPhaseFlux_dP[ke] *= mobility;
         dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
 
         for( localIndex jc = 0; jc < NC; ++jc )
         {
-          dPhaseFlux_dC[ke][jc] *= mob_unw[k_up];
+          dPhaseFlux_dC[ke][jc] *= mobility;
           dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
         }
       }
 
+      real64 const dMob_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
+      arraySlice1d< real64 const > const  dMob_dC = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
+
+
       // add contribution from upstream cell mobility derivatives
-    dPhaseFlux_dP[k_up] += dMob_unw_dP[k_up] * potGrad;
-    dTotFlux_dP[k_up] += dMob_unw_dP[k_up] * potGrad;
+    dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
+    dTotFlux_dP[k_up] += dMob_dP * potGrad;
 
     for( localIndex jc = 0; jc < NC; ++jc )
     {
-      dPhaseFlux_dC[k_up][jc] += dMob_unw_dC[k_up][jc] * potGrad;
-      dTotFlux_dC[k_up][jc] += dMob_unw_dC[k_up][jc] * potGrad;
+      dPhaseFlux_dC[k_up][jc] += dMob_dC[jc] * potGrad;
+      dTotFlux_dC[k_up][jc] += dMob_dC[jc] * potGrad;
     }
 
-    //validating densMult helper
-    densMult(phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, ip, k_up);
-
-    if( !IS_UT_FORM ) // skip  if you intend to use fixed total valocity formulation
+    if( !IS_UT_FORM ) // skip  if you intend to use fixed total velocity formulation
     {
 
       // slice some constitutive arrays to avoid too much indexing in component loop
@@ -1134,296 +1008,11 @@ compute( localIndex const numPhases,
       }
     }
     }
-
-//  std::cerr << " phaseFlux " << totFlux_unw << std::endl;
   // *** end of upwinding
 
   //if total flux formulation
   if( IS_UT_FORM )
   {
-      //for UT form
-      real64 totMob_unw{};
-      real64 dTotMob_unw_dP[MAX_STENCIL]{};
-      real64 dTotMob_unw_dC[MAX_STENCIL][NC]{};
-
-      real64 presGrad {};
-      real64 dPresGrad_dP[MAX_STENCIL] {};
-      real64 dPresGrad_dC[MAX_STENCIL][NC] {};
-
-    //getting frac flow and derivatives populated
-    auto dFrac_dX =
-      [&seri, &sesri, &sei, &stencilSize, &totMob_unw, &dTotMob_unw_dP, &dTotMob_unw_dC, &dMob_dX]
-        (real64& fflow, real64 dFflow_dP[MAX_STENCIL], real64 dFflow_dC[MAX_STENCIL][NC], int kp, int k_up_)
-      {
-
-        real64 mob_unw[MAX_STENCIL] {};
-        real64 dMob_unw_dP[MAX_STENCIL] {};
-        real64 dMob_unw_dC[MAX_STENCIL][NC] {};
-
-        //reinit
-        //fractional flow too low to let the upstream phase flow
-        fflow = 0;
-        for( localIndex ke = 0; ke < stencilSize; ++ke )
-        {
-          dFflow_dP[ke] = 0;
-
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dFflow_dC[ke][jc] = 0;
-          }
-        }
-
-        dMob_dX(mob_unw,dMob_unw_dP,dMob_unw_dC,kp);
-        //compute
-        if( std::fabs(mob_unw[k_up_]) > 1e-20 )
-        {
-          fflow = mob_unw[k_up_] / totMob_unw;
-          //update component fluxes
-          dFflow_dP[k_up_] = dMob_unw_dP[k_up_] / totMob_unw;
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dFflow_dC[k_up_][jc] = dMob_unw_dC[k_up_][jc] / totMob_unw;
-          }
-
-          for( localIndex ke = 0; ke < stencilSize; ++ke )
-          {
-            dFflow_dP[ke] -= fflow * dTotMob_unw_dP[ke] / totMob_unw;
-
-            for( localIndex jc = 0; jc < NC; ++jc )
-            {
-              dFflow_dC[ke][jc] -= fflow * dTotMob_unw_dC[ke][jc] / totMob_unw;
-            }
-          }
-        }
-      };
-
-    //compute potential
-    if(is_ppu || is_pu || is_hu)
-      {
-        for( localIndex i = 0; i < stencilSize; ++i )
-        {
-          localIndex const er = seri[i];
-          localIndex const esr = sesri[i];
-          localIndex const ei = sei[i];
-          real64 const weight = stencilWeights[i];
-          presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] );
-          dPresGrad_dP[i] += weight * (1);// - dCapPressure_dP);
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dPresGrad_dC[i][jc] += 0;//-weight * dCapPressure_dC[jc];
-          }
-        }
-      }
-
-    //finding the largest negPot to be compared against later
-    real64 minGravHead = 0;
-    bool all_pos_ = true;
-    if( is_pu || is_hu ){
-      for( localIndex ip = 0; ip < NP; ++ip )
-      {
-        real64 pot_{};
-
-        real64 gravHead{};
-        real64 dGravHead_dP[NUM_ELEMS]{};
-        real64 dGravHead_dC[NUM_ELEMS][NC]{};
-
-        real64 dProp_dC[NC]{};
-        dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
-        //defining up and down-wind direction based on total flux
-        if(is_pu)
-          pot_ = totFlux_unw;
-
-        localIndex const k_up = 0;
-          //( pot_ >= phase_eps ) ? 0 : 1;
-        localIndex const k_dw = 1;
-          //( pot_ >= phase_eps ) ? 1 : 0;
-
-        std::cerr << ip << " : (" << pot_ << " ; ";
-        for( localIndex jp = 0; jp < NP; ++jp )
-        {
-
-          if(ip!=jp)
-          {
-            real64 gravHeadOther{};
-            real64 dGravHeadOther_dP[NUM_ELEMS]{};
-            real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
-            real64 dPropOther_dC[NC]{};
-
-            dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
-            real64 mob_unw[MAX_STENCIL]{};
-            real64 dMob_unw_dP[MAX_STENCIL]{};
-            real64 dMob_unw_dC[MAX_STENCIL][NC]{};
-
-            dMob_dX( mob_unw, dMob_unw_dP, dMob_unw_dC, jp );
-
-            real64 const mob_up = mob_unw[k_up];
-            real64 const mob_dw = mob_unw[k_dw];
-
-            pot_ += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead - gravHeadOther ) : mob_up * ( gravHead
-                                                                                                           - gravHeadOther );
-                      std::cerr << pot_ << "[ " << mob_dw << " ," << mob_up << "] ";
-
-          }
-        }
-
-        all_pos_ &= pot_>=0;
-
-        std::cerr << "  " << pot_ << "), " << gravHead << std::endl;
-        if( pot_ < 0 && std::fabs(gravHead) >= std::fabs(minGravHead) ) // if neg pot and more dense
-        {
-          minGravHead = gravHead;
-        }
-      }
-    }
-
-        auto getUpwindV = [&presGrad, &dGravHead_dX, &phase_eps, &minGravHead, &totFlux_unw,&all_pos_] (bool is_ppu_, bool is_pu_, bool is_hu_, localIndex kp)
-          {
-            real64 gravHead{};
-            real64 dGravHead_dP[NUM_ELEMS]{};
-            real64 dGravHead_dC[NUM_ELEMS][NC]{};
-
-            real64 dProp_dC[NC]{};
-
-            dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, kp );
-
-            localIndex k_up = -1;
-            if( is_ppu_ )
-            {
-              k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
-            }
-            else if( is_pu_ )
-            {
-              k_up = 0;
-              if( std::fabs( gravHead ) <= std::fabs( minGravHead ) && !(all_pos_) )
-                k_up = ( k_up == 1 ) ? 0 : 1;
-            }
-            else if( is_hu_ )
-            {
-              // dummy use of gravTerm to preserve interface
-              k_up = ( totFlux_unw >= phase_eps ) ? 0 : 1;
-            }
-
-              return k_up;
-          };
-
-        auto getUpwindG = [&seri, &sesri, &sei, &gravCoef, &presGrad, &dGravHead_dX, &phase_eps, &minGravHead, &totFlux_unw, &all_pos_](bool is_ppu_, bool is_pu_, bool is_hu_, localIndex kp)
-        {
-          localIndex const er  = seri[0];
-          localIndex const esr = sesri[0];
-          localIndex const ei  = sei[0];
-
-          real64 gravHeadOther{};
-          real64 dGravHeadOther_dP[NUM_ELEMS]{};
-          real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
-
-          real64 dPropOther_dC[NC]{};
-
-          dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, kp );
-
-          localIndex k_up_g = -1;
-          if( is_ppu_ )
-          {
-            k_up_g = ( presGrad - gravHeadOther >= 0 ) ? 0 : 1;
-          }
-          else if( is_pu_ || is_hu_ )
-          {
-            k_up_g = ( gravCoef[er][esr][ei] > 0 ) ? 0 : 1;//heavy is upwinded with above value (resp. the lighter with below)
-            if( std::fabs( gravHeadOther ) <= std::fabs( minGravHead )
-                && !(all_pos_) )
-              k_up_g = ( k_up_g == 1 ) ? 0 : 1;
-          }
-
-          return k_up_g;
-        };
-
-        auto dTotMob_dX = [&NP, &dMob_dX, &stencilSize, &getUpwindV, &getUpwindG]
-        ( bool is_grav_ , bool is_ppu_, bool is_pu_, bool is_hu_,
-                              real64& totMob_unw_, real64 dTotMob_unw_dP_[MAX_STENCIL], real64 dTotMob_unw_dC_[MAX_STENCIL][NC])
-        {
-
-          totMob_unw_ = 0.0;
-          for(localIndex ke=0; ke < stencilSize; ++ke)
-          {
-              dTotMob_unw_dP_[ke] = 0.0;
-              for(localIndex ic = 0 ; ic < NC; ++ic)
-                dTotMob_unw_dC_[ke][ic] = 0.0;
-
-          };
-
-
-          for( localIndex ip = 0; ip < NP; ++ip )
-          {
-
-
-            real64 mob_unw[MAX_STENCIL]{};
-            real64 dMob_unw_dP[MAX_STENCIL]{};
-            real64 dMob_unw_dC[MAX_STENCIL][NC]{};
-
-            dMob_dX( mob_unw, dMob_unw_dP, dMob_unw_dC, ip );
-            localIndex k_up = -1;
-            if( ! is_grav_ )
-              k_up = getUpwindV(is_ppu_, is_pu_, is_hu_, ip);
-            else
-              k_up = getUpwindG(is_ppu_, is_pu_, is_hu_, ip);
-
-            if( std::fabs( mob_unw[k_up] ) < 1e-20 )
-              continue;
-
-            totMob_unw_ += mob_unw[k_up];
-            dTotMob_unw_dP_[k_up] += dMob_unw_dP[k_up];
-
-            for( localIndex ic = 0; ic < NC; ++ic )
-            {
-              dTotMob_unw_dC_[k_up][ic] += dMob_unw_dC[k_up][ic];
-            }
-          }
-        };
-
-        auto dPhaseComp_dX = [&seri, &sesri, &sei, &stencilSize, &phaseCompFrac, &dPhaseCompFrac_dPres, &dPhaseCompFrac_dComp, &dCompFrac_dCompDens]
-          (real64 phaseFlux_, real64 dPhaseFlux_dP_[MAX_STENCIL], real64 dPhaseFlux_dC_[MAX_STENCIL][NC],
-          real64 compFlux_[NC], real64 dCompFlux_dP_[MAX_STENCIL][NC], real64 dCompFlux_dC_[MAX_STENCIL][NC][NC],
-            localIndex kp, localIndex k_up_)
-    {
-      /*update phaseComp from grav part*/
-      localIndex const er_up_ = seri[k_up_];
-      localIndex const esr_up_ = sesri[k_up_];
-      localIndex const ei_up_ = sei[k_up_];
-
-      arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up_][esr_up_][ei_up_][0][kp];
-      arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up_][esr_up_][ei_up_][0][kp];
-      arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up_][esr_up_][ei_up_][0][kp];
-
-      real64 dProp_dC[NC] {};
-
-      // compute component fluxes and derivatives using upstream cell composition
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        real64 const ycp = phaseCompFracSub[ic];
-        compFlux_[ic] += phaseFlux_ * ycp;
-
-        // derivatives stemming from phase flux
-        for( localIndex ke = 0; ke < stencilSize; ++ke )
-        {
-          dCompFlux_dP_[ke][ic] += dPhaseFlux_dP_[ke] * ycp;
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dCompFlux_dC_[ke][ic][jc] += dPhaseFlux_dC_[ke][jc] * ycp;
-          }
-        }
-
-        // additional derivatives stemming from upstream cell phase composition
-        dCompFlux_dP_[k_up_][ic] += phaseFlux_ * dPhaseCompFrac_dPresSub[ic];
-
-        // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component
-        // densities
-        applyChainRule( NC, dCompFrac_dCompDens[er_up_][esr_up_][ei_up_], dPhaseCompFrac_dCompSub[ic], dProp_dC );
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dCompFlux_dC_[k_up_][ic][jc] += phaseFlux_ * dProp_dC[jc];
-        }
-      }
-    };
-
     for( localIndex ip = 0; ip < NP; ++ip )
     {
       // choose upstream cell
@@ -1446,29 +1035,49 @@ compute( localIndex const numPhases,
 
       real64 dProp_dC[NC]{};
 
-      dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
-      /* chosing upwind for viscous term */
-      localIndex k_up = getUpwindV(is_ppu, is_pu, is_hu, ip);
-      std::cerr << " " << k_up << " ";
-      dTotMob_dX(false, is_ppu, is_pu, is_hu, totMob_unw, dTotMob_unw_dP, dTotMob_unw_dC);
+      //Fetch gravHead for phase i
+      CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formGravHead( ip,
+                                                                                  stencilSize,
+                                                                                  seri,
+                                                                                  sesri,
+                                                                                  sei,
+                                                                                  stencilWeights,
+                                                                                  gravCoef,
+                                                                                  dCompFrac_dCompDens,
+                                                                                  phaseMassDens,
+                                                                                  dPhaseMassDens_dPres,
+                                                                                  dPhaseMassDens_dComp,
+                                                                                  gravHead,
+                                                                                  dGravHead_dP,
+                                                                                  dGravHead_dC,
+                                                                                  dProp_dC);
 
-
-      real64 mob_unw[MAX_STENCIL] {};
-      real64 dMob_unw_dP[MAX_STENCIL] {};
-      real64 dMob_unw_dC[MAX_STENCIL][NC] {};
-
-      dMob_dX(mob_unw,dMob_unw_dP,dMob_unw_dC,ip);
-
-          //fractional flow too low to let the upstream phase flow
-      if( std::fabs(mob_unw[k_up]) < 1e-20 || std::fabs(totMob_unw) < 1e-20 )
-          continue;
-
-      //get the fracflow for viscous part and (opt1) re-multiply by molar phaseDens
-      dFrac_dX(fflow,dFflow_dP,dFflow_dC, ip, k_up);
-      densMult(fflow, dFflow_dP, dFflow_dC, ip, k_up);
+      // and the fractional flow for viscous part
+      localIndex k_up = -1;
+      CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formFracFlow< NC, MAX_STENCIL, UpwindV>(NP,
+                                                                                                            ip,
+                                                                                                            stencilSize,
+                                                                                                            seri,
+                                                                                                            sesri,
+                                                                                                            sei,
+                                                                                                            stencilWeights,
+                                                                                                            totFlux_unw, //in fine should be a ElemnetViewConst once seq form are in place
+                                                                                                            pres,
+                                                                                                            dPres,
+                                                                                                            gravCoef,
+                                                                                                            dCompFrac_dCompDens,
+                                                                                                            phaseMassDens,
+                                                                                                            dPhaseMassDens_dPres,
+                                                                                                            dPhaseMassDens_dComp,
+                                                                                                            phaseMob,
+                                                                                                            dPhaseMob_dPres,
+                                                                                                            dPhaseMob_dComp,
+                                                                                                            k_up,
+                                                                                                            fflow,
+                                                                                                            dFflow_dP,
+                                                                                                            dFflow_dC);
 
       phaseFluxV = fflow * totFlux_unw;
-
       for( localIndex ke = 0; ke < stencilSize; ++ke)
       {
         dPhaseFluxV_dP[ke] += dFflow_dP[ke] * totFlux_unw;
@@ -1507,56 +1116,124 @@ compute( localIndex const numPhases,
           real64 dPhaseFluxG_dP[MAX_STENCIL]{};
           real64 dPhaseFluxG_dC[MAX_STENCIL][NC]{};
 
+          localIndex k_up_g = -1;
+          localIndex k_up_og = -1;
+
           real64 gravHeadOther{};
           real64 dGravHeadOther_dP[NUM_ELEMS]{};
           real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
           real64 dPropOther_dC[NC]{};
 
-          dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
+          CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formGravHead( jp,
+                                                                                      stencilSize,
+                                                                                      seri,
+                                                                                      sesri,
+                                                                                      sei,
+                                                                                      stencilWeights,
+                                                                                      gravCoef,
+                                                                                      dCompFrac_dCompDens,
+                                                                                      phaseMassDens,
+                                                                                      dPhaseMassDens_dPres,
+                                                                                      dPhaseMassDens_dComp,
+                                                                                      gravHeadOther,
+                                                                                      dGravHeadOther_dP,
+                                                                                      dGravHeadOther_dC,
+                                                                                      dPropOther_dC);
 
-          dTotMob_dX(true, is_ppu, is_pu, is_hu, totMob_unw, dTotMob_unw_dP, dTotMob_unw_dC);
-          localIndex k_up_g = getUpwindG(is_ppu, is_pu, is_hu, ip);
-          localIndex k_up_og = getUpwindG(is_ppu, is_pu, is_hu, jp);
-//      std::cerr << " " << k_up_g << " ";
-          std::cerr << " " << k_up_og << " ";
 
-          dFrac_dX(fflow, dFflow_dP, dFflow_dC, ip, k_up_g);
-          densMult(fflow, dFflow_dP, dFflow_dC, ip, k_up_g);
+          CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formFracFlow< NC, MAX_STENCIL, UpwindG >( NP,
+                                                                                                                  ip,
+                                                                                                                  stencilSize,
+                                                                                                                  seri,
+                                                                                                                  sesri,
+                                                                                                                  sei,
+                                                                                                                  stencilWeights,
+                                                                                                                  totFlux_unw, //in fine should be a ElemnetViewConst once seq form are in place
+                                                                                                                  pres,
+                                                                                                                  dPres,
+                                                                                                                  gravCoef,
+                                                                                                                  dCompFrac_dCompDens,
+                                                                                                                  phaseMassDens,
+                                                                                                                  dPhaseMassDens_dPres,
+                                                                                                                  dPhaseMassDens_dComp,
+                                                                                                                  phaseMob,
+                                                                                                                  dPhaseMob_dPres,
+                                                                                                                  dPhaseMob_dComp,
+                                                                                                                  k_up_g,
+                                                                                                                  fflow,
+                                                                                                                  dFflow_dP,
+                                                                                                                  dFflow_dC);
+          //Eventually get the mobility of the second phase
+          real64 mobOther {};
+          real64 dMobOther_dP {};
+          real64 dMobOther_dC[NC] {};
 
-          real64 mob_other_unw[MAX_STENCIL] {};
-          real64 dMob_other_unw_dP[MAX_STENCIL] {};
-          real64 dMob_other_unw_dC[MAX_STENCIL][NC] {};
-          dMob_dX(mob_other_unw, dMob_other_unw_dP, dMob_other_unw_dC, jp);
-          if( std::fabs(mob_other_unw[k_up_og]) < 1e-20 )
-            continue;
+          CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::upwindMob< NC, UpwindG >( NP,
+                                                                                                  jp,
+                                                                                                  stencilSize,
+                                                                                                  seri,
+                                                                                                  sesri,
+                                                                                                  sei,
+                                                                                                  stencilWeights,
+                                                                                                  totFlux_unw, //in fine should be a ElemnetViewConst once seq form are in place
+                                                                                                  pres,
+                                                                                                  dPres,
+                                                                                                  gravCoef,
+                                                                                                  dCompFrac_dCompDens,
+                                                                                                  phaseMassDens,
+                                                                                                  dPhaseMassDens_dPres,
+                                                                                                  dPhaseMassDens_dComp,
+                                                                                                  phaseMob,
+                                                                                                  dPhaseMob_dPres,
+                                                                                                  dPhaseMob_dComp,
+                                                                                                  k_up_og,
+                                                                                                  mobOther,
+                                                                                                  dMobOther_dP,
+                                                                                                  dMobOther_dC);
 
-          phaseFluxG -= fflow * mob_other_unw[k_up_og] * ( gravHead - gravHeadOther );
+          phaseFluxG -= fflow * mobOther * ( gravHead - gravHeadOther );
 
-          dPhaseFluxG_dP[k_up_og] -= fflow * dMob_other_unw_dP[k_up_og] * ( gravHead - gravHeadOther );
+          dPhaseFluxG_dP[k_up_og] -= fflow * dMobOther_dP * ( gravHead - gravHeadOther );
           for( localIndex jc = 0; jc < NC; ++jc )
-            dPhaseFluxG_dC[k_up_og][jc] -= fflow * dMob_other_unw_dC[k_up_og][jc] * ( gravHead - gravHeadOther );
+            dPhaseFluxG_dC[k_up_og][jc] -= fflow * dMobOther_dC[jc] * ( gravHead - gravHeadOther );
 
           //mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
           for( localIndex ke = 0; ke < stencilSize; ++ke )
           {
-            dPhaseFluxG_dP[ke] -= dFflow_dP[ke] * mob_other_unw[k_up_og] * ( gravHead - gravHeadOther );
+            dPhaseFluxG_dP[ke] -= dFflow_dP[ke] * mobOther * ( gravHead - gravHeadOther );
 
             for( localIndex jc = 0; jc < NC; ++jc )
             {
-              dPhaseFluxG_dC[ke][jc] -= dFflow_dC[ke][jc] * mob_other_unw[k_up_og] * ( gravHead - gravHeadOther );
+              dPhaseFluxG_dC[ke][jc] -= dFflow_dC[ke][jc] * mobOther * ( gravHead - gravHeadOther );
             }
           }
 
           for( localIndex ke = 0; ke < NUM_ELEMS; ++ke )
           {
-            dPhaseFluxG_dP[ke] -= fflow * mob_other_unw[k_up_og] * ( dGravHead_dP[ke] - dGravHeadOther_dP[ke] );
+            dPhaseFluxG_dP[ke] -= fflow * mobOther * ( dGravHead_dP[ke] - dGravHeadOther_dP[ke] );
             for( localIndex jc = 0; jc < NC; ++jc )
             {
-              dPhaseFluxG_dC[ke][jc] -= fflow * mob_other_unw[k_up_og] * ( dGravHead_dC[ke][jc] - dGravHeadOther_dC[ke][jc] );
+              dPhaseFluxG_dC[ke][jc] -= fflow * mobOther * ( dGravHead_dC[ke][jc] - dGravHeadOther_dC[ke][jc] );
             }
           }
-          dPhaseComp_dX(phaseFluxG, dPhaseFluxG_dP, dPhaseFluxG_dC, compFlux, dCompFlux_dP, dCompFlux_dC, ip, k_up_g);
+          CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formPhaseComp(ip,
+                                                                                      k_up_g,
+                                                                                      stencilSize,
+                                                                                      seri,
+                                                                                      sesri,
+                                                                                      sei,
+                                                                                      phaseCompFrac,
+                                                                                      dPhaseCompFrac_dPres,
+                                                                                      dPhaseCompFrac_dComp,
+                                                                                      dCompFrac_dCompDens,
+                                                                                      phaseFluxG,
+                                                                                      dPhaseFluxG_dP,
+                                                                                      dPhaseFluxG_dC,
+                                                                                      compFlux,
+                                                                                      dCompFlux_dP,
+                                                                                      dCompFlux_dC);
 
+          //update phaseFlux from gravitational part
           phaseFlux += phaseFluxG;
           for(localIndex ke = 0; ke < stencilSize; ++ke)
           {
@@ -1568,32 +1245,25 @@ compute( localIndex const numPhases,
         }
       }
 
-      //(opt 2) restore molar phaseDens at the end of the call
-/*      k_up = -1;
-      if( is_ppu )
-      {
-        k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
-      }
-      else if( is_pu )
-      {
-        k_up = (totFlux_unw >= 0) ? 0 : 1 ;
-        if( (std::fabs(gravHead) <= std::fabs(minGravHead)) && std::fabs(minGravHead)>0 )
-          k_up = ( k_up == 1 ) ? 0 : 1;
-      }
-      else if( is_hu )
-      {
-        k_up = (totFlux_unw >= 0) ? 0 : 1 ;
-      }
-      densMult(phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, ip, k_up); */
-
-      /*update phaseComp from viscous part */
-      dPhaseComp_dX(phaseFluxV, dPhaseFluxV_dP, dPhaseFluxV_dC, compFlux, dCompFlux_dP, dCompFlux_dC, ip, k_up);
-
-      std::cerr << std::endl;
+      //update phaseComp from viscous part
+      CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formPhaseComp(ip,
+                                                                                  k_up,
+                                                                                  stencilSize,
+                                                                                  seri,
+                                                                                  sesri,
+                                                                                  sei,
+                                                                                  phaseCompFrac,
+                                                                                  dPhaseCompFrac_dPres,
+                                                                                  dPhaseCompFrac_dComp,
+                                                                                  dCompFrac_dCompDens,
+                                                                                  phaseFluxV,
+                                                                                  dPhaseFluxV_dP,
+                                                                                  dPhaseFluxV_dC,
+                                                                                  compFlux,
+                                                                                  dCompFlux_dP,
+                                                                                  dCompFlux_dC);
     }
-    std::cerr << std::endl;
-
-  }//end If UT_FORM
+  }//end if UT_FORM
 
   // populate local flux vector and derivatives
   for( localIndex ic = 0; ic < NC; ++ic )
@@ -1601,7 +1271,7 @@ compute( localIndex const numPhases,
     localFlux[ic]      =  dt * compFlux[ic];
     localFlux[NC + ic] = -dt * compFlux[ic];
 
-    std::cerr << "\n***********\n ic" << ic << " compFlux : " << compFlux[ic] <<std::endl;
+//    std::cerr << "\n***********\n ic" << ic << " compFlux : " << compFlux[ic] <<std::endl;
 
     for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
@@ -1609,7 +1279,7 @@ compute( localIndex const numPhases,
       localFluxJacobian[ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
       localFluxJacobian[NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
 
-      std::cerr << "*********** \t ke" << ke << " compFlux : " << dCompFlux_dP[ke][ic] <<std::endl;
+//      std::cerr << "*********** \t ke" << ke << " compFlux : " << dCompFlux_dP[ke][ic] <<std::endl;
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
@@ -1617,7 +1287,7 @@ compute( localIndex const numPhases,
         localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
         localFluxJacobian[NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
 
-        std::cerr << "*********** \t \t jc" << jc << " compFlux : " << dCompFlux_dC[ke][ic][jc] << std::endl << std::endl;
+//        std::cerr << "*********** \t \t jc" << jc << " compFlux : " << dCompFlux_dC[ke][ic][jc] << std::endl << std::endl;
       }
     }
   }
@@ -1673,7 +1343,7 @@ FluxKernel::
     stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
     stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
 
-    std::cerr << " iconn :" << iconn <<std::endl;
+//    std::cerr << " iconn :" << iconn <<std::endl;
 
     FluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL, IS_UT_FORM >( numPhases,
                                                        stencilSize,
