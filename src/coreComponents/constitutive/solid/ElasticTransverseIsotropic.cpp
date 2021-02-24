@@ -27,8 +27,8 @@ namespace constitutive
 
 ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
-  m_defaultYoungsModulusTransverse(),
-  m_defaultYoungsModulusAxial(),
+  m_defaultYoungModulusTransverse(),
+  m_defaultYoungModulusAxial(),
   m_defaultPoissonsRatioTransverse(),
   m_defaultPoissonsRatioAxialTransverse(),
   m_defaultShearModulusAxialTransverse(),
@@ -38,12 +38,12 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   m_c44(),
   m_c66()
 {
-  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverseString(), &m_defaultYoungsModulusTransverse )->
+  registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default Transverse Young's Modulus" );
 
-  registerWrapper( viewKeyStruct::defaultYoungsModulusAxialString(), &m_defaultYoungsModulusAxial )->
+  registerWrapper( viewKeyStruct::defaultYoungModulusAxialString(), &m_defaultYoungModulusAxial )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default Axial Young's Modulus" );
@@ -123,8 +123,8 @@ void ElasticTransverseIsotropic::postProcessInput()
   real64 & c44  = getReference< real64 >( viewKeyStruct::defaultC44String() );
   real64 & c66  = getReference< real64 >( viewKeyStruct::defaultC66String() );
 
-  real64 & Et = m_defaultYoungsModulusTransverse;
-  real64 & Ea = m_defaultYoungsModulusAxial;
+  real64 & Et = m_defaultYoungModulusTransverse;
+  real64 & Ea = m_defaultYoungModulusAxial;
   real64 & Nut = m_defaultPoissonsRatioTransverse;
   real64 & Nuat = m_defaultPoissonsRatioAxialTransverse;
   real64 & Gat = m_defaultShearModulusAxialTransverse;
