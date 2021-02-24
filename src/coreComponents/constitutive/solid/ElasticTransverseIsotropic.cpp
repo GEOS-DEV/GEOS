@@ -29,8 +29,8 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   SolidBase( name, parent ),
   m_defaultYoungModulusTransverse(),
   m_defaultYoungModulusAxial(),
-  m_defaultPoissonsRatioTransverse(),
-  m_defaultPoissonsRatioAxialTransverse(),
+  m_defaultPoissonRatioTransverse(),
+  m_defaultPoissonRatioAxialTransverse(),
   m_defaultShearModulusAxialTransverse(),
   m_c11(),
   m_c13(),
@@ -48,12 +48,12 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default Axial Young's Modulus" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonsRatioTransverseString(), &m_defaultPoissonsRatioTransverse )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverseString(), &m_defaultPoissonRatioTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default Transverse Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonsRatioAxialTransverseString(), &m_defaultPoissonsRatioAxialTransverse )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverseString(), &m_defaultPoissonRatioAxialTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Default Axial-Transverse Poisson's Ratio" );
@@ -125,8 +125,8 @@ void ElasticTransverseIsotropic::postProcessInput()
 
   real64 & Et = m_defaultYoungModulusTransverse;
   real64 & Ea = m_defaultYoungModulusAxial;
-  real64 & Nut = m_defaultPoissonsRatioTransverse;
-  real64 & Nuat = m_defaultPoissonsRatioAxialTransverse;
+  real64 & Nut = m_defaultPoissonRatioTransverse;
+  real64 & Nuat = m_defaultPoissonRatioAxialTransverse;
   real64 & Gat = m_defaultShearModulusAxialTransverse;
 
   if( Et > 0.0 && Ea > 0.0 && Gat > 0.0 && Nut > -0.5 && Nut < 0.5 )

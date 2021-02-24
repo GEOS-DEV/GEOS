@@ -427,27 +427,27 @@ public:
    * @brief Getter for default transverse Poisson's ratio
    * @return The value of the default transverse Poisson's ratio.
    */
-  real64 getDefaultPoissonsRatioTransverse() const
+  real64 getDefaultPoissonRatioTransverse() const
   {
-    return m_defaultPoissonsRatioTransverse;
+    return m_defaultPoissonRatioTransverse;
   }
 
   /**
    * @brief Setter for the default transverse Poisson's ratio.
    * @param[in] input New value for the default transverse Poisson's ratio
    */
-  void setDefaultPoissonsRatioTransverse( real64 const input )
+  void setDefaultPoissonRatioTransverse( real64 const input )
   {
-    m_defaultPoissonsRatioTransverse = input;
+    m_defaultPoissonRatioTransverse = input;
   }
 
   /**
    * @brief Getter for default axial Poisson's ratio
    * @return The value of the default axial/transverse Poisson's modulus.
    */
-  real64 getDefaultPoissonsRatioAxialTransverse() const
+  real64 getDefaultPoissonRatioAxialTransverse() const
   {
-    return m_defaultPoissonsRatioAxialTransverse;
+    return m_defaultPoissonRatioAxialTransverse;
   }
 
   /**
@@ -455,9 +455,9 @@ public:
    * @param[in] input New value for the default axial/transverse Poisson's
    *             modulus
    */
-  void setDefaultPoissonsRatioAxialTransverse( real64 const input )
+  void setDefaultPoissonRatioAxialTransverse( real64 const input )
   {
-    m_defaultPoissonsRatioAxialTransverse = input;
+    m_defaultPoissonRatioAxialTransverse = input;
   }
 
   /**
@@ -590,11 +590,11 @@ protected:
 
   /// The default value of the transverse Poisson's ratio for any new
   /// allocations.
-  real64 m_defaultPoissonsRatioTransverse;
+  real64 m_defaultPoissonRatioTransverse;
 
   /// The default value of the axial/transverse Poisson's ratio for any new
   /// allocations.
-  real64 m_defaultPoissonsRatioAxialTransverse;
+  real64 m_defaultPoissonRatioAxialTransverse;
 
   /// The default value of the axial/transverse Shear modulus for any new
   /// allocations.
