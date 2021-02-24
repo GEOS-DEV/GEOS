@@ -36,7 +36,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 //#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -90,7 +90,7 @@ void TwoPhasePoroelasticSolver::setupDofs( DomainPartition const & domain,
   m_flowSolver->setupDofs( domain, dofManager );
 
   dofManager.addCoupling( keys::TotalDisplacement,
-                          CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString(),
+                          CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
 }
 
@@ -136,7 +136,7 @@ void TwoPhasePoroelasticSolver::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  m_flowSolver = &this->getParent().getGroup< CompositionalMultiphaseFlow >( m_flowSolverName );
+  m_flowSolver = &this->getParent().getGroup< CompositionalMultiphaseBase >( m_flowSolverName );
   m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   m_solidSolver->setEffectiveStress( 1 );
@@ -197,11 +197,11 @@ void TwoPhasePoroelasticSolver::assembleSystem( real64 const time_n,
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  string const compVarDofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString() );
+  string const compVarDofKey = dofManager.getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  int const numComponents = LvArray::integerConversion<int>( dofManager.numComponents( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString() ) - 1);
+  int const numComponents = LvArray::integerConversion<int>( dofManager.numComponents( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() ) - 1);
 
   // Cell-based contributions (except pressure-dependent terms in the accumulation term of the mass balance equation)
   m_solidSolver->getMaxForce() =
