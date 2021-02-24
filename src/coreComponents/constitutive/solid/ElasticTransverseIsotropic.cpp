@@ -66,27 +66,27 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   registerWrapper< real64 >( viewKeyStruct::defaultC11String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Stiffness Parameter C11" );
+    setDescription( "Default Stiffness Parameter C11" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultC13String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Stiffness Parameter C13" );
+    setDescription( "Default Stiffness Parameter C13" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultC33String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Stiffness Parameter C33" );
+    setDescription( "Default Stiffness Parameter C33" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultC44String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Stiffness Parameter C44" );
+    setDescription( "Default Stiffness Parameter C44" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultC66String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Stiffness Parameter C66" );
+    setDescription( "Default Stiffness Parameter C66" );
 
   registerWrapper( viewKeyStruct::c11String(), &m_c11 )->
     setApplyDefaultValue( -1 )->
