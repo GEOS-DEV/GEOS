@@ -143,7 +143,6 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, real64 ( &stiffness )[6][6] ) const override final;
 
-
 private:
 
   /// A reference to the ArrayView holding c11 for each element.
@@ -161,7 +160,6 @@ private:
   /// A reference to the ArrayView holding c66 for each element.
   arrayView1d< real64 const > const m_c66;
 };
-
 
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
@@ -205,7 +203,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( loc
   stress[5] = m_c66[k]*totalStrain[5];
 }
 
-
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
@@ -217,7 +214,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
   getElasticStiffness( k, stiffness );
 }
-
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -235,7 +231,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
   stiffness.m_c66 = m_c66[k];
 }
 
-
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
@@ -248,7 +243,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
 
-
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
@@ -260,7 +254,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
   smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   getElasticStiffness( k, stiffness );
 }
-
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -576,7 +569,6 @@ public:
                           m_oldStress );
   }
 
-
 protected:
   virtual void postProcessInput() override;
 
@@ -614,7 +606,6 @@ protected:
 
   /// The 66 component of the Voigt stiffness tensor.
   array1d< real64 > m_c66;
-
 };
 
 } /* namespace constitutive */

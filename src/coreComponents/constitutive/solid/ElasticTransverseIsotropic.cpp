@@ -114,7 +114,6 @@ ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
 
 void ElasticTransverseIsotropic::postProcessInput()
 {
-
   SolidBase::postProcessInput();
 
   real64 & c11  = getReference< real64 >( viewKeyStruct::defaultC11String() );
