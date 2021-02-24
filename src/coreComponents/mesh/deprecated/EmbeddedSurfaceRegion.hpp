@@ -99,13 +99,13 @@ public:
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     /// Fracture set string
-    static constexpr auto fractureSetString = "fractureSet";
+    static constexpr char const * fractureSetString() { return "fractureSet"; }
     /// Default fracture aperture
-    static constexpr auto defaultApertureString = "defaultAperture";
+    static constexpr char const * defaultApertureString() { return "defaultAperture"; }
   };
 
 protected:
-  virtual void initializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups() override;
 
 private:
 

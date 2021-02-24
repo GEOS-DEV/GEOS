@@ -110,18 +110,14 @@ public:
 //START_SPHINX_INCLUDE_01
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString = "phaseMinVolumeFraction";
-    static constexpr auto phaseRelPermExponentString   = "phaseRelPermExponent";
-    static constexpr auto phaseRelPermMaxValueString   = "phaseRelPermMaxValue";
-    static constexpr auto volFracScaleString                = "volFracScale";
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * phaseRelPermExponentString() { return "phaseRelPermExponent"; }
+    static constexpr char const * phaseRelPermMaxValueString() { return "phaseRelPermMaxValue"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
 
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString };
-    ViewKey phaseRelPermExponent   = { phaseRelPermExponentString };
-    ViewKey phaseRelPermMaxValue   = { phaseRelPermMaxValueString };
-
+    dataRepository::ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString() };
+    dataRepository::ViewKey phaseRelPermExponent   = { phaseRelPermExponentString() };
+    dataRepository::ViewKey phaseRelPermMaxValue   = { phaseRelPermMaxValueString() };
   } vieKeysBrooksCoreyRelativePermeability;
 
 protected:
@@ -144,18 +140,14 @@ BrooksCoreyRelativePermeabilityUpdate::
            arraySlice1d< real64 > const & phaseRelPerm,
            arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  localIndex const NP = numPhases();
-
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( real64 & val : dPhaseRelPerm_dPhaseVolFrac )
   {
-    for( localIndex jp = 0; jp < NP; ++jp )
-    {
-      dPhaseRelPerm_dPhaseVolFrac[ip][jp] = 0.0;
-    }
+    val = 0.0;
   }
+
   real64 const satScaleInv = 1.0 / m_volFracScale;
 
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases(); ++ip )
   {
     real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
     real64 const exponent  = m_phaseRelPermExponent[ip];

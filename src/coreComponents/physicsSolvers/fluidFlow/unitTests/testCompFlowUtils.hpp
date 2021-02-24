@@ -19,7 +19,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "managers/ProblemManager.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geosx
 {
@@ -181,24 +181,26 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  dataRepository::Group * commandLine =
+
+  dataRepository::Group & commandLine =
     problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
-  commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() )->
+
+  commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
   problemManager.processInputFileRecursive( xmlProblemNode );
 
-  DomainPartition & domain  = *problemManager.getDomainPartition();
+  DomainPartition & domain = problemManager.getDomainPartition();
 
-  constitutive::ConstitutiveManager & constitutiveManager = *domain.getConstitutiveManager();
+  constitutive::ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
   constitutiveManager.processInputFileRecursive( topLevelNode );
 
-  MeshManager & meshManager = *problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
-  meshManager.generateMeshLevels( &domain );
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.generateMeshLevels( domain );
 
-  ElementRegionManager & elementManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
   elementManager.processInputFileRecursive( topLevelNode );
 

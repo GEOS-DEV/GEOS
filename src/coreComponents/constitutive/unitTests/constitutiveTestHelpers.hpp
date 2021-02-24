@@ -45,7 +45,7 @@ void testNumericalDerivatives( dataRepository::Group & parent,
 
   // create a clone of the rel perm to run updates on
   std::unique_ptr< constitutive::ConstitutiveBase > modelCopyPtr = model.deliverClone( "fluidCopy", &parent );
-  MODEL & modelCopy = *modelCopyPtr->groupCast< MODEL * >();
+  MODEL & modelCopy = dynamicCast< MODEL & >( *modelCopyPtr );
 
   model.allocateConstitutiveData( model.getParent(), 1 );
   modelCopy.allocateConstitutiveData( model.getParent(), 1 );
@@ -102,11 +102,11 @@ public:
     m_parent.resize( 1 );
   }
 
-  void initialize( BASE * model )
+  void initialize( BASE & model )
   {
-    m_model = model;
-    m_parent.initialize( &m_parent );
-    m_parent.initializePostInitialConditions( &m_parent );
+    m_model = &model;
+    m_parent.initialize();
+    m_parent.initializePostInitialConditions();
   }
 
 protected:

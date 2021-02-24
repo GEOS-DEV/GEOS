@@ -131,7 +131,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
     dataRepository::loadTree( restartFileName, getRootConduitNode() );
   }
 
-  m_problemManager = std::make_unique< ProblemManager >( "Problem", getRootConduitNode() );
+  m_problemManager = std::make_unique< ProblemManager >( getRootConduitNode() );
 
   GEOSX_ERROR_IF( currentGlobalState != nullptr, "Only one state can exist at a time." );
   currentGlobalState = this;
@@ -154,7 +154,7 @@ bool GeosxState::initializeDataRepository()
   GEOSX_MARK_FUNCTION;
   Timer timer( m_initTime );
 
-  GEOSX_ERROR_IF_NE( m_state, State::UNINITIALIZED );
+  GEOSX_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
 
   getProblemManager().parseCommandLineInput();
 
@@ -179,7 +179,7 @@ void GeosxState::applyInitialConditions()
   GEOSX_MARK_FUNCTION;
   Timer timer( m_initTime );
 
-  GEOSX_ERROR_IF_NE( m_state, State::INITIALIZED );
+  GEOSX_THROW_IF_NE( m_state, State::INITIALIZED, std::logic_error );
 
   getProblemManager().applyInitialConditions();
 
@@ -198,7 +198,7 @@ void GeosxState::run()
   GEOSX_MARK_FUNCTION;
   Timer timer( m_runTime );
 
-  GEOSX_ERROR_IF_NE( m_state, State::READY_TO_RUN );
+  GEOSX_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
 
   if( !getProblemManager().runSimulation() )
   {

@@ -62,7 +62,9 @@ void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot );
  * @param schemaParent XML node for the parent node
  * @param documentationType type of XML schema generated
  */
-void SchemaConstruction( dataRepository::Group * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent,
+void SchemaConstruction( dataRepository::Group & group,
+                         xmlWrapper::xmlNode schemaRoot,
+                         xmlWrapper::xmlNode schemaParent,
                          integer documentationType );
 
 } /// namespace schemaUtilities

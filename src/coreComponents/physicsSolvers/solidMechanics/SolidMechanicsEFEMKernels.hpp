@@ -81,7 +81,7 @@ public:
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               CONSTITUTIVE_TYPE & inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
                arrayView1d< globalIndex const > const & uDofNumber,
                arrayView1d< globalIndex const > const & wDofNumber,
@@ -342,7 +342,10 @@ public:
 
     int Heaviside[ numNodesPerElem ];
 
-    m_constitutiveUpdate.getStiffness( k, q, stack.constitutiveStiffness );
+    // TODO: asking for the stiffness here will only work for elastic models.  most other models
+    //       need to know the strain increment to compute the current stiffness value.
+
+    m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.X,

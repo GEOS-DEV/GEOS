@@ -125,12 +125,12 @@ public:
 
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString      = "phaseMinVolumeFraction";
-    static constexpr auto phaseCapPressureExponentInvString = "phaseCapPressureExponentInv";
-    static constexpr auto phaseEntryPressureString          = "phaseEntryPressure";
-    static constexpr auto capPressureEpsilonString          = "capPressureEpsilon";
-    static constexpr auto volFracScaleString                = "volFracScale";
-  } viewKeysBrooksCoreyCapillaryPressure;
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * phaseCapPressureExponentInvString() { return "phaseCapPressureExponentInv"; }
+    static constexpr char const * phaseEntryPressureString() { return "phaseEntryPressure"; }
+    static constexpr char const * capPressureEpsilonString() { return "capPressureEpsilon"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
+  };
 
 protected:
 
