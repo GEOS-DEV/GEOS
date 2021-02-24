@@ -130,7 +130,7 @@ public:
     //TODO ?
   }
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override
   {
     GEOSX_UNUSED_VAR( mesh );
     //TODO ?
@@ -148,8 +148,8 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     /// @cond DO_NOT_DOCUMENT
-    static constexpr auto elementVolumeString          = "elementVolume";
-    static constexpr auto fineElementsListString       = "fineElements";
+    static constexpr char const * elementVolumeString() { return "elementVolume"; }
+    static constexpr char const * fineElementsListString() { return "fineElements"; }
     /// @endcond
   };
   ///@}

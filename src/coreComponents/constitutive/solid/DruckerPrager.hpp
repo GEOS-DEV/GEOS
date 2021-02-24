@@ -314,7 +314,7 @@ public:
   virtual ~DruckerPrager() override;
 
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   virtual void saveConvergedState() const override;
@@ -342,31 +342,31 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for default friction angle
-    static constexpr auto defaultFrictionAngleString = "defaultFrictionAngle";
+    static constexpr char const * defaultFrictionAngleString() { return "defaultFrictionAngle"; }
 
     /// string/key for default dilation angle
-    static constexpr auto defaultDilationAngleString = "defaultDilationAngle";
+    static constexpr char const * defaultDilationAngleString() { return "defaultDilationAngle"; }
 
     /// string/key for default hardening rate
-    static constexpr auto defaultHardeningString = "defaultHardeningRate";
+    static constexpr char const * defaultHardeningString() { return "defaultHardeningRate"; }
 
     /// string/key for default cohesion
-    static constexpr auto defaultCohesionString = "defaultCohesion";
+    static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
 
     /// string/key for friction angle
-    static constexpr auto frictionString  = "friction";
+    static constexpr char const * frictionString() { return "friction"; }
 
     /// string/key for dilation angle
-    static constexpr auto dilationString  = "dilation";
+    static constexpr char const * dilationString() { return "dilation"; }
 
     /// string/key for cohesion
-    static constexpr auto hardeningString  = "hardening";
+    static constexpr char const * hardeningString() { return "hardening"; }
 
     /// string/key for cohesion
-    static constexpr auto newCohesionString  = "cohesion";
+    static constexpr char const * newCohesionString() { return "cohesion"; }
 
     /// string/key for cohesion
-    static constexpr auto oldCohesionString  = "oldCohesion";
+    static constexpr char const * oldCohesionString() { return "oldCohesion"; }
   };
 
   /**
