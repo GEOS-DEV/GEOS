@@ -98,7 +98,6 @@ public:
             CONSTITUTIVE_TYPE & inputConstitutiveType,
             arrayView1d< globalIndex const > const & inputDispDofNumber,
             string const & inputFlowDofKey,
-            localIndex const numComponents,
             globalIndex const rankOffset,
             CRSMatrixView< real64, globalIndex const > const & inputMatrix,
             arrayView1d< real64 > const & inputRhs,
@@ -123,15 +122,25 @@ public:
                                  inputGravityVector[1] * inputGravityVector[1] +
                                  inputGravityVector[2] * inputGravityVector[2] ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
+    //
+    m_fluidPhaseDensity( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).phaseDensity() ),
+    //
     m_fluidPhaseMassDensity( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).phaseMassDensity() ),
+    m_dFluidPhaseMassDensity_dPressure( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).dPhaseMassDensity_dPressure() ),
+    m_dFluidPhaseMassDensity_dGlobalCompFraction( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).dPhaseMassDensity_dGlobalCompFraction() ),
+    //
     m_fluidPhaseSaturation( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString() )),
+    m_dFluidPhaseSaturation_dPressure( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString() )),
+    m_dFluidPhaseSaturation_dGlobalCompFraction( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() )),
+    //
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
     m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString() ) ),
-    m_numComponents( numComponents )
+    m_numComponents( m_dFluidPhaseMassDensity_dGlobalCompFraction.size( 3 ) ),
+    m_numPhases( m_fluidPhaseSaturation.size( 1 ) )
   {
-    if( numComponents > numMaxComponentsTwoPhasePoroelastic )
+    if( m_numComponents > numMaxComponentsTwoPhasePoroelastic )
     {
       GEOSX_ERROR( "TwoPhasePoroelastic solver allows at most three components at the moment" );
     }
@@ -263,12 +272,25 @@ public:
     //     phi_n = phi_0 + biot * div (u_n,k - u_0)) + 1/N (p_n,k - p_0)
     //
     //     Note: since grains are assumed incompressible 1/N = 0
-    real64  bodyForce[3] = { 0.0 };
+    real64  bodyForce[3] = { m_gravityVector[0],
+                             m_gravityVector[1],
+                             m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
       real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
       real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
-      real64 mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidPhaseMassDensity( k, q, 0 );
+      real64 mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q );
+      for( localIndex iPhase = 0; iPhase < m_numPhases; ++iPhase )
+      {
+        mixtureDensity += porosity * m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
+      }
+      mixtureDensity = m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
+      for( localIndex iPhase = 1; iPhase < m_numPhases; ++iPhase )
+      {
+        mixtureDensity += m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
+      }
+      mixtureDensity *= porosity;
+      mixtureDensity += ( 1.0 - porosity ) * m_solidDensity( k, q );
       mixtureDensity *= detJxW;
       bodyForce[0] *= mixtureDensity;
       bodyForce[1] *= mixtureDensity;
@@ -299,8 +321,13 @@ public:
     {
       // Considering this contribution yields nonsymmetry and requires fullBTDB
 #if 0
-      real64 dMixtureDens_dVolStrain = ( - m_solidDensity( k, q ) + m_fluidDensity( k, q ) ) * biotCoefficient;
-      dMixtureDens_dVolStrain *= detJxW;
+      real64 dPoro_dVolStrain = biotCoefficient;
+      real64 dMixtureDens_dVolStrain = - m_solidDensity( k, q ) + m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
+      for( localIndex iPhase = 1; iPhase < m_numPhases; ++iPhase )
+      {
+        dMixtureDens_dVolStrain += m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
+      }
+      dMixtureDens_dVolStrain *= dPoro_dVolStrain * detJxW;
       for( integer a = 0; a < numNodesPerElem; ++a )
       {
         for( integer b = 0; b < numNodesPerElem; ++b )
@@ -414,8 +441,15 @@ protected:
 
   /// The rank global density
   arrayView2d< real64 const > const m_solidDensity;
+  arrayView3d< real64 const > const m_fluidPhaseDensity;
+
   arrayView3d< real64 const > const m_fluidPhaseMassDensity;
+  arrayView3d< real64 const > const m_dFluidPhaseMassDensity_dPressure;
+  arrayView4d< real64 const > const m_dFluidPhaseMassDensity_dGlobalCompFraction;
+
   arrayView2d< real64 const > const m_fluidPhaseSaturation;
+  arrayView2d< real64 const > const m_dFluidPhaseSaturation_dPressure;
+  arrayView3d< real64 const > const m_dFluidPhaseSaturation_dGlobalCompFraction;
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_flowDofNumber;
@@ -430,7 +464,10 @@ protected:
   arrayView1d< real64 const > const m_poroRef;
 
   /// Number of components
-  int const m_numComponents;
+  localIndex const m_numComponents;
+
+  /// Number of phases
+  localIndex const m_numPhases;
 
 };
 

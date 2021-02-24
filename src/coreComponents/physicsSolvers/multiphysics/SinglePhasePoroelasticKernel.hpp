@@ -254,7 +254,9 @@ public:
     //     phi_n = phi_0 + biot * div (u_n,k - u_0)) + 1/N (p_n,k - p_0)
     //
     //     Note: since grains are assumed incompressible 1/N = 0
-    real64  bodyForce[3] = { 0.0 };
+    real64  bodyForce[3] = { m_gravityVector[0],
+                             m_gravityVector[1],
+                             m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
       real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
@@ -290,7 +292,8 @@ public:
     {
       // Considering this contribution yields nonsymmetry and requires fullBTDB
 #if 0
-      real64 dMixtureDens_dVolStrain = ( - m_solidDensity( k, q ) + m_fluidDensity( k, q ) ) * biotCoefficient;
+      real64 dPoro_dVolStrain = biotCoefficient;
+      real64 dMixtureDens_dVolStrain = ( - m_solidDensity( k, q ) + m_fluidDensity( k, q ) ) * dPoro_dVolStrain;
       dMixtureDens_dVolStrain *= detJxW;
       for( integer a = 0; a < numNodesPerElem; ++a )
       {
@@ -312,9 +315,9 @@ public:
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[ a * 3 + 0][0] += biotCoefficient * dNdX[a][0] * detJxW;
-      stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJxW;
-      stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 0][0] += biotCoefficient * dNdX[a][0] * detJxW; // TODO missing dMixture_dPres
+      stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJxW; // ...
+      stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJxW; // ...
 
       stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][0] * detJxW;
       stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][1] * detJxW;

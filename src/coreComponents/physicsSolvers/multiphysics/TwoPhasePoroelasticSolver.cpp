@@ -182,11 +182,11 @@ real64 TwoPhasePoroelasticSolver::solverStep( real64 const & time_n,
 }
 
 void TwoPhasePoroelasticSolver::assembleSystem( real64 const time_n,
-                                        real64 const dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs )
+                                                real64 const dt,
+                                                DomainPartition & domain,
+                                                DofManager const & dofManager,
+                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                arrayView1d< real64 > const & localRhs )
 {
 
   GEOSX_MARK_FUNCTION;
@@ -201,8 +201,6 @@ void TwoPhasePoroelasticSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  int const numComponents = LvArray::integerConversion<int>( dofManager.numComponents( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() ) - 1);
-
   // Cell-based contributions (except pressure-dependent terms in the accumulation term of the mass balance equation)
   m_solidSolver->getMaxForce() =
       finiteElement::
@@ -215,7 +213,6 @@ void TwoPhasePoroelasticSolver::assembleSystem( real64 const time_n,
                                                                     m_solidSolver->solidMaterialNames(),
                                                                     dispDofNumber,
                                                                     compVarDofKey,
-                                                                    numComponents,
                                                                     dofManager.rankOffset(),
                                                                     localMatrix,
                                                                     localRhs,
@@ -232,11 +229,11 @@ void TwoPhasePoroelasticSolver::assembleSystem( real64 const time_n,
 }
 
 void TwoPhasePoroelasticSolver::applyBoundaryConditions( real64 const time_n,
-                                                 real64 const dt,
-                                                 DomainPartition & domain,
-                                                 DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs )
+                                                         real64 const dt,
+                                                         DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs )
 {
   m_solidSolver->applyBoundaryConditions( time_n, dt,
                                           domain,
@@ -272,18 +269,18 @@ real64 TwoPhasePoroelasticSolver::calculateResidualNorm( DomainPartition const &
 }
 
 void TwoPhasePoroelasticSolver::solveSystem( DofManager const & dofManager,
-                                     ParallelMatrix & matrix,
-                                     ParallelVector & rhs,
-                                     ParallelVector & solution )
+                                             ParallelMatrix & matrix,
+                                             ParallelVector & rhs,
+                                             ParallelVector & solution )
 {
   solution.zero();
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 }
 
 void TwoPhasePoroelasticSolver::applySystemSolution( DofManager const & dofManager,
-                                             arrayView1d< real64 const > const & localSolution,
-                                             real64 const scalingFactor,
-                                             DomainPartition & domain )
+                                                     arrayView1d< real64 const > const & localSolution,
+                                                     real64 const scalingFactor,
+                                                     DomainPartition & domain )
 {
   // update displacement field
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
