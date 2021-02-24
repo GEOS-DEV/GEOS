@@ -38,76 +38,75 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   m_c44(),
   m_c66()
 {
-  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverse, &m_defaultYoungsModulusTransverse )->
+  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverseString(), &m_defaultYoungsModulusTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Transverse Young's Modulus Parameter" );
+    setDescription( "Default Transverse Young's Modulus" );
 
-  registerWrapper( viewKeyStruct::defaultYoungsModulusAxial, &m_defaultYoungsModulusAxial )->
+  registerWrapper( viewKeyStruct::defaultYoungsModulusAxialString(), &m_defaultYoungsModulusAxial )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Axial Young's Modulus Parameter" );
+    setDescription( "Default Axial Young's Modulus" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonsRatioTransverse, &m_defaultPoissonsRatioTransverse )->
+  registerWrapper( viewKeyStruct::defaultPoissonsRatioTransverseString(), &m_defaultPoissonsRatioTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Transverse Poisson's ratio Parameter" );
+    setDescription( "Default Transverse Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonsRatioAxialTransverse, &m_defaultPoissonsRatioAxialTransverse )->
+  registerWrapper( viewKeyStruct::defaultPoissonsRatioAxialTransverseString(), &m_defaultPoissonsRatioAxialTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Axial-Transverse Poisson's ratio Parameter" );
+    setDescription( "Default Axial-Transverse Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverse, &m_defaultShearModulusAxialTransverse )->
+  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverseString(), &m_defaultShearModulusAxialTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Axial-Transverse (out-plane) Shear Modulus Parameter" );
+    setDescription( "Default Axial-Transverse Shear Modulus" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC11 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC11String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Stiffness Parameter C11" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC13 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC13String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Stiffness Parameter C13" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC33 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC33String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Stiffness Parameter C33" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC44 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC44String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Stiffness Parameter C44" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC66 )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC66String() )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Stiffness Parameter C66" );
 
-  registerWrapper( viewKeyStruct::c11, &m_c11 )->
+  registerWrapper( viewKeyStruct::c11String(), &m_c11 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Stiffness Field C11" );
 
-  registerWrapper( viewKeyStruct::c13, &m_c13 )->
+  registerWrapper( viewKeyStruct::c13String(), &m_c13 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Stiffness Field C13" );
 
-  registerWrapper( viewKeyStruct::c33, &m_c33 )->
+  registerWrapper( viewKeyStruct::c33String(), &m_c33 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Stiffness Field C33" );
 
-  registerWrapper( viewKeyStruct::c44, &m_c44 )->
+  registerWrapper( viewKeyStruct::c44String(), &m_c44 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Stiffness Field C44" );
 
-  registerWrapper( viewKeyStruct::c66, &m_c66 )->
+  registerWrapper( viewKeyStruct::c66String(), &m_c66 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Stiffness Field C66" );
-
 }
 
 ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
@@ -118,11 +117,11 @@ void ElasticTransverseIsotropic::postProcessInput()
 
   SolidBase::postProcessInput();
 
-  real64 & c11  = getReference< real64 >( viewKeyStruct::defaultC11 );
-  real64 & c13  = getReference< real64 >( viewKeyStruct::defaultC13 );
-  real64 & c33  = getReference< real64 >( viewKeyStruct::defaultC33 );
-  real64 & c44  = getReference< real64 >( viewKeyStruct::defaultC44 );
-  real64 & c66  = getReference< real64 >( viewKeyStruct::defaultC66 );
+  real64 & c11  = getReference< real64 >( viewKeyStruct::defaultC11String() );
+  real64 & c13  = getReference< real64 >( viewKeyStruct::defaultC13String() );
+  real64 & c33  = getReference< real64 >( viewKeyStruct::defaultC33String() );
+  real64 & c44  = getReference< real64 >( viewKeyStruct::defaultC44String() );
+  real64 & c66  = getReference< real64 >( viewKeyStruct::defaultC66String() );
 
   real64 & Et = m_defaultYoungsModulusTransverse;
   real64 & Ea = m_defaultYoungsModulusAxial;
@@ -145,23 +144,24 @@ void ElasticTransverseIsotropic::postProcessInput()
     }
   }
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() )->
     setApplyDefaultValue( c11 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() )->
     setApplyDefaultValue( c13 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() )->
     setApplyDefaultValue( c33 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() )->
     setApplyDefaultValue( c44 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() )->
     setApplyDefaultValue( c66 );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticTransverseIsotropic, string const &, Group * const )
+
 } /* namespace constitutive */
 
 } /* namespace geosx */

@@ -25,13 +25,13 @@ using namespace dataRepository;
 
 NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
   Group( name, parent ),
-  m_finiteElementDiscretizationManager( groupKeysStruct::finiteElementDiscretizations, this ),
-  m_finiteVolumeManager( groupKeysStruct::finiteVolumeManager, this )
+  m_finiteElementDiscretizationManager( groupKeysStruct::finiteElementDiscretizationsString(), this ),
+  m_finiteVolumeManager( groupKeysStruct::finiteVolumeManagerString(), this )
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  this->registerGroup( groupKeysStruct::finiteElementDiscretizations, &m_finiteElementDiscretizationManager );
-  this->registerGroup( groupKeysStruct::finiteVolumeManager, &m_finiteVolumeManager );
+  this->registerGroup( groupKeysStruct::finiteElementDiscretizationsString(), &m_finiteElementDiscretizationManager );
+  this->registerGroup( groupKeysStruct::finiteVolumeManagerString(), &m_finiteVolumeManager );
 }
 
 NumericalMethodsManager::~NumericalMethodsManager()

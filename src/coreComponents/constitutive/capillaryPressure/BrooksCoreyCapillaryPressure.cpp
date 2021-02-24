@@ -33,29 +33,29 @@ BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( string const & name,
                                                             Group * const parent )
   : CapillaryPressureBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Minimum volume fraction value for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString, &m_phaseCapPressureExponentInv )->
-    setApplyDefaultValue( 2.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString(), &m_phaseCapPressureExponentInv ).
+    setApplyDefaultValue( 2.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Inverse of capillary power law exponent for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseEntryPressureString, &m_phaseEntryPressure )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseEntryPressureString(), &m_phaseEntryPressure ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Entry pressure value for each phase" );
 
-  registerWrapper( viewKeyStruct::capPressureEpsilonString, &m_capPressureEpsilon )->
-    setApplyDefaultValue( 1e-6 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::capPressureEpsilonString(), &m_capPressureEpsilon ).
+    setApplyDefaultValue( 1e-6 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription(
     "Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero" );
 
-  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
-    setApplyDefaultValue( 1.0 )->
+  registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 }
 
@@ -78,9 +78,9 @@ void BrooksCoreyCapillaryPressure::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseEntryPressure, NP, viewKeyStruct::phaseEntryPressureString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString() )
+  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString() )
+  COREY_CHECK_INPUT_LENGTH( m_phaseEntryPressure, NP, viewKeyStruct::phaseEntryPressureString() )
 
 #undef COREY_CHECK_INPUT_LENGTH
 

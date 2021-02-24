@@ -342,49 +342,49 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for transverse Young's modulus
-    static constexpr auto defaultYoungsModulusTransverse     = "defaultYoungsModulusTransverse";
+    static constexpr char const * defaultYoungsModulusTransverseString() { return "defaultYoungsModulusTransverse"; }
 
     /// string/key for axial Young's modulus
-    static constexpr auto defaultYoungsModulusAxial          = "defaultYoungsModulusAxial";
+    static constexpr char const * defaultYoungsModulusAxialString() { return "defaultYoungsModulusAxial"; }
 
     /// string/key for transverse Poisson's Ratio
-    static constexpr auto defaultPoissonsRatioTransverse      = "defaultPoissonsRatioTransverse";
+    static constexpr char const * defaultPoissonRatioTransverseString() { return "defaultPoissonRatioTransverse"; }
 
     /// string/key for axial Poisson's Ratio
-    static constexpr auto defaultPoissonsRatioAxialTransverse = "defaultPoissonsRatioAxialTransverse";
+    static constexpr char const * defaultPoissonRatioAxialTransverseString() { return "defaultPoissonRatioAxialTransverse"; }
 
     /// string/key for transverse shear modulus
-    static constexpr auto defaultShearModulusAxialTransverse = "defaultShearModulusAxialTransverse";
+    static constexpr char const * defaultShearModulusAxialTransverseString() { return "defaultShearModulusAxialTransverse"; }
 
     /// string/key for default c11 component of Voigt stiffness tensor
-    static constexpr auto defaultC11 = "defaultC11";
+    static constexpr char auto * defaultC11String() { return "defaultC11" };
 
     /// string/key for default c13 component of Voigt stiffness tensor
-    static constexpr auto defaultC13 = "defaultC13";
+    static constexpr char auto * defaultC13String() { return "defaultC13" };
 
     /// string/key for default c33 component of Voigt stiffness tensor
-    static constexpr auto defaultC33 = "defaultC33";
+    static constexpr char auto * defaultC33String() { return "defaultC33" };
 
     /// string/key for default c44 component of Voigt stiffness tensor
-    static constexpr auto defaultC44 = "defaultC44";
+    static constexpr char auto * defaultC44String() { return "defaultC44" };
 
     /// string/key for default c66 component of Voigt stiffness tensor
-    static constexpr auto defaultC66 = "defaultC66";
+    static constexpr char auto * defaultC66String() { return "defaultC66" };
 
     /// string/key for c11 component of Voigt stiffness tensor
-    static constexpr auto c11 = "c11";
+    static constexpr char const * c11String() { return "c11"; }
 
     /// string/key for c13 component of Voigt stiffness tensor
-    static constexpr auto c13 = "c13";
+    static constexpr char const * c13String() { return "c13"; }
 
     /// string/key for c33 component of Voigt stiffness tensor
-    static constexpr auto c33 = "c33";
+    static constexpr char const * c33String() { return "c33"; }
 
     /// string/key for c44 component of Voigt stiffness tensor
-    static constexpr auto c44 = "c44";
+    static constexpr char const * c44String() { return "c44"; }
 
     /// string/key for c66 component of Voigt stiffness tensor
-    static constexpr auto c66 = "c66";
+    static constexpr char const * c66String() { return "c66"; }
   };
 
   /**
