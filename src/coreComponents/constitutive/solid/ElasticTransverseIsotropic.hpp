@@ -391,7 +391,7 @@ public:
    * @brief Getter for default transverse Young's modulus
    * @return The value of the default transverse Young's modulus.
    */
-  real64 getDefaultYoungsModulusTransverse()
+  real64 getDefaultYoungsModulusTransverse() const
   {
     return m_defaultYoungsModulusTransverse;
   }
@@ -409,7 +409,7 @@ public:
    * @brief Getter for default axial Young's modulus
    * @return The value of the default axial Young's modulus.
    */
-  real64 getDefaultYoungsModulusAxial()
+  real64 getDefaultYoungsModulusAxial() const
   {
     return m_defaultYoungsModulusAxial;
   }
@@ -427,7 +427,7 @@ public:
    * @brief Getter for default transverse Poisson's ratio
    * @return The value of the default transverse Poisson's ratio.
    */
-  real64 getDefaultPoissonsRatioTransverse()
+  real64 getDefaultPoissonsRatioTransverse() const
   {
     return m_defaultPoissonsRatioTransverse;
   }
@@ -445,7 +445,7 @@ public:
    * @brief Getter for default axial Poisson's ratio
    * @return The value of the default axial/transverse Poisson's modulus.
    */
-  real64 getDefaultPoissonsRatioAxialTransverse()
+  real64 getDefaultPoissonsRatioAxialTransverse() const
   {
     return m_defaultPoissonsRatioAxialTransverse;
   }
@@ -464,7 +464,7 @@ public:
    * @brief Getter for default axial/transverse Shear modulus
    * @return The value of the default axial/transverse Shear modulus.
    */
-  real64 getDefaultShearModulusAxialTransverse()
+  real64 getDefaultShearModulusAxialTransverse() const
   {
     return m_defaultShearModulusAxialTransverse;
   }
@@ -488,7 +488,7 @@ public:
    * @brief Getter for 11 component of Voigt stiffness tensor.
    * @return reference to mutable 11 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC11() { return m_c11; }
+  arrayView1d< real64 > getC11() const { return m_c11; }
 
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
@@ -500,7 +500,7 @@ public:
    * @brief Getter for 13 component of Voigt stiffness tensor.
    * @return reference to mutable 13 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC13() { return m_c13; }
+  arrayView1d< real64 > getC13() const { return m_c13; }
 
   /**
    * @brief Const-Getter for 33 component of Voigt stiffness tensor.
@@ -512,7 +512,7 @@ public:
    * @brief Getter for 33 component of Voigt stiffness tensor.
    * @return reference to mutable 33 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC33() { return m_c33; }
+  arrayView1d< real64 > getC33() const { return m_c33; }
 
   /**
    * @brief Const-Getter for 44 component of Voigt stiffness tensor.
@@ -524,7 +524,7 @@ public:
    * @brief Getter for 44 component of Voigt stiffness tensor.
    * @return reference to mutable 44 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC44() { return m_c44; }
+  arrayView1d< real64 > getC44() const { return m_c44; }
 
   /**
    * @brief Const-Getter for 66 component of Voigt stiffness tensor.
@@ -536,7 +536,7 @@ public:
    * @brief Getter for 66 component of Voigt stiffness tensor.
    * @return reference to mutable 66 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC66() { return m_c66; }
+  arrayView1d< real64 > getC66() const { return m_c66; }
 
   /**
    * @brief Create a instantiation of the
