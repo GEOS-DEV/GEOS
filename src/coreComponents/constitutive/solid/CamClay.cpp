@@ -33,6 +33,8 @@ CamClay::CamClay( string const & name, Group * const parent ):
   m_defaultCslSlope(),
   m_defaultShapeParameter(),
   m_defaultPreConsolidationPressure(),
+  m_refPressure(),
+  m_refStrainVol(),
   m_recompressionIndex(),
   m_virginCompressionIndex(),
   m_cslSlope(),
@@ -57,7 +59,7 @@ CamClay::CamClay( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Recompresion index" );
 
-  registerWrapper( viewKeyStruct::defaultVirginCompressionIndexString(), &m_ddefaultVirginCompressionIndex ).
+  registerWrapper( viewKeyStruct::defaultVirginCompressionIndexString(), &m_defaultVirginCompressionIndex ).
     setApplyDefaultValue( 5e-3).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Virgin Compression index" );

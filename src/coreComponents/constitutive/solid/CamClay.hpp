@@ -47,21 +47,27 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-  CamClayUpdates( arrayView1d< real64 const > const & friction,
-                        arrayView1d< real64 const > const & dilation,
-                        arrayView1d< real64 const > const & hardening,
-                        arrayView2d< real64 > const & newCohesion,
-                        arrayView2d< real64 > const & oldCohesion,
-                        arrayView1d< real64 const > const & bulkModulus,
-                        arrayView1d< real64 const > const & shearModulus,
-                        arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                        arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
+  CamClayUpdates( arrayView1d< real64 const > const & refPressure,
+                  arrayView1d< real64 const > const & refStrainVol,
+                  arrayView1d< real64 const > const & recompressionIndex,
+                  arrayView1d< real64 const > const & virginCompressionIndex,
+                  arrayView1d< real64 const > const & cslSlope,
+                  arrayView1d< real64 const > const & shapeParameter,
+                  arrayView2d< real64 > const & newPreConsolidationPressure,
+                  arrayView2d< real64 > const & oldPreConsolidationPressure,
+                  arrayView1d< real64 const > const & bulkModulus,
+                  arrayView1d< real64 const > const & shearModulus,
+                  arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                  arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
     ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress ),
-    m_friction( friction ),
-    m_dilation( dilation ),
-    m_hardening( hardening ),
-    m_newCohesion( newCohesion ),
-    m_oldCohesion( oldCohesion )
+    m_refPressure(refPressure),
+    m_refStrainVol(refStrainVol),
+    m_recompressionIndex(recompressionIndex),
+    m_virginCompressionIndex(virginCompressionIndex),
+    m_cslSlope(cslSlope),
+    m_shapeParameter(shapeParameter),
+    m_newPreConsolidationPressure(newPreConsolidationPressure),
+    m_oldPreConsolidationPressure(oldPreConsolidationPressure)
   {}
 
   /// Default copy constructor
@@ -100,20 +106,30 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
 private:
-  /// A reference to the ArrayView holding the friction angle for each element.
-  arrayView1d< real64 const > const m_friction;
+    
+  /// A reference to the ArrayView holding the reference pressure for each element.
+  arrayView1d< real64 const > const m_refPressure;
+    
+  /// A reference to the ArrayView holding the reference volumetric strain for each element.
+  arrayView1d< real64 const > const m_refStrainVol;
+    
+  /// A reference to the ArrayView holding the recompression index  for each element.
+  arrayView1d< real64 const > const m_recompressionIndex;
+    
+  /// A reference to the ArrayView holding the virgin compression index for each element.
+  arrayView1d< real64 const > const m_virginCompressionIndex;
 
-  /// A reference to the ArrayView holding the dilation angle for each element.
-  arrayView1d< real64 const > const m_dilation;
+  /// A reference to the ArrayView holding the slope of the critical state line for each element.
+  arrayView1d< real64 const > const m_cslSlope;
 
-  /// A reference to the ArrayView holding the hardening rate for each element.
-  arrayView1d< real64 const > const m_hardening;
+  /// A reference to the ArrayView holding the shape parameter for each element.
+  arrayView1d< real64 const > const m_shapeParameter;
 
-  /// A reference to the ArrayView holding the new cohesion for each integration point
-  arrayView2d< real64 > const m_newCohesion;
+  /// A reference to the ArrayView holding the new preconsolidation pressure for each integration point
+  arrayView2d< real64 > const m_newPreConsolidationPressure;
 
-  /// A reference to the ArrayView holding the old cohesion for each integration point
-  arrayView2d< real64 > const m_oldCohesion;
+  /// A reference to the ArrayView holding the old preconsolidation presure for each integration point
+  arrayView2d< real64 > const m_oldPreConsolidationPressure;
 
 };
 
@@ -336,31 +352,49 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for default friction angle
-    static constexpr char const * defaultFrictionAngleString() { return "defaultFrictionAngle"; }
+    static constexpr char const * defaultRefPressureString() { return "defaultRefPressure"; }
 
     /// string/key for default dilation angle
-    static constexpr char const * defaultDilationAngleString() { return "defaultDilationAngle"; }
+    static constexpr char const * defaultRefStrainVolString() { return "defaultRefStrainVol"; }
 
     /// string/key for default hardening rate
-    static constexpr char const * defaultHardeningString() { return "defaultHardeningRate"; }
+    static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
 
     /// string/key for default cohesion
-    static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
+    static constexpr char const * defaultVirginCompressionIndexString() { return "defaultVirginCompressionIndex"; }
+      
+      /// string/key for default cohesion
+      static constexpr char const * defaultCslSlopeString() { return "defaultCslSlope"; }
+      
+      /// string/key for default cohesion
+      static constexpr char const * defaultShapeParameterString() { return "defaultShapeParameter"; }
+      
+      /// string/key for default cohesion
+      static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
 
     /// string/key for friction angle
-    static constexpr char const * frictionString() { return "friction"; }
+    static constexpr char const * refPressureString() { return "refPressure"; }
 
     /// string/key for dilation angle
-    static constexpr char const * dilationString() { return "dilation"; }
+    static constexpr char const * refStrainVolString() { return "refStrainVol"; }
 
     /// string/key for cohesion
-    static constexpr char const * hardeningString() { return "hardening"; }
+    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
 
     /// string/key for cohesion
-    static constexpr char const * newCohesionString() { return "cohesion"; }
+    static constexpr char const * virginCompressionIndexString() { return "virginCompressionIndex"; }
+
+      /// string/key for cohesion
+      static constexpr char const * cslSlopeString() { return "cslSlope"; }
+      
+      /// string/key for cohesion
+      static constexpr char const * shapeParameterString() { return "shapeParameter"; }
+      
+      /// string/key for cohesion
+      static constexpr char const * newPreConsolidationPressureString() { return "preConsolidationPressure"; }
 
     /// string/key for cohesion
-    static constexpr char const * oldCohesionString() { return "oldCohesion"; }
+    static constexpr char const * oldPreConsolidationPressureString() { return "oldPreConsolidationPressure"; }
   };
 
   /**
@@ -369,15 +403,18 @@ public:
    */
   CamClayUpdates createKernelUpdates() const
   {
-    return CamClayUpdates( m_friction,
-                                 m_dilation,
-                                 m_hardening,
-                                 m_newCohesion,
-                                 m_oldCohesion,
-                                 m_bulkModulus,
-                                 m_shearModulus,
-                                 m_newStress,
-                                 m_oldStress );
+    return CamClayUpdates(m_refPressure
+                          m_refStrainVol
+                          m_recompressionIndex
+                          m_virginCompressionIndex,
+                          m_cslSlope,
+                          m_shapeParameter,
+                          m_newPreConsolidationPressure,
+                          m_oldPreConsolidationPressure,
+                          m_bulkModulus,
+                          m_shearModulus,
+                          m_newStress,
+                          m_oldStress );
   }
 
   /**
@@ -391,11 +428,14 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
-                          m_friction,
-                          m_dilation,
-                          m_hardening,
-                          m_newCohesion,
-                          m_oldCohesion,
+                          m_refPressure
+                          m_refStrainVol
+                          m_recompressionIndex
+                          m_virginCompressionIndex,
+                          m_cslSlope,
+                          m_shapeParameter,
+                          m_newPreConsolidationPressure,
+                          m_oldPreConsolidationPressure,
                           m_bulkModulus,
                           m_shearModulus,
                           m_newStress,
@@ -406,32 +446,50 @@ public:
 protected:
   virtual void postProcessInput() override;
 
-  /// Material parameter: The default value of yield surface slope
-  real64 m_defaultFrictionAngle;
+  /// Material parameter: The default value of reference pressure
+  real64 m_defaultRefPressure;
 
-  /// Material parameter: The default value of plastic potential slope
-  real64 m_defaultDilationAngle;
+  /// Material parameter: The default value of reference volumetric strain
+  real64 m_defaultRefStrainVol;
 
-  /// Material parameter: The default value of the initial cohesion
-  real64 m_defaultCohesion;
+  /// Material parameter: The default value of the recompression index
+  real64 m_defaultRecompressionIndex;
 
-  /// Material parameter: The default value of the hardening rate
-  real64 m_defaultHardening;
+  /// Material parameter: The default value of the virgin compression index
+  real64 m_defaultVirginCompressionIndex;
 
-  /// Material parameter: The yield surface slope for each element
-  array1d< real64 > m_friction;
+  /// Material parameter: The default value of the slope of the critical state line
+  real64 m_defaultCslSlope;
+    
+  /// Material parameter: The default value of the shape parameter of the yield surface
+  real64 m_defaultShapeParameter;
+    
+  /// Material parameter: The default value of the preconsolidation pressure
+  real64 m_defaultPreConsolidationPressure;
+    
+  /// Material parameter: The reference pressure for each element
+  array1d< real64 > m_refPressure;
+    
+  /// Material parameter: The reference volumetric strain for each element
+  array1d< real64 > m_refStrainVol;
+    
+  /// Material parameter: The recompression index for each element
+  array1d< real64 > m_recompressionIndex;
+    
+  /// Material parameter: The virgin compression index for each element
+  array1d< real64 > m_virginCompressionIndex;
 
-  /// Material parameter: The plastic potential slope for each element
-  array1d< real64 > m_dilation;
+  /// Material parameter: The slope of the critical state line for each element
+  array1d< real64 > m_cslSlope;
 
-  /// Material parameter: The hardening rate each element
-  array1d< real64 > m_hardening;
+  /// Material parameter: Thehape parameter of the yield surface for each element
+  array1d< real64 > m_shapeParameter;
 
-  /// State variable: The current cohesion parameter for each quadrature point
-  array2d< real64 > m_newCohesion;
+  /// State variable: The current preconsolidation pressure for each quadrature point
+  array2d< real64 > m_newPreConsolidationPressure;
 
-  /// State variable: The previous cohesion parameter for each quadrature point
-  array2d< real64 > m_oldCohesion;
+  /// State variable: The previous preconsolidation pressure for each quadrature point
+  array2d< real64 > m_oldPreConsolidationPressure;
 };
 
 } /* namespace constitutive */
