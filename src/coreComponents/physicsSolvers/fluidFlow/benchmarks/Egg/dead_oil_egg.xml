@@ -27,7 +27,7 @@
         krylovWeakestTol="1e-2"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"

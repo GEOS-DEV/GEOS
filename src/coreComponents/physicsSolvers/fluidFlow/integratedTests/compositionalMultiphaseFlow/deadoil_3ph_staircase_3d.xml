@@ -3,7 +3,7 @@
 <Problem>
   <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
   <Solvers>
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
@@ -22,7 +22,8 @@
         solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </CompositionalMultiphaseFlow>
+    </CompositionalMultiphaseFVM>
+
   </Solvers>
 
   <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
