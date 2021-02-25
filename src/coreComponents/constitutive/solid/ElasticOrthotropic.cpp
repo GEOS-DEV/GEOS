@@ -45,130 +45,130 @@ ElasticOrthotropic::ElasticOrthotropic( string const & name, Group * const paren
   m_c55(),
   m_c66()
 {
-  registerWrapper( viewKeyStruct::defaultE1String(), &m_defaultE1 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Young's Modulus Parameter E1" );
+  registerWrapper( viewKeyStruct::defaultE1String(), &m_defaultE1 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Young's Modulus E1" );
 
-  registerWrapper( viewKeyStruct::defaultE2String(), &m_defaultE2 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Young's Modulus Parameter E2" );
+  registerWrapper( viewKeyStruct::defaultE2String(), &m_defaultE2 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Young's Modulus E2" );
 
-  registerWrapper( viewKeyStruct::defaultE3String(), &m_defaultE3 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Young's Modulus Parameter E3" );
+  registerWrapper( viewKeyStruct::defaultE3String(), &m_defaultE3 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Young's Modulus E3" );
 
-  registerWrapper( viewKeyStruct::defaultNu12String(), &m_defaultNu12 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Poission's Ratio Parameter Nu12" );
+  registerWrapper( viewKeyStruct::defaultNu12String(), &m_defaultNu12 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Poission's Ratio Nu12" );
 
-  registerWrapper( viewKeyStruct::defaultNu13String(), &m_defaultNu13 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Poission's Ratio Parameter Nu13" );
+  registerWrapper( viewKeyStruct::defaultNu13String(), &m_defaultNu13 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Poission's Ratio Nu13" );
 
-  registerWrapper( viewKeyStruct::defaultNu23String(), &m_defaultNu23 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Poission's Ratio Parameter Nu23" );
+  registerWrapper( viewKeyStruct::defaultNu23String(), &m_defaultNu23 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Poission's Ratio Nu23" );
 
-  registerWrapper( viewKeyStruct::defaultG12String(), &m_defaultG12 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Shear Modulus Parameter G12" );
+  registerWrapper( viewKeyStruct::defaultG12String(), &m_defaultG12 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Shear Modulus G12" );
 
-  registerWrapper( viewKeyStruct::defaultG13String(), &m_defaultG13 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Shear Modulus Parameter G13" );
+  registerWrapper( viewKeyStruct::defaultG13String(), &m_defaultG13 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Shear Modulus G13" );
 
-  registerWrapper( viewKeyStruct::defaultG23String(), &m_defaultG23 )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Shear Modulus Parameter G23" );
+  registerWrapper( viewKeyStruct::defaultG23String(), &m_defaultG23 ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Shear Modulus G23" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC11String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC11String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C11 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC12String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC12String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C12 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC13String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC13String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C13 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC22String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC22String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C22 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC23String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC23String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C23 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC33String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC33String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C33 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC44String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC44String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C44 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC55String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC55String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C55 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC66String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC66String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C66 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::c11String(), &m_c11 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c11String(), &m_c11 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C11" );
 
-  registerWrapper( viewKeyStruct::c12String(), &m_c12 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c12String(), &m_c12 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C12" );
 
-  registerWrapper( viewKeyStruct::c13String(), &m_c13 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c13String(), &m_c13 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C13" );
 
-  registerWrapper( viewKeyStruct::c22String(), &m_c22 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c22String(), &m_c22 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C22" );
 
-  registerWrapper( viewKeyStruct::c23String(), &m_c23 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c23String(), &m_c23 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C23" );
 
-  registerWrapper( viewKeyStruct::c33String(), &m_c33 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c33String(), &m_c33 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C33" );
 
-  registerWrapper( viewKeyStruct::c44String(), &m_c44 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c44String(), &m_c44 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C44" );
 
-  registerWrapper( viewKeyStruct::c55String(), &m_c55 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c55String(), &m_c55 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C55" );
 
-  registerWrapper( viewKeyStruct::c66String(), &m_c66 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c66String(), &m_c66 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C66" );
 }
 
@@ -177,6 +177,7 @@ ElasticOrthotropic::~ElasticOrthotropic()
 
 void ElasticOrthotropic::postProcessInput()
 {
+  SolidBase::postProcessInput();
 
   real64 & c11 = getReference< real64 >( viewKeyStruct::defaultC11String() );
   real64 & c12 = getReference< real64 >( viewKeyStruct::defaultC12String() );
@@ -231,37 +232,37 @@ void ElasticOrthotropic::postProcessInput()
     GEOSX_ERROR( "Invalid specification for default elastic stiffnesses." );
   }
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() ).
     setApplyDefaultValue( c11 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c12String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c12String() ).
     setApplyDefaultValue( c12 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() ).
     setApplyDefaultValue( c13 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c22String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c22String() ).
     setApplyDefaultValue( c22 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c23String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c23String() ).
     setApplyDefaultValue( c23 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() ).
     setApplyDefaultValue( c33 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() ).
     setApplyDefaultValue( c44 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c55String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c55String() ).
     setApplyDefaultValue( c55 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() ).
     setApplyDefaultValue( c66 );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticOrthotropic, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace constitutive */
 
 } /* namespace geosx */
 

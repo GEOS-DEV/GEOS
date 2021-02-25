@@ -92,9 +92,9 @@ struct ConstitutivePassThru< SolidBase >
     {
       lambda( *ptr7 );
     }
-    else if( dynamic_cast< ElasticOrthotropic * >( constitutiveRelation ) )
+    else if( auto * const ptr8 = dynamic_cast< ElasticOrthotropic * >( &constitutiveRelation ) )
     {
-      lambda( static_cast< ElasticOrthotropic * >( constitutiveRelation) );
+      lambda( *ptr8 );
     }
     else
     {
@@ -154,6 +154,10 @@ struct ConstitutivePassThru< PoroElasticBase >
     else if( auto * const ptr4 = dynamic_cast< PoroElastic< ElasticTransverseIsotropic > * >( &constitutiveRelation ) )
     {
       lambda( *ptr4 );
+    }
+    else if( auto * const ptr5 = dynamic_cast< PoroElastic< ElasticOrthotropic > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr5 );
     }
     else
     {

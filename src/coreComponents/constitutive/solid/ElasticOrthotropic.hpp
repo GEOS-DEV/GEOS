@@ -39,8 +39,6 @@ namespace constitutive
 class ElasticOrthotropicUpdates : public SolidBaseUpdates
 {
 public:
-  using DiscretizationOps = SolidModelDiscretizationOpsOrthotropic;
-
   /**
    * @brief Constructor
    * @param[in] c11 The 11 component of the Voigt stiffness tensor.
@@ -64,8 +62,9 @@ public:
                              arrayView1d< real64 const > const & c44,
                              arrayView1d< real64 const > const & c55,
                              arrayView1d< real64 const > const & c66,
-                             arrayView3d< real64, solid::STRESS_USD > const & stress ):
-    SolidBaseUpdates( stress ),
+                             arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                             arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
+    SolidBaseUpdates( newStress, oldStress ),
     m_c11( c11 ),
     m_c12( c12 ),
     m_c13( c13 ),
@@ -92,82 +91,69 @@ public:
   /// Deleted move assignment operator
   ElasticOrthotropicUpdates & operator=( ElasticOrthotropicUpdates && ) =  delete;
 
+  // Use orthotropic form of inner product compression
+
+  using DiscretizationOps = SolidModelDiscretizationOpsOrthotropic;
+
+  // total strain interfaces
 
   GEOSX_HOST_DEVICE
-  virtual void smallStrainNoState( localIndex const k,
-                                   real64 const ( &voigtStrain )[ 6 ],
-                                   real64 ( &stress )[ 6 ] ) const override final;
+  virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const ( &totalStrain )[6],
+                                                    real64 ( &stress )[6] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void smallStrain( localIndex const k,
-                            localIndex const q,
-                            real64 const ( &voigtStrainInc )[ 6 ] ) const override final;
+  virtual void smallStrainNoStateUpdate( localIndex const k,
+                                         localIndex const q,
+                                         real64 const ( &totalStrain )[6],
+                                         real64 ( &stress )[6],
+                                         real64 ( &stiffness )[6][6] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void hypoElastic( localIndex const k,
-                            localIndex const q,
-                            real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
+  virtual void smallStrainNoStateUpdate( localIndex const k,
+                                         localIndex const q,
+                                         real64 const ( &totalStrain )[6],
+                                         real64 ( &stress )[6],
+                                         DiscretizationOps & stiffness ) const final;
+
+  // incremental strain interfaces
 
   GEOSX_HOST_DEVICE
-  virtual void hyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
-                             real64 ( &stress )[ 6 ] ) const override final;
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( &stress )[6] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void hyperElastic( localIndex const k,
-                             localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual void getStiffness( localIndex const k,
-                             localIndex const q,
-                             real64 (& c)[6][6] ) const override final
-  {
-    GEOSX_UNUSED_VAR( q );
-    memset( c, 0, sizeof( c ) );
-
-    c[0][0] = m_c11[k];
-    c[0][1] = m_c12[k];
-    c[0][2] = m_c13[k];
-    c[1][0] = c[0][1];
-    c[1][1] = m_c22[k];
-    c[1][2] = m_c23[k];
-    c[2][0] = c[0][2];
-    c[2][1] = c[1][2];
-    c[2][2] = m_c33[k];
-    c[3][3] = m_c44[k];
-    c[4][4] = m_c55[k];
-    c[5][5] = m_c66[k];
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  void setDiscretizationOps( localIndex const k,
-                             localIndex const q,
-                             DiscretizationOps & discOps ) const
-  {
-    GEOSX_UNUSED_VAR( q )
-    discOps.m_c11 = m_c11[k];
-    discOps.m_c12 = m_c12[k];
-    discOps.m_c13 = m_c13[k];
-    discOps.m_c22 = m_c22[k];
-    discOps.m_c23 = m_c23[k];
-    discOps.m_c33 = m_c33[k];
-    discOps.m_c44 = m_c44[k];
-    discOps.m_c55 = m_c55[k];
-    discOps.m_c66 = m_c66[k];
-  }
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
+                                  real64 ( &stiffness )[6][6] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual real64 calculateStrainEnergyDensity( localIndex const k,
-                                               localIndex const q ) const override final
-  {
-    GEOSX_UNUSED_VAR( k, q );
-    GEOSX_ERROR( "Not implemented" );
-    return 0;
-  }
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
+                                  DiscretizationOps & stiffness ) const final;
+
+  // hypo interface
+
+  GEOSX_HOST_DEVICE
+  virtual void hypoUpdate( localIndex const k,
+                           localIndex const q,
+                           real64 const ( &Ddt )[6],
+                           real64 const ( &Rot )[3][3],
+                           real64 ( &stress )[6],
+                           real64 ( &stiffness )[6][6] ) const override final;
+
+  // miscellaneous getters
+
+  GEOSX_HOST_DEVICE
+  virtual void getElasticStiffness( localIndex const k, real64 ( &stiffness )[6][6] ) const override final;
+
 
 private:
   /// A reference to the ArrayView holding c11 for each element.
@@ -198,80 +184,153 @@ private:
   arrayView1d< real64 const > const m_c66;
 };
 
+
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
-void
-ElasticOrthotropicUpdates::smallStrainNoState( localIndex const k,
-                                               real64 const ( &voigtStrain )[ 6 ],
-                                               real64 ( & stress )[ 6 ] ) const
+void ElasticOrthotropicUpdates::getElasticStiffness( localIndex const k,
+                                                     real64 ( & stiffness )[6][6] ) const
 {
-  stress[0] = m_c11[k] * voigtStrain[0] + m_c12[k] * voigtStrain[1] + m_c13[k] * voigtStrain[2];
-  stress[1] = m_c12[k] * voigtStrain[0] + m_c22[k] * voigtStrain[1] + m_c23[k] * voigtStrain[2];
-  stress[2] = m_c13[k] * voigtStrain[0] + m_c23[k] * voigtStrain[1] + m_c33[k] * voigtStrain[2];
+  LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
-  stress[3] = m_c44[k] * voigtStrain[3];
-  stress[4] = m_c55[k] * voigtStrain[4];
-  stress[5] = m_c66[k] * voigtStrain[5];
+  stiffness[0][0] = m_c11[k];
+  stiffness[0][1] = m_c12[k];
+  stiffness[0][2] = m_c13[k];
+
+  stiffness[1][0] = stiffness[0][1];
+  stiffness[1][1] = m_c22[k];
+  stiffness[1][2] = m_c23[k];
+
+  stiffness[2][0] = stiffness[0][2];
+  stiffness[2][1] = stiffness[1][2];
+  stiffness[2][2] = m_c33[k];
+
+  stiffness[3][3] = m_c44[k];
+  stiffness[4][4] = m_c55[k];
+  stiffness[5][5] = m_c66[k];
 }
 
-GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void
-ElasticOrthotropicUpdates::smallStrain( localIndex const k,
-                                        localIndex const q,
-                                        real64 const ( &voigtStrainInc )[ 6 ] ) const
+GEOSX_HOST_DEVICE
+void ElasticOrthotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
+                                                                     localIndex const q,
+                                                                     real64 const ( &totalStrain )[6],
+                                                                     real64 ( & stress )[6] ) const
 {
-  real64 stress[6];
-  smallStrainNoState( k, voigtStrainInc, stress );
+  GEOSX_UNUSED_VAR( q );
+  stress[0] = m_c11[k] * totalStrain[0] + m_c12[k] * totalStrain[1] + m_c13[k]*totalStrain[2];
+  stress[1] = m_c12[k] * totalStrain[0] + m_c22[k] * totalStrain[1] + m_c23[k]*totalStrain[2];
+  stress[2] = m_c13[k] * totalStrain[0] + m_c23[k] * totalStrain[1] + m_c33[k]*totalStrain[2];
 
-  for( int i=0; i<6; ++i )
-  {
-    m_stress( k, q, i ) += stress[i];
-  }
+  stress[3] = m_c44[k] * totalStrain[3];
+  stress[4] = m_c55[k] * totalStrain[4];
+  stress[5] = m_c66[k] * totalStrain[5];
 }
 
-GEOSX_HOST_DEVICE
+
 GEOSX_FORCE_INLINE
-void
-ElasticOrthotropicUpdates::
-  hypoElastic( localIndex const k,
-               localIndex const q,
-               real64 const ( &Ddt )[ 6 ],
-               real64 const ( &Rot )[ 3 ][ 3 ] ) const
+GEOSX_HOST_DEVICE
+void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
+                                                          localIndex const q,
+                                                          real64 const ( &totalStrain )[6],
+                                                          real64 ( & stress )[6],
+                                                          real64 ( & stiffness )[6][6] ) const
 {
-  smallStrain( k, q, Ddt );
-  real64 temp[ 6 ];
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
-  LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
+  getElasticStiffness( k, stiffness );
 }
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void
-ElasticOrthotropicUpdates::
-  hyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
-                real64 ( & )[ 6 ] ) const
+void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
+                                                          localIndex const q,
+                                                          real64 const ( &totalStrain )[6],
+                                                          real64 ( & stress )[6],
+                                                          DiscretizationOps & stiffness ) const
 {
-  GEOSX_ERROR( "ElasticOrthotropicKernelWrapper::HyperElastic() is not implemented!" );
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
+  stiffness.m_c11 = m_c11[k];
+  stiffness.m_c12 = m_c12[k];
+  stiffness.m_c13 = m_c13[k];
+  stiffness.m_c22 = m_c22[k];
+  stiffness.m_c23 = m_c23[k];
+  stiffness.m_c33 = m_c33[k];
+  stiffness.m_c44 = m_c44[k];
+  stiffness.m_c55 = m_c55[k];
+  stiffness.m_c66 = m_c66[k];
 }
+
+
+GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
+void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                              localIndex const q,
+                                                              real64 const ( &strainIncrement )[6],
+                                                              real64 ( & stress )[6] ) const
+{
+  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress =  incrementalStress
+  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
+  saveStress( k, q, stress );                                           // m_newStress = stress
+}
+
+
+GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
+void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
+                                                   localIndex const q,
+                                                   real64 const ( &strainIncrement )[6],
+                                                   real64 ( & stress )[6],
+                                                   real64 ( & stiffness )[6][6] ) const
+{
+  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  getElasticStiffness( k, stiffness );
+}
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void
-ElasticOrthotropicUpdates::
-  hyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                localIndex const GEOSX_UNUSED_PARAM( q ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3] ) const
+void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
+                                                   localIndex const q,
+                                                   real64 const ( &strainIncrement )[6],
+                                                   real64 ( & stress )[6],
+                                                   DiscretizationOps & stiffness ) const
 {
-  GEOSX_ERROR( "ElasticOrthotropicKernelWrapper::HyperElastic() is not implemented!" );
+  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  stiffness.m_c11 = m_c11[k];
+  stiffness.m_c12 = m_c12[k];
+  stiffness.m_c13 = m_c13[k];
+  stiffness.m_c22 = m_c22[k];
+  stiffness.m_c23 = m_c23[k];
+  stiffness.m_c33 = m_c33[k];
+  stiffness.m_c44 = m_c44[k];
+  stiffness.m_c55 = m_c55[k];
+  stiffness.m_c66 = m_c66[k];
+}
+
+
+GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
+void ElasticOrthotropicUpdates::hypoUpdate( localIndex const k,
+                                            localIndex const q,
+                                            real64 const ( &Ddt )[6],
+                                            real64 const ( &Rot )[3][3],
+                                            real64 ( & stress )[6],
+                                            real64 ( & stiffness )[6][6] ) const
+{
+  GEOSX_UNUSED_VAR( k );
+  GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR( Ddt );
+  GEOSX_UNUSED_VAR( Rot );
+  GEOSX_UNUSED_VAR( stress );
+  GEOSX_UNUSED_VAR( stiffness );
+  GEOSX_ERROR( "hypoUpdate() disabled for anisotropic models when using Hughes-Winget integration" );
 }
 
 
 /**
  * @class ElasticOrthotropic
  *
- * Class to provide a linear elastic transverse isotropic material response.
+ * Class to provide an elastic orthotropic material response.
  */
 class ElasticOrthotropic : public SolidBase
 {
@@ -309,90 +368,90 @@ public:
   ///@}
 
   /**
-   * @struct Set of "char const *" and keys for data specified in this class.
+   * Keys for data specified in this class.
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for Young's modulus E1
-    static constexpr char const * defaultE1String() { return "defaultE1" };
+    static constexpr char const * defaultE1String() { return "defaultE1"; };
 
     /// string/key for Young's modulus E2
-    static constexpr char const * defaultE2String() { return "defaultE2" };
+    static constexpr char const * defaultE2String() { return "defaultE2"; };
 
     /// string/key for Young's modulus E3
-    static constexpr char const * defaultE3String() { return "defaultE3" };
+    static constexpr char const * defaultE3String() { return "defaultE3"; };
 
     /// string/key for Poisson's ratio Nu12
-    static constexpr char const * defaultNu12String() { return "defaultNu12" };
+    static constexpr char const * defaultNu12String() { return "defaultNu12"; };
 
     /// string/key for Poisson's ratio Nu13
-    static constexpr char const * defaultNu13String() { return "defaultNu13" };
+    static constexpr char const * defaultNu13String() { return "defaultNu13"; };
 
     /// string/key for Poisson's ratio Nu23
-    static constexpr char const * defaultNu23String() { return "defaultNu23" };
+    static constexpr char const * defaultNu23String() { return "defaultNu23"; };
 
     /// string/key for shear modulus G12
-    static constexpr char const * defaultG12String() { return "defaultG12" };
+    static constexpr char const * defaultG12String() { return "defaultG12"; };
 
     /// string/key for shear modulus G13
-    static constexpr char const * defaultG13String() { return "defaultG13" };
+    static constexpr char const * defaultG13String() { return "defaultG13"; };
 
     /// string/key for shear modulus G23
-    static constexpr char const * defaultG23String() { return "defaultG23" };
+    static constexpr char const * defaultG23String() { return "defaultG23"; };
 
     /// string/key for default c11 component of Voigt stiffness tensor
-    static constexpr char const * defaultC11String() { return "defaultC11" };
+    static constexpr char const * defaultC11String() { return "defaultC11"; };
 
     /// string/key for default c12 component of Voigt stiffness tensor
-    static constexpr char const * defaultC12String() { return "defaultC12" };
+    static constexpr char const * defaultC12String() { return "defaultC12"; };
 
     /// string/key for default c13 component of Voigt stiffness tensor
-    static constexpr char const * defaultC13String() { return "defaultC13" };
+    static constexpr char const * defaultC13String() { return "defaultC13"; };
 
     /// string/key for default c22 component of Voigt stiffness tensor
-    static constexpr char const * defaultC22String() { return "defaultC22" };
+    static constexpr char const * defaultC22String() { return "defaultC22"; };
 
     /// string/key for default c23 component of Voigt stiffness tensor
-    static constexpr char const * defaultC23String() { return "defaultC23" };
+    static constexpr char const * defaultC23String() { return "defaultC23"; };
 
     /// string/key for default c33 component of Voigt stiffness tensor
-    static constexpr char const * defaultC33String() { return "defaultC33" };
+    static constexpr char const * defaultC33String() { return "defaultC33"; };
 
     /// string/key for default c44 component of Voigt stiffness tensor
-    static constexpr char const * defaultC44String() { return "defaultC44" };
+    static constexpr char const * defaultC44String() { return "defaultC44"; };
 
     /// string/key for default c55 component of Voigt stiffness tensor
-    static constexpr char const * defaultC55String() { return "defaultC55" };
+    static constexpr char const * defaultC55String() { return "defaultC55"; };
 
     /// string/key for default c66 component of Voigt stiffness tensor
-    static constexpr char const * defaultC66String() { return "defaultC66" };
+    static constexpr char const * defaultC66String() { return "defaultC66"; };
 
     /// string/key for c11 component of Voigt stiffness tensor
-    static constexpr char const * c11String() { return "c11" };
+    static constexpr char const * c11String() { return "c11"; };
 
     /// string/key for c12 component of Voigt stiffness tensor
-    static constexpr char const * c12String() { return "c12" };
+    static constexpr char const * c12String() { return "c12"; };
 
     /// string/key for c13 component of Voigt stiffness tensor
-    static constexpr char const * c13String() { return "c13" };
+    static constexpr char const * c13String() { return "c13"; };
 
     /// string/key for c22 component of Voigt stiffness tensor
-    static constexpr char const * c22String() { return "c22" };
+    static constexpr char const * c22String() { return "c22"; };
 
     /// string/key for c23 component of Voigt stiffness tensor
-    static constexpr char const * c23String() { return "c23" };
+    static constexpr char const * c23String() { return "c23"; };
 
     /// string/key for c33 component of Voigt stiffness tensor
-    static constexpr char const * c33String() { return "c33" };
+    static constexpr char const * c33String() { return "c33"; };
 
     /// string/key for c44 component of Voigt stiffness tensor
-    static constexpr char const * c44String() { return "c44" };
+    static constexpr char const * c44String() { return "c44"; };
 
     /// string/key for c55 component of Voigt stiffness tensor
-    static constexpr char const * c55String() { return "c55" };
+    static constexpr char const * c55String() { return "c55"; };
 
     /// string/key for c66 component of Voigt stiffness tensor
-    static constexpr char const * c66String() { return "c66" };
+    static constexpr char const * c66String() { return "c66"; };
   };
 
   /**
@@ -643,7 +702,8 @@ public:
                                       m_c44,
                                       m_c55,
                                       m_c66,
-                                      m_stress );
+                                      m_newStress,
+                                      m_oldStress );
   }
 
   /**
@@ -667,13 +727,12 @@ public:
                           m_c44,
                           m_c55,
                           m_c66,
-                          m_stress );
+                          m_newStress,
+                          m_oldStress );
   }
 
 protected:
   virtual void postProcessInput() override;
-
-private:
 
   /// The default value of the Young's modulus E1 for any new
   /// allocations.
