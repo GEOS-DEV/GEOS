@@ -1,3 +1,4 @@
+.. _FiniteElement:
 
 Finite Element Discretization
 -------------------------------
