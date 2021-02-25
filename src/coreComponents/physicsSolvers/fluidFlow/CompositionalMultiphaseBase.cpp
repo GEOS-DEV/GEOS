@@ -62,7 +62,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Temperature" );
-
+//END_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).

@@ -18,6 +18,7 @@ under infinitesimal strain assumptions can be expressed as
 
 .. math::
    \bm{\sigma^{n+1}} = \bm{\sigma}(\bm{\epsilon^{n}}, \bm{ \dot{{\epsilon}}}, Q^n, \Delta t),
+
 where :math:`\bm{\epsilon}` is the small strain tensor, 
 :math:`\bm{\dot{{\epsilon}}}` rate of the small strain tensor, and :math:`Q^n`
 is the collection of material state variables (which includes stress), and 
@@ -36,6 +37,7 @@ assumptions may be expressed as
 
 .. math::
    \bm{\sigma^{n+1}} = \bm{\sigma}(\mathbf{F^n}, \mathbf{ \dot{{F}}}, Q^n, \Delta t),
+
 where :math:`\mathbf{F}` and :math:`\mathbf{\dot{{F}}}` are the 
 finite strain deformation gradient and its rate. 
 Note that the finite deformation stress measures such as one of the
@@ -74,6 +76,7 @@ potential for the stress:
 
 .. math::
    \mathbf{S} = \frac{\partial \psi (\tensor{C})}{ \partial \tensor{C} },
+
 where :math:`\mathbf{S}` is the second Piola-Kirchoff stress, :math:`\psi` is 
 the stored energy potential, and :math:`\tensor{C}` is the right Cauchy-Green 
 deformation tensor.
