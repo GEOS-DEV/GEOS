@@ -27,11 +27,6 @@ namespace geosx
 namespace dataRepository
 {
 class Group;
-
-namespace keys
-{
-string const compositionalMultiphaseFVM = "CompositionalMultiphaseFVM";
-}
 }
 
 namespace constitutive
@@ -46,8 +41,10 @@ class MultiFluidBase;
  * using only cell-centered variables
  * works with both TPFA and MPFA
  */
+//START_SPHINX_INCLUDE_00
 class CompositionalMultiphaseFVM : public CompositionalMultiphaseBase
 {
+//END_SPHINX_INCLUDE_00
 public:
 
   /**
@@ -78,11 +75,13 @@ public:
    */
   virtual ~CompositionalMultiphaseFVM() override = default;
 
+//START_SPHINX_INCLUDE_01
   /**
    * @brief name of the solver in the object catalog
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
-  static string catalogName() { return dataRepository::keys::compositionalMultiphaseFVM; }
+  static string catalogName() { return "CompositionalMultiphaseFVM"; }
+//END_SPHINX_INCLUDE_01
 
   /**
    * @defgroup Solver Interface Functions
