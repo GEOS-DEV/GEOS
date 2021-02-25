@@ -444,7 +444,7 @@ void DeadOilFluidUpdate::computeDensities( real64 pressure,
   real64 fvf = 0.0;
   real64 derivative = 0.0;
 
-  for( double & val : dPhaseMassDens_dGlobalCompFrac )
+  for( real64 & val : dPhaseMassDens_dGlobalCompFrac )
   {
     val = 0.0;
   }
@@ -521,7 +521,7 @@ void DeadOilFluidUpdate::computeViscosities( real64 pressure,
                                              arraySlice1d< real64 > const & dPhaseVisc_dPres,
                                              arraySlice2d< real64 > const & dPhaseVisc_dGlobalCompFrac ) const
 {
-  for( double & val : dPhaseVisc_dGlobalCompFrac )
+  for( real64 & val : dPhaseVisc_dGlobalCompFrac )
   {
     val = 0.0;
   }
