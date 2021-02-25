@@ -78,7 +78,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
+.. include:: /coreComponents/fileIO/schema/docs/ElasticIsotropic.rst
 
 Example
 =========================
