@@ -240,7 +240,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/CamClay.rst
+.. include:: /coreComponents/fileIO/schema/docs/DelftEgg.rst
 
 Example
 ----------------------
