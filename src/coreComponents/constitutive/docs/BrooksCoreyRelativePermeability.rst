@@ -64,9 +64,9 @@ Example
    <Constitutive>
       ...
       <BrooksCoreyRelativePermeability name="relPerm"
-                                       phaseNames="oil water"
-                                       phaseMinVolumeFraction="0.02 0.015"
-                                       phaseRelPermExponent="2 2.5"
-                                       phaseRelPermMaxValue="0.8 1.0"/>
+                                       phaseNames="{oil, water}"
+                                       phaseMinVolumeFraction="{0.02, 0.015}"
+                                       phaseRelPermExponent="{2, 2.5}"
+                                       phaseRelPermMaxValue="{0.8, 1.0}"/>
       ...
    </Constitutive>
