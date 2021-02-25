@@ -860,7 +860,7 @@ struct PrecomputeKernel
       }
     } );
 
-    forAll< serialPolicy >( faceManagerSize, [=] GEOSX_HOST ( localIndex const iface )
+    forAll< serialPolicy >( faceManagerSize, [=] ( localIndex const iface )
     {
       if( !isZero( mimFaceGravCoefDenominator[iface].get() ) )
       {
