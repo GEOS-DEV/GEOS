@@ -950,6 +950,10 @@
 		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--hydrocarbonFormationVolFactorTableNames => (no description available)-->
+		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="string_array" />
+		<!--hydrocarbonViscosityTableNames => (no description available)-->
+		<xsd:attribute name="hydrocarbonViscosityTableNames" type="string_array" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--phaseDensity => (no description available)-->
@@ -964,6 +968,14 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
+		<!--waterCompressibility => (no description available)-->
+		<xsd:attribute name="waterCompressibility" type="real64" />
+		<!--waterFormationVolumeFactor => (no description available)-->
+		<xsd:attribute name="waterFormationVolumeFactor" type="real64" />
+		<!--waterReferencePressure => (no description available)-->
+		<xsd:attribute name="waterReferencePressure" type="real64" />
+		<!--waterViscosity => (no description available)-->
+		<xsd:attribute name="waterViscosity" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->

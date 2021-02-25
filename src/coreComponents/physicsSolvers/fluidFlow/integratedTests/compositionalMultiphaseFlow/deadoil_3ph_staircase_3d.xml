@@ -8,7 +8,7 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
-      fluidNames="{ fluid1 }"
+      fluidNames="{ fluid }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       temperature="300"
@@ -97,7 +97,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ fluid1, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -120,9 +120,8 @@
   <!-- END_SPHINX_INCLUDE_NUMMET_BLOCK -->
   <!-- START_SPHINX_INCLUDE_CONST_BLOCK -->
   <Constitutive>
-    <BlackOilFluid
-      name="fluid1"
-      fluidType="DeadOil"
+    <DeadOilFluid
+      name="fluid"
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"

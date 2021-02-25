@@ -121,7 +121,7 @@ public:
 
   /// Deleted move assignment operator
   DeadOilFluidUpdate & operator=( DeadOilFluidUpdate && ) = delete;
-  
+
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void compute( real64 const pressure,
@@ -330,6 +330,7 @@ public:
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
     static constexpr char const * surfacePhaseMassDensitiesString() { return "surfaceDensities"; }
+    static constexpr char const * tableFilesString() { return "tableFiles"; }
     static constexpr char const * formationVolumeFactorTableNamesString() { return "hydrocarbonFormationVolFactorTableNames"; }
     static constexpr char const * viscosityTableNamesString() { return "hydrocarbonViscosityTableNames"; }
     static constexpr char const * waterRefPressureString() { return "waterReferencePressure"; }
@@ -355,6 +356,11 @@ private:
   void validateTable( TableFunction const & table ) const;
 
   // Input data
+
+  // Black-oil table filenames
+  path_array m_tableFiles;
+
+  // Fluid data
 
   /// Names of the formation volume factor tables
   array1d< string > m_formationVolFactorTableNames;

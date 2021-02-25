@@ -1,5 +1,5 @@
 /*
- * ------------------------------------------------------------------------------------------------------------
+   1;5202;0c * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
@@ -32,12 +32,6 @@ class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
-  enum class FluidType : integer
-  {
-    DeadOil,
-    LiveOil
-  };
-
   BlackOilFluid( string const & name, Group * const parent );
 
   virtual ~BlackOilFluid() override;
@@ -55,7 +49,6 @@ public:
   {
     static constexpr char const * surfaceDensitiesString() { return "surfaceDensities"; }
     static constexpr char const * tableFilesString() { return "tableFiles"; }
-    static constexpr char const * fluidTypeString() { return "fluidType"; }
   };
 
 protected:
@@ -71,12 +64,7 @@ private:
   // Black-oil table filenames
   path_array m_tableFiles;
 
-  // Type of black-oil fluid (live/dead)
-  FluidType m_fluidType;
-
 };
-
-ENUM_STRINGS( BlackOilFluid::FluidType, "DeadOil", "LiveOil" )
 
 } /* namespace constitutive */
 
