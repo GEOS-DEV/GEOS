@@ -148,10 +148,10 @@ void CamClay::postProcessInput()
   getWrapper< array2d< real64 > >( viewKeyStruct::newPreConsolidationPressureString() ).
     setApplyDefaultValue( m_defaultPreConsolidationPressure);
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::refPressureString() ).
+  getWrapper< array2d< real64 > >( viewKeyStruct::refPressureString() ).
     setApplyDefaultValue( m_defaultRefPressure );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::refStrainVolString() ).
+  getWrapper< array2d< real64 > >( viewKeyStruct::refStrainVolString() ).
     setApplyDefaultValue( m_defaultRefStrainVol );
 
   getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).

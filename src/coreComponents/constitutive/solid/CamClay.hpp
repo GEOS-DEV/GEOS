@@ -47,8 +47,8 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-  CamClayUpdates( arrayView1d< real64 const > const & refPressure,
-                  arrayView1d< real64 const > const & refStrainVol,
+  CamClayUpdates( arrayView2d< real64 const > const & refPressure,
+                  arrayView2d< real64 const > const & refStrainVol,
                   arrayView1d< real64 const > const & recompressionIndex,
                   arrayView1d< real64 const > const & virginCompressionIndex,
                   arrayView1d< real64 const > const & cslSlope,
@@ -107,11 +107,11 @@ public:
 
 private:
     
-  /// A reference to the ArrayView holding the reference pressure for each element.
-  arrayView1d< real64 const > const m_refPressure;
+  /// A reference to the ArrayView holding the reference pressure for each quadrature point.
+  arrayView2d< real64 const > const m_refPressure;
     
-  /// A reference to the ArrayView holding the reference volumetric strain for each element.
-  arrayView1d< real64 const > const m_refStrainVol;
+  /// A reference to the ArrayView holding the reference volumetric strain for each quadrature point.
+  arrayView2d< real64 const > const m_refStrainVol;
     
   /// A reference to the ArrayView holding the recompression index  for each element.
   arrayView1d< real64 const > const m_recompressionIndex;
@@ -142,24 +142,111 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] ) const
 {
-  // elastic predictor (assume strainIncrement is all elastic)
+  
+    // Rename variables for easier implementation
+    
+    real64 const oldPc  = m_oldPreConsolidationPressure[k][q]; //pre-consolidation pressure
+    real64 const mu     = m_shearModulus[k];
+    real64 const p0     = m_refPressure[k][q];
 
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    real64 const eps_v0 = m_refStrainVol[k][q];
+    real64 const M      = m_cslSlope[k];
+    real64 const Cr     = m_recompressionIndex[k];
+    real64 const Cc     = m_virginCompressionIndex[k];
+    real64 const alpha  = m_shapeParameter[k];
+    
+    real64        pc    = oldPc;
+    real64 bulkModulus  = -p0/Cr;
+    
 
-  // decompose into mean (P) and von Mises (Q) stress invariants
+    // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
+        
+      real64 oldP;
+      real64 oldQ;
+      real64 oldDeviator[6];
+      real64 deviator[6];
+      real64 oldStrainElastic[6];
+      real64 strainElasticTrial[6];
+      real64 eps_s_trial;
+      real64 eps_v_trial;
 
-  real64 trialP;
-  real64 trialQ;
-  real64 deviator[6];
+      twoInvariant::stressDecomposition( stress,
+                                         oldP,
+                                         oldQ,
+                                         oldDeviator );
+    
+    
 
-  twoInvariant::stressDecomposition( stress,
-                                     trialP,
-                                     trialQ,
-                                     deviator );
+    // Recover elastic strains from the previous step, based on stress from the previous step
+    // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
+    
+    real64 oldElasticStrainVol = std::log(oldP/p0) * Cr * (-1.0) + eps_v0 ;
+    real64 oldElasticStrainDev = oldQ/3./mu;
+   
+    // Now recover the old strain tensor from the strain invariants.
+    // Note that we need the deviatoric direction (n-hat) from the previous step.
+    
+    twoInvariant::strainRecomposition( oldElasticStrainVol,
+                                       oldElasticStrainDev,
+                                       oldDeviator,
+                                       oldStrainElastic );
+    
+    // elastic predictor (assume strainIncrement is all elastic)
+    // TODO: define ElasticIsotropicPressureUpdates to call here
+    //ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
-  // check yield function F <= 0, using old hardening variable state
+    for(localIndex i=0; i<6; ++i)
+   {
+     strainElasticTrial[i] = oldStrainElastic[i] + strainIncrement[i];
+   }
+  // two-invariant decomposition of trial elastic strain
+    
+    twoInvariant::strainDecomposition( strainElasticTrial,
+                                       eps_v_trial,
+                                       eps_s_trial,
+                                      deviator);
+  
+    // Calculate trial mean and deviatoric stress
+    
+    real64 trialP = p0 * std::exp(-1./Cr* (eps_v_trial-eps_v0));
+    real64 trialQ = 3. * mu * eps_s_trial;
+    
+    twoInvariant::stressRecomposition( trialP,
+                                       trialQ,
+                                       deviator,
+                                      stress );
+    
+    // set stiffness to elastic predictor
+    
+    bulkModulus = -trialP/Cr ;
+    real64 lame = bulkModulus - 2./3. * mu;
 
-  real64 yield = trialQ + m_friction[k] * trialP - m_oldCohesion[k][q];
+    for(localIndex i=0; i<6; ++i)
+    {
+      for(localIndex j=0; j<6; ++j)
+      {
+        stiffness[i][j] = 0;
+      }
+    }
+    
+    stiffness[0][0] = lame + 2.*mu;
+    stiffness[0][1] = lame;
+    stiffness[0][2] = lame;
+
+    stiffness[1][0] = lame;
+    stiffness[1][1] = lame + 2.*mu;
+    stiffness[1][2] = lame;
+
+    stiffness[2][0] = lame;
+    stiffness[2][1] = lame;
+    stiffness[2][2] = lame + 2.*mu;
+
+    stiffness[3][3] = mu;
+    stiffness[4][4] = mu;
+    stiffness[5][5] = mu;
+    
+    // check yield function F <= 0
+    real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 
   if( yield < 1e-9 ) // elasticity
   {
@@ -167,17 +254,14 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   }
 
   // else, plasticity (trial stress point lies outside yield surface)
+  std::cout << "plastic " <<  "\n " << std::endl;
 
-  // the return mapping can in general be written as a Newton iteration.
-  // here we have a linear problem, so the algorithm will converge in one
-  // iteration, but this is a template for more general models with either
-  // nonlinear hardening or yield surfaces.
 
   real64 solution[3], residual[3], delta[3];
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
-  solution[0] = trialP; // initial guess for newP
-  solution[1] = trialQ; // initial guess for newQ
+  solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
+  solution[1] = eps_s_trial; // initial guess for elastic deviatoric strain
   solution[2] = 1e-5;   // initial guess for plastic multiplier
 
   real64 norm, normZero = 1e30;
@@ -186,26 +270,33 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-    // apply a linear cohesion decay model,
-    // then check for complete cohesion loss
+      trialP = p0 * std::exp(-1./Cr* (solution[0] - eps_v0));
+      trialQ = 3. * mu * solution[1];
+      bulkModulus = -trialP/Cr;
+      pc = oldPc * std::exp(-1./(Cc-Cr)*(eps_v_trial-solution[0]));
 
-    m_newCohesion[k][q] = m_oldCohesion[k][q] + solution[2] * m_hardening[k];
-    real64 cohesionDeriv = m_hardening[k];
+      yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 
-    if( m_newCohesion[k][q] < 0 )
-    {
-      m_newCohesion[k][q] = 0;
-      cohesionDeriv = 0;
-    }
+      // derivatives of yield surface
+      real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
+      real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
+      real64 df_dq = 2. * trialQ /(M*M);
+      real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP ;
+      real64 dpc_dve = -1./(Cc-Cr) * pc; //TODO: Check negative or positive
 
+      real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
+      real64 df_dq_dse = 2. /(M*M) * 3. * mu;
+      //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
+
+      
     // assemble residual system
     // resid1 = P - trialP + dlambda*bulkMod*dG/dP = 0
     // resid2 = Q - trialQ + dlambda*3*shearMod*dG/dQ = 0
     // resid3 = F = 0
-
-    residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * m_dilation[k];
-    residual[1] = solution[1] - trialQ + solution[2] * 3 * m_shearModulus[k];
-    residual[2] = solution[1] + m_friction[k] * solution[0] - m_newCohesion[k][q];
+      residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp; // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
+      residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;       // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
+      residual[2] = yield;    // F = 0
+ 
 
     // check for convergence
 
@@ -223,13 +314,13 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
     // solve Newton system
 
-    jacobian[0][0] = 1;
-    jacobian[0][2] = m_bulkModulus[k] * m_dilation[k];
-    jacobian[1][1] = 1;
-    jacobian[1][2] = 3 * m_shearModulus[k];
-    jacobian[2][0] = m_friction[k];
-    jacobian[2][1] = 1;
-    jacobian[2][2] = -cohesionDeriv;
+    jacobian[0][0] = 1. + solution[2] * df_dp_dve;
+    jacobian[0][2] = df_dp;
+    jacobian[1][1] = 1. + solution[2]*df_dq_dse;
+    jacobian[1][2] = df_dq;
+    jacobian[2][0] = bulkModulus * df_dp - dpc_dve * df_dpc;
+    jacobian[2][1] = 3.0 * mu * df_dq;
+    jacobian[2][2] = 0.0;
 
     LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
@@ -242,23 +333,41 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
 
-  twoInvariant::stressRecomposition( solution[0],
-                                     solution[1],
+  twoInvariant::stressRecomposition( trialP,
+                                     trialQ,
                                      deviator,
                                      stress );
 
   // construct consistent tangent stiffness
-  // note: if trialQ = 0, we will get a divide by zero error below,
-  // but this is an unphysical (zero-strength) state anyway
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
+  real64 BB[2][2] = {{}};
+    
+    real64 dpc_dve = -1./(Cc-Cr) * pc;
+    real64 a1= 1. + solution[2]*dpc_dve;
+    real64 a2 = trialP * dpc_dve;
 
-  real64 c1 = 2 * m_shearModulus[k] * solution[1] / trialQ;
-  real64 c2 = jacobianInv[0][0] * m_bulkModulus[k] - c1 / 3;
-  real64 c3 = sqrt( 2./3 ) * 3 * m_shearModulus[k] * jacobianInv[0][1];
-  real64 c4 = sqrt( 2./3 ) * m_bulkModulus[k] * jacobianInv[1][0];
-  real64 c5 = 2 * jacobianInv[1][1] * m_shearModulus[k] - c1;
+    bulkModulus = -trialP/Cr;
 
+    BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
+    BB[0][1] =bulkModulus*jacobianInv[0][1];
+    BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
+    BB[1][1] = 3. * mu*jacobianInv[1][1];
+
+    real64 c1;
+    
+    if(eps_s_trial<1e-15) // confirm eps_s_trial != 0
+    {
+      c1 = 2. * mu;
+    }else{
+      c1 = 2. * trialQ/(3. * eps_s_trial);
+    }
+
+    real64 c2 = BB[0][0] - c1/3.;
+    real64 c3 = std::sqrt(2./3.) * BB[0][1];
+    real64 c4 = std::sqrt(2./3.) * BB[1][0];
+    real64 c5 = 2./3. * BB[1][1] - c1;
+    
   real64 identity[6];
 
   for( localIndex i=0; i<3; ++i )
@@ -279,7 +388,10 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
                          + c5 * deviator[i] * deviator[j];
     }
   }
-
+    // remember history variables before returning
+    
+  m_newPreConsolidationPressure[k][q] = pc;
+    
   // save new stress and return
   saveStress( k, q, stress );
   return;
@@ -403,9 +515,9 @@ public:
    */
   CamClayUpdates createKernelUpdates() const
   {
-    return CamClayUpdates(m_refPressure
-                          m_refStrainVol
-                          m_recompressionIndex
+    return CamClayUpdates(m_refPressure,
+                          m_refStrainVol,
+                          m_recompressionIndex,
                           m_virginCompressionIndex,
                           m_cslSlope,
                           m_shapeParameter,
@@ -428,9 +540,9 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
-                          m_refPressure
-                          m_refStrainVol
-                          m_recompressionIndex
+                          m_refPressure,
+                          m_refStrainVol,
+                          m_recompressionIndex,
                           m_virginCompressionIndex,
                           m_cslSlope,
                           m_shapeParameter,
@@ -467,11 +579,11 @@ protected:
   /// Material parameter: The default value of the preconsolidation pressure
   real64 m_defaultPreConsolidationPressure;
     
-  /// Material parameter: The reference pressure for each element
-  array1d< real64 > m_refPressure;
+  /// Material parameter: The reference pressure for each quadrature point
+  array2d< real64 > m_refPressure;
     
-  /// Material parameter: The reference volumetric strain for each element
-  array1d< real64 > m_refStrainVol;
+  /// Material parameter: The reference volumetric strain for each quadrature point
+  array2d< real64 > m_refStrainVol;
     
   /// Material parameter: The recompression index for each element
   array1d< real64 > m_recompressionIndex;
