@@ -477,7 +477,6 @@ public:
                           m_oldStress );
   }
 
-
 protected:
 
   /// Post-process XML data
@@ -497,7 +496,7 @@ protected:
 
 };
 
-}
+} /* namespace constitutive */
 
 } /* namespace geosx */
 
