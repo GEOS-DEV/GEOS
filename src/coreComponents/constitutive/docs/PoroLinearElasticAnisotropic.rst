@@ -83,7 +83,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/PoroLinearElasticAnisotropic.rst
+.. include:: /coreComponents/fileIO/schema/docs/PoroElasticAnisotropic.rst
 
 Example
 =========================

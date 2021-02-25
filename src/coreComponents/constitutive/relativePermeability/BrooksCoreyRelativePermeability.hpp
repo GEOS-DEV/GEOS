@@ -119,6 +119,7 @@ public:
     dataRepository::ViewKey phaseRelPermExponent   = { phaseRelPermExponentString() };
     dataRepository::ViewKey phaseRelPermMaxValue   = { phaseRelPermMaxValueString() };
   } vieKeysBrooksCoreyRelativePermeability;
+//END_SPHINX_INCLUDE_01
 
 protected:
 
@@ -130,6 +131,7 @@ protected:
   array1d< real64 > m_phaseRelPermMaxValue;
 
   real64 m_volFracScale;
+//END_SPHINX_INCLUDE_02
 };
 
 GEOSX_HOST_DEVICE
