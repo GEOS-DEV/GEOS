@@ -761,7 +761,7 @@ FieldSpecificationBase::
                                                    lambda( a ) );
       ++counter;
     }
-    FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
+    FIELD_OP::template prescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
   }
   else
   {
@@ -781,7 +781,7 @@ FieldSpecificationBase::
                                                      lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::template prescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
     }
     else
     {
@@ -799,7 +799,7 @@ FieldSpecificationBase::
                                                      lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::template prescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
     }
   }
 }
@@ -860,7 +860,7 @@ FieldSpecificationBase::
                                                    lambda( a ) );
       ++counter;
     }
-    FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
+    FIELD_OP::template prescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
   }
   else
   {
@@ -880,7 +880,7 @@ FieldSpecificationBase::
                                                      lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::template prescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
     }
     else
     {
@@ -898,7 +898,7 @@ FieldSpecificationBase::
                                                      lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::template prescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
     }
   }
 }

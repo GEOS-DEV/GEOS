@@ -641,7 +641,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                                                  localRhs,
                                                                  [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      return pres[a] + dPres[a];
+      return pres[a] - dPres[a];
     } );
   } );
 }

@@ -882,7 +882,6 @@ real64 LagrangianContactFlowSolver::calculateResidualNorm( DomainPartition const
     globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
     globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
     globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
-    // Add 0 just to match Matlab code results
     globalResidualNorm[3] /= (m_initialResidual[3]+0.0);
   }
 
@@ -938,8 +937,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
     // Flow + Jacobi: using LAI implementation of Jacobi preconditioner
     schurOptions[1] = SchurComplementOption::Diagonal;
 
-    LinearSolverParameters flowParams;
-    flowParams.preconditionerType = LinearSolverParameters::PreconditionerType::jacobi;
+    LinearSolverParameters flowParams = m_flowSolver->getLinearSolverParameters();
     flowPrecond = LAInterface::createPreconditioner( flowParams );
 
     precond = std::make_unique< BlockPreconditionerGeneral< LAInterface > >( 3,
@@ -1012,8 +1010,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
     // Mechanics + Jacobi: using LAI implementation of Jacobi preconditioner
     schurOptions[1] = SchurComplementOption::Diagonal;
 
-    LinearSolverParameters flowParams;
-    flowParams.preconditionerType = LinearSolverParameters::PreconditionerType::jacobi;
+    LinearSolverParameters flowParams = m_flowSolver->getLinearSolverParameters();
     flowPrecond = LAInterface::createPreconditioner( flowParams );
 
     precond = std::make_unique< BlockPreconditionerGeneral< LAInterface > >( 3,
@@ -1785,6 +1782,7 @@ void LagrangianContactFlowSolver::solveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
+  //rhs.write( "rhs.petsc", LAIOutputFormat::MATRIX_MARKET );
   matrix.write( "matrix.petsc", LAIOutputFormat::NATIVE_BINARY );
 
   if( getLogLevel() > 3 )
@@ -1794,6 +1792,8 @@ void LagrangianContactFlowSolver::solveSystem( DofManager const & dofManager,
   }
 
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+
+  //solution.write( "sol.petsc", LAIOutputFormat::MATRIX_MARKET );
 
   if( getLogLevel() > 3 )
   {

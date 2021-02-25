@@ -109,7 +109,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   Stopwatch watch;
 
   // Compute the target absolute tolerance
-  real64 const absTol = b.norm2() * m_tolerance;
+  //real64 const absTol = b.norm2() * m_tolerance;
 
   // Define vectors
   VectorTemp r = createTempVector( b );
@@ -118,6 +118,8 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
 
   // Compute initial rk
   m_operator.residual( x, b, r );
+
+  real64 const absTol = r.norm2() * m_tolerance;
 
   // Create upper Hessenberg matrix
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > H( m_maxRestart + 1, m_maxRestart );
