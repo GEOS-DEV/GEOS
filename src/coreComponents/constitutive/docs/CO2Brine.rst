@@ -8,8 +8,9 @@ CO2-brine model
 Summary
 =======
 
-The CO2-brine model implemented in GEOSX includes two components (CO2 and H2O) that are transported by one or two fluid phases (the gas (:math:`g`) phase and the brine (:math:`\ell`) phase).
-The water component is only present in the brine phase, while the CO2 component can be present in the gas phase as well as in the brine phase.
+The CO2-brine model implemented in GEOSX includes two components (CO2 and H2O) that are transported by one or two fluid phases (the brine phase and the CO2 phase).
+We refer to the brine phase with the subscript :math:`\ell` and to the CO2 phase with the subscript :math:`g` (although the CO2 phase can be in supercritical, liquid, or gas state).
+The water component is only present in the brine phase, while the CO2 component can be present in the CO2 phase as well as in the brine phase.
 Thus, considering the phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
 
 .. math::
@@ -81,24 +82,24 @@ We conclude Step 1 by computing the phase component fractions as:
 Step 2: Computation of the phase densities and phase viscosities
 ================================================================
 
-Gas density and viscosity
--------------------------
+CO2 phase density and viscosity
+-------------------------------
 
-In GEOSX, the computation of the CO2 gas density and viscosity  is entirely based on look-up in precomputed tables.
+In GEOSX, the computation of the CO2 phase density and viscosity  is entirely based on look-up in precomputed tables.
 The user defines the pressure (in Pascal) and temperature (in degrees Celsius) axis of the density table in the form:
 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
 | DensityFun | SpanWagnerCO2Density | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` |
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
 
-This correlation is valid for pressures inferior to :math:`8 \times 10^8` Pascal and temperatures inferior to 800 degrees Celsius.  
+This correlation is valid for pressures less than :math:`8 \times 10^8` Pascal and temperatures less than 800 degrees Celsius.  
 Using these parameters, GEOSX internally constructs a two-dimensional table storing the values of density as a function of pressure and temperature.
 This table is populated as explained in the work of Span and Wagner (1996) by solving the following nonlinear Helmholtz energy equation for each pair :math:`(p,T)` to obtain the value of density, :math:`\rho_{g}`:
 
 .. math::
    \frac{p}{RT\rho_{g}} = 1 + \delta \phi^r_{\delta}( \delta, \tau )
 
-where :math:`R` is the gas constant, :math:`\delta := \rho_{g} / \rho_{crit}` is the reduced gas density, and :math:`\tau := T_{crit} / T` is the inverse of the reduced temperature.
+where :math:`R` is the gas constant, :math:`\delta := \rho_{g} / \rho_{crit}` is the reduced CO2 phase density, and :math:`\tau := T_{crit} / T` is the inverse of the reduced temperature.
 The definition of the residual part of the energy equation, denoted by :math:`\phi^r_{\delta}`, can be found in equation (6.5), page 1544 of Span and Wagner (1996).
 The coefficients involved in the computation of :math:`\phi^r_{\delta}` are listed in Table (31), page 1544 of Span and Wagner (1996).   
 These calculations are done in a preprocessing step.
@@ -109,30 +110,30 @@ The pressure and temperature axis of the viscosity table can be parameterized in
 | ViscosityFun | FenghourCO2Viscosity | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` |
 +--------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
 
-This correlation is valid for pressures inferior to :math:`3 \times 10^8` Pascal and temperatures inferior to 1220 degrees Celsius.  
-This table is populated as explained in the work of Fenghour and Wakeham (1998) by computing the gas viscosity, :math:`\mu_g`, as follows:
+This correlation is valid for pressures less than :math:`3 \times 10^8` Pascal and temperatures less than 1220 degrees Celsius.  
+This table is populated as explained in the work of Fenghour and Wakeham (1998) by computing the CO2 phase viscosity, :math:`\mu_g`, as follows:
 
 .. math::
    \mu_{g} = \mu_{0}(T) + \mu_{excess}( \rho_{g}, T ) + \mu_{crit}( \rho_{g}, T )  
    
 The "zero-density limit" viscosity, :math:`\mu_{0}(T)`, is computed as a function of temperature using equations (3), (4), and (5), as well as Table (1) of Fenghour and Wakeham (1998).
-The excess viscosity, :math:`\mu_{excess}( \rho_{g}, T )`, is computed as a function of temperature and gas density (computed as explained above) using equation (8) and Table (3) of Fenghour and Wakeham (1998).
+The excess viscosity, :math:`\mu_{excess}( \rho_{g}, T )`, is computed as a function of temperature and CO2 phase density (computed as explained above) using equation (8) and Table (3) of Fenghour and Wakeham (1998).
 We currently neglect the critical viscosity, :math:`\mu_{crit}`.
 These calculations are done in a preprocessing step.
 
-During the simulation, the update of CO2 gas density and viscosity is simply done with a look-up in the precomputed tables. 
+During the simulation, the update of CO2 phase density and viscosity is simply done with a look-up in the precomputed tables. 
 
 Brine density and viscosity 
 ---------------------------
 
-The computation of the brine density involves a tabulated correlation presented in Phillips et al (1981). 
+The computation of the brine density involves a tabulated correlation presented in Phillips et al. (1981). 
 The user specifies the (constant) salinity and defines the pressure and temperature axis of the brine density table in the form:
 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 | DensityFun | BrineCO2Density      | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 
-The pressure must be in Pascal and must be inferior to :math:`5 \times 10^7` Pascal.
+The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
 The temperature must be in degree Celsius and must be between 10 and 350 degrees Celsius.
 Using these parameters, GEOSX performs a preprocessing step to construct a two-dimensional table storing the brine density, :math:`\rho_{\ell,table}` for the specified salinity as a function of pressure and temperature using the expression:
 
@@ -199,7 +200,7 @@ Supported phase names are:
 ======== ===========
 Value     Comment
 ======== ===========
-gas      Gas phase
+gas      CO2 phase
 water    Water phase
 ======== ===========
 
@@ -208,7 +209,7 @@ Supported component names are:
 ============= ===============
 Value         Component
 ============= ===============
-co2,CO2       co2 component
+co2,CO2       CO2 component
 water,liquid  Water component
 ============= ===============
 
@@ -228,7 +229,7 @@ Example
     </Constitutive>
 
 In the XML code listed above, "co2flash.txt" parameterizes the CO2 solubility table constructed in Step 1.
-The file "pvtgas.txt" parameterizes the gas density and viscosity tables constructed in Step 2, while
+The file "pvtgas.txt" parameterizes the CO2 phase density and viscosity tables constructed in Step 2, while
 the file "pvtliquid.txt" parameterizes the brine density and viscosity tables.
     
 References
