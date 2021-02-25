@@ -27,8 +27,8 @@ namespace constitutive
 
 ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
-  m_defaultYoungModulusTransverse(),
-  m_defaultYoungModulusAxial(),
+  m_defaultYoungsModulusTransverse(),
+  m_defaultYoungsModulusAxial(),
   m_defaultPoissonRatioTransverse(),
   m_defaultPoissonRatioAxialTransverse(),
   m_defaultShearModulusAxialTransverse(),
@@ -38,74 +38,74 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   m_c44(),
   m_c66()
 {
-  registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverseString(), &m_defaultYoungsModulusTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Transverse Young's Modulus" );
 
-  registerWrapper( viewKeyStruct::defaultYoungModulusAxialString(), &m_defaultYoungModulusAxial )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultYoungsModulusAxialString(), &m_defaultYoungsModulusAxial ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Axial Young's Modulus" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverseString(), &m_defaultPoissonRatioTransverse )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverseString(), &m_defaultPoissonRatioTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Transverse Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverseString(), &m_defaultPoissonRatioAxialTransverse )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverseString(), &m_defaultPoissonRatioAxialTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Axial-Transverse Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverseString(), &m_defaultShearModulusAxialTransverse )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverseString(), &m_defaultShearModulusAxialTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Axial-Transverse Shear Modulus" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC11String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC11String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Stiffness Parameter C11" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC13String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC13String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Stiffness Parameter C13" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC33String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC33String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Stiffness Parameter C33" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC44String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC44String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Stiffness Parameter C44" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultC66String() )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper< real64 >( viewKeyStruct::defaultC66String() ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Stiffness Parameter C66" );
 
-  registerWrapper( viewKeyStruct::c11String(), &m_c11 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c11String(), &m_c11 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C11" );
 
-  registerWrapper( viewKeyStruct::c13String(), &m_c13 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c13String(), &m_c13 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C13" );
 
-  registerWrapper( viewKeyStruct::c33String(), &m_c33 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c33String(), &m_c33 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C33" );
 
-  registerWrapper( viewKeyStruct::c44String(), &m_c44 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c44String(), &m_c44 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C44" );
 
-  registerWrapper( viewKeyStruct::c66String(), &m_c66 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c66String(), &m_c66 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C66" );
 }
 
@@ -122,8 +122,8 @@ void ElasticTransverseIsotropic::postProcessInput()
   real64 & c44  = getReference< real64 >( viewKeyStruct::defaultC44String() );
   real64 & c66  = getReference< real64 >( viewKeyStruct::defaultC66String() );
 
-  real64 & Et = m_defaultYoungModulusTransverse;
-  real64 & Ea = m_defaultYoungModulusAxial;
+  real64 & Et = m_defaultYoungsModulusTransverse;
+  real64 & Ea = m_defaultYoungsModulusAxial;
   real64 & Nut = m_defaultPoissonRatioTransverse;
   real64 & Nuat = m_defaultPoissonRatioAxialTransverse;
   real64 & Gat = m_defaultShearModulusAxialTransverse;
@@ -143,19 +143,19 @@ void ElasticTransverseIsotropic::postProcessInput()
     }
   }
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() ).
     setApplyDefaultValue( c11 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() ).
     setApplyDefaultValue( c13 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() ).
     setApplyDefaultValue( c33 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() ).
     setApplyDefaultValue( c44 );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() ).
     setApplyDefaultValue( c66 );
 }
 

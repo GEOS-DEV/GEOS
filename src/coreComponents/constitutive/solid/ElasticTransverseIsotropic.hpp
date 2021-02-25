@@ -335,10 +335,10 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for transverse Young's modulus
-    static constexpr char const * defaultYoungModulusTransverseString() { return "defaultYoungModulusTransverse"; }
+    static constexpr char const * defaultYoungsModulusTransverseString() { return "defaultYoungsModulusTransverse"; }
 
     /// string/key for axial Young's modulus
-    static constexpr char const * defaultYoungModulusAxialString() { return "defaultYoungModulusAxial"; }
+    static constexpr char const * defaultYoungsModulusAxialString() { return "defaultYoungsModulusAxial"; }
 
     /// string/key for transverse Poisson's Ratio
     static constexpr char const * defaultPoissonRatioTransverseString() { return "defaultPoissonRatioTransverse"; }
@@ -350,19 +350,19 @@ public:
     static constexpr char const * defaultShearModulusAxialTransverseString() { return "defaultShearModulusAxialTransverse"; }
 
     /// string/key for default c11 component of Voigt stiffness tensor
-    static constexpr char auto * defaultC11String() { return "defaultC11" };
+    static constexpr char const * defaultC11String() { return "defaultC11"; };
 
     /// string/key for default c13 component of Voigt stiffness tensor
-    static constexpr char auto * defaultC13String() { return "defaultC13" };
+    static constexpr char const * defaultC13String() { return "defaultC13"; };
 
     /// string/key for default c33 component of Voigt stiffness tensor
-    static constexpr char auto * defaultC33String() { return "defaultC33" };
+    static constexpr char const * defaultC33String() { return "defaultC33"; };
 
     /// string/key for default c44 component of Voigt stiffness tensor
-    static constexpr char auto * defaultC44String() { return "defaultC44" };
+    static constexpr char const * defaultC44String() { return "defaultC44"; };
 
     /// string/key for default c66 component of Voigt stiffness tensor
-    static constexpr char auto * defaultC66String() { return "defaultC66" };
+    static constexpr char const * defaultC66String() { return "defaultC66"; };
 
     /// string/key for c11 component of Voigt stiffness tensor
     static constexpr char const * c11String() { return "c11"; }
@@ -384,36 +384,36 @@ public:
    * @brief Getter for default transverse Young's modulus
    * @return The value of the default transverse Young's modulus.
    */
-  real64 getDefaultYoungModulusTransverse() const
+  real64 getDefaultYoungsModulusTransverse() const
   {
-    return m_defaultYoungModulusTransverse;
+    return m_defaultYoungsModulusTransverse;
   }
 
   /**
    * @brief Setter for the default transverse Young's modulus.
    * @param[in] input New value for the default transverse Young's modulus
    */
-  void setDefaultYoungModulusTransverse( real64 const input )
+  void setDefaultYoungsModulusTransverse( real64 const input )
   {
-    m_defaultYoungModulusTransverse = input;
+    m_defaultYoungsModulusTransverse = input;
   }
 
   /**
    * @brief Getter for default axial Young's modulus
    * @return The value of the default axial Young's modulus.
    */
-  real64 getDefaultYoungModulusAxial() const
+  real64 getDefaultYoungsModulusAxial() const
   {
-    return m_defaultYoungModulusAxial;
+    return m_defaultYoungsModulusAxial;
   }
 
   /**
    * @brief Setter for the default axial Young's modulus.
    * @param[in] input New value for the default axial Young's modulus
    */
-  void setDefaultYoungModulusAxial( real64 const input )
+  void setDefaultYoungsModulusAxial( real64 const input )
   {
-    m_defaultYoungModulusAxial = input;
+    m_defaultYoungsModulusAxial = input;
   }
 
   /**
@@ -481,7 +481,7 @@ public:
    * @brief Getter for 11 component of Voigt stiffness tensor.
    * @return reference to mutable 11 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC11() const { return m_c11; }
+  arrayView1d< real64 > getC11() { return m_c11; }
 
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
@@ -493,7 +493,7 @@ public:
    * @brief Getter for 13 component of Voigt stiffness tensor.
    * @return reference to mutable 13 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC13() const { return m_c13; }
+  arrayView1d< real64 > getC13() { return m_c13; }
 
   /**
    * @brief Const-Getter for 33 component of Voigt stiffness tensor.
@@ -505,7 +505,7 @@ public:
    * @brief Getter for 33 component of Voigt stiffness tensor.
    * @return reference to mutable 33 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC33() const { return m_c33; }
+  arrayView1d< real64 > getC33() { return m_c33; }
 
   /**
    * @brief Const-Getter for 44 component of Voigt stiffness tensor.
@@ -517,7 +517,7 @@ public:
    * @brief Getter for 44 component of Voigt stiffness tensor.
    * @return reference to mutable 44 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC44() const { return m_c44; }
+  arrayView1d< real64 > getC44() { return m_c44; }
 
   /**
    * @brief Const-Getter for 66 component of Voigt stiffness tensor.
@@ -529,7 +529,7 @@ public:
    * @brief Getter for 66 component of Voigt stiffness tensor.
    * @return reference to mutable 66 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 > getC66() const { return m_c66; }
+  arrayView1d< real64 > getC66() { return m_c66; }
 
   /**
    * @brief Create a instantiation of the
@@ -574,11 +574,11 @@ protected:
 
   /// The default value of the transverse Young's modulus for any new
   /// allocations.
-  real64 m_defaultYoungModulusTransverse;
+  real64 m_defaultYoungsModulusTransverse;
 
   /// The default value of the axial Young's modulus for any new
   /// allocations.
-  real64 m_defaultYoungModulusAxial;
+  real64 m_defaultYoungsModulusAxial;
 
   /// The default value of the transverse Poisson's ratio for any new
   /// allocations.
