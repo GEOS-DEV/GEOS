@@ -776,9 +776,10 @@ compute( localIndex const numPhases,
   localIndex const NP = numPhases;
 
   //useful alias for upwind scheme templateing of fractional flow and mobility upwind
-  using term = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::term;
-  using UpwindV = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::PU<NC,NUM_ELEMS,term::Viscous>;
-  using UpwindG = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::PU<NC,NUM_ELEMS,term::Gravity>;
+  using UpwindHelpers = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper;
+
+//  using UpwindV = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::PU<NC,NUM_ELEMS,term::Viscous>;
+//  using UpwindG = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::PU<NC,NUM_ELEMS,term::Gravity>;
 //  using UpwindPc = CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::PU<NC,NUM_ELEMS,term::Capillary>;
 
   real64 compFlux[NC]{};
@@ -1035,8 +1036,8 @@ compute( localIndex const numPhases,
 
       real64 dProp_dC[NC]{};
 
-      //Fetch gravHead for phase i
-      CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formGravHead( ip,
+      //Fetch gravHead for phase i defined as \rho_i g dz/dx
+      UpwindHelpers::formGravHead( ip,
                                                                                   stencilSize,
                                                                                   seri,
                                                                                   sesri,
@@ -1052,9 +1053,10 @@ compute( localIndex const numPhases,
                                                                                   dGravHead_dC,
                                                                                   dProp_dC);
 
-      // and the fractional flow for viscous part
+      // and the fractional flow for viscous part as \lambda_i^{up}/\sum_{NP}(\lambda_j^{up}) with up decided upon
+      // the Upwind strategy
       localIndex k_up = -1;
-      CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formFracFlow< NC, MAX_STENCIL, UpwindV>(NP,
+      UpwindHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL, UpwindHelpers::term::Viscous, UpwindHelpers::PU>(NP,
                                                                                                             ip,
                                                                                                             stencilSize,
                                                                                                             seri,
@@ -1077,6 +1079,8 @@ compute( localIndex const numPhases,
                                                                                                             dFflow_dP,
                                                                                                             dFflow_dC);
 
+
+      // Assembling the viscous flux (and derivatives) from fractional flow and total velocity as \phi_{\mu} = f_i^{up,\mu} uT
       phaseFluxV = fflow * totFlux_unw;
       for( localIndex ke = 0; ke < stencilSize; ++ke)
       {
@@ -1107,6 +1111,23 @@ compute( localIndex const numPhases,
           dPhaseFlux_dC[ke][ic] += dPhaseFluxV_dC[ke][ic];
       }
 
+      // Distributing the viscous flux of phase i onto component
+      UpwindHelpers::formPhaseComp(ip,
+                                                                                  k_up,
+                                                                                  stencilSize,
+                                                                                  seri,
+                                                                                  sesri,
+                                                                                  sei,
+                                                                                  phaseCompFrac,
+                                                                                  dPhaseCompFrac_dPres,
+                                                                                  dPhaseCompFrac_dComp,
+                                                                                  dCompFrac_dCompDens,
+                                                                                  phaseFluxV,
+                                                                                  dPhaseFluxV_dP,
+                                                                                  dPhaseFluxV_dC,
+                                                                                  compFlux,
+                                                                                  dCompFlux_dP,
+                                                                                  dCompFlux_dC);
       /***           GRAVITY TERM                ***/
      for( localIndex jp = 0; jp < NP; ++jp )
       {
@@ -1124,7 +1145,8 @@ compute( localIndex const numPhases,
           real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
           real64 dPropOther_dC[NC]{};
 
-          CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formGravHead( jp,
+          //Fetch gravHead for phase j!=i defined as \rho_j g dz/dx
+          UpwindHelpers::formGravHead( jp,
                                                                                       stencilSize,
                                                                                       seri,
                                                                                       sesri,
@@ -1140,8 +1162,9 @@ compute( localIndex const numPhases,
                                                                                       dGravHeadOther_dC,
                                                                                       dPropOther_dC);
 
-
-          CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formFracFlow< NC, MAX_STENCIL, UpwindG >( NP,
+       // and the fractional flow for gravitational part as \lambda_i^{up}/\sum_{NP}(\lambda_k^{up}) with up decided upon
+        // the Upwind strategy
+          UpwindHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL, UpwindHelpers::term::Gravity, UpwindHelpers::PU >( NP,
                                                                                                                   ip,
                                                                                                                   stencilSize,
                                                                                                                   seri,
@@ -1168,7 +1191,9 @@ compute( localIndex const numPhases,
           real64 dMobOther_dP {};
           real64 dMobOther_dC[NC] {};
 
-          CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::upwindMob< NC, UpwindG >( NP,
+          // and the other mobility for gravitational part as \lambda_j^{up} with up decided upon
+          // the Upwind strategy - Note that it should be the same as the gravitational fractional flow
+          UpwindHelpers::upwindMob< NC, NUM_ELEMS, UpwindHelpers::term::Gravity, UpwindHelpers::PU >( NP,
                                                                                                   jp,
                                                                                                   stencilSize,
                                                                                                   seri,
@@ -1191,8 +1216,10 @@ compute( localIndex const numPhases,
                                                                                                   dMobOther_dP,
                                                                                                   dMobOther_dC);
 
-          phaseFluxG -= fflow * mobOther * ( gravHead - gravHeadOther );
 
+
+          // Assembling gravitational flux phase-wise as \phi_{i,g} = \sum_{k\nei} \lambda_k^{up,g} f_k^{up,g} (G_i - G_k)
+          phaseFluxG -= fflow * mobOther * ( gravHead - gravHeadOther );
           dPhaseFluxG_dP[k_up_og] -= fflow * dMobOther_dP * ( gravHead - gravHeadOther );
           for( localIndex jc = 0; jc < NC; ++jc )
             dPhaseFluxG_dC[k_up_og][jc] -= fflow * dMobOther_dC[jc] * ( gravHead - gravHeadOther );
@@ -1216,7 +1243,9 @@ compute( localIndex const numPhases,
               dPhaseFluxG_dC[ke][jc] -= fflow * mobOther * ( dGravHead_dC[ke][jc] - dGravHeadOther_dC[ke][jc] );
             }
           }
-          CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formPhaseComp(ip,
+
+          // Distributing the gravitational flux of phase i onto component
+          UpwindHelpers::formPhaseComp(ip,
                                                                                       k_up_g,
                                                                                       stencilSize,
                                                                                       seri,
@@ -1245,27 +1274,11 @@ compute( localIndex const numPhases,
         }
       }
 
-      //update phaseComp from viscous part
-      CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelper::formPhaseComp(ip,
-                                                                                  k_up,
-                                                                                  stencilSize,
-                                                                                  seri,
-                                                                                  sesri,
-                                                                                  sei,
-                                                                                  phaseCompFrac,
-                                                                                  dPhaseCompFrac_dPres,
-                                                                                  dPhaseCompFrac_dComp,
-                                                                                  dCompFrac_dCompDens,
-                                                                                  phaseFluxV,
-                                                                                  dPhaseFluxV_dP,
-                                                                                  dPhaseFluxV_dC,
-                                                                                  compFlux,
-                                                                                  dCompFlux_dP,
-                                                                                  dCompFlux_dC);
+
     }
   }//end if UT_FORM
 
-  // populate local flux vector and derivatives
+  // populate jacobian from compnent fluxes (and derivatives)
   for( localIndex ic = 0; ic < NC; ++ic )
   {
     localFlux[ic]      =  dt * compFlux[ic];

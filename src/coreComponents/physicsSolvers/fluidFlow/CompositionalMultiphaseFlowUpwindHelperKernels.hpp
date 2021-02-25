@@ -246,7 +246,8 @@ struct UpwindHelper
   };
 
 /**
- * @brief Class describing the classical Phase Potential Upwind Scheme valid across all physics
+ * @brief Class describing the classical Phase Potential Upwind Scheme as studied in Sammon. "An analysis of upstream
+ *        differencing." SPE reservoir engineering (1988)
  * @tparam NC number of components
  * @tparam NUM_ELEMS number of elements neighbors of considered face
  * @tparam T physics concerned by the scheme if specialized
@@ -319,7 +320,8 @@ struct UpwindHelper
   };
 
   /**
-   * @brief Class describing the Hybrid Upwinding as in ()
+   * @brief Class describing the Hybrid Upwinding as in Lee, Efendiev, and Tchelepi. "Hybrid upwind
+   *        discretization of nonlinear two-phase flow with gravity." Advances in Water Resources (2015).
    * @tparam NC number of components
    * @tparam NUM_ELEMS number of elements neighbors of considered face
    * @tparam T physics concerned enum
@@ -350,7 +352,8 @@ struct UpwindHelper
 
 
   /**
-   * @brief Class describing the Potential Upwind as in ()
+   * @brief Class describing the Potential Upwind as in Brenier and Jaffré. "Upstream differencing for
+   *        multiphase flow in reservoir simulation." SIAM journal on numerical analysis (1991)
    * @tparam NC number of components
    * @tparam NUM_ELEMS number of elements neighbors of considered face
    * @tparam T physics concerned enum
@@ -750,7 +753,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
    * @param stencilWeights weights associated with elements in the stencil
    * @param totFlux total flux signed value
    */
-  template< localIndex NC, class UpwindScheme >
+  template< localIndex NC, localIndex NUM_ELEMS, term T, template<localIndex,localIndex,term> class UPWIND_SCHEME >
   GEOSX_HOST_DEVICE
   static void
   upwindMob(    localIndex const numPhase,
@@ -784,7 +787,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
       dMob_dC[ic] = 0.0;
 
 
-    UpwindScheme scheme( numPhase,
+    UPWIND_SCHEME<NC, NUM_ELEMS, T> scheme( numPhase,
                          phaseIndex,
                          stencilSize,
                          seri,
@@ -830,7 +833,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
     * @param stencilWeights weights associated with elements in the stencil
     * @param totFlux total flux signed value
     */
-  template< localIndex NC, localIndex MAX_STENCIL, class UpwindScheme >
+  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, term T, template<localIndex,localIndex,term> class UPWIND_SCHEME >
   GEOSX_HOST_DEVICE
   static void
   formFracFlow( localIndex const numPhase,
@@ -856,7 +859,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
                 real64 (& dFflow_dP) [MAX_STENCIL],
                 real64 (& dFflow_dC) [MAX_STENCIL][NC] )
   {
-
+    // get var to memorized the numerator mobility properly upwinded
     real64 mainMob {};
     real64 dMMob_dP{};
     real64 dMMob_dC[NC] {};
@@ -887,7 +890,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
       real64 dMob_dP {};
       real64 dMob_dC[NC] {};
 
-      upwindMob<NC, UpwindScheme>( numPhase,
+      upwindMob<NC, NUM_ELEMS, T, UPWIND_SCHEME>( numPhase,
                                    ip,
                                    stencilSize,
                                    seri,
