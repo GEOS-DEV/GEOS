@@ -29,17 +29,30 @@ using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;
 using serialAtomic = RAJA::seq_atomic;
 
+using serialStream = RAJA::resources::Host;
+using serialEvent = RAJA::resources::HostEvent;
+
 #if defined(GEOSX_USE_OPENMP)
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 using parallelHostReduce = RAJA::omp_reduce;
 using parallelHostAtomic = RAJA::builtin_atomic;
 
+// issues with Raja::resources::Omp on lassen
+using parallelHostStream = serialStream;
+using parallelHostEvent = serialEvent;
+
+void RAJA_INLINE parallelHostSync() { RAJA::synchronize< RAJA::omp_synchronize >(); }
+
 #else
 
 using parallelHostPolicy = serialPolicy;
 using parallelHostReduce = serialReduce;
 using parallelHostAtomic = serialAtomic;
+using parallelHostStream = serialStream;
+using parallelHostEvent = serialEvent;
+
+void RAJA_INLINE parallelHostSync() { }
 
 #endif
 
@@ -52,14 +65,12 @@ template< unsigned long BLOCK_SIZE = 256 >
 using parallelDeviceAsyncPolicy = RAJA::cuda_exec_async< BLOCK_SIZE >;
 
 using parallelDeviceStream = RAJA::resources::Cuda;
+using parallelDeviceEvent = RAJA::resources::Event;
 
 using parallelDeviceReduce = RAJA::cuda_reduce;
 using parallelDeviceAtomic = RAJA::cuda_atomic;
 
-using parallelDeviceEvent = RAJA::resources::Event;
-using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
-
-void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::policy::cuda::cuda_synchronize >(); }
+void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::cuda_synchronize >(); }
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
 RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end, LAMBDA && body )
@@ -77,15 +88,13 @@ using parallelDevicePolicy = parallelHostPolicy;
 template< unsigned long BLOCK_SIZE = 0 >
 using parallelDeviceAsyncPolicy = parallelHostPolicy;
 
-using parallelDeviceStream = RAJA::resources::Omp;
+using parallelDeviceStream = parallelHostStream;
+using parallelDeviceEvent = parallelHostEvent;
 
 using parallelDeviceReduce = parallelHostReduce;
 using parallelDeviceAtomic = parallelHostAtomic;
 
-using parallelDeviceEvent = RAJA::resources::HostEvent;
-using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
-
-void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::policy::omp::omp_synchronize >(); }
+void RAJA_INLINE parallelDeviceSync() { parallelHostSync( ); }
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
 RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
@@ -95,6 +104,8 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream )
 }
 
 #endif
+
+using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
 
 namespace internalRajaInterface
 {
