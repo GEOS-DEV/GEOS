@@ -606,6 +606,7 @@ protected:
 
   /// The 66 component of the Voigt stiffness tensor.
   array1d< real64 > m_c66;
+
 };
 
 } /* namespace constitutive */
