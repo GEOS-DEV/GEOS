@@ -22,7 +22,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 #include <algorithm>
