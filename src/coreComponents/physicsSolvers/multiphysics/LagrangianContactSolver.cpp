@@ -339,6 +339,7 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
+
         if( ghostRank[kfe] < 0 )
         {
           real64 const area = faceArea[kfe];
@@ -354,9 +355,11 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex const faceIndex = elemsToFaces[kfe][i];
-            localIndex const er = faceToElemRegion[faceIndex][0];
-            localIndex const esr = faceToElemSubRegion[faceIndex][0];
-            localIndex const ei = faceToElemIndex[faceIndex][0];
+            localIndex const ke = faceToElemIndex[faceIndex][0] >= 0 ? 0 : 1;
+
+            localIndex const er = faceToElemRegion[faceIndex][ke];
+            localIndex const esr = faceToElemSubRegion[faceIndex][ke];
+            localIndex const ei = faceToElemIndex[faceIndex][ke];
 
             real64 const volume = elemVolume[er][esr][ei];
 
