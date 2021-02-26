@@ -45,7 +45,7 @@ public:
    * @param[in] parent point to the parent Group of the InternalWellboreGenerator
    */
   InternalWellboreGenerator( const string & name,
-                         Group * const parent );
+                             Group * const parent );
 
   virtual ~InternalWellboreGenerator() override = default;
 
@@ -103,10 +103,13 @@ private:
 
   /// Mesh number of dimension
   int m_dim;
+
   /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];
+
   /// Ndim x nElem spatialized for element indexes
   integer_array m_nElems[3];
+
   /// Ndim x nElem spatialized array of element scaling factors
   array1d< real64 > m_nElemScaling[3];
 
@@ -119,31 +122,19 @@ private:
 
   /// Minimum extent of mesh dimensions
   real64 m_min[3];
+
   /// Maximum extent of mesh dimensions
   real64 m_max[3];
 
   //int m_numElems[3];
   /// Ndim x nBlock spatialized array of first elemnt index in the cellBlock
   integer_array m_firstElemIndexForBlock[3];
+
   /// Ndim x nBlock spatialized array of last elemnt index in the cellBlock
   integer_array m_lastElemIndexForBlock[3];
 
-
-
-//  real64 m_wExtensionMin[3];
-//  real64 m_wExtensionMax[3];
-//  int m_nExtensionLayersMin[3];
-//  int m_nExtensionLayersMax[3];
-//  real64 m_extendedMin[3];
-//  real64 m_extendedMax[3]; // This is the domain size after we apply n layers
-// of elements which are of the same size as the core elements.  We will move
-// these nodes to where they should be later when we finish the meshing.
-
   /// Array of number of elements per direction
   int m_numElemsTotal[3];
-
-//  real64 m_commonRatioMin[3];
-//  real64 m_commonRatioMax[3];
 
   // String array listing the element type present
   string_array m_elementType;
@@ -159,6 +150,7 @@ private:
 
   /// Node perturbation amplitude value
   real64 m_fPerturb=0.0;
+
   /// Random seed for generation of the node perturbation field
   int m_randSeed;
 
@@ -175,7 +167,7 @@ private:
   real64 m_meshPhi;
   real64 m_meshRout;
   real64 m_meshRact;
-/// @endcond
+  /// @endcond
 
   /// skew angle in radians for skewed mesh generation
   real64 m_skewAngle = 0;

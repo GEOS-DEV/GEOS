@@ -8,6 +8,7 @@ set(meshUtilities_headers
     MeshGeneratorBase.hpp
     InternalMeshGenerator.hpp
     InternalWellGenerator.hpp
+    InternalWellboreGenerator.hpp
     PerforationData.hpp
     Perforation.hpp
     MeshUtilities.hpp
@@ -28,6 +29,7 @@ set(meshUtilities_sources
     MeshGeneratorBase.cpp
     InternalMeshGenerator.cpp
     InternalWellGenerator.cpp
+    InternalWellboreGenerator.cpp
     PerforationData.cpp
     Perforation.cpp
     MeshUtilities.cpp
