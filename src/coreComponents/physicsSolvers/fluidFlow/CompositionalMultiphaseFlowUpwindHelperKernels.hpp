@@ -25,9 +25,6 @@ namespace CompositionalMultiphaseFlowUpwindHelperKernels
 {
 
 /******************************** UpwindingHelpers ********************************/
-struct UpwindHelper
-  {
-
   /**
    * @brief The type for element-based non-constitutive data parameters.
    * Consists entirely of ArrayView's.
@@ -37,6 +34,239 @@ struct UpwindHelper
    */
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+ template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL>
+ GEOSX_HOST_DEVICE
+ void
+ formPPUVelocity( localIndex const numPhase,
+           localIndex const phaseIndex,
+           localIndex const stencilSize,
+           arraySlice1d< localIndex const > const seri,
+           arraySlice1d< localIndex const > const sesri,
+           arraySlice1d< localIndex const > const sei,
+           arraySlice1d< real64 const > const stencilWeights,
+           ElementViewConst< arrayView1d< real64 const > > const & pres,
+           ElementViewConst< arrayView1d< real64 const > > const & dPres,
+           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+           ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
+           ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
+           ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+           ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
+           ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+           integer const capPressureFlag,
+           localIndex& k_up,
+           real64 (&phaseFlux),
+           real64 (&dPhaseFlux_dP) [MAX_STENCIL],
+           real64 (&dPhaseFlux_dC) [MAX_STENCIL][NC] ){
+
+     real64 densMean{};
+    real64 dDensMean_dP[NUM_ELEMS]{};
+    real64 dDensMean_dC[NUM_ELEMS][NC]{};
+
+    real64 presGrad{};
+    real64 dPresGrad_dP[MAX_STENCIL]{};
+    real64 dPresGrad_dC[MAX_STENCIL][NC]{};
+
+    real64 gravHead{};
+    real64 dGravHead_dP[NUM_ELEMS]{};
+    real64 dGravHead_dC[NUM_ELEMS][NC]{};
+
+    real64 dCapPressure_dC[NC]{};
+
+    // Working array
+    real64 dProp_dC[NC]{};
+
+    // calculate quantities on primary connected cells
+    for( localIndex i = 0; i < NUM_ELEMS; ++i )
+    {
+      localIndex const er = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei = sei[i];
+
+      // density
+      real64 const density = phaseMassDens[er][esr][ei][0][phaseIndex];
+      real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][phaseIndex];
+
+      applyChainRule( NC,
+                      dCompFrac_dCompDens[er][esr][ei],
+                      dPhaseMassDens_dComp[er][esr][ei][0][phaseIndex],
+                      dProp_dC );
+
+      // average density and derivatives
+      densMean += 0.5 * density;
+      dDensMean_dP[i] = 0.5 * dDens_dP;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
+      }
+    }
+
+ // compute potential difference MPFA-style
+    for( localIndex i = 0; i < stencilSize; ++i )
+    {
+      localIndex const er = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei = sei[i];
+      real64 const weight = stencilWeights[i];
+
+      // capillary pressure
+      real64 capPressure = 0.0;
+      real64 dCapPressure_dP = 0.0;
+
+      for( localIndex ic = 0; ic < NC; ++ic )
+      {
+        dCapPressure_dC[ic] = 0.0;
+      }
+
+      if( capPressureFlag )
+      {
+        capPressure = phaseCapPressure[er][esr][ei][0][phaseIndex];
+
+        for( localIndex jp = 0; jp < numPhase; ++jp )
+        {
+          real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][phaseIndex][jp];
+          dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
+
+          for( localIndex jc = 0; jc < NC; ++jc )
+          {
+            dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac_dComp[er][esr][ei][jp][jc];
+          }
+        }
+      }
+
+      presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] - capPressure );
+      dPresGrad_dP[i] += weight * ( 1 - dCapPressure_dP );
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPresGrad_dC[i][jc] += -weight * dCapPressure_dC[jc];
+      }
+
+      real64 const gravD = weight * gravCoef[er][esr][ei];
+
+      // the density used in the potential difference is always a mass density
+      // unlike the density used in the phase mobility, which is a mass density
+      // if useMass == 1 and a molar density otherwise
+      gravHead += densMean * gravD;
+
+      // need to add contributions from both cells the mean density depends on
+      for( localIndex j = 0; j < NUM_ELEMS; ++j )
+      {
+        dGravHead_dP[j] += dDensMean_dP[j] * gravD;
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
+        }
+      }
+    }
+
+    // compute phase potential gradient
+    real64 const potGrad = presGrad - gravHead;
+
+    // choose upstream cell
+    k_up = ( potGrad >= 0 ) ? 0 : 1;
+
+    localIndex er_up = seri[k_up];
+    localIndex esr_up = sesri[k_up];
+    localIndex ei_up = sei[k_up];
+
+    real64 const mobility = phaseMob[er_up][esr_up][ei_up][phaseIndex];
+
+    //adding totMob update for UT -  formulation
+    // skip the phase flux if phase not present or immobile upstream
+
+    // pressure gradient depends on all points in the stencil
+    for( localIndex ke = 0; ke < stencilSize; ++ke )
+    {
+      dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
+      }
+
+    }
+
+    // gravitational head depends only on the two cells connected (same as mean density)
+    for( localIndex ke = 0; ke < NUM_ELEMS; ++ke )
+    {
+      dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseFlux_dC[ke][jc] -= dGravHead_dC[ke][jc];
+      }
+    }
+
+    // compute the phase flux and derivatives using upstream cell mobility
+    phaseFlux = mobility * potGrad;
+    //adding totflux for UT formulation
+
+    for( localIndex ke = 0; ke < stencilSize; ++ke )
+    {
+      dPhaseFlux_dP[ke] *= mobility;
+
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseFlux_dC[ke][jc] *= mobility;
+      }
+    }
+
+    real64 const dMob_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][phaseIndex];
+    arraySlice1d< real64 const > const dMob_dC = dPhaseMob_dComp[er_up][esr_up][ei_up][phaseIndex];
+
+    // add contribution from upstream cell mobility derivatives
+    dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
+
+    for( localIndex jc = 0; jc < NC; ++jc )
+    {
+      dPhaseFlux_dC[k_up][jc] += dMob_dC[jc] * potGrad;
+    }
+
+ }
+
+
+  template<localIndex NC, localIndex MAX_STENCIL, localIndex NDOF>
+  GEOSX_HOST_DEVICE
+  static void fillLocalJacobi(real64 const (& compFlux) [NC],
+                       real64 const (& dCompFlux_dP) [MAX_STENCIL][NC],
+                       real64 const (& dCompFlux_dC) [MAX_STENCIL][NC][NC],
+                       localIndex const stencilSize,
+                       real64 const dt,
+                       arraySlice1d< real64 > const localFlux,
+                       arraySlice2d< real64 > const localFluxJacobian )
+{
+// populate jacobian from compnent fluxes (and derivatives)
+    for( localIndex ic = 0; ic < NC; ++ic )
+    {
+      localFlux[ic]      =  dt * compFlux[ic];
+      localFlux[NC + ic] = -dt * compFlux[ic];
+
+//    std::cerr << "\n***********\n ic" << ic << " compFlux : " << compFlux[ic] <<std::endl;
+
+      for( localIndex ke = 0; ke < stencilSize; ++ke )
+      {
+        localIndex const localDofIndexPres = ke * NDOF;
+        localFluxJacobian[ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
+        localFluxJacobian[NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
+
+//      std::cerr << "*********** \t ke" << ke << " compFlux : " << dCompFlux_dP[ke][ic] <<std::endl;
+
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+          localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
+          localFluxJacobian[NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
+
+//        std::cerr << "*********** \t \t jc" << jc << " compFlux : " << dCompFlux_dC[ke][ic][jc] << std::endl << std::endl;
+        }
+      }
+    }
+}
+
 
   /**
    * @brief Form gravitational head for phase from gravity and massDensities
@@ -215,35 +445,113 @@ struct UpwindHelper
    * @tparam NUM_ELEMS number of elements neighbors of considered face
    * @tparam T physics concerned by the scheme if specialized
    */
-  template< localIndex NC, localIndex NUM_ELEMS, term T >
+  template< term T >
   class UpwindScheme{
-    protected :
-        real64 pot_;
-        localIndex source;
 
-    protected:
-        UpwindScheme( localIndex const GEOSX_UNUSED_PARAM(numPhase),
-                      localIndex const GEOSX_UNUSED_PARAM(phaseIndex),
-                      localIndex const GEOSX_UNUSED_PARAM(stencilSize),
-                      arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(seri),
-                      arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(sesri),
-                      arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(sei),
-                      arraySlice1d< real64 const > const GEOSX_UNUSED_PARAM(stencilWeights),
-                      real64 const GEOSX_UNUSED_PARAM(totFlux), //in fine should be a ElemnetViewConst once seq form are in place
-                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(pres),
-                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(dPres),
-                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(gravCoef),
-                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMob),
-                      ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dCompFrac_dCompDens),
-                      ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMassDens),
-                      ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseMassDens_dPres),
-                      ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseMassDens_dComp) ):
-                      pot_(0),source(0)
-                      {};
+  public:
 
-    public:
-        localIndex operator()() { return (pot_>0)? source : ((source ==0) ? 1 : 0); };
+    //default ctor
+    UpwindScheme() = default;
+    //usual copy ctor
+    UpwindScheme(UpwindScheme const & scheme) = default;
+    //default move ctor
+    UpwindScheme(UpwindScheme&& ) = default;
+
+    //deleted copy and move assignement
+    UpwindScheme & operator=( UpwindScheme const & ) = delete;
+    UpwindScheme & operator=( UpwindScheme && ) = delete;
+
+    virtual ~UpwindScheme() = default;
+
+    template< localIndex NC, localIndex NUM_ELEMS, template<term> class UPWIND>
+    GEOSX_HOST_DEVICE
+    void getUpwindDir(localIndex const numPhase,
+                localIndex const phaseIndex,
+                localIndex const stencilSize,
+                arraySlice1d< localIndex const > const seri,
+                arraySlice1d< localIndex const > const sesri,
+                arraySlice1d< localIndex const > const sei,
+                arraySlice1d< real64 const > const stencilWeights,
+                real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
+                ElementViewConst< arrayView1d< real64 const > > const & pres,
+                ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+                ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+                ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+                ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
+                localIndex& upwindDir)
+                {
+                          real64 pot {};
+                          localIndex source {};
+
+                          UPWIND<T>::template calcPotential<NC,NUM_ELEMS>(numPhase,
+                                       phaseIndex,
+                                       stencilSize,
+                                       seri,
+                                       sesri,
+                                       sei,
+                                       stencilWeights,
+                                       totFlux, //in fine should be a ElemnetViewConst once seq form are in place
+                                       pres,
+                                       dPres,
+                                       gravCoef,
+                                       phaseMob,
+                                       dCompFrac_dCompDens,
+                                       phaseMassDens,
+                                       dPhaseMassDens_dPres,
+                                       dPhaseMassDens_dComp,
+                                       source,
+                                       pot);
+
+                          //treat orientation reversalfor HU gravitational
+                          upwindDir = ( pot > 0) ? source : ( ( source == 0) ? 1 : 0);
+                }
   };
+
+/*template< term T >
+template< localIndex NC, localIndex NUM_ELEMS, template< term > class UPWIND >
+GEOSX_HOST_DEVICE
+void UpwindScheme< T >::getUpwindDir( localIndex const numPhase,
+                                      localIndex const phaseIndex,
+                                      localIndex const stencilSize,
+                                      arraySlice1d< localIndex const > const seri,
+                                      arraySlice1d< localIndex const > const sesri,
+                                      arraySlice1d< localIndex const > const sei,
+                                      arraySlice1d< real64 const > const stencilWeights,
+                                      real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
+                                      ElementViewConst <arrayView1d< real64 const >> const & pres,
+                                      ElementViewConst <arrayView1d< real64 const >> const & dPres,
+                                      ElementViewConst <arrayView1d< real64 const >> const & gravCoef,
+                                      ElementViewConst <arrayView2d< real64 const >> const & phaseMob,
+                                      ElementViewConst <arrayView3d< real64 const >> const & dCompFrac_dCompDens,
+                                      ElementViewConst <arrayView3d< real64 const >> const & phaseMassDens,
+                                      ElementViewConst <arrayView3d< real64 const >> const & dPhaseMassDens_dPres,
+                                      ElementViewConst <arrayView4d< real64 const >> const & dPhaseMassDens_dComp,
+                                      localIndex & upwindDir )
+{
+  real64 pot{};
+  UPWIND< T >::template calcPotential< NC, NUM_ELEMS >( numPhase,
+                                                        phaseIndex,
+                                                        stencilSize,
+                                                        seri,
+                                                        sesri,
+                                                        sei,
+                                                        stencilWeights,
+                                                        totFlux, //in fine should be a ElemnetViewConst once seq form are in place
+                                                        pres,
+                                                        dPres,
+                                                        gravCoef,
+                                                        phaseMob,
+                                                        dCompFrac_dCompDens,
+                                                        phaseMassDens,
+                                                        dPhaseMassDens_dPres,
+                                                        dPhaseMassDens_dComp,
+                                                        pot );
+
+  upwindDir = ( pot > 0 ) ? m_source : ( ( m_source == 0 ) ? 1 : 0 );
+}*/
 
 /**
  * @brief Class describing the classical Phase Potential Upwind Scheme as studied in Sammon. "An analysis of upstream
@@ -252,30 +560,32 @@ struct UpwindHelper
  * @tparam NUM_ELEMS number of elements neighbors of considered face
  * @tparam T physics concerned by the scheme if specialized
  */
-  template< localIndex NC, localIndex NUM_ELEMS, term T >
-  class PPU : public UpwindScheme<NC,NUM_ELEMS,T>
+  template<term T >
+  class PPU : public UpwindScheme<T>
   {
     public:
-    PPU() = delete;
-    PPU(localIndex const numPhase,
+
+    template< localIndex NC , localIndex NUM_ELEMS >
+    GEOSX_HOST_DEVICE
+    static
+    void calcPotential(localIndex const GEOSX_UNUSED_PARAM(numPhase),
         localIndex const phaseIndex,
         localIndex const stencilSize,
         arraySlice1d< localIndex const > const seri,
         arraySlice1d< localIndex const > const sesri,
         arraySlice1d< localIndex const > const sei,
         arraySlice1d< real64 const > const stencilWeights,
-        real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
+        real64 const GEOSX_UNUSED_PARAM(totFlux), //in fine should be a ElemnetViewConst once seq form are in place
         ElementViewConst< arrayView1d< real64 const > > const & pres,
         ElementViewConst< arrayView1d< real64 const > > const & dPres,
         ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-        ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+        ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMob),
         ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
         ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
         ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp )
-        :
-        UpwindScheme<NC,NUM_ELEMS,T>(numPhase,phaseIndex,stencilSize,seri,sesri,sei,stencilWeights,totFlux,pres,dPres,gravCoef,
-                  phaseMob,dCompFrac_dCompDens,phaseMassDens,dPhaseMassDens_dPres,dPhaseMassDens_dComp)
+        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
+        localIndex& source,
+        real64& pot )
       {
         //compute presGrad
         real64 presGrad{};
@@ -314,42 +624,23 @@ struct UpwindHelper
                     dGravHead_dC,
                     dProp_dC);
 
-      UpwindScheme<NC,NUM_ELEMS,T>::pot_ = presGrad - gravHead;
+      source = 0;
+      pot = presGrad - gravHead;
     }
 
   };
 
-  /**
+ /**
    * @brief Class describing the Hybrid Upwinding as in Lee, Efendiev, and Tchelepi. "Hybrid upwind
    *        discretization of nonlinear two-phase flow with gravity." Advances in Water Resources (2015).
    * @tparam NC number of components
    * @tparam NUM_ELEMS number of elements neighbors of considered face
    * @tparam T physics concerned enum
    */
-  template< localIndex NC, localIndex NUM_ELEMS, term T>
-  class HU : public UpwindScheme<NC, NUM_ELEMS, T>
-    {
-    public:
-      HU() = delete;
-      HU( localIndex const GEOSX_UNUSED_PARAM(numPhase),
-          localIndex const GEOSX_UNUSED_PARAM(phaseIndex),
-          localIndex const GEOSX_UNUSED_PARAM(stencilSize),
-          arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(seri),
-          arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(sesri),
-          arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(sei),
-          arraySlice1d< real64 const > const GEOSX_UNUSED_PARAM(stencilWeights),
-          real64 const GEOSX_UNUSED_PARAM(totFlux), //in fine should be a ElemnetViewConst once seq form are in place
-          ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(pres),
-          ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(dPres),
-          ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(gravCoef),
-          ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMob),
-          ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dCompFrac_dCompDens),
-          ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMassDens),
-          ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseMassDens_dPres),
-          ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseMassDens_dComp) ) = delete;
-
+  template<term T>
+  class HU : public UpwindScheme<T>
+  {
   };
-
 
   /**
    * @brief Class describing the Potential Upwind as in Brenier and Jaffré. "Upstream differencing for
@@ -358,28 +649,9 @@ struct UpwindHelper
    * @tparam NUM_ELEMS number of elements neighbors of considered face
    * @tparam T physics concerned enum
    */
-  template< localIndex NC, localIndex NUM_ELEMS, term T >
-  class PU : public UpwindScheme<NC,NUM_ELEMS,T>
+  template<term T >
+  class PU : public UpwindScheme<T>
   {
-    PU() = delete;
-    PU( localIndex const GEOSX_UNUSED_PARAM(numPhase),
-        localIndex const GEOSX_UNUSED_PARAM(phaseIndex),
-        localIndex const GEOSX_UNUSED_PARAM(stencilSize),
-        arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(seri),
-        arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(sesri),
-        arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(sei),
-        arraySlice1d< real64 const > const GEOSX_UNUSED_PARAM(stencilWeights),
-        real64 const GEOSX_UNUSED_PARAM(totFlux), //in fine should be a ElemnetViewConst once seq form are in place
-        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(pres),
-        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(dPres),
-        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(gravCoef),
-        ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMob),
-        ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dCompFrac_dCompDens),
-        ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMassDens),
-        ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseMassDens_dPres),
-        ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseMassDens_dComp) ) = delete;
-
-
   };
 
 
@@ -388,12 +660,16 @@ struct UpwindHelper
    * @tparam NC number of components
    * @tparam NUM_ELEMS number of elements neighbors of considered face
    */
-template< localIndex NC, localIndex NUM_ELEMS>
-class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Viscous>
+template<>
+class PU<term::Viscous> : public UpwindScheme<term::Viscous>
     {
 
     public:
-    PU( localIndex const numPhase,
+
+      template<localIndex NC, localIndex NUM_ELEMS>
+    GEOSX_HOST_DEVICE
+    static
+    void calcPotential( localIndex const numPhase,
         localIndex const phaseIndex,
         localIndex const stencilSize,
         arraySlice1d< localIndex const > const seri,
@@ -401,20 +677,19 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
         arraySlice1d< localIndex const > const sei,
         arraySlice1d< real64 const > const stencilWeights,
         real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
-        ElementViewConst< arrayView1d< real64 const > > const & pres,
-        ElementViewConst< arrayView1d< real64 const > > const & dPres,
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(pres),
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(dPres),
         ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
         ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
         ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
         ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
         ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp )
-        :
-        UpwindScheme<NC,NUM_ELEMS,term::Viscous>(numPhase,phaseIndex,stencilSize,seri,sesri,sei,stencilWeights,totFlux,pres,dPres,gravCoef,
-                                  phaseMob,dCompFrac_dCompDens,phaseMassDens,dPhaseMassDens_dPres,dPhaseMassDens_dComp)
+        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
+        localIndex& source,
+        real64& pot)
     {
       //Form total velocity
-      UpwindScheme < NC, NUM_ELEMS, term::Viscous > ::pot_ = totFlux;
+      pot = totFlux;
       // reinit source and target depending on gravity orientation
       // form gravHead for the currentPhase
       // then form GravHead
@@ -482,9 +757,9 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
           real64 const mob_up = phaseMob[er_up][esr_up][ei_up][ip];
           real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][ip];
 
-          UpwindScheme < NC, NUM_ELEMS, term::Viscous > ::pot_ +=
-                                          ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead - gravHeadOther ) :
-                                          mob_up * ( gravHead - gravHeadOther );
+          source = 0;
+          pot += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead - gravHeadOther ) :
+                                                    mob_up * ( gravHead - gravHeadOther );
 
         }
       }
@@ -496,11 +771,15 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
  * @tparam NC number of components
  * @tparam NUM_ELEMS number of elements neighbors of considered face
  */
-  template<localIndex NC, localIndex NUM_ELEMS>
-  class PU< NC,NUM_ELEMS,term::Gravity > : public UpwindScheme<NC,NUM_ELEMS,term::Gravity>
+  template<>
+  class PU< term::Gravity > : public UpwindScheme<term::Gravity>
   {
   public :
-    PU( localIndex const numPhase,
+
+    template<localIndex NC, localIndex NUM_ELEMS>
+    GEOSX_HOST_DEVICE
+    static
+    void calcPotential( localIndex const numPhase,
         localIndex const phaseIndex,
         localIndex const stencilSize,
         arraySlice1d< localIndex const > const seri,
@@ -508,21 +787,20 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
         arraySlice1d< localIndex const > const sei,
         arraySlice1d< real64 const > const stencilWeights,
         real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
-        ElementViewConst< arrayView1d< real64 const > > const & pres,
-        ElementViewConst< arrayView1d< real64 const > > const & dPres,
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(pres),
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(dPres),
         ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
         ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
         ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
         ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
         ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp )
-        :
-        UpwindScheme<NC,NUM_ELEMS,term::Gravity>(numPhase,phaseIndex,stencilSize,seri,sesri,sei,stencilWeights,totFlux,pres,dPres,gravCoef,
-         phaseMob,dCompFrac_dCompDens,phaseMassDens,dPhaseMassDens_dPres,dPhaseMassDens_dComp)
+        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
+        localIndex& source,
+        real64& pot )
     {
 
       //Form total velocity
-      UpwindScheme<NC,NUM_ELEMS,term::Gravity>::pot_ = totFlux;
+      pot = totFlux;
       // reinit source and target depending on gravity orientation
       // form gravHead for the currentPhase
       // then form GravHead
@@ -585,11 +863,14 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
                         dGravHeadOther_dC,
                         dPropOther_dC);
 
-          UpwindScheme<NC,NUM_ELEMS,term::Gravity>::source = ( gravCoef[er_up][esr_up][ei_up] > 0 ) ? 0 : 1;//heavy is upwinded with above value (resp. the lighter with below)
+          source = ( gravCoef[er_up][esr_up][ei_up] > 0 ) ? 0 : 1;//heavy is upwinded with above value (resp. the lighter with below)
           real64 const mob_up = phaseMob[er_up][esr_up][ei_up][ip];
           real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][ip];
 
-          UpwindScheme<NC,NUM_ELEMS,term::Gravity>::pot_ += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead - gravHeadOther ) : mob_up * ( gravHead - gravHeadOther) ;
+          pot += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead- gravHeadOther ) :
+                                                      mob_up * ( gravHead - gravHeadOther ) ;
+          std::cerr << pot << " .. ";
+
         }
       }
     }
@@ -601,32 +882,36 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
  * @tparam NC number of components
  * @tparam NUM_ELEMS number of elements neighbors of considered face
  */
-   template< localIndex NC, localIndex NUM_ELEMS >
-   class HU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC, NUM_ELEMS, term::Viscous>
+   template<>
+   class HU<term::Viscous> : public UpwindScheme<term::Viscous>
   {
     public:
-    HU( localIndex const numPhase,
-        localIndex const phaseIndex,
-        localIndex const stencilSize,
-        arraySlice1d< localIndex const > const seri,
-        arraySlice1d< localIndex const > const sesri,
-        arraySlice1d< localIndex const > const sei,
-        arraySlice1d< real64 const > const stencilWeights,
+
+    template<localIndex NC, localIndex NUM_ELEMS>
+    GEOSX_HOST_DEVICE
+    static
+    void calcPotential( localIndex const GEOSX_UNUSED_PARAM(numPhase),
+        localIndex const GEOSX_UNUSED_PARAM(phaseIndex),
+        localIndex const GEOSX_UNUSED_PARAM(stencilSize),
+        arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(seri),
+        arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(sesri),
+        arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM(sei),
+        arraySlice1d< real64 const > const GEOSX_UNUSED_PARAM(stencilWeights),
         real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
-        ElementViewConst< arrayView1d< real64 const > > const & pres,
-        ElementViewConst< arrayView1d< real64 const > > const & dPres,
-        ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-        ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-        ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-        ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-        ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp )
-     :
-     UpwindScheme<NC,NUM_ELEMS,term::Viscous>(numPhase,phaseIndex,stencilSize,seri,sesri,sei,stencilWeights,totFlux,pres,dPres,gravCoef,
-                                               phaseMob,dCompFrac_dCompDens,phaseMassDens,dPhaseMassDens_dPres,dPhaseMassDens_dComp)
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(pres),
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(dPres),
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(gravCoef),
+        ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMob),
+        ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dCompFrac_dCompDens),
+        ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseMassDens),
+        ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseMassDens_dPres),
+        ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseMassDens_dComp),
+        localIndex& source,
+        real64& pot)
     {
         //Form total velocity
-        UpwindScheme<NC,NUM_ELEMS,term::Viscous>::pot_ = totFlux;
+        source = 0;
+        pot = totFlux;
     }
 
   };
@@ -636,32 +921,35 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
  * @tparam NC number of components
  * @tparam NUM_ELEMS number of elements neighbors of considered face
  */
-  template< localIndex NC, localIndex NUM_ELEMS>
-  class HU<NC,NUM_ELEMS,term::Gravity> : public UpwindScheme<NC, NUM_ELEMS, term::Gravity>
+template<>
+  class HU<term::Gravity> : public UpwindScheme<term::Gravity>
   {
+
   public:
-    HU( localIndex const numPhase,
+    template<localIndex NC, localIndex NUM_ELEMS>
+    GEOSX_HOST_DEVICE
+    static
+    void calcPotential( localIndex const numPhase,
         localIndex const phaseIndex,
         localIndex const stencilSize,
         arraySlice1d< localIndex const > const seri,
         arraySlice1d< localIndex const > const sesri,
         arraySlice1d< localIndex const > const sei,
         arraySlice1d< real64 const > const stencilWeights,
-        real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
-        ElementViewConst< arrayView1d< real64 const > > const & pres,
-        ElementViewConst< arrayView1d< real64 const > > const & dPres,
+        real64 const GEOSX_UNUSED_PARAM(totFlux), //in fine should be a ElemnetViewConst once seq form are in place
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(pres),
+        ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(dPres),
         ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
         ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
         ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
         ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
         ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp )
-        :
-        UpwindScheme<NC,NUM_ELEMS,term::Gravity>(numPhase,phaseIndex,stencilSize,seri,sesri,sei,stencilWeights,totFlux,pres,dPres,gravCoef,
-          phaseMob,dCompFrac_dCompDens,phaseMassDens,dPhaseMassDens_dPres,dPhaseMassDens_dComp)
+        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
+        localIndex& source,
+        real64& pot )
     {
       //Form total velocity
-      UpwindScheme<NC,NUM_ELEMS,term::Gravity>::pot_ = 0;
+      pot = 0;
       // reinit source and target depending on gravity orientation
 
       //form gravHead for the currentPhase
@@ -725,17 +1013,17 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
                           dGravHeadOther_dC,
                           dPropOther_dC);
 
-              UpwindScheme<NC,NUM_ELEMS,term::Gravity>::source = ( gravCoef[er_up][esr_up][ei_up] > 0 ) ? 0 : 1;//heavy is upwinded with above value (resp. the lighter with below)
-              real64 const mob_up = phaseMob[er_up][esr_up][ei_up][ip];
+          source = ( gravCoef[er_up][esr_up][ei_up] > 0 ) ? 0 : 1;//heavy is upwinded with above value (resp. the lighter with below)
+
+          real64 const mob_up = phaseMob[er_up][esr_up][ei_up][ip];
               real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][ip];
-              UpwindScheme<NC,NUM_ELEMS,term::Gravity>::pot_ += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead - gravHeadOther ) : mob_up * ( gravHead - gravHeadOther) ;
+              pot += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead - gravHeadOther ) : mob_up * ( gravHead - gravHeadOther) ;
 
         }
       }
 
     }
   };
-
 
   /*********** upwinded mobilities and fractional flow ************/
 
@@ -753,7 +1041,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
    * @param stencilWeights weights associated with elements in the stencil
    * @param totFlux total flux signed value
    */
-  template< localIndex NC, localIndex NUM_ELEMS, term T, template<localIndex,localIndex,term> class UPWIND_SCHEME >
+  template< localIndex NC, localIndex NUM_ELEMS, term T, template<term> class UPWIND >
   GEOSX_HOST_DEVICE
   static void
   upwindMob(    localIndex const numPhase,
@@ -786,8 +1074,8 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
     for( localIndex ic=0;ic<NC; ++ic )
       dMob_dC[ic] = 0.0;
 
-
-    UPWIND_SCHEME<NC, NUM_ELEMS, T> scheme( numPhase,
+    UPWIND<T> scheme;
+    scheme.template getUpwindDir<NC,NUM_ELEMS,UPWIND>( numPhase,
                          phaseIndex,
                          stencilSize,
                          seri,
@@ -802,9 +1090,8 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
                          dCompFrac_dCompDens,
                          phaseMassDens,
                          dPhaseMassDens_dPres,
-                         dPhaseMassDens_dComp );
-
-    upwindDir = scheme();
+                         dPhaseMassDens_dComp,
+                         upwindDir);
 
     localIndex const er_up = seri[upwindDir];
     localIndex const esr_up = sesri[upwindDir];
@@ -833,7 +1120,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
     * @param stencilWeights weights associated with elements in the stencil
     * @param totFlux total flux signed value
     */
-  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, term T, template<localIndex,localIndex,term> class UPWIND_SCHEME >
+  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, term T, template<term> class UPWIND>
   GEOSX_HOST_DEVICE
   static void
   formFracFlow( localIndex const numPhase,
@@ -890,7 +1177,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
       real64 dMob_dP {};
       real64 dMob_dC[NC] {};
 
-      upwindMob<NC, NUM_ELEMS, T, UPWIND_SCHEME>( numPhase,
+      upwindMob<NC, NUM_ELEMS, T, UPWIND>( numPhase,
                                    ip,
                                    stencilSize,
                                    seri,
@@ -953,7 +1240,7 @@ class PU<NC,NUM_ELEMS,term::Viscous> : public UpwindScheme<NC,NUM_ELEMS,term::Vi
   }
 
 
-  };//end of struct UpwindHelper
+
 
 
 
