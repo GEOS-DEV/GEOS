@@ -479,40 +479,22 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
 
-          // cartesian-specific nodesets
-          if( m_mapToRadial == 0 )
+          if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
           {
-            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
-            {
-              rnegNodes.insert( localNodeIndex );
-            }
-            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
-            {
-              rposNodes.insert( localNodeIndex );
-            }
-            if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
-            {
-              tnegNodes.insert( localNodeIndex );
-            }
-            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
-            {
-              tposNodes.insert( localNodeIndex );
-            }
+            rnegNodes.insert( localNodeIndex );
           }
-          else
+          if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
           {
-            // radial-specific nodesets
-            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
-            {
-              rnegNodes.insert( localNodeIndex );
-            }
-            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
-            {
-              rposNodes.insert( localNodeIndex );
-            }
+            rposNodes.insert( localNodeIndex );
           }
-
-          // general nodesets
+          if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
+          {
+            tnegNodes.insert( localNodeIndex );
+          }
+          if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
+          {
+            tposNodes.insert( localNodeIndex );
+          }
           if( isEqual( X( localNodeIndex, 2 ), m_min[2], 1e-10 ) )
           {
             anegNodes.insert( localNodeIndex );
@@ -696,10 +678,33 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     // Map to radial mesh
     for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
     {
+/**
+      // add mapped values to nodesets
+      if( m_mapToRadial >= 1 )
+      {
+        if( isEqual( X[iN][0], m_min[0], 1e-6 ) )
+        {
+          rnegNodes.insert( iN );
+        }
+        if( isEqual( X[iN][0], m_max[0], 1e-6 ) )
+        {
+          rposNodes.insert( iN );
+        }
+        if( isEqual( X[iN][1], m_min[1], 1e-6 ) )
+        {
+          tnegNodes.insert( iN );
+        }
+        if( isEqual( X[iN][1], m_max[1], 1e-6 ) )
+        {
+          tposNodes.insert( iN );
+        }
+      }
+*/
       m_meshTheta = X[iN][1] * M_PI / 180.0;
       m_meshAxis = static_cast< int >(round( m_meshTheta * 2.0 / M_PI ));
       m_meshPhi = fabs( m_meshTheta - m_meshAxis * M_PI / 2.0 );
       m_meshRout = m_max[0] / cos( m_meshPhi );
+      
 
       if( m_mapToRadial > 1 )
       {
@@ -711,28 +716,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
       }
 
       X[iN][0] = m_meshRact * cos( m_meshTheta );
-      X[iN][1] = m_meshRact * sin( m_meshTheta );
-
-      // add mapped values to nodesets
-      if( m_mapToRadial > 1 )
-      {
-        if( isEqual( X[iN][0], -1 * m_max[0], 1e-6 ) )
-        {
-          rnegNodes.insert( iN );
-        }
-        if( isEqual( X[iN][0], m_max[0], 1e-6 ) )
-        {
-          rposNodes.insert( iN );
-        }
-        if( isEqual( X[iN][1], -1 * m_max[0], 1e-6 ) )
-        {
-          tnegNodes.insert( iN );
-        }
-        if( isEqual( X[iN][1], m_max[0], 1e-6 ) )
-        {
-          tposNodes.insert( iN );
-        }
-      }
+      X[iN][1] = m_meshRact * sin( m_meshTheta );      
     }
   }
 
