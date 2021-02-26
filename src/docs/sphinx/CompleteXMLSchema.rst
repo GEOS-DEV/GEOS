@@ -372,13 +372,6 @@ Element: MultiPhaseMultiComponentFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
 
 
-.. _XML_NewMultiPhaseMultiComponentFluid:
-
-Element: NewMultiPhaseMultiComponentFluid
-=========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/NewMultiPhaseMultiComponentFluid.rst
-
-
 .. _XML_NonlinearSolverParameters:
 
 Element: NonlinearSolverParameters
@@ -1151,13 +1144,6 @@ Datastructure: MeshBodies
 Datastructure: MultiPhaseMultiComponentFluid
 ============================================
 .. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
-
-
-.. _DATASTRUCTURE_NewMultiPhaseMultiComponentFluid:
-
-Datastructure: NewMultiPhaseMultiComponentFluid
-===============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/NewMultiPhaseMultiComponentFluid_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:

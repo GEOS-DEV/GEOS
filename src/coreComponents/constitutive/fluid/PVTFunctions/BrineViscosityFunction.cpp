@@ -13,9 +13,8 @@
  */
 
 /**
- * @file BrineViscosityFunction.cpp
+ * @file BrineViscosity.cpp
  */
-
 
 #include "constitutive/fluid/PVTFunctions/BrineViscosityFunction.hpp"
 
@@ -27,25 +26,24 @@ using namespace stringutilities;
 namespace PVTProps
 {
 
-BrineViscosityFunction::BrineViscosityFunction( string_array const & inputPara,
-                                                string_array const & componentNames,
-                                                real64_array const & componentMolarWeight ):
-  PVTFunction( inputPara[1], componentNames, componentMolarWeight )
+BrineViscosity::BrineViscosity( array1d< string > const & inputPara,
+                                array1d< string > const & componentNames,
+                                array1d< real64 > const & componentMolarWeight ):
+  PVTFunctionBase( inputPara[1],
+                   componentNames,
+                   componentMolarWeight )
 {
-
-  makeCoef( inputPara );
-
+  makeCoefficients( inputPara );
 }
 
-void BrineViscosityFunction::makeCoef( string_array const & inputPara )
+void BrineViscosity::makeCoefficients( array1d< string > const & inputPara )
 {
-
+  // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
   constexpr real64 a = 0.0816;
   constexpr real64 b = 0.0122;
   constexpr real64 c = 0.000128;
   constexpr real64 d = 0.000629;
   constexpr real64 k = -0.7;
-
   constexpr real64 waterVisc = 8.9e-4; //at 25C
 
   real64 m = -1.0;
@@ -54,38 +52,27 @@ void BrineViscosityFunction::makeCoef( string_array const & inputPara )
 
   try
   {
-
     m = stod( inputPara[2] );
-
   }
   catch( const std::invalid_argument & e )
   {
-
-    GEOSX_ERROR( "Invalid BrineViscosity argument:" + string( e.what()));
-
+    GEOSX_ERROR( "Invalid BrineViscosity argument:" + string( e.what() ) );
   }
 
-
   m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;
-
   m_coef1 =  d * (1.0 - exp( k * m )) * waterVisc;
-
 }
 
-
-void BrineViscosityFunction::evaluation( EvalVarArgs const & GEOSX_UNUSED_PARAM(
-                                           pressure ), EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM(
-                                           phaseComposition ), EvalVarArgs & value, bool GEOSX_UNUSED_PARAM( useMass )) const
+BrineViscosity::KernelWrapper BrineViscosity::createKernelWrapper()
 {
-
-  value = m_coef0 + m_coef1 * temperature;
-
+  return KernelWrapper( m_componentNames,
+                        m_componentMolarWeight,
+                        m_coef0,
+                        m_coef1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunction,
-                        BrineViscosityFunction,
-                        string_array const &, string_array const &, real64_array const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineViscosity, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
 
-}
+} // end namespace PVTProps
 
-}
+} // end namespace geosx

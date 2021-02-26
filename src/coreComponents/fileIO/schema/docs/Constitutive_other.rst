@@ -19,7 +19,6 @@ ElasticIsotropic                      node :ref:`DATASTRUCTURE_ElasticIsotropic`
 ElasticTransverseIsotropic            node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`            
 ExtendedDruckerPrager                 node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                 
 MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiComponentFluid`         
-NewMultiPhaseMultiComponentFluid      node :ref:`DATASTRUCTURE_NewMultiPhaseMultiComponentFluid`      
 NullModel                             node :ref:`DATASTRUCTURE_NullModel`                             
 ParticleFluid                         node :ref:`DATASTRUCTURE_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           

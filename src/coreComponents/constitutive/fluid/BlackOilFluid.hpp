@@ -32,6 +32,8 @@ class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
+  using exec_policy = serialPolicy;
+
   enum class FluidType : integer
   {
     DeadOil,

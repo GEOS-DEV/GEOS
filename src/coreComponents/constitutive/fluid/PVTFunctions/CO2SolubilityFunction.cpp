@@ -13,11 +13,13 @@
  */
 
 /**
- * @file CO2SolubilityFunction.cpp
+ * @file CO2Solubility.cpp
  */
 
-
 #include "constitutive/fluid/PVTFunctions/CO2SolubilityFunction.hpp"
+
+#include "managers/Functions/FunctionManager.hpp"
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -28,244 +30,182 @@ using namespace stringutilities;
 namespace PVTProps
 {
 
-constexpr real64 minForDivision = 1e-10;
-
-constexpr real64 T_K_f = 273.15;
+constexpr real64 T_K_f  = 273.15;
 constexpr real64 P_Pa_f = 1e+5;
-constexpr real64 P_c = 73.773 * P_Pa_f;
-constexpr real64 T_c = 304.1282;
-constexpr real64 Rgas = 8.314467;
-constexpr real64 V_c = Rgas*T_c/P_c;
+constexpr real64 P_c    = 73.773 * P_Pa_f;
+constexpr real64 T_c    = 304.1282;
+constexpr real64 Rgas   = 8.314467;
+constexpr real64 V_c    = Rgas*T_c/P_c;
 
+// these coefficients are in Table (A1) of Duan and Sun (2003)
 constexpr real64 acoef[] =
-{8.99288497e-2, -4.94783127e-1, 4.77922245e-2, 1.03808883e-2, -2.82516861e-2, 9.49887563e-2, 5.20600880e-4, -2.93540971e-4, -1.77265112e-3, -2.51101973e-5,
- 8.93353441e-5, 7.88998563e-5, -1.66727022e-2, 1.398, 2.96e-2};
+{ 8.99288497e-2, -4.94783127e-1, 4.77922245e-2, 1.03808883e-2, -2.82516861e-2, 9.49887563e-2, 5.20600880e-4,
+  -2.93540971e-4, -1.77265112e-3, -2.51101973e-5, 8.93353441e-5, 7.88998563e-5, -1.66727022e-2, 1.398, 2.96e-2 };
 
+namespace detail
+{
 
 real64 ff( real64 const & T, real64 const & P, real64 const & V_r )
 {
+  // reduced pressure
   real64 const P_r = P*P_Pa_f/P_c;
+  // reduced temperature
   real64 const T_r = (T_K_f+T)/T_c;
 
-  real64 const f_Z = 1.0 + (acoef[0] + acoef[1]/(T_r * T_r) + acoef[2]/(T_r*T_r*T_r))/V_r + (acoef[3] + acoef[4]/(T_r*T_r) + acoef[5]/(T_r*T_r*T_r))/(V_r*V_r) +
-                     (acoef[6] + acoef[7]/(T_r*T_r) + acoef[8]/(T_r*T_r*T_r))/(V_r*V_r*V_r*V_r) + (acoef[9] + acoef[10]/(T_r*T_r) + acoef[11]/(T_r*T_r*T_r))/
-                     (V_r*V_r*V_r*V_r*V_r) + acoef[12]/(T_r*T_r*T_r)/(V_r*V_r) * (acoef[13] + acoef[14]/(V_r*V_r)) * exp( -acoef[14]/(V_r*V_r)) - P_r * V_r /
-                     T_r;
+  // CO2 equation of state
+  // see equation (A1) in Duan and Sun (2003)
+  real64 const f_Z = 1.0
+                     + ( acoef[0] + acoef[1]/(T_r * T_r) + acoef[2]/(T_r * T_r * T_r) )/V_r
+                     + ( acoef[3] + acoef[4]/(T_r * T_r) + acoef[5]/(T_r * T_r * T_r) )/(V_r*V_r)
+                     + ( acoef[6] + acoef[7]/(T_r * T_r) + acoef[8]/(T_r * T_r * T_r) )/(V_r*V_r*V_r*V_r)
+                     + ( acoef[9] + acoef[10]/(T_r * T_r) + acoef[11]/(T_r * T_r * T_r) )/(V_r*V_r*V_r*V_r*V_r)
+                     + acoef[12]/(T_r * T_r * T_r)/(V_r * V_r) * (acoef[13] + acoef[14]/(V_r * V_r)) * exp( -acoef[14]/(V_r * V_r)) - P_r * V_r / T_r;
 
   return f_Z;
 }
 
 real64 PWater( real64 const & T )
 {
-  constexpr real64 ccoef[] = {-38.640844, 5.8948420, 59.876516, 26.654627, 10.637097};
+  // these coefficients are defined in Table (B1) of Duan and Sun (2003)
+  constexpr real64 ccoef[] = { -38.640844, 5.8948420, 59.876516, 26.654627, 10.637097 };
 
-  real64 const P_c_w = 220.85;       // H2O critical pressure (bars)
-  real64 const T_c_w = 647.29;     // H2O critical temperature (K)
-  real64 const tt = ((T+T_K_f)-T_c_w)/T_c_w;
-  real64 const x = (P_c_w*(T+T_K_f)/T_c_w) * (1 + ccoef[0]*pow( -tt, 1.9 ) + ccoef[1]*tt + ccoef[2]*tt*tt + ccoef[3]*tt*tt*tt + ccoef[4]*tt*tt*tt*tt);
+  // H2O critical pressure (bars)
+  real64 const P_c_w = 220.85;
+  // H2O critical temperature (K)
+  real64 const T_c_w = 647.29;
+  real64 const tt = ( (T+T_K_f)-T_c_w )/T_c_w;
+  // Empirical model for water pressure of equation (B1) of Duan and Sun (2003)
+  real64 const x = (P_c_w*(T+T_K_f)/T_c_w)
+                   * (1
+                      + ccoef[0]*pow( -tt, 1.9 )
+                      + ccoef[1]*tt
+                      + ccoef[2]*tt*tt
+                      + ccoef[3]*tt*tt*tt
+                      + ccoef[4]*tt*tt*tt*tt);
 
   return x;
 }
 
 real64 logF( real64 const & T, real64 const & P, real64 const & V_r )
 {
+  // reduced pressure
   real64 const P_r = P*P_Pa_f/P_c;
+  // reduced temperature
   real64 const T_r = (T_K_f+T)/T_c;
+  real64 const Z   = P_r * V_r/T_r;
 
-  real64 const Z=P_r * V_r/T_r;
-
-  real64 const log_f = Z - 1 - log( Z ) + (acoef[0] + acoef[1]/T_r/T_r + acoef[2]/T_r/T_r/T_r)/V_r + (acoef[3] + acoef[4]/T_r/T_r + acoef[5]/T_r/T_r/T_r)/2.0/
-                       V_r/V_r + (acoef[6] + acoef[7]/T_r/T_r + acoef[8]/T_r/T_r/T_r)/4.0/V_r/V_r/V_r/V_r +
-                       (acoef[9] + acoef[10]/T_r/T_r + acoef[11]/T_r/T_r/T_r)/5.0/V_r/V_r/
-                       V_r/V_r/V_r + acoef[12]/2.0/T_r/T_r/T_r/acoef[14] *
-                       (acoef[13] + 1.0 - (acoef[13] + 1.0 + acoef[14]/V_r/V_r) * exp( -acoef[14]/V_r/V_r ));
+  // fugacity coefficient of CO2, equation (A6) of Duan and Sun (2003)
+  real64 const log_f = Z - 1 - log( Z ) +
+                       ( acoef[0] + acoef[1]/T_r/T_r + acoef[2]/T_r/T_r/T_r )/V_r
+                       + ( acoef[3] + acoef[4]/T_r/T_r + acoef[5]/T_r/T_r/T_r )/2.0/V_r/V_r
+                       + ( acoef[6] + acoef[7]/T_r/T_r + acoef[8]/T_r/T_r/T_r )/4.0/V_r/V_r/V_r/V_r
+                       + ( acoef[9] + acoef[10]/T_r/T_r + acoef[11]/T_r/T_r/T_r )/5.0/V_r/V_r/V_r/V_r/V_r
+                       + acoef[12]/2.0/T_r/T_r/T_r/acoef[14] * ( acoef[13] + 1.0 - (acoef[13] + 1.0 + acoef[14]/V_r/V_r) * exp( -acoef[14]/V_r/V_r ) );
 
   return log_f;
 }
 
 real64 Par( real64 const & T, real64 const & P, real64 const * cc )
 {
-  real64 x = cc[0] + cc[1]*T +cc[2]/T + cc[3]*T*T + cc[4]/(630.0-T) + cc[5]*P + cc[6] *P *log( T ) + cc[7]*P/T + cc[8]*P/(630.0-T) + cc[9]*P*P/(630.0-T)/
-             (630.0-T) + cc[10] *T *log( P );
+  // "equation for the parameters", see equation (7) of Duan and Sun (2003)
+  real64 x = cc[0]
+             + cc[1]*T
+             + cc[2]/T
+             + cc[3]*T*T
+             + cc[4]/(630.0-T)
+             + cc[5]*P
+             + cc[6]*P *log( T )
+             + cc[7]*P/T
+             + cc[8]*P/(630.0-T)
+             + cc[9]*P*P/(630.0-T)/(630.0-T)
+             + cc[10]*T *log( P );
 
   return x;
 }
 
-void CO2Solubility( real64 const & T, real64 const & P, real64 & V_r, real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ))
-{
-
-  constexpr real64 eps = 1e-9;
-  int count = 0;
-  constexpr real64 dx = 1e-10;
-
-  real64 dre;
-  real64 Vr_int = 0.05;
-
-  V_r = 0.75*Rgas*(T_K_f+T)/(P*P_Pa_f)*(1/V_c);
-
-  real64 v1, v0;
-
-  for(;; )
-  {
-
-    if( V_r < 0.0 )
-    {
-      V_r = Vr_int;
-      Vr_int += 0.05;
-    }
-
-    v0 = (*f)( T, P, V_r );
-    v1 = (*f)( T, P, V_r+dx );
-    dre = -v0/((v1-v0)/dx);
-
-    if( fabs( dre ) < eps )
-      break;
-
-    GEOSX_ERROR_IF( count > 50, "CO2Solubiltiy NR convergence fails! " << "dre = " << dre << ", eps = " << eps );
-
-    count++;
-
-    V_r += dre;
-  }
 }
 
-void CalculateCO2Solubility( real64_array const & pressure, real64_array const & temperature, real64 const & salinity, real64_array2d const & solubiltiy )
+CO2Solubility::CO2Solubility( array1d< string > const & inputPara,
+                              array1d< string > const & phaseNames,
+                              array1d< string > const & componentNames,
+                              array1d< real64 > const & componentMolarWeight ):
+  FlashModelBase( inputPara[1],
+                  componentNames,
+                  componentMolarWeight )
 {
+  GEOSX_ERROR_IF( phaseNames.size() != 2, "The CO2Solubility model is a two-phase model" );
+  GEOSX_ERROR_IF( componentNames.size() != 2, "The CO2Solubility model is a two-component model" );
 
-  real64 T, P, V_r, m, logK, y_CO2;
-
-  constexpr real64 mu[] =
-  {28.9447706, -0.0354581768, -4770.67077, 1.02782768e-5, 33.8126098, 9.04037140e-3, -1.14934031e-3, -0.307405726, -0.0907301486, 9.32713393e-4, 0};
-
-  constexpr real64 lambda[] = {-0.411370585, 6.07632013e-4, 97.5347708, 0, 0, 0, 0, -0.0237622469, 0.0170656236, 0, 1.41335834e-5};
-
-  constexpr real64 zeta[] = {3.36389723e-4, -1.98298980e-5, 0, 0, 0, 0, 0, 2.12220830e-3, -5.24873303e-3, 0, 0};
-
-  m = salinity;
-
-  for( localIndex i = 0; i < pressure.size(); ++i )
-  {
-
-    P = pressure[i] / P_Pa_f;
-
-    for( localIndex j = 0; j < temperature.size(); ++j )
-    {
-
-      T = temperature[j];
-
-      CO2Solubility( T, P, V_r, &ff );
-
-      logK = Par( T+T_K_f, P, mu ) - logF( T, P, V_r ) + 2*Par( T+T_K_f, P, lambda )*m + Par( T+T_K_f, P, zeta )*m*m;
-
-      y_CO2 = (P - PWater( T ))/P;
-
-      solubiltiy[i][j] = y_CO2 * P / exp( logK );
-
-    }
-
-  }
-
-}
-
-
-CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
-                                              string_array const & phaseNames,
-                                              string_array const & componentNames,
-                                              real64_array const & componentMolarWeight ):
-  FlashModel( inputPara[1], componentNames, componentMolarWeight )
-{
-
-  bool notFound = 1;
-
+  bool notFound = true;
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
-
-    if( streq( componentNames[i], "CO2" ) || streq( componentNames[i], "co2" ))
+    if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
     {
       m_CO2Index = i;
-      notFound = 0;
+      notFound = false;
       break;
     }
-
   }
-
   GEOSX_ERROR_IF( notFound, "Component CO2 is not found!" );
 
-  notFound = 1;
-
+  notFound = true;
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
-
-    if( streq( componentNames[i], "Water" ) || streq( componentNames[i], "water" ))
+    if( componentNames[i] == "Water" || componentNames[i] == "water" )
     {
       m_waterIndex = i;
-      notFound = 0;
+      notFound = false;
       break;
     }
-
   }
-
   GEOSX_ERROR_IF( notFound, "Component Water/Brine is not found!" );
 
-
-  notFound = 1;
-
+  notFound = true;
   for( localIndex i = 0; i < phaseNames.size(); ++i )
   {
-
-    if( streq( phaseNames[i], "CO2" ) || streq( phaseNames[i], "co2" ) || streq( phaseNames[i], "gas" ) || streq( phaseNames[i], "Gas" ))
+    if( phaseNames[i] == "CO2" || phaseNames[i] == "co2" ||
+        phaseNames[i] == "gas" || phaseNames[i] == "Gas" )
     {
       m_phaseGasIndex = i;
-      notFound = 0;
+      notFound = false;
       break;
     }
-
   }
-
   GEOSX_ERROR_IF( notFound, "Phase co2/gas is not found!" );
 
-  notFound = 1;
-
+  notFound = true;
   for( localIndex i = 0; i < phaseNames.size(); ++i )
   {
-
-    if( streq( phaseNames[i], "Water" ) || streq( phaseNames[i], "water" ) || streq( phaseNames[i], "Liquid" ) || streq( phaseNames[i], "liquid" ))
+    if( streq( phaseNames[i], "Water" ) || streq( phaseNames[i], "water" ) ||
+        streq( phaseNames[i], "Liquid" ) || streq( phaseNames[i], "liquid" ) )
     {
       m_phaseLiquidIndex = i;
-      notFound = 0;
+      notFound = false;
       break;
     }
-
   }
-
   GEOSX_ERROR_IF( notFound, "Phase water/liquid is not found!" );
 
   makeTable( inputPara );
-
 }
 
-void CO2SolubilityFunction::makeTable( string_array const & inputPara )
+void CO2Solubility::makeTable( array1d< string > const & inputPara )
 {
+  array1d< array1d< real64 > > coordinates;
+  coordinates.resize( 2 );
 
-  real64_array pressures;
-  real64_array temperatures;
-
-  real64 PStart, PEnd, dP;
-  real64 TStart, TEnd, dT;
-  real64 P, T, m;
-
-  dT = -1.0;
-  dP = -1.0;
-  TStart = -1.0;
-  TEnd = -1.0;
-  PStart = -1.0;
-  PEnd = -1.0;
+  real64 TStart = -1.0;
+  real64 TEnd = -1.0;
+  real64 dT = -1.0;
+  real64 PStart = -1.0;
+  real64 PEnd = -1.0;
+  real64 dP = -1.0;
+  real64 salinity = 0;
 
   GEOSX_ERROR_IF( inputPara.size() < 9, "Invalid CO2Solubility input!" );
 
   try
   {
-
     PStart = stod( inputPara[2] );
     PEnd = stod( inputPara[3] );
     dP = stod( inputPara[4] );
@@ -274,121 +214,131 @@ void CO2SolubilityFunction::makeTable( string_array const & inputPara )
     TEnd = stod( inputPara[6] );
     dT = stod( inputPara[7] );
 
-    m = stod( inputPara[8] );
-
+    salinity = stod( inputPara[8] );
   }
   catch( const std::invalid_argument & e )
   {
-
-    GEOSX_ERROR( "Invalid CO2Solubility argument:" + string( e.what()));
-
+    GEOSX_ERROR( "Invalid CO2Solubility argument:" + string( e.what()) );
   }
 
-  P = PStart;
-
+  real64 P = PStart;
   while( P <= PEnd )
   {
-
-    pressures.emplace_back( P );
+    coordinates[0].emplace_back( P );
     P += dP;
-
   }
 
-  T = TStart;
-
+  real64 T = TStart;
   while( T <= TEnd )
   {
-
-    temperatures.emplace_back( T );
+    coordinates[1].emplace_back( T );
     T += dT;
-
   }
 
-  localIndex const nP = pressures.size();
-  localIndex const nT = temperatures.size();
+  localIndex const nP = coordinates[0].size();
+  localIndex const nT = coordinates[1].size();
+  array1d< real64 > values( nP * nT );
+  calculateCO2Solubility( coordinates, salinity, values );
 
-  real64_array2d solubilities( nP, nT );
-
-  CalculateCO2Solubility( pressures, temperatures, m, solubilities );
-
-  m_CO2SolubilityTable = std::make_shared< XYTable >( "CO2SolubilityTable", pressures, temperatures, solubilities );
-
-
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  m_CO2SolubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
+  m_CO2SolubilityTable->setTableCoordinates( coordinates );
+  m_CO2SolubilityTable->setTableValues( values );
+  m_CO2SolubilityTable->reInitializeFunction();
+  m_CO2SolubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
 
-void CO2SolubilityFunction::partition( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & compFraction,
-                                       arraySlice1d< EvalVarArgs > const & phaseFraction, arraySlice2d< EvalVarArgs > const & phaseCompFraction ) const
+void CO2Solubility::calculateCO2Solubility( array1d< array1d< real64 > > const & coordinates,
+                                            real64 const & salinity,
+                                            array1d< real64 > const & values )
+{
+  // Interaction parameters, see Table 2 of Duan and Sun (2003)
+  constexpr real64 mu[] =
+  { 28.9447706, -0.0354581768, -4770.67077, 1.02782768e-5, 33.8126098, 9.04037140e-3,
+    -1.14934031e-3, -0.307405726, -0.0907301486, 9.32713393e-4, 0 };
+  constexpr real64 lambda[] = { -0.411370585, 6.07632013e-4, 97.5347708, 0, 0, 0, 0, -0.0237622469, 0.0170656236, 0, 1.41335834e-5 };
+  constexpr real64 zeta[] = { 3.36389723e-4, -1.98298980e-5, 0, 0, 0, 0, 0, 2.12220830e-3, -5.24873303e-3, 0, 0 };
+
+  localIndex const numPressures = coordinates[0].size();
+  localIndex const numTemperatures = coordinates[1].size();
+
+  for( localIndex i = 0; i < numPressures; ++i )
+  {
+    real64 const P = coordinates[0][i] / P_Pa_f;
+
+    for( localIndex j = 0; j < numTemperatures; ++j )
+    {
+      real64 const T = coordinates[1][j];
+
+      // compute reduced volume by solving the CO2 equation of state
+      real64 V_r = 0.0;
+      CO2SolubilityFunction( T, P, V_r, &detail::ff );
+
+      // compute equation (6) of Duan and Sun (2003)
+      real64 const logK = detail::Par( T+T_K_f, P, mu )
+                          - detail::logF( T, P, V_r )
+                          + 2*detail::Par( T+T_K_f, P, lambda ) * salinity
+                          + detail::Par( T+T_K_f, P, zeta ) * salinity * salinity;
+
+      // mole fraction of CO2 in vapor phase, equation (4) of Duan and Sun (2003)
+      real64 const y_CO2 = (P - detail::PWater( T ))/P;
+      values[j*numPressures+i] = y_CO2 * P / exp( logK );
+    }
+  }
+}
+
+void CO2Solubility::CO2SolubilityFunction( real64 const & T,
+                                           real64 const & P,
+                                           real64 & V_r,
+                                           real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ) )
 {
 
-  EvalArgs2D P, T, solubility;
-  P.m_var = pressure.m_var;
-  P.m_der[0] = 1.0;
+  constexpr real64 eps = 1e-9;
+  constexpr real64 dx = 1e-10;
+  int count = 0;
+  real64 Vr_int = 0.05;
 
-  T.m_var = temperature.m_var;
-  T.m_der[1] = 1.0;
+  V_r = 0.75*Rgas*(T_K_f+T)/(P*P_Pa_f)*(1/V_c);
 
-  //solubiltiy mol/kg(water)  X = Csat/W
-  solubility = m_CO2SolubilityTable->value( P, T );
-
-  real64 const waterMW = m_componentMolarWeight[m_waterIndex];
-
-  solubility *= waterMW;
-
-  EvalVarArgs X, Y;
-
-  X.m_var = solubility.m_var;
-  X.m_der[0] = solubility.m_der[0];
-
-  //Y = C/W = z/(1-z)
-
-  if( compFraction[m_CO2Index].m_var > 1.0 - minForDivision )
+  // iterate until the solution of the CO2 equation of state is found
+  for(;; )
   {
-    Y = compFraction[m_CO2Index] / minForDivision;
-  }
-  else
-  {
-    Y = compFraction[m_CO2Index] / (1.0 - compFraction[m_CO2Index]);
-  }
-
-  if( Y < X )
-  {
-    //liquid phase only
-
-    phaseFraction[m_phaseLiquidIndex] = 1.0;
-    phaseFraction[m_phaseGasIndex] = 0.0;
-
-    for( localIndex c = 0; c < m_componentNames.size(); ++c )
+    if( V_r < 0.0 )
     {
-      phaseCompFraction[m_phaseLiquidIndex][c] = compFraction[c];
+      V_r = Vr_int;
+      Vr_int += 0.05;
     }
 
-  }
-  else
-  {
-    // two-phase
-    // liquid phase fraction = (Csat + W) / (C + W) = (Csat/W + 1) / (C/W + 1)
+    real64 const v0 = (*f)( T, P, V_r );
+    real64 const v1 = (*f)( T, P, V_r+dx );
+    real64 const dre = -v0/((v1-v0)/dx);
 
-    phaseFraction[m_phaseLiquidIndex] = (X + 1.0)/ (Y + 1.0);
-    phaseFraction[m_phaseGasIndex] = 1.0 - phaseFraction[m_phaseLiquidIndex];
+    if( fabs( dre ) < eps )
+    {
+      break;
+    }
 
-    //liquid phase composition  CO2 = Csat / (Csat + W) = (Csat/W) / (Csat/W + 1)
+    GEOSX_ERROR_IF( count > 50, "CO2Solubility NR convergence fails! " << "dre = " << dre << ", eps = " << eps );
 
-    phaseCompFraction[m_phaseLiquidIndex][m_CO2Index] = X / (X + 1.0);
-    phaseCompFraction[m_phaseLiquidIndex][m_waterIndex] = 1.0 - phaseCompFraction[m_phaseLiquidIndex][m_CO2Index];
-
-    //gas phase composition  CO2 = 1.0
-
-    phaseCompFraction[m_phaseGasIndex][m_CO2Index] = 1.0;
-    phaseCompFraction[m_phaseGasIndex][m_waterIndex] = 0.0;
-
+    count++;
+    V_r += dre;
   }
 }
 
 
-REGISTER_CATALOG_ENTRY( FlashModel,
-                        CO2SolubilityFunction,
-                        string_array const &, string_array const &, string_array const &, real64_array const & )
-
+CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper()
+{
+  return KernelWrapper( m_componentNames,
+                        m_componentMolarWeight,
+                        m_CO2SolubilityTable,
+                        m_CO2Index,
+                        m_waterIndex,
+                        m_phaseGasIndex,
+                        m_phaseLiquidIndex );
 }
 
-}
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, array1d< string > const &, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
+
+} // end namespace PVTProps
+
+} // end namespace geosx

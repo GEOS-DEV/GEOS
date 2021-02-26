@@ -16,11 +16,7 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/PVTFunctions/NewBrineViscosityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/NewFenghourCO2ViscosityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/NewBrineCO2DensityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/NewSpanWagnerCO2DensityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/NewCO2SolubilityFunction.hpp"
+#include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineViscosityFunction.hpp"
 #include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineCO2DensityFunction.hpp"
@@ -49,12 +45,11 @@ static const char * pvtgas_str = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 
 
 static const char * co2flash_str = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
 
-// TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
 void testValuesAgainstPreviousImplementation( PVTFunctionBaseUpdate const & pvtFunctionWrapper,
-                                              PVTFunction const & oldPvtFunction,
                                               real64 const pressure,
                                               real64 const temperature,
                                               arraySlice1d< real64 > const & phaseComposition,
+                                              real64 const & oldImplValue,
                                               bool const useMass,
                                               real64 const relTol )
 {
@@ -71,29 +66,15 @@ void testValuesAgainstPreviousImplementation( PVTFunctionBaseUpdate const & pvtF
                               dValue_dPhaseComposition,
                               useMass );
 
-  EvalVarArgs oldPres( pressure );
-  EvalVarArgs oldTemp( temperature );
-  EvalVarArgs oldValue( 0.0 );
-  stackArray1d< EvalVarArgs, 2 > oldPhaseComposition( 2 );
-  for( localIndex ic = 0; ic < 2; ic++ )
-  {
-    oldPhaseComposition[ic].m_var = phaseComposition[ic];
-  }
-  oldPvtFunction.evaluation( oldPres,
-                             oldTemp,
-                             oldPhaseComposition,
-                             oldValue,
-                             useMass );
-
-  checkRelativeError( value, oldValue.m_var, relTol );
+  checkRelativeError( value, oldImplValue, relTol );
 }
 
-// TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
 void testValuesAgainstPreviousImplementation( FlashModelBaseUpdate const & flashModelWrapper,
-                                              FlashModel const & oldFlashModel,
-                                              real64 const pressure,
-                                              real64 const temperature,
+                                              real64 const & pressure,
+                                              real64 const & temperature,
                                               arraySlice1d< real64 > const & compFraction,
+                                              real64 const & savedGasPhaseFrac,
+                                              real64 const & savedWaterPhaseGasComp,
                                               real64 const relTol )
 {
   stackArray1d< real64, 2 > phaseFraction( 2 );
@@ -116,27 +97,23 @@ void testValuesAgainstPreviousImplementation( FlashModelBaseUpdate const & flash
                              dPhaseCompFraction_dTemp,
                              dPhaseCompFraction_dCompFraction );
 
-  EvalVarArgs oldPres( pressure );
-  EvalVarArgs oldTemp( temperature );
-  stackArray1d< EvalVarArgs, 2 > oldCompFraction( 2 );
-  stackArray1d< EvalVarArgs, 2 > oldPhaseFraction( 2 );
-  stackArray2d< EvalVarArgs, 4 > oldPhaseCompFraction( 2, 2 );
-  for( localIndex ic = 0; ic < 2; ic++ )
-  {
-    oldCompFraction[ic].m_var = compFraction[ic];
-  }
-  oldFlashModel.partition( oldPres,
-                           oldTemp,
-                           oldCompFraction,
-                           oldPhaseFraction,
-                           oldPhaseCompFraction );
-
   for( localIndex i = 0; i < 2; ++i )
   {
-    checkRelativeError( phaseFraction[i], oldPhaseFraction[i].m_var, relTol );
+    real64 const savedPhaseFrac = (i == 0) ? savedGasPhaseFrac : 1.0 - savedGasPhaseFrac;
+    checkRelativeError( phaseFraction[i], savedPhaseFrac, relTol );
+
     for( localIndex j = 0; j < 2; ++j )
     {
-      checkRelativeError( phaseCompFraction[i][j], oldPhaseCompFraction[i][j].m_var, relTol );
+      real64 savedCompFrac = 0.0;
+      if( i == 0 )
+      {
+        savedCompFrac = ( j == 0 ) ? 1 : 0;
+      }
+      else
+      {
+        savedCompFrac = ( j == 0 ) ? savedWaterPhaseGasComp : 1 - savedWaterPhaseGasComp;
+      }
+      checkRelativeError( phaseCompFraction[i][j], savedCompFrac, relTol );
     }
   }
 }
@@ -434,7 +411,6 @@ protected:
     writeTableToFile( filename, pvtliquid_str );
 
     pvtFunction = makePVTFunction< BrineViscosity >( filename, key );
-    oldPvtFunction = makePVTFunction< BrineViscosityFunction >( filename, key ); // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
   }
 
   virtual void TearDown() override
@@ -446,7 +422,6 @@ protected:
   string const filename = "pvtliquid.txt";
 
   std::unique_ptr< BrineViscosity > pvtFunction;
-  std::unique_ptr< BrineViscosityFunction > oldPvtFunction; // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
 };
 
 TEST_F( BrineViscosityTest, brineViscosityValuesAndDeriv )
@@ -454,21 +429,36 @@ TEST_F( BrineViscosityTest, brineViscosityValuesAndDeriv )
   real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
   real64 const TC[3] = { 94.5, 95, 95.6 };
   array1d< real64 > comp( 2 );
-  comp[0] = 0.3; comp[1] = 0.7;
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
+  real64 const savedValues[] = { 0.0009009475991, 0.0009009665224, 0.0009009892304, 0.0009009475991, 0.0009009665224,
+                                 0.0009009892304, 0.0009009475991, 0.0009009665224, 0.0009009892304, 0.0009009475991,
+                                 0.0009009665224, 0.0009009892304, 0.0009009475991, 0.0009009665224, 0.0009009892304,
+                                 0.0009009475991, 0.0009009665224, 0.0009009892304, 0.0009009475991, 0.0009009665224,
+                                 0.0009009892304, 0.0009009475991, 0.0009009665224, 0.0009009892304, 0.0009009475991,
+                                 0.0009009665224, 0.0009009892304 };
+
   BrineViscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  for( localIndex iPres = 0; iPres < 3; ++iPres )
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
-      testValuesAgainstPreviousImplementation( pvtFunctionWrapper, // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
-                                               *oldPvtFunction, P[iPres], TC[iTemp], comp, true, relTol );
-      testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
     }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
   }
 }
 
@@ -481,7 +471,6 @@ protected:
     writeTableToFile( filename, pvtgas_str );
 
     pvtFunction = makePVTFunction< FenghourCO2Viscosity >( filename, key );
-    oldPvtFunction = makePVTFunction< FenghourCO2ViscosityFunction >( filename, key ); // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
   }
 
   virtual void TearDown() override
@@ -493,7 +482,6 @@ protected:
   string const filename = "pvtgas.txt";
 
   std::unique_ptr< FenghourCO2Viscosity > pvtFunction;
-  std::unique_ptr< FenghourCO2ViscosityFunction > oldPvtFunction; // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
 };
 
 TEST_F( FenghourCO2ViscosityTest, fenghourCO2ViscosityValuesAndDeriv )
@@ -503,21 +491,35 @@ TEST_F( FenghourCO2ViscosityTest, fenghourCO2ViscosityValuesAndDeriv )
   real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
   real64 const TC[3] = { 94.5, 95.1, 95.6 };
   array1d< real64 > comp( 2 );
-  comp[0] = 0.3; comp[1] = 0.7;
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
+  real64 const savedValues[] = { 1.904605302e-05, 1.907031467e-05, 1.909055363e-05, 2.008611673e-05, 2.010303796e-05, 2.011728461e-05,
+                                 2.508888392e-05, 2.504245053e-05, 2.500575965e-05, 1.904605302e-05, 1.907031467e-05, 1.909055363e-05,
+                                 2.008611673e-05, 2.010303796e-05, 2.011728461e-05, 2.508888392e-05, 2.504245053e-05, 2.500575965e-05,
+                                 1.904605302e-05, 1.907031467e-05, 1.909055363e-05, 2.008611673e-05, 2.010303796e-05, 2.011728461e-05,
+                                 2.508888392e-05, 2.504245053e-05, 2.500575965e-05 };
+
   FenghourCO2Viscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  for( localIndex iPres = 0; iPres < 3; ++iPres )
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
-      testValuesAgainstPreviousImplementation( pvtFunctionWrapper, // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
-                                               *oldPvtFunction, P[iPres], TC[iTemp], comp, true, relTol );
-      testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
     }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
   }
 }
 
@@ -530,7 +532,6 @@ protected:
     writeTableToFile( filename, pvtliquid_str );
 
     pvtFunction = makePVTFunction< BrineCO2Density >( filename, key );
-    oldPvtFunction = makePVTFunction< BrineCO2DensityFunction >( filename, key ); // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
   }
 
   virtual void TearDown() override
@@ -542,7 +543,6 @@ protected:
   string const filename = "pvtliquid.txt";
 
   std::unique_ptr< BrineCO2Density > pvtFunction;
-  std::unique_ptr< BrineCO2DensityFunction > oldPvtFunction; // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
 };
 
 TEST_F( BrineCO2DensityTest, brineCO2DensityMassValuesAndDeriv )
@@ -552,21 +552,34 @@ TEST_F( BrineCO2DensityTest, brineCO2DensityMassValuesAndDeriv )
   real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
   real64 const TC[3] = { 94.5, 95.1, 95.6 };
   array1d< real64 > comp( 2 );
-  comp[0] = 0.3; comp[1] = 0.7;
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
+  real64 const savedValues[] = { 1186.281618, 1185.321099, 1184.511961, 1186.997612, 1186.037426, 1185.228539, 1188.470081, 1187.510437,
+                                 1186.70195, 1477.603717, 1476.040357, 1474.719028, 1476.803422, 1475.235146, 1473.909633, 1475.091089,
+                                 1473.51237, 1472.177974, 2162.60433, 2159.623476, 2157.097807, 2158.238706, 2155.240595, 2152.700314,
+                                 2149.037782, 2146.003403, 2143.432409 };
+
   BrineCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  for( localIndex iPres = 0; iPres < 3; ++iPres )
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
-      testValuesAgainstPreviousImplementation( pvtFunctionWrapper, // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
-                                               *oldPvtFunction, P[iPres], TC[iTemp], comp, true, relTol );
-      testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
     }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
   }
 }
 
@@ -577,21 +590,37 @@ TEST_F( BrineCO2DensityTest, brineCO2DensityMolarValuesAndDeriv )
   real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
   real64 const TC[3] = { 94.5, 95.1, 95.6 };
   array1d< real64 > comp( 2 );
-  comp[0] = 0.3; comp[1] = 0.7;
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
+  // =======================================================================
+  // TODO FRANCOIS: NEW AND OLD MODEL PRODUCE NEGATIVE MOLAR DENSITIES !!!!
+  // =======================================================================
+  real64 const savedValues[] = { 32023.1563, 31987.53048, 31957.40422, 31997.76967, 31962.01198, 31931.77369, 31943.80393,
+                                 31907.76711, 31877.29169, 3267.434571, 3221.843011, 3182.926776, 3071.375934, 3025.161549, 2985.719723,
+                                 2660.391855, 2612.877907, 2572.339248, -64347.37057, -64416.39509, -64475.97965, -64944.73907,
+                                 -65015.54082, -65076.62339, -66195.19869, -66269.69941, -66333.90028 };
+
   BrineCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  for( localIndex iPres = 0; iPres < 3; ++iPres )
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
-      testValuesAgainstPreviousImplementation( pvtFunctionWrapper, // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
-                                               *oldPvtFunction, P[iPres], TC[iTemp], comp, false, relTol );
-      testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+        counter++;
+      }
     }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
   }
 }
 
@@ -605,7 +634,6 @@ protected:
     writeTableToFile( filename, pvtgas_str );
 
     pvtFunction = makePVTFunction< SpanWagnerCO2Density >( filename, key );
-    oldPvtFunction = makePVTFunction< SpanWagnerCO2DensityFunction >( filename, key ); // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
   }
 
   virtual void TearDown() override
@@ -617,7 +645,6 @@ protected:
   string const filename = "pvtgas.txt";
 
   std::unique_ptr< SpanWagnerCO2Density > pvtFunction;
-  std::unique_ptr< SpanWagnerCO2DensityFunction > oldPvtFunction; // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
 };
 
 TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMassValuesAndDeriv )
@@ -627,21 +654,34 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMassValuesAndDeriv )
   real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
   real64 const TC[3] = { 94.5, 95.1, 95.6 };
   array1d< real64 > comp( 2 );
-  comp[0] = 0.3; comp[1] = 0.7;
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
+  real64 const savedValues[] = { 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962, 280.2559694,
+                                 278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962,
+                                 280.2559694, 278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568,
+                                 281.9140962, 280.2559694, 278.9092508 };
+
   SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  for( localIndex iPres = 0; iPres < 3; ++iPres )
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
-      testValuesAgainstPreviousImplementation( pvtFunctionWrapper, // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
-                                               *oldPvtFunction, P[iPres], TC[iTemp], comp, true, relTol );
-      testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
     }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
   }
 }
 
@@ -652,21 +692,34 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMolarValuesAndDeriv )
   real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
   real64 const TC[3] = { 94.5, 95.1, 95.6 };
   array1d< real64 > comp( 2 );
-  comp[0] = 0.3; comp[1] = 0.7;
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
+  real64 const savedValues[] = { 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473, 6407.138549, 6369.45385,
+                                 6338.846609, 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473, 6407.138549,
+                                 6369.45385, 6338.846609, 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473,
+                                 6407.138549, 6369.45385, 6338.846609 };
+
   SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  for( localIndex iPres = 0; iPres < 3; ++iPres )
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
-      testValuesAgainstPreviousImplementation( pvtFunctionWrapper, // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
-                                               *oldPvtFunction, P[iPres], TC[iTemp], comp, false, relTol );
-      testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+        counter++;
+      }
     }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
   }
 }
 
@@ -680,7 +733,6 @@ protected:
     writeTableToFile( filename, co2flash_str );
 
     flashModel = makeFlashModel< CO2Solubility >( filename, key );
-    oldFlashModel = makeFlashModel< CO2SolubilityFunction >( filename, key ); // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
   }
 
   virtual void TearDown() override
@@ -692,7 +744,6 @@ protected:
   string const filename = "co2flash.txt";
 
   std::unique_ptr< CO2Solubility > flashModel;
-  std::unique_ptr< CO2SolubilityFunction > oldFlashModel; // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
 };
 
 TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
@@ -702,21 +753,40 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
   real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
   real64 const TC[3] = { 94.5, 95.1, 95.6 };
   array1d< real64 > comp( 2 );
-  comp[0] = 0.3; comp[1] = 0.7;
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
+  real64 const savedGasPhaseFrac[] = { 0.298158785, 0.298183347, 0.2982033821, 0.295950309, 0.2959791448, 0.2960026365, 0.2926988393,
+                                       0.292724834, 0.2927459702, 0.499837295, 0.499854799, 0.4998690769, 0.4982634386, 0.4982839883,
+                                       0.4983007295, 0.4959462993, 0.4959648242, 0.4959798868, 0.7015158051, 0.701526251, 0.7015347717,
+                                       0.7005765682, 0.7005888317, 0.7005988224, 0.6991937592, 0.6992048145, 0.6992138034 };
+  real64 const savedWaterPhaseGasComp[] = { 0.008322701666, 0.008287995083, 0.008259683449, 0.01143341315, 0.0113929227, 0.01135993384,
+                                            0.01597786252, 0.01594169644, 0.015912288, 0.008322701666, 0.008287995083, 0.008259683449,
+                                            0.01143341315, 0.0113929227, 0.01135993384, 0.01597786252, 0.01594169644, 0.015912288,
+                                            0.008322701666, 0.008287995083, 0.008259683449, 0.01143341315, 0.0113929227, 0.01135993384,
+                                            0.01597786252, 0.01594169644, 0.015912288 };
+
   CO2Solubility::KernelWrapper flashModelWrapper = flashModel->createKernelWrapper();
 
-  for( localIndex iPres = 0; iPres < 3; ++iPres )
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
-      testValuesAgainstPreviousImplementation( flashModelWrapper, // TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
-                                               *oldFlashModel, P[iPres], TC[iTemp], comp, relTol );
-      testNumericalDerivatives( flashModelWrapper, P[iPres], TC[iTemp], comp, eps, relTol );
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        testValuesAgainstPreviousImplementation( flashModelWrapper,
+                                                 P[iPres], TC[iTemp], comp,
+                                                 savedGasPhaseFrac[counter], savedWaterPhaseGasComp[counter], relTol );
+        testNumericalDerivatives( flashModelWrapper, P[iPres], TC[iTemp], comp, eps, relTol );
+        counter++;
+      }
     }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
   }
 }
 

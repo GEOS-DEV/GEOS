@@ -13,13 +13,15 @@
  */
 
 /**
- * @file SpanWagnerCO2DensityFunction.hpp
+ * @file SpanWagnerCO2Density.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITYFUNCTION_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITYFUNCTION_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
+
+#include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
 {
@@ -27,47 +29,137 @@ namespace geosx
 namespace PVTProps
 {
 
-class SpanWagnerCO2DensityFunction : public PVTFunction
+class SpanWagnerCO2DensityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
+  SpanWagnerCO2DensityUpdate( arrayView1d< string const > const & componentNames,
+                              arrayView1d< real64 const > const & componentMolarWeight,
+                              TableFunction * CO2DensityTable,
+                              localIndex const CO2Index )
+    : PVTFunctionBaseUpdate( componentNames,
+                             componentMolarWeight ),
+    m_CO2DensityTable( CO2DensityTable->createKernelWrapper() ),
+    m_CO2Index( CO2Index )
+  {}
 
-  SpanWagnerCO2DensityFunction( string_array const & inputPara,
-                                string_array const & componentNames,
-                                real64_array const & componentMolarWeight );
+  /// Default copy constructor
+  SpanWagnerCO2DensityUpdate( SpanWagnerCO2DensityUpdate const & ) = default;
 
-  ~SpanWagnerCO2DensityFunction() override {}
+  /// Default move constructor
+  SpanWagnerCO2DensityUpdate( SpanWagnerCO2DensityUpdate && ) = default;
 
+  /// Deleted copy assignment operator
+  SpanWagnerCO2DensityUpdate & operator=( SpanWagnerCO2DensityUpdate const & ) = delete;
 
-  static constexpr auto m_catalogName = "SpanWagnerCO2Density";
-  static string catalogName()                    { return m_catalogName; }
+  /// Deleted move assignment operator
+  SpanWagnerCO2DensityUpdate & operator=( SpanWagnerCO2DensityUpdate && ) = delete;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void compute( real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d< real64 const > const & phaseComposition,
+                        real64 & value,
+                        real64 & dValue_dPressure,
+                        real64 & dValue_dTemperature,
+                        arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                        bool useMass = 0 ) const override;
+
+protected:
+
+  /// Table with brine density tabulated as a function (P,T,sal)
+  TableFunction::KernelWrapper const m_CO2DensityTable;
+
+  /// Index of the CO2 component
+  localIndex const m_CO2Index;
+
+};
+
+class SpanWagnerCO2Density : public PVTFunctionBase
+{
+public:
+
+  SpanWagnerCO2Density( array1d< string > const & inputPara,
+                        array1d< string > const & componentNames,
+                        array1d< real64 > const & componentMolarWeight );
+
+  ~SpanWagnerCO2Density() override {}
+
+  static string catalogName() { return "SpanWagnerCO2Density"; }
+
   virtual string getCatalogName() const override final { return catalogName(); }
 
-
-  virtual PVTFuncType functionType() const override
+  virtual PVTFunctionType functionType() const override
   {
-    return PVTFuncType::DENSITY;
+    return PVTFunctionType::DENSITY;
   }
 
-  virtual void evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
-                           EvalVarArgs & value, bool useMass = 0 ) const override;
+  /// Type of kernel wrapper for in-kernel update
+  using KernelWrapper = SpanWagnerCO2DensityUpdate;
 
-  static void calculateCO2Density( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density );
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  KernelWrapper createKernelWrapper();
+
+  static
+  void calculateCO2Density( array1d< array1d< real64 > > const & coordinates,
+                            array1d< real64 > const & values );
 
 private:
 
-  void makeTable( string_array const & inputPara );
+  void makeTable( array1d< string > const & inputPara );
 
-  static void spanWagnerCO2Density( real64 const & T, real64 const & P, real64 & rho, real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ));
+  static
+  void spanWagnerCO2DensityFunction( real64 const & T,
+                                     real64 const & P,
+                                     real64 & rho,
+                                     real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ) );
 
+  /// Table with CO2 density tabulated as a function of (P,T)
+  TableFunction * m_CO2DensityTable;
 
-  TableFunctionPtr m_CO2DensityTable;
+  /// Index of the CO2 component
   localIndex m_CO2Index;
 
 };
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
+                                          real64 const & temperature,
+                                          arraySlice1d< real64 const > const & phaseComposition,
+                                          real64 & value,
+                                          real64 & dValue_dPressure,
+                                          real64 & dValue_dTemperature,
+                                          arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                                          bool useMass ) const
+{
+  GEOSX_UNUSED_VAR( phaseComposition );
+
+  real64 const input[2] = { pressure, temperature };
+  real64 densityDeriv[2]{};
+  m_CO2DensityTable.compute( input, value, densityDeriv );
+  dValue_dPressure = densityDeriv[0];
+  dValue_dTemperature = densityDeriv[1];
+
+  if( !useMass )
+  {
+    value /= m_componentMolarWeight[m_CO2Index];
+    dValue_dPressure /= m_componentMolarWeight[m_CO2Index];
+    dValue_dTemperature /= m_componentMolarWeight[m_CO2Index];
+  }
+
+  for( real64 & val : dValue_dPhaseComposition )
+  {
+    val = 0.0;
+  }
 }
 
-}
+} // end namespace PVTProps
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITYFUNCTION_HPP_
+} // end namespace geosx
+
+#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_SPANWAGNERCO2DENSITY_HPP_

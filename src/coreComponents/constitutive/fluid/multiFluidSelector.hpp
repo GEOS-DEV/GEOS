@@ -22,7 +22,6 @@
 #include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
 #include "constitutive/fluid/BlackOilFluid.hpp"
 #include "constitutive/fluid/MultiPhaseMultiComponentFluid.hpp"
-#include "constitutive/fluid/NewMultiPhaseMultiComponentFluid.hpp"
 
 namespace geosx
 {
@@ -36,8 +35,7 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 {
   ConstitutivePassThruHandler< BlackOilFluid,
                                CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid,
-                               NewMultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               MultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -46,8 +44,7 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 {
   ConstitutivePassThruHandler< BlackOilFluid,
                                CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid,
-                               NewMultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               MultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

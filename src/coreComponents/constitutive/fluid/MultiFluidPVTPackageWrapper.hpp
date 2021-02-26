@@ -117,6 +117,7 @@ public:
   /// Deleted move assignment operator
   MultiFluidPVTPackageWrapperUpdate & operator=( MultiFluidPVTPackageWrapperUpdate && ) = delete;
 
+  GEOSX_HOST_DEVICE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
@@ -127,6 +128,7 @@ public:
                         arraySlice2d< real64 > const & phaseCompFraction,
                         real64 & totalDensity ) const override;
 
+  GEOSX_HOST_DEVICE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
@@ -155,6 +157,7 @@ public:
                         real64 & dTotalDensity_dTemperature,
                         arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const override;
 
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
@@ -162,6 +165,7 @@ public:
                        real64 const temperature,
                        arraySlice1d< real64 const > const & composition ) const override
   {
+#ifndef __CUDACC__
     compute( pressure,
              temperature,
              composition,
@@ -189,6 +193,7 @@ public:
              m_dTotalDensity_dPressure[k][q],
              m_dTotalDensity_dTemperature[k][q],
              m_dTotalDensity_dGlobalCompFraction[k][q] );
+#endif
   }
 
 private:

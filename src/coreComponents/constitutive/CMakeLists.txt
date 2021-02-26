@@ -14,22 +14,13 @@ set( constitutive_headers
      contact/ContactRelationBase.hpp
      contact/Coulomb.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp
-     fluid/NewMultiPhaseMultiComponentFluid.hpp          
      fluid/PVTFunctions/BrineCO2DensityFunction.hpp
-     fluid/PVTFunctions/NewBrineCO2DensityFunction.hpp
      fluid/PVTFunctions/BrineViscosityFunction.hpp
-     fluid/PVTFunctions/NewBrineViscosityFunction.hpp     
      fluid/PVTFunctions/CO2SolubilityFunction.hpp
-     fluid/PVTFunctions/NewCO2SolubilityFunction.hpp     
      fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
-     fluid/PVTFunctions/NewFenghourCO2ViscosityFunction.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
-     fluid/PVTFunctions/NewFlashModelBase.hpp     
      fluid/PVTFunctions/PVTFunctionBase.hpp
-     fluid/PVTFunctions/NewPVTFunctionBase.hpp     
      fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp
-     fluid/PVTFunctions/NewSpanWagnerCO2DensityFunction.hpp     
-     fluid/PVTFunctions/UtilityFunctions.hpp
      fluid/SingleFluidBase.hpp
      fluid/singleFluidSelector.hpp
      fluid/MultiFluidBase.hpp
@@ -82,18 +73,11 @@ set( constitutive_sources
      contact/Coulomb.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp
-     fluid/NewMultiPhaseMultiComponentFluid.cpp
      fluid/PVTFunctions/BrineCO2DensityFunction.cpp
-     fluid/PVTFunctions/NewBrineCO2DensityFunction.cpp     
      fluid/PVTFunctions/BrineViscosityFunction.cpp
-     fluid/PVTFunctions/NewBrineViscosityFunction.cpp      
      fluid/PVTFunctions/CO2SolubilityFunction.cpp
-     fluid/PVTFunctions/NewCO2SolubilityFunction.cpp     
      fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
-     fluid/PVTFunctions/NewFenghourCO2ViscosityFunction.cpp     
      fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp
-     fluid/PVTFunctions/NewSpanWagnerCO2DensityFunction.cpp         
-     fluid/PVTFunctions/UtilityFunctions.cpp
      fluid/SingleFluidBase.cpp
      fluid/MultiFluidBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp

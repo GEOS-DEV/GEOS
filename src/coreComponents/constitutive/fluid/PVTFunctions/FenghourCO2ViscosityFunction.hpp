@@ -13,13 +13,15 @@
  */
 
 /**
- * @file FenghourCO2ViscosityFunction.hpp
+ * @file FenghourCO2Viscosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FENGHOURCO2VISCOSITYFUNCTION_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FENGHOURCO2VISCOSITYFUNCTION_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FENGHOURCO2VISCOSITY_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FENGHOURCO2VISCOSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
+
+#include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
 {
@@ -27,45 +29,120 @@ namespace geosx
 namespace PVTProps
 {
 
-class FenghourCO2ViscosityFunction : public PVTFunction
+class FenghourCO2ViscosityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  FenghourCO2ViscosityFunction( string_array const & inputPara,
-                                string_array const & componentNames,
-                                real64_array const & componentMolarWeight );
-  ~FenghourCO2ViscosityFunction() override
+  FenghourCO2ViscosityUpdate( arrayView1d< string const > const & componentNames,
+                              arrayView1d< real64 const > const & componentMolarWeight,
+                              TableFunction * CO2ViscosityTable )
+    : PVTFunctionBaseUpdate( componentNames,
+                             componentMolarWeight ),
+    m_CO2ViscosityTable( CO2ViscosityTable->createKernelWrapper() )
   {}
 
-  static constexpr auto m_catalogName = "FenghourCO2Viscosity";
-  static string catalogName()                    { return m_catalogName; }
+  /// Default copy constructor
+  FenghourCO2ViscosityUpdate( FenghourCO2ViscosityUpdate const & ) = default;
+
+  /// Default move constructor
+  FenghourCO2ViscosityUpdate( FenghourCO2ViscosityUpdate && ) = default;
+
+  /// Deleted copy assignment operator
+  FenghourCO2ViscosityUpdate & operator=( FenghourCO2ViscosityUpdate const & ) = delete;
+
+  /// Deleted move assignment operator
+  FenghourCO2ViscosityUpdate & operator=( FenghourCO2ViscosityUpdate && ) = delete;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void compute( real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d< real64 const > const & phaseComposition,
+                        real64 & value,
+                        real64 & dValue_dPressure,
+                        real64 & dValue_dTemperature,
+                        arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                        bool useMass = 0 ) const override;
+
+protected:
+
+  /// Table with viscosity tabulated as a function (P,T)
+  TableFunction::KernelWrapper const m_CO2ViscosityTable;
+
+};
+
+class FenghourCO2Viscosity : public PVTFunctionBase
+{
+public:
+
+  FenghourCO2Viscosity( array1d< string > const & inputPara,
+                        array1d< string > const & componentNames,
+                        array1d< real64 > const & componentMolarWeight );
+  ~FenghourCO2Viscosity() override {}
+
+  static string catalogName() { return "FenghourCO2Viscosity"; }
+
   virtual string getCatalogName() const override final { return catalogName(); }
 
-  virtual PVTFuncType functionType() const override
+  virtual PVTFunctionType functionType() const override
   {
-    return PVTFuncType::VISCOSITY;
-
+    return PVTFunctionType::VISCOSITY;
   }
 
-  virtual void evaluation( EvalVarArgs const & pressure,
-                           EvalVarArgs const & temperature,
-                           arraySlice1d< EvalVarArgs const > const & phaseComposition,
-                           EvalVarArgs & value, bool useMass = 0 ) const override;
+  /// Type of kernel wrapper for in-kernel update
+  using KernelWrapper = FenghourCO2ViscosityUpdate;
 
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  KernelWrapper createKernelWrapper();
 
 private:
 
-  void makeTable( string_array const & inputPara );
+  void makeTable( array1d< string > const & inputPara );
 
-  void calculateCO2Viscosity( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density,
-                              real64_array2d const & viscosity );
+  void calculateCO2Viscosity( array1d< array1d< real64 > > const & coordinates,
+                              array1d< real64 > const & valuesDensity,
+                              array1d< real64 > const & valuesViscosity );
 
-  void fenghourCO2Viscosity( real64 const & Tcent, real64 const & den, real64 & vis );
+  void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
+                                     real64 const & density,
+                                     real64 & viscosity );
 
-  TableFunctionPtr m_CO2ViscosityTable;
+  /// Table with CO2 viscosity tabulated as a function of (P,T)
+  TableFunction * m_CO2ViscosityTable;
+
 };
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
+                                          real64 const & temperature,
+                                          arraySlice1d< real64 const > const & phaseComposition,
+                                          real64 & value,
+                                          real64 & dValue_dPressure,
+                                          real64 & dValue_dTemperature,
+                                          arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                                          bool useMass ) const
+{
+  GEOSX_UNUSED_VAR( phaseComposition );
+  GEOSX_UNUSED_VAR( useMass );
+
+  real64 const input[2] = { pressure, temperature };
+  real64 densityDeriv[2]{};
+  m_CO2ViscosityTable.compute( input, value, densityDeriv );
+  dValue_dPressure = densityDeriv[0];
+  dValue_dTemperature = densityDeriv[1];
+
+  for( real64 & val : dValue_dPhaseComposition )
+  {
+    val = 0.0;
+  }
 }
 
-}
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FENGHOURCO2VISCOSITYFUNCTION_HPP_
+} // end namespace PVTProps
+
+} // end namespace geosx
+
+#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FENGHOURCO2VISCOSITY_HPP_

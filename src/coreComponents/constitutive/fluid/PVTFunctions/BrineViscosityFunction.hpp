@@ -13,11 +13,11 @@
  */
 
 /**
- * @file BrineViscosityFunction.hpp
+ * @file BrineViscosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITYFUNCTION_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITYFUNCTION_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITY_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
 
@@ -27,42 +27,116 @@ namespace geosx
 namespace PVTProps
 {
 
-class BrineViscosityFunction : public PVTFunction
+class BrineViscosityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-
-  BrineViscosityFunction( string_array const & inputPara,
-                          string_array const & componentNames,
-                          real64_array const & componentMolarWeight );
-  ~BrineViscosityFunction() override
+  BrineViscosityUpdate( arrayView1d< string const > const & componentNames,
+                        arrayView1d< real64 const > const & componentMolarWeight,
+                        real64 const & coef0,
+                        real64 const & coef1 )
+    : PVTFunctionBaseUpdate( componentNames,
+                             componentMolarWeight ),
+    m_coef0( coef0 ),
+    m_coef1( coef1 )
   {}
 
-  static constexpr auto m_catalogName = "BrineViscosity";
-  static string catalogName()                    { return m_catalogName; }
+  /// Default copy constructor
+  BrineViscosityUpdate( BrineViscosityUpdate const & ) = default;
+
+  /// Default move constructor
+  BrineViscosityUpdate( BrineViscosityUpdate && ) = default;
+
+  /// Deleted copy assignment operator
+  BrineViscosityUpdate & operator=( BrineViscosityUpdate const & ) = delete;
+
+  /// Deleted move assignment operator
+  BrineViscosityUpdate & operator=( BrineViscosityUpdate && ) = delete;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void compute( real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d< real64 const > const & phaseComposition,
+                        real64 & value,
+                        real64 & dValue_dPressure,
+                        real64 & dValue_dTemperature,
+                        arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                        bool useMass = 0 ) const override;
+
+protected:
+
+  real64 const m_coef0;
+
+  real64 const m_coef1;
+
+};
+
+
+class BrineViscosity : public PVTFunctionBase
+{
+public:
+
+  BrineViscosity( array1d< string > const & inputPara,
+                  array1d< string > const & componentNames,
+                  array1d< real64 > const & componentMolarWeight );
+
+  ~BrineViscosity() override {}
+
+  static string catalogName() { return "BrineViscosity"; }
+
   virtual string getCatalogName() const override final { return catalogName(); }
 
-  virtual PVTFuncType functionType() const override
+  virtual PVTFunctionType functionType() const override
   {
-    return PVTFuncType::VISCOSITY;
-
+    return PVTFunctionType::VISCOSITY;
   }
 
-  virtual void evaluation( EvalVarArgs const & pressure,
-                           EvalVarArgs const & temperature,
-                           arraySlice1d< EvalVarArgs const > const & phaseComposition,
-                           EvalVarArgs & value, bool useMass = 0 ) const override;
+  /// Type of kernel wrapper for in-kernel update
+  using KernelWrapper = BrineViscosityUpdate;
+
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  KernelWrapper createKernelWrapper();
 
 private:
 
-  void makeCoef( string_array const & inputPara );
+  void makeCoefficients( array1d< string > const & inputPara );
 
   real64 m_coef0;
+
   real64 m_coef1;
 
 };
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void BrineViscosityUpdate::compute( real64 const & pressure,
+                                    real64 const & temperature,
+                                    arraySlice1d< real64 const > const & phaseComposition,
+                                    real64 & value,
+                                    real64 & dValue_dPressure,
+                                    real64 & dValue_dTemperature,
+                                    arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                                    bool useMass ) const
+{
+  GEOSX_UNUSED_VAR( pressure );
+  GEOSX_UNUSED_VAR( phaseComposition );
+  GEOSX_UNUSED_VAR( useMass );
+
+  value = m_coef0 + m_coef1 * temperature;
+  dValue_dPressure = 0.0;
+  dValue_dTemperature = m_coef1;
+  for( real64 & val : dValue_dPhaseComposition )
+  {
+    val = 0.0;
+  }
 }
 
-}
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITYFUNCTION_HPP_
+} // end namespace PVTProps
+
+} // end namespace geosx
+
+#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITY_HPP_

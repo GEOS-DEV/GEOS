@@ -388,15 +388,16 @@ void CompositionalMultiphaseBase::updateFluidModel( Group & dataGroup, localInde
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    using FluidType = TYPEOFREF( castedFluid );
+    using ExecPolicy = typename FluidType::exec_policy;
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    // MultiFluid models are not thread-safe or device-capable yet
-    FluidUpdateKernel::launch< serialPolicy >( dataGroup.size(),
-                                               fluidWrapper,
-                                               pres,
-                                               dPres,
-                                               m_temperature,
-                                               compFrac );
+    FluidUpdateKernel::launch< ExecPolicy >( dataGroup.size(),
+                                             fluidWrapper,
+                                             pres,
+                                             dPres,
+                                             m_temperature,
+                                             compFrac );
   } );
 }
 
@@ -891,10 +892,10 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
     // 1.1. Apply BC to set the field values
-    fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
-                                                                       time + dt,
-                                                                       subRegion,
-                                                                       viewKeyStruct::bcPressureString() );
+    fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                           time + dt,
+                                                                           subRegion,
+                                                                           viewKeyStruct::bcPressureString() );
   } );
 
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
@@ -918,10 +919,10 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     bcStatusMap[subRegionName][setName][comp] = true;
 
     // 2.1. Apply BC to set the field values
-    fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
-                                                                       time + dt,
-                                                                       subRegion,
-                                                                       viewKeyStruct::globalCompFractionString() );
+    fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                           time + dt,
+                                                                           subRegion,
+                                                                           viewKeyStruct::globalCompFractionString() );
   } );
 
   // 2.3 Check consistency between composition BC applied to sets
@@ -973,14 +974,15 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
     constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
     {
-      typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      using FluidType = TYPEOFREF( castedFluid );
+      using ExecPolicy = typename FluidType::exec_policy;
+      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-      // MultiFluid models are not thread-safe or device-capable yet
-      FluidUpdateKernel::launch< serialPolicy >( targetSet,
-                                                 fluidWrapper,
-                                                 bcPres,
-                                                 m_temperature,
-                                                 compFrac );
+      FluidUpdateKernel::launch< ExecPolicy >( targetSet,
+                                               fluidWrapper,
+                                               bcPres,
+                                               m_temperature,
+                                               compFrac );
     } );
 
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )

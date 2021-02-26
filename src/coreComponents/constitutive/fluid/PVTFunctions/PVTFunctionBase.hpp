@@ -13,14 +13,14 @@
  */
 
 /**
- * @file PVTFunctionBase.hpp
+ * @file NewPVTFunctionBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NEWPVTFUNCTIONBASE_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NEWPVTFUNCTIONBASE_HPP_
 
-#include "constitutive/fluid/PVTFunctions/UtilityFunctions.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 
 namespace geosx
 {
@@ -28,57 +28,96 @@ namespace geosx
 namespace PVTProps
 {
 
-enum class PVTFuncType {UNKNOWN, DENSITY, VISCOSITY};
+enum class PVTFunctionType { UNKNOWN, DENSITY, VISCOSITY };
 
-class PVTFunction
+class PVTFunctionBaseUpdate
 {
 public:
+  PVTFunctionBaseUpdate( arrayView1d< string const > const & componentNames,
+                         arrayView1d< real64 const > const & componentMolarWeight )
+    :
+    m_componentNames( componentNames ),
+    m_componentMolarWeight( componentMolarWeight )
+  {}
 
-  PVTFunction( string const & name, string_array const & componentNames, real64_array const & componentMolarWeight ):
+  /// Default copy constructor
+  PVTFunctionBaseUpdate( PVTFunctionBaseUpdate const & ) = default;
+
+  /// Default move constructor
+  PVTFunctionBaseUpdate( PVTFunctionBaseUpdate && ) = default;
+
+  /// Deleted copy assignment operator
+  PVTFunctionBaseUpdate & operator=( PVTFunctionBaseUpdate const & ) = delete;
+
+  /// Deleted move assignment operator
+  PVTFunctionBaseUpdate & operator=( PVTFunctionBaseUpdate && ) = delete;
+
+  GEOSX_HOST_DEVICE
+  virtual void compute( real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d< real64 const > const & phaseComposition,
+                        real64 & value,
+                        real64 & dValue_dPresure,
+                        real64 & dValue_dTemperature,
+                        arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                        bool useMass = 0 ) const = 0;
+
+protected:
+
+  /// Array storing the name of the components
+  arrayView1d< string const > m_componentNames;
+
+  /// Array storing the component molar weights
+  arrayView1d< real64 const > m_componentMolarWeight;
+
+};
+
+class PVTFunctionBase
+{
+
+public:
+
+  PVTFunctionBase( string const & name,
+                   array1d< string > const & componentNames,
+                   array1d< real64 > const & componentMolarWeight )
+    :
     m_functionName( name ),
     m_componentNames( componentNames ),
     m_componentMolarWeight( componentMolarWeight )
   {}
 
-  virtual ~PVTFunction(){}
+  virtual ~PVTFunctionBase() = default;
 
-
-  using CatalogInterface = dataRepository::CatalogInterface< PVTFunction, string_array const &,
-                                                             string_array const &,
-                                                             real64_array const & >;
+  using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase, array1d< string > const &,
+                                                             array1d< string > const &,
+                                                             array1d< real64 > const & >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
   }
+
   virtual string getCatalogName() const = 0;
 
+  string const & functionName() const { return m_functionName; }
 
-  string const & functionName() const
-  {
-    return m_functionName;
-  }
-
-  virtual PVTFuncType functionType() const = 0;
-
-  //phase density/viscosity
-  //input: P, T, phaseCompFraction
-  //output: phase density/viscoty
-
-  virtual void evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
-                           EvalVarArgs & value, bool useMass = 0 ) const = 0;
+  virtual PVTFunctionType functionType() const = 0;
 
 protected:
 
+  /// Name of the PVT function
   string m_functionName;
-  string_array m_componentNames;
-  real64_array m_componentMolarWeight;
 
+  /// Array storing the name of the components
+  array1d< string > m_componentNames;
+
+  /// Array storing the component molar weights
+  array1d< real64 > m_componentMolarWeight;
 
 };
 
-}
+} // end namespace PVTProps
 
-}
+} // end namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NEWPVTFUNCTIONBASE_HPP_
