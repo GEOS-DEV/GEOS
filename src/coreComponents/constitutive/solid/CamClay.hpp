@@ -290,9 +290,6 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
       
     // assemble residual system
-    // resid1 = P - trialP + dlambda*bulkMod*dG/dP = 0
-    // resid2 = Q - trialQ + dlambda*3*shearMod*dG/dQ = 0
-    // resid3 = F = 0
       residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp; // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
       residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;       // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
       residual[2] = yield;    // F = 0
