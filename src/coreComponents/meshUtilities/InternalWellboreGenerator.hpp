@@ -29,11 +29,9 @@
 namespace geosx
 {
 
-class NodeManager;
-class DomainPartition;
 /**
  * @class InternalWellboreGenerator
- * @brief The InternalWellboreGenerator class is a class handling GEOSX generated meshes.
+ * @brief The InternalWellboreGenerator class for generating internal mesh for wellbore problems.
  */
 class InternalWellboreGenerator : public MeshGeneratorBase
 {
@@ -41,8 +39,8 @@ public:
 
   /**
    * @brief Main constructor for InternalWellboreGenerator.
-   * @param[in] name of the InternalWellboreGenerator
-   * @param[in] parent point to the parent Group of the InternalWellboreGenerator
+   * @param[in] name the name of the InternalWellboreGenerator object
+   * @param[in] parent the parent Group pointer for the InternalWellboreGenerator object
    */
   InternalWellboreGenerator( const string & name,
                              Group * const parent );
@@ -55,6 +53,7 @@ public:
    */
   static string catalogName() { return "InternalWellbore"; }
 
+  ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     constexpr static char const * radialCoordsString() { return "radialCoords"; }
@@ -68,7 +67,9 @@ public:
     constexpr static char const * cellBlockNamesString() { return "cellBlockNames"; }
     constexpr static char const * elementTypesString() { return "elementTypes"; }
     constexpr static char const * trianglePatternString() { return "trianglePattern"; }
+    constexpr static char const * mapToRadialString() { return "mapToRadial"; }
   };
+  /// @endcond
 
   virtual void generateElementRegions( DomainPartition & domain ) override;
 
@@ -82,9 +83,6 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
-  //                                NodeManager * nodeManager ) override;
-
   virtual void getElemToNodesRelationInBox ( const string & elementType,
                                              const int index[],
                                              const int & iEle,
@@ -93,32 +91,18 @@ public:
 
   virtual void remapMesh ( dataRepository::Group & domain ) override;
 
-//  int m_delayMeshDeformation;
-
 protected:
 
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   void postProcessInput() override final;
 
 private:
 
-  /// Mesh number of dimension
+  /// Number of mesh dimension
   int m_dim;
-
-  /// Array of vertex coordinates
-  array1d< real64 > m_vertices[3];
-
-  /// Ndim x nElem spatialized for element indexes
-  integer_array m_nElems[3];
-
-  /// Ndim x nElem spatialized array of element scaling factors
-  array1d< real64 > m_nElemScaling[3];
-
-  //bool m_useBias = false;
-  /// Ndim x nElem spatialized array of element bias
-  array1d< real64 > m_nElemBias[3];
-
-  /// String array of region names
-  string_array m_regionNames;
 
   /// Minimum extent of mesh dimensions
   real64 m_min[3];
@@ -126,39 +110,53 @@ private:
   /// Maximum extent of mesh dimensions
   real64 m_max[3];
 
-  //int m_numElems[3];
+  /// Array of vertex coordinates
+  array1d< real64 > m_vertices[3];
+
+  /// Ndim x nElem spatialized for element indexes
+  array1d< integer > m_nElems[3];
+
+  /// Ndim x nElem spatialized array of element bias
+  array1d< real64 > m_nElemBias[3];
+
+  /// String array of region names
+  array1d< string > m_regionNames;
+
+  /// String array listing the element type present
+  array1d< string > m_elementType;
+
+  /// Triangle pattern seletion.
+  int m_trianglePattern;
+
+  /// Array of number of element per box (a hexahedron cell)
+  array1d< integer > m_numElePerBox;
+
   /// Ndim x nBlock spatialized array of first elemnt index in the cellBlock
   integer_array m_firstElemIndexForBlock[3];
 
   /// Ndim x nBlock spatialized array of last elemnt index in the cellBlock
   integer_array m_lastElemIndexForBlock[3];
 
-  /// Array of number of elements per direction
-  int m_numElemsTotal[3];
-
-  // String array listing the element type present
-  string_array m_elementType;
-
-  /// Array of number of element per box
-  array1d< integer > m_numElePerBox;
-
-  /**
-   * @brief Member variable for triangle pattern seletion.
-   * @note In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
-   */
-  int m_trianglePattern;
-
   /// Node perturbation amplitude value
   real64 m_fPerturb=0.0;
 
-  /// Random seed for generation of the node perturbation field
-  int m_randSeed;
+  /// Array of number of elements per direction
+  int m_numElemsTotal[3];
 
   /**
    * @brief Knob to map onto a radial mesh.
    * @note if 0 mesh is not radial, if positive mesh is, it larger than 1
    */
   int m_mapToRadial = 0;
+
+
+  /// Ndim x nElem spatialized array of element scaling factors
+  array1d< real64 > m_nElemScaling[3];
+
+  /// Random seed for generation of the node perturbation field
+  int m_randSeed;
+
+
   ///@cond DO_NOT_DOCUMENT
   /// axis index for cartesian to radial coordinates mapping
   // internal temp var

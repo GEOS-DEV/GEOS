@@ -35,12 +35,10 @@ using namespace dataRepository;
 InternalWellboreGenerator::InternalWellboreGenerator( string const & name, 
                                                       Group * const parent ):
   MeshGeneratorBase( name, parent ),
-  m_dim( 0 ),
+  m_dim( 3 ),
   m_min(),
   m_max()
 {
-  m_dim = 3;
-
   registerWrapper( viewKeyStruct::radialCoordsString(), &(m_vertices[0]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
@@ -99,18 +97,19 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Pattern by which to decompose the hex mesh into prisms" );
+
+  registerWrapper( viewKeyStruct::mapToRadialString(), &m_mapToRadial ).
+    setApplyDefaultValue( 2 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "A flag for radial mesh: 1 for radial mesh with circular outer boundary, 2 for square outer boundary" );
 }
 
-/**
- * @param domain
- */
-void InternalWellboreGenerator::generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void InternalWellboreGenerator::
+  generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 void InternalWellboreGenerator::postProcessInput()
 {
-
-
   if( m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6" )
   {
     m_dim = 3;
@@ -127,6 +126,7 @@ void InternalWellboreGenerator::postProcessInput()
   {
     // Check for vertex/element matching
     bool failFlag = false;
+
     for( int i=0; i<m_dim; ++i )
     {
       failFlag += ( m_nElems[i].size() != m_vertices[i].size()-1 );
@@ -221,13 +221,13 @@ void InternalWellboreGenerator::postProcessInput()
     }
   }
 
-  for( int i=0; i<3; ++i )
+  for( int i=0; i<3; ++i )//TODO i<m_dim?
   {
     m_min[i] = m_vertices[i].front();
     m_max[i] = m_vertices[i].back();
   }
 
-  for( int dir=0; dir<3; ++dir )
+  for( int dir=0; dir<3; ++dir )//TODO dir<m_dim?
   {
     m_firstElemIndexForBlock[dir].resize( m_nElems[dir].size() );
     m_lastElemIndexForBlock[dir].resize( m_nElems[dir].size() );
@@ -240,39 +240,18 @@ void InternalWellboreGenerator::postProcessInput()
     }
   }
 
-  m_fPerturb = 0.0;
+  m_fPerturb = 0.0;//TODO ???
 }
 
 
-
-Group * InternalWellboreGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
-{
-  return nullptr;
-}
-
-
-/**
- * @param partition
- * @param domain
- */
 void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  // This cannot find groupkeys:
-  // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
+  Group & meshBodies = domain.getGroup( string( "MeshBodies" ) );
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-
-  // special case
-  //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) &&
-  // (partition.GetPartitions()[1]==1);
-
+  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ) );
   NodeManager & nodeManager = meshLevel0.getNodeManager();
-
-  // Make sure that the node manager fields are initialized
-
   CellBlockManager & elementManager = domain.getGroup< CellBlockManager >( keys::cellManager );
   Group & nodeSets = nodeManager.sets();
 
@@ -280,8 +259,6 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 
   bool isRadialWithOneThetaPartition = false;
 
-
-  // This should probably handled elsewhere:
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
@@ -291,17 +268,16 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   }
 
 
-  SortedArray< localIndex > & xnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xneg" ) ).reference();
-  SortedArray< localIndex > & xposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xpos" ) ).reference();
-  SortedArray< localIndex > & ynegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "yneg" ) ).reference();
-  SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "ypos" ) ).reference();
-  SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zneg" ) ).reference();
-  SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) ).reference();
+  // Default nodesets
+  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
+  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
+  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
+  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
+  SortedArray< localIndex > & anegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "aneg" ) ).reference();
+  SortedArray< localIndex > & aposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "apos" ) ).reference();
   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
 
 
-  // partition based on even spacing to get load balance
-  // Partition geometrical boundaries will be corrected in the end.
   {
     m_min[0] = m_vertices[0].front();
     m_min[1] = m_vertices[1].front();
@@ -320,7 +296,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 
   // find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
-  for( int i = 0; i < 3; ++i )
+  for( int i = 0; i < 3; ++i )//TODO use m_dim
   {
     m_numElemsTotal[i] = 0;
     for( int block = 0; block < m_nElems[i].size(); ++block )
@@ -332,7 +308,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     array1d< real64 > elemCenterCoordsLocal( m_numElemsTotal[i] );
     for( int k = 0; k < m_numElemsTotal[i]; ++k )
     {
-      elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * ( k + 0.5 ) / m_numElemsTotal[i];
+      elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * ( k + 0.5 ) / m_numElemsTotal[i];// TODO this seems not needed to convert to cylindrical coordinates
     }
     MpiWrapper::allReduce( elemCenterCoordsLocal.data(),
                            elemCenterCoords[i].data(),
@@ -344,10 +320,8 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   // find starting/ending index
 
   // get the first and last indices in this partition each direction
-  int firstElemIndexInPartition[3] =
-  { -1, -1, -1 };
-  int lastElemIndexInPartition[3] =
-  { -2, -2, -2 };
+  int firstElemIndexInPartition[3] = { -1, -1, -1 };
+  int lastElemIndexInPartition[3] = { -2, -2, -2 };
 
   for( int i = 0; i < 3; ++i )
   {
@@ -380,8 +354,8 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   std::map< string, int > numElemsInRegions;
   std::map< string, string > elemTypeInRegions;
 
-  integer_array firstElemIndexForBlockInPartition[3];
-  integer_array lastElemIndexForBlockInPartition[3];
+  array1d< integer > firstElemIndexForBlockInPartition[3];
+  array1d< integer > lastElemIndexForBlockInPartition[3];
 
   for( int dir = 0; dir < 3; ++dir )
   {
@@ -510,19 +484,19 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
           {
             if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
-              xnegNodes.insert( localNodeIndex );
+              rnegNodes.insert( localNodeIndex );
             }
             if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
             {
-              xposNodes.insert( localNodeIndex );
+              rposNodes.insert( localNodeIndex );
             }
             if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
             {
-              ynegNodes.insert( localNodeIndex );
+              tnegNodes.insert( localNodeIndex );
             }
             if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
             {
-              yposNodes.insert( localNodeIndex );
+              tposNodes.insert( localNodeIndex );
             }
           }
           else
@@ -530,22 +504,22 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
             // radial-specific nodesets
             if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
-              xnegNodes.insert( localNodeIndex );
+              rnegNodes.insert( localNodeIndex );
             }
             if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
             {
-              xposNodes.insert( localNodeIndex );
+              rposNodes.insert( localNodeIndex );
             }
           }
 
           // general nodesets
           if( isEqual( X( localNodeIndex, 2 ), m_min[2], 1e-10 ) )
           {
-            znegNodes.insert( localNodeIndex );
+            anegNodes.insert( localNodeIndex );
           }
           if( isEqual( X( localNodeIndex, 2 ), m_max[2], 1e-10 ) )
           {
-            zposNodes.insert( localNodeIndex );
+            aposNodes.insert( localNodeIndex );
           }
           allNodes.insert( localNodeIndex );
 
@@ -586,9 +560,6 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
       {
         for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
         {
-//          ElementRegionT& elemRegion =
-// domain->m_feElementManager->m_ElementRegions[*iterRegion];
-
           CellBlock & elemRegion =  elementManager.getRegion( m_regionNames[ regionOffset ] );
           int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion.numNodesPerElement());
           integer_array nodeIDInBox( 8 );
@@ -747,19 +718,19 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
       {
         if( isEqual( X[iN][0], -1 * m_max[0], 1e-6 ) )
         {
-          xnegNodes.insert( iN );
+          rnegNodes.insert( iN );
         }
         if( isEqual( X[iN][0], m_max[0], 1e-6 ) )
         {
-          xposNodes.insert( iN );
+          rposNodes.insert( iN );
         }
         if( isEqual( X[iN][1], -1 * m_max[0], 1e-6 ) )
         {
-          ynegNodes.insert( iN );
+          tnegNodes.insert( iN );
         }
         if( isEqual( X[iN][1], m_max[0], 1e-6 ) )
         {
-          yposNodes.insert( iN );
+          tposNodes.insert( iN );
         }
       }
     }
@@ -1064,6 +1035,13 @@ void InternalWellboreGenerator::getElemToNodesRelationInBox( const string & elem
       nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
     }
   }
+}
+
+
+Group * InternalWellboreGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), 
+                                                string const & GEOSX_UNUSED_PARAM( childName ) )
+{
+  return nullptr;
 }
 
 void InternalWellboreGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARAM( domain ) )
