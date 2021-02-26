@@ -36,25 +36,25 @@ BrineCO2Density::BrineCO2Density( array1d< string > const & inputPara,
                    componentNames,
                    componentMolarWeight )
 {
-  bool notFound = 1;
+  bool notFound = true;
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
     if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
     {
       m_CO2Index = i;
-      notFound = 0;
+      notFound = false;
       break;
     }
   }
   GEOSX_ERROR_IF( notFound, "Component CO2 is not found!" );
 
-  notFound = 1;
+  notFound = true;
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
     if( componentNames[i] == "Water" || componentNames[i] == "water" )
     {
       m_waterIndex = i;
-      notFound = 0;
+      notFound = false;
       break;
     }
   }
@@ -115,8 +115,8 @@ void BrineCO2Density::makeTable( array1d< string > const & inputPara )
   array1d< real64 > values( nP * nT );
   calculateBrineDensity( coordinates, salinity, values );
 
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
-  m_brineDensityTable = functionManager->createChild( "TableFunction", "brineDensityTable" )->groupCast< TableFunction * >();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  m_brineDensityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "brineDensityTable" ) );
   m_brineDensityTable->setTableCoordinates( coordinates );
   m_brineDensityTable->setTableValues( values );
   m_brineDensityTable->reInitializeFunction();
@@ -127,6 +127,7 @@ void BrineCO2Density::calculateBrineDensity( array1d< array1d< real64 > > const 
                                              real64 const & salinity,
                                              array1d< real64 > const & values )
 {
+  // these coefficients come from Phillips et al. (1981), equations (4) and (5), pages 14 and 15
   constexpr real64 c1 = -9.9595;
   constexpr real64 c2 = 7.0845;
   constexpr real64 c3 = 3.9093;
@@ -149,6 +150,7 @@ void BrineCO2Density::calculateBrineDensity( array1d< array1d< real64 > > const 
 
     for( localIndex j = 0; j < numTemperatures; ++j )
     {
+      // see Phillips et al. (1981), equations (4) and (5), pages 14 and 15
       real64 const x = c1 * exp( a1 * salinity )
                        + c2 * exp( a2 * coordinates[1][j] )
                        + c3 * exp( a3 * P );

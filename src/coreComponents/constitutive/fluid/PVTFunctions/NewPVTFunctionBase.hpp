@@ -87,7 +87,7 @@ public:
     m_componentMolarWeight( componentMolarWeight )
   {}
 
-  virtual ~PVTFunctionBase() {}
+  virtual ~PVTFunctionBase() = default;
 
   using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase, array1d< string > const &,
                                                              array1d< string > const &,

@@ -88,7 +88,7 @@ public:
     m_componentMolarWeight( componentMolarWeight )
   {}
 
-  virtual ~FlashModelBase() {}
+  virtual ~FlashModelBase() = default;
 
   using CatalogInterface = dataRepository::CatalogInterface< FlashModelBase, array1d< string > const &,
                                                              array1d< string > const &,

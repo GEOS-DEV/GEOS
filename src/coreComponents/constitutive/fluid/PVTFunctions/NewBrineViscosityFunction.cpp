@@ -38,7 +38,7 @@ BrineViscosity::BrineViscosity( array1d< string > const & inputPara,
 
 void BrineViscosity::makeCoefficients( array1d< string > const & inputPara )
 {
-
+  // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
   constexpr real64 a = 0.0816;
   constexpr real64 b = 0.0122;
   constexpr real64 c = 0.000128;

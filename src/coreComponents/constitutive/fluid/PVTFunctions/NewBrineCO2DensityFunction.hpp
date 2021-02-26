@@ -140,6 +140,9 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
                                      arraySlice1d< real64 > const & dValue_dPhaseComposition,
                                      bool useMass ) const
 {
+  // this method implements the method proposed by E. Garcia (2001)
+
+  // these coefficients come from equation (2) from Garcia (2001)
   constexpr real64 a = 37.51;
   constexpr real64 b = -9.585e-2;
   constexpr real64 c = 8.740e-4;
@@ -150,6 +153,7 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
   real64 densityDeriv[2]{};
   m_brineDensityTable.compute( input, density, densityDeriv );
 
+  // equation (2) from Garcia (2001)
   real64 const squaredTemp = temperature * temperature;
   real64 const V = (  a
                       + b * temperature
@@ -160,7 +164,6 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
                             + 3 * d * squaredTemp ) * 1e-6;
 
   // CO2 concentration
-  // C = X * den / (waterMW * (1.0 - X));
   real64 const denom = ( m_componentMolarWeight[m_waterIndex] * ( 1.0 - phaseComposition[m_CO2Index] ) );
   real64 const coef = phaseComposition[m_CO2Index] / denom;
   real64 dCoef_dComp[2]{};
@@ -184,7 +187,7 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
   dConcDensVol_dComp[m_waterIndex] = dConc_dComp[m_waterIndex] * density * V;
 
   // Brine density
-  // value = den + CO2MW * C - C * den * V;
+  // equation (1) from Garcia (2001)
   if( useMass )
   {
     value = density
@@ -201,7 +204,7 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
     dValue_dPhaseComposition[m_waterIndex] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_waterIndex]
                                              - dConcDensVol_dComp[m_waterIndex];
   }
-  else // value = den / waterMW + C - C * den * V / waterMW;
+  else
   {
     value = density / m_componentMolarWeight[m_waterIndex]
             + conc

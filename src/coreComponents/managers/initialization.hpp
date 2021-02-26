@@ -118,6 +118,11 @@ void setupLogger();
 void finalizeLogger();
 
 /**
+ * @brief Finalize Caliper and Adiak.
+ */
+void finalizeCaliper();
+
+/**
  * @brief Setup the LvArray library. This initializes signal handling
  *        and the floating point environment.
  */
@@ -155,10 +160,6 @@ void finalizeMPI();
 void setupCaliper( cali::ConfigManager & caliperManager,
                    CommandLineOptions const & commandLineOptions );
 
-/**
- * @brief Finalize Caliper and Adiak.
- */
-void finalizeCaliper();
 
 #endif
 

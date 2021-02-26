@@ -36,6 +36,8 @@ real64 f( real64 const & T,
           real64 const & P,
           real64 const & rho )
 {
+  // all the coefficients below are defined in Table (31) of Span and Wagner (1996)
+  // the variable names used below follow the notation of the Table
   constexpr real64 n[] =
   {0.38856823203161, 2.938547594274, -5.5867188534934, -0.76753199592477, 0.31729005580416, 0.54803315897767, 0.12279411220335, 2.165896154322,
    1.5841735109724, -0.23132705405503, 0.058116916431436, -0.55369137205382, 0.48946615909422, -0.024275739843501, 0.062494790501678, -0.12175860225246,
@@ -80,11 +82,13 @@ real64 f( real64 const & T,
 
   constexpr real64 R = 188.9241;
 
-  real64 tau = T_c / T;
-  real64 delta = rho / rho_c;
+  real64 const tau = T_c / T;
+  real64 const delta = rho / rho_c;
 
   real64 theta, Delta, Phi, dPhi_delta, dDelta_delta, dDelta_delta_b;
 
+  // residual part of the energy equation
+  // this is defined in Table (32) of Span and Wagner (1996)
   real64 phi_r_delta = 0.0;
 
   for( int i=0; i<7; i++ )
@@ -126,10 +130,11 @@ real64 f( real64 const & T,
     phi_r_delta += n[i] * (pow( Delta, b[i] ) * (Phi + delta *dPhi_delta) + dDelta_delta_b * delta * Phi);
   }
 
+  // Helmholtz energy equation: see equation (2.2) from Span and Wagner (1996)
   return rho * (1.0 + delta * phi_r_delta) / (P / (R * T)) - 1.0;
 }
 
-};
+}
 
 SpanWagnerCO2Density::SpanWagnerCO2Density( array1d< string > const & inputPara,
                                             array1d< string > const & componentNames,
@@ -139,13 +144,13 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( array1d< string > const & inputPara,
                    componentMolarWeight )
 {
 
-  bool notFound = 1;
+  bool notFound = true;
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
     if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
     {
       m_CO2Index = i;
-      notFound = 0;
+      notFound = false;
       break;
     }
   }
@@ -202,8 +207,8 @@ void SpanWagnerCO2Density::makeTable( array1d< string > const & inputPara )
   array1d< real64 > values( nP * nT );
   calculateCO2Density( coordinates, values );
 
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
-  m_CO2DensityTable = functionManager->createChild( "TableFunction", "CO2DensityTable" )->groupCast< TableFunction * >();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  m_CO2DensityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
   m_CO2DensityTable->setTableCoordinates( coordinates );
   m_CO2DensityTable->setTableValues( values );
   m_CO2DensityTable->reInitializeFunction();

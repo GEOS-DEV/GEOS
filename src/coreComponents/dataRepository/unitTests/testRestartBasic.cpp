@@ -50,7 +50,7 @@ public:
     m_groupSize( rand( 0, 100 ) )
   {
     m_group->resize( m_groupSize );
-    m_wrapper = m_group->registerWrapper< T >( m_wrapperName );
+    m_wrapper = &m_group->registerWrapper< T >( m_wrapperName );
     m_wrapperSizedFromParent = rand( 0, 100 );
     m_wrapper->setSizedFromParent( m_wrapperSizedFromParent );
   }
@@ -75,7 +75,7 @@ public:
     // Load in the tree
     loadTree( m_fileName, *m_node );
     m_group = std::make_unique< Group >( m_groupName, *m_node );
-    m_wrapper = m_group->registerWrapper< T >( m_wrapperName );
+    m_wrapper = &m_group->registerWrapper< T >( m_wrapperName );
     m_group->loadFromConduit();
 
     // Compare metadata

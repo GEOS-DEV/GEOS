@@ -33,14 +33,14 @@ namespace constitutive
 NewMultiPhaseMultiComponentFluid::NewMultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phasePVTParaFilesString, &m_phasePVTParaFiles )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
-  registerWrapper( viewKeyStruct::flashModelParaFileString, &m_flashModelParaFile )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
+  registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Name of the file defining the parameters of the flash model" );
 }
 
@@ -105,7 +105,7 @@ void NewMultiPhaseMultiComponentFluid::postProcessInput()
 void NewMultiPhaseMultiComponentFluid::createPVTModels()
 {
   // 1) Create the viscosity and density models
-  for( string & filename : m_phasePVTParaFiles )
+  for( string const & filename : m_phasePVTParaFiles )
   {
     std::ifstream is( filename );
     constexpr std::streamsize buf_size = 256;
@@ -120,10 +120,12 @@ void NewMultiPhaseMultiComponentFluid::createPVTModels()
         if( strs[1] == "SpanWagnerCO2Density" )
         {
           m_co2Density = std::make_unique< SpanWagnerCO2Density >( strs, m_componentNames, m_componentMolarWeight );
+          m_co2DensityWrapper.emplace_back( m_co2Density->createKernelWrapper() );
         }
         else if( strs[1] == "BrineCO2Density" )
         {
           m_brineDensity = std::make_unique< BrineCO2Density >( strs, m_componentNames, m_componentMolarWeight );
+          m_brineDensityWrapper.emplace_back( m_brineDensity->createKernelWrapper() );
         }
       }
       else if( strs[0] == "ViscosityFun" )
@@ -131,10 +133,12 @@ void NewMultiPhaseMultiComponentFluid::createPVTModels()
         if( strs[1] == "FenghourCO2Viscosity" )
         {
           m_co2Viscosity = std::make_unique< FenghourCO2Viscosity >( strs, m_componentNames, m_componentMolarWeight );
+          m_co2ViscosityWrapper.emplace_back( m_co2Viscosity->createKernelWrapper() );
         }
         else if( strs[1] == "BrineViscosity" )
         {
           m_brineViscosity = std::make_unique< BrineViscosity >( strs, m_componentNames, m_componentMolarWeight );
+          m_brineViscosityWrapper.emplace_back( m_brineViscosity->createKernelWrapper() );
         }
       }
       else
@@ -163,6 +167,7 @@ void NewMultiPhaseMultiComponentFluid::createPVTModels()
       if( strs[0] == "FlashModel" && strs[1] == "CO2Solubility" )
       {
         m_co2Solubility = std::make_unique< CO2Solubility >( strs, m_phaseNames, m_componentNames, m_componentMolarWeight );
+        m_co2SolubilityWrapper.emplace_back( m_co2Solubility->createKernelWrapper() );
       }
       else
       {
