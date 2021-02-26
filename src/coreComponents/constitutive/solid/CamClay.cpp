@@ -60,24 +60,24 @@ CamClay::CamClay( string const & name, Group * const parent ):
     setDescription( "Recompresion index" );
 
   registerWrapper( viewKeyStruct::defaultVirginCompressionIndexString(), &m_defaultVirginCompressionIndex ).
-    setApplyDefaultValue( 5e-3).
+    setApplyDefaultValue( 5e-3 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Virgin Compression index" );
-    
+
   registerWrapper( viewKeyStruct::defaultCslSlopeString(), &m_defaultCslSlope ).
-     setApplyDefaultValue( 1.0).
-     setInputFlag( InputFlags::OPTIONAL ).
-     setDescription( "Slope of the critical state line" );
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Slope of the critical state line" );
 
   registerWrapper( viewKeyStruct::defaultShapeParameterString(), &m_defaultShapeParameter ).
-     setApplyDefaultValue( 1.0).
-     setInputFlag( InputFlags::OPTIONAL ).
-     setDescription( "Shape parameter for the yield surface" );
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Shape parameter for the yield surface" );
 
   registerWrapper( viewKeyStruct::defaultPreConsolidationPressureString(), &m_defaultPreConsolidationPressure ).
-     setApplyDefaultValue( 5e6 ).
-     setInputFlag( InputFlags::OPTIONAL ).
-     setDescription( "Initial preconsolidation pressure" );
+    setApplyDefaultValue( 5e6 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Initial preconsolidation pressure" );
 
   // register fields
 
@@ -102,17 +102,17 @@ CamClay::CamClay( string const & name, Group * const parent ):
     setDescription( "Slope of the critical state line" );
 
   registerWrapper( viewKeyStruct::shapeParameterString(), &m_shapeParameter ).
-     setApplyDefaultValue( -1 ).
-     setDescription( "Shape parameter for the yield surface" );
+    setApplyDefaultValue( -1 ).
+    setDescription( "Shape parameter for the yield surface" );
 
   registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
-     setApplyDefaultValue( -1 ).
-     setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-     setDescription( "New preconsolidation pressure" );
-    
+    setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
+    setDescription( "New preconsolidation pressure" );
+
   registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
-     setApplyDefaultValue( -1 ).
-     setDescription( "Old preconsolidation pressure" );
+    setApplyDefaultValue( -1 ).
+    setDescription( "Old preconsolidation pressure" );
 }
 
 
@@ -121,7 +121,7 @@ CamClay::~CamClay()
 
 
 void CamClay::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+                                        localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
@@ -146,7 +146,7 @@ void CamClay::postProcessInput()
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
   getWrapper< array2d< real64 > >( viewKeyStruct::newPreConsolidationPressureString() ).
-    setApplyDefaultValue( m_defaultPreConsolidationPressure);
+    setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
   getWrapper< array2d< real64 > >( viewKeyStruct::refPressureString() ).
     setApplyDefaultValue( m_defaultRefPressure );
@@ -156,15 +156,15 @@ void CamClay::postProcessInput()
 
   getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
     setApplyDefaultValue( m_defaultRecompressionIndex );
-    
+
   getWrapper< array1d< real64 > >( viewKeyStruct::virginCompressionIndexString() ).
     setApplyDefaultValue( m_defaultVirginCompressionIndex );
-    
+
   getWrapper< array1d< real64 > >( viewKeyStruct::cslSlopeString() ).
     setApplyDefaultValue( m_defaultCslSlope );
-    
-    getWrapper< array1d< real64 > >( viewKeyStruct::shapeParameterString() ).
-      setApplyDefaultValue( m_defaultShapeParameter );
+
+  getWrapper< array1d< real64 > >( viewKeyStruct::shapeParameterString() ).
+    setApplyDefaultValue( m_defaultShapeParameter );
 }
 
 

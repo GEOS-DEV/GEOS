@@ -60,14 +60,14 @@ public:
                   arrayView3d< real64, solid::STRESS_USD > const & newStress,
                   arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
     ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress ),
-    m_refPressure(refPressure),
-    m_refStrainVol(refStrainVol),
-    m_recompressionIndex(recompressionIndex),
-    m_virginCompressionIndex(virginCompressionIndex),
-    m_cslSlope(cslSlope),
-    m_shapeParameter(shapeParameter),
-    m_newPreConsolidationPressure(newPreConsolidationPressure),
-    m_oldPreConsolidationPressure(oldPreConsolidationPressure)
+    m_refPressure( refPressure ),
+    m_refStrainVol( refStrainVol ),
+    m_recompressionIndex( recompressionIndex ),
+    m_virginCompressionIndex( virginCompressionIndex ),
+    m_cslSlope( cslSlope ),
+    m_shapeParameter( shapeParameter ),
+    m_newPreConsolidationPressure( newPreConsolidationPressure ),
+    m_oldPreConsolidationPressure( oldPreConsolidationPressure )
   {}
 
   /// Default copy constructor
@@ -106,16 +106,16 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
 private:
-    
+
   /// A reference to the ArrayView holding the reference pressure for each quadrature point.
   arrayView2d< real64 const > const m_refPressure;
-    
+
   /// A reference to the ArrayView holding the reference volumetric strain for each quadrature point.
   arrayView2d< real64 const > const m_refStrainVol;
-    
+
   /// A reference to the ArrayView holding the recompression index  for each element.
   arrayView1d< real64 const > const m_recompressionIndex;
-    
+
   /// A reference to the ArrayView holding the virgin compression index for each element.
   arrayView1d< real64 const > const m_virginCompressionIndex;
 
@@ -137,116 +137,116 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void CamClayUpdates::smallStrainUpdate( localIndex const k,
-                                              localIndex const q,
-                                              real64 const ( &strainIncrement )[6],
-                                              real64 ( & stress )[6],
-                                              real64 ( & stiffness )[6][6] ) const
+                                        localIndex const q,
+                                        real64 const ( &strainIncrement )[6],
+                                        real64 ( & stress )[6],
+                                        real64 ( & stiffness )[6][6] ) const
 {
-  
-    // Rename variables for easier implementation
-    
-    real64 const oldPc  = m_oldPreConsolidationPressure[k][q]; //pre-consolidation pressure
-    real64 const mu     = m_shearModulus[k];
-    real64 const p0     = m_refPressure[k][q];
 
-    real64 const eps_v0 = m_refStrainVol[k][q];
-    real64 const M      = m_cslSlope[k];
-    real64 const Cr     = m_recompressionIndex[k];
-    real64 const Cc     = m_virginCompressionIndex[k];
-    real64 const alpha  = m_shapeParameter[k];
-    
-    real64        pc    = oldPc;
-    real64 bulkModulus  = -p0/Cr;
-    
+  // Rename variables for easier implementation
 
-    // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
-        
-      real64 oldP;
-      real64 oldQ;
-      real64 oldDeviator[6];
-      real64 deviator[6];
-      real64 oldStrainElastic[6];
-      real64 strainElasticTrial[6];
-      real64 eps_s_trial;
-      real64 eps_v_trial;
+  real64 const oldPc  = m_oldPreConsolidationPressure[k][q];   //pre-consolidation pressure
+  real64 const mu     = m_shearModulus[k];
+  real64 const p0     = m_refPressure[k][q];
 
-      twoInvariant::stressDecomposition( stress,
-                                         oldP,
-                                         oldQ,
-                                         oldDeviator );
-    
-    
+  real64 const eps_v0 = m_refStrainVol[k][q];
+  real64 const M      = m_cslSlope[k];
+  real64 const Cr     = m_recompressionIndex[k];
+  real64 const Cc     = m_virginCompressionIndex[k];
+  real64 const alpha  = m_shapeParameter[k];
 
-    // Recover elastic strains from the previous step, based on stress from the previous step
-    // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
-    
-    real64 oldElasticStrainVol = std::log(oldP/p0) * Cr * (-1.0) + eps_v0 ;
-    real64 oldElasticStrainDev = oldQ/3./mu;
-   
-    // Now recover the old strain tensor from the strain invariants.
-    // Note that we need the deviatoric direction (n-hat) from the previous step.
-    
-    twoInvariant::strainRecomposition( oldElasticStrainVol,
-                                       oldElasticStrainDev,
-                                       oldDeviator,
-                                       oldStrainElastic );
-    
-    // elastic predictor (assume strainIncrement is all elastic)
-    // TODO: define ElasticIsotropicPressureUpdates to call here
-    //ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  real64 pc    = oldPc;
+  real64 bulkModulus  = -p0/Cr;
 
-    for(localIndex i=0; i<6; ++i)
-   {
-     strainElasticTrial[i] = oldStrainElastic[i] + strainIncrement[i];
-   }
+
+  // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
+
+  real64 oldP;
+  real64 oldQ;
+  real64 oldDeviator[6];
+  real64 deviator[6];
+  real64 oldStrainElastic[6];
+  real64 strainElasticTrial[6];
+  real64 eps_s_trial;
+  real64 eps_v_trial;
+
+  twoInvariant::stressDecomposition( stress,
+                                     oldP,
+                                     oldQ,
+                                     oldDeviator );
+
+
+
+  // Recover elastic strains from the previous step, based on stress from the previous step
+  // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
+
+  real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+  real64 oldElasticStrainDev = oldQ/3./mu;
+
+  // Now recover the old strain tensor from the strain invariants.
+  // Note that we need the deviatoric direction (n-hat) from the previous step.
+
+  twoInvariant::strainRecomposition( oldElasticStrainVol,
+                                     oldElasticStrainDev,
+                                     oldDeviator,
+                                     oldStrainElastic );
+
+  // elastic predictor (assume strainIncrement is all elastic)
+  // TODO: define ElasticIsotropicPressureUpdates to call here
+  //ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+
+  for( localIndex i=0; i<6; ++i )
+  {
+    strainElasticTrial[i] = oldStrainElastic[i] + strainIncrement[i];
+  }
   // two-invariant decomposition of trial elastic strain
-    
-    twoInvariant::strainDecomposition( strainElasticTrial,
-                                       eps_v_trial,
-                                       eps_s_trial,
-                                      deviator);
-  
-    // Calculate trial mean and deviatoric stress
-    
-    real64 trialP = p0 * std::exp(-1./Cr* (eps_v_trial-eps_v0));
-    real64 trialQ = 3. * mu * eps_s_trial;
-    
-    twoInvariant::stressRecomposition( trialP,
-                                       trialQ,
-                                       deviator,
-                                      stress );
-    
-    // set stiffness to elastic predictor
-    
-    bulkModulus = -trialP/Cr ;
-    real64 lame = bulkModulus - 2./3. * mu;
 
-    for(localIndex i=0; i<6; ++i)
+  twoInvariant::strainDecomposition( strainElasticTrial,
+                                     eps_v_trial,
+                                     eps_s_trial,
+                                     deviator );
+
+  // Calculate trial mean and deviatoric stress
+
+  real64 trialP = p0 * std::exp( -1./Cr* (eps_v_trial-eps_v0));
+  real64 trialQ = 3. * mu * eps_s_trial;
+
+  twoInvariant::stressRecomposition( trialP,
+                                     trialQ,
+                                     deviator,
+                                     stress );
+
+  // set stiffness to elastic predictor
+
+  bulkModulus = -trialP/Cr;
+  real64 lame = bulkModulus - 2./3. * mu;
+
+  for( localIndex i=0; i<6; ++i )
+  {
+    for( localIndex j=0; j<6; ++j )
     {
-      for(localIndex j=0; j<6; ++j)
-      {
-        stiffness[i][j] = 0;
-      }
+      stiffness[i][j] = 0;
     }
-    
-    stiffness[0][0] = lame + 2.*mu;
-    stiffness[0][1] = lame;
-    stiffness[0][2] = lame;
+  }
 
-    stiffness[1][0] = lame;
-    stiffness[1][1] = lame + 2.*mu;
-    stiffness[1][2] = lame;
+  stiffness[0][0] = lame + 2.*mu;
+  stiffness[0][1] = lame;
+  stiffness[0][2] = lame;
 
-    stiffness[2][0] = lame;
-    stiffness[2][1] = lame;
-    stiffness[2][2] = lame + 2.*mu;
+  stiffness[1][0] = lame;
+  stiffness[1][1] = lame + 2.*mu;
+  stiffness[1][2] = lame;
 
-    stiffness[3][3] = mu;
-    stiffness[4][4] = mu;
-    stiffness[5][5] = mu;
-    
-    // check yield function F <= 0
-    real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+  stiffness[2][0] = lame;
+  stiffness[2][1] = lame;
+  stiffness[2][2] = lame + 2.*mu;
+
+  stiffness[3][3] = mu;
+  stiffness[4][4] = mu;
+  stiffness[5][5] = mu;
+
+  // check yield function F <= 0
+  real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 
   if( yield < 1e-9 ) // elasticity
   {
@@ -270,30 +270,30 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-      trialP = p0 * std::exp(-1./Cr* (solution[0] - eps_v0));
-      trialQ = 3. * mu * solution[1];
-      bulkModulus = -trialP/Cr;
-      pc = oldPc * std::exp(-1./(Cc-Cr)*(eps_v_trial-solution[0]));
+    trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
+    trialQ = 3. * mu * solution[1];
+    bulkModulus = -trialP/Cr;
+    pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
 
-      yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
+    yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 
-      // derivatives of yield surface
-      real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
-      real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
-      real64 df_dq = 2. * trialQ /(M*M);
-      real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP ;
-      real64 dpc_dve = -1./(Cc-Cr) * pc; //TODO: Check negative or positive
+    // derivatives of yield surface
+    real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
+    real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
+    real64 df_dq = 2. * trialQ /(M*M);
+    real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
+    real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
 
-      real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
-      real64 df_dq_dse = 2. /(M*M) * 3. * mu;
-      //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
+    real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
+    real64 df_dq_dse = 2. /(M*M) * 3. * mu;
+    //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
 
-      
+
     // assemble residual system
-      residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp; // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
-      residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;       // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
-      residual[2] = yield;    // F = 0
- 
+    residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
+    residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
+    residual[2] = yield;      // F = 0
+
 
     // check for convergence
 
@@ -339,32 +339,34 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
   real64 BB[2][2] = {{}};
-    
-    real64 dpc_dve = -1./(Cc-Cr) * pc;
-    real64 a1= 1. + solution[2]*dpc_dve;
-    real64 a2 = trialP * dpc_dve;
 
-    bulkModulus = -trialP/Cr;
+  real64 dpc_dve = -1./(Cc-Cr) * pc;
+  real64 a1= 1. + solution[2]*dpc_dve;
+  real64 a2 = trialP * dpc_dve;
 
-    BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
-    BB[0][1] =bulkModulus*jacobianInv[0][1];
-    BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
-    BB[1][1] = 3. * mu*jacobianInv[1][1];
+  bulkModulus = -trialP/Cr;
 
-    real64 c1;
-    
-    if(eps_s_trial<1e-15) // confirm eps_s_trial != 0
-    {
-      c1 = 2. * mu;
-    }else{
-      c1 = 2. * trialQ/(3. * eps_s_trial);
-    }
+  BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
+  BB[0][1] =bulkModulus*jacobianInv[0][1];
+  BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
+  BB[1][1] = 3. * mu*jacobianInv[1][1];
 
-    real64 c2 = BB[0][0] - c1/3.;
-    real64 c3 = std::sqrt(2./3.) * BB[0][1];
-    real64 c4 = std::sqrt(2./3.) * BB[1][0];
-    real64 c5 = 2./3. * BB[1][1] - c1;
-    
+  real64 c1;
+
+  if( eps_s_trial<1e-15 ) // confirm eps_s_trial != 0
+  {
+    c1 = 2. * mu;
+  }
+  else
+  {
+    c1 = 2. * trialQ/(3. * eps_s_trial);
+  }
+
+  real64 c2 = BB[0][0] - c1/3.;
+  real64 c3 = std::sqrt( 2./3. ) * BB[0][1];
+  real64 c4 = std::sqrt( 2./3. ) * BB[1][0];
+  real64 c5 = 2./3. * BB[1][1] - c1;
+
   real64 identity[6];
 
   for( localIndex i=0; i<3; ++i )
@@ -385,10 +387,10 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
                          + c5 * deviator[i] * deviator[j];
     }
   }
-    // remember history variables before returning
-    
+  // remember history variables before returning
+
   m_newPreConsolidationPressure[k][q] = pc;
-    
+
   // save new stress and return
   saveStress( k, q, stress );
   return;
@@ -398,10 +400,10 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void CamClayUpdates::smallStrainUpdate( localIndex const k,
-                                              localIndex const q,
-                                              real64 const ( &strainIncrement )[6],
-                                              real64 ( & stress )[6],
-                                              DiscretizationOps & stiffness ) const
+                                        localIndex const q,
+                                        real64 const ( &strainIncrement )[6],
+                                        real64 ( & stress )[6],
+                                        DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
 }
@@ -425,7 +427,7 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-    CamClay( string const & name, Group * const parent );
+  CamClay( string const & name, Group * const parent );
 
   /**
    * Default Destructor
@@ -471,15 +473,15 @@ public:
 
     /// string/key for default cohesion
     static constexpr char const * defaultVirginCompressionIndexString() { return "defaultVirginCompressionIndex"; }
-      
-      /// string/key for default cohesion
-      static constexpr char const * defaultCslSlopeString() { return "defaultCslSlope"; }
-      
-      /// string/key for default cohesion
-      static constexpr char const * defaultShapeParameterString() { return "defaultShapeParameter"; }
-      
-      /// string/key for default cohesion
-      static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
+
+    /// string/key for default cohesion
+    static constexpr char const * defaultCslSlopeString() { return "defaultCslSlope"; }
+
+    /// string/key for default cohesion
+    static constexpr char const * defaultShapeParameterString() { return "defaultShapeParameter"; }
+
+    /// string/key for default cohesion
+    static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
 
     /// string/key for friction angle
     static constexpr char const * refPressureString() { return "refPressure"; }
@@ -493,14 +495,14 @@ public:
     /// string/key for cohesion
     static constexpr char const * virginCompressionIndexString() { return "virginCompressionIndex"; }
 
-      /// string/key for cohesion
-      static constexpr char const * cslSlopeString() { return "cslSlope"; }
-      
-      /// string/key for cohesion
-      static constexpr char const * shapeParameterString() { return "shapeParameter"; }
-      
-      /// string/key for cohesion
-      static constexpr char const * newPreConsolidationPressureString() { return "preConsolidationPressure"; }
+    /// string/key for cohesion
+    static constexpr char const * cslSlopeString() { return "cslSlope"; }
+
+    /// string/key for cohesion
+    static constexpr char const * shapeParameterString() { return "shapeParameter"; }
+
+    /// string/key for cohesion
+    static constexpr char const * newPreConsolidationPressureString() { return "preConsolidationPressure"; }
 
     /// string/key for cohesion
     static constexpr char const * oldPreConsolidationPressureString() { return "oldPreConsolidationPressure"; }
@@ -512,18 +514,18 @@ public:
    */
   CamClayUpdates createKernelUpdates() const
   {
-    return CamClayUpdates(m_refPressure,
-                          m_refStrainVol,
-                          m_recompressionIndex,
-                          m_virginCompressionIndex,
-                          m_cslSlope,
-                          m_shapeParameter,
-                          m_newPreConsolidationPressure,
-                          m_oldPreConsolidationPressure,
-                          m_bulkModulus,
-                          m_shearModulus,
-                          m_newStress,
-                          m_oldStress );
+    return CamClayUpdates( m_refPressure,
+                           m_refStrainVol,
+                           m_recompressionIndex,
+                           m_virginCompressionIndex,
+                           m_cslSlope,
+                           m_shapeParameter,
+                           m_newPreConsolidationPressure,
+                           m_oldPreConsolidationPressure,
+                           m_bulkModulus,
+                           m_shearModulus,
+                           m_newStress,
+                           m_oldStress );
   }
 
   /**
@@ -569,22 +571,22 @@ protected:
 
   /// Material parameter: The default value of the slope of the critical state line
   real64 m_defaultCslSlope;
-    
+
   /// Material parameter: The default value of the shape parameter of the yield surface
   real64 m_defaultShapeParameter;
-    
+
   /// Material parameter: The default value of the preconsolidation pressure
   real64 m_defaultPreConsolidationPressure;
-    
+
   /// Material parameter: The reference pressure for each quadrature point
   array2d< real64 > m_refPressure;
-    
+
   /// Material parameter: The reference volumetric strain for each quadrature point
   array2d< real64 > m_refStrainVol;
-    
+
   /// Material parameter: The recompression index for each element
   array1d< real64 > m_recompressionIndex;
-    
+
   /// Material parameter: The virgin compression index for each element
   array1d< real64 > m_virginCompressionIndex;
 
