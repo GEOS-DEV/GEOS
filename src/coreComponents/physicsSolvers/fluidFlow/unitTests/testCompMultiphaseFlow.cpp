@@ -30,6 +30,8 @@ using namespace geosx::testing;
 
 CommandLineOptions g_commandLineOptions;
 
+// Sphinx start after input XML
+
 char const * xmlInput =
   "<Problem>\n"
   "  <Solvers gravityVector=\"0.0, 0.0, -9.81\">\n"
@@ -175,6 +177,8 @@ char const * xmlInput =
   "                   values=\"{1.0, 0.5}\"/>\n"
   "  </Functions>"
   "</Problem>";
+
+// Sphinx end before input XML
 
 void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                                           DomainPartition & domain,
