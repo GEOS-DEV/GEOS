@@ -740,7 +740,7 @@ protected:
 
   /// The default value of the Young's modulus E2 for any new
   /// allocations.
-  real64 m_defaultE2; 
+  real64 m_defaultE2;
 
   /// The default value of the Young's modulus E3 for any new
   /// allocations.
@@ -804,4 +804,3 @@ protected:
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_ELASTICORTHOTROPIC_HPP_ */
-

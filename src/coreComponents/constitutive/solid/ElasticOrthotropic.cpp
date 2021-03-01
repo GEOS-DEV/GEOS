@@ -206,7 +206,7 @@ void ElasticOrthotropic::postProcessInput()
     real64 const Nu32 = Nu23 * E3 / E2;
 
     real64 const delta = 1.0 - Nu12 * Nu21 - Nu13 * Nu31 - Nu23 * Nu32 - 2.0 * Nu12 * Nu23 * Nu31;
-    
+
     if( delta > 0.0 && Nu23 * Nu32 < 1.0 && Nu31 * Nu13 < 1.0 && Nu12 * Nu21 < 1.0 )
     {
       c11 = ( 1.0 - Nu23 * Nu32 )  * E1 / delta;
@@ -265,4 +265,3 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticOrthotropic, string const &, Gr
 } /* namespace constitutive */
 
 } /* namespace geosx */
-

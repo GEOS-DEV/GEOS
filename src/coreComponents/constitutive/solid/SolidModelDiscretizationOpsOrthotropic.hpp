@@ -73,7 +73,7 @@ struct SolidModelDiscretizationOpsOrthotropic : public SolidModelDiscretizationO
   real64 m_c44;
   real64 m_c55;
   real64 m_c66;
-  
+
 };
 
 #if __GNUC__
@@ -147,7 +147,7 @@ void SolidModelDiscretizationOpsOrthotropic::diagBTDB( BASIS_GRADIENT const & gr
                                          3 >( gradN,
                                               diagElementStiffness,
                                               [ c11,
-                                                c22,    
+                                                c22,
                                                 c33,
                                                 c44,
                                                 c55,
@@ -233,4 +233,3 @@ void SolidModelDiscretizationOpsOrthotropic::diagRowSumBTDB( BASIS_GRADIENT cons
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSORTHOTROPIC_HPP_ */
-
