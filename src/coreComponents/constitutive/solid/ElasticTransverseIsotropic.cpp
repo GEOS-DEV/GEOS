@@ -132,7 +132,7 @@ void ElasticTransverseIsotropic::postProcessInput()
   {
     real64 const Nuta = Nuat * ( Et / Ea );
     real64 const delta = ( 1.0 + Nut ) * ( 1.0 - Nut - 2.0 * Nuta * Nuat );
-    
+
     if( delta > 0.0 && Nuta * Nuat < 1.0 )
     {
       c11 = ( 1.0 - Nuta * Nuat ) * Et / delta;
