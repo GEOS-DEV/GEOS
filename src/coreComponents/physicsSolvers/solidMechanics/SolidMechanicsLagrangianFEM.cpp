@@ -732,7 +732,7 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
     real64_array nodeRHS;
 
     // The flag component = 0, 1 and 2 are for the traction in the three orthogonal directions
-    // in the global cartesian coordinate system  
+    // in the global cartesian coordinate system
     // The flag component = -1 is for the normal traction
 
     integer const component = bc.getComponent();
@@ -766,7 +766,7 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
               localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + normalComponent - dofRankOffset;
               if( dof < 0 || dof >= localRhs.size() )
                 continue;
-              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof], 
+              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof],
                                                        faceNormal( kf, normalComponent ) * value * faceArea[kf] / numNodes );
             }
           }
@@ -801,7 +801,7 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
               localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + normalComponent - dofRankOffset;
               if( dof < 0 || dof >= localRhs.size() )
                 continue;
-              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof], 
+              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof],
                                                        faceNormal( kf, normalComponent ) * results[kf] * faceArea[kf] / numNodes );
             }
           }
