@@ -1522,12 +1522,12 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
         // Find shared edge (pair of nodes)
         array1d< real64 > Nbar0( 3 ), Nbar1( 3 );
         Nbar0[ 0 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
-        Nbar0[ 1 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
-        Nbar0[ 2 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
+        Nbar0[ 1 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][1] - faceNormal[ faceMap[sei[iconn][0]][1] ][1];
+        Nbar0[ 2 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][2] - faceNormal[ faceMap[sei[iconn][0]][1] ][2];
         LvArray::tensorOps::normalize< 3 >( Nbar0 );
         Nbar1[ 0 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
-        Nbar1[ 1 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
-        Nbar1[ 2 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
+        Nbar1[ 1 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][1] - faceNormal[ faceMap[sei[iconn][1]][1] ][1];
+        Nbar1[ 2 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][2] - faceNormal[ faceMap[sei[iconn][1]][1] ][2];
         LvArray::tensorOps::normalize< 3 >( Nbar1 );
 
         real64 normalProduct = LvArray::tensorOps::AiBi< 3 >( Nbar0, Nbar1 );
@@ -1595,7 +1595,7 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
         real64 const areafac = nodalArea0[node0index0] * nodalArea1[node0index1] + nodalArea0[node1index0] * nodalArea1[node1index1];
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)
-        real64 stiffApprox[ 2 ][ 2 ][ 3 ];
+        real64 stiffDiagApprox[ 2 ][ 2 ][ 3 ];
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)
@@ -1646,7 +1646,7 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
 
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffApprox[ kf ][ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffDiagApprox[ kf ][ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
         }
@@ -1657,8 +1657,8 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
           // T -> top (index 0), B -> bottom (index 1)
           // Ka(i,i) = KT(i,i) + KB(i,i)
           // Kb(i,i) = KT(i,i) + KB(i,i)
-          invTotStiffApprox[ i ][ i ] = 1.0 / ( stiffApprox[ 0 ][ 0 ][ i ] + stiffApprox[ 1 ][ 0 ][ i ] )
-                                        + 1.0 / ( stiffApprox[ 0 ][ 1 ][ i ] + stiffApprox[ 1 ][ 1 ][ i ] );
+          invTotStiffApprox[ i ][ i ] = 1.0 / ( stiffDiagApprox[ 0 ][ 0 ][ i ] + stiffDiagApprox[ 1 ][ 0 ][ i ] )
+                                        + 1.0 / ( stiffDiagApprox[ 0 ][ 1 ][ i ] + stiffDiagApprox[ 1 ][ 1 ][ i ] );
         }
 
         array1d< real64 > avgNbar( 3 );
