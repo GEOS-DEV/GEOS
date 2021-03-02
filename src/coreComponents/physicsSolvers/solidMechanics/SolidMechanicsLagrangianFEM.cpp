@@ -521,12 +521,12 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
-//      setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+      setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
-//      dtReturn = nonlinearImplicitStep( time_n,
-//                                        dt,
-//                                        cycleNumber,
-//                                        domain );
+      dtReturn = nonlinearImplicitStep( time_n,
+                                        dt,
+                                        cycleNumber,
+                                        domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -549,7 +549,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
         GEOSX_LOG_RANK_0( "Fracture Occurred. Resolve" );
       }
     }
-//    implicitStepComplete( time_n, dt, domain );
+    implicitStepComplete( time_n, dt, domain );
   }
 
   return dtReturn;
@@ -891,12 +891,12 @@ SolidMechanicsLagrangianFEM::
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
   constitutiveRelations = elementRegionManager->constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
 
-//  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-//                                                          CellElementSubRegion & subRegion )
-//  {
-//    SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-//    constitutiveRelation.saveConvergedState();
-//  } );
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
 
   GEOSX_LOG_RANK( "done with constitutive" );
 

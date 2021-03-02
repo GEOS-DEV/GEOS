@@ -14,4 +14,5 @@ set(MPI_Fortran_COMPILER /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-rel
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
 
 
-#set(HYPRE_DIR /usr/workspace/GEOS/GEOSX/geosx_hypre/thirdPartyLibs/install-${CONFIG_NAME}-release/hypre CACHE PATH "" FORCE)
+
+set(HYPRE_DIR ${GEOSX_TPL_ROOT_DIR}/2021-03-01/install-${CONFIG_NAME}-debug/hypre CACHE PATH "" FORCE)
