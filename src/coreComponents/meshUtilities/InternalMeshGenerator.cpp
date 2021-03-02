@@ -94,6 +94,11 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Pattern by which to decompose the hex mesh into prisms (more explanation required)" );
+
+  registerWrapper( viewKeyStruct::mapToRadialString(), &m_mapToRadial ).
+    setApplyDefaultValue( 2 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "A flag for radial mesh: 1 for radial mesh with circular outer boundary, 2 for square outer boundary" );
 }
 
 /**
@@ -361,8 +366,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   std::map< string, int > numElemsInRegions;
   std::map< string, string > elemTypeInRegions;
 
-  integer_array firstElemIndexForBlockInPartition[3];
-  integer_array lastElemIndexForBlockInPartition[3];
+  array1d< integer > firstElemIndexForBlockInPartition[3];
+  array1d< integer > lastElemIndexForBlockInPartition[3];
 
   for( int dir = 0; dir < 3; ++dir )
   {
@@ -534,9 +539,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   }
 
   {
-    integer_array numElements;
-    string_array elementRegionNames;
-    string_array elementTypes;
+    array1d< integer > numElements;
+    array1d< string > elementRegionNames;
+    array1d< string > elementTypes;
     std::map< string, localIndex > localElemIndexInRegion;
 
     for( std::map< string, int >::iterator iterNumElemsInRegion = numElemsInRegions.begin();
@@ -565,7 +570,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
         {
           CellBlock & elemRegion =  elementManager.getRegion( m_regionNames[ regionOffset ] );
           int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion.numNodesPerElement());
-          integer_array nodeIDInBox( 8 );
+          array1d< integer > nodeIDInBox( 8 );
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion.nodeList();
           arrayView1d< globalIndex > const & elemLocalToGlobal = elemRegion.localToGlobalMap();
@@ -1040,7 +1045,6 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
     {
       nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
     }
-
   }
 }
 
