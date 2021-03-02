@@ -95,10 +95,10 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Pattern by which to decompose the hex mesh into prisms (more explanation required)" );
 
-  registerWrapper( viewKeyStruct::mapToRadialString(), &m_mapToRadial ).
-    setApplyDefaultValue( 2 ).
+  registerWrapper( viewKeyStruct::meshTypeString(), &m_meshType ).
+    setApplyDefaultValue( MeshType::Cartesian ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "A flag for radial mesh: 1 for radial mesh with circular outer boundary, 2 for square outer boundary" );
+    setDescription( "Mesh type. Options are:\n* " + EnumStrings< MeshType >::concat( "\n* " ) );
 }
 
 /**
@@ -477,7 +477,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           getNodePosition( index, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          if( m_mapToRadial > 0 )
+          if( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary )
           {
             if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
             {
@@ -488,7 +488,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
 
           // Cartesian-specific nodesets
-          if( m_mapToRadial == 0 )
+          if( m_meshType == MeshType::Cartesian )
           {
             if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
@@ -702,7 +702,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
-  if( m_mapToRadial > 0 )
+  if( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary )
   {
     // Map to radial mesh
     for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
@@ -712,7 +712,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       m_meshPhi = fabs( m_meshTheta - m_meshAxis * M_PI / 2.0 );
       m_meshRout = m_max[0] / cos( m_meshPhi );
 
-      if( m_mapToRadial > 1 )
+      if( m_meshType == MeshType::CylindricalSquareBoundary )
       {
         m_meshRact = ( ( m_meshRout - m_min[0] ) / ( m_max[0] - m_min[0] ) ) * ( X[iN][0] - m_min[0] ) + m_min[0];
       }
@@ -725,7 +725,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       X[iN][1] = m_meshRact * sin( m_meshTheta );
 
       // Add mapped values to nodesets
-      if( m_mapToRadial > 1 )
+      if( m_meshType == MeshType::CylindricalSquareBoundary )
       {
         if( isEqual( X[iN][0], -1 * m_max[0], 1e-6 ) )
         {

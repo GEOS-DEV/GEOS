@@ -19,6 +19,7 @@
 #ifndef GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP
 #define GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP
 
+#include "common/EnumStrings.hpp" 
 #include "dataRepository/Group.hpp"
 #include "MeshGeneratorBase.hpp"
 
@@ -64,9 +65,21 @@ public:
     constexpr static char const * cellBlockNamesString() { return "cellBlockNames"; }
     constexpr static char const * elementTypesString() { return "elementTypes"; }
     constexpr static char const * trianglePatternString() { return "trianglePattern"; }
-    constexpr static char const * mapToRadialString() { return "mapToRadial"; }
+    constexpr static char const * meshTypeString() { return "meshType"; }
   };
   /// @endcond
+
+  /**
+   * @enum MeshType
+   *
+   * The options for mesh type
+   */
+  enum class MeshType : integer
+  {
+    Cartesian,
+    Cylindrical,
+    CylindricalSquareBoundary
+  };
 
   virtual void generateElementRegions( DomainPartition & domain ) override;
 
@@ -149,7 +162,7 @@ private:
    * @brief Knob to map onto a radial mesh.
    * @note if 0 mesh is not radial, if positive mesh is, it larger than 1
    */
-  int m_mapToRadial = 0;
+  MeshType m_meshType = MeshType::Cartesian;
 
   ///@cond DO_NOT_DOCUMENT
   /// axis index for cartesian to radial coordinates mapping
@@ -287,11 +300,13 @@ public:
    */
   inline bool isRadial()
   {
-    bool rval = (m_mapToRadial > 0);
+    bool rval = ( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary );
     return rval;
   }
 
 };
+
+ENUM_STRINGS( InternalMeshGenerator::MeshType, "Cartesian", "Cylindrical", "CylindricalSquareBoundary" )
 
 } /* namespace geosx */
 
