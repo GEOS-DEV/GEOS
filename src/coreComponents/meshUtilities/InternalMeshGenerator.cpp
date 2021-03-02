@@ -284,8 +284,11 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "ypos" ) ).reference();
   SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zneg" ) ).reference();
   SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) ).reference();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all"  ) ).reference();
+  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
+  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
+  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
+  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
 
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
@@ -507,16 +510,37 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
               yposNodes.insert( localNodeIndex );
             }
           }
-          else
+          else if( m_meshType == MeshType::Cylindrical )
           {
             // Radial-specific nodesets
             if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
-              xnegNodes.insert( localNodeIndex );
+              rnegNodes.insert( localNodeIndex );
             }
             if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
             {
-              xposNodes.insert( localNodeIndex );
+              rposNodes.insert( localNodeIndex );
+            }
+          }
+          else if( m_meshType == MeshType::CylindricalSquareBoundary )
+          {
+            // Inner cylindrical boundary nodeset
+            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
+            {
+              rnegNodes.insert( localNodeIndex );
+            }
+          }
+
+          if( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary )
+          {
+            // tangent nodesets
+            if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
+            {
+              tnegNodes.insert( localNodeIndex );
+            }
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
+            {
+              tposNodes.insert( localNodeIndex );
             }
           }
 
@@ -532,7 +556,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           allNodes.insert( localNodeIndex );
 
           ++localNodeIndex;
-
         }
       }
     }
@@ -598,12 +621,10 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
                 if( m_elementType[iR] == "CPE4" || m_elementType[iR] == "STRI" )
                 {
-
                   nodeOfBox[0] = firstNodeIndex;
                   nodeOfBox[1] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex;
                   nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndex;
                   nodeOfBox[3] = numNodesInDir[2] + firstNodeIndex;
-
                 }
                 else
                 {
@@ -664,7 +685,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;
-
                 }
               }
             }
@@ -727,19 +747,19 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       // Add mapped values to nodesets
       if( m_meshType == MeshType::CylindricalSquareBoundary )
       {
-        if( isEqual( X[iN][0], -1 * m_max[0], 1e-6 ) )
+        if( isEqual( X[iN][0], -1 * m_max[0], 1e-10 ) )
         {
           xnegNodes.insert( iN );
         }
-        if( isEqual( X[iN][0], m_max[0], 1e-6 ) )
+        if( isEqual( X[iN][0], m_max[0], 1e-10 ) )
         {
           xposNodes.insert( iN );
         }
-        if( isEqual( X[iN][1], -1 * m_max[0], 1e-6 ) )
+        if( isEqual( X[iN][1], -1 * m_max[0], 1e-10 ) )
         {
           ynegNodes.insert( iN );
         }
-        if( isEqual( X[iN][1], m_max[0], 1e-6 ) )
+        if( isEqual( X[iN][1], m_max[0], 1e-10 ) )
         {
           yposNodes.insert( iN );
         }
