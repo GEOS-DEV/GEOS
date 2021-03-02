@@ -1,8 +1,20 @@
 /*
- * WaveEquation.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Jan 12, 2021
- *      Author: settgast
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+
+/**
+ * @file AcousticWaveEquationSEM.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
@@ -73,21 +85,19 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr auto varName = "varName";
+    static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
+    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
+    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
+    static constexpr char const * sourceIsLocalString() { return "sourceIsLocal"; }
 
-    static constexpr auto sourceCoordinatesString = "sourceCoordinates";
-    static constexpr auto sourceNodeIdsString     = "sourceNodeIds";
-    static constexpr auto sourceConstantsString   = "sourceConstants";
-    static constexpr auto sourceIsLocalString     = "sourceIsLocal";
+    static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
 
-    static constexpr auto timeSourceFrequencyString = "timeSourceFrequency";
+    static constexpr char const * receiverCoordinatesString() { return "receiverCoordinates"; }
+    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
+    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
+    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
-    static constexpr auto receiverCoordinatesString = "receiverCoordinates";
-    static constexpr auto receiverNodeIdsString     = "receiverNodeIds";
-    static constexpr auto receiverConstantsString   = "receiverConstants";
-    static constexpr auto receiverIsLocalString     = "receiverIsLocal";
-
-    static constexpr auto pressureNp1AtReceiversString   = "pressureNp1AtReceivers";
+    static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
 
 
   } waveEquationViewKeys;

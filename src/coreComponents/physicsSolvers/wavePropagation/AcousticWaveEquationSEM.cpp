@@ -1,8 +1,20 @@
 /*
- * WaveEquation.cpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Jan 12, 2021
- *      Author: settgast
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+
+/**
+ * @file AcousticWaveEquationSEM.cpp
  */
 
 #include "AcousticWaveEquationSEM.hpp"
@@ -24,53 +36,53 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
               parent )
 {
 
-  registerWrapper( viewKeyStruct::sourceCoordinatesString, &m_sourceCoordinates ).
+  registerWrapper( viewKeyStruct::sourceCoordinatesString(), &m_sourceCoordinates ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the sources" );
 
-  registerWrapper( viewKeyStruct::sourceNodeIdsString, &m_sourceNodeIds ).
+  registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each source point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString, &m_sourceConstants ).
+  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
 
-  registerWrapper( viewKeyStruct::sourceIsLocalString, &m_sourceIsLocal ).
+  registerWrapper( viewKeyStruct::sourceIsLocalString(), &m_sourceIsLocal ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the source is local to this MPI rank" );
 
 
-  registerWrapper( viewKeyStruct::timeSourceFrequencyString, &m_timeSourceFrequency ).
+  registerWrapper( viewKeyStruct::timeSourceFrequencyString(), &m_timeSourceFrequency ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Central frequency for the time source" );
 
 
-  registerWrapper( viewKeyStruct::receiverCoordinatesString, &m_receiverCoordinates ).
+  registerWrapper( viewKeyStruct::receiverCoordinatesString(), &m_receiverCoordinates ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the receivers" );
 
-  registerWrapper( viewKeyStruct::receiverNodeIdsString, &m_receiverNodeIds ).
+  registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each receiver point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString, &m_sourceConstants ).
+  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
 
-  registerWrapper( viewKeyStruct::receiverIsLocalString, &m_receiverIsLocal ).
+  registerWrapper( viewKeyStruct::receiverIsLocalString(), &m_receiverIsLocal ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
-  registerWrapper( viewKeyStruct::pressureNp1AtReceiversString, &m_pressureNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::pressureNp1AtReceiversString(), &m_pressureNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Pressure value at each receiver for each timestep" );
@@ -115,7 +127,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   //for( auto & mesh : MeshBodies->getSubGroups() )
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
-    
+
     MeshLevel & meshLevel =  meshBody.getMeshLevel( 0 );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -136,7 +148,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
     } );
 
-  });
+  } );
 }
 
 
@@ -216,19 +228,15 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
               if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
               {
                 sourceIsLocal[isrc] = 1;
-                std::cout << "I found the source in element " << k << " at location ("
-                          << coords[0] << ", " << coords[1] << ", " << coords[2] << ")" << std::endl;
+
                 /// Get all the node of element k containing the source point
                 real64 xLocal[numNodesPerElem][3];
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
-                  std::cout << " For node " << a;
                   for( localIndex i=0; i<3; ++i )
                   {
                     xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                    std::cout << " x_"<< i << " = " << xLocal[a][i];
                   }
-                  std::cout << " " << std::endl;
                 }
 
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
@@ -281,12 +289,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 // save all the node indices and constant part of source term here
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
-
                   sourceNodeIds[isrc][a] = elemsToNodes[k][a];
                   sourceConstants[isrc][a] = Ntest[a];
-
-                  std::cout << "For source #" << isrc << " I save node #" << sourceNodeIds[isrc][a] << " and constant value = " << sourceConstants[isrc][a] << std::endl;
-
                 }
               }
             }
@@ -309,20 +313,15 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
               if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
               {
                 receiverIsLocal[ircv] = 1;
-                std::cout << "I found the receiver in element " << k << " at location ("
-                          << coords[0] << ", " << coords[1] << ", " << coords[2] << ")" << std::endl;
 
                 /// Get all the node of element k containing the source point
                 real64 xLocal[numNodesPerElem][3];
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
-                  std::cout << " For node " << a;
                   for( localIndex i=0; i<3; ++i )
                   {
                     xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                    std::cout << " x_"<< i << " = " << xLocal[a][i];
                   }
-                  std::cout << " " << std::endl;
                 }
 
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
@@ -370,17 +369,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
-                std::cout << "Ntest Ok receiver "<< std::endl;
-
                 // save all the node indices and constant part of source term here
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
-
                   receiverNodeIds[ircv][a] = elemsToNodes[k][a];
                   receiverConstants[ircv][a] = Ntest[a];
-
-                  std::cout << "For receiver #" << ircv << " I save node #" << receiverNodeIds[ircv][a] <<  " and constant value = " << receiverConstants[ircv][a] << std::endl;
-
                 }
               }
             }
@@ -390,7 +383,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
       } );
     } );
   } );
-  ///GEOSX_ERROR_IF( true, "Stop test " );
 }
 
 
@@ -446,9 +438,6 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
       /// Define filename for sismo trace at receiver ircv
       sprintf( filename, "sismoTraceReceiver%0ld.txt", ircv );
       this->saveSismo( isismo, p_rcvs[ircv], filename );
-
-      //std::cout << "Step #" << isismo << " rcv #" << ircv << " p = " << p_rcvs[ircv][isismo] << std::endl;
-
     }
   }
 }
@@ -456,9 +445,6 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
 
 void AcousticWaveEquationSEM::saveSismo( localIndex isismo, real64 val_pressure, char *filename )
 {
-  //arrayView1d< real64 const > const p_rcvs = m_pressureNp1AtReceivers.toViewConst();
-  //localIndex sizeVect = p_rcvs.size(0);
-
   std::ofstream f( filename, std::ios::app );
   f<< isismo << " " << val_pressure << std::endl;
   f.close();
@@ -535,6 +521,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         real64 N[numNodesPerElem];
         real64 gradN[ numNodesPerElem ][ 3 ];
+
+        /// Loop over elements
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
           real64 const invC2 = 1.0 / ( c[k] * c[k] );
@@ -558,26 +546,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
               mass[elemsToNodes[k][a]] +=  invC2 * detJ * N[a];
             }
           }
-        }
 
-        /* Unit test
-           // Test for mass matrix sumTerm*c2 should be volume of the domaine
-              real64 sumMass = 0.0;
-              for( localIndex a=0; a<nodeManager.size(); ++a )
-              {
-                sumMass +=mass[a];
-              }
-
-           // assuming MediumVelocity c = 1500
-           sumMass *=1500*1500;
-           std::cout << "Sum mass terms time C2 = " << sumMass << std::endl;
-
-           GEOSX_ERROR_IF( true, " Stop test Mass Ok" );
-         */
-
-        /// update damping matrix
-        for( localIndex k=0; k < elemsToFaces.size( 0 ); ++k )
-        {
           real64 const alpha = 1.0/c[k];
 
           for( localIndex kfe=0; kfe< numFacesPerElem; ++kfe )
@@ -585,14 +554,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
             /// Face on the domain boundary
             if( facesDomainBoundaryIndicator[elemsToFaces[k][kfe]]==1 )
             {
-              real64 xLocal[numNodesPerElem][3];
-              for( localIndex a=0; a< numNodesPerElem; ++a )
-              {
-                for( localIndex i=0; i<3; ++i )
-                {
-                  xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                }
-              }
+              //real64 xLocal[numNodesPerElem][3];
+              //for( localIndex a=0; a< numNodesPerElem; ++a )
+              //{
+              //  for( localIndex i=0; i<3; ++i )
+              //  {
+              //    xLocal[a][i] = X( elemsToNodes( k, a ), i );
+              //  }
+              //}
               for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
               {
                 FE_TYPE::calcN( q, N );
@@ -623,9 +592,23 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                 }
               }
             }
-          }
-        }
+          } // end loop over element
 
+          /* Unit test
+                 // Test for mass matrix sumTerm*c2 should be volume of the domaine
+                    real64 sumMass = 0.0;
+                    for( localIndex a=0; a<nodeManager.size(); ++a )
+                    {
+                      sumMass +=mass[a];
+                    }
+
+                 // assuming MediumVelocity c = 1500
+                 sumMass *=1500*1500;
+                 std::cout << "Sum mass terms time C2 = " << sumMass << std::endl;
+
+                 GEOSX_ERROR_IF( true, " Stop test Mass Ok" );
+           */
+        }
       } );
     } );
   } );
@@ -821,12 +804,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   /// Synchronize pressure fields
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( "pressure_np1" );
-  
+
   CommunicationTools syncFields;
   syncFields.synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+                                domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                domain.getNeighbors(),
+                                true );
 
   for( localIndex a=0; a<nodes.size(); ++a )
   {
