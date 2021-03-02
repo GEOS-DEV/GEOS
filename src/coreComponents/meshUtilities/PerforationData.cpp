@@ -21,9 +21,7 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/Perforation.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-
 
 namespace geosx
 {
@@ -52,9 +50,9 @@ namespace
 
 /**
  * @brief Check if the well is along the x-, y-, or z- directions.
- * @tparam VEC_TYPE type of @p vecWellElemCenterToPerf
+ * @tparam VEC_TYPE type of @p vecTopNodeToBottom
  * @tparam PERM_TYPE type of @p perm
- * @param[in] vecWellElemCenterToPerf vector connecting the well element center to the perforation
+ * @param[in] vecTopToBottom vector connecting the well element center to the perforation
  * @param[in] dx dimension of the element in the x-direction
  * @param[in] dy dimension of the element in the y-direction
  * @param[in] dz dimension of the element in the z-direction
@@ -66,7 +64,7 @@ namespace
  * @param[out] k2 absolute permeability in the reservoir element (second direction)
  */
 template< typename VEC_TYPE, typename PERM_TYPE >
-void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
+void decideWellDirection( VEC_TYPE const & vecTopToBottom,
                           real64 const & dx,
                           real64 const & dy,
                           real64 const & dz,
@@ -78,8 +76,8 @@ void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
                           real64 & k2 )
 {
   // vertical well (approximately along the z-direction)
-  if( fabs( vecWellElemCenterToPerf[2] ) > fabs( vecWellElemCenterToPerf[0] )
-      && fabs( vecWellElemCenterToPerf[2] ) > fabs( vecWellElemCenterToPerf[1] ) )
+  if( fabs( vecTopToBottom[2] ) > fabs( vecTopToBottom[0] )
+      && fabs( vecTopToBottom[2] ) > fabs( vecTopToBottom[1] ) )
   {
     d1 = dx;
     d2 = dy;
@@ -88,8 +86,8 @@ void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
     k2 = perm[1];
   }
   // well approximately along the y-direction
-  else if( fabs( vecWellElemCenterToPerf[1] ) > fabs( vecWellElemCenterToPerf[0] )
-           && fabs( vecWellElemCenterToPerf[1] ) > fabs( vecWellElemCenterToPerf[2] ) )
+  else if( fabs( vecTopToBottom[1] ) > fabs( vecTopToBottom[0] )
+           && fabs( vecTopToBottom[1] ) > fabs( vecTopToBottom[2] ) )
   {
     d1 = dx;
     d2 = dz;
@@ -114,12 +112,13 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                                                    WellElementSubRegion const & wellElemSubRegion,
                                                    string const & permeabilityKey )
 {
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  WellElementSubRegion::NodeMapType const & elemToNodeMap = wellElemSubRegion.nodeList();
 
   // get the permeability in the domain
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
     mesh.getElemManager().constructArrayViewAccessor< real64, 2 >( permeabilityKey );
-
-  arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion.getElementCenter();
 
   // for all the local perforations on this well
   for( localIndex iperf = 0; iperf < size(); ++iperf )
@@ -151,15 +150,21 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     real64 k1 = 0;
     real64 k2 = 0;
 
-    // compute the vector perforation - well elem center
-    // this vector will be used to decide whether this is a vectical well or not
-    localIndex const wellElemIndex   = m_wellElementIndex[iperf];
-    real64 vecWellElemCenterToPerf[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( wellElemCenter[wellElemIndex] );
-    LvArray::tensorOps::subtract< 3 >( vecWellElemCenterToPerf, m_location[iperf] );
+    // get the index of the well element, and of the neighboring well nodes
+    localIndex const wellElemIndex = m_wellElementIndex[iperf];
+    localIndex const topNode = elemToNodeMap[wellElemIndex][InternalWellGenerator::NodeLocation::TOP];
+    localIndex const bottomNode = elemToNodeMap[wellElemIndex][InternalWellGenerator::NodeLocation::BOTTOM];
+    // using the direction of the segment, compute the perforation "direction"
+    // that will be used to construct the Peaceman index
+    real64 vecTopToBottom[3] = { X[bottomNode][0],
+                                 X[bottomNode][1],
+                                 X[bottomNode][2] };
+    LvArray::tensorOps::subtract< 3 >( vecTopToBottom, X[topNode] );
+    LvArray::tensorOps::normalize< 3 >( vecTopToBottom );
 
     // check if this is a vertical well or a horizontal well
     // assign d1, d2, h, k1, and k2 accordingly
-    DecideWellDirection( vecWellElemCenterToPerf,
+    decideWellDirection( vecTopToBottom,
                          dx, dy, dz, perm[er][esr][ei],
                          d1, d2, h, k1, k2 );
 
