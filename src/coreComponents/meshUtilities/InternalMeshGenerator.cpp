@@ -17,20 +17,8 @@
  */
 
 #include "InternalMeshGenerator.hpp"
-
 #include "managers/DomainPartition.hpp"
-
-#include "codingUtilities/StringUtilities.hpp"
-#include <math.h>
-#include <algorithm>
-
 #include "mpiCommunications/PartitionBase.hpp"
-#include "mpiCommunications/SpatialPartition.hpp"
-#include "common/DataTypes.hpp"
-
-#include "mesh/MeshBody.hpp"
-
-#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -38,120 +26,84 @@ using namespace dataRepository;
 
 InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
-//    m_vertices({this->registerWrapper<real64_array>(keys::xCoords).reference(),
-//                this->registerWrapper<real64_array>(keys::yCoords).reference(),
-//                this->registerWrapper<real64_array>(keys::zCoords).reference()
-// }),
   m_dim( 0 ),
   m_min(),
   m_max()
 {
-
-  /*
-     for( int i=0 ; i<3 ; ++i )
-     {
-     m_wExtensionMin[i] = 0;
-     m_wExtensionMax[i] = 0;
-     m_nExtensionLayersMin[i] = 0;
-     m_nExtensionLayersMax[i] = 0;
-     m_commonRatioMin[i] = 1.5;
-     m_commonRatioMax[i] = 1.5;
-     }
-   */
   m_dim = 3;
 
-  registerWrapper( keys::xCoords, &(m_vertices[0]) ).
+  registerWrapper( viewKeyStruct::xCoordsString(), &(m_vertices[0]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "x-coordinates of each mesh block vertex" );
 
-  registerWrapper( keys::yCoords, &(m_vertices[1]) ).
+  registerWrapper( viewKeyStruct::yCoordsString(), &(m_vertices[1]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "y-coordinates of each mesh block vertex" );
 
-  registerWrapper( keys::zCoords, &(m_vertices[2]) ).
+  registerWrapper( viewKeyStruct::zCoordsString(), &(m_vertices[2]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "z-coordinates of each mesh block vertex" );
 
-  registerWrapper( keys::xElems, &(m_nElems[0]) ).
+  registerWrapper( viewKeyStruct::xElemsString(), &(m_nElems[0]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "number of elements in the x-direction within each mesh block" );
+    setDescription( "Number of elements in the x-direction within each mesh block" );
 
-  registerWrapper( keys::yElems, &(m_nElems[1]) ).
+  registerWrapper( viewKeyStruct::yElemsString(), &(m_nElems[1]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "number of elements in the y-direction within each mesh block" );
+    setDescription( "Number of elements in the y-direction within each mesh block" );
 
-  registerWrapper( keys::zElems, &(m_nElems[2]) ).
+  registerWrapper( viewKeyStruct::zElemsString(), &(m_nElems[2]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "number of elements in the z-direction within each mesh block" );
+    setDescription( "Number of elements in the z-direction within each mesh block" );
 
-  registerWrapper( keys::xBias, &(m_nElemBias[0]) ).
+  registerWrapper( viewKeyStruct::xBiasString(), &(m_nElemBias[0]) ).
     setApplyDefaultValue( 1.0 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)" );
+    setDescription( "Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)" );
 
-  registerWrapper( keys::yBias, &(m_nElemBias[1]) ).
+  registerWrapper( viewKeyStruct::yBiasString(), &(m_nElemBias[1]) ).
     setApplyDefaultValue( 1.0 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)" );
+    setDescription( "Bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)" );
 
-  registerWrapper( keys::zBias, &(m_nElemBias[2]) ).
+  registerWrapper( viewKeyStruct::zBiasString(), &(m_nElemBias[2]) ).
     setApplyDefaultValue( 1.0 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)" );
+    setDescription( "Bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)" );
 
-  registerWrapper( keys::cellBlockNames, &m_regionNames ).
+  registerWrapper( viewKeyStruct::cellBlockNamesString(), &m_regionNames ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "names of each mesh block" );
+    setDescription( "Names of each mesh block" );
 
-  registerWrapper( keys::elementTypes, &m_elementType ).
+  registerWrapper( viewKeyStruct::elementTypesString(), &m_elementType ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "element types of each mesh block" );
+    setDescription( "Element types of each mesh block" );
 
-  registerWrapper( keys::trianglePattern, &m_trianglePattern ).
+  registerWrapper( viewKeyStruct::trianglePatternString(), &m_trianglePattern ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "pattern by which to decompose the hex mesh into prisms (more explanation required)" );
-
+    setDescription( "Pattern by which to decompose the hex mesh into prisms (more explanation required)" );
 }
-
-InternalMeshGenerator::~InternalMeshGenerator()
-{
-  // TODO Auto-generated destructor stub
-}
-
 
 /**
  * @param domain
  */
 void InternalMeshGenerator::generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{
-  //  lvector numElements;
-  //
-  //  for( string_array::size_type r=0 ; r<m_regionNames.size() ; ++r )
-  //  {
-  //    numElements.emplace_back( 0 );
-  //  }
-  //
-  //  domain.m_feElementManager->resize( numElements, m_regionNames,
-  // m_elementType );
-
-}
+{}
 
 void InternalMeshGenerator::postProcessInput()
 {
-
-
   if( m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6" )
   {
     m_dim = 3;
@@ -282,38 +234,13 @@ void InternalMeshGenerator::postProcessInput()
   }
 
   m_fPerturb = 0.0;
-
-//    m_fPerturb = hdn.GetAttributeOrDefault<real64>("perturbationFactor", 0.0);
-//    m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed",
-// time(NULL));
-//    srand(m_randSeed);
-//
-//    m_mapToRadial = hdn.GetAttributeOrDefault<int>("mapToRadial", 0);
-//
-//    m_skewAngle = hdn.GetAttributeOrDefault<real64>("skewAngle", 0.0);
-//    m_skewAngle *= 3.14159265/180;
-//    R1Tensor zeroVector;
-//    zeroVector *= 0.0;
-//    m_skewCenter = hdn.GetAttributeOrDefault<R1Tensor>("skewCenter",
-// zeroVector);
-//
-//
-//    // Mesh deformation
-//    m_delayMeshDeformation =
-// hdn.GetAttributeOrDefault<int>("delayMeshDeformation", 0);
-//    m_meshDx = hdn.GetAttributeString("dxTable");
-//    m_meshDy = hdn.GetAttributeString("dyTable");
-//    m_meshDz = hdn.GetAttributeString("dzTable");
-
 }
 
-
-
-Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), 
+                                            string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
-
 
 /**
  * @param partition
@@ -323,16 +250,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  // This cannot find groupkeys:
-  // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
   Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-
-  // special case
-  //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) &&
-  // (partition.GetPartitions()[1]==1);
-
   NodeManager & nodeManager = meshLevel0.getNodeManager();
 
   // Make sure that the node manager fields are initialized
@@ -344,7 +264,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   bool isRadialWithOneThetaPartition = false;
 
-
   // This should probably handled elsewhere:
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
@@ -353,7 +272,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     string elementType = m_elementType[aa++];
     cellBlock.setElementType( elementType );
   }
-
 
   SortedArray< localIndex > & xnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xneg" ) ).reference();
   SortedArray< localIndex > & xposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xpos" ) ).reference();
@@ -364,7 +282,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
 
 
-  // partition based on even spacing to get load balance
+  // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
     m_min[0] = m_vertices[0].front();
@@ -382,7 +300,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     meshBody.setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( size ) );
   }
 
-  // find elemCenters for even uniform element sizes
+  // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
   for( int i = 0; i < 3; ++i )
   {
@@ -405,9 +323,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                            MPI_COMM_GEOSX );
   }
 
-  // find starting/ending index
-
-  // get the first and last indices in this partition each direction
+  // Find starting/ending index
+  // Get the first and last indices in this partition each direction
   int firstElemIndexInPartition[3] =
   { -1, -1, -1 };
   int lastElemIndexInPartition[3] =
@@ -438,7 +355,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
-  // calculate number of elements in this partition from each region, and the
+  // Calculate number of elements in this partition from each region, and the
   // total number of nodes
 
   std::map< string, int > numElemsInRegions;
@@ -519,15 +436,11 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   }
 
   localIndex numNodes = 1;
-
-  //  int numElemsInDir[3] = {1,1,1};
   localIndex numNodesInDir[3] =
   { 1, 1, 1 };
 
   for( int i = 0; i < m_dim; ++i )
   {
-    //    numElemsInDir[i] = lastElemIndexInPartition[i] -
-    // firstElemIndexInPartition[i] + 1;
     numNodesInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 2;
     if( isRadialWithOneThetaPartition && i == 1 )
     {
@@ -558,7 +471,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
           getNodePosition( index, m_trianglePattern, X[localNodeIndex] );
 
-          // alter global node map for radial mesh
+          // Alter global node map for radial mesh
           if( m_mapToRadial > 0 )
           {
             if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
@@ -569,7 +482,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
 
-          // cartesian-specific nodesets
+          // Cartesian-specific nodesets
           if( m_mapToRadial == 0 )
           {
             if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
@@ -591,7 +504,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           }
           else
           {
-            // radial-specific nodesets
+            // Radial-specific nodesets
             if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
               xnegNodes.insert( localNodeIndex );
@@ -602,7 +515,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
             }
           }
 
-          // general nodesets
+          // General nodesets
           if( isEqual( X( localNodeIndex, 2 ), m_min[2], 1e-10 ) )
           {
             znegNodes.insert( localNodeIndex );
@@ -639,7 +552,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
     elementManager.resize( numElements, elementRegionNames, elementTypes );
 
-    // assign global numbers to elements
+    // Assign global numbers to elements
     regionOffset = 0;
     SortedArray< string > processedRegionNames;
     localIndex iR = 0;
@@ -650,9 +563,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       {
         for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
         {
-//          ElementRegionT& elemRegion =
-// domain->m_feElementManager->m_ElementRegions[*iterRegion];
-
           CellBlock & elemRegion =  elementManager.getRegion( m_regionNames[ regionOffset ] );
           int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion.numNodesPerElement());
           integer_array nodeIDInBox( 8 );
@@ -719,11 +629,12 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                   //            0                   1             |/____ x
 
                 }
-                // fix local connectivity for single theta (y) partition (radial meshes only)
+                // Fix local connectivity for single theta (y) partition (radial meshes only)
                 if( isRadialWithOneThetaPartition )
                 {
                   if( j == numElemsInDirForRegion[1] - 1 && jblock == m_nElems[1].size() - 1 )
-                  { // last set of elements
+                  { 
+                    // Last set of elements
                     index[1] = -1;
                     const localIndex firstNodeIndexR = numNodesInDir[1] * numNodesInDir[2] * ( index[0] - firstElemIndexInPartition[0] )
                                                        + numNodesInDir[2] * ( index[1] - firstElemIndexInPartition[1] )
@@ -758,86 +669,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
-#if 0
-  // Correct partition geometrical boundary.
-  {
-    R1Tensor pMin, pMax;
-    partition.getPartitionGeometricalBoundary( pMin, pMax );
-    for( int i = 0; i < m_dim; ++i )
-    {
-      real64 xMinByNumElems = ( pMin[i] - m_min[i] ) / ( m_max[i] - m_min[i] ) * m_numElemsTotal[i];
-      real64 xMaxByNumElems = ( pMax[i] - m_min[i] ) / ( m_max[i] - m_min[i] ) * m_numElemsTotal[i];
-
-      localIndex iBlockMin( 0 ), iBlockMax( 0 );
-      while( ( xMinByNumElems < m_firstElemIndexForBlock[i][iBlockMin] * 1.0 || xMinByNumElems > m_lastElemIndexForBlock[i][iBlockMin] * 1.0 + 1.0 )
-             && iBlockMin < m_nElems[i].size() - 1 )
-      {
-        ++iBlockMin;
-      }
-      while( ( xMaxByNumElems < m_firstElemIndexForBlock[i][iBlockMax] * 1.0 || xMaxByNumElems > m_lastElemIndexForBlock[i][iBlockMax] * 1.0 + 1.0 )
-             && iBlockMax < m_nElems[i].size() - 1 )
-      {
-        ++iBlockMax;
-      }
-      //sanity check
-
-      if( xMinByNumElems < m_firstElemIndexForBlock[i][iBlockMin] * 1.0 ||
-          xMinByNumElems > m_lastElemIndexForBlock[i][iBlockMin] * 1.0 + 1.0 ||
-          iBlockMin >= m_nElems[i].size() )
-      {
-        std::cout
-          << "WARNING: Had some trouble in correcting partition geometric boundaries.  If this affects the results, contact a developer"
-          << std::endl;
-      }
-      if( xMaxByNumElems < m_firstElemIndexForBlock[i][iBlockMax] * 1.0 ||
-          xMaxByNumElems > m_lastElemIndexForBlock[i][iBlockMax] * 1.0 + 1.0 ||
-          iBlockMax >= m_nElems[i].size() )
-      {
-        std::cout
-          << "WARNING: Had some trouble in correcting partition geometric boundaries.  If this affects the results, contact a developer"
-          << std::endl;
-      }
-
-      pMin[i] = m_vertices[i][iBlockMin] + ( xMinByNumElems - m_firstElemIndexForBlock[i][iBlockMin] ) *
-                ( m_vertices[i][iBlockMin + 1] - m_vertices[i][iBlockMin] ) / m_nElems[i][iBlockMin];
-      pMax[i] = m_vertices[i][iBlockMax] + ( xMaxByNumElems - m_firstElemIndexForBlock[i][iBlockMax] ) *
-                ( m_vertices[i][iBlockMax + 1] - m_vertices[i][iBlockMax] ) / m_nElems[i][iBlockMax];
-    }
-
-    partition.SetPartitionGeometricalBoundary( pMin, pMax );
-
-  }
-#endif
-
-  /*
-     {// Move nodes in the extension layers.
-
-     for (localIndex iN = 0; iN != nodeManager.DataLengths(); ++iN)
-     {
-     for (int i=0; i<m_dim; ++i)
-     {
-     if ( X[iN][i] < m_min[i])
-     {
-     int eLayer = (int) ((m_min[i] -X[iN][i]) / ((m_max[i] - m_min[i]) /
-        m_numElems[i]) + 0.5);
-     X[iN][i] = m_min[i] - ((m_max[i] - m_min[i]) / m_numElems[i]) *
-        m_commonRatioMin[i] * (1- pow(m_commonRatioMin[i], eLayer)) / (1 -
-        m_commonRatioMin[i]);
-     }
-     else if (X[iN][i] > m_max[i])
-     {
-     int eLayer = (int) ((X[iN][i] - m_max[i] ) / ((m_max[i] - m_min[i]) /
-        m_numElems[i]) + 0.5);
-     X[iN][i] = m_max[i] + ((m_max[i] - m_min[i]) / m_numElems[i]) *
-        m_commonRatioMax[i] * (1- pow(m_commonRatioMax[i], eLayer)) / (1 -
-        m_commonRatioMax[i]);
-     }
-
-     }
-     }
-     }
-   */
-
   // Node perturbation
   if( m_fPerturb > 0 )
   {
@@ -849,16 +680,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       {
         if( X[iN][i] > m_min[i] && X[iN][i] < m_max[i] )
         {
-          srand( LvArray::integerConversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i ); // This
-          // ensures
-          // that
-          // the
-          // perturbation
-          // pattern
-          // is
-          // unaffected
-          // by
-          // domain
+          // This ensures that the perturbation pattern is unaffected by domain
+          srand( LvArray::integerConversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i ); 
+
           X[iN][i] += ( ( m_max[i] - m_min[i] ) / m_numElemsTotal[i] ) * ( ( rand() * 1.0 ) / RAND_MAX - 0.5 ) * 2 * m_fPerturb;
         }
       }
@@ -895,7 +719,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       X[iN][0] = m_meshRact * cos( m_meshTheta );
       X[iN][1] = m_meshRact * sin( m_meshTheta );
 
-      // add mapped values to nodesets
+      // Add mapped values to nodesets
       if( m_mapToRadial > 1 )
       {
         if( isEqual( X[iN][0], -1 * m_max[0], 1e-6 ) )
@@ -1221,45 +1045,7 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
 }
 
 void InternalMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARAM( domain ) )
-{
-  //  // Node mapping
-  //  if (!m_meshDx.empty())
-  //  {
-  //    const Table3D* tableDx =
-  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDx);
-  //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
-  //    {
-  //      real64 dx=tableDx->Lookup(X[iN]);
-  //      X[iN][0] += dx;
-  //    }
-  //  }
-  //
-  //  if (!m_meshDy.empty())
-  //  {
-  //    const Table3D* tableDy =
-  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDy);
-  //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
-  //    {
-  //      real64 dy=tableDy->Lookup(X[iN]);
-  //      X[iN][1] += dy;
-  //    }
-  //  }
-  //
-  //  if (!m_meshDz.empty())
-  //  {
-  //    const Table3D* tableDz =
-  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDz);
-  //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
-  //    {
-  //      real64 dz=tableDz->Lookup(X[iN]);
-  //      X[iN][2] += dz;
-  //    }
-  //  }
-
-}
+{}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, string const &, Group * const )
-}
+} /* namespace geosx */
