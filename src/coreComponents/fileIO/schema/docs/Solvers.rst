@@ -13,6 +13,7 @@ FlowProppantTransport            node               :ref:`XML_FlowProppantTransp
 Hydrofracture                    node               :ref:`XML_Hydrofracture`                    
 LagrangianContact                node               :ref:`XML_LagrangianContact`                
 LaplaceFEM                       node               :ref:`XML_LaplaceFEM`                       
+MultiphasePoroelastic            node               :ref:`XML_MultiphasePoroelastic`            
 PhaseFieldDamageFEM              node               :ref:`XML_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node               :ref:`XML_PhaseFieldFracture`               
 Poroelastic                      node               :ref:`XML_Poroelastic`                      
@@ -27,7 +28,6 @@ SolidMechanicsEmbeddedFractures  node               :ref:`XML_SolidMechanicsEmbe
 SolidMechanicsLagrangianSSLE     node               :ref:`XML_SolidMechanicsLagrangianSSLE`     
 SolidMechanics_LagrangianFEM     node               :ref:`XML_SolidMechanics_LagrangianFEM`     
 SurfaceGenerator                 node               :ref:`XML_SurfaceGenerator`                 
-TwoPhasePoroelastic              node               :ref:`XML_TwoPhasePoroelastic`              
 ================================ ======== ========= =========================================== 
 
 

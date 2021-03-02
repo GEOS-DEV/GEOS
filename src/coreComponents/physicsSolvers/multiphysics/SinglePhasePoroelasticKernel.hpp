@@ -21,6 +21,7 @@
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
+
 namespace geosx
 {
 
@@ -122,11 +123,13 @@ public:
                                  inputGravityVector[2] * inputGravityVector[2] ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] ).density() ),
+    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
     m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString() ) )
-  {}
+  {
+  }
 
   //*****************************************************************************
   /**
@@ -152,7 +155,6 @@ public:
                                        localFlowResidual{ 0.0 },
                                        localDispFlowJacobian{ {0.0} },
                                        localFlowDispJacobian{ {0.0} },
-                                       localStiff{ {0.0} },
                                        localFlowDofIndex{ 0 }
     {}
 
@@ -173,7 +175,6 @@ public:
     real64 localFlowResidual[1];
     real64 localDispFlowJacobian[numDispDofPerElem][1];
     real64 localFlowDispJacobian[1][numDispDofPerElem];
-    real64 localStiff[numDispDofPerElem][numDispDofPerElem]; //temporary
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localFlowDofIndex[1];
@@ -223,9 +224,6 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    // For now we assume incompressible solid grains (biot's coefficient = 1)
-    constexpr real64 biotCoefficient = 1.0;
-
     // Get displacement basis functions (N), their derivatives (dNdX) and the determinant of the
     // Jacobian transformation matrix times the quadrature weight (detJxW)
     real64 N[numNodesPerElem];
@@ -244,6 +242,11 @@ public:
     m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, totalStress, stiffness );
 
     // --- Subtract pressure term
+    //     For now we assume incompressible solid grains (biot's coefficient = 1)
+    real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
+    GEOSX_ERROR_IF_GT_MSG( abs( biotCoefficient - 1.0 ),
+                           1e-10,
+                           "" );
     real64 const biotTimesPressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
     totalStress[0] -= biotTimesPressure;
     totalStress[1] -= biotTimesPressure;
@@ -288,6 +291,23 @@ public:
     // ---
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 
+    for( integer a = 0; a < numNodesPerElem; ++a )
+    {
+      stack.localDispFlowJacobian[ a * 3 + 0][0] += dNdX[a][0] * biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 1][0] += dNdX[a][1] * biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 2][0] += dNdX[a][2] * biotCoefficient * detJxW;
+
+      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][0] * detJxW;
+      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][1] * detJxW;
+      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][2] * detJxW;
+
+      real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
+                      + dNdX[a][1] * stack.uhat_local[a][1]
+                      + dNdX[a][2] * stack.uhat_local[a][2];
+      Rf_tmp *= m_fluidDensity( k, q ) * biotCoefficient * detJxW;
+      stack.localFlowResidual[0] += Rf_tmp;
+    }
+
     if( m_gravityAcceleration > 0.0 )
     {
       // Considering this contribution yields nonsymmetry and requires fullBTDB
@@ -311,26 +331,19 @@ public:
         }
       }
 #endif
+      //
+      real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
+      real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
+      real64 dMixtureDens_dFluidPres = porosity * m_dFluidDensity_dPressure( k, q );
+      dMixtureDens_dFluidPres *= detJxW;
+      for( integer a = 0; a < numNodesPerElem; ++a )
+      {
+        stack.localDispFlowJacobian[ a * 3 + 0][0] += N[a] * dMixtureDens_dFluidPres * m_gravityVector[0];
+        stack.localDispFlowJacobian[ a * 3 + 1][0] += N[a] * dMixtureDens_dFluidPres * m_gravityVector[1];
+        stack.localDispFlowJacobian[ a * 3 + 2][0] += N[a] * dMixtureDens_dFluidPres * m_gravityVector[2];
+
+      }
     }
-
-    for( integer a = 0; a < numNodesPerElem; ++a )
-    {
-      stack.localDispFlowJacobian[ a * 3 + 0][0] += biotCoefficient * dNdX[a][0] * detJxW; // TODO missing dMixture_dPres
-      stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJxW; // ...
-      stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJxW; // ...
-
-      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][0] * detJxW;
-      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][1] * detJxW;
-      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][2] * detJxW;
-
-      real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
-                      + dNdX[a][1] * stack.uhat_local[a][1]
-                      + dNdX[a][2] * stack.uhat_local[a][2];
-      Rf_tmp *= m_fluidDensity( k, q ) * biotCoefficient * detJxW;
-      stack.localFlowResidual[0] += Rf_tmp;
-    }
-
-
 
   }
 
@@ -406,9 +419,10 @@ protected:
   real64 const m_gravityVector[3];
   real64 const m_gravityAcceleration;
 
-  /// The rank global density
+  /// The rank global densities
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
+  arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_flowDofNumber;

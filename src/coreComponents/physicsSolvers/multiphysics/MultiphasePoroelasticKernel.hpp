@@ -16,8 +16,8 @@
  * @file SinglePhasePoroelasticKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_TWOPHASEPOROELASTICKERNEL_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_TWOPHASEPOROELASTICKERNEL_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICKERNEL_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
@@ -54,7 +54,7 @@ namespace PoroelasticKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class TwoPhase :
+class Multiphase :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
@@ -72,7 +72,7 @@ public:
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
-  static constexpr int numMaxComponentsTwoPhasePoroelastic = 3;
+  static constexpr int numMaxComponentsMultiphasePoroelastic = 3;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -89,20 +89,20 @@ public:
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
-  TwoPhase( NodeManager const & nodeManager,
-            EdgeManager const & edgeManager,
-            FaceManager const & faceManager,
-            localIndex const targetRegionIndex,
-            SUBREGION_TYPE const & elementSubRegion,
-            FE_TYPE const & finiteElementSpace,
-            CONSTITUTIVE_TYPE & inputConstitutiveType,
-            arrayView1d< globalIndex const > const & inputDispDofNumber,
-            string const & inputFlowDofKey,
-            globalIndex const rankOffset,
-            CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-            arrayView1d< real64 > const & inputRhs,
-            real64 const (&inputGravityVector)[3],
-            arrayView1d< string const > const & fluidModelNames):
+  Multiphase( NodeManager const & nodeManager,
+              EdgeManager const & edgeManager,
+              FaceManager const & faceManager,
+              localIndex const targetRegionIndex,
+              SUBREGION_TYPE const & elementSubRegion,
+              FE_TYPE const & finiteElementSpace,
+              CONSTITUTIVE_TYPE & inputConstitutiveType,
+              arrayView1d< globalIndex const > const & inputDispDofNumber,
+              string const & inputFlowDofKey,
+              globalIndex const rankOffset,
+              CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+              arrayView1d< real64 > const & inputRhs,
+              real64 const (&inputGravityVector)[3],
+              arrayView1d< string const > const & fluidModelNames):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -124,6 +124,7 @@ public:
     m_solidDensity( inputConstitutiveType.getDensity() ),
     //
     m_fluidPhaseDensity( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).phaseDensity() ),
+    m_fluidPhaseCompFrac( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).phaseCompFraction() ),
     //
     m_fluidPhaseMassDensity( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).phaseMassDensity() ),
     m_dFluidPhaseMassDensity_dPressure( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).dPhaseMassDensity_dPressure() ),
@@ -133,6 +134,8 @@ public:
     m_dFluidPhaseSaturation_dPressure( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString() )),
     m_dFluidPhaseSaturation_dGlobalCompFraction( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() )),
     //
+    m_dGlobalCompFraction_dGlobalCompDensity( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() )),
+    //
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
@@ -140,9 +143,9 @@ public:
     m_numComponents( m_dFluidPhaseMassDensity_dGlobalCompFraction.size( 3 ) ),
     m_numPhases( m_fluidPhaseSaturation.size( 1 ) )
   {
-    if( m_numComponents > numMaxComponentsTwoPhasePoroelastic )
+    if( m_numComponents > numMaxComponentsMultiphasePoroelastic )
     {
-      GEOSX_ERROR( "TwoPhasePoroelastic solver allows at most three components at the moment" );
+      GEOSX_ERROR( "MultiphasePoroelastic solver allows at most three components at the moment" );
     }
   }
 
@@ -188,13 +191,13 @@ public:
     /// Stack storage for the element local nodal incremental displacement
     real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
-    real64 localFlowResidual[1];
-    real64 localDispFlowJacobian[numDispDofPerElem][numMaxComponentsTwoPhasePoroelastic + 1];
-    real64 localFlowDispJacobian[numMaxComponentsTwoPhasePoroelastic][numDispDofPerElem];
+    real64 localFlowResidual[numMaxComponentsMultiphasePoroelastic];
+    real64 localDispFlowJacobian[numDispDofPerElem][numMaxComponentsMultiphasePoroelastic + 1];
+    real64 localFlowDispJacobian[numMaxComponentsMultiphasePoroelastic][numDispDofPerElem];
     real64 localStiff[numDispDofPerElem][numDispDofPerElem]; //temporary
 
     /// C-array storage for the element local row degrees of freedom.
-    globalIndex localFlowDofIndex[numMaxComponentsTwoPhasePoroelastic+1];
+    globalIndex localFlowDofIndex[numMaxComponentsMultiphasePoroelastic+1];
 
   };
   //*****************************************************************************
@@ -228,7 +231,7 @@ public:
       }
     }
 
-    for( int flowDofIndex=0; flowDofIndex<numMaxComponentsTwoPhasePoroelastic; ++flowDofIndex )
+    for( int flowDofIndex=0; flowDofIndex<numMaxComponentsMultiphasePoroelastic; ++flowDofIndex )
     {
       stack.localFlowDofIndex[flowDofIndex] = m_flowDofNumber[k] + flowDofIndex;
     }
@@ -242,7 +245,10 @@ public:
                               StackVariables & stack ) const
   {
     // For now we assume incompressible solid grains (biot's coefficient = 1)
-    constexpr real64 biotCoefficient = 1.0;
+    const real64 biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
+    GEOSX_ERROR_IF_GT_MSG( abs( biotCoefficient - 1.0 ),
+                           1e-10,
+                           "" );
 
     // Get displacement basis functions (N), their derivatives (dNdX) and the determinant of the
     // Jacobian transformation matrix times the quadrature weight (detJxW)
@@ -277,14 +283,10 @@ public:
                              m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
+      // Compute mixture density
       real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
       real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
-      real64 mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q );
-      for( localIndex iPhase = 0; iPhase < m_numPhases; ++iPhase )
-      {
-        mixtureDensity += porosity * m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
-      }
-      mixtureDensity = m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
+      real64 mixtureDensity = m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
       for( localIndex iPhase = 1; iPhase < m_numPhases; ++iPhase )
       {
         mixtureDensity += m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
@@ -296,7 +298,6 @@ public:
       bodyForce[1] *= mixtureDensity;
       bodyForce[2] *= mixtureDensity;
     }
-
 
     // Compute local linear momentum residual
     // \int ( - symgrad(N) : totalStress + \eta \cdot bodyForce )
@@ -342,7 +343,7 @@ public:
           stack.localJacobian[a * 3 + 2][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][1];
           stack.localJacobian[a * 3 + 2][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][2];
         }
-      }
+       }
 #endif
     }
 
@@ -352,10 +353,16 @@ public:
       stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJxW;
       stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJxW;
 
-      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidPhaseMassDensity( k, q, 0 ) * biotCoefficient * dNdX[a][0] * detJxW;
-      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidPhaseMassDensity( k, q, 0 ) * biotCoefficient * dNdX[a][1] * detJxW;
-      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidPhaseMassDensity( k, q, 0 ) * biotCoefficient * dNdX[a][2] * detJxW;
-
+      for( localIndex ip = 0; ip < m_numPhases; ++ip )
+      {
+        for( localIndex jc = 0; jc < m_numComponents; ++jc )
+        {
+          for( localIndex iDim = 0; iDim < 3; ++iDim )
+          {
+            stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidPhaseMassDensity( k, q, ip ) * biotCoefficient * dNdX[a][iDim] * detJxW;
+          }
+        }
+      }
       real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
                       + dNdX[a][1] * stack.uhat_local[a][1]
                       + dNdX[a][2] * stack.uhat_local[a][2];
@@ -442,6 +449,7 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > const m_solidDensity;
   arrayView3d< real64 const > const m_fluidPhaseDensity;
+  arrayView4d< real64 const > const m_fluidPhaseCompFrac;
 
   arrayView3d< real64 const > const m_fluidPhaseMassDensity;
   arrayView3d< real64 const > const m_dFluidPhaseMassDensity_dPressure;
@@ -450,6 +458,8 @@ protected:
   arrayView2d< real64 const > const m_fluidPhaseSaturation;
   arrayView2d< real64 const > const m_dFluidPhaseSaturation_dPressure;
   arrayView3d< real64 const > const m_dFluidPhaseSaturation_dGlobalCompFraction;
+
+  arrayView3d< real64 const > const m_dGlobalCompFraction_dGlobalCompDensity;
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_flowDofNumber;
@@ -478,4 +488,4 @@ protected:
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_TWOPHASEPOROELASTICKERNEL_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPOROELASTICKERNEL_HPP_

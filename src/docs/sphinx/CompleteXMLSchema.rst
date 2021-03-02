@@ -372,6 +372,13 @@ Element: MultiPhaseMultiComponentFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
 
 
+.. _XML_MultiphasePoroelastic:
+
+Element: MultiphasePoroelastic
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic.rst
+
+
 .. _XML_NonlinearSolverParameters:
 
 Element: NonlinearSolverParameters
@@ -692,13 +699,6 @@ Element: ThickPlane
 Element: TimeHistory
 ====================
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
-
-
-.. _XML_TwoPhasePoroelastic:
-
-Element: TwoPhasePoroelastic
-============================
-.. include:: ../../coreComponents/fileIO/schema/docs/TwoPhasePoroelastic.rst
 
 
 .. _XML_TwoPointFluxApproximation:
@@ -1153,6 +1153,13 @@ Datastructure: MultiPhaseMultiComponentFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
 
 
+.. _DATASTRUCTURE_MultiphasePoroelastic:
+
+Datastructure: MultiphasePoroelastic
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic_other.rst
+
+
 .. _DATASTRUCTURE_NonlinearSolverParameters:
 
 Datastructure: NonlinearSolverParameters
@@ -1473,13 +1480,6 @@ Datastructure: ThickPlane
 Datastructure: TimeHistory
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
-
-
-.. _DATASTRUCTURE_TwoPhasePoroelastic:
-
-Datastructure: TwoPhasePoroelastic
-==================================
-.. include:: ../../coreComponents/fileIO/schema/docs/TwoPhasePoroelastic_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:

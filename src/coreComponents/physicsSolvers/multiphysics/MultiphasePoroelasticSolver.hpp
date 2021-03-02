@@ -13,12 +13,12 @@
  */
 
 /**
- * @file PoroelasticSolver.hpp
+ * @file MultiphasePoroelasticSolver.hpp
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_TWOPHASEPOROELASTICSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_TWOPHASEPOROELASTICSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_MULTIPHASEPOROELASTICSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_MULTIPHASEPOROELASTICSOLVER_HPP_
 
 #include "common/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -30,18 +30,18 @@ namespace geosx
 class SolidMechanicsLagrangianFEM;
 class FlowSolverBase;
 
-class TwoPhasePoroelasticSolver : public SolverBase
+class MultiphasePoroelasticSolver : public SolverBase
 {
 public:
-  TwoPhasePoroelasticSolver( const string & name,
-                     Group * const parent );
-  ~TwoPhasePoroelasticSolver() override;
+  MultiphasePoroelasticSolver( const string & name,
+                               Group * const parent );
+  ~MultiphasePoroelasticSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName() { return "TwoPhasePoroelastic"; }
+  static string catalogName() { return "MultiphasePoroelastic"; }
 
   virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
 
@@ -144,8 +144,8 @@ protected:
 
 };
 
-ENUM_STRINGS( TwoPhasePoroelasticSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
+ENUM_STRINGS( MultiphasePoroelasticSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_TWOPHASEPOROELASTICSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_MULTIPHASEPOROELASTICSOLVER_HPP_ */
