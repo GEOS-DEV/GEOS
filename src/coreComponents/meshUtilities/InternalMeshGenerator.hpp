@@ -19,56 +19,13 @@
 #ifndef GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP
 #define GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP
 
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
-
+#include "common/EnumStrings.hpp" 
 #include "dataRepository/Group.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "MeshGeneratorBase.hpp"
 
 namespace geosx
 {
 
-namespace dataRepository
-{
-
-/*
- * @name keys for InternalMesh object
- */
-///@{
-namespace keys
-{
-/// key for x coordinates
-string const xCoords = "xCoords";
-/// key for y coordinates
-string const yCoords = "yCoords";
-/// key for z coordinates
-string const zCoords = "zCoords";
-/// key for number of element in x-direction
-string const xElems  = "nx";
-/// key for number of element in y-direction
-string const yElems  = "ny";
-/// key for number of elemnt in z-direction
-string const zElems  = "nz";
-/// key for x bias
-string const xBias  = "xBias";
-/// key for y bias
-string const yBias  = "yBias";
-/// key for z bias
-string const zBias  = "zBias";
-/// key for cellBlock names
-string const cellBlockNames = "cellBlockNames";
-/// key for element type
-string const elementTypes = "elementTypes";
-/// key for triangle pattern identifier
-string const trianglePattern = "trianglePattern";
-}
-///@}
-
-}
-
-class NodeManager;
-class DomainPartition;
 /**
  * @class InternalMeshGenerator
  * @brief The InternalMeshGenerator class is a class handling GEOSX generated meshes.
@@ -85,7 +42,7 @@ public:
   InternalMeshGenerator( const string & name,
                          Group * const parent );
 
-  virtual ~InternalMeshGenerator() override;
+  virtual ~InternalMeshGenerator() override = default;
 
   /**
    * @brief Return the name of the InternalMeshGenerator in object Catalog.
@@ -93,9 +50,36 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-//  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
-//
-//
+  ///@cond DO_NOT_DOCUMENT
+  struct viewKeyStruct
+  {
+    constexpr static char const * xCoordsString() { return "xCoords"; }
+    constexpr static char const * yCoordsString() { return "yCoords"; }
+    constexpr static char const * zCoordsString() { return "zCoords"; }
+    constexpr static char const * xElemsString() { return "nx"; }
+    constexpr static char const * yElemsString() { return "ny"; }
+    constexpr static char const * zElemsString() { return "nz"; }
+    constexpr static char const * xBiasString() { return "xBias"; }
+    constexpr static char const * yBiasString() { return "yBias"; }
+    constexpr static char const * zBiasString() { return "zBias"; }
+    constexpr static char const * cellBlockNamesString() { return "cellBlockNames"; }
+    constexpr static char const * elementTypesString() { return "elementTypes"; }
+    constexpr static char const * trianglePatternString() { return "trianglePattern"; }
+    constexpr static char const * meshTypeString() { return "meshType"; }
+  };
+  /// @endcond
+
+  /**
+   * @enum MeshType
+   *
+   * The options for mesh type
+   */
+  enum class MeshType : integer
+  {
+    Cartesian,
+    Cylindrical,
+    CylindricalSquareBoundary
+  };
 
   virtual void generateElementRegions( DomainPartition & domain ) override;
 
@@ -109,9 +93,6 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
-  //                                NodeManager * nodeManager ) override;
-
   virtual void getElemToNodesRelationInBox ( const string & elementType,
                                              const int index[],
                                              const int & iEle,
@@ -119,8 +100,6 @@ public:
                                              const int size ) override;
 
   virtual void remapMesh ( dataRepository::Group & domain ) override;
-
-//  int m_delayMeshDeformation;
 
 protected:
 
@@ -130,50 +109,39 @@ private:
 
   /// Mesh number of dimension
   int m_dim;
+
   /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];
+
   /// Ndim x nElem spatialized for element indexes
-  integer_array m_nElems[3];
+  array1d< integer > m_nElems[3];
+
   /// Ndim x nElem spatialized array of element scaling factors
   array1d< real64 > m_nElemScaling[3];
 
-  //bool m_useBias = false;
   /// Ndim x nElem spatialized array of element bias
   array1d< real64 > m_nElemBias[3];
 
   /// String array of region names
-  string_array m_regionNames;
+  array1d< string > m_regionNames;
 
   /// Minimum extent of mesh dimensions
   real64 m_min[3];
+
   /// Maximum extent of mesh dimensions
   real64 m_max[3];
 
-  //int m_numElems[3];
-  /// Ndim x nBlock spatialized array of first elemnt index in the cellBlock
-  integer_array m_firstElemIndexForBlock[3];
-  /// Ndim x nBlock spatialized array of last elemnt index in the cellBlock
-  integer_array m_lastElemIndexForBlock[3];
+  /// Ndim x nBlock spatialized array of first element index in the cellBlock
+  array1d< integer > m_firstElemIndexForBlock[3];
 
-
-
-//  real64 m_wExtensionMin[3];
-//  real64 m_wExtensionMax[3];
-//  int m_nExtensionLayersMin[3];
-//  int m_nExtensionLayersMax[3];
-//  real64 m_extendedMin[3];
-//  real64 m_extendedMax[3]; // This is the domain size after we apply n layers
-// of elements which are of the same size as the core elements.  We will move
-// these nodes to where they should be later when we finish the meshing.
+  /// Ndim x nBlock spatialized array of last element index in the cellBlock
+  array1d< integer > m_lastElemIndexForBlock[3];
 
   /// Array of number of elements per direction
   int m_numElemsTotal[3];
 
-//  real64 m_commonRatioMin[3];
-//  real64 m_commonRatioMax[3];
-
-  // String array listing the element type present
-  string_array m_elementType;
+  /// String array listing the element type present
+  array1d< string > m_elementType;
 
   /// Array of number of element per box
   array1d< integer > m_numElePerBox;
@@ -185,7 +153,8 @@ private:
   int m_trianglePattern;
 
   /// Node perturbation amplitude value
-  real64 m_fPerturb=0.0;
+  real64 m_fPerturb = 0.0;
+
   /// Random seed for generation of the node perturbation field
   int m_randSeed;
 
@@ -193,32 +162,28 @@ private:
    * @brief Knob to map onto a radial mesh.
    * @note if 0 mesh is not radial, if positive mesh is, it larger than 1
    */
-  int m_mapToRadial = 0;
+  MeshType m_meshType = MeshType::Cartesian;
+
   ///@cond DO_NOT_DOCUMENT
   /// axis index for cartesian to radial coordinates mapping
-  // internal temp var
+  /// internal temp var
   int m_meshAxis;
   real64 m_meshTheta;
   real64 m_meshPhi;
   real64 m_meshRout;
   real64 m_meshRact;
-/// @endcond
+  /// @endcond
 
-  /// skew angle in radians for skewed mesh generation
+  /// Skew angle in radians for skewed mesh generation
   real64 m_skewAngle = 0;
-  /// skew center for skew mesh generation
+
+  /// Skew center for skew mesh generation
   real64 m_skewCenter[3] = { 0, 0, 0 };
 
-
-  ///@cond DO_NOT_DOCUMENT
-  //unused
-  string m_meshDx, m_meshDy, m_meshDz;
-  ///@endcond
-
-/**
- * @brief Convert ndim node spatialized index to node global index.
- * @param[in] node ndim spatialized array index
- */
+  /**
+   * @brief Convert ndim node spatialized index to node global index.
+   * @param[in] node ndim spatialized array index
+   */
   inline globalIndex nodeGlobalIndex( const int index[3] )
   {
     globalIndex rval = 0;
@@ -227,10 +192,10 @@ private:
     return rval;
   }
 
-/**
- * @brief Convert ndim element spatialized index to element global index.
- * @param[in] element ndim spatialized array index
- */
+  /**
+   * @brief Convert ndim element spatialized index to element global index.
+   * @param[in] element ndim spatialized array index
+   */
   inline globalIndex elemGlobalIndex( const int index[3] )
   {
     globalIndex rval = 0;
@@ -335,11 +300,14 @@ public:
    */
   inline bool isRadial()
   {
-    bool rval = (m_mapToRadial > 0);
+    bool rval = ( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary );
     return rval;
   }
 
 };
-}
+
+ENUM_STRINGS( InternalMeshGenerator::MeshType, "Cartesian", "Cylindrical", "CylindricalSquareBoundary" )
+
+} /* namespace geosx */
 
 #endif /* GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP */
