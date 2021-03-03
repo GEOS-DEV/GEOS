@@ -166,7 +166,6 @@ void InternalMeshGenerator::postProcessInput()
     }
   }
 
-
   for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( m_elementType.size() ); ++i )
   {
     if( m_elementType[i] == "C3D8" )
@@ -241,7 +240,7 @@ void InternalMeshGenerator::postProcessInput()
   m_fPerturb = 0.0;
 }
 
-Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), 
+Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
                                             string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
@@ -284,11 +283,19 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "ypos" ) ).reference();
   SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zneg" ) ).reference();
   SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) ).reference();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all"  ) ).reference();
-  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
-  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
-  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
-  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+
+  // Nodesets for applying boundary conditions to a borehole problem
+  if( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary )
+  {
+    SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
+    SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
+    SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
+  }
+  if( m_meshType == MeshType::Cylindrical )
+  {
+    SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
+  }
 
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
@@ -333,10 +340,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   // Find starting/ending index
   // Get the first and last indices in this partition each direction
-  int firstElemIndexInPartition[3] =
-  { -1, -1, -1 };
-  int lastElemIndexInPartition[3] =
-  { -2, -2, -2 };
+  int firstElemIndexInPartition[3] = { -1, -1, -1 };
+  int lastElemIndexInPartition[3] = { -2, -2, -2 };
 
   for( int i = 0; i < 3; ++i )
   {
@@ -437,7 +442,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           numElemsInRegion *= m_numElePerBox[iR];
           numElemsInRegions[ m_regionNames[ regionOffset ] ] += numElemsInRegion;
           elemTypeInRegions[ m_regionNames[ regionOffset ] ] = m_elementType[iR];
-
         }
       }
     }
@@ -659,7 +663,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                 if( isRadialWithOneThetaPartition )
                 {
                   if( j == numElemsInDirForRegion[1] - 1 && jblock == m_nElems[1].size() - 1 )
-                  { 
+                  {
                     // Last set of elements
                     index[1] = -1;
                     const localIndex firstNodeIndexR = numNodesInDir[1] * numNodesInDir[2] * ( index[0] - firstElemIndexInPartition[0] )
@@ -706,7 +710,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
         if( X[iN][i] > m_min[i] && X[iN][i] < m_max[i] )
         {
           // This ensures that the perturbation pattern is unaffected by domain
-          srand( LvArray::integerConversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i ); 
+          srand( LvArray::integerConversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i );
 
           X[iN][i] += ( ( m_max[i] - m_min[i] ) / m_numElemsTotal[i] ) * ( ( rand() * 1.0 ) / RAND_MAX - 0.5 ) * 2 * m_fPerturb;
         }
@@ -902,7 +906,6 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
         nodeIDInBox[6] = 6;
         nodeIDInBox[7] = 2;
       }
-
     }
   }
   else if( elementType == "CPE4" )
@@ -943,7 +946,6 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
         nodeIDInBox[1] = 2;
         nodeIDInBox[2] = 3;
       }
-
     }
   }
   else if( ( elementType == "STRI" ) && ( m_trianglePattern == 1 ) )
@@ -977,7 +979,6 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
         nodeIDInBox[1] = 2;
         nodeIDInBox[2] = 3;
       }
-
     }
   }
   else if( elementType == "C3D4" )
