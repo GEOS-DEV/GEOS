@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP
 #define GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP
 
-#include "common/EnumStrings.hpp" 
+#include "common/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "MeshGeneratorBase.hpp"
 
@@ -39,8 +39,7 @@ public:
    * @param[in] name of the InternalMeshGenerator
    * @param[in] parent point to the parent Group of the InternalMeshGenerator
    */
-  InternalMeshGenerator( const string & name,
-                         Group * const parent );
+  InternalMeshGenerator( const string & name, Group * const parent );
 
   virtual ~InternalMeshGenerator() override = default;
 
@@ -105,10 +104,16 @@ protected:
 
   void postProcessInput() override final;
 
-private:
-
   /// Mesh number of dimension
   int m_dim;
+
+  /// Minimum extent of mesh dimensions
+  real64 m_min[3];
+
+  /// Maximum extent of mesh dimensions
+  real64 m_max[3];
+
+private:
 
   /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];
@@ -116,20 +121,11 @@ private:
   /// Ndim x nElem spatialized for element indexes
   array1d< integer > m_nElems[3];
 
-  /// Ndim x nElem spatialized array of element scaling factors
-  array1d< real64 > m_nElemScaling[3];
-
   /// Ndim x nElem spatialized array of element bias
   array1d< real64 > m_nElemBias[3];
 
   /// String array of region names
   array1d< string > m_regionNames;
-
-  /// Minimum extent of mesh dimensions
-  real64 m_min[3];
-
-  /// Maximum extent of mesh dimensions
-  real64 m_max[3];
 
   /// Ndim x nBlock spatialized array of first element index in the cellBlock
   array1d< integer > m_firstElemIndexForBlock[3];
@@ -156,23 +152,13 @@ private:
   real64 m_fPerturb = 0.0;
 
   /// Random seed for generation of the node perturbation field
-  int m_randSeed;
+  int m_randSeed = 0;
 
   /**
    * @brief Knob to map onto a radial mesh.
    * @note if 0 mesh is not radial, if positive mesh is, it larger than 1
    */
   MeshType m_meshType = MeshType::Cartesian;
-
-  ///@cond DO_NOT_DOCUMENT
-  /// axis index for cartesian to radial coordinates mapping
-  /// internal temp var
-  int m_meshAxis;
-  real64 m_meshTheta;
-  real64 m_meshPhi;
-  real64 m_meshRout;
-  real64 m_meshRact;
-  /// @endcond
 
   /// Skew angle in radians for skewed mesh generation
   real64 m_skewAngle = 0;
@@ -186,10 +172,7 @@ private:
    */
   inline globalIndex nodeGlobalIndex( const int index[3] )
   {
-    globalIndex rval = 0;
-
-    rval = index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
-    return rval;
+    return index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
   }
 
   /**
@@ -198,10 +181,7 @@ private:
    */
   inline globalIndex elemGlobalIndex( const int index[3] )
   {
-    globalIndex rval = 0;
-
-    rval = index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
-    return rval;
+    return index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
   }
 
   /**
@@ -300,8 +280,7 @@ public:
    */
   inline bool isRadial()
   {
-    bool rval = ( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary );
-    return rval;
+    return m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary;
   }
 
 };
