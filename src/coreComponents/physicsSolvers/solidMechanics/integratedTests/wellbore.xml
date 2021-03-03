@@ -24,9 +24,9 @@
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
-  <!-- SPHINX_BeamBendingMesh -->
+  <!-- SPHINX_WellboreMesh -->
   <Mesh>
-    <InternalMesh
+    <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ 1, 2 }"
