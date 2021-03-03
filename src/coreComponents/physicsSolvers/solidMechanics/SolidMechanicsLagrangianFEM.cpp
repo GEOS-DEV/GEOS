@@ -707,7 +707,8 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
   FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
   NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
 
-  arrayView1d< real64 const > const faceArea  = faceManager.getReference< real64_array >( "faceArea" );
+  arrayView1d< real64 const > const faceArea  = faceManager.faceArea();
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -729,8 +730,12 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
 
     globalIndex_array nodeDOF;
     real64_array nodeRHS;
-    integer const component = bc.getComponent();
 
+    // The flag component = 0, 1 and 2 are for the traction in the three orthogonal directions
+    // in the global cartesian coordinate system
+    // The flag component = -1 is for the normal traction
+
+    integer const component = bc.getComponent();
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
@@ -747,10 +752,24 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
         for( localIndex a=0; a<numNodes; ++a )
         {
-          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
-          if( dof < 0 || dof >= localRhs.size() )
-            continue;
-          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], value * faceArea[kf] / numNodes );
+          if( component != -1 )
+          {
+            localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
+            if( dof < 0 || dof >= localRhs.size() )
+              continue;
+            RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof], value * faceArea[kf] / numNodes );
+          }
+          else // Apply traction normal to the face
+          {
+            for( int normalComponent = 0; normalComponent < 3; ++normalComponent )
+            {
+              localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + normalComponent - dofRankOffset;
+              if( dof < 0 || dof >= localRhs.size() )
+                continue;
+              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof],
+                                                       faceNormal( kf, normalComponent ) * value * faceArea[kf] / numNodes );
+            }
+          }
         }
       } );
     }
@@ -768,10 +787,24 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
         for( localIndex a=0; a<numNodes; ++a )
         {
-          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
-          if( dof < 0 || dof >= localRhs.size() )
-            continue;
-          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], results[ kf ] * faceArea[kf] / numNodes );
+          if( component != -1 )
+          {
+            localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
+            if( dof < 0 || dof >= localRhs.size() )
+              continue;
+            RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof], results[kf] * faceArea[kf] / numNodes );
+          }
+          else // Apply normal traction to the face
+          {
+            for( int normalComponent = 0; normalComponent < 3; ++normalComponent )
+            {
+              localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + normalComponent - dofRankOffset;
+              if( dof < 0 || dof >= localRhs.size() )
+                continue;
+              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof],
+                                                       faceNormal( kf, normalComponent ) * results[kf] * faceArea[kf] / numNodes );
+            }
+          }
         }
       } );
     }
