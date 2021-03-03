@@ -273,6 +273,12 @@ public:
     totalStress[1] -= biotTimesPressure;
     totalStress[2] -= biotTimesPressure;
 
+    // --- Compute new and old porosity
+    real64 volumetricStrain    = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
+//    real64 volumetricStrainInc = strainInc[0] + strainInc[1] + strainInc[2];
+    real64 poroNew = m_poroRef( k ) + biotCoefficient * volumetricStrain;
+//    real64 poroOld = poroNew - + biotCoefficient * volumetricStrainInc;
+
     // Evaluate body force vector
     // --- Compute Lagrangian porosity assuming linear model poroelastic infinitesimal deformation
     //     phi_n = phi_0 + biot * div (u_n,k - u_0)) + 1/N (p_n,k - p_0)
@@ -284,15 +290,13 @@ public:
     if( m_gravityAcceleration > 0.0 )
     {
       // Compute mixture density
-      real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
-      real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
       real64 mixtureDensity = m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
       for( localIndex iPhase = 1; iPhase < m_numPhases; ++iPhase )
       {
         mixtureDensity += m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
       }
-      mixtureDensity *= porosity;
-      mixtureDensity += ( 1.0 - porosity ) * m_solidDensity( k, q );
+      mixtureDensity *= poroNew;
+      mixtureDensity += ( 1.0 - poroNew ) * m_solidDensity( k, q );
       mixtureDensity *= detJxW;
       bodyForce[0] *= mixtureDensity;
       bodyForce[1] *= mixtureDensity;
@@ -318,34 +322,34 @@ public:
     // ---
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 
-    if( m_gravityAcceleration > 0.0 )
-    {
-      // Considering this contribution yields nonsymmetry and requires fullBTDB
-#if 0
-      real64 dPoro_dVolStrain = biotCoefficient;
-      real64 dMixtureDens_dVolStrain = - m_solidDensity( k, q ) + m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
-      for( localIndex iPhase = 1; iPhase < m_numPhases; ++iPhase )
-      {
-        dMixtureDens_dVolStrain += m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
-      }
-      dMixtureDens_dVolStrain *= dPoro_dVolStrain * detJxW;
-      for( integer a = 0; a < numNodesPerElem; ++a )
-      {
-        for( integer b = 0; b < numNodesPerElem; ++b )
-        {
-          stack.localJacobian[a * 3 + 0][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][0];
-          stack.localJacobian[a * 3 + 0][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][1];
-          stack.localJacobian[a * 3 + 0][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][2];
-          stack.localJacobian[a * 3 + 1][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][0];
-          stack.localJacobian[a * 3 + 1][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][1];
-          stack.localJacobian[a * 3 + 1][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][2];
-          stack.localJacobian[a * 3 + 2][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][0];
-          stack.localJacobian[a * 3 + 2][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][1];
-          stack.localJacobian[a * 3 + 2][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][2];
-        }
-       }
-#endif
-    }
+//    if( m_gravityAcceleration > 0.0 )
+//    {
+//      // Considering this contribution yields nonsymmetry and requires fullBTDB
+//#if 0
+//      real64 dPoro_dVolStrain = biotCoefficient;
+//      real64 dMixtureDens_dVolStrain = - m_solidDensity( k, q ) + m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
+//      for( localIndex iPhase = 1; iPhase < m_numPhases; ++iPhase )
+//      {
+//        dMixtureDens_dVolStrain += m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
+//      }
+//      dMixtureDens_dVolStrain *= dPoro_dVolStrain * detJxW;
+//      for( integer a = 0; a < numNodesPerElem; ++a )
+//      {
+//        for( integer b = 0; b < numNodesPerElem; ++b )
+//        {
+//          stack.localJacobian[a * 3 + 0][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][0];
+//          stack.localJacobian[a * 3 + 0][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][1];
+//          stack.localJacobian[a * 3 + 0][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][2];
+//          stack.localJacobian[a * 3 + 1][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][0];
+//          stack.localJacobian[a * 3 + 1][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][1];
+//          stack.localJacobian[a * 3 + 1][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][2];
+//          stack.localJacobian[a * 3 + 2][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][0];
+//          stack.localJacobian[a * 3 + 2][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][1];
+//          stack.localJacobian[a * 3 + 2][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][2];
+//        }
+//       }
+//#endif
+//    }
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
@@ -355,19 +359,24 @@ public:
 
       for( localIndex ip = 0; ip < m_numPhases; ++ip )
       {
-        for( localIndex jc = 0; jc < m_numComponents; ++jc )
+        for( localIndex ic = 0; ic < m_numComponents; ++ic )
         {
+          real64 tmp = biotCoefficient
+                     * m_fluidPhaseDensity( k, q, ip )
+                     * m_fluidPhaseCompFrac( k, q, ip,ic )
+                     * m_fluidPhaseSaturation( k, ip )
+                     * detJxW;
           for( localIndex iDim = 0; iDim < 3; ++iDim )
           {
-            stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidPhaseMassDensity( k, q, ip ) * biotCoefficient * dNdX[a][iDim] * detJxW;
+            stack.localFlowDispJacobian[ic][a * 3 + 0] += tmp * dNdX[a][iDim];
           }
         }
       }
-      real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
-                      + dNdX[a][1] * stack.uhat_local[a][1]
-                      + dNdX[a][2] * stack.uhat_local[a][2];
-      Rf_tmp *= m_fluidPhaseMassDensity( k, q, 0 ) * biotCoefficient * detJxW;
-      stack.localFlowResidual[0] += Rf_tmp;
+//      real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
+//                      + dNdX[a][1] * stack.uhat_local[a][1]
+//                      + dNdX[a][2] * stack.uhat_local[a][2];
+//      Rf_tmp *= m_fluidPhaseMassDensity( k, q, 0 ) * biotCoefficient * detJxW;
+//      stack.localFlowResidual[0] += Rf_tmp;
     }
 
 
@@ -387,7 +396,7 @@ public:
 
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
-    constexpr int nPDof = 1;
+    constexpr int nFlowDof = m_numComponents;
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
@@ -407,12 +416,12 @@ public:
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localFlowDofIndex,
                                                                                 stack.localDispFlowJacobian[numDofPerTestSupportPoint * localNode + dim],
-                                                                                nPDof );
+                                                                                nFlowDof );
 
       }
     }
 
-    for( localIndex i = 0; i < nPDof; ++i )
+    for( localIndex i = 0; i < nFlowDof; ++i )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[ i ] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() )
