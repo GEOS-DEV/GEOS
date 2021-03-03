@@ -447,7 +447,7 @@ struct FluxKernel
            arraySlice1d< real64 > const localFlux,
            arraySlice2d< real64 > const localFluxJacobian );
 
-  template< localIndex NC, typename STENCIL_TYPE, bool IS_UT_FORM = true>
+  template< localIndex NC, typename STENCIL_TYPE, bool IS_UT_FORM = false>
   static void
   launch( localIndex const numPhases,
           STENCIL_TYPE const & stencil,

@@ -870,7 +870,7 @@ void CompositionalMultiphaseFlow::assembleFluxTerms( real64 const dt,
   elemDofNumber = mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( getName() + "/accessors/" + dofKey );
 
-//  std::cerr << " %%% Assembling Fluxes \n";
+  std::cerr << " %%% Assembling Fluxes \n";
   fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
   {
     KernelLaunchSelector1< FluxKernel >( m_numComponents,

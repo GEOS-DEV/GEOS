@@ -17,12 +17,10 @@
  */
 
 #include <physicsSolvers/multiphysics/CompositionalMultiphaseReservoir.hpp>
-#include <physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp>
 #include "CompositionalMultiphaseFlowKernels.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FaceElementStencil.hpp"
-#include "CompositionalMultiphaseFlow.hpp"
 
 namespace geosx
 {
@@ -313,6 +311,70 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 PhaseMobilityKernel::
+compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+         arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM(phaseDens),
+         arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM(dPhaseDens_dPres),
+         arraySlice2d< real64 const > const & GEOSX_UNUSED_PARAM(dPhaseDens_dComp),
+         arraySlice1d< real64 const > const & phaseVisc,
+         arraySlice1d< real64 const > const & dPhaseVisc_dPres,
+         arraySlice2d< real64 const > const & dPhaseVisc_dComp,
+         arraySlice1d< real64 const > const & phaseRelPerm,
+         arraySlice2d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+         arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+         arraySlice2d< real64 const > const & dPhaseVolFrac_dComp,
+         arraySlice1d< real64 > const & phaseMob,
+         arraySlice1d< real64 > const & dPhaseMob_dPres,
+         arraySlice2d< real64 > const & dPhaseMob_dComp )
+{
+  real64 dRelPerm_dC[NC];
+  real64 dVisc_dC[NC];
+
+  for( localIndex ip = 0; ip < NP; ++ip )
+  {
+    real64 const viscosity = phaseVisc[ip];
+    real64 const dVisc_dP = dPhaseVisc_dPres[ip];
+    applyChainRule( NC, dCompFrac_dCompDens, dPhaseVisc_dComp[ip], dVisc_dC );
+
+    real64 const relPerm = phaseRelPerm[ip];
+    real64 dRelPerm_dP = 0.0;
+    for( localIndex ic = 0; ic < NC; ++ic )
+    {
+      dRelPerm_dC[ic] = 0.0;
+    }
+
+    for( localIndex jp = 0; jp < NP; ++jp )
+    {
+      real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
+      dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[jp];
+
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[jp][jc];
+      }
+    }
+
+    real64 const mobility = relPerm  / viscosity;
+
+    phaseMob[ip] = mobility;
+    dPhaseMob_dPres[ip] = dRelPerm_dP / viscosity
+                          - mobility * dVisc_dP / viscosity;
+
+    // compositional derivatives
+    for( localIndex jc = 0; jc < NC; ++jc )
+    {
+      dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] / viscosity
+                                - mobility * dVisc_dC[jc] / viscosity;
+    }
+  }
+}
+
+// weighted
+/*
+template< localIndex NC, localIndex NP >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+PhaseMobilityKernel::
   compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseDens,
            arraySlice1d< real64 const > const & dPhaseDens_dPres,
@@ -337,6 +399,8 @@ PhaseMobilityKernel::
     real64 const density = phaseDens[ip];
     real64 const dDens_dP = dPhaseDens_dPres[ip];
     applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dDens_dC );
+
+      std::cerr << "Checking dDens_dC " << dDens_dC[0] << std::endl;
 
     real64 const viscosity = phaseVisc[ip];
     real64 const dVisc_dP = dPhaseVisc_dPres[ip];
@@ -374,6 +438,7 @@ PhaseMobilityKernel::
     }
   }
 }
+*/
 
 template< localIndex NC, localIndex NP >
 void PhaseMobilityKernel::
@@ -757,9 +822,9 @@ compute( localIndex const numPhases,
            ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
            ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
            ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-           ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(phaseDens),
-           ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseDens_dPres),
-           ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM(dPhaseDens_dComp),
+           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
+           ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
            ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
            ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
            ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
@@ -823,6 +888,7 @@ compute( localIndex const numPhases,
            dPhaseFlux_dC
       );
 
+    // updateing phase Flux
     totFlux_unw += phaseFlux;
 
     for( localIndex ke = 0; ke < stencilSize; ++ke )
@@ -834,6 +900,22 @@ compute( localIndex const numPhases,
         dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
       }
     }
+
+//    mdensmultiply
+    CompositionalMultiphaseFlowUpwindHelperKernels::mdensMultiply(
+      ip,
+      k_up,
+      stencilSize,
+      seri,
+      sesri,
+      sei,
+      dCompFrac_dCompDens,
+      phaseDens,
+      dPhaseDens_dPres,
+      dPhaseDens_dComp,
+      phaseFlux,
+      dPhaseFlux_dP,
+      dPhaseFlux_dC);
 
     if( !IS_UT_FORM ) // skip  if you intend to use fixed total velocity formulation
     {
@@ -928,6 +1010,22 @@ compute( localIndex const numPhases,
                                                               dFflow_dP,
                                                               dFflow_dC );
 
+//mdensmultiply
+      CompositionalMultiphaseFlowUpwindHelperKernels::mdensMultiply(
+                                                                  ip,
+                                                                  k_up,
+                                                                  stencilSize,
+                                                                  seri,
+                                                                  sesri,
+                                                                  sei,
+                                                                  dCompFrac_dCompDens,
+                                                                  phaseDens,
+                                                                  dPhaseDens_dPres,
+                                                                  dPhaseDens_dComp,
+                                                                  fflow,
+                                                                  dFflow_dP,
+                                                                  dFflow_dC
+      );
 
       // Assembling the viscous flux (and derivatives) from fractional flow and total velocity as \phi_{\mu} = f_i^{up,\mu} uT
       phaseFluxV = fflow * totFlux_unw;
@@ -1037,6 +1135,26 @@ compute( localIndex const numPhases,
                                                                   fflow,
                                                                   dFflow_dP,
                                                                   dFflow_dC );
+
+          //mdensmultiply
+          CompositionalMultiphaseFlowUpwindHelperKernels::mdensMultiply(
+            ip,
+            k_up_g,
+            stencilSize,
+            seri,
+            sesri,
+            sei,
+            dCompFrac_dCompDens,
+            phaseDens,
+            dPhaseDens_dPres,
+            dPhaseDens_dComp,
+            fflow,
+            dFflow_dP,
+            dFflow_dC
+            );
+
+
+
           //Eventually get the mobility of the second phase
           real64 mobOther{};
           real64 dMobOther_dP{};
@@ -1132,7 +1250,6 @@ compute( localIndex const numPhases,
     }
   }//end if UT_FORM
 
-  //to be replaced
   CompositionalMultiphaseFlowUpwindHelperKernels::fillLocalJacobi< NC, MAX_STENCIL, NDOF >( compFlux,
                                                                                             dCompFlux_dP,
                                                                                             dCompFlux_dC,
@@ -1192,7 +1309,7 @@ FluxKernel::
     stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
     stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
 
-//    std::cerr << " iconn :" << iconn <<std::endl;
+    std::cerr << " iconn :" << iconn <<std::endl;
 
     FluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL, IS_UT_FORM >( numPhases,
                                                        stencilSize,
