@@ -278,6 +278,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
 #if SET_CREATION_PRESSURE==1
   arrayView1d< real64 > const fluidPressure = fractureSubRegion->getReference< array1d< real64 > >( "pressure" );
+  arrayView1d< real64 const> const deltaFluidPressure = fractureSubRegion->getReference< array1d< real64 > >( "deltaPressure" );
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
   SortedArrayView< localIndex const > const newFaceElements = fractureSubRegion->m_newFaceElements.toViewConst();
   forAll< serialPolicy >( fractureSubRegion->m_newFaceElements.size(), [=]( localIndex const k )
@@ -327,6 +328,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                             edgeGhostRank,
                             elemGhostRank,
                             fluidPressure,
+                            deltaFluidPressure,
                             fractureSubRegion,
 #if SET_CREATION_DISPLACEMENT==1
                             faceToNodesMap,
@@ -389,7 +391,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
         // code to initialize new face elements with pressures from neighbors
         if( fractureSubRegion->m_newFaceElements.count( fractureElementIndex )==0 )
         {
-          initialPressure = std::min( initialPressure, fluidPressure[fractureElementIndex] );
+          initialPressure = std::min( initialPressure, fluidPressure[fractureElementIndex]
+                                                     + deltaFluidPressure[fractureElementIndex] );
 #if SET_CREATION_DISPLACEMENT==1
           initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
 #endif
@@ -490,6 +493,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
       if( fluidPressure[newElemIndex] > 1.0e98 )
       {
         fluidPressure[newElemIndex] = 0.0;
+        fluidPressure[newElemIndex] = 1.0e6;
       }
 #if !defined(ALLOW_CREATION_MASS)
       static_assert( true, "must have ALLOW_CREATION_MASS defined" );

@@ -100,7 +100,7 @@ public:
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
-                        const real64 time_np1 );
+                        const real64 time_np1);
 
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
@@ -260,6 +260,13 @@ private:
                                  ElementRegionManager & elementManager,
                                  ModifiedObjectLists & modifiedObjects );
 
+  void MarkRuptureFaceFromNodeUsingSignedDistance ( const localIndex nodeIndex,
+                                                    NodeManager & nodeManager,
+                                                    EdgeManager & edgeManager,
+                                                    FaceManager & faceManager,
+                                                    ElementRegionManager & elementManager,
+                                                    ModifiedObjectLists & modifiedObjects );
+
   /**
    *
    * @param nodeManager
@@ -328,7 +335,9 @@ private:
                     std::vector< std::set< localIndex > > & edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
                     ModifiedObjectLists & modifiedObjects,
-                    const bool prefrac );
+                    const bool prefrac,
+                    const real64 time_n,
+                    const real64 dt);
 
   /**
    * @brief Find a fracture path for surface generation

@@ -85,7 +85,14 @@ public:
                                              FaceElementSubRegion & subRegion,
                                              std::unordered_set<localIndex> const & partiallyOpenFaceElmts,
                                              real64 const Eprime,
-                                             real64 const Kprime);
+                                             real64 const Kprime,
+                                             real64 const mup,
+                                             real64 const dt);
+
+  void FractureTipVolumeEnrichment( DomainPartition & domain,
+                                    bool isCalculateOpennng,
+                                    bool isCalculateEikonal,
+                                    bool isCalculateGeometry);
 
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
@@ -133,7 +140,10 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-  void UpdateDeformationForCoupling( DomainPartition & domain );
+  void UpdateDeformationForCoupling( DomainPartition & domain,
+                                     bool isCalculateOpennng,
+                                     bool isCalculateEikonal,
+                                     bool isCalculateGeometry);
 
 //  void ApplyFractureFluidCoupling( DomainPartition * const domain,
 //                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
@@ -154,7 +164,6 @@ public:
   void initializeNewFaceElements( DomainPartition const & domain );
 
 
-
   enum class CouplingTypeOption : integer
   {
     FIM,
@@ -166,6 +175,9 @@ public:
     ToughnessDominated,
     ViscosityDominated
   };
+
+  RegimeTypeOption getRegimeTypeOption() const { return m_regimeTypeOption; }
+
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

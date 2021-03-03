@@ -92,7 +92,8 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
 {
   localIndex const faceID = m_toFacesRelation( k, 0 );
   m_elementArea[ k ] = faceArea[ faceID ];
-  m_elementVolume[ k ] = m_elementAperture[ k ] * faceArea[ faceID ];
+  //m_elementVolume[ k ] = m_elementAperture[ k ] * faceArea[ faceID ];
+  m_elementVolume[ k ] = 0.0;
   LvArray::tensorOps::copy< 3, 3 >( m_elementRotationMatrix[ k ], faceRotationMatrix[ faceID ] );
 }
 

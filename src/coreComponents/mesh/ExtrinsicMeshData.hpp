@@ -306,6 +306,14 @@ EXTRINSIC_MESH_DATA_TRAIT( SignedNodeDistance,
                            "Signed distance at each node (positive means "
                            "node has not been split; negative means node has been split)." );
 
+EXTRINSIC_MESH_DATA_TRAIT( SignedNodeDistance0,
+                           "SignedNodeDistance0",
+                           array1d< real64 >,
+                           1.0e99,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Signed distance at the end of the last converged time step." );
+
 EXTRINSIC_MESH_DATA_TRAIT( PartiallyOpenFaceElmtFluidVol,
                            "PartiallyOpenFaceElmtFluidVol",
                            array1d< real64 >,

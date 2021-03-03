@@ -190,7 +190,8 @@ localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
   subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea(), faceManager->faceRotationMatrix() );
 
-  creationMass[kfe] *= elemArea[kfe];
+  //creationMass[kfe] *= elemArea[kfe];
+  creationMass[kfe] = 0.0;
 
   // update the sets
   for( auto const & setIter : faceManager->sets().wrappers() )

@@ -822,7 +822,7 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
 
 void
 SolidMechanicsLagrangianFEM::
-  ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+  ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain )
 {
@@ -874,7 +874,17 @@ SolidMechanicsLagrangianFEM::
       {
         for( int i=0; i<3; ++i )
         {
-          uhat( a, i ) = 0.0;
+          if (time_n > 1.0e-9)
+          {
+            uhat( a, i ) = 0.0;
+          }
+          else
+          {
+            if (std::abs(uhat( a, i )) < 1.0e-9 )
+            {
+              uhat( a, i ) = 0.0;
+            }
+          }
         }
       } );
     }

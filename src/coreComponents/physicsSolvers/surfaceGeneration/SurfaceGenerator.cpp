@@ -30,6 +30,9 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "managers/EventManager.hpp"
 
 
 #ifdef USE_GEOSX_PTP
@@ -258,7 +261,9 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
                                        extrinsicMeshData::K_IC_22,
                                        extrinsicMeshData::RuptureTime,
                                        extrinsicMeshData::RuptureRate,
-                                       extrinsicMeshData::IsFaceElmtPartiallyOpen >( this->getName() );
+                                       extrinsicMeshData::IsFaceElmtPartiallyOpen,
+                                       extrinsicMeshData::PartiallyOpenFaceElmtFluidVol,
+                                       extrinsicMeshData::PartiallyOpenFaceElmtArea >( this->getName() );
     } );
 
     NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -271,7 +276,8 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
                                         extrinsicMeshData::DegreeFromCrackTip,
                                         extrinsicMeshData::SIFNode,
                                         extrinsicMeshData::RuptureTime,
-                                        extrinsicMeshData::SignedNodeDistance >( this->getName() );
+                                        extrinsicMeshData::SignedNodeDistance,
+                                        extrinsicMeshData::SignedNodeDistance0>( this->getName() );
 
     edgeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex,
                                         extrinsicMeshData::ChildIndex,
@@ -467,7 +473,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                partition.GetColor(),
                                partition.NumColor(),
                                0,
-                               time_n + dt );
+                               time_n + dt);
     }
   }
 
@@ -511,9 +517,14 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
                                         int const tileColor,
                                         int const numTileColors,
                                         bool const prefrac,
-                                        real64 const time_np1 )
+                                        real64 const time_np1)
 {
   GEOSX_MARK_FUNCTION;
+
+  Group * myProblem = domain.getParent();
+  EventManager * const myEventManager = myProblem->GetGroup<EventManager>("Events");
+  real64 dt = myEventManager->getReference<real64>(EventManager::viewKeyStruct::dtString);
+  real64 time_n = myEventManager->getReference<real64>(EventManager::viewKeyStruct::timeString);
 
   m_faceElemsRupturedThisSolve.clear();
   NodeManager & nodeManager = *mesh.getNodeManager();
@@ -596,7 +607,10 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
                                    nodesToRupturedFaces,
                                    edgesToRupturedFaces,
                                    elementManager,
-                                   modifiedObjects, prefrac );
+                                   modifiedObjects,
+                                   prefrac,
+                                   time_n,
+                                   dt);
           if( didSplit > 0 )
           {
             rval += didSplit;
@@ -875,7 +889,9 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                     std::vector< std::set< localIndex > > & edgesToRupturedFaces,
                                     ElementRegionManager & elementManager,
                                     ModifiedObjectLists & modifiedObjects,
-                                    const bool GEOSX_UNUSED_PARAM( prefrac ) )
+                                    const bool GEOSX_UNUSED_PARAM( prefrac ),
+                                    real64 const time_n,
+                                    real64 const dt)
 {
   bool didSplit = false;
   bool fracturePlaneFlag = true;
@@ -898,6 +914,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                             edgeLocations,
                                             faceLocations,
                                             elemLocations );
+
     if( fracturePlaneFlag )
     {
       MapConsistencyCheck( nodeID, nodeManager, edgeManager, faceManager, elementManager, elemLocations );
@@ -918,6 +935,185 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                        elemLocations );
       MapConsistencyCheck( nodeID, nodeManager, edgeManager, faceManager, elementManager, elemLocations );
 
+      // we should initialize the displacement and its increment at the newly split node @nodeID
+      // according to the its signed distance for signed distance based propagation condition
+      if (m_nodeBasedSIF == 2)
+      {
+        localIndex hydroSolverIndex;
+        this->getParent()->forSubGroups<HydrofractureSolver>( [&hydroSolverIndex] (SolverBase const & solver)
+        {
+          hydroSolverIndex = solver.getIndexInParent();
+        });
+        HydrofractureSolver const * hydroSolver = this->getParent()->GetGroup<HydrofractureSolver>(hydroSolverIndex);
+
+        real64 shearModulus;
+        real64 bulkModulus;
+        real64 viscosity;
+        elementManager.forElementSubRegions<FaceElementSubRegion>( [&]
+                                                                   (FaceElementSubRegion & subRegion)
+        {
+          Group const * const constitutiveModels = subRegion.GetConstitutiveModels();
+          ConstitutiveBase const * const solid  = constitutiveModels->GetGroup<SolidBase>(m_solidMaterialNames[0]);
+          if (solid != nullptr)
+          {
+            shearModulus = solid->getReference<real64>
+                                      (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
+            bulkModulus = solid->getReference<real64>
+                                      (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
+          }
+          constitutiveModels->forSubGroups<SingleFluidBase>( [&viscosity]
+                                                             (SingleFluidBase const & fluidModel)
+          {
+            viscosity = fluidModel.defaultViscosity();
+          } );
+        } );
+
+        real64 const toughness = m_rockToughness;
+
+        real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+        real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+        real64 const Eprime = E/(1.0-nu*nu);
+        real64 const PI = 2 * acos(0.0);
+        real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+        real64 const mup = 12.0 * viscosity;
+
+        array1d<localIndex> const & childNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
+        array1d<real64> & signedNodeDistance = nodeManager.getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
+        array1d<real64> & signedNodeDistance0 = nodeManager.getExtrinsicData< extrinsicMeshData::SignedNodeDistance0 >();
+        array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager.referencePosition();
+        array2d<real64, nodes::TOTAL_DISPLACEMENT_PERM> const & totalDisplacement = nodeManager.totalDisplacement();
+        array2d<real64, nodes::INCR_DISPLACEMENT_PERM>  const & incrementalDisplacement = nodeManager.incrementalDisplacement();
+        arrayView2d< real64 const > faceNormal = faceManager.faceNormal();
+
+        localIndex childNodeID;
+        childNodeID = childNodeIndices(nodeID);
+        signedNodeDistance[childNodeID] = signedNodeDistance[nodeID];
+
+        // initialize the nodal displacement based on the signedDistance
+        // when the signedDistance at the node is non-negative, it means this node
+        // is split as the prefracture
+        if (signedNodeDistance[nodeID] >= 0)
+        {
+          std::cout << "Node " << nodeID << " is split as prefracture." << std::endl;
+          real64 initialDispMagnitude;
+          // the node has some positive value, instead of the initial value 1.0e99
+          //if (signedNodeDistance[nodeID] < 1.0e98)
+          if (time_n > 1.0e-9)
+          {
+            initialDispMagnitude = 1.0e-5;
+          }
+          else
+          {
+            initialDispMagnitude = 1.0e-3;
+            // This should only be executed at the beginning of the simulation
+            if (hydroSolver->getRegimeTypeOption() == HydrofractureSolver::RegimeTypeOption::ViscosityDominated)
+            {
+              signedNodeDistance0[nodeID] = 0.0;
+              signedNodeDistance0[childNodeID] = 0.0;
+            }
+          }
+          for (localIndex iFace : nodesToRupturedFaces[nodeID])
+          {
+            //iFace is the parent face
+            real64 newDisp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[ iFace ] );
+            LvArray::tensorOps::scale< 3 >( newDisp, -initialDispMagnitude );
+
+            // we need to modify the disp and increDisp both
+            LvArray::tensorOps::add< 3 >( incrementalDisplacement[nodeID], newDisp );
+            LvArray::tensorOps::add< 3 >( totalDisplacement[nodeID], newDisp );
+            LvArray::tensorOps::subtract< 3 >( incrementalDisplacement[childNodeID], newDisp );
+            LvArray::tensorOps::subtract< 3 >( totalDisplacement[childNodeID], newDisp );
+
+            break;
+          }
+        }
+        // initialize the nodal displacement based on the signedDistance
+        // when the signedDistance at the node is negative, it means this node
+        // is split due to fracture propagation
+        else
+        {
+          real64 fullOpening;
+          real64 halfOpening;
+          std::cout << "Provide an initial guess for node " << nodeID << " after split." << std::endl;
+          if (hydroSolver->getRegimeTypeOption() == HydrofractureSolver::RegimeTypeOption::ToughnessDominated)
+          {
+            fullOpening = Kprime/Eprime * sqrt(std::fabs(signedNodeDistance[nodeID]));
+            halfOpening = 0.5 * fullOpening;
+          }
+          else if (hydroSolver->getRegimeTypeOption() == HydrofractureSolver::RegimeTypeOption::ViscosityDominated)
+          {
+            // the location of the node that is under split
+            real64 const nodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[nodeID] );
+            // the signed distance for the current node
+            real64 const nodeF = signedNodeDistance[nodeID]; // nodeF < 0
+            // the signed distance for the current node at the previous time step
+            real64 nodeF0 = 1.0e99; // nodeF0 > 0
+            // loop over all the nodes to find the previous signed distance for the current node
+            for (localIndex iNode = 0 ; iNode < signedNodeDistance0.size(); iNode++)
+            {
+              if ((signedNodeDistance0[iNode] >= 0) && (signedNodeDistance0[iNode] < 1.0e98))
+              {
+                real64 tipNodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[iNode] );
+                LvArray::tensorOps::subtract< 3 >( tipNodeLoc, nodeLoc );
+                nodeF0 = std::min(nodeF0,
+                                  LvArray::tensorOps::l2Norm< 3 >( tipNodeLoc ) + signedNodeDistance0[iNode]);
+              }
+            }
+            real64 const velocity = (nodeF0 - nodeF)/dt;
+            real64 const betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+            // viscosity-dominated asymptoic relation
+            fullOpening = betam * pow( mup/Eprime * velocity * nodeF * nodeF, 1.0/3.0);
+            halfOpening = 0.5 * fullOpening;
+          } //viscosity-dominated case
+          else
+          {
+            GEOSX_ERROR("Unknown propagation regime.");
+          }
+
+          for (localIndex iFace : nodesToRupturedFaces[nodeID])
+          {
+            //iFace is the parent face
+            real64 newDisp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[ iFace ] );
+            LvArray::tensorOps::scale< 3 >( newDisp, -halfOpening );
+            // we need to modify the disp and increDisp both
+            LvArray::tensorOps::add< 3 >( incrementalDisplacement[nodeID], newDisp );
+            LvArray::tensorOps::add< 3 >( totalDisplacement[nodeID], newDisp );
+            LvArray::tensorOps::subtract< 3 >( incrementalDisplacement[childNodeID], newDisp );
+            LvArray::tensorOps::subtract< 3 >( totalDisplacement[childNodeID], newDisp );
+            break;
+          }
+        } // the signed distance is negative
+
+        std::cout << "Parent node " << nodeID
+                  << ": coords = " << referencePosition(nodeID, 0) << ", "
+                                   << referencePosition(nodeID, 1) << ", "
+                                   << referencePosition(nodeID, 2) << std::endl;
+        std::cout << "Parent node " << nodeID
+                  << ": disps = "  << totalDisplacement(nodeID, 0) << ", "
+                                   << totalDisplacement(nodeID, 1) << ", "
+                                   << totalDisplacement(nodeID, 2) << std::endl;
+        std::cout << "Parent node " << nodeID
+                  << ": increDisps = "  << incrementalDisplacement(nodeID, 0) << ", "
+                                        << incrementalDisplacement(nodeID, 1) << ", "
+                                        << incrementalDisplacement(nodeID, 2) << std::endl;
+        std::cout << "Parent node " << nodeID
+                  << ": signed dist = " << signedNodeDistance[nodeID] << std::endl;
+
+        std::cout << "Child node " << childNodeID
+                  << ": coords = " << referencePosition(childNodeID, 0) << ", "
+                                   << referencePosition(childNodeID, 1) << ", "
+                                   << referencePosition(childNodeID, 2) << std::endl;
+        std::cout << "Child node " << childNodeID
+                  << ": disps = "  << totalDisplacement(childNodeID, 0) << ", "
+                                   << totalDisplacement(childNodeID, 1) << ", "
+                                   << totalDisplacement(childNodeID, 2) << std::endl;
+        std::cout << "Child node " << childNodeID
+                  << ": increDisps = "  << incrementalDisplacement(childNodeID, 0) << ", "
+                                        << incrementalDisplacement(childNodeID, 1) << ", "
+                                        << incrementalDisplacement(childNodeID, 2) << std::endl;
+        std::cout << "Child node " << childNodeID
+                  << ": signed dist = " << signedNodeDistance[childNodeID] << std::endl;
+      } // m_nodeBasedSIF == 2
     }
   }
 
@@ -1631,7 +1827,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   array1d< integer > const & edgeIsExternal = edgeManager.isExternal();
   array1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
-  SurfaceElementRegion * const fractureElementRegion = elementManager.GetRegion< SurfaceElementRegion >( "Fracture" );
+  // It's problematic to access an object through a string
+  //SurfaceElementRegion * const fractureElementRegion = elementManager.GetRegion< SurfaceElementRegion >( "Fracture" );
+  SurfaceElementRegion * const fractureElementRegion = elementManager.GetRegion< SurfaceElementRegion >( this->m_fractureRegionName );
   array1d< integer > const & isFaceSeparable = faceManager.getExtrinsicData< extrinsicMeshData::IsFaceSeparable >();
 
   array2d< real64 > const & faceNormals = faceManager.faceNormal();
@@ -1662,7 +1860,6 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     }
     std::cout<<std::endl;
   }
-
 
   nodeManager.SplitObject( nodeID, rank, newNodeIndex );
 
@@ -2715,7 +2912,8 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition & domain,
   // We use the color map scheme because we can mark a face to be rupture ready from a partition where the face is a
   // ghost.
 
-  if( !m_nodeBasedSIF )
+  // edge-based criterion
+  if( m_nodeBasedSIF == 0 )
   {
     {
 //      for( int color=0 ; color<partition.NumColor() ; ++color )
@@ -2765,7 +2963,8 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition & domain,
       }
     }
   }
-  else
+  // node-based stress intensity factor criterion
+  else if (m_nodeBasedSIF == 1)
   {
     ModifiedObjectLists modifiedObjects;
 
@@ -2784,8 +2983,33 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition & domain,
       }
     }
   }
+  // new node-based signed distance criterion
+  else if (m_nodeBasedSIF == 2 )
+  {
+    ModifiedObjectLists modifiedObjects;
 
-
+    array1d<real64> & signedNodeDistance = nodeManager.getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
+    for( auto nodeIndex: m_tipNodes )
+    {
+      std::cout << nodeIndex << ": " << signedNodeDistance[nodeIndex] << std::endl;
+      // the signed distance of the node is negative, meaning this node is behind
+      // the fracture tip front
+      if (signedNodeDistance[nodeIndex] < 0)
+      {
+        MarkRuptureFaceFromNodeUsingSignedDistance( nodeIndex,
+                                                    nodeManager,
+                                                    edgeManager,
+                                                    faceManager,
+                                                    elementManager,
+                                                    modifiedObjects );
+      }
+    }
+  }
+  else
+  {
+    GEOSX_ERROR("Invalid input for nodeBasedSIF, which should be: 0 -> edgeSIF based; "
+                 "1 -> nodeSIF based, and 2 -> node signed distance based.");
+  }
 
 }
 
@@ -2814,6 +3038,25 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList().toViewConst();
+/*
+  for (localIndex node = 0; node < nodeManager.size(); node++ )
+  {
+    std::cout << "Node " << node << " nodeToRegionMap.sizeOfArray( node ) "
+                         << nodeToRegionMap.sizeOfArray( node ) << ", "
+                         << nodeToSubRegionMap.sizeOfArray( node ) << ", "
+                         << nodeToElementMap.sizeOfArray( node ) << std::endl;
+    for (int i = 0; i< nodeToRegionMap.sizeOfArray( node ); i++)
+    {
+      std::cout << nodeToRegionMap[node][i] << ", "
+                << nodeToSubRegionMap[node][i] << ", "
+                << nodeToElementMap[node][i] << std::endl;
+    }
+  }
+*/
+
+
+
+
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList().toViewConst();
   const arrayView1d< integer > & isNodeGhost = nodeManager.ghostRank();
@@ -3995,6 +4238,33 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
 //        }
 //      }
     }
+  }
+}
+
+void SurfaceGenerator::MarkRuptureFaceFromNodeUsingSignedDistance( const localIndex nodeIndex,
+                                                                   NodeManager & nodeManager,
+                                                                   EdgeManager & GEOSX_UNUSED_PARAM( edgeManager ),
+                                                                   FaceManager & faceManager,
+                                                                   ElementRegionManager & GEOSX_UNUSED_PARAM( elementManager ),
+                                                                   ModifiedObjectLists & modifiedObjects )
+{
+  arrayView1d< integer > const & ruptureState = faceManager.getExtrinsicData< extrinsicMeshData::RuptureState >();
+  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList().toViewConst();
+  localIndex_array eligibleFaces;
+
+  for( localIndex const faceIndex : nodeToFaceMap[ nodeIndex ] )
+  {
+    if( m_tipFaces.contains( faceIndex ))
+    {
+      eligibleFaces.emplace_back( faceIndex );
+    }
+  }
+
+  for( localIndex i = 0; i < eligibleFaces.size(); ++i )
+  {
+    localIndex pickedFace = eligibleFaces[i];
+    ruptureState[pickedFace] = 1;
+    modifiedObjects.modifiedFaces.insert( pickedFace );
   }
 }
 

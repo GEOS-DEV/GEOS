@@ -250,7 +250,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
 // aperture0[stencilElementIndices[k]] ) : 0.0;
 #if PERM_CALC==1
     FluxKernelHelper::
-      apertureForPermeablityCalculation< 1 >( aperture0[stencilElementIndices[k]],
+      apertureForPermeablityCalculation< 2 >( aperture0[stencilElementIndices[k]],
                                               aperture[stencilElementIndices[k]],
                                               aperTerm[k],
                                               dAperTerm_dAper[k] );

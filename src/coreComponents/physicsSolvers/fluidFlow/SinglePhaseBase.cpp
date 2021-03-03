@@ -328,7 +328,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition & domain,
                            setSparsity );
 }
 
-void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+void SinglePhaseBase::ImplicitStepSetup( real64 const & time_n,
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
 {
@@ -343,7 +343,11 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     arrayView1d< real64 > const & dVol = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
 
     dPres.setValues< parallelDevicePolicy<> >( 0.0 );
-    dVol.setValues< parallelDevicePolicy<> >( 0.0 );
+    // dVol should not be initialized at the first time step of the simulation
+    if (time_n > 1.0e-9)
+    {
+      dVol.setValues< parallelDevicePolicy<> >( 0.0 );
+    }
 
     // This should fix NaN density in newly created fracture elements
     UpdateState( subRegion, targetIndex );
