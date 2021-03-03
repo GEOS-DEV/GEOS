@@ -206,7 +206,7 @@ private:
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void computeDensities( real64 pressure,
-                         arraySlice1d< real64, 0 > const & phaseMassDens ) const;
+                         arraySlice1d< real64 > const & phaseMassDens ) const;
 
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -218,7 +218,7 @@ private:
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void computeViscosities( real64 pressure,
-                           arraySlice1d< real64, 0 > const & phaseVisc ) const;
+                           arraySlice1d< real64 > const & phaseVisc ) const;
 
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -349,6 +349,39 @@ protected:
 
 private:
 
+  /**
+   * @brief Read all the PVT table provided by the user in Eclipse format
+   */
+  void readInputDataFromPVTFiles();
+
+  /**
+   * @brief Use the TableFunctions provided by the user to get the PVT data
+   */
+  void useProvidedTableFunctions();
+
+  /**
+   * @brief Open the file "filename", read the table inside, and fill "values" with the table values
+   * @param[in] filename the name of the file containing the table
+   * @param[inout] values an array of arrays containing the table values
+   */
+  void readTable( string const & filename,
+                  array1d< array1d< real64 > > & values ) const;
+
+  /**
+   * @brief Fill the water data (formation vol factor, compressibility, etc)
+   * @param[in] tableValues the values in the water table
+   */
+  void fillWaterData( array1d< array1d< real64 > > const & tableValues );
+
+  /**
+   * @brief Fill the hydrocarbon data (pressure, formation vol factor, viscosity)
+   * @param[in] ip the index of the phase
+   * @param[in] tableValues the values in the oil or gas table
+   */
+  void fillHydrocarbonData( localIndex const ip,
+                            array1d< array1d< real64 > > const & tableValues );
+
+
   /// create all the table kernel wrappers
   void createAllKernelWrappers();
 
@@ -402,7 +435,7 @@ private:
 //GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::computeDensities( real64 pressure,
-                                           arraySlice1d< real64, 0 > const & phaseMassDens ) const
+                                           arraySlice1d< real64 > const & phaseMassDens ) const
 {
   real64 fvf = 0.0;
   real64 derivative = 0.0;
@@ -554,12 +587,12 @@ void DeadOilFluidUpdate::computeViscosities( real64 pressure,
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::compute( real64 pressure,
                                   real64 temperature,
-                                  arraySlice1d< real64 const, 0 > const & composition,
-                                  arraySlice1d< real64, 0 > const & phaseFrac,
-                                  arraySlice1d< real64, 0 > const & phaseDens,
-                                  arraySlice1d< real64, 0 > const & phaseMassDens,
-                                  arraySlice1d< real64, 0 > const & phaseVisc,
-                                  arraySlice2d< real64, 1 > const & phaseCompFrac,
+                                  arraySlice1d< real64 const > const & composition,
+                                  arraySlice1d< real64 > const & phaseFrac,
+                                  arraySlice1d< real64 > const & phaseDens,
+                                  arraySlice1d< real64 > const & phaseMassDens,
+                                  arraySlice1d< real64 > const & phaseVisc,
+                                  arraySlice2d< real64 > const & phaseCompFrac,
                                   real64 & totalDens ) const
 {
   GEOSX_UNUSED_VAR( temperature );
@@ -603,7 +636,7 @@ void DeadOilFluidUpdate::compute( real64 pressure,
 GEOSX_FORCE_INLINE
 void DeadOilFluidUpdate::compute( real64 pressure,
                                   real64 temperature,
-                                  arraySlice1d< real64 const, 0 > const & composition,
+                                  arraySlice1d< real64 const > const & composition,
                                   arraySlice1d< real64 > const & phaseFraction,
                                   arraySlice1d< real64 > const & dPhaseFraction_dPressure,
                                   arraySlice1d< real64 > const & dPhaseFraction_dTemperature,

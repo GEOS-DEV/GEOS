@@ -28,7 +28,7 @@
   <Mesh>
 
     <InternalMesh
-      name="mesh1"
+      name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 5, 10 }"
       yCoords="{ 0, 5, 10 }"
@@ -139,7 +139,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="permy_channel"
@@ -148,7 +148,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="permz_channel"
@@ -157,7 +157,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="porosity_channel"
@@ -212,7 +212,7 @@
       component="2"
       scale="0.001"/>
 
-    <!-- Injection pressure: ~10 bar -->
+    <!-- Injection pressure: ~100 bar -->
     <FieldSpecification
       name="sourceTermPressure"
       objectPath="ElementRegions/Channel"
@@ -245,12 +245,12 @@
       component="2"
       scale="0.8"/>
 
-    <!-- Production pressure: ~2 bar, -->
+    <!-- Production pressure: ~50 bar, -->
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Channel"
       fieldName="pressure"
-      scale="2e5"
+      scale="5e6"
       setNames="{ sink }"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->

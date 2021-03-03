@@ -56,23 +56,261 @@ DeadOilFluid::DeadOilFluid( string const & name,
   getWrapperBase( viewKeyStruct::componentMolarWeightString() ).setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::phaseNamesString() ).setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::tableFilesString(), &m_tableFiles ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "List of filenames with input PVT tables" );
-
   registerWrapper( viewKeyStruct::surfacePhaseMassDensitiesString(), &m_surfacePhaseMassDensity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of surface mass densities for each phase" );
 
+  // 1) First option: specify PVT tables from one file per phase, read the files line by line, and populate the internal TableFunctions
+
+  registerWrapper( viewKeyStruct::tableFilesString(), &m_tableFiles ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "List of filenames with input PVT tables (one per phase)" );
+
+  // 2) Second option: specify TableFunction names for oil and gas,
+  //                   and then specify water reference pressure, water Bw, water compressibility and water viscosity
+
   registerWrapper( viewKeyStruct::formationVolumeFactorTableNamesString(), &m_formationVolFactorTableNames ).
-    setSizedFromParent( 0 );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "List of formation volume factor TableFunction names from the Functions block. \n"
+                    "The user must provide one TableFunction per hydrocarbon phase, in the order provided in \"phaseNames\". \n"
+                    "For instance, if \"oil\" is before \"gas\" in \"phaseNames\", the table order should be: oilTableName, gasTableName" );
   registerWrapper( viewKeyStruct::viscosityTableNamesString(), &m_viscosityTableNames ).
-    setSizedFromParent( 0 );;
-  registerWrapper( viewKeyStruct::waterRefPressureString(), &m_waterRefPressure );
-  registerWrapper( viewKeyStruct::waterFormationVolumeFactorString(), &m_waterFormationVolFactor );
-  registerWrapper( viewKeyStruct::waterCompressibilityString(), &m_waterCompressibility );
-  registerWrapper( viewKeyStruct::waterViscosityString(), &m_waterViscosity );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "List of viscosity TableFunction names from the Functions block. \n"
+                    "The user must provide one TableFunction per hydrocarbon phase, in the order provided in \"phaseNames\". \n"
+                    "For instance, if \"oil\" is before \"gas\" in \"phaseNames\", the table order should be: oilTableName, gasTableName" );
+  registerWrapper( viewKeyStruct::waterRefPressureString(), &m_waterRefPressure ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Water reference pressure" );
+  registerWrapper( viewKeyStruct::waterFormationVolumeFactorString(), &m_waterFormationVolFactor ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Water formation volume factor" );
+  registerWrapper( viewKeyStruct::waterCompressibilityString(), &m_waterCompressibility ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Water compressibility" );
+  registerWrapper( viewKeyStruct::waterViscosityString(), &m_waterViscosity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Water viscosity" );
+}
+
+void DeadOilFluid::readTable( string const & filename,
+                              array1d< array1d< real64 > > & values ) const
+{
+  std::ifstream is( filename );
+  constexpr std::streamsize buf_size = 256;
+  char buf[buf_size];
+
+  while( is.getline( buf, buf_size ) )
+  {
+    string const str( buf );
+    string_array const strs = Tokenize( str, " " );
+
+    if( strs.empty() )
+    {
+      continue;
+    }
+    if( strs[0].front() == '#' )
+    {
+      continue;
+    }
+    if( streq( strs[0], "--" ) )
+    {
+      continue;
+    }
+
+    array1d< real64 > rowValues;
+    rowValues.resize( strs.size() );
+    for( localIndex i = 0; i < strs.size(); ++i )
+    {
+      rowValues[i] = stod( strs[i] );
+    }
+    values.emplace_back( rowValues );
+  }
+  is.close();
+}
+
+void DeadOilFluid::fillWaterData( array1d< array1d< real64 > > const & tableValues )
+{
+  GEOSX_THROW_IF( tableValues.size() != 1,
+                  "DeadOilFluid: the water table must contain one line and only one",
+                  InputError );
+  GEOSX_THROW_IF( tableValues[0].size() != 4,
+                  "DeadOilFluid: four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
+                  InputError );
+
+  GEOSX_THROW_IF( m_waterRefPressure > 0.0 || m_waterFormationVolFactor > 0.0
+                  || m_waterCompressibility > 0.0 || m_waterViscosity > 0.0,
+                  "DeadOilFluid: input is redundant (user provided both water data and a water pvt file)",
+                  InputError );
+
+  m_waterRefPressure = tableValues[0][0];
+  m_waterFormationVolFactor = tableValues[0][1];
+  m_waterCompressibility = tableValues[0][2];
+  m_waterViscosity = tableValues[0][3];
+
+  GEOSX_THROW_IF( m_waterRefPressure <= 0.0,
+                  "DeadOilFluid: a strictly positive value must be provided for: "
+                  << viewKeyStruct::waterRefPressureString(),
+                  InputError );
+  GEOSX_THROW_IF( m_waterFormationVolFactor <= 0.0,
+                  "DeadOilFluid: a strictly positive value must be provided for: "
+                  << viewKeyStruct::waterFormationVolumeFactorString(),
+                  InputError );
+  GEOSX_THROW_IF( m_waterCompressibility <= 0.0,
+                  "DeadOilFluid: a strictly positive value must be provided for: "
+                  << viewKeyStruct::waterCompressibilityString(),
+                  InputError );
+  GEOSX_THROW_IF( m_waterViscosity <= 0.0,
+                  "DeadOilFluid: a strictly positive value must be provided for: "
+                  << viewKeyStruct::waterViscosityString(),
+                  InputError );
+}
+
+void DeadOilFluid::fillHydrocarbonData( localIndex const ip,
+                                        array1d< array1d< real64 > > const & tableValues )
+{
+  array1d< array1d< real64 > > pressureCoords;
+  pressureCoords.resize( 1 );
+  pressureCoords[0].resize( tableValues.size() );
+  array1d< real64 > formationVolFactor;
+  formationVolFactor.resize( tableValues.size() );
+  array1d< real64 > viscosity;
+  viscosity.resize( tableValues.size() );
+
+  for( localIndex i = 0; i < tableValues.size(); ++i )
+  {
+    GEOSX_THROW_IF( tableValues[i].size() != 3,
+                    "DeadOilFluid: three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
+                    InputError );
+
+    pressureCoords[0][i] = tableValues[i][0];
+    formationVolFactor[i] = tableValues[i][1];
+    viscosity[i] = tableValues[i][2];
+  }
+
+  m_hydrocarbonPhaseOrder.emplace_back( LvArray::integerConversion< integer >( ip ) );
+  string const formationVolFactorTableName = (m_phaseTypes[ip] == PhaseType::OIL) ? "PVDO_Bo" : "PVDG_Bg";
+  string const viscosityTableName = (m_phaseTypes[ip] == PhaseType::OIL) ? "PVDO_visco" : "PVDG_viscg";
+  m_formationVolFactorTableNames.emplace_back( formationVolFactorTableName );
+  m_viscosityTableNames.emplace_back( viscosityTableName );
+
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  TableFunction & tablePVDX_B =
+    dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", formationVolFactorTableName ) );
+  tablePVDX_B.setTableCoordinates( pressureCoords );
+  tablePVDX_B.setTableValues( formationVolFactor );
+  tablePVDX_B.reInitializeFunction();
+  tablePVDX_B.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  TableFunction & tablePVDX_visc =
+    dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", viscosityTableName ) );
+  tablePVDX_visc.setTableCoordinates( pressureCoords );
+  tablePVDX_visc.setTableValues( viscosity );
+  tablePVDX_visc.reInitializeFunction();
+  tablePVDX_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+}
+
+void DeadOilFluid::readInputDataFromPVTFiles()
+{
+  GEOSX_THROW_IF( m_tableFiles.size() != numFluidPhases(),
+                  "DeadOilFluid: the number of table files must be equal to the number of phases",
+                  InputError );
+  GEOSX_THROW_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
+                  "DeadOilFluid: input is redundant (user provided both TableFunction names and pvt files)",
+                  InputError );
+
+  array1d< array1d< real64 > > tableValues;
+  for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
+  {
+    tableValues.clear();
+    readTable( m_tableFiles[ip], tableValues );
+
+    if( m_phaseTypes[ip] == PhaseType::WATER )
+    {
+      fillWaterData( tableValues );
+    }
+    else
+    {
+      fillHydrocarbonData( ip, tableValues );
+    }
+  }
+}
+
+void DeadOilFluid::useProvidedTableFunctions()
+{
+  GEOSX_THROW_IF( m_tableFiles.size() > 0,
+                  "DeadOilFluid: input is redundant (user provided both TableFunction names and pvt files)",
+                  InputError );
+
+  integer const ipWater = m_phaseOrder[PhaseType::WATER];
+  integer const ipGas = m_phaseOrder[PhaseType::GAS];
+  if( ipWater >= 0 ) // if water is present
+  {
+    GEOSX_THROW_IF( m_waterRefPressure <= 0.0,
+                    "DeadOilFluid: a strictly positive value must be provided for: "
+                    << viewKeyStruct::waterRefPressureString(),
+                    InputError );
+    GEOSX_THROW_IF( m_waterFormationVolFactor <= 0.0,
+                    "DeadOilFluid: a strictly positive value must be provided for: "
+                    << viewKeyStruct::waterFormationVolumeFactorString(),
+                    InputError );
+    GEOSX_THROW_IF( m_waterCompressibility <= 0.0,
+                    "DeadOilFluid: a strictly positive value must be provided for: "
+                    << viewKeyStruct::waterCompressibilityString(),
+                    InputError );
+    GEOSX_THROW_IF( m_waterViscosity <= 0.0,
+                    "DeadOilFluid: a strictly positive value must be provided for: "
+                    << viewKeyStruct::waterViscosityString(),
+                    InputError );
+  }
+  else
+  {
+    GEOSX_THROW_IF( m_waterRefPressure > 0.0,
+                    "DeadOilFluid: if water is absent, this keyword is not needed "
+                    << viewKeyStruct::waterRefPressureString(),
+                    InputError );
+    GEOSX_THROW_IF( m_waterFormationVolFactor > 0.0,
+                    "DeadOilFluid: if water is absent, this keyword is not needed "
+                    << viewKeyStruct::waterFormationVolumeFactorString(),
+                    InputError );
+    GEOSX_THROW_IF( m_waterViscosity > 0.0,
+                    "DeadOilFluid: if water is absent, this keyword is not needed "
+                    << viewKeyStruct::waterViscosityString(),
+                    InputError );
+    GEOSX_THROW_IF( m_waterCompressibility > 0.0,
+                    "DeadOilFluid: if water is absent, this keyword is not needed "
+                    << viewKeyStruct::waterCompressibilityString(),
+                    InputError );
+  }
+
+  localIndex const numExpectedTables = (ipGas >= 0) ? 2 : 1;
+  GEOSX_THROW_IF( m_formationVolFactorTableNames.size() != numExpectedTables,
+                  "DeadOilFluid: one formation volume factor table must be provided for each hydrocarbon phase",
+                  InputError );
+  GEOSX_THROW_IF( m_viscosityTableNames.size() != numExpectedTables,
+                  "DeadOilFluid: one viscosity table must be provided for each hydrocarbon phase",
+                  InputError );
+
+  for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
+  {
+    if( m_phaseTypes[ip] == PhaseType::OIL || m_phaseTypes[ip] == PhaseType::GAS )
+    {
+      m_hydrocarbonPhaseOrder.emplace_back( LvArray::integerConversion< integer >( ip ) );
+    }
+  }
+
+  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+  for( localIndex iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
+  {
+    GEOSX_THROW_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
+                    "DeadOilFluid: the formation volume factor table " << m_formationVolFactorTableNames[iph]
+                                                                       << " could not be found",
+                    InputError );
+    GEOSX_THROW_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
+                    "DeadOilFluid: the viscosity table " << m_viscosityTableNames[iph]
+                                                         << " could not be found",
+                    InputError );
+  }
 }
 
 void DeadOilFluid::postProcessInput()
@@ -88,128 +326,33 @@ void DeadOilFluid::postProcessInput()
   for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
   {
     auto it = phaseDict.find( m_phaseNames[ip] );
-    GEOSX_ERROR_IF( it == phaseDict.end(), "DeadOilFluid: phase not supported: " << m_phaseNames[ip] );
+    GEOSX_THROW_IF( it == phaseDict.end(),
+                    "DeadOilFluid: phase not supported: " << m_phaseNames[ip],
+                    InputError );
     integer const phaseIndex = it->second;
-    GEOSX_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "DeadOilFluid: invalid phase index " << phaseIndex );
+    GEOSX_THROW_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "DeadOilFluid: invalid phase index " << phaseIndex,
+                    InputError );
 
     m_phaseTypes[ip] = phaseIndex;
     m_phaseOrder[phaseIndex] = LvArray::integerConversion< integer >( ip );
   }
 
-  GEOSX_ERROR_IF( m_tableFiles.size() != numFluidPhases(),
-                  "The number of table files must be equal to the number of phases" );
-  for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
+  GEOSX_THROW_IF( m_surfacePhaseMassDensity.size() != m_phaseNames.size(),
+                  "DeadOilFluid: the number of surfacePhaseMassDensities is inconsistent with the phase names",
+                  InputError );
+  GEOSX_THROW_IF( m_componentMolarWeight.size() != m_phaseNames.size(),
+                  "DeadOilFluid: the number of componentMolarWeights is inconsistent with the phase names",
+                  InputError );
+
+  // at this point, we make the distinction between the two input options
+  if( !m_tableFiles.empty() )
   {
-    string const filename = m_tableFiles[ip];
-
-    array1d< array1d< real64 > > pressureCoords;
-    pressureCoords.resize( 1 );
-    array1d< real64 > formationVolFactor;
-    array1d< real64 > viscosity;
-
-    std::ifstream is( filename );
-    constexpr std::streamsize buf_size = 256;
-    char buf[buf_size];
-
-    localIndex counter = 0;
-    while( is.getline( buf, buf_size ) )
-    {
-      string const str( buf );
-      string_array const strs = Tokenize( str, " " );
-
-      if( strs.empty() )
-      {
-        continue;
-      }
-
-      if( strs[0].front() == '#' )
-      {
-        continue;
-      }
-      if( streq( strs[0], "--" ) )
-      {
-        continue;
-      }
-
-      std::cout << "strs.size() = " << strs.size() << std::endl;
-      for( localIndex i = 0; i < strs.size(); ++i )
-      {
-        std::cout << strs[i] << std::endl;
-      }
-
-      GEOSX_ERROR_IF( (m_phaseTypes[ip] != PhaseType::WATER)
-                      && strs.size() != 3,
-                      "Three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas" );
-      GEOSX_ERROR_IF( (m_phaseTypes[ip] == PhaseType::WATER)
-                      && strs.size() != 4,
-                      "Four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water" );
-      GEOSX_ERROR_IF( (m_phaseTypes[ip] == PhaseType::WATER)
-                      && counter > 1,
-                      "The water table must contain only one line" );
-
-      if( m_phaseTypes[ip] == PhaseType::WATER )
-      {
-        m_waterRefPressure = stod( strs[0] );
-        m_waterFormationVolFactor = stod( strs[1] );
-        m_waterCompressibility = stod( strs[2] );
-        m_waterViscosity = stod( strs[3] );
-
-        GEOSX_ERROR_IF( m_waterRefPressure <= 0.0,
-                        "DeadOilFluid: a strictly positive value must be provided for: "
-                        << viewKeyStruct::waterRefPressureString() );
-        GEOSX_ERROR_IF( m_waterFormationVolFactor <= 0.0,
-                        "DeadOilFluid: a strictly positive value must be provided for: "
-                        << viewKeyStruct::waterFormationVolumeFactorString() );
-        GEOSX_ERROR_IF( m_waterCompressibility <= 0.0,
-                        "DeadOilFluid: a strictly positive value must be provided for: "
-                        << viewKeyStruct::waterCompressibilityString() );
-        GEOSX_ERROR_IF( m_waterViscosity <= 0.0,
-                        "DeadOilFluid: a strictly positive value must be provided for: "
-                        << viewKeyStruct::waterViscosityString() );
-      }
-      else
-      {
-        pressureCoords[0].emplace_back( stod( strs[0] ) );
-        formationVolFactor.emplace_back( stod( strs[1] ) );
-        viscosity.emplace_back( stod( strs[2] ) );
-      }
-
-      counter++;
-    }
-
-    if( m_phaseTypes[ip] != PhaseType::WATER )
-    {
-      m_hydrocarbonPhaseOrder.emplace_back( LvArray::integerConversion< integer >( ip ) );
-      string const formationVolFactorTableName = (m_phaseTypes[ip] == PhaseType::OIL) ? "PVDO_Bo" : "PVDG_Bg";
-      string const viscosityTableName = (m_phaseTypes[ip] == PhaseType::OIL) ? "PVDO_visco" : "PVDG_viscg";
-      m_formationVolFactorTableNames.emplace_back( formationVolFactorTableName );
-      m_viscosityTableNames.emplace_back( viscosityTableName );
-
-      GEOSX_ERROR_IF( pressureCoords[0].size() <= 1,
-                      "DeadOilFluid: The oil and gas PVT tables must contain at least 2 values" );
-
-      FunctionManager & functionManager = getGlobalState().getFunctionManager();
-      TableFunction & tablePVDX_B =
-        dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", formationVolFactorTableName ) );
-      tablePVDX_B.setTableCoordinates( pressureCoords );
-      tablePVDX_B.setTableValues( formationVolFactor );
-      tablePVDX_B.reInitializeFunction();
-      tablePVDX_B.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-      TableFunction & tablePVDX_visc =
-        dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", viscosityTableName ) );
-      tablePVDX_visc.setTableCoordinates( pressureCoords );
-      tablePVDX_visc.setTableValues( viscosity );
-      tablePVDX_visc.reInitializeFunction();
-      tablePVDX_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-    }
-    is.close();
+    readInputDataFromPVTFiles();
   }
-
-  // check the size of the additional parameters
-  GEOSX_ERROR_IF( m_surfacePhaseMassDensity.size() != m_phaseNames.size(),
-                  "DeadOilFluid: the number of surfacePhaseMassDensities is inconsistent with the phase names" );
-  GEOSX_ERROR_IF( m_componentMolarWeight.size() != m_phaseNames.size(),
-                  "DeadOilFluid: the number of componentMolarWeights is inconsistent with the phase names" );
+  else
+  {
+    useProvidedTableFunctions();
+  }
 }
 
 void DeadOilFluid::initializePostSubGroups()
@@ -222,8 +365,9 @@ void DeadOilFluid::createAllKernelWrappers()
 {
   FunctionManager const & functionManager = getGlobalState().getFunctionManager();
 
-  GEOSX_ERROR_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                  "DeadOilFluid: the number of hydrocarbon phases should be equal to 1 (oil) or 2 (oil+gas)" );
+  GEOSX_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
+                  "DeadOilFluid: the number of hydrocarbon phases should be equal to 1 (oil) or 2 (oil+gas)",
+                  InputError );
 
   if( m_formationVolFactorTables.size() == 0 && m_viscosityTables.size() == 0 )
   {
@@ -249,10 +393,18 @@ void DeadOilFluid::validateTable( TableFunction const & table ) const
 {
   array1d< real64 > const & property = table.getValues();
 
+  GEOSX_THROW_IF( table.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+                  "DeadOilFluid: the interpolation method in the table must be linear",
+                  InputError );
+  GEOSX_THROW_IF( property.size() <= 1,
+                  "DeadOilFluid: each PVT table must contain at least 2 values",
+                  InputError );
+
   for( localIndex i = 2; i < property.size(); ++i )
   {
-    GEOSX_ERROR_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                    "DeadOilFluid: the values in each PVT table must monotone" );
+    GEOSX_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
+                    "DeadOilFluid: the values in each PVT table must monotone",
+                    InputError );
   }
 }
 

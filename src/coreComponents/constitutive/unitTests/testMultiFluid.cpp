@@ -210,6 +210,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                        "Pres",
                        phases,
                        components );
+      std::cout << phaseDens.value << std::endl;
     }
 
     // update temperature and check derivatives
@@ -425,6 +426,113 @@ MultiFluidBase & makeDeadOilFluid( string const & name, Group * parent )
   return fluid;
 }
 
+MultiFluidBase & makeDeadOilFluidFromTable( string const & name, Group * parent )
+{
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+
+  // 1) First, define the tables (PVDO, PVDG)
+
+  // 1D table with linear interpolation
+  localIndex const NaxisPVDO = 7;
+  localIndex const NaxisPVDG = 13;
+
+  array1d< real64_array > coordinatesPVDO;
+  real64_array valuesPVDO_Bo( NaxisPVDO );
+  real64_array valuesPVDO_visc( NaxisPVDO );
+  coordinatesPVDO.resize( 1 );
+  coordinatesPVDO[0].resize( NaxisPVDO );
+  coordinatesPVDO[0][0] =  2000000; valuesPVDO_Bo[0] = 1.02; valuesPVDO_visc[0] = 0.000975;
+  coordinatesPVDO[0][1] =  5000000; valuesPVDO_Bo[1] = 1.03; valuesPVDO_visc[1] = 0.00091;
+  coordinatesPVDO[0][2] = 10000000; valuesPVDO_Bo[2] = 1.04; valuesPVDO_visc[2] = 0.00083;
+  coordinatesPVDO[0][3] = 20000000; valuesPVDO_Bo[3] = 1.05; valuesPVDO_visc[3] = 0.000695;
+  coordinatesPVDO[0][4] = 30000000; valuesPVDO_Bo[4] = 1.07; valuesPVDO_visc[4] = 0.000594;
+  coordinatesPVDO[0][5] = 40000000; valuesPVDO_Bo[5] = 1.08; valuesPVDO_visc[5] = 0.00051;
+  coordinatesPVDO[0][6] = 50000000; valuesPVDO_Bo[6] = 1.09; valuesPVDO_visc[6] = 0.000449;
+
+  array1d< real64_array > coordinatesPVDG;
+  real64_array valuesPVDG_Bg( NaxisPVDG );
+  real64_array valuesPVDG_visc( NaxisPVDG );
+  coordinatesPVDG.resize( 1 );
+  coordinatesPVDG[0].resize( NaxisPVDG );
+  coordinatesPVDG[0][0]  =  3000000; valuesPVDG_Bg[0]  = 0.04234;  valuesPVDG_visc[0] = 0.00001344;
+  coordinatesPVDG[0][1]  =  6000000; valuesPVDG_Bg[1]  = 0.02046;  valuesPVDG_visc[1] = 0.0000142;
+  coordinatesPVDG[0][2]  =  9000000; valuesPVDG_Bg[2]  = 0.01328;  valuesPVDG_visc[2] = 0.00001526;
+  coordinatesPVDG[0][3]  = 12000000; valuesPVDG_Bg[3]  = 0.00977;  valuesPVDG_visc[3] = 0.0000166;
+  coordinatesPVDG[0][4]  = 15000000; valuesPVDG_Bg[4]  = 0.00773;  valuesPVDG_visc[4] = 0.00001818;
+  coordinatesPVDG[0][5]  = 18000000; valuesPVDG_Bg[5]  = 0.006426; valuesPVDG_visc[5] = 0.00001994;
+  coordinatesPVDG[0][6]  = 21000000; valuesPVDG_Bg[6]  = 0.005541; valuesPVDG_visc[6] = 0.00002181;
+  coordinatesPVDG[0][7]  = 24000000; valuesPVDG_Bg[7]  = 0.004919; valuesPVDG_visc[7] = 0.0000237;
+  coordinatesPVDG[0][8]  = 27000000; valuesPVDG_Bg[8]  = 0.004471; valuesPVDG_visc[8] = 0.00002559;
+  coordinatesPVDG[0][9]  = 29500000; valuesPVDG_Bg[9]  = 0.004194; valuesPVDG_visc[9] = 0.00002714;
+  coordinatesPVDG[0][10] = 31000000; valuesPVDG_Bg[10] = 0.004031; valuesPVDG_visc[10] = 0.00002806;
+  coordinatesPVDG[0][11] = 33000000; valuesPVDG_Bg[11] = 0.00391;  valuesPVDG_visc[11] = 0.00002832;
+  coordinatesPVDG[0][12] = 53000000; valuesPVDG_Bg[12] = 0.003868; valuesPVDG_visc[12] = 0.00002935;
+
+  TableFunction & tablePVDO_Bo = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDO_Bo" ) );
+  tablePVDO_Bo.setTableCoordinates( coordinatesPVDO );
+  tablePVDO_Bo.setTableValues( valuesPVDO_Bo );
+  tablePVDO_Bo.reInitializeFunction();
+  tablePVDO_Bo.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  TableFunction & tablePVDO_visc = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDO_visc" ) );
+  tablePVDO_visc.setTableCoordinates( coordinatesPVDO );
+  tablePVDO_visc.setTableValues( valuesPVDO_visc );
+  tablePVDO_visc.reInitializeFunction();
+  tablePVDO_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  TableFunction & tablePVDG_Bg = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDG_Bg" ) );
+  tablePVDG_Bg.setTableCoordinates( coordinatesPVDG );
+  tablePVDG_Bg.setTableValues( valuesPVDG_Bg );
+  tablePVDG_Bg.reInitializeFunction();
+  tablePVDG_Bg.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  TableFunction & tablePVDG_visc = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDG_visc" ) );
+  tablePVDG_visc.setTableCoordinates( coordinatesPVDG );
+  tablePVDG_visc.setTableValues( valuesPVDG_visc );
+  tablePVDG_visc.reInitializeFunction();
+  tablePVDG_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  // 2) Then, define the Dead-Oil constitutive model
+
+  DeadOilFluid & fluid = parent->registerGroup< DeadOilFluid >( name );
+
+  string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+  compNames.resize( 3 );
+  compNames[0] = "gas"; compNames[1] = "water"; compNames[2] = "oil";
+
+  array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
+  molarWgt.resize( 3 );
+  molarWgt[0] = 18e-3; molarWgt[1] = 16e-3; molarWgt[2] = 114e-3;
+
+  string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 3 );
+  phaseNames[0] = "gas"; phaseNames[1] = "water"; phaseNames[2] = "oil";
+
+  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( DeadOilFluid::viewKeyStruct::surfacePhaseMassDensitiesString() );
+  surfaceDens.resize( 3 );
+  surfaceDens[0] = 0.9907; surfaceDens[1] = 1022.0; surfaceDens[2] = 800.0;
+
+  string_array & FVFTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::formationVolumeFactorTableNamesString() );
+  FVFTableNames.resize( 2 );
+  FVFTableNames[0] = "PVDG_Bg"; FVFTableNames[1] = "PVDO_Bo";
+
+  string_array & viscosityTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::viscosityTableNamesString() );
+  viscosityTableNames.resize( 2 );
+  viscosityTableNames[0] = "PVDG_visc"; viscosityTableNames[1] = "PVDO_visc";
+
+  real64 & waterRefPressure = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterRefPressureString() );
+  waterRefPressure = 30600000.1;
+  real64 & waterFormationVolumeFactor = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterFormationVolumeFactorString() );
+  waterFormationVolumeFactor = 1.03;
+  real64 & waterCompressibility = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterCompressibilityString() );
+  waterCompressibility = 0.00000000041;
+  real64 & waterViscosity = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterViscosityString() );
+  waterViscosity = 0.0003;
+
+  fluid.postProcessInputRecursive();
+  return fluid;
+}
+
 void writeTableToFile( string const & filename, char const * str )
 {
   std::ofstream os( filename );
@@ -558,6 +666,37 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
   }
 }
 
+class DeadOilFluidFromTableTest : public CompositionalFluidTestBase
+{
+public:
+
+  DeadOilFluidFromTableTest()
+  {
+    parent.resize( 1 );
+    fluid = &makeDeadOilFluidFromTable( "fluid", &parent );
+
+    parent.initialize();
+    parent.initializePostInitialConditions();
+  }
+};
+
+TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
+{
+  fluid->setMassFlag( false );
+
+  real64 const P[3] = { 5.4e6, 1.24e7, 3.21e7 };
+  real64 const T = 297.15;
+  array1d< real64 > comp( 3 );
+  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-4;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, relTol );
+  }
+}
 
 int main( int argc, char * * argv )
 {

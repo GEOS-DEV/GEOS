@@ -30,7 +30,7 @@
   <!-- START_SPHINX_INCLUDE_MESH_BLOCK -->
   <Mesh>
     <InternalMesh
-      name="mesh1"
+      name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 5, 10 }"
       yCoords="{ 0, 5, 10 }"
@@ -123,10 +123,15 @@
   <Constitutive>
     <DeadOilFluid
       name="fluid"
-      phaseNames="{ oil, gas, water }"
-      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
-      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
-      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
+      phaseNames="{ gas, water, oil }"
+      surfaceDensities="{ 0.9907, 1022.0, 800.0 }"
+      componentMolarWeight="{ 16e-3, 18e-3, 114e-3 }"
+      hydrocarbonFormationVolFactorTableNames="{ B_g_table, B_o_table }"
+      hydrocarbonViscosityTableNames="{ visc_g_table, visc_o_table }"
+      waterReferencePressure="30600000.1"
+      waterFormationVolumeFactor="1.03"
+      waterCompressibility="0.00000000041"
+      waterViscosity="0.0003"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -135,7 +140,7 @@
 
     <BrooksCoreyBakerRelativePermeability
       name="relperm"
-      phaseNames="{ oil, gas, water }"
+      phaseNames="{ gas, water, oil }"
       phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
       waterOilRelPermExponent="{ 2.5, 1.5 }"
       waterOilRelPermMaxValue="{ 0.8, 0.9 }"
@@ -153,7 +158,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="permy_channel"
@@ -162,7 +167,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="permz_channel"
@@ -171,7 +176,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="porosity_channel"
@@ -182,7 +187,7 @@
       scale="0.2"/>
 
     <!-- END_SPHINX_INCLUDE_PERM_BLOCK -->
-    <!-- Initial pressure: ~5 bar -->
+    <!-- Initial pressure: ~50 bar -->
     <!-- START_SPHINX_INCLUDE_INIT_BLOCK -->
     <FieldSpecification
       name="initialPressure"
@@ -222,7 +227,7 @@
 
     <!-- END_SPHINX_INCLUDE_INIT_BLOCK -->
     <!-- START_SPHINX_INCLUDE_BC_BLOCK -->
-    <!-- Injection pressure: ~10 bar -->
+    <!-- Injection pressure: ~100 bar -->
     <FieldSpecification
       name="sourceTermPressure"
       objectPath="ElementRegions/Channel"
@@ -255,12 +260,12 @@
       component="2"
       scale="0.8"/>
 
-    <!-- Production pressure: ~2 bar, -->
+    <!-- Production pressure: ~50 bar, -->
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Channel"
       fieldName="pressure"
-      scale="2e5"
+      scale="5e6"
       setNames="{ sink }"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
@@ -288,8 +293,33 @@
       component="2"
       scale="0.001"/>
   </FieldSpecifications>
-
   <!-- END_SPHINX_INCLUDE_BC_BLOCK -->
+
+ <Functions>
+    <TableFunction
+      name="B_o_table"
+      coordinateFiles="{ pres_pvdo.txt }"
+      voxelFile="B_o_pvdo.txt"
+      interpolation="linear"/>
+    <TableFunction
+      name="visc_o_table"
+      coordinateFiles="{ pres_pvdo.txt }"
+      voxelFile="visc_pvdo.txt"
+      interpolation="linear"/>
+    <TableFunction
+      name="B_g_table"
+      coordinateFiles="{ pres_pvdg.txt }"
+      voxelFile="B_g_pvdg.txt"
+      interpolation="linear"/>
+    <TableFunction
+      name="visc_g_table"
+      coordinateFiles="{ pres_pvdg.txt }"
+      voxelFile="visc_pvdg.txt"
+      interpolation="linear"/>
+    
+ </Functions>
+
+  
   <!-- START_SPHINX_INCLUDE_OUTPUT_BLOCK -->
   <Outputs>
     <Silo
