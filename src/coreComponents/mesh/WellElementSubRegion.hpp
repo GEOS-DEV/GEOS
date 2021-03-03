@@ -281,10 +281,6 @@ public:
 
   ///@}
 
-  /// @cond DO_NOT_DOCUMENT
-  void debugWellElementSubRegionsAfterSetupCommunications() const;
-  /// @endcond
-
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -416,14 +412,6 @@ private:
    * The function WellElementSubRegion::ConstructSubRegionLocalElementMaps must have been called before this function
    */
   void updateNodeManagerNodeToElementMap( MeshLevel & mesh );
-
-  /// @cond DO_NOT_DOCUMENT
-  void debugNodeManager( MeshLevel const & mesh ) const;
-  /// @endcond
-
-  /// @cond DO_NOT_DOCUMENT
-  void debugWellElementSubRegions( arrayView1d< integer const > const & wellElemStatus, globalIndex elemOffsetGlobal ) const;
-  /// @endcond
 
   /**
    * @brief Pack element-to-node and element-to-face maps
