@@ -118,7 +118,7 @@ struct EnumStrings
   static string concat( string const & delim = " " )
   {
     auto const & strings = get();
-    return stringutilities::strjoin( begin( strings ), end( strings ), delim );
+    return stringutilities::join( begin( strings ), end( strings ), delim );
   }
 
   /**
