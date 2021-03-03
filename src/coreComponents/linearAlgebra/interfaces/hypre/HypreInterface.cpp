@@ -31,7 +31,7 @@ void HypreInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ),
                                  char * * & GEOSX_UNUSED_PARAM( argv ) )
 {
   HYPRE_Init();
-#if defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_HYPRE_CUDA)
   hypre_HandleDefaultExecPolicy( hypre_handle()) = HYPRE_EXEC_DEVICE;
   hypre_HandleSpgemmUseCusparse( hypre_handle()) = 0;
 #endif

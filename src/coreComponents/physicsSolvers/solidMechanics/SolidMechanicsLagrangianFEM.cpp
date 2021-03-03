@@ -822,7 +822,6 @@ SolidMechanicsLagrangianFEM::
                      real64 const & dt,
                      DomainPartition & domain )
 {
-  GEOSX_LOG_RANK( "SolidMechanicsLagrangianFEM::implicitStepSetup" );
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
@@ -831,10 +830,6 @@ SolidMechanicsLagrangianFEM::
   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
 
   localIndex const numNodes = nodeManager.size();
-  GEOSX_LOG_RANK( "numNodes = "<<numNodes );
-  GEOSX_LOG_RANK( "uhat size = "<<uhat.size(0)<<", "<<uhat.size(1) );
-
-
 
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
@@ -871,7 +866,6 @@ SolidMechanicsLagrangianFEM::
     }
     else
     {
-      GEOSX_LOG_RANK( "updating uhat" );
       forAll< parallelDevicePolicy< 32 > >( numNodes, [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
         for( int i=0; i<3; ++i )
@@ -879,12 +873,8 @@ SolidMechanicsLagrangianFEM::
           uhat( a, i ) = 0.0;
         }
       } );
-
-      GEOSX_LOG_RANK( "done with uhat" );
-
     }
   }
-  GEOSX_LOG_RANK( "updating constitutive" );
 
   ElementRegionManager * const elementRegionManager = mesh.getElemManager();
   ConstitutiveManager * const constitutiveManager = domain.getConstitutiveManager();
@@ -897,11 +887,6 @@ SolidMechanicsLagrangianFEM::
     SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
     constitutiveRelation.saveConvergedState();
   } );
-
-  GEOSX_LOG_RANK( "done with constitutive" );
-
-
-  GEOSX_LOG_RANK( "Leaving SolidMechanicsLagrangianFEM::implicitStepSetup" );
 
 }
 
