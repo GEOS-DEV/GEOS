@@ -127,9 +127,9 @@ public:
    */
   struct groupKeysStruct
   {
-    /// String key to the Group holding the MeshBodies
+    /// @return String key to the Group holding the MeshBodies
     static constexpr char const * meshBodiesString() { return "MeshBodies"; }
-    /// String key to the Group holding the ConstitutiveManager
+    /// @return String key to the Group holding the ConstitutiveManager
     static constexpr char const * constitutiveManagerString() { return "Constitutive"; }
 
     /// View key to the Group holding the MeshBodies
