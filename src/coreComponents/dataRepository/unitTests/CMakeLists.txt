@@ -49,3 +49,11 @@ foreach(test ${dataRepository_tests})
                   COMMAND ${test_name} )
 endforeach()
 
+#   blt_add_executable( NAME testWrapper
+#                       SOURCES testWrapper.cpp
+#                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+#                       DEPENDS_ON dataRepository managers gtest conduit
+#                       )
+
+#   blt_add_test( NAME testWrapper
+#                 COMMAND testWrapper )
