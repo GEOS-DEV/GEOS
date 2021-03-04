@@ -356,7 +356,34 @@ public:
       stack.localDispFlowJacobian[ a * 3 + 0][0] += biotCoefficient * dNdX[a][0] * detJxW;
       stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJxW;
       stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJxW;
+    }
 
+    real64 phaseCompAmount[numMaxComponentsMultiphasePoroelastic] = { 0.0 };
+    for( localIndex ip = 0; ip < m_numPhases; ++ip )
+    {
+      real64 tmp = biotCoefficient
+                 * m_fluidPhaseDensity( k, q, ip )
+                 * m_fluidPhaseSaturation( k, ip )
+                 * detJxW;
+      for( localIndex ic = 0; ic < m_numComponents; ++ic )
+      {
+        phaseCompAmount[ic] += tmp * m_fluidPhaseCompFrac( k, q, ip,ic );
+      }
+    }
+    for( localIndex ic = 0; ic < m_numComponents; ++ic )
+    {
+      for( integer a = 0; a < numNodesPerElem; ++a )
+      {
+        stack.localFlowDispJacobian[ic][a * 3 + 0] += phaseCompAmount[ic] * dNdX[a][0];
+        stack.localFlowDispJacobian[ic][a * 3 + 1] += phaseCompAmount[ic] * dNdX[a][1];
+        stack.localFlowDispJacobian[ic][a * 3 + 2] += phaseCompAmount[ic] * dNdX[a][2];
+      }
+    }
+
+
+
+    for( integer a = 0; a < numNodesPerElem; ++a )
+    {
       for( localIndex ip = 0; ip < m_numPhases; ++ip )
       {
         for( localIndex ic = 0; ic < m_numComponents; ++ic )
@@ -396,7 +423,8 @@ public:
 
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
-    constexpr int nFlowDof = m_numComponents;
+    //int nFlowDof = m_numComponents + 1;
+
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
@@ -416,12 +444,12 @@ public:
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localFlowDofIndex,
                                                                                 stack.localDispFlowJacobian[numDofPerTestSupportPoint * localNode + dim],
-                                                                                nFlowDof );
+                                                                                m_numComponents + 1 );
 
       }
     }
 
-    for( localIndex i = 0; i < nFlowDof; ++i )
+    for( localIndex i = 0; i < m_numComponents; ++i )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[ i ] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() )
