@@ -26,9 +26,7 @@ using namespace dataRepository;
 
 InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group * const parent ):
   InternalMeshGenerator( name, parent )
-{
-
-}
+{}
 
 void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 {
@@ -45,14 +43,14 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
   SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
   SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
-  
+
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
   {
     real64 xCoord = X( localNodeIndex, 0 );
     real64 yCoord = X( localNodeIndex, 1 );
     real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
- 
+
     if( isEqual( rCoord, m_min[0], 1e-10 ) )
     {
       rnegNodes.insert( localNodeIndex );
@@ -63,8 +61,8 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
       rposNodes.insert( localNodeIndex );
     }
 
-    real64 tCoord; 
- 
+    real64 tCoord;
+
     if( yCoord>=0 )
     {
       tCoord = acos( xCoord/rCoord );
@@ -73,7 +71,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     {
       tCoord = 2*M_PI - acos( xCoord/rCoord );
     }
-    
+
     tCoord *= 180/M_PI;
 
     if( isEqual( tCoord, m_min[1], 1e-10 ) )

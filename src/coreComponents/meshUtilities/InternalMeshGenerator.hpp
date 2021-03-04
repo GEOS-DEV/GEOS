@@ -180,7 +180,7 @@ private:
    * @param[in] element ndim spatialized array index
    */
   inline globalIndex elemGlobalIndex( const int index[3] )
-  { 
+  {
     return index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
   }
 

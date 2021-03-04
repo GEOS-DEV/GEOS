@@ -281,8 +281,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "ypos" ) ).reference();
   SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zneg" ) ).reference();
   SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) ).reference();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all"  ) ).reference();
-  
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
