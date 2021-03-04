@@ -113,10 +113,10 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// String key for the coarsening ratio
+    /// @return String key for the coarsening ratio
     static constexpr char const * coarseningRatioString() {return "coarseningRatio"; }
 
-    /// String key for the cell block names
+    /// @return String key for the cell block names
     static constexpr char const * sourceCellBlockNamesString() {return "cellBlocks"; }
   };
 

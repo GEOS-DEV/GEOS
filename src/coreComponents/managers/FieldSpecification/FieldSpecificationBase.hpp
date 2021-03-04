@@ -388,33 +388,33 @@ public:
    */
   struct viewKeyStruct
   {
-    /// The key for setName
+    /// @return The key for setName
     constexpr static char const * setNamesString() { return "setNames"; }
-    /// The key for constitutivePath
+    /// @return The key for constitutivePath
     constexpr static char const * constitutivePathString() { return "constitutivePath"; }
-    /// The key for objectPath
+    /// @return The key for objectPath
     constexpr static char const * objectPathString() { return "objectPath"; }
-    /// The key for fieldName
+    /// @return The key for fieldName
     constexpr static char const * fieldNameString() { return "fieldName"; }
-    /// The key for dataType
+    /// @return The key for dataType
     constexpr static char const * dataTypeString() { return "dataType"; }
-    /// The key for component
+    /// @return The key for component
     constexpr static char const * componentString() { return "component"; }
-    /// The key for direction
+    /// @return The key for direction
     constexpr static char const * directionString() { return "direction"; }
-    /// The key for bcApplicationTableName
+    /// @return The key for bcApplicationTableName
     constexpr static char const * bcApplicationTableNameString() { return "bcApplicationTableName"; }
-    /// The key for scale
+    /// @return The key for scale
     constexpr static char const * scaleString() { return "scale"; }
-    /// The key for functionName
+    /// @return The key for functionName
     constexpr static char const * functionNameString() { return "functionName"; }
-    /// The key for initialCondition
+    /// @return The key for initialCondition
     constexpr static char const * initialConditionString() { return "initialCondition"; }
-    /// The key for beginTime
+    /// @return The key for beginTime
     constexpr static char const * beginTimeString() { return "beginTime"; }
-    /// The key for endTime
+    /// @return The key for endTime
     constexpr static char const * endTimeString() { return "endTime"; }
-    /// The key for fluxBoundaryCondition
+    /// @return The key for fluxBoundaryCondition
     constexpr static char const * fluxBoundaryConditionString() { return "fluxBoundaryCondition"; }
   };
 
