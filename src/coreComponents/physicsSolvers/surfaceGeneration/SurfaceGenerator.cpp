@@ -1059,6 +1059,9 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                   LvArray::tensorOps::l2Norm< 3 >( tipNodeLoc ) + signedNodeDistance0[iNode]);
               }
             }
+            std::cout << "The previous signed distance of node " << nodeID << " is "
+                      << nodeF0 << std::endl;
+
             real64 const velocity = (nodeF0 - nodeF)/dt;
             real64 const betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
             // viscosity-dominated asymptoic relation

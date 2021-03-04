@@ -148,6 +148,9 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
   }
   else
   {
+    // we should not recalculate signed distance field, since dt could be different
+    // in the current step comparing with the previous time step. Therefore, the velocity
+    //  would be different.
     UpdateDeformationForCoupling( domain, false, false, false );
   }
 
@@ -425,18 +428,29 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                 // the location of the node that is under split
                 real64 const nodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[parentNode] );
                 // the signed distance for the current node at the previous time step
-                real64 nodeF0 = 1.0e99; // nodeF0 > 0
-                // loop over all the nodes to find the previous signed distance for the current node
-                for (localIndex iNode = 0 ; iNode < signedNodeDistance0.size(); iNode++)
+                real64 nodeF0 = 1.0e99;
+
+                if (signedNodeDistance0[parentNode] < 0.0)
                 {
-                  if ((signedNodeDistance0[iNode] >= 0) && (signedNodeDistance0[iNode] < 1.0e98))
+                  nodeF0 = signedNodeDistance0[parentNode];
+                }
+                else
+                {
+                  // loop over all the nodes to find the previous signed distance for the current node
+                  for (localIndex iNode = 0 ; iNode < signedNodeDistance0.size(); iNode++)
                   {
-                    real64 tipNodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[iNode] );
-                    LvArray::tensorOps::subtract< 3 >( tipNodeLoc, nodeLoc );
-                    nodeF0 = std::min(nodeF0,
-                                      LvArray::tensorOps::l2Norm< 3 >( tipNodeLoc ) + signedNodeDistance0[iNode]);
+                    if ((signedNodeDistance0[iNode] >= 0) && (signedNodeDistance0[iNode] < 1.0e98))
+                    {
+                      real64 tipNodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[iNode] );
+                      LvArray::tensorOps::subtract< 3 >( tipNodeLoc, nodeLoc );
+                      nodeF0 = std::min(nodeF0,
+                                        LvArray::tensorOps::l2Norm< 3 >( tipNodeLoc ) + signedNodeDistance0[iNode]);
+                    }
                   }
                 }
+                std::cout << "The previous signed distance of node " << parentNode << " is "
+                          << nodeF0 << std::endl;
+
                 real64 const d = b * ( b - 4.0 * pow(nodeF0/3.0, 3) );
                 real64 const c = b - 2.0 * pow(nodeF0/3.0, 3);
                 real64 nodeF; // the unknown in the cubic equation
@@ -462,7 +476,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                 }
 
                 GEOSX_ERROR_IF_GE(nodeF, 0.0);
-                GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-7);
+                GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-6);
                 signedNodeDistance[parentNode] = nodeF;
               }
               else
