@@ -48,7 +48,7 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    /// element regions group string key
+    /// @return element regions group string key
     static constexpr auto elementRegionsGroup() { return "elementRegionsGroup"; }
   };
 

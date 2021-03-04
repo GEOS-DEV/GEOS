@@ -98,9 +98,9 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// Fracture set string
+    /// @return Fracture set string
     static constexpr char const * fractureSetString() { return "fractureSet"; }
-    /// Default fracture aperture
+    /// @return Default fracture aperture
     static constexpr char const * defaultApertureString() { return "defaultAperture"; }
   };
 

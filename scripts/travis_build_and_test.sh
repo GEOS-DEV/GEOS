@@ -37,13 +37,13 @@ or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
 if [[ "$*" == *--test-code-style* ]]; then
-  or_die ctest -V -R "testUncrustifyCheck"
+  or_die ctest --output-on-failure -R "testUncrustifyCheck"
   exit 0
 fi
 
 # Documentation check
 if [[ "$*" == *--test-documentation* ]]; then
-  or_die ctest -V -R "testDoxygenCheck"
+  or_die ctest --output-on-failure -R "testDoxygenCheck"
   exit 0
 fi
 
@@ -57,7 +57,7 @@ fi
 
 # Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then
-  or_die ctest -V -E "testUncrustifyCheck|testDoxygenCheck"
+  or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
 exit 0
