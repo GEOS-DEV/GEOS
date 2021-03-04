@@ -18,7 +18,7 @@
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
       discretization="fluidTPFA"

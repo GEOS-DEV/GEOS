@@ -19,9 +19,11 @@
 #include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
 
-
 namespace geosx
 {
+
+class DomainPartition;
+
 namespace dataRepository
 {
 namespace keys
@@ -75,7 +77,7 @@ public:
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
    */
-  bool run( dataRepository::Group * domain );
+  bool run( DomainPartition & domain );
 
   /**
    * @name viewKeyStruct/groupKeyStruct
@@ -84,13 +86,13 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr auto maxTimeString = "maxTime";
-    static constexpr auto maxCycleString = "maxCycle";
+    static constexpr char const * maxTimeString() { return "maxTime"; }
+    static constexpr char const * maxCycleString() { return "maxCycle"; }
 
-    static constexpr auto timeString = "time";
-    static constexpr auto dtString = "dt";
-    static constexpr auto cycleString = "cycle";
-    static constexpr auto currentSubEventString = "currentSubEvent";
+    static constexpr char const * timeString() { return "time"; }
+    static constexpr char const * dtString() { return "dt"; }
+    static constexpr char const * cycleString() { return "cycle"; }
+    static constexpr char const * currentSubEventString() { return "currentSubEvent"; }
 
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };

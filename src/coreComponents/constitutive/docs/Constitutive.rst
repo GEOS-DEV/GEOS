@@ -46,7 +46,7 @@ Currently supported constitutive models are:
 .. toctree::
    :maxdepth: 2
 
-   SolidModels
+   SolidMechanicsModels
 
    FluidModels
  

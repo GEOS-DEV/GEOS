@@ -39,14 +39,14 @@ SymbolicFunction::SymbolicFunction( const string & name,
   parserContext(),
   parserExpression()
 {
-  registerWrapper( keys::variableNames, &m_variableNames )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::variableNames, &m_variableNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "List of variables in expression.  The order must match the evaluate argument" );
 
-  registerWrapper( keys::expression, &m_expression )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::expression, &m_expression ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
     setDescription( "Symbolic math expression" );
 }
 

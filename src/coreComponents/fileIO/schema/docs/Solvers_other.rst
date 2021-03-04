@@ -3,7 +3,8 @@
 ================================ ==== ===================================================== 
 Name                             Type Description                                           
 ================================ ==== ===================================================== 
-CompositionalMultiphaseFlow      node :ref:`DATASTRUCTURE_CompositionalMultiphaseFlow`      
+CompositionalMultiphaseFVM       node :ref:`DATASTRUCTURE_CompositionalMultiphaseFVM`       
+CompositionalMultiphaseHybridFVM node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM` 
 CompositionalMultiphaseReservoir node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir` 
 CompositionalMultiphaseWell      node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`      
 EmbeddedSurfaceGenerator         node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`         
@@ -14,6 +15,7 @@ LaplaceFEM                       node :ref:`DATASTRUCTURE_LaplaceFEM`
 PhaseFieldDamageFEM              node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node :ref:`DATASTRUCTURE_PhaseFieldFracture`               
 Poroelastic                      node :ref:`DATASTRUCTURE_Poroelastic`                      
+PoroelasticEmbeddedFractures     node :ref:`DATASTRUCTURE_PoroelasticEmbeddedFractures`     
 ProppantTransport                node :ref:`DATASTRUCTURE_ProppantTransport`                
 SinglePhaseFVM                   node :ref:`DATASTRUCTURE_SinglePhaseFVM`                   
 SinglePhaseHybridFVM             node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`             

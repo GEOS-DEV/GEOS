@@ -64,7 +64,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
     GEOSX_UNUSED_VAR( time_n );
     GEOSX_UNUSED_VAR( dt );

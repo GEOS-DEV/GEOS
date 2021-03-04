@@ -14,7 +14,7 @@ which for the case of linear elasticity, may be expressed as:
 .. math::
    \sigma_{ij} = \lambda \epsilon_{kk} + 2 \mu \epsilon_{ij},
 
-where :math:`\sigma_{ij}` is the :math:`ij` component of the cauchy stress tensor,
+where :math:`\sigma_{ij}` is the :math:`ij` component of the Cauchy stress tensor,
 :math:`\epsilon_{ij}` is the :math:`ij` component of the the strain tensor,
 :math:`\lambda` is the Lames elastic constant,
 and :math:`\mu` is the elastic shear modulus.
@@ -78,7 +78,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
+.. include:: /coreComponents/fileIO/schema/docs/ElasticIsotropic.rst
 
 Example
 =========================

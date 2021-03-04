@@ -33,9 +33,9 @@ FunctionBase::FunctionBase( const string & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::inputVarNames, &m_inputVarNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setSizedFromParent( 0 )->
+  registerWrapper( keys::inputVarNames, &m_inputVarNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
     setDescription( "Name of fields are input to function." );
 }
 
@@ -71,7 +71,7 @@ integer FunctionBase::isFunctionOfTime() const
 }
 
 
-real64_array FunctionBase::evaluateStats( dataRepository::Group const * const group,
+real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
                                           real64 const time,
                                           SortedArray< localIndex > const & set ) const
 {

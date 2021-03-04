@@ -69,7 +69,7 @@ public:
    */
   virtual ~SinglePhaseBase() override = default;
 
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -200,44 +200,28 @@ public:
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     // used for face-based BC
-    static constexpr auto facePressureString = "facePressure";
+    static constexpr char const * facePressureString() { return "facePressure"; }
 
     // intermediate fields
-    static constexpr auto mobilityString = "mobility";
-    static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
-    static constexpr auto porosityString = "porosity";
+    static constexpr char const * mobilityString() { return "mobility"; }
+    static constexpr char const * dMobility_dPressureString() { return "dMobility_dPressure"; }
+    static constexpr char const * porosityString() { return "porosity"; }
 
     // backup fields
-    static constexpr auto porosityOldString = "porosityOld";
-    static constexpr auto densityOldString = "densityOld";
-    static constexpr auto transTMultString = "transTMult";
-    static constexpr auto poroMultString = "poroMult";
-
-  } viewKeysSinglePhaseBase;
-
-  viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseBase; }
-
-  viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseBase; }
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysSinglePhaseBase;
-
-  groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseBase; }
-
-  groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseBase; }
+    static constexpr char const * porosityOldString() { return "porosityOld"; }
+    static constexpr char const * densityOldString() { return "densityOld"; }
+    static constexpr char const * transTMultString() { return "transTMult"; }
+    static constexpr char const * poroMultString() { return "poroMult"; }
+  };
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
   virtual void resetViews( MeshLevel & mesh ) override;
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
