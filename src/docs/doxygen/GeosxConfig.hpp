@@ -72,11 +72,11 @@
 #define GEOSX_USE_PETSC
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
-#define GEOSX_LA_INTERFACE Hypre
+#define GEOSX_LA_INTERFACE Trilinos
 /// Macro defined when Trilinos interface is selected
-/* #undef GEOSX_LA_INTERFACE_TRILINOS */
+#define GEOSX_LA_INTERFACE_TRILINOS
 /// Macro defined when Hypre interface is selected
-#define GEOSX_LA_INTERFACE_HYPRE
+/* #undef GEOSX_LA_INTERFACE_HYPRE */
 /// Macro defined when PETSc interface is selected
 /* #undef GEOSX_LA_INTERFACE_PETSC */
 
@@ -90,10 +90,10 @@
 /// CMake option CMAKE_BUILD_TYPE
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
 
-#define GEOSX_LOCALINDEX_TYPE int
-#define GEOSX_GLOBALINDEX_TYPE int
-#define GEOSX_LOCALINDEX_TYPE_FLAG 0
-#define GEOSX_GLOBALINDEX_TYPE_FLAG 0
+#define GEOSX_LOCALINDEX_TYPE std::ptrdiff_t
+#define GEOSX_GLOBALINDEX_TYPE long long int
+#define GEOSX_LOCALINDEX_TYPE_FLAG 3
+#define GEOSX_GLOBALINDEX_TYPE_FLAG 2
 
 
 #endif  /* GEOSX_CONFIG_HPP */
