@@ -40,7 +40,7 @@
       meshType="CylindricalSquareBoundary"/>
   </Mesh>
 
-  <!-- SPHINX_BeamBendingMeshEnd -->
+  <!-- SPHINX_WellboreMeshEnd -->
   <Events
     maxTime="10.0">
     <!-- This event is applied every cycle, and overrides the

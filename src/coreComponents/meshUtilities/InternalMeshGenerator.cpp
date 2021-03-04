@@ -26,12 +26,10 @@ using namespace dataRepository;
 
 InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
-  m_dim( 0 ),
+  m_dim( 3 ),
   m_min(),
   m_max()
 {
-  m_dim = 3;
-
   registerWrapper( viewKeyStruct::xCoordsString(), &(m_vertices[0]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
@@ -478,7 +476,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           getNodePosition( index, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          if( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary )
+          if( isRadial() )
           {
             if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
             {
@@ -529,7 +527,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
             }
           }
 
-          if( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary )
+          if( isRadial() )
           {
             // tangent nodesets
             if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
@@ -725,22 +723,23 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     // Map to radial mesh
     for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
     {
-      m_meshTheta = X[iN][1] * M_PI / 180.0;
-      m_meshAxis = static_cast< int >(round( m_meshTheta * 2.0 / M_PI ));
-      m_meshPhi = fabs( m_meshTheta - m_meshAxis * M_PI / 2.0 );
-      m_meshRout = m_max[0] / cos( m_meshPhi );
+      real64 meshTheta = X[iN][1] * M_PI / 180.0;
+      int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
+      real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
+      real64 meshRout = m_max[0] / cos( meshPhi );
+      real64 meshRact;
 
       if( m_meshType == MeshType::CylindricalSquareBoundary )
       {
-        m_meshRact = ( ( m_meshRout - m_min[0] ) / ( m_max[0] - m_min[0] ) ) * ( X[iN][0] - m_min[0] ) + m_min[0];
+        meshRact = ( ( meshRout - m_min[0] ) / ( m_max[0] - m_min[0] ) ) * ( X[iN][0] - m_min[0] ) + m_min[0];
       }
       else
       {
-        m_meshRact = X[iN][0];
+        meshRact = X[iN][0];
       }
 
-      X[iN][0] = m_meshRact * cos( m_meshTheta );
-      X[iN][1] = m_meshRact * sin( m_meshTheta );
+      X[iN][0] = meshRact * cos( meshTheta );
+      X[iN][1] = meshRact * sin( meshTheta );
 
       // Add mapped values to nodesets
       if( m_meshType == MeshType::CylindricalSquareBoundary )
