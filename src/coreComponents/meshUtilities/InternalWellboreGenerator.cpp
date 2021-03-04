@@ -26,7 +26,66 @@ using namespace dataRepository;
 
 InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group * const parent ):
   InternalMeshGenerator( name, parent )
-{}
+{
+
+}
+
+void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
+{
+  InternalMeshGenerator::generateMesh( domain );
+
+  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
+  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
+  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
+  NodeManager & nodeManager = meshLevel0.getNodeManager();
+  Group & nodeSets = nodeManager.sets();
+
+  // Wellbore nodeset
+  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
+  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
+  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
+  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
+  
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
+  {
+    real64 xCoord = X( localNodeIndex, 0 );
+    real64 yCoord = X( localNodeIndex, 1 );
+    real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
+ 
+    if( isEqual( rCoord, m_min[0], 1e-10 ) )
+    {
+      rnegNodes.insert( localNodeIndex );
+    }
+
+    if( isEqual( rCoord, m_max[0], 1e-10 ) )
+    {
+      rposNodes.insert( localNodeIndex );
+    }
+
+    real64 tCoord; 
+ 
+    if( yCoord>=0 )
+    {
+      tCoord = acos( xCoord/rCoord );
+    }
+    else
+    {
+      tCoord = 2*M_PI - acos( xCoord/rCoord );
+    }
+    
+    tCoord *= 180/M_PI;
+
+    if( isEqual( tCoord, m_min[1], 1e-10 ) )
+    {
+      tnegNodes.insert( localNodeIndex );
+    }
+    if( isEqual( tCoord, m_max[1], 1e-10 ) )
+    {
+      tposNodes.insert( localNodeIndex );
+    }
+  }
+}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )
 } /* namespace geosx */

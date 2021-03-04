@@ -48,6 +48,9 @@ public:
    * @return string that contains the key name to InternalWellboreGenerator in the Catalog
    */
   static string catalogName() { return "InternalWellbore"; }
+
+  virtual void generateMesh( DomainPartition & domain ) override;
+
 };
 
 } /* namespace geosx */

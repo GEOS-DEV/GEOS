@@ -104,10 +104,16 @@ protected:
 
   void postProcessInput() override final;
 
-private:
-
   /// Mesh number of dimension
   int m_dim;
+
+  /// Minimum extent of mesh dimensions
+  real64 m_min[3];
+
+  /// Maximum extent of mesh dimensions
+  real64 m_max[3];
+
+private:
 
   /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];
@@ -120,12 +126,6 @@ private:
 
   /// String array of region names
   array1d< string > m_regionNames;
-
-  /// Minimum extent of mesh dimensions
-  real64 m_min[3];
-
-  /// Maximum extent of mesh dimensions
-  real64 m_max[3];
 
   /// Ndim x nBlock spatialized array of first element index in the cellBlock
   array1d< integer > m_firstElemIndexForBlock[3];

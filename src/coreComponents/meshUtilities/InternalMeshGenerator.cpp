@@ -281,14 +281,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "ypos" ) ).reference();
   SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zneg" ) ).reference();
   SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) ).reference();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-
-  // Nodesets for applying boundary conditions to a borehole problem
-  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
-  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
-  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
-  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
-
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all"  ) ).reference();
+  
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -506,39 +500,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
               yposNodes.insert( localNodeIndex );
             }
           }
-          else if( m_meshType == MeshType::Cylindrical )
-          {
-            // Radial-specific nodesets
-            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
-            {
-              rnegNodes.insert( localNodeIndex );
-            }
-            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
-            {
-              rposNodes.insert( localNodeIndex );
-            }
-          }
-          else if( m_meshType == MeshType::CylindricalSquareBoundary )
-          {
-            // Inner cylindrical boundary nodeset
-            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
-            {
-              rnegNodes.insert( localNodeIndex );
-            }
-          }
-
-          if( isRadial() )
-          {
-            // tangent nodesets
-            if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
-            {
-              tnegNodes.insert( localNodeIndex );
-            }
-            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
-            {
-              tposNodes.insert( localNodeIndex );
-            }
-          }
 
           // General nodesets
           if( isEqual( X( localNodeIndex, 2 ), m_min[2], 1e-10 ) )
@@ -718,7 +679,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
-  if( m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary )
+  if( isRadial() )
   {
     // Map to radial mesh
     for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
