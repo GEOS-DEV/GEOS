@@ -134,7 +134,7 @@ SpanWagnerCO2DensityFunction::SpanWagnerCO2DensityFunction( string_array const &
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
 
-    if( streq( componentNames[i], "CO2" ) || streq( componentNames[i], "co2" ))
+    if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
     {
       m_CO2Index = i;
       notFound = 0;

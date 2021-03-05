@@ -454,9 +454,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
   GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
 
-  string xmlDir, xmlName;
-  splitPath( commandLineOptions.inputFileName, xmlDir, xmlName );
-  adiak::value( "XML File", xmlName );
+  adiak::value( "XML File", splitPath( commandLineOptions.inputFileName ).second );
   adiak::value( "Problem name", commandLineOptions.problemName );
 
   // MPI info

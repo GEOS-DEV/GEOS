@@ -232,7 +232,7 @@ public:
       if( ( isInitialCondition && fieldPath=="" ) ||
           ( !isInitialCondition && fs.getObjectPath().find( fieldPath ) != string::npos ) )
       {
-        string_array const targetPath = stringutilities::Tokenize( fs.getObjectPath(), "/" );
+        string_array const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
         localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
         string const targetName = fs.getFieldName();
 
