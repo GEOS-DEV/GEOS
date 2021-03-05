@@ -616,6 +616,60 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 }
 
 
+void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time,
+						  DomainPartition & domain )
+{
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+
+  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
+  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+
+  arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+  arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+  arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+
+  fsManager.apply( time,
+                   domain,
+                   "faceManager",
+                   string( "FreeSurface" ),
+                   [&]( FieldSpecificationBase const & bc,
+                        string const &,
+                        SortedArrayView< localIndex const > const & targetSet,
+                        Group &,
+                        string const & )
+  {
+    string const & functionName = bc.getFunctionName();
+
+    if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
+    {
+      real64 const value = bc.getScale();
+      
+      for( localIndex i = 0; i < targetSet.size(); ++i)
+      {
+        localIndex const kf = targetSet[ i ];
+        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+        for( localIndex a=0; a < numNodes ; ++a )
+        {
+          localIndex const dof = faceToNodeMap( kf, a ) ;
+	  p_np1[dof] *= value;
+	  p_n[dof]   *= value;
+	  p_nm1[dof] *= value;
+        }
+      }
+    }
+    else
+    {
+      GEOSX_ERROR( "This option is not supported yet" );
+    }
+  } );
+}
+
+
+
 real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
                                             real64 const & dt,
                                             integer const cycleNumber,
@@ -800,7 +854,10 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     // pressure update here
     p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
   }
-
+  
+  /// Apply free surface
+  applyFreeSurfaceBC( time_n, domain );
+  
   /// Synchronize pressure fields
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( "pressure_np1" );
