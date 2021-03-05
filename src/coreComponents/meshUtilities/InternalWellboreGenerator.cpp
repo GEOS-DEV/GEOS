@@ -62,11 +62,11 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
 
 void InternalWellboreGenerator::postProcessInput()
 {
-  m_vertices[0].resize(2);
-  m_vertices[1].resize(2);
-  m_nElems[0].resize(1);
-  m_nElems[1].resize(1);
-  m_nElemBias[0].resize(1);
+  m_vertices[0].resize( 2 );
+  m_vertices[1].resize( 2 );
+  m_nElems[0].resize( 1 );
+  m_nElems[1].resize( 1 );
+  m_nElemBias[0].resize( 1 );
 
   m_vertices[0][0]  = m_radius;
   m_vertices[0][1]  = m_rOut;

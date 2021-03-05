@@ -68,7 +68,7 @@ protected:
   void postProcessInput() override final;
 
 private:
-  
+
   /// Wellbore radius
   real64 m_radius;
 

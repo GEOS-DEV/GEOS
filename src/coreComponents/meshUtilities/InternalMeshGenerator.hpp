@@ -74,10 +74,10 @@ public:
   void generateMesh( DomainPartition & domain ) override;
 
   void getElemToNodesRelationInBox ( const string & elementType,
-                                             const int index[],
-                                             const int & iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) override;
+                                     const int index[],
+                                     const int & iEle,
+                                     int nodeIDInBox[],
+                                     const int size ) override;
 
   void remapMesh ( dataRepository::Group & domain ) override;
 
