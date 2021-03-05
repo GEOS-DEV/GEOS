@@ -1257,7 +1257,7 @@ void LagrangianContactFlowSolver::
             array1d< real64 > nodalArea;
             m_contactSolver->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
 
-            real64 const nodalForceMag = ( pressure[kfe] + deltaPressure[kfe] ) * nodalArea[a];
+            real64 const nodalForceMag = -( pressure[kfe] + deltaPressure[kfe] ) * nodalArea[a];
             array1d< real64 > globalNodalForce( 3 );
             LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
 
@@ -1713,11 +1713,11 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
         real64 rhs0 = 0.0;
         if( nDof[0] > 0 )
         {
-          rhs0 -= totalInvStiffApproxDiag( 0 ) * ( pressure[fractureIndex[0]] + deltaPressure[fractureIndex[0]] );
+          rhs0 -= totalInvStiffApproxDiag( 0 ) * ( -( pressure[fractureIndex[0]] + deltaPressure[fractureIndex[0]] ) );
         }
         if( nDof[1] > 0 )
         {
-          rhs0 += totalInvStiffApproxDiag( 0 ) * ( pressure[fractureIndex[1]] + deltaPressure[fractureIndex[1]] );
+          rhs0 += totalInvStiffApproxDiag( 0 ) * ( -( pressure[fractureIndex[1]] + deltaPressure[fractureIndex[1]] ) );
         }
         real64 rhs1 = -rhs0;
 
@@ -1769,7 +1769,7 @@ void LagrangianContactFlowSolver::applySystemSolution( DofManager const & dofMan
 
   m_flowSolver->applySystemSolution( dofManager,
                                      localSolution,
-                                     scalingFactor,
+                                     -scalingFactor,
                                      domain );
 
   updateOpeningForFlow( domain );
@@ -1782,7 +1782,7 @@ void LagrangianContactFlowSolver::solveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  //rhs.write( "rhs.petsc", LAIOutputFormat::MATRIX_MARKET );
+  rhs.write( "rhs.petsc", LAIOutputFormat::MATRIX_MARKET );
   matrix.write( "matrix.petsc", LAIOutputFormat::NATIVE_BINARY );
 
   if( getLogLevel() > 3 )

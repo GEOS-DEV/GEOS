@@ -334,7 +334,7 @@ FluxKernel::computeJunction( localIndex const numFluxElems,
       real64 const dDensMean_dP[2] = { 0.5 * dDens_dPres[ei[0]][0],
                                        0.5 * dDens_dPres[ei[1]][0] };
 
-      real64 const potDif = -( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
+      real64 const potDif =  ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
                                densMean * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) );
 
 

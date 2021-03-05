@@ -251,7 +251,7 @@ static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const arg
   }
 
   string groupPath, wrapperName;
-  splitPath( path, groupPath, wrapperName );
+  std::tie( groupPath, wrapperName ) = splitPath( path );
 
   try
   {

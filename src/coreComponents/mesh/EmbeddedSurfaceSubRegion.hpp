@@ -143,28 +143,28 @@ public:
    */
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// Embedded surface element normal vector string
+    /// @return Embedded surface element normal vector string
     static constexpr char const * normalVectorString()      { return "normalVector"; }
 
-    /// Tangent vector 1 string
+    /// @return Tangent vector 1 string
     static constexpr char const * t1VectorString()          { return "tangentVector1"; }
 
-    /// Tangent vector 2 string
+    /// @return Tangent vector 2 string
     static constexpr char const * t2VectorString()          { return "tangentVector2"; }
 
-    /// Connectivity index string
+    /// @return Connectivity index string
     static constexpr char const * connectivityIndexString() { return "connectivityIndex"; }
 
-    /// Displacement jump string
+    /// @return Displacement jump string
     static constexpr char const * dispJumpString()          { return "displacementJump"; }
 
-    /// Delta displacement jump string
+    /// @return Delta displacement jump string
     static constexpr char const * deltaDispJumpString()     { return "deltaDisplacementJump"; }
 
-    /// traction vector string
+    /// @return Fracture traction string
     static constexpr char const * fractureTractionString()  { return "fractureTraction"; }
 
-    /// dTraction_dJump string
+    /// @return Fracture traction derivative w.r.t. jump string
     static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
 
     /// Displacement jump key
