@@ -76,6 +76,8 @@ struct FluxKernel
             ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
             ElementViewConst< arrayView1d< real64 const > > const & mob,
             ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+            ElementViewConst< arrayView3d< real64 const > > const & permeability,
+            ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
             ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
             R1Tensor const & gravityVector,
             real64 const meanPermCoeff,
@@ -102,8 +104,8 @@ struct FluxKernel
 
       // compute transmissibility
       real64 transmissiblity, dTrans_dPressure[2];
-      stencilWrapper.computeTransmissibility( iconn, transmissiblity );
-      stencilWrapper.dTrans_dPressure( iconn, dTrans_dPressure );
+      stencilWrapper.computeTransmissibility( iconn, permeability, transmissiblity );
+      stencilWrapper.dTrans_dPressure( iconn, dPerm_dPressure,  dTrans_dPressure );
 
       computeTPFA( stencilSize,
                    seri[iconn],

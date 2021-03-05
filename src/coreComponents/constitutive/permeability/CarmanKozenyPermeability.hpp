@@ -72,6 +72,7 @@ public:
 
 private:
 
+  /// dPermeability_dPorosity
   arrayView3d< real64 > m_dPerm_dPorosity;
 
   /// Particle diameter
@@ -96,7 +97,7 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static string catalogName() { return "FracturePermeability"; }
+  static string catalogName() { return "CarmanKozenyPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -118,16 +119,15 @@ public:
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
-    static constexpr auto dPerm_dPorosityString = "dPerm_dPorosity";
-    static constexpr auto particleDiameterString = "particleDiameter";
-    static constexpr auto sphericityString = "sphericity";
+    static constexpr char const * dPerm_dPorosityString() { return "dPerm_dPorosity"; }
+    static constexpr char const * particleDiameterString() { return "particleDiameter"; }
+    static constexpr char const * sphericityString() { return "sphericity"; }
   } viewKeys;
 
 protected:
   virtual void postProcessInput() override;
 
 private:
-
   /// dPermeability_dPorosity
   array3d< real64 > m_dPerm_dPorosity;
 

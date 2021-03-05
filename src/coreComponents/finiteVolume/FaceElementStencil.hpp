@@ -108,11 +108,12 @@ public:
   /// Deleted move assignment operator
   FaceElementStencilWrapper & operator=( FaceElementStencilWrapper && ) = delete;
 
+  template<typename PERMTYPE >
   void computeTransmissibility( localIndex iconn,
+                                PERMTYPE permeability,
                                 real64 (& transmissibility)[2] );
 
 private:
-  ElementViewConst< array1d< real64 > > m_aperture;
 
   CoefficientAccessor< array1d< real64 > > m_permeability;
 };
@@ -186,7 +187,7 @@ public:
   /**
    * @brief Give the array of vectors pointing from the cell center to the edge center.
    * @return The array of vectors pointing from the cell center to the edge center
-   */oui
+   */
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 

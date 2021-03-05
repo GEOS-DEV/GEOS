@@ -95,7 +95,7 @@ public:
 
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
-    static constexpr char const * solidNamesString() { return "solidNames"; }
+    static constexpr char const * porosityNamesString() { return "porosityNames"; }
 
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
 
@@ -108,11 +108,11 @@ public:
     static constexpr char const * meanPermCoeffString() { return "meanPermCoeff"; }
   };
 
-  void updatePermeabilityModel( CellElementSubRegion & subRegion,
-                                localIndex const targetIndex );
+  void updateSolidFlowProperties( CellElementSubRegion & subRegion,
+                                  localIndex const targetIndex );
 
-  void updatePermeabilityModel( SurfaceElementSubRegion & subRegion,
-                                localIndex const targetIndex );
+  void updateSolidFlowProperties( SurfaceElementSubRegion & subRegion,
+                                  localIndex const targetIndex );
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -160,8 +160,8 @@ protected:
   /// name of the fluid constitutive model
   array1d< string > m_fluidModelNames;
 
-  /// name of the solid constitutive model
-  array1d< string > m_solidModelNames;
+  /// name of the porosity constitutive model
+  array1d< string > m_porosityModelNames;
 
   /// name of the permeability constituive model
   array1d< string > m_permeabilityModelNames;
@@ -185,7 +185,9 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_porosityRef;
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_permeability;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_dPerm_dPressure;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementArea;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementAperture0;

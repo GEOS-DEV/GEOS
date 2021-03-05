@@ -23,6 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
+#include "constitutive/porosity/PorosityBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/GeosxState.hpp"
@@ -70,11 +71,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityString() ).setPlotLevel( PlotLevel::LEVEL_1 );
-
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityOldString() ).
-        setRestartFlags( RestartFlags::NO_WRITE );
-
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
     } );
@@ -92,13 +88,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::mobilityString() );
 
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString() ).
-        setRestartFlags( RestartFlags::NO_WRITE );
-
-      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::porosityString() ).
-        setDefaultValue( 1.0 );
-
-      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::porosityOldString() ).
-        setDefaultValue( 1.0 ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).
@@ -141,11 +130,6 @@ SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( Constitutiv
            singleFluid.defaultViscosity() };
 }
 
-arrayView1d< real64 const > SinglePhaseBase::getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const
-{
-  return subRegion.getReference< array1d< real64 > >( viewKeyStruct::poroMultString() );
-}
-
 void SinglePhaseBase::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
@@ -167,17 +151,6 @@ void SinglePhaseBase::updateFluidModel( Group & dataGroup, localIndex const targ
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     FluidUpdateKernel::launch( fluidWrapper, pres, dPres );
   } );
-}
-
-void SinglePhaseBase::updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  arrayView1d< real64 const > const pres  = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
-
-  ConstitutiveBase & solid = getConstitutiveModel< ConstitutiveBase >( dataGroup, m_solidModelNames[targetIndex] );
-  solid.stateUpdateBatchPressure( pres, dPres );
 }
 
 void SinglePhaseBase::updateMobility( Group & dataGroup, localIndex const targetIndex ) const
@@ -211,7 +184,7 @@ void SinglePhaseBase::updateState( Group & dataGroup, localIndex const targetInd
   GEOSX_MARK_FUNCTION;
 
   updateFluidModel( dataGroup, targetIndex );
-  updateSolidModel( dataGroup, targetIndex );
+  updateSolidFlowProperties( dataGroup, targetIndex );
   updateMobility( dataGroup, targetIndex );
 }
 
@@ -424,20 +397,10 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_poroElasticFlag )
-  {
-    assembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
-                                                               dofManager,
-                                                               localMatrix,
-                                                               localRhs );
-  }
-  else
-  {
-    assembleAccumulationTerms< false, parallelDevicePolicy<> >( domain,
-                                                                dofManager,
-                                                                localMatrix,
-                                                                localRhs );
-  }
+  assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
+                                                       dofManager,
+                                                       localMatrix,
+                                                       localRhs );
 
   assembleFluxTerms( time_n,
                      dt,
@@ -448,7 +411,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 
 }
 
-template< bool ISPORO, typename POLICY >
+template< typename POLICY >
 void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                           CellElementSubRegion & subRegion,
                                           DofManager const & dofManager,
@@ -464,61 +427,37 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
     subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
   arrayView1d< real64 const > const densityOld =
     subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
-  arrayView1d< real64 > const porosity =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString() );
-  arrayView1d< real64 const > const porosityOld =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString() );
-  arrayView1d< real64 const > const porosityRef =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
-  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-  arrayView1d< real64 const > const deltaVolume =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
 
-  arrayView1d< real64 const > const totalMeanStressOld =
-    ISPORO ? subRegion.getReference< array1d< real64 > >( "oldTotalMeanStress" ) : porosityOld;
-  arrayView1d< real64 const > const totalMeanStress =
-    ISPORO ? subRegion.getReference< array1d< real64 > >( "totalMeanStress" ) : porosityOld;
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
   ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
   FluidPropViews const fluidProps = getFluidProperties( fluid );
   arrayView2d< real64 const > const density = fluidProps.dens;
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
-  ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
-  arrayView2d< real64 const > const pvMult =
-    solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
-  arrayView2d< real64 const > const dPvMult_dPres =
-    solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString() );
-  arrayView1d< real64 const > const bulkModulus =
-    ISPORO ? solid.getReference< array1d< real64 > >( "bulkModulus" ) : porosityOld;
-  real64 const biotCoefficient = ISPORO ? solid.getReference< real64 >( "BiotCoefficient" ) : 0.0;
+  PorosityBase const & porosityModel = getConstitutiveModel( subRegion, porosityModelNames()[targetIndex] );
 
-  using Kernel = AccumulationKernel< CellElementSubRegion >;
+  arrayView2d< real64 const > const & porosity    = porosityModel.getPorosity();
+  arrayView2d< real64 const > const & porosityOld = porosityModel.getPorosityOld();
+  arrayView2d< real64 const > const & dPoro_dPres = porosityModel.dPorosity_dPressure();
 
-  Kernel::template launch< ISPORO, POLICY >( subRegion.size(),
-                                             rankOffset,
-                                             dofNumber,
-                                             ghostRank,
-                                             deltaPressure,
-                                             densityOld,
-                                             porosity,
-                                             porosityOld,
-                                             porosityRef,
-                                             volume,
-                                             deltaVolume,
-                                             density,
-                                             dDens_dPres,
-                                             pvMult,
-                                             dPvMult_dPres,
-                                             totalMeanStressOld,
-                                             totalMeanStress,
-                                             bulkModulus,
-                                             biotCoefficient,
-                                             localMatrix,
-                                             localRhs );
+  AccumulationKernel::template launch< POLICY >( subRegion.size(),
+                                                 rankOffset,
+                                                 dofNumber,
+                                                 ghostRank,
+                                                 deltaPressure,
+                                                 densityOld,
+                                                 porosity,
+                                                 porosityOld,
+                                                 dPoro_dPres,
+                                                 volume,
+                                                 density,
+                                                 dDens_dPres,
+                                                 localMatrix,
+                                                 localRhs );
 }
 
-template< bool ISPORO, typename POLICY >
+template< typename POLICY >
 void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                           SurfaceElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
@@ -532,8 +471,6 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
 
   arrayView1d< real64 const > const & densityOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
   arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-  arrayView1d< real64 const > const & deltaVolume = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
-  arrayView1d< real64 const > const & poroMult = getPoreVolumeMult( subRegion );
 
   ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
   FluidPropViews const fluidProps = getFluidProperties( fluid );
@@ -549,26 +486,23 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   creationMass = subRegion.getReference< real64_array >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() );
 #endif
 
-  using Kernel = AccumulationKernel< SurfaceElementSubRegion >;
-
-  Kernel::template launch< ISPORO, POLICY >( subRegion.size(),
-                                             rankOffset,
-                                             dofNumber,
-                                             ghostRank,
-                                             densityOld,
-                                             volume,
-                                             deltaVolume,
-                                             density,
-                                             dDens_dPres,
-                                             poroMult,
+  AccumulationKernel::template launch< POLICY >( subRegion.size(),
+                                                         rankOffset,
+                                                         dofNumber,
+                                                         ghostRank,
+                                                         densityOld,
+                                                         volume,
+                                                         density,
+                                                         dDens_dPres,
+                                                         poroMult,
 #if ALLOW_CREATION_MASS
-                                             creationMass,
+                                                         creationMass,
 #endif
-                                             localMatrix,
-                                             localRhs );
+                                                         localMatrix,
+                                                         localRhs );
 }
 
-template< bool ISPORO, typename POLICY >
+template< typename POLICY >
 void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -582,7 +516,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                         [&]( localIndex const targetIndex,
                                                                              auto & subRegion )
   {
-    accumulationLaunch< ISPORO, POLICY >( targetIndex, subRegion, dofManager, localMatrix, localRhs );
+    accumulationLaunch< POLICY >( targetIndex, subRegion, dofManager, localMatrix, localRhs );
   } );
 }
 
@@ -737,14 +671,16 @@ void SinglePhaseBase::backupFields( MeshLevel & mesh ) const
     ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & dens = getFluidProperties( fluid ).dens;
 
-    arrayView1d< real64 > const & poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString() );
+    PorosityBase & porosityModel = getConstitutiveModel(subRegion, m_porosityModelNames[targetIndex] );
+    arrayView2d< real64 > const & poro = porosityModel.getPorosity();
+    arrayView2d< real64 > const & poroOld = porosityModel.getPorosityOld();
+
     arrayView1d< real64 > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
-    arrayView1d< real64 > const & poroOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString() );
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       densOld[ei] = dens[ei][0];
-      poroOld[ei] = poro[ei];
+      poroOld[ei][0] = poro[ei][0];
     } );
   } );
 }

@@ -30,6 +30,31 @@ namespace geosx
 namespace FlowSolverBaseKernels
 {
 
+/******************************** PorosityKernel ********************************/
+struct PorosityKernel
+{
+  template<typename POROSITY_WRAPPER>
+  static void
+  launch( localIndex const size,
+          POROSITY_WRAPPER const & porWrapper,
+          arrayView1d< real64 const > const & pres,
+          arrayView1d< real64 const > const & dPres )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+     for( localIndex q = 0; q < porWrapper.numGauss(); ++q )
+     {
+       porWrapper.update( k, q, pres[k] + dPres[k] );
+     }
+    } );
+  }
+
+};
+
+
+
+
+
 /******************************** PermeabilityKernel ********************************/
 
 template< typename REGIONTYPE >
@@ -43,13 +68,13 @@ struct PermeabilityKernel< CellElementSubRegion >
   static void
   launch( localIndex const size,
           PERM_WRAPPER const & permWrapper,
-          arrayView1d< real64 const > const & porosity )
+          arrayView2d< real64 const > const & porosity )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < permWrapper.numGauss(); ++q )
       {
-        permWrapper.update( k, q, porosity[k] );
+        permWrapper.update( k, q, porosity[k][q] );
       }
     } );
   }
@@ -58,14 +83,14 @@ struct PermeabilityKernel< CellElementSubRegion >
   static void
   launch( SortedArrayView< localIndex const > const & targetSet,
           PERM_WRAPPER const & permWrapper,
-          arrayView1d< real64 const > const & porosity )
+          arrayView2d< real64 const > const & porosity )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < permWrapper.numGauss(); ++q )
       {
-        permWrapper.update( k, q, porosity[k] );
+        permWrapper.update( k, q, porosity[k][q] );
       }
     } );
   }

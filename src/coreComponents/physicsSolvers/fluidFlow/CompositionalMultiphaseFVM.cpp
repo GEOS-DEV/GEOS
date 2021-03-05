@@ -191,7 +191,6 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
     arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
     arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
 
     ResidualNormKernel::launch< parallelDevicePolicy<>,
@@ -200,7 +199,6 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                                         numFluidComponents(),
                                                         dofNumber,
                                                         elemGhostRank,
-                                                        refPoro,
                                                         volume,
                                                         totalDensOld,
                                                         localResidualNorm );

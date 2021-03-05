@@ -64,18 +64,6 @@ protected:
   /// Deleted move assignment operator
   PermeabilityBaseUpdate & operator=( PermeabilityBaseUpdate && ) = delete;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( real64 const & porosity,
-                        arraySlice1d< real64 > const & permeability,
-                        arraySlice1d< real64 > const & dPerm_dPorosity ) const = 0;
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void update( localIndex const k,
-                       localIndex const q,
-                       real64 const & porosity ) const = 0;
-
   arrayView3d< real64 > m_permeability;
 };
 
@@ -99,7 +87,8 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto permeabilityString = "permeability";
+    static constexpr char const * permeabilityString() { return "permeability"; }
+    static constexpr char const * dPerm_dPressureString() {return "dPerm_dPressure";}
   } viewKeys;
 
 protected:

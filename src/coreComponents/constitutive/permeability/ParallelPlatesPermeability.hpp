@@ -13,13 +13,13 @@
  */
 
 /**
- * @file FracturePermeability.hpp
+ * @file ParallelPlatesPermeability.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_PARALLELPLATESPERMEABILITY_HPP_
 #define GEOSX_CONSTITUTIVE_PERMEABILITY_PARALLELPLATESPERMEABILITY_HPP_
 
-#include "constitutive/permeability/FracturePermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 
 
 namespace geosx
@@ -27,13 +27,14 @@ namespace geosx
 namespace constitutive
 {
 
-class ParallelPlatesPermeabilityUpdate : public FracturePermeabilityBaseUpdate
+class ParallelPlatesPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dAperture )
-    : FracturePermeabilityBaseUpdate( permeability, dPerm_dAperture )
+    : PermeabilityBaseUpdate( permeability ),
+      m_dPerm_dAperture( dPerm_dAperture )
   {}
 
   /// Default copy constructor
@@ -50,13 +51,13 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void compute( real64 const & effectiveAperture,
+  void compute( real64 const & effectiveAperture,
                         arraySlice1d< real64 > const & permeability,
                         arraySlice1d< real64 > const & dPerm_dAperture ) const;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void update( localIndex const k,
+  void update( localIndex const k,
                        localIndex const q,
                        real64 const & effectiveAperture ) const
   {
@@ -64,11 +65,13 @@ public:
              m_permeability[k][q],
              m_dPerm_dAperture[k][q] );
   }
+private:
+  arrayView3d< real64 > m_dPerm_dAperture;
 
 };
 
 
-class ParallelPlatesPermeability : public FracturePermeabilityBase
+class ParallelPlatesPermeability : public PermeabilityBase
 {
 public:
   ParallelPlatesPermeability( string const & name, Group * const parent );
@@ -99,10 +102,13 @@ public:
   }
 
 
-  struct viewKeyStruct : public FracturePermeabilityBase::viewKeyStruct
-  {} viewKeys;
+  struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
+  {
+    static constexpr char const * dPerm_dApertureString() { return "dPerm_dAperture"; }
+  } viewKeys;
 
-protected:
+private:
+  array3d< real64 > m_dPerm_dAperture;
 
 };
 
@@ -113,8 +119,15 @@ void ParallelPlatesPermeabilityUpdate::compute( real64 const & effectiveAperture
                                                 arraySlice1d< real64 > const & permeability,
                                                 arraySlice1d< real64 > const & dPerm_dAperture ) const
 {
-  permeability[0] = effectiveAperture*effectiveAperture*effectiveAperture /12;
-  dPerm_dAperture[0]  = effectiveAperture*effectiveAperture / 12;
+  // Technically this is not a permeability but it's convenient to definite like this.
+  real64 const perm  = effectiveAperture*effectiveAperture*effectiveAperture / 12;
+  real64 const dPerm = effectiveAperture*effectiveAperture / 12;
+
+  for(int dim=0; dim < 3; dim++)
+  {
+    permeability[dim]     = perm;
+    dPerm_dAperture[dim]  = dPerm;
+  }
 }
 
 

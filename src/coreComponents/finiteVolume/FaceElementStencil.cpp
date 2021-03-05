@@ -91,7 +91,9 @@ void FaceElementStencil::add( localIndex const numPts,
   }
 }
 
+template<typename PERMTYPE >
 void FaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
+                                                         PERMTYPE permeability,
                                                          real64 transmissibility )
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];

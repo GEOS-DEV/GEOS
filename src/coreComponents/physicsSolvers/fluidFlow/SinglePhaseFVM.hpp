@@ -76,7 +76,6 @@ public:
   using BASE::m_elemGhostRank;
   using BASE::m_volume;
   using BASE::m_gravCoef;
-  using BASE::m_porosityRef;
   using BASE::m_elementArea;
   using BASE::m_elementAperture0;
   using BASE::m_elementAperture;

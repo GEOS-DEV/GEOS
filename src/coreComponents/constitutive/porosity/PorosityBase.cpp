@@ -13,10 +13,10 @@
  */
 
 /**
- * @file PermeabilityBase.cpp
+ * @file PorosityBase.cpp
  */
 
-#include "../permeability/PermeabilityBase.hpp"
+#include "PorosityBase.hpp"
 
 namespace geosx
 {
@@ -27,16 +27,20 @@ namespace constitutive
 {
 
 
-PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
+PorosityBase::PorosityBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::permeabilityString(), &m_permeability ).setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::porosityString(), &m_porosity ).
+      setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::porosityOldString(), &m_porosityOld ).
+      setPlotLevel( PlotLevel::LEVEL_3 );
+  registerWrapper( viewKeyStruct::porosityString(), &m_dPorosity_dPressure );
 }
 
-PermeabilityBase::~PermeabilityBase() = default;
+PorosityBase::~PorosityBase() = default;
 
 std::unique_ptr< ConstitutiveBase >
-PermeabilityBase::deliverClone( string const & name,
+PorosityBase::deliverClone( string const & name,
                                 Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
@@ -44,17 +48,19 @@ PermeabilityBase::deliverClone( string const & name,
   return clone;
 }
 
-void PermeabilityBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void PorosityBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_permeability.resize( 0, numConstitutivePointsPerParentIndex, 3 );
+  m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
+  m_porosityOld.resize( 0, numConstitutivePointsPerParentIndex );
+  m_dPorosity_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-void PermeabilityBase::postProcessInput()
+void PorosityBase::postProcessInput()
 {}
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PermeabilityBase, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorosityBase, string const &, Group * const )
 }
 } /* namespace geosx */

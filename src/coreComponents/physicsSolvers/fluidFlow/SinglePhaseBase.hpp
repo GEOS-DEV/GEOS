@@ -276,11 +276,11 @@ protected:
    */
   virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
-  /**
-   * @brief Function to update all constitutive models
-   * @param dataGroup group that contains the fields
-   */
-  void updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
+//  /**
+//   * @brief Function to update all constitutive models
+//   * @param dataGroup group that contains the fields
+//   */
+//  void updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update fluid mobility

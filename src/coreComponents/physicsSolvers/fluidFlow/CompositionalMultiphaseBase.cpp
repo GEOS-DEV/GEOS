@@ -35,6 +35,7 @@
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
+#include "constitutive/porosity/PorosityBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -659,52 +660,42 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOSX_UNUSED_PARA
 
 }
 
-<<<<<<< HEAD:src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
-void CompositionalMultiphaseFlow::accumulationLaunch( localIndex const targetIndex,
+void CompositionalMultiphaseBase::accumulationLaunch( localIndex const targetIndex,
                                                       CellElementSubRegion const & subRegion,
                                                       DofManager const & dofManager,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                       arrayView1d< real64 > const & localRhs ) const
-=======
-void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition const & domain,
-                                                             DofManager const & dofManager,
-                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                             arrayView1d< real64 > const & localRhs ) const
->>>>>>> upstream/develop:src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.cpp
 {
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-<<<<<<< HEAD:src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
   arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-  arrayView1d< real64 const > const & porosityRef =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
 
   arrayView2d< real64 const > const & phaseVolFrac =
-    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString() );
   arrayView2d< real64 const > const & dPhaseVolFrac_dPres =
-    subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
   arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens =
-    subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+    subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
   arrayView3d< real64 const > const & dCompFrac_dCompDens =
-    subRegion.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+    subRegion.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
   arrayView1d< real64 const > const & porosityOld =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString );
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString() );
   arrayView2d< real64 const > const & phaseVolFracOld =
-    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString() );
   arrayView2d< real64 const > const & phaseDensOld =
-    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseDensityOldString );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseDensityOldString() );
   arrayView3d< real64 const > const & phaseCompFracOld =
-    subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString );
+    subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString() );
 
   ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
   arrayView2d< real64 const > const & pvMult =
-    solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
+    solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
   arrayView2d< real64 const > const & dPvMult_dPres =
-    solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString );
+    solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString() );
 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
   arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
@@ -724,9 +715,6 @@ void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition con
                                                    elemGhostRank,
                                                    volume,
                                                    porosityOld,
-                                                   porosityRef,
-                                                   pvMult,
-                                                   dPvMult_dPres,
                                                    dCompFrac_dCompDens,
                                                    phaseVolFracOld,
                                                    phaseVolFrac,
@@ -744,40 +732,35 @@ void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition con
                                                    localRhs );
 }
 
-void CompositionalMultiphaseFlow::accumulationLaunch( localIndex const targetIndex,
+void CompositionalMultiphaseBase::accumulationLaunch( localIndex const targetIndex,
                                                       SurfaceElementSubRegion const & subRegion,
                                                       DofManager const & dofManager,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                       arrayView1d< real64 > const & localRhs ) const
 {
-  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
-=======
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
->>>>>>> upstream/develop:src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.cpp
 
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
-<<<<<<< HEAD:src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
   arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
   arrayView2d< real64 const > const & phaseVolFrac =
-    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString() );
   arrayView2d< real64 const > const & dPhaseVolFrac_dPres =
-    subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
   arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens =
-    subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+    subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
   arrayView3d< real64 const > const & dCompFrac_dCompDens =
-    subRegion.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+    subRegion.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
   arrayView2d< real64 const > const & phaseVolFracOld =
-    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString() );
   arrayView2d< real64 const > const & phaseDensOld =
-    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseDensityOldString );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseDensityOldString() );
   arrayView3d< real64 const > const & phaseCompFracOld =
-    subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString );
+    subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString() );
 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
   arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
@@ -812,44 +795,16 @@ void CompositionalMultiphaseFlow::accumulationLaunch( localIndex const targetInd
                                                    localMatrix,
                                                    localRhs );
 }
-=======
-    arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & porosityRef =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
 
-    arrayView2d< real64 const > const & phaseVolFrac =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString() );
-    arrayView2d< real64 const > const & dPhaseVolFrac_dPres =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
-    arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens =
-      subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
-    arrayView3d< real64 const > const & dCompFrac_dCompDens =
-      subRegion.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
-    arrayView1d< real64 const > const & porosityOld =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString() );
-    arrayView2d< real64 const > const & phaseVolFracOld =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString() );
-    arrayView2d< real64 const > const & phaseDensOld =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseDensityOldString() );
-    arrayView3d< real64 const > const & phaseCompFracOld =
-      subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString() );
-
-    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
-    arrayView2d< real64 const > const & pvMult =
-      solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
-    arrayView2d< real64 const > const & dPvMult_dPres =
-      solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString() );
->>>>>>> upstream/develop:src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.cpp
-
-void CompositionalMultiphaseFlow::assembleAccumulationTerms( DomainPartition const & domain,
+void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition const & domain,
                                                              DofManager const & dofManager,
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh,
                                                                         [&]( localIndex const targetIndex,
@@ -880,8 +835,6 @@ void CompositionalMultiphaseBase::assembleVolumeBalanceTerms( DomainPartition co
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & porosityRef =
-      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString() );
     arrayView2d< real64 const > const & phaseVolFrac =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString() );
     arrayView2d< real64 const > const & dPhaseVolFrac_dPres =
@@ -889,11 +842,11 @@ void CompositionalMultiphaseBase::assembleVolumeBalanceTerms( DomainPartition co
     arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
 
-    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
-    arrayView2d< real64 const > const & pvMult =
-      solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
-    arrayView2d< real64 const > const & dPvMult_dPres =
-      solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString() );
+    PorosityBase const & porosityModel = getConstitutiveModel( subRegion, m_porosityModelNames[targetIndex] );
+    arrayView2d< real64 const > const & porosity =
+        porosityModel.getPorosity();
+    arrayView2d< real64 const > const & dPoro_dPres =
+        porosityModel.dPorosity_dPressure();
 
     KernelLaunchSelector2< VolumeBalanceKernel >( m_numComponents, m_numPhases,
                                                   subRegion.size(),
@@ -901,9 +854,8 @@ void CompositionalMultiphaseBase::assembleVolumeBalanceTerms( DomainPartition co
                                                   dofNumber,
                                                   elemGhostRank,
                                                   volume,
-                                                  porosityRef,
-                                                  pvMult,
-                                                  dPvMult_dPres,
+                                                  porosity,
+                                                  dPoro_dPres,
                                                   phaseVolFrac,
                                                   dPhaseVolFrac_dPres,
                                                   dPhaseVolFrac_dCompDens,

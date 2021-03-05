@@ -24,6 +24,7 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
 #include "constitutive/permeability/permeabilitySelector.hpp"
+#include "constitutive/porosity/PressureDependentPorosity.hpp"
 #include "managers/GeosxState.hpp"
 #include "managers/ProblemManager.hpp"
 
@@ -47,7 +48,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_elemGhostRank(),
   m_volume(),
   m_gravCoef(),
-  m_porosityRef(),
   m_elementArea(),
   m_elementAperture0(),
   m_elementAperture()
@@ -61,10 +61,10 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setSizedFromParent( 0 ).
     setDescription( "Names of fluid constitutive models for each region." );
 
-  this->registerWrapper( viewKeyStruct::solidNamesString(), &m_solidModelNames ).
+  this->registerWrapper( viewKeyStruct::porosityNamesString(), &m_porosityModelNames ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Names of solid constitutive models for each region." );
+    setDescription( "Names of porosity constitutive models for each region." );
 
   this->registerWrapper( viewKeyStruct::permeabilityNamesString, &m_permeabilityModelNames ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -96,11 +96,10 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     forTargetSubRegions( mesh, [&]( localIndex const,
                                     ElementSubRegionBase & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString() ).
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPerm_dPressureString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         reference().resizeDimension< 1 >( 3 );
+
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).
         setApplyDefaultValue( 0.0 );
     } );
@@ -114,10 +113,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     {
       SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
-        setApplyDefaultValue( 1.0 );
-
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString() ).
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPerm_dPressureString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         reference().resizeDimension< 1 >( 3 );
 
@@ -141,7 +137,8 @@ void FlowSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
   checkModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString() );
-  checkModelNames( m_solidModelNames, viewKeyStruct::solidNamesString() );
+  checkModelNames( m_porosityModelNames, viewKeyStruct::solidNamesString() );
+  checkModelNames( m_permeabilityModelNames, viewKeyStruct::solidNamesString() );
 }
 
 void FlowSolverBase::initializePreSubGroups()
@@ -228,13 +225,26 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh )
 FlowSolverBase::~FlowSolverBase() = default;
 
 
-void FlowSolverBase::updatePermeabilityModel( CellElementSubRegion & subRegion,
-                                              localIndex const targetIndex )
+void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion,
+                                                localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const porosity  =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+  pressure = subRegion.getRerence< array1d<real64> >( viewKeyStruct::pressureString() );
+  deltaPressure = subRegion.getRerence< array1d<real64> >( viewKeyStruct::deltaPressureString() );
+
+  // update porosity
+  PressureDependentPorosity & porosityModel =
+     getConstitutiveModel< PressureDependentPorosity >( subRegion, m_porosityModelNames[targetIndex] );
+
+  PressureDependentPorosity::KernelWrapper porosityWrapper = porosityModel.createKernelWrapper();
+
+  PorosityKernel::launch( subRegion.size(),
+                          porosityWrapper,
+                          pressure,
+                          deltaPressure );
+
+  arrayView2d<real64 const > const & porosity = porosityModel.getPorosity();
 
   PermeabilityBase & perm =
     getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
@@ -249,13 +259,13 @@ void FlowSolverBase::updatePermeabilityModel( CellElementSubRegion & subRegion,
   } );
 }
 
-void FlowSolverBase::updatePermeabilityModel( SurfaceElementSubRegion & subRegion,
+void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subRegion,
                                               localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const effectiveAperture  =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString );
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
 
   PermeabilityBase & perm =
     getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
@@ -286,10 +296,6 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
   m_gravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::gravityCoefString() );
   m_gravCoef.setName( getName() + "/accessors/" + viewKeyStruct::gravityCoefString() );
 
-  m_porosityRef.clear();
-  m_porosityRef = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::referencePorosityString() );
-  m_porosityRef.setName( getName() + "/accessors/" + viewKeyStruct::referencePorosityString() );
-
   m_elementArea.clear();
   m_elementArea = elemManager.constructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::elementAreaString() );
   m_elementArea.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::elementAreaString() );
@@ -306,6 +312,17 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
   m_effectiveAperture = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::effectiveApertureString() );
   m_effectiveAperture.setName( getName() + "/accessors/" + viewKeyStruct::effectiveApertureString() );
 
+  using keys = PermeabilityBase::viewKeyStruct;
+
+  m_permeability.clear();
+  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::permeabilityString() );
+  m_permeability.setName( getName() + "/accessors/" + keys::permeabilityString() );
+
+  m_dPerm_dPressure.clear();
+  m_dPerm_dPressure = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPerm_dPressureString() );
+  m_dPerm_dPressure.setName( getName() + "/accessors/" + viewKeyStruct::dPerm_dPressureString() );
+
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   m_elementSeparationCoefficient.clear();
   m_elementSeparationCoefficient = elemManager.constructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::separationCoeffString() );
@@ -320,10 +337,11 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
 
 std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & regionName ) const
 {
+  // TODO IS THIS EVER USED? WHAT FOR?
 
   localIndex const regionIndex = this->targetRegionIndex( regionName );
 
-  std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
+  std::vector< string > rval{ m_porosityModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
 }

@@ -200,10 +200,6 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-//  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-//  permeability = mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( keys::permeability(),
-//                                                                                        targetRegionNames(),
-//                                                                                        permeabilityModelNames() );
   fluxApprox.forAllStencils( mesh, [&]( auto const & stencil )
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
@@ -220,6 +216,8 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                         m_dDens_dPres.toNestedViewConst(),
                         m_mobility.toNestedViewConst(),
                         m_dMobility_dPres.toNestedViewConst(),
+                        m_permeability.toNestedViewConst(),
+                        m_dPerm_dPressure.toNestedViewConst(),
                         m_transTMultiplier.toNestedViewConst(),
                         this->gravityVector(),
                         this->m_meanPermCoeff,

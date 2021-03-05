@@ -30,15 +30,15 @@ namespace constitutive
 CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::particleDiameterString, &m_particleDiameter )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::particleDiameterString(), &m_particleDiameter ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Diameter of the spherical particles." );
 
-  registerWrapper( viewKeyStruct::sphericityString, &m_sphericity )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::sphericityString(), &m_sphericity ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Sphericity of the particles." );
 
-  registerWrapper( viewKeyStruct::dPerm_dPorosityString, &m_dPerm_dPorosity );
+  registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );
 }
 
 CarmanKozenyPermeability::~CarmanKozenyPermeability() = default;
@@ -55,12 +55,9 @@ CarmanKozenyPermeability::deliverClone( string const & name,
 void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
+  m_dPerm_dPorosity.resize( 0, numConstitutivePointsPerParentIndex, 3 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  m_dPerm_dPorosity.resize( parent->size(), numConstitutivePointsPerParentIndex, 3 );
 }
-
-void CarmanKozenyPermeability::postProcessInput()
-{}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )
 
