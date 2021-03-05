@@ -47,8 +47,8 @@ add_subdirectory(thirdparty)
 # Add components
 ################################
 set( externalComponentsLinkList "" ) 
-add_subdirectory(externalComponents)
 add_subdirectory(coreComponents)
+add_subdirectory(externalComponents)
 add_subdirectory(main)
 
 
