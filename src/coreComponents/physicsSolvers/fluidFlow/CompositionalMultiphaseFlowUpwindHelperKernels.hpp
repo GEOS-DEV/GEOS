@@ -37,22 +37,22 @@ using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
 
 /**
- * @brief Form the PPU from inputs (legacy code)
- * @tparam NC xx
- * @tparam NUM_ELEMS xx
- * @tparam MAX_STENCIL xx
- * @param numPhase xx
- * @param phaseIndex xx
- * @param stencilSize xx
- * @param seri xx
- * @param sesri xx
- * @param sei xx
- * @param stencilWeights xx
+ * @brief Form the PPU from pressure gradient and gravitational heads (legacy)
+ * @tparam NC number of components
+ * @tparam NUM_ELEMS numberof elements involve in the stencil connexion
+ * @tparam MAX_STENCIL maximum number of points in the stencil
+ * @param numPhase number of phases
+ * @param ip index of the treated phase
+ * @param stencilSize number of points in the stencil
+ * @param seri arraySlice of the stencil implied element region index
+ * @param sesri arraySlice of the stencil implied element subregion index
+ * @param sei arraySlice of the stencil implied element index
+ * @param stencilWeights weights associated with elements in the stencil
  */
 template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
 GEOSX_HOST_DEVICE
-static void formPPUVelocity( localIndex const GEOSX_UNUSED_PARAM( numPhase ),
-                             localIndex const phaseIndex,
+static void formPPUVelocity( localIndex const numPhase,
+                             localIndex const ip,
                              localIndex const stencilSize,
                              arraySlice1d< localIndex const > const seri,
                              arraySlice1d< localIndex const > const sesri,
@@ -64,20 +64,19 @@ static void formPPUVelocity( localIndex const GEOSX_UNUSED_PARAM( numPhase ),
                              ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
                              ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
                              ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-                             ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dPres ),
-                             ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dComp ),
+                             ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
+                             ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
                              ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
                              ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
                              ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
                              ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                             ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( phaseCapPressure ),
-                             ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseCapPressure_dPhaseVolFrac ),
-                             integer const GEOSX_UNUSED_PARAM( capPressureFlag ),
+                             ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
+                             ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                             integer const capPressureFlag,
                              localIndex( & k_up ),
-                             real64( &phaseFlux ),
-                             real64( &dPhaseFlux_dP ) [MAX_STENCIL],
-                             real64 ( & dPhaseFlux_dC ) [MAX_STENCIL][NC]
-                             )
+                             real64( & phaseFlux ),
+                             real64( & dPhaseFlux_dP ) [MAX_STENCIL],
+                             real64 ( & dPhaseFlux_dC ) [MAX_STENCIL][NC] )
 {
 
 real64 densMean{};
@@ -92,8 +91,7 @@ real64 gravHead{};
 real64 dGravHead_dP[NUM_ELEMS]{};
 real64 dGravHead_dC[NUM_ELEMS][NC]{};
 
-// real64 dCapPressure_dC[NC]{};
-
+ real64 dCapPressure_dC[NC]{};
 // Working array
  real64 dProp_dC[NC]{};
 
@@ -105,12 +103,12 @@ for( localIndex i = 0; i< NUM_ELEMS; ++i )
  localIndex const ei = sei[i];
 
  // density
- real64 const density = phaseMassDens[er][esr][ei][0][phaseIndex];
- real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][phaseIndex];
+ real64 const density = phaseMassDens[er][esr][ei][0][ip];
+ real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][ip];
 
  applyChainRule( NC,
    dCompFrac_dCompDens[er][esr][ei],
-   dPhaseMassDens_dComp[er][esr][ei][0][phaseIndex],
+   dPhaseMassDens_dComp[er][esr][ei][0][ip],
    dProp_dC
  );
 
@@ -130,22 +128,22 @@ for( localIndex i = 0; i< stencilSize; ++i )
  localIndex const ei = sei[i];
  real64 const weight = stencilWeights[i];
 
-/* // capillary pressure
+ // capillary pressure
  real64 capPressure = 0.0;
  real64 dCapPressure_dP = 0.0;
 
  for( localIndex ic = 0; ic< NC; ++ic )
  {
   dCapPressure_dC[ic] = 0.0;
- }*/
+ }
 
-/* if( capPressureFlag )
+ if( capPressureFlag )
  {
-  capPressure = phaseCapPressure[er][esr][ei][0][phaseIndex];
+  capPressure = phaseCapPressure[er][esr][ei][0][ip];
 
   for( localIndex jp = 0; jp< numPhase; ++jp )
   {
-   real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][phaseIndex][jp];
+   real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
    dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
 
    for( localIndex jc = 0; jc< NC; ++jc )
@@ -153,14 +151,14 @@ for( localIndex i = 0; i< stencilSize; ++i )
     dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac_dComp[er][esr][ei][jp][jc];
    }
   }
- }*/
+ }
 
- presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei]);// - capPressure );
- dPresGrad_dP[i] += weight;// * ( 1 - dCapPressure_dP );
-/* for( localIndex jc = 0; jc< NC; ++jc )
+ presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] - capPressure );
+ dPresGrad_dP[i] += weight * ( 1 - dCapPressure_dP );
+ for( localIndex jc = 0; jc< NC; ++jc )
  {
   dPresGrad_dC[i][jc] += -weight * dCapPressure_dC[jc];
- }*/
+ }
 
  real64 const gravD = weight * gravCoef[er][esr][ei];
 
@@ -190,7 +188,7 @@ for( localIndex i = 0; i< stencilSize; ++i )
  localIndex esr_up = sesri[k_up];
  localIndex ei_up = sei[k_up];
 
-real64 const mobility = phaseMob[er_up][esr_up][ei_up][phaseIndex];
+real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 // pressure gradient depends on all points in the stencil
 for( localIndex ke = 0; ke< stencilSize; ++ke )
 {
@@ -225,8 +223,8 @@ for( localIndex ke = 0; ke< stencilSize; ++ke )
    }
  }
 
- real64 const dMob_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][phaseIndex];
- arraySlice1d< real64 const > const dMob_dC = dPhaseMob_dComp[er_up][esr_up][ei_up][phaseIndex];
+ real64 const dMob_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
+ arraySlice1d< real64 const > const dMob_dC = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
 
  // add contribution from upstream cell mobility derivatives
  dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
@@ -240,16 +238,16 @@ for( localIndex ke = 0; ke< stencilSize; ++ke )
 
 /**
  * @brief Helper function to fill the Jacobi local entries from the compositional fluxes (and derivatives)
- * @tparam NC
- * @tparam MAX_STENCIL
- * @tparam NDOF
- * @param compFlux
- * @param dCompFlux_dP
- * @param dCompFlux_dC
- * @param stencilSize
- * @param dt
- * @param localFlux
- * @param localFluxJacobian
+ * @tparam NC number of components
+ * @tparam MAX_STENCIL maximum number of points in the stencil
+ * @tparam NDOF number of degrees of freedom for this element
+ * @param compFlux the component fluxes table
+ * @param dCompFlux_dP the component fluxes derivatives wrt pressure
+ * @param dCompFlux_dC the component fluxes derivatives wrt component
+ * @param stencilSize number of points in the stencil
+ * @param dt the time step increment
+ * @param localFlux arraySlice of localFlux to be filled
+ * @param localFluxJacobian arraySlice of local Jacobian to be filled
  */
 template< localIndex NC, localIndex MAX_STENCIL, localIndex NDOF >
 GEOSX_HOST_DEVICE
@@ -267,24 +265,17 @@ static void fillLocalJacobi( real64 const (& compFlux)[NC],
     localFlux[ic] = dt * compFlux[ic];
     localFlux[NC + ic] = -dt * compFlux[ic];
 
-    std::cerr << "\n***********\n ic" << ic << " compFlux : " << compFlux[ic] << std::endl;
-
     for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
       localIndex const localDofIndexPres = ke * NDOF;
       localFluxJacobian[ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
       localFluxJacobian[NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
 
-      std::cerr << "*********** \t ke" << ke << " compFlux : " << dCompFlux_dP[ke][ic] << std::endl;
-
       for( localIndex jc = 0; jc < NC; ++jc )
       {
         localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
         localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
         localFluxJacobian[NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
-
-        std::cerr << "*********** \t \t jc" << jc << " compFlux : " << dCompFlux_dC[ke][ic][jc] << std::endl
-                  << std::endl;
       }
     }
   }
@@ -295,7 +286,7 @@ static void fillLocalJacobi( real64 const (& compFlux)[NC],
   * @brief Form gravitational head for phase from gravity and massDensities
   * @tparam NC number of components
   * @tparam NUM_ELEMS number of elements neighbors of considered face
-  * @param phaseIndex phase concerned
+  * @param ip phase concerned
   * @param stencilSize number of points in the stencil
   * @param seri arraySlice of the stencil implied element region index
   * @param sesri arraySlice of the stencil implied element subregion index
@@ -304,7 +295,7 @@ static void fillLocalJacobi( real64 const (& compFlux)[NC],
   */
 template< localIndex NC, localIndex NUM_ELEMS >
 GEOSX_HOST_DEVICE
-static void formGravHead( localIndex const phaseIndex,
+static void formGravHead( localIndex const ip,
                           localIndex const stencilSize,
                           arraySlice1d< localIndex const > const seri,
                           arraySlice1d< localIndex const > const sesri,
@@ -344,12 +335,12 @@ static void formGravHead( localIndex const phaseIndex,
     localIndex const ei = sei[i];
 
     // density
-    real64 const density = phaseMassDens[er][esr][ei][0][phaseIndex];
-    real64 const dDens_dPres = dPhaseMassDens_dPres[er][esr][ei][0][phaseIndex];
+    real64 const density = phaseMassDens[er][esr][ei][0][ip];
+    real64 const dDens_dPres = dPhaseMassDens_dPres[er][esr][ei][0][ip];
 
     applyChainRule( NC,
                     dCompFrac_dCompDens[er][esr][ei],
-                    dPhaseMassDens_dComp[er][esr][ei][0][phaseIndex],
+                    dPhaseMassDens_dComp[er][esr][ei][0][ip],
                     dProp_dComp );
 
     // average density and derivatives
@@ -387,27 +378,27 @@ static void formGravHead( localIndex const phaseIndex,
 
 /**
   * @brief Remultiply field by molar density (and derivatives)
-  * @tparam NC
-  * @tparam MAX_STENCIL
-  * @param phaseIndex
-  * @param upwindDir
-  * @param stencilSize
-  * @param seri
-  * @param sesri
-  * @param sei
-  * @param dCompFrac_dCompDens
-  * @param phaseDens
-  * @param dPhaseDens_dPres
-  * @param dPhaseDens_dComp
-  * @param field
-  * @param dField_dPres
-  * @param dField_dComp
+  * @tparam NC number of components
+  * @tparam MAX_STENCIL maximum number of points in the stencil
+  * @param ip concerned phase index
+  * @param k_up upwind direction of the phase
+  * @param stencilSize  number of points in the stencil
+  * @param seri arraySlice of the stencil implied element region index
+  * @param sesri arraySlice of the stencil implied element subregion index
+  * @param sei arraySlice of the stencil implied element index
+  * @param dCompFrac_dCompDens table of derivatives of composition fraction wrt their molar densities
+  * @param phaseDens table of molar density by elements and phase
+  * @param dPhaseDens_dPres table of molar density derivatives wrt pressure by elements and phase
+  * @param dPhaseDens_dComp table of molar density derivatives wrt pressure by elements and phase
+  * @param field a scalar field to be rescaled by molar density
+  * @param dField_dPres the scalar field's pressure derivative table
+  * @param dField_dComp the scalar field's component derivative table
   */
 
 template< localIndex NC, localIndex MAX_STENCIL >
 GEOSX_HOST_DEVICE
-static void mdensMultiply( localIndex const phaseIndex,
-                           localIndex const upwindDir,
+static void mdensMultiply( localIndex const ip,
+                           localIndex const k_up,
                            localIndex const stencilSize,
                            arraySlice1d< localIndex const > const seri,
                            arraySlice1d< localIndex const > const sesri,
@@ -420,41 +411,39 @@ static void mdensMultiply( localIndex const phaseIndex,
                            real64 (& dField_dPres)[MAX_STENCIL],
                            real64 (& dField_dComp)[MAX_STENCIL][NC] )
 {
-  localIndex const er_up = seri[upwindDir];
-  localIndex const esr_up = sesri[upwindDir];
-  localIndex const ei_up = sei[upwindDir];
+  localIndex const er_up = seri[k_up];
+  localIndex const esr_up = sesri[k_up];
+  localIndex const ei_up = sei[k_up];
 
   for( localIndex ke = 0; ke < stencilSize; ++ke )
   {
-    dField_dPres[ke] = dField_dPres[ke] * phaseDens[er_up][esr_up][ei_up][0][phaseIndex];
+    dField_dPres[ke] = dField_dPres[ke] * phaseDens[er_up][esr_up][ei_up][0][ip];
     for( localIndex jc = 0; jc < NC; ++jc )
     {
-      dField_dComp[ke][jc] = dField_dComp[ke][jc] * phaseDens[er_up][esr_up][ei_up][0][phaseIndex];
+      dField_dComp[ke][jc] = dField_dComp[ke][jc] * phaseDens[er_up][esr_up][ei_up][0][ip];
     }
   }
 
-  dField_dPres[upwindDir] += dPhaseDens_dPres[er_up][esr_up][ei_up][0][phaseIndex] * field;
+  dField_dPres[k_up] += dPhaseDens_dPres[er_up][esr_up][ei_up][0][ip] * field;
   real64 dPhaseDens_dCompDens[NC] = { 0.0 };
-  applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseDens_dComp[er_up][esr_up][ei_up][0][phaseIndex],
+  applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseDens_dComp[er_up][esr_up][ei_up][0][ip],
                   dPhaseDens_dCompDens );
-
-  std::cerr << "Checking dDens_dC " << dPhaseDens_dCompDens[0] << std::endl;
 
   for( localIndex jc = 0; jc < NC; ++jc )
   {
-    dField_dComp[upwindDir][jc] += dPhaseDens_dCompDens[jc] * field;
+    dField_dComp[k_up][jc] += dPhaseDens_dCompDens[jc] * field;
   }
 
   //last as multiplicative use in the second part of derivatives
-  field = field * phaseDens[er_up][esr_up][ei_up][0][phaseIndex];
+  field = field * phaseDens[er_up][esr_up][ei_up][0][ip];
 }
 
 /**
   * @brief Distribute phaseFlux onto component fluxes
   * @tparam NC number of components
   * @tparam MAX_STENCIL maximum number of points in the stencil
-  * @param phaseIndex concerned phase index
-  * @param upwindDir upwind direction of the phase
+  * @param ip concerned phase index
+  * @param k_up upwind direction of the phase
   * @param stencilSize number of points in the stencil
   * @param seri arraySlice of the stencil implied element region index
   * @param sesri arraySlice of the stencil implied element subregion index
@@ -463,8 +452,8 @@ static void mdensMultiply( localIndex const phaseIndex,
 template< localIndex NC, localIndex MAX_STENCIL >
 GEOSX_HOST_DEVICE
 static void
-formPhaseComp( localIndex const phaseIndex,
-               localIndex const upwindDir,
+formPhaseComp( localIndex const ip,
+               localIndex const k_up,
                localIndex const stencilSize,
                arraySlice1d< localIndex const > const seri,
                arraySlice1d< localIndex const > const sesri,
@@ -481,13 +470,13 @@ formPhaseComp( localIndex const phaseIndex,
                real64 (& dCompFlux_dComp)[MAX_STENCIL][NC][NC] )
 {
   /*update phaseComp from grav part*/
-  localIndex const er_up = seri[upwindDir];
-  localIndex const esr_up = sesri[upwindDir];
-  localIndex const ei_up = sei[upwindDir];
+  localIndex const er_up = seri[k_up];
+  localIndex const esr_up = sesri[k_up];
+  localIndex const ei_up = sei[k_up];
 
-  arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][phaseIndex];
-  arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][phaseIndex];
-  arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][phaseIndex];
+  arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
+  arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
+  arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][ip];
 
   real64 dProp_dC[NC]{};
 
@@ -508,14 +497,14 @@ formPhaseComp( localIndex const phaseIndex,
     }
 
     // additional derivatives stemming from upstream cell phase composition
-    dCompFlux_dPres[upwindDir][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
+    dCompFlux_dPres[k_up][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
 
     // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component
     // densities
     applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dProp_dC );
     for( localIndex jc = 0; jc < NC; ++jc )
     {
-      dCompFlux_dComp[upwindDir][ic][jc] += phaseFlux * dProp_dC[jc];
+      dCompFlux_dComp[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
     }
   }
 }
@@ -561,7 +550,7 @@ public:
   template< localIndex NC, localIndex NUM_ELEMS, template< term > class UPWIND >
   GEOSX_HOST_DEVICE
   void getUpwindDir( localIndex const numPhase,
-                     localIndex const phaseIndex,
+                     localIndex const ip,
                      localIndex const stencilSize,
                      arraySlice1d< localIndex const > const seri,
                      arraySlice1d< localIndex const > const sesri,
@@ -582,7 +571,7 @@ public:
     localIndex source{};
 
     UPWIND< T >::template calcPotential< NC, NUM_ELEMS >( numPhase,
-                                                          phaseIndex,
+                                                          ip,
                                                           stencilSize,
                                                           seri,
                                                           sesri,
@@ -622,14 +611,13 @@ public:
   GEOSX_HOST_DEVICE
   static
   void calcPotential( localIndex const GEOSX_UNUSED_PARAM( numPhase ),
-                      localIndex const phaseIndex,
+                      localIndex const ip,
                       localIndex const stencilSize,
                       arraySlice1d< localIndex const > const seri,
                       arraySlice1d< localIndex const > const sesri,
                       arraySlice1d< localIndex const > const sei,
                       arraySlice1d< real64 const > const stencilWeights,
-                      real64 const GEOSX_UNUSED_PARAM(
-                        totFlux ), //in fine should be a ElemnetViewConst once seq form are in place
+                      real64 const GEOSX_UNUSED_PARAM(totFlux ), //in fine should be a ElemnetViewConst once seq form are in place
                       ElementViewConst <arrayView1d< real64 const >> const & pres,
                       ElementViewConst <arrayView1d< real64 const >> const & dPres,
                       ElementViewConst <arrayView1d< real64 const >> const & gravCoef,
@@ -639,7 +627,7 @@ public:
                       ElementViewConst <arrayView3d< real64 const >> const & phaseMassDens,
                       ElementViewConst <arrayView3d< real64 const >> const & dPhaseMassDens_dPres,
                       ElementViewConst <arrayView4d< real64 const >> const & dPhaseMassDens_dComp,
-                      localIndex & source,
+                      localIndex & GEOSX_UNUSED_PARAM(source),
                       real64 & pot )
   {
     //compute presGrad
@@ -663,7 +651,7 @@ public:
     real64 dGravHead_dC[NUM_ELEMS][NC]{};
     real64 dProp_dC[NC]{};
 
-    formGravHead( phaseIndex,
+    formGravHead( ip,
                   stencilSize,
                   seri,
                   sesri,
@@ -679,7 +667,6 @@ public:
                   dGravHead_dC,
                   dProp_dC );
 
-    source = 0;
     pot = presGrad - gravHead;
   }
 
@@ -711,7 +698,7 @@ public :
   GEOSX_HOST_DEVICE
   static
   void calcPotential( localIndex const numPhase,
-                      localIndex const phaseIndex,
+                      localIndex const ip,
                       localIndex const stencilSize,
                       arraySlice1d< localIndex const > const seri,
                       arraySlice1d< localIndex const > const sesri,
@@ -728,7 +715,7 @@ public :
                       ElementViewConst <arrayView3d< real64 const >> const & phaseMassDens,
                       ElementViewConst <arrayView3d< real64 const >> const & dPhaseMassDens_dPres,
                       ElementViewConst <arrayView4d< real64 const >> const & dPhaseMassDens_dComp,
-                      localIndex & source,
+                      localIndex & GEOSX_UNUSED_PARAM(source),
                       real64 & pot )
   {
 
@@ -742,7 +729,7 @@ public :
     real64 dGravHead_dC[NUM_ELEMS][NC]{};
     real64 dProp_dC[NC]{};
 
-    formGravHead( phaseIndex,
+    formGravHead( ip,
                   stencilSize,
                   seri,
                   sesri,
@@ -762,12 +749,12 @@ public :
     localIndex const k_up = 0;
     localIndex const k_dw = 1;
 
-    std::cerr << " phase : " << phaseIndex << std::endl;
     //loop other other phases to form
-    for( localIndex ip = 0; ip < numPhase; ++ip )
+    for( localIndex jp = 0; jp < numPhase; ++jp )
     {
-      if( ip != phaseIndex )
+      if( jp != ip )
       {
+
         // then form GravHead
         real64 gravHeadOther{};
         real64 dGravHeadOther_dP[NUM_ELEMS]{};
@@ -782,7 +769,7 @@ public :
         localIndex const esr_dw = sesri[k_dw];
         localIndex const ei_dw = sei[k_dw];
 
-        formGravHead( ip,
+        formGravHead( jp,
                       stencilSize,
                       seri,
                       sesri,
@@ -798,18 +785,14 @@ public :
                       dGravHeadOther_dC,
                       dPropOther_dC );
 
-        //          source = ( gravCoef[er_up][esr_up][ei_up] > 0 ) ? 0 : 1;//heavy is upwinded with above value (resp. the lighter with below)
-        source = 0;
-        real64 const mob_up = phaseMob[er_up][esr_up][ei_up][ip];
-        real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][ip];
+        real64 const mob_up = phaseMob[er_up][esr_up][ei_up][jp];
+        real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][jp];
 
         pot += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHeadOther - gravHead ) :
-               mob_up * ( gravHeadOther - gravHead );
-        std::cerr << pot << " .. ";
+                                                   mob_up * ( gravHeadOther - gravHead );
 
       }
     }
-    std::cerr << std::endl;
   }
 
 };
@@ -828,7 +811,7 @@ public:
   GEOSX_HOST_DEVICE
   static
   void calcPotential( localIndex const GEOSX_UNUSED_PARAM( numPhase ),
-                      localIndex const GEOSX_UNUSED_PARAM( phaseIndex ),
+                      localIndex const GEOSX_UNUSED_PARAM( ip ),
                       localIndex const GEOSX_UNUSED_PARAM( stencilSize ),
                       arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM( seri ),
                       arraySlice1d< localIndex const > const GEOSX_UNUSED_PARAM( sesri ),
@@ -851,11 +834,10 @@ public:
                       GEOSX_UNUSED_PARAM( dPhaseMassDens_dPres ),
                       ElementViewConst <arrayView4d< real64 const >> const &
                       GEOSX_UNUSED_PARAM( dPhaseMassDens_dComp ),
-                      localIndex & source,
+                      localIndex & GEOSX_UNUSED_PARAM(source),
                       real64 & pot )
   {
     //Form total velocity
-    source = 0;
     pot = totFlux;
   }
 
@@ -875,7 +857,7 @@ public:
   GEOSX_HOST_DEVICE
   static
   void calcPotential( localIndex const numPhase,
-                      localIndex const phaseIndex,
+                      localIndex const ip,
                       localIndex const stencilSize,
                       arraySlice1d< localIndex const > const seri,
                       arraySlice1d< localIndex const > const sesri,
@@ -893,7 +875,7 @@ public:
                       ElementViewConst <arrayView3d< real64 const >> const & phaseMassDens,
                       ElementViewConst <arrayView3d< real64 const >> const & dPhaseMassDens_dPres,
                       ElementViewConst <arrayView4d< real64 const >> const & dPhaseMassDens_dComp,
-                      localIndex & source,
+                      localIndex & GEOSX_UNUSED_PARAM(source),
                       real64 & pot )
   {
     //Form total velocity
@@ -907,7 +889,7 @@ public:
     real64 dGravHead_dC[NUM_ELEMS][NC]{};
     real64 dProp_dC[NC]{};
 
-    formGravHead( phaseIndex,
+    formGravHead( ip,
                   stencilSize,
                   seri,
                   sesri,
@@ -927,10 +909,10 @@ public:
     localIndex const k_dw = 1;
 
     //loop other other phases to form
-    for( localIndex ip = 0; ip < numPhase; ++ip )
+    for( localIndex jp = 0; jp < numPhase; ++jp )
     {
 
-      if( ip != phaseIndex )
+      if( jp != ip )
       {
         // then form GravHead
         real64 gravHeadOther{};
@@ -946,7 +928,7 @@ public:
         localIndex const esr_dw = sesri[k_dw];
         localIndex const ei_dw = sei[k_dw];
 
-        formGravHead( ip,
+        formGravHead( jp,
                       stencilSize,
                       seri,
                       sesri,
@@ -962,12 +944,11 @@ public:
                       dGravHeadOther_dC,
                       dPropOther_dC );
 
-//        source = ( gravCoef[er_up][esr_up][ei_up] > 0 ) ? 0 : 1;//heavy is upwinded with above value (resp. the lighter with below)
+        real64 const mob_up = phaseMob[er_up][esr_up][ei_up][jp];
+        real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][jp];
 
-        real64 const mob_up = phaseMob[er_up][esr_up][ei_up][ip];
-        real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][ip];
-        pot += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHead - gravHeadOther ) : mob_up * ( gravHead
-                                                                                                      - gravHeadOther );
+        pot += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHeadOther - gravHead ) :
+                                                   mob_up * ( gravHeadOther - gravHead );
 
       }
     }
@@ -983,7 +964,7 @@ public:
   * @tparam NC number of components
   * @tparam UpwindScheme Desciption of how to construct potential used to decide upwind direction
   * @param numPhase total number of phases
-  * @param phaseIndex concerned phase index
+  * @param ip concerned phase index
   * @param stencilSizei number of points in the stencil
   * @param seri arraySlice of the stencil implied element region index
   * @param sesri arraySlice of the stencil implied element subregion index
@@ -995,7 +976,7 @@ template< localIndex NC, localIndex NUM_ELEMS, term T, template< term > class UP
 GEOSX_HOST_DEVICE
 static void
 upwindMob( localIndex const numPhase,
-           localIndex const phaseIndex,
+           localIndex const ip,
            localIndex const stencilSize,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
@@ -1028,7 +1009,7 @@ upwindMob( localIndex const numPhase,
 
   UPWIND< T > scheme;
   scheme.template getUpwindDir< NC, NUM_ELEMS, UPWIND >( numPhase,
-                                                         phaseIndex,
+                                                         ip,
                                                          stencilSize,
                                                          seri,
                                                          sesri,
@@ -1049,13 +1030,13 @@ upwindMob( localIndex const numPhase,
   localIndex const esr_up = sesri[upwindDir];
   localIndex const ei_up = sei[upwindDir];
 
-  if( std::fabs( phaseMob[er_up][esr_up][ei_up][phaseIndex] ) > 1e-20 )
+  if( std::fabs( phaseMob[er_up][esr_up][ei_up][ip] ) > 1e-20 )
   {
-    mob = phaseMob[er_up][esr_up][ei_up][phaseIndex];
-    dMob_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][phaseIndex];
+    mob = phaseMob[er_up][esr_up][ei_up][ip];
+    dMob_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
     for( localIndex ic = 0; ic < NC; ++ic )
     {
-      dMob_dC[ic] = dPhaseMob_dComp[er_up][esr_up][ei_up][phaseIndex][ic];
+      dMob_dC[ic] = dPhaseMob_dComp[er_up][esr_up][ei_up][ip][ic];
     }
   }
 }
@@ -1066,7 +1047,7 @@ upwindMob( localIndex const numPhase,
   * @tparam NC number of components
   * @tparam UpwindScheme Desciption of how to construct potential used to decide upwind direction
   * @param numPhase total number of phases
-  * @param phaseIndex concerned phase index
+  * @param ip concerned phase index
   * @param stencilSizei number of points in the stencil
   * @param seri arraySlice of the stencil implied element region index
   * @param sesri arraySlice of the stencil implied element subregion index
@@ -1078,7 +1059,7 @@ template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, term T, t
 GEOSX_HOST_DEVICE
 static void
 formFracFlow( localIndex const numPhase,
-              localIndex const phaseIndex,
+              localIndex const ip,
               localIndex const stencilSize,
               arraySlice1d< localIndex const > const seri,
               arraySlice1d< localIndex const > const sesri,
@@ -1123,7 +1104,7 @@ formFracFlow( localIndex const numPhase,
   }
 
   //Form totMob
-  for( localIndex ip = 0; ip < numPhase; ++ip )
+  for( localIndex jp = 0; jp < numPhase; ++jp )
   {
 
     localIndex k_up;
@@ -1132,7 +1113,7 @@ formFracFlow( localIndex const numPhase,
     real64 dMob_dC[NC]{};
 
     upwindMob< NC, NUM_ELEMS, T, UPWIND >( numPhase,
-                                           ip,
+                                           jp,
                                            stencilSize,
                                            seri,
                                            sesri,
@@ -1162,7 +1143,7 @@ formFracFlow( localIndex const numPhase,
       dTotMob_dC[k_up][ic] += dMob_dC[ic];
     }
 
-    if( ip == phaseIndex )
+    if( jp == ip )
     {
       k_up_main = k_up;
       mainMob = mob;

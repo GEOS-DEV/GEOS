@@ -17,6 +17,7 @@
  */
 
 #include "CompositionalMultiphaseFVMKernels.hpp"
+#include "CompositionalMultiphaseFlowUpwindHelperKernels.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FaceElementStencil.hpp"
@@ -90,80 +91,6 @@ compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
     }
   }
 }
-
-// weighted
-/*
-template< localIndex NC, localIndex NP >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-PhaseMobilityKernel::
-  compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const > const & phaseDens,
-           arraySlice1d< real64 const > const & dPhaseDens_dPres,
-           arraySlice2d< real64 const > const & dPhaseDens_dComp,
-           arraySlice1d< real64 const > const & phaseVisc,
-           arraySlice1d< real64 const > const & dPhaseVisc_dPres,
-           arraySlice2d< real64 const > const & dPhaseVisc_dComp,
-           arraySlice1d< real64 const > const & phaseRelPerm,
-           arraySlice2d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
-           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const > const & dPhaseVolFrac_dComp,
-           arraySlice1d< real64 > const & phaseMob,
-           arraySlice1d< real64 > const & dPhaseMob_dPres,
-           arraySlice2d< real64 > const & dPhaseMob_dComp )
-{
-  real64 dRelPerm_dC[NC];
-  real64 dDens_dC[NC];
-  real64 dVisc_dC[NC];
-
-  for( localIndex ip = 0; ip < NP; ++ip )
-  {
-    real64 const density = phaseDens[ip];
-    real64 const dDens_dP = dPhaseDens_dPres[ip];
-    applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dDens_dC );
-
-      std::cerr << "Checking dDens_dC " << dDens_dC[0] << std::endl;
-
-    real64 const viscosity = phaseVisc[ip];
-    real64 const dVisc_dP = dPhaseVisc_dPres[ip];
-    applyChainRule( NC, dCompFrac_dCompDens, dPhaseVisc_dComp[ip], dVisc_dC );
-
-    real64 const relPerm = phaseRelPerm[ip];
-    real64 dRelPerm_dP = 0.0;
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      dRelPerm_dC[ic] = 0.0;
-    }
-
-    for( localIndex jp = 0; jp < NP; ++jp )
-    {
-      real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
-      dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[jp];
-
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[jp][jc];
-      }
-    }
-
-
-    real64 const mobility = relPerm * density / viscosity;
-
-    phaseMob[ip] = mobility;
-    dPhaseMob_dPres[ip] = dRelPerm_dP * density / viscosity
-                          + mobility * (dDens_dP / density - dVisc_dP / viscosity);
-
-    // compositional derivatives
-    for( localIndex jc = 0; jc < NC; ++jc )
-    {
-      dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] * density / viscosity
-                                + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
-    }
-
-  }
-}
-*/
 
 template< localIndex NC, localIndex NP >
 void PhaseMobilityKernel::
@@ -485,7 +412,7 @@ FluxKernel::
       localIndex k_up = -1;
       CompositionalMultiphaseFlowUpwindHelperKernels::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
         CompositionalMultiphaseFlowUpwindHelperKernels::term::Viscous,
-        CompositionalMultiphaseFlowUpwindHelperKernels::PU >( NP,
+        CompositionalMultiphaseFlowUpwindHelperKernels::HU >( NP,
                                                               ip,
                                                               stencilSize,
                                                               seri,
@@ -611,7 +538,7 @@ FluxKernel::
           // the Upwind strategy
           CompositionalMultiphaseFlowUpwindHelperKernels::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
             CompositionalMultiphaseFlowUpwindHelperKernels::term::Gravity,
-            CompositionalMultiphaseFlowUpwindHelperKernels::PU >( NP,
+            CompositionalMultiphaseFlowUpwindHelperKernels::HU >( NP,
                                                                   ip,
                                                                   stencilSize,
                                                                   seri,
@@ -663,7 +590,7 @@ FluxKernel::
 
           CompositionalMultiphaseFlowUpwindHelperKernels::upwindMob< NC, NUM_ELEMS,
             CompositionalMultiphaseFlowUpwindHelperKernels::term::Gravity,
-            CompositionalMultiphaseFlowUpwindHelperKernels::PU >( NP,
+            CompositionalMultiphaseFlowUpwindHelperKernels::HU >( NP,
                                                                   jp,
                                                                   stencilSize,
                                                                   seri,
@@ -807,8 +734,6 @@ FluxKernel::
     stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
     stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
 
-    std::cerr << " iconn :" << iconn <<std::endl;
-
     FluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL, IS_UT_FORM >( numPhases,
                                                        stencilSize,
                                                        seri[iconn],
@@ -824,9 +749,9 @@ FluxKernel::
                                                        dPhaseVolFrac_dPres,
                                                        dPhaseVolFrac_dComp,
                                                        dCompFrac_dCompDens,
-                                                                   phaseDens,
-                                                                   dPhaseDens_dPres,
-                                                                   dPhaseDens_dComp,
+                                                       phaseDens,
+                                                       dPhaseDens_dPres,
+                                                       dPhaseDens_dComp,
                                                        phaseMassDens,
                                                        dPhaseMassDens_dPres,
                                                        dPhaseMassDens_dComp,
