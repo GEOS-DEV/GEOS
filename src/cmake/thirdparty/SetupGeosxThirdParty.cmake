@@ -520,6 +520,15 @@ else()
 endif()
 
 ################################
+# doxygen
+################################
+if(DOXYGEN_FOUND)
+    message(STATUS "DOXYGEN_EXECUTABLE = ${DOXYGEN_EXECUTABLE}")
+else()
+    message(STATUS "Not using doxygen.")
+endif()
+
+################################
 # Python
 ################################
 if(ENABLE_PYGEOSX)

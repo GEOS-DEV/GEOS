@@ -105,6 +105,12 @@
 #define GEOSX_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 #endif
 
+/**
+ * @brief Conditionally throw an exception.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
 #define GEOSX_THROW_IF( EXP, msg, TYPE ) LVARRAY_THROW_IF( EXP, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
@@ -113,6 +119,11 @@
  */
 #define GEOSX_ERROR( msg ) GEOSX_ERROR_IF( true, msg )
 
+/**
+ * @brief Throw an exception.
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
 #define GEOSX_THROW( msg, TYPE ) GEOSX_THROW_IF( true, msg, TYPE )
 
 /**
@@ -177,8 +188,14 @@
  */
 #define GEOSX_ERROR_IF_NE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
+/**
+ * @brief Throw an exception if two values are not equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
 #define GEOSX_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
-
 
 /**
  * @brief Raise a hard error if two values are not equal.
@@ -187,6 +204,12 @@
  */
 #define GEOSX_ERROR_IF_NE( lhs, rhs ) GEOSX_ERROR_IF_NE_MSG( lhs, rhs, "" )
 
+/**
+ * @brief Throw an exception if two values are not equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param TYPE the type of exception to throw
+ */
 #define GEOSX_THROW_IF_NE( lhs, rhs, TYPE ) GEOSX_THROW_IF_NE_MSG( lhs, rhs, "", TYPE )
 
 /**
@@ -347,17 +370,31 @@
 namespace geosx
 {
 
+/**
+ * @brief Exception class used to report errors in user input.
+ */
 struct InputError : public std::runtime_error
 {
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
   InputError( std::string const & what ):
     std::runtime_error( what )
   {}
 
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
   InputError( char const * const what ):
     std::runtime_error( what )
   {}
 };
 
+/**
+ * @brief Exception class used for special control flow.
+ */
 class NotAnError : public std::exception
 {};
 

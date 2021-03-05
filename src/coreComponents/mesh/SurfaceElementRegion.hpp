@@ -146,16 +146,16 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// subRegion type string
+    /// @return subRegion type string
     static constexpr char const * subRegionTypeString() { return "subRegionType"; }
 
-    /// Fracture set string
+    /// @return Fracture set string
     static constexpr char const * fractureSetString() { return "fractureSet"; }
 
-    /// Default fracture aperture
+    /// @return Default fracture aperture
     static constexpr char const * defaultApertureString() { return "defaultAperture"; }
 
-    /// Rupture time string
+    /// @return Rupture time string
     static constexpr char const * ruptureTimeString() { return "ruptureTime"; }
   };
 

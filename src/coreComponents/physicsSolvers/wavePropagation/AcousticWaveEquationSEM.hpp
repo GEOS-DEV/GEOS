@@ -134,7 +134,7 @@ private:
 
   /// Apply free surface condition to the face define in the geometry box from the xml
   void applyFreeSurfaceBC( real64 const time, DomainPartition & domain );
-  
+
   /// Compute the pressure at each receiver coordinate in one time step
   void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const pressure_np1 );
 
