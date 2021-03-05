@@ -248,21 +248,21 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    /// String key for the number of nodes per element in this subregion.
+    /// @return String key for the number of nodes per element in this subregion.
     static constexpr char const * numNodesPerElementString() { return "numNodesPerElement"; }
-    /// String key for the element-to-node relation
+    /// @return String key for the element-to-node relation
     static constexpr char const * nodeListString() { return "nodeList"; }
-    /// String key for the number of edges per element in this subregion.
+    /// @return String key for the number of edges per element in this subregion.
     static constexpr char const * numEdgesPerElementString() { return "numEdgesPerElement"; }
-    /// String key for the element-to-edge relation
+    /// @return String key for the element-to-edge relation
     static constexpr char const * edgeListString() { return "edgeList"; }
-    /// String key for the number of faces per element in this subregion.
+    /// @return String key for the number of faces per element in this subregion.
     static constexpr char const * numFacesPerElementString() { return "numFacesPerElement"; }
-    /// String key for the element-to-face relation
+    /// @return String key for the element-to-face relation
     static constexpr char const * faceListString() { return "faceList"; }
-    /// String key for the member level field for the element center.
+    /// @return String key for the member level field for the element center.
     static constexpr char const * elementCenterString() { return "elementCenter"; }
-    /// String key for the member level field for the element volume.
+    /// @return String key for the member level field for the element volume.
     static constexpr char const * elementVolumeString() { return "elementVolume"; }
   };
 
@@ -272,7 +272,7 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    /// String key for the group in which the constitutive models of this subregion are registered.
+    /// @return String key for the group in which the constitutive models of this subregion are registered.
     static constexpr auto constitutiveModelsString() { return "ConstitutiveModels"; }
   };
 

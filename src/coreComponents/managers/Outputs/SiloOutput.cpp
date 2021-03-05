@@ -22,6 +22,8 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/FunctionManager.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 
 namespace geosx
 {
@@ -92,6 +94,7 @@ bool SiloOutput::execute( real64 const time_n,
 
   integer const numFiles = parallelThreads() == 0 ? size : parallelThreads();
 
+  silo.setOutputDirectory( getGlobalState().getCommandLineOptions().outputDirectory ),
   silo.setPlotLevel( m_plotLevel );
   silo.setWriteEdgeMesh( m_writeEdgeMesh );
   silo.setWriteFaceMesh( m_writeFaceMesh );
