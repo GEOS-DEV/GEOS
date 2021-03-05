@@ -52,7 +52,19 @@ set( linearAlgebra_sources
 if( BUILD_OBJ_LIBS )
   set( dependencyList common blas lapack RAJA managers)
 else()
-  set( dependencyList common blas lapack RAJA )
+  set( dependencyList 
+       common 
+       blas
+       lapack
+       RAJA
+       mesh
+       lvarray
+       managers
+       mpiCommunications
+       finiteVolume
+       codingUtilities
+       finiteElement
+      )
 endif()
 
 
