@@ -41,7 +41,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Shear Modulus Parameter" );
 
-  registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString() ).
+  registerWrapper< real64 >( viewKeyStruct::defaultYoungModulusString() ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Young's Modulus" );
@@ -70,7 +70,7 @@ void ElasticIsotropic::postProcessInput()
   SolidBase::postProcessInput();
 
   real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString() );
-  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString() );
+  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungModulusString() );
   real64 & K  = m_defaultBulkModulus;
   real64 & G  = m_defaultShearModulus;
 
@@ -107,32 +107,32 @@ void ElasticIsotropic::postProcessInput()
 
   if( nu > -0.5 && nu < 0.5 && E > 0.0 )
   {
-    K = conversions::YoungsModAndPoissonRatio::toBulkMod( E, nu );
-    G = conversions::YoungsModAndPoissonRatio::toShearMod( E, nu );
+    K = conversions::YoungModAndPoissonRatio::toBulkMod( E, nu );
+    G = conversions::YoungModAndPoissonRatio::toShearMod( E, nu );
   }
   else if( nu > -0.5 && nu < 0.5 && G > 0.0 )
   {
-    E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu );
+    E = conversions::ShearModAndPoissonRatio::toYoungMod( G, nu );
     K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu );
   }
   else if( nu > -0.5 && nu < 0.5 && K > 0.0 )
   {
-    E = conversions::BulkModAndPoissonRatio::toYoungsMod( K, nu );
+    E = conversions::BulkModAndPoissonRatio::toYoungMod( K, nu );
     G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
   }
   else if( E > 0.0 && K > 0.0 )
   {
-    nu = conversions::BulkModAndYoungsMod::toPoissonRatio( K, E );
-    G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
+    nu = conversions::BulkModAndYoungMod::toPoissonRatio( K, E );
+    G  = conversions::BulkModAndYoungMod::toShearMod( K, E );
   }
   else if( E > 0.0 && G > 0.0 )
   {
-    nu = conversions::ShearModAndYoungsMod::toPoissonRatio( G, E );
-    K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
+    nu = conversions::ShearModAndYoungMod::toPoissonRatio( G, E );
+    K  = conversions::ShearModAndYoungMod::toBulkMod( G, E );
   }
   else if( K > 0.0 && G > 0.0 )
   {
-    E  = conversions::BulkModAndShearMod::toYoungsMod( K, G );
+    E  = conversions::BulkModAndShearMod::toYoungMod( K, G );
     nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
   }
   else

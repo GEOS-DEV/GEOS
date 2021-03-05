@@ -335,10 +335,10 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for transverse Young's modulus
-    static constexpr char const * defaultYoungsModulusTransverseString() { return "defaultYoungsModulusTransverse"; }
+    static constexpr char const * defaultYoungModulusTransverseString() { return "defaultYoungModulusTransverse"; }
 
     /// string/key for axial Young's modulus
-    static constexpr char const * defaultYoungsModulusAxialString() { return "defaultYoungsModulusAxial"; }
+    static constexpr char const * defaultYoungModulusAxialString() { return "defaultYoungModulusAxial"; }
 
     /// string/key for transverse Poisson's Ratio
     static constexpr char const * defaultPoissonRatioTransverseString() { return "defaultPoissonRatioTransverse"; }
@@ -384,36 +384,36 @@ public:
    * @brief Getter for default transverse Young's modulus
    * @return The value of the default transverse Young's modulus.
    */
-  real64 getDefaultYoungsModulusTransverse() const
+  real64 getDefaultYoungModulusTransverse() const
   {
-    return m_defaultYoungsModulusTransverse;
+    return m_defaultYoungModulusTransverse;
   }
 
   /**
    * @brief Setter for the default transverse Young's modulus.
    * @param[in] input New value for the default transverse Young's modulus
    */
-  void setDefaultYoungsModulusTransverse( real64 const input )
+  void setDefaultYoungModulusTransverse( real64 const input )
   {
-    m_defaultYoungsModulusTransverse = input;
+    m_defaultYoungModulusTransverse = input;
   }
 
   /**
    * @brief Getter for default axial Young's modulus
    * @return The value of the default axial Young's modulus.
    */
-  real64 getDefaultYoungsModulusAxial() const
+  real64 getDefaultYoungModulusAxial() const
   {
-    return m_defaultYoungsModulusAxial;
+    return m_defaultYoungModulusAxial;
   }
 
   /**
    * @brief Setter for the default axial Young's modulus.
    * @param[in] input New value for the default axial Young's modulus
    */
-  void setDefaultYoungsModulusAxial( real64 const input )
+  void setDefaultYoungModulusAxial( real64 const input )
   {
-    m_defaultYoungsModulusAxial = input;
+    m_defaultYoungModulusAxial = input;
   }
 
   /**
@@ -574,11 +574,11 @@ protected:
 
   /// The default value of the transverse Young's modulus for any new
   /// allocations.
-  real64 m_defaultYoungsModulusTransverse;
+  real64 m_defaultYoungModulusTransverse;
 
   /// The default value of the axial Young's modulus for any new
   /// allocations.
-  real64 m_defaultYoungsModulusAxial;
+  real64 m_defaultYoungModulusAxial;
 
   /// The default value of the transverse Poisson's ratio for any new
   /// allocations.
