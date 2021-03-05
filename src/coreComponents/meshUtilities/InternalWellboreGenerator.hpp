@@ -41,7 +41,7 @@ public:
    */
   InternalWellboreGenerator( const string & name, Group * const parent );
 
-  virtual ~InternalWellboreGenerator() override = default;
+  ~InternalWellboreGenerator() override = default;
 
   /**
    * @brief Return the name of the InternalWellboreGenerator in object Catalog.
@@ -49,7 +49,47 @@ public:
    */
   static string catalogName() { return "InternalWellbore"; }
 
-  virtual void generateMesh( DomainPartition & domain ) override;
+  void generateMesh( DomainPartition & domain ) override final;
+
+protected:
+
+  ///@cond DO_NOT_DOCUMENT
+  struct viewKeyStruct
+  {
+    constexpr static char const * radiusString() { return "radius"; }
+    constexpr static char const * thetaString() { return "theta"; }
+    constexpr static char const * rOutString() { return "rOut"; }
+    constexpr static char const * rElemsString() { return "nr"; }
+    constexpr static char const * tElemsString() { return "nt"; }
+    constexpr static char const * rBiasString() { return "rBias"; }
+    constexpr static char const * trajectoryString() { return "trajectory"; }
+  };
+  /// @endcond
+
+  void postProcessInput() override final;
+
+private:
+
+  /// Wellbore radius
+  real64 m_radius;
+
+  /// Farfield distance
+  real64 m_rOut;
+
+  /// Maximum tangent angle in degrees
+  real64 m_theta;
+
+  /// Number of elements in radial direction
+  real64 m_rElems;
+
+  /// Number of elements in tangent direction
+  real64 m_tElems;
+
+  /// Bias in the radial direction
+  real64 m_rBias;
+
+  /// Trajectory defined by coordinates of the wellbore centers
+  array2d< real64 > m_trajectory;
 
 };
 

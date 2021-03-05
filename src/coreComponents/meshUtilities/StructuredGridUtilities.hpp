@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESHUTILITIES_STRUCTUREDGRIDUTILITIES_HPP
-#define GEOSX_MESHUTILITIES_STRUCTUREDGRIDUTILITIES_HPP
+#ifndef GEOSX_MESHUTILITIES_STRUCTUREDGRIDUTILITIES_HPP_
+#define GEOSX_MESHUTILITIES_STRUCTUREDGRIDUTILITIES_HPP_
 
 /**
  * @file StructuredGridUtilities.hpp
@@ -23,7 +23,7 @@ namespace StructuredGrid
 {
 
 /**
- * @brief Given n, compute n^d, where d is the spatial dimension.
+ * @brief Given n, compute n^dim, where dim is the spatial dimension.
  * @param[in] n the input integer whose power is computed here
  * @return the power of n
  */
@@ -90,6 +90,6 @@ void map_index< 3 >( const int index,
 
 /// @endcond
 
-} // end namespace
+} /* namespace StructuredGrid */
 
-#endif
+#endif /* GEOSX_MESHUTILITIES_STRUCTUREDGRIDUTILITIES_HPP_ */

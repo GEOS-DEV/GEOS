@@ -31,32 +31,32 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   m_max()
 {
   registerWrapper( viewKeyStruct::xCoordsString(), &(m_vertices[0]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "x-coordinates of each mesh block vertex" );
 
   registerWrapper( viewKeyStruct::yCoordsString(), &(m_vertices[1]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "y-coordinates of each mesh block vertex" );
 
   registerWrapper( viewKeyStruct::zCoordsString(), &(m_vertices[2]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "z-coordinates of each mesh block vertex" );
 
   registerWrapper( viewKeyStruct::xElemsString(), &(m_nElems[0]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Number of elements in the x-direction within each mesh block" );
 
   registerWrapper( viewKeyStruct::yElemsString(), &(m_nElems[1]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Number of elements in the y-direction within each mesh block" );
 
   registerWrapper( viewKeyStruct::zElemsString(), &(m_nElems[2]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Number of elements in the z-direction within each mesh block" );
 
@@ -97,6 +97,11 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setApplyDefaultValue( MeshType::Cartesian ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Mesh type. Options are:\n* " + EnumStrings< MeshType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::positionToleranceString(), &m_coordinatePrecision ).
+    setApplyDefaultValue( 10 * std::numeric_limits< real64 >::epsilon() ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "A position tolerance to verify if a node belong to a nodeset" );
 }
 
 /**
@@ -434,8 +439,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   }
 
   localIndex numNodes = 1;
-  localIndex numNodesInDir[3] =
-  { 1, 1, 1 };
+  localIndex numNodesInDir[3] = { 1, 1, 1 };
 
   for( int i = 0; i < m_dim; ++i )
   {
@@ -460,8 +464,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       {
         for( int k = 0; k < numNodesInDir[2]; ++k )
         {
-          int index[3] =
-          { i, j, k };
+          int index[3] = { i, j, k };
+
           for( int a = 0; a < m_dim; ++a )
           {
             index[a] += firstElemIndexInPartition[a];
@@ -472,7 +476,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           // Alter global node map for radial mesh
           if( isRadial() )
           {
-            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], m_coordinatePrecision ) )
             {
               index[1] = 0;
             }
@@ -481,32 +485,32 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
 
           // Cartesian-specific nodesets
-          if( m_meshType == MeshType::Cartesian )
+          if( isCartesian() )
           {
-            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_min[0], m_coordinatePrecision ) )
             {
               xnegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_max[0], m_coordinatePrecision ) )
             {
               xposNodes.insert( localNodeIndex );
             }
-            if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_min[1], m_coordinatePrecision ) )
             {
               ynegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], m_coordinatePrecision ) )
             {
               yposNodes.insert( localNodeIndex );
             }
           }
 
           // General nodesets
-          if( isEqual( X( localNodeIndex, 2 ), m_min[2], 1e-10 ) )
+          if( isEqual( X( localNodeIndex, 2 ), m_min[2], m_coordinatePrecision ) )
           {
             znegNodes.insert( localNodeIndex );
           }
-          if( isEqual( X( localNodeIndex, 2 ), m_max[2], 1e-10 ) )
+          if( isEqual( X( localNodeIndex, 2 ), m_max[2], m_coordinatePrecision ) )
           {
             zposNodes.insert( localNodeIndex );
           }
@@ -705,19 +709,19 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       // Add mapped values to nodesets
       if( m_meshType == MeshType::CylindricalSquareBoundary )
       {
-        if( isEqual( X[iN][0], -1 * m_max[0], 1e-10 ) )
+        if( isEqual( X[iN][0], -1 * m_max[0], m_coordinatePrecision ) )
         {
           xnegNodes.insert( iN );
         }
-        if( isEqual( X[iN][0], m_max[0], 1e-10 ) )
+        if( isEqual( X[iN][0], m_max[0], m_coordinatePrecision ) )
         {
           xposNodes.insert( iN );
         }
-        if( isEqual( X[iN][1], -1 * m_max[0], 1e-10 ) )
+        if( isEqual( X[iN][1], -1 * m_max[0], m_coordinatePrecision ) )
         {
           ynegNodes.insert( iN );
         }
-        if( isEqual( X[iN][1], m_max[0], 1e-10 ) )
+        if( isEqual( X[iN][1], m_max[0], m_coordinatePrecision ) )
         {
           yposNodes.insert( iN );
         }

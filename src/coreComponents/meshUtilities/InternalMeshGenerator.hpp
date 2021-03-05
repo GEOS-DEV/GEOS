@@ -41,13 +41,47 @@ public:
    */
   InternalMeshGenerator( const string & name, Group * const parent );
 
-  virtual ~InternalMeshGenerator() override = default;
+  ~InternalMeshGenerator() override = default;
 
   /**
    * @brief Return the name of the InternalMeshGenerator in object Catalog.
    * @return string that contains the key name to InternalMeshGenerator in the Catalog
    */
   static string catalogName() { return "InternalMesh"; }
+
+  /**
+   * @enum MeshType
+   *
+   * The options for mesh type
+   */
+  enum class MeshType : integer
+  {
+    Cartesian,
+    Cylindrical,
+    CylindricalSquareBoundary
+  };
+
+  void generateElementRegions( DomainPartition & domain ) override;
+
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
+  Group * createChild( string const & childKey, string const & childName ) override;
+
+  void generateMesh( DomainPartition & domain ) override;
+
+  void getElemToNodesRelationInBox ( const string & elementType,
+                                     const int index[],
+                                     const int & iEle,
+                                     int nodeIDInBox[],
+                                     const int size ) override;
+
+  void remapMesh ( dataRepository::Group & domain ) override;
+
+protected:
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -65,44 +99,11 @@ public:
     constexpr static char const * elementTypesString() { return "elementTypes"; }
     constexpr static char const * trianglePatternString() { return "trianglePattern"; }
     constexpr static char const * meshTypeString() { return "meshType"; }
+    constexpr static char const * positionToleranceString() { return "positionTolerance"; }
   };
   /// @endcond
 
-  /**
-   * @enum MeshType
-   *
-   * The options for mesh type
-   */
-  enum class MeshType : integer
-  {
-    Cartesian,
-    Cylindrical,
-    CylindricalSquareBoundary
-  };
-
-  virtual void generateElementRegions( DomainPartition & domain ) override;
-
-  /**
-   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
-   * @param childKey the catalog key of the new geometric object to create
-   * @param childName the name of the new geometric object in the repository
-   * @return the group child
-   */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
-
-  virtual void generateMesh( DomainPartition & domain ) override;
-
-  virtual void getElemToNodesRelationInBox ( const string & elementType,
-                                             const int index[],
-                                             const int & iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) override;
-
-  virtual void remapMesh ( dataRepository::Group & domain ) override;
-
-protected:
-
-  void postProcessInput() override final;
+  void postProcessInput() override;
 
   /// Mesh number of dimension
   int m_dim;
@@ -113,7 +114,8 @@ protected:
   /// Maximum extent of mesh dimensions
   real64 m_max[3];
 
-private:
+  /// Position tolerance for adding nodes to nodesets
+  real64 m_coordinatePrecision;
 
   /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];
@@ -123,6 +125,8 @@ private:
 
   /// Ndim x nElem spatialized array of element bias
   array1d< real64 > m_nElemBias[3];
+
+private:
 
   /// String array of region names
   array1d< string > m_regionNames;
@@ -274,6 +278,16 @@ private:
   }
 
 public:
+
+  /**
+   * @brief Check if the mesh is a cartesian mesh.
+   * @return true if the Internal mesh is cartesian, false else
+   */
+  inline bool isCartesian()
+  {
+    return m_meshType == MeshType::Cartesian;
+  }
+
   /**
    * @brief Check if the mesh is a radial mesh.
    * @return true if the Internal mesh is radial, false else

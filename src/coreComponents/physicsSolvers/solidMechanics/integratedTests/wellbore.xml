@@ -29,13 +29,12 @@
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 1, 2 }"
-      yCoords="{ 0, 90 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 5 }"
-      ny="{ 10 }"
+      radius="0.1"
+      theta="180"
+      trajectory="{ { -0.3, 0.0, 1.0 }, {  0.3, 0.3, 0.0 } }"
+      nr="5"
+      nt="16"
       nz="{ 2 }"
-      xBias="{ -0.5 }"
       cellBlockNames="{ cb1 }"
       meshType="CylindricalSquareBoundary"/>
   </Mesh>
@@ -99,28 +98,20 @@
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
     <FieldSpecification
-      name="tnegConstraint"
+      name="tConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ tneg }"/>
+      setNames="{ tneg, tpos }"/>
 
     <FieldSpecification
-      name="tposConstraint"
+      name="xConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ tpos }"/>
-
-    <FieldSpecification
-      name="xposConstraint"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="0"
-      scale="0.0"
-      setNames="{ xpos }"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="yposConstraint"
