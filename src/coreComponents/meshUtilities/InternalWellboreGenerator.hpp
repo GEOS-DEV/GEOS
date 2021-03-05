@@ -41,7 +41,7 @@ public:
    */
   InternalWellboreGenerator( const string & name, Group * const parent );
 
-  virtual ~InternalWellboreGenerator() override = default;
+  ~InternalWellboreGenerator() override = default;
 
   /**
    * @brief Return the name of the InternalWellboreGenerator in object Catalog.
@@ -49,7 +49,7 @@ public:
    */
   static string catalogName() { return "InternalWellbore"; }
 
-  virtual void generateMesh( DomainPartition & domain ) override;
+  void generateMesh( DomainPartition & domain ) override final;
 
 };
 

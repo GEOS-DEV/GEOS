@@ -38,7 +38,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   NodeManager & nodeManager = meshLevel0.getNodeManager();
   Group & nodeSets = nodeManager.sets();
 
-  // Wellbore nodeset
+  // Wellbore nodesets
   SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
   SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
   SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
@@ -47,16 +47,16 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
   {
-    real64 xCoord = X( localNodeIndex, 0 );
-    real64 yCoord = X( localNodeIndex, 1 );
+    real64 const xCoord = X( localNodeIndex, 0 );
+    real64 const yCoord = X( localNodeIndex, 1 );
     real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
 
-    if( isEqual( rCoord, m_min[0], 1e-10 ) )
+    if( isEqual( rCoord, m_min[0], m_positionTolerance ) )
     {
       rnegNodes.insert( localNodeIndex );
     }
 
-    if( isEqual( rCoord, m_max[0], 1e-10 ) )
+    if( isEqual( rCoord, m_max[0], m_positionTolerance ) )
     {
       rposNodes.insert( localNodeIndex );
     }
@@ -74,11 +74,11 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 
     tCoord *= 180/M_PI;
 
-    if( isEqual( tCoord, m_min[1], 1e-10 ) )
+    if( isEqual( tCoord, m_min[1], m_positionTolerance ) )
     {
       tnegNodes.insert( localNodeIndex );
     }
-    if( isEqual( tCoord, m_max[1], 1e-10 ) )
+    if( isEqual( tCoord, m_max[1], m_positionTolerance ) )
     {
       tposNodes.insert( localNodeIndex );
     }

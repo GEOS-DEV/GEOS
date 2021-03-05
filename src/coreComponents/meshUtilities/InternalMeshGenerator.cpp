@@ -472,7 +472,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           // Alter global node map for radial mesh
           if( isRadial() )
           {
-            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], m_positionTolerance ) )
             {
               index[1] = 0;
             }
@@ -481,32 +481,32 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
 
           // Cartesian-specific nodesets
-          if( m_meshType == MeshType::Cartesian )
+          if( isCartesian() )
           {
-            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_min[0], m_positionTolerance ) )
             {
               xnegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_max[0], m_positionTolerance ) )
             {
               xposNodes.insert( localNodeIndex );
             }
-            if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_min[1], m_positionTolerance ) )
             {
               ynegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], m_positionTolerance ) )
             {
               yposNodes.insert( localNodeIndex );
             }
           }
 
           // General nodesets
-          if( isEqual( X( localNodeIndex, 2 ), m_min[2], 1e-10 ) )
+          if( isEqual( X( localNodeIndex, 2 ), m_min[2], m_positionTolerance ) )
           {
             znegNodes.insert( localNodeIndex );
           }
-          if( isEqual( X( localNodeIndex, 2 ), m_max[2], 1e-10 ) )
+          if( isEqual( X( localNodeIndex, 2 ), m_max[2], m_positionTolerance ) )
           {
             zposNodes.insert( localNodeIndex );
           }
@@ -705,19 +705,19 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       // Add mapped values to nodesets
       if( m_meshType == MeshType::CylindricalSquareBoundary )
       {
-        if( isEqual( X[iN][0], -1 * m_max[0], 1e-10 ) )
+        if( isEqual( X[iN][0], -1 * m_max[0], m_positionTolerance ) )
         {
           xnegNodes.insert( iN );
         }
-        if( isEqual( X[iN][0], m_max[0], 1e-10 ) )
+        if( isEqual( X[iN][0], m_max[0], m_positionTolerance ) )
         {
           xposNodes.insert( iN );
         }
-        if( isEqual( X[iN][1], -1 * m_max[0], 1e-10 ) )
+        if( isEqual( X[iN][1], -1 * m_max[0], m_positionTolerance ) )
         {
           ynegNodes.insert( iN );
         }
-        if( isEqual( X[iN][1], m_max[0], 1e-10 ) )
+        if( isEqual( X[iN][1], m_max[0], m_positionTolerance ) )
         {
           yposNodes.insert( iN );
         }
