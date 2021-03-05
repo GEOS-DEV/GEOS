@@ -443,7 +443,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
 {
   GEOSX_LAI_ASSERT( insertable() );
 
-#if defined(GEOSX_USE_CUDA) && defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_HYPRE_CUDA)
   array1d< globalIndex > rowIndexDevice( 1 );
   array1d< HYPRE_Int > ncolsDevice( 1 );
 
@@ -457,7 +457,8 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   HYPRE_Int * const ncols = ncolsDevice.data();
 #else
   globalIndex const * const rowIndex = &rowIndex0;
-  HYPRE_Int * const ncols = reinterpret_cast< HYPRE_Int * >(&size);
+  HYPRE_Int hypreSize = size;
+  HYPRE_Int * const ncols = &hypreSize;
 #endif
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,

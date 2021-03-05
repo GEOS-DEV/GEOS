@@ -37,8 +37,10 @@ namespace geosx
 //          localIndex to int. We are getting away with this because we do not
 //          pass ( localIndex * ) to hypre except when it is on the GPU, in
 //          which case we are using int for localIndex.
-//static_assert( sizeof( HYPRE_Int ) == sizeof( localIndex ),
-//               "HYPRE_Int and geosx::localIndex must have the same size" );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+static_assert( sizeof( HYPRE_Int ) == sizeof( localIndex ),
+               "HYPRE_Int and geosx::localIndex must have the same size" );
+#endif
 
 static_assert( sizeof( HYPRE_BigInt ) == sizeof( globalIndex ),
                "HYPRE_BigInt and geosx::globalIndex must have the same size" );

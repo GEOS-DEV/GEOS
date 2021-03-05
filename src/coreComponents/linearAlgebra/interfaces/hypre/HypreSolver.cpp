@@ -43,8 +43,7 @@ namespace geosx
 
 typedef HYPRE_Int (* HYPRE_PtrToSolverDestroyFcn)( HYPRE_Solver );
 
-HypreSolver::HypreSolver( LinearSolverParameters parameters )
-  :
+HypreSolver::HypreSolver( LinearSolverParameters parameters ):
   m_parameters( std::move( parameters ) )
 { }
 
