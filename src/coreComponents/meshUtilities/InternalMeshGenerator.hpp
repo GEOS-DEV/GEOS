@@ -102,7 +102,7 @@ protected:
   };
   /// @endcond
 
-  void postProcessInput() override final;
+  void postProcessInput() override;
 
   /// Mesh number of dimension
   int m_dim;
@@ -116,8 +116,6 @@ protected:
   /// Position tolerance for adding nodes to nodesets
   real64 m_positionTolerance = 1e-10;
 
-private:
-
   /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];
 
@@ -126,6 +124,8 @@ private:
 
   /// Ndim x nElem spatialized array of element bias
   array1d< real64 > m_nElemBias[3];
+
+private:
 
   /// String array of region names
   array1d< string > m_regionNames;

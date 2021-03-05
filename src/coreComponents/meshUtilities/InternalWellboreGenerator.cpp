@@ -26,7 +26,58 @@ using namespace dataRepository;
 
 InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group * const parent ):
   InternalMeshGenerator( name, parent )
-{}
+{
+  registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Wellbore radius" );
+
+  registerWrapper( viewKeyStruct::thetaString(), &m_theta ).
+    setApplyDefaultValue( 360.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Tangent angle defining geometry size: 90 for quarter, 180 for half and 360 for full wellbore geometry" );
+
+  registerWrapper( viewKeyStruct::rOutString(), &m_rOut ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Farfield distance from wellbore center" );
+
+  registerWrapper( viewKeyStruct::rElemsString(), &m_rElems ).
+    setApplyDefaultValue( 10 ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of elements in the radial direction" );
+
+  registerWrapper( viewKeyStruct::tElemsString(), &m_tElems ).
+    setApplyDefaultValue( 40 ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of elements in the tangent direction" );
+
+  registerWrapper( viewKeyStruct::rBiasString(), &m_rBias ).
+    setApplyDefaultValue( -0.8 ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Bias of element sizes in the radial direction" );
+}
+
+void InternalWellboreGenerator::postProcessInput()
+{
+  m_vertices[0].resize(2);
+  m_vertices[1].resize(2);
+  m_nElems[0].resize(1);
+  m_nElems[1].resize(1);
+  m_nElemBias[0].resize(1);
+
+  m_vertices[0][0]  = m_radius;
+  m_vertices[0][1]  = m_rOut;
+  m_vertices[1][0]  = 0;
+  m_vertices[1][1]  = m_theta;
+  m_nElems[0][0]    = m_rElems;
+  m_nElems[1][0]    = m_tElems;
+  m_nElemBias[0][0] = m_rBias;
+
+  InternalMeshGenerator::postProcessInput();
+}
 
 void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 {
