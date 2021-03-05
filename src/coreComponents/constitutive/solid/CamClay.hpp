@@ -90,6 +90,7 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
+  using ElasticIsotropicUpdates::saveStress;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -250,6 +251,8 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   if( yield < 1e-9 ) // elasticity
   {
+      std::cout << "elastic" <<  "\n " << std::endl;
+
     return;
   }
 
