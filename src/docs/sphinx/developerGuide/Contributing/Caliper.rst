@@ -26,7 +26,7 @@ Configuring Caliper
   
 Caliper configuration is done by specifying a string to initialize Caliper with via the
 `-t` option. A few options are listed below but we refer the reader to
-`Caliper Config <https://github.com/LLNL/Caliper/blob/releases/v2.3.0/doc/ConfigManagerAPI.md>`_ for the full Caliper tutorial.
+`Caliper Config <https://software.llnl.gov/Caliper/BuiltinConfigurations.html>`_ for the full Caliper tutorial.
 
 * ``-t runtime-report`` Will make Caliper print aggregated timing information to standard out.
 * ``-t runtime-report,aggregate_across_ranks=false`` Will make Caliper write per rank timing information to standard out.
