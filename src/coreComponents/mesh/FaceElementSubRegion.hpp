@@ -126,9 +126,9 @@ public:
    */
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// String key for the derivatives of the shape functions with respect to the reference configuration
+    /// @return String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr char const * dNdXString() { return "dNdX"; }
-    /// String key for the derivative of the jacobian.
+    /// @return String key for the derivative of the jacobian.
     static constexpr char const * detJString() { return "detJ"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
