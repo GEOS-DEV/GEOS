@@ -182,7 +182,7 @@ public:
     if( !hasKeyName( objectTypeName ) )
     {
       std::list< typename CatalogType::key_type > keys = getKeys();
-      string const tmp = stringutilities::strjoin( keys.cbegin(), keys.cend(), ",\n" );
+      string const tmp = stringutilities::join( keys.cbegin(), keys.cend(), ",\n" );
 
       string errorMsg = "Could not find keyword \"" + objectTypeName + "\" in this context. ";
       errorMsg += "Please be sure that all your keywords are properly spelled or that input file parameters have not changed.\n";
@@ -215,8 +215,8 @@ public:
   template< typename TYPE >
   static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::catalogName();
-    std::string objectName = object.getName();
+    std::string const & castedName = TYPE::catalogName();
+    std::string const & objectName = object.getName();
 
     if( castedName != objectName )
     {
@@ -504,8 +504,8 @@ public:
   template< typename TYPE >
   static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::catalogName();
-    std::string objectName = object.getName();
+    std::string const & castedName = TYPE::catalogName();
+    std::string const & objectName = object.getName();
 
     if( castedName != objectName )
     {

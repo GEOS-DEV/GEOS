@@ -27,15 +27,13 @@ namespace geosx
 {
 
 /**
- * @class VTKOutput
- *
- * A class for creating vtk outputs
+ * @brief A class for creating vtk outputs
  */
 class VTKOutput : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
 
+  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
   VTKOutput( string const & name, Group * const parent );
 
   /// Destructor
@@ -47,6 +45,8 @@ public:
    */
   static string catalogName() { return "VTK"; }
 
+  virtual void postProcessInput() override;
+
   /**
    * @brief Writes out a set of vtk files.
    * @copydoc EventBase::execute()
@@ -56,7 +56,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief Write one final set of vtk files as the code exits
@@ -66,7 +66,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
     execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
@@ -83,10 +83,10 @@ public:
   /// @endcond
 
 private:
+
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
-
   integer m_writeBinaryData;
 
   vtk::VTKPolyDataWriterInterface m_writer;

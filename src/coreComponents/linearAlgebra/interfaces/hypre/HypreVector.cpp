@@ -172,9 +172,9 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 {
   GEOSX_LAI_ASSERT( closed() );
 
-#if !defined(GEOSX_USE_CUDA)
-  localValues.move( LvArray::MemorySpace::CPU, false );
-#endif
+//#if !defined(GEOSX_USE_CUDA)
+//  localValues.move( LvArray::MemorySpace::CPU, false );
+//#endif
   HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
   HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( localSize );
   HYPRE_BigInt const jupper = jlower + localSize - 1;

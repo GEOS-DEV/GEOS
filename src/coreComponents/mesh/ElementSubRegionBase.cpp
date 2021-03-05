@@ -24,27 +24,27 @@ using namespace dataRepository;
 
 ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_constitutiveModels( groupKeyStruct::constitutiveModelsString, this ),
+  m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
   m_numNodesPerElement(),
   m_numEdgesPerElement(),
   m_numFacesPerElement(),
   m_elementCenter(),
   m_elementVolume()
 {
-  registerGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels )->
+  registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
 
-  registerWrapper( viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement );
+  registerWrapper( viewKeyStruct::numNodesPerElementString(), &m_numNodesPerElement );
 
-  registerWrapper( viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement );
+  registerWrapper( viewKeyStruct::numEdgesPerElementString(), &m_numEdgesPerElement );
 
-  registerWrapper( viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement );
+  registerWrapper( viewKeyStruct::numFacesPerElementString(), &m_numFacesPerElement );
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
-    setPlotLevel( PlotLevel::LEVEL_1 )->
+  registerWrapper( viewKeyStruct::elementCenterString(), &m_elementCenter ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
+  registerWrapper( viewKeyStruct::elementVolumeString(), &m_elementVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 }
 

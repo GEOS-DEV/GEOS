@@ -57,18 +57,17 @@ public:
   /// Contains the keys for the object names in the data repository.
   struct groupKeysStruct
   {
-    /// Name for the basis function manager.
-    static constexpr auto basisFunctions = "BasisFunctions";
+    /// @return Name for the basis function manager.
+    static constexpr char const * basisFunctionsString() { return "BasisFunctions"; }
 
-    /// Name for the quadrature rule manager.
-    static constexpr auto quadratureRules = "QuadratureRules";
+    /// @return Name for the quadrature rule manager.
+    static constexpr char const * quadratureRulesString() { return "QuadratureRules"; }
 
-    /// Name for the finite element discretization manager.
-    static constexpr auto finiteElementDiscretizations = "FiniteElements";
+    /// @return Name for the finite element discretization manager.
+    static constexpr char const * finiteElementDiscretizationsString() { return "FiniteElements"; }
 
-    /// Name for the finite volume manager.
-    static constexpr auto finiteVolumeManager = "FiniteVolume";
-
+    /// @return Name for the finite volume manager.
+    static constexpr char const * finiteVolumeManagerString() { return "FiniteVolume"; }
   };
 
   /**

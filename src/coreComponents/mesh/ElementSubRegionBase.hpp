@@ -84,7 +84,7 @@ public:
    * faceManager, and (if needed) edgeManager to, respectively, the node list, face list, and
    * edge list of the subregion.
    */
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) = 0;
 
   /**
    * @brief Call ObjectManagerBase::fixUpDownMaps for the connectivity maps needed by
@@ -193,14 +193,14 @@ public:
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
-  dataRepository::Group const * getConstitutiveModels() const
-  { return &m_constitutiveModels; }
+  dataRepository::Group const & getConstitutiveModels() const
+  { return m_constitutiveModels; }
 
   /**
    * @copydoc getConstitutiveModels() const
    */
-  dataRepository::Group * getConstitutiveModels()
-  { return &m_constitutiveModels; }
+  dataRepository::Group & getConstitutiveModels()
+  { return m_constitutiveModels; }
 
   /**
    * @brief Get a pointer to the constitutive model.
@@ -209,19 +209,15 @@ public:
    * @return A pointer to the constitutive model.
    */
   template< typename T = constitutive::ConstitutiveBase >
-  T const * getConstitutiveModel( string const & name ) const
-  {
-    return m_constitutiveModels.getGroup< T >( name );
-  }
+  T const & getConstitutiveModel( string const & name ) const
+  { return m_constitutiveModels.getGroup< T >( name ); }
 
   /**
    * @copydoc getConstitutiveModel( string const & ) const
    */
   template< typename T = constitutive::ConstitutiveBase >
-  T * getConstitutiveModel( string const & name )
-  {
-    return m_constitutiveModels.getGroup< T >( name );
-  }
+  T & getConstitutiveModel( string const & name )
+  { return m_constitutiveModels.getGroup< T >( name ); }
 
 
   /**
@@ -252,23 +248,22 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-
-    /// String key for the number of nodes per element in this subregion.
-    static constexpr auto numNodesPerElementString = "numNodesPerElement";
-    /// String key for the element-to-node relation
-    static constexpr auto nodeListString           = "nodeList";
-    /// String key for the number of edges per element in this subregion.
-    static constexpr auto numEdgesPerElementString = "numEdgesPerElement";
-    /// String key for the element-to-edge relation
-    static constexpr auto edgeListString           = "edgeList";
-    /// String key for the number of faces per element in this subregion.
-    static constexpr auto numFacesPerElementString = "numFacesPerElement";
-    /// String key for the element-to-face relation
-    static constexpr auto faceListString           = "faceList";
-    /// String key for the member level field for the element center.
-    static constexpr auto elementCenterString      = "elementCenter";
-    /// String key for the member level field for the element volume.
-    static constexpr auto elementVolumeString      = "elementVolume";
+    /// @return String key for the number of nodes per element in this subregion.
+    static constexpr char const * numNodesPerElementString() { return "numNodesPerElement"; }
+    /// @return String key for the element-to-node relation
+    static constexpr char const * nodeListString() { return "nodeList"; }
+    /// @return String key for the number of edges per element in this subregion.
+    static constexpr char const * numEdgesPerElementString() { return "numEdgesPerElement"; }
+    /// @return String key for the element-to-edge relation
+    static constexpr char const * edgeListString() { return "edgeList"; }
+    /// @return String key for the number of faces per element in this subregion.
+    static constexpr char const * numFacesPerElementString() { return "numFacesPerElement"; }
+    /// @return String key for the element-to-face relation
+    static constexpr char const * faceListString() { return "faceList"; }
+    /// @return String key for the member level field for the element center.
+    static constexpr char const * elementCenterString() { return "elementCenter"; }
+    /// @return String key for the member level field for the element volume.
+    static constexpr char const * elementVolumeString() { return "elementVolume"; }
   };
 
   /**
@@ -277,8 +272,8 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    /// String key for the group in which the constitutive models of this subregion are registered.
-    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
+    /// @return String key for the group in which the constitutive models of this subregion are registered.
+    static constexpr auto constitutiveModelsString() { return "ConstitutiveModels"; }
   };
 
 private:

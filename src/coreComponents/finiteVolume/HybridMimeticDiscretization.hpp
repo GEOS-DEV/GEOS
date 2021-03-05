@@ -63,21 +63,24 @@ public:
    */
   struct viewKeyStruct
   {
-    /// The key for coefficientName
-    static constexpr auto coeffNameString        = "coefficientName";
-    /// The key for transMultiplier
-    static constexpr auto transMultiplierString  = "TransMultiplier";
-    /// The key for the type of inner product
-    static constexpr auto innerProductTypeString = "innerProductType";
-    /// The key for the inner product
-    static constexpr auto innerProductString     = "innerProduct";
+    /// @return The key for coefficientName
+    static constexpr char const * coeffNameString() { return "coefficientName"; }
+
+    /// @return The key for transMultiplier
+    static constexpr char const * transMultiplierString() { return "TransMultiplier"; }
+
+    /// @return The key for the type of inner product
+    static constexpr char const * innerProductTypeString() { return "innerProductType"; }
+
+    /// @return The key for the inner product
+    static constexpr char const * innerProductString() { return "innerProduct"; }
   };
 
 protected:
 
-  virtual void registerDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
 

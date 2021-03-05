@@ -206,25 +206,7 @@ public:
 
   /**@}*/
 
-  virtual void initializePreSubGroups( dataRepository::Group * const rootGroup ) override;
-
-  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-  {} viewKeysSinglePhaseFVM;
-
-  viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseFVM; }
-
-  viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseFVM; }
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysSinglePhaseFVM;
-
-  groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseFVM; }
-
-  groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseFVM; }
+  virtual void initializePreSubGroups() override;
 
 private:
 

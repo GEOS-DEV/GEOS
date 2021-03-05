@@ -37,34 +37,48 @@ using namespace geosx;
 
 int main( int argc, char *argv[] )
 {
-  std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
-
-  std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
-
-  std::chrono::system_clock::duration initTime;
-  std::chrono::system_clock::duration runTime;
+  try
   {
-    GeosxState state( std::move( commandLineOptions ) );
+    std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
 
-    bool const problemToRun = state.initializeDataRepository();
-    if( problemToRun )
+    std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
+
+    std::chrono::system_clock::duration initTime;
+    std::chrono::system_clock::duration runTime;
     {
-      state.applyInitialConditions();
-      state.run();
-      LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
+      GeosxState state( std::move( commandLineOptions ) );
+
+      bool const problemToRun = state.initializeDataRepository();
+      if( problemToRun )
+      {
+        state.applyInitialConditions();
+        state.run();
+        LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
+      }
+
+      initTime = state.getInitTime();
+      runTime = state.getRunTime();
     }
 
-    initTime = state.getInitTime();
-    runTime = state.getRunTime();
+    basicCleanup();
+
+    std::chrono::system_clock::duration const totalTime = std::chrono::system_clock::now() - startTime;
+
+    GEOSX_LOG_RANK_0( "total time          " << durationToString( totalTime ) );
+    GEOSX_LOG_RANK_0( "initialization time " << durationToString( initTime ) );
+    GEOSX_LOG_RANK_0( "run time            " << durationToString( runTime ) );
+
+    return 0;
   }
-
-  basicCleanup();
-
-  std::chrono::system_clock::duration const totalTime = std::chrono::system_clock::now() - startTime;
-
-  GEOSX_LOG_RANK_0( "total time          " << durationToString( totalTime ) );
-  GEOSX_LOG_RANK_0( "initialization time " << durationToString( initTime ) );
-  GEOSX_LOG_RANK_0( "run time            " << durationToString( runTime ) );
-
-  return 0;
+  // A NotAnError is thrown if "-h" or "--help" option is used.
+  catch( NotAnError const & )
+  {
+    return 0;
+  }
+  catch( std::exception const & e )
+  {
+    GEOSX_LOG( e.what() );
+    LvArray::system::callErrorHandler();
+    std::abort();
+  }
 }

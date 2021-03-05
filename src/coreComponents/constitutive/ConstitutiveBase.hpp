@@ -94,21 +94,20 @@ public:
 
   /**
    * @brief Allocate constitutive data and make views to data on parent objects
-   * @param[in] parent pointer to the group that holds the constitutive relation
+   * @param[in] parent reference to the group that holds the constitutive relation
    * @param[in] numConstitutivePointsPerParentIndex number of quadrature points
    *
    * This function does 2 things:
    *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
   {
-    static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
-    static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
-
+    static constexpr char const * poreVolumeMultiplierString() { return "poreVolumeMultiplier"; }
+    static constexpr char const * dPVMult_dPresString() { return "dPVMult_dDensity"; }
   };
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
