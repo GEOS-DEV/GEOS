@@ -832,9 +832,9 @@ the relative residual norm satisfies:
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
-		<!--plotFileRoot => (no description available)-->
-		<xsd:attribute name="plotFileRoot" type="string" default="" />
-		<!--plotLevel => (no description available)-->
+		<!--plotFileRoot => Name of the root file for this output.-->
+		<xsd:attribute name="plotFileRoot" type="string" default="VTK" />
+		<!--plotLevel => Level detail plot. Only fields with lower of equal plot level will be output.-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
 		<!--writeBinaryData => Output the data in binary format-->
 		<xsd:attribute name="writeBinaryData" type="integer" default="1" />

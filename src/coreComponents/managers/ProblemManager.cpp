@@ -191,11 +191,8 @@ void ProblemManager::parseCommandLineInput()
 
   if( schemaName.empty())
   {
-    getAbsolutePath( inputFileName, inputFileName );
-    string xmlFolder;
-    string notUsed;
-    splitPath( inputFileName, xmlFolder, notUsed );
-    Path::pathPrefix() = xmlFolder;
+    inputFileName = getAbsolutePath( inputFileName );
+    Path::pathPrefix() = splitPath( inputFileName ).first;
   }
 
   if( opts.suppressMoveLogging )
@@ -212,20 +209,18 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
 
   if( beginFromRestart == 1 )
   {
-    string dirname;
-    string basename;
-    splitPath( restartFileName, dirname, basename );
+    string dirname, basename;
+    std::tie( dirname, basename ) = splitPath( restartFileName );
 
-    std::vector< string > dir_contents;
-    readDirectory( dirname, dir_contents );
+    std::vector< string > dir_contents = readDirectory( dirname );
 
-    GEOSX_THROW_IF( dir_contents.size() == 0,
+    GEOSX_THROW_IF( dir_contents.empty(),
                     "Directory gotten from " << restartFileName << " " << dirname << " is empty.",
                     InputError );
 
     std::regex basename_regex( basename );
 
-    string min_str( "" );
+    string min_str;
     string & max_match = min_str;
     bool match_found = false;
     for( string & s : dir_contents )
@@ -241,8 +236,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
                     "No matches found for pattern " << basename << " in directory " << dirname << ".",
                     InputError );
 
-    restartFileName = dirname + "/" + max_match;
-    getAbsolutePath( restartFileName, restartFileName );
+    restartFileName = getAbsolutePath( dirname + "/" + max_match );
   }
 
   return beginFromRestart;

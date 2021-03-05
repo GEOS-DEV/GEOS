@@ -214,7 +214,7 @@ void SchemaConstruction( Group & group,
             std::set< string > const & registrars = wrapper.getRegisteringObjects();
             if( !registrars.empty() )
             {
-              commentString += " => " + stringutilities::strjoin( registrars.begin(), registrars.end(), ", " );
+              commentString += " => " + stringutilities::join( registrars.begin(), registrars.end(), ", " );
             }
 
             xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );

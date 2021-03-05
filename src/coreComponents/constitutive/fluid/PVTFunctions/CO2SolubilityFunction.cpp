@@ -180,7 +180,7 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
 
-    if( streq( componentNames[i], "CO2" ) || streq( componentNames[i], "co2" ))
+    if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
     {
       m_CO2Index = i;
       notFound = 0;
@@ -196,7 +196,7 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
 
-    if( streq( componentNames[i], "Water" ) || streq( componentNames[i], "water" ))
+    if( componentNames[i] == "Water" || componentNames[i] == "water" )
     {
       m_waterIndex = i;
       notFound = 0;
@@ -213,7 +213,7 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
   for( localIndex i = 0; i < phaseNames.size(); ++i )
   {
 
-    if( streq( phaseNames[i], "CO2" ) || streq( phaseNames[i], "co2" ) || streq( phaseNames[i], "gas" ) || streq( phaseNames[i], "Gas" ))
+    if( phaseNames[i] == "CO2" || phaseNames[i] == "co2" || phaseNames[i] == "gas" || phaseNames[i] == "Gas" )
     {
       m_phaseGasIndex = i;
       notFound = 0;
@@ -229,7 +229,7 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
   for( localIndex i = 0; i < phaseNames.size(); ++i )
   {
 
-    if( streq( phaseNames[i], "Water" ) || streq( phaseNames[i], "water" ) || streq( phaseNames[i], "Liquid" ) || streq( phaseNames[i], "liquid" ))
+    if( phaseNames[i] == "Water" || phaseNames[i] == "water" || phaseNames[i] == "Liquid" || phaseNames[i] == "liquid" )
     {
       m_phaseLiquidIndex = i;
       notFound = 0;

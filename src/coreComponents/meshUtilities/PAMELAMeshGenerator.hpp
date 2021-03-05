@@ -156,7 +156,7 @@ public:
      */
     static string retrieveSurfaceOrRegionName( string const & pamelaLabel )
     {
-      string_array const splitLabel = stringutilities::Tokenize( pamelaLabel, m_separator );
+      string_array const splitLabel = stringutilities::tokenize( pamelaLabel, m_separator );
       return splitLabel[splitLabel.size() -2 ];
     }
 private:

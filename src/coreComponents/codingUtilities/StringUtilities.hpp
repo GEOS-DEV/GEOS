@@ -19,36 +19,15 @@
 #ifndef GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 #define GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 
-#include <algorithm>
-#include <cstring>
-#include <cxxabi.h>
 #include <iomanip>
-#include <map>
-#include <memory>
 #include <sstream>
 
-
 #include "common/DataTypes.hpp"
-#include "LvArray/src/limits.hpp"
 
 namespace geosx
 {
 namespace stringutilities
 {
-
-/// Overloaded function to check equality between strings and char arrays
-/// Mainly used to avoid char*==char* mistakes
-inline bool streq( string const & strA, string const & strB )
-{ return strA == strB; }
-
-inline bool streq( string const & strA, char const * const strB )
-{ return strA == strB; }
-
-inline bool streq( char const * const strA, string const & strB )
-{ return strA == strB; }
-
-inline bool streq( char const * const strA, char const * const strB )
-{ return !strcmp( strA, strB ); }
 
 /**
  * @brief Return a copy of the string in lower case.
@@ -67,7 +46,7 @@ string toLower( string const & input );
  * @return a new string containing input strings concatenated with a delimiter
  */
 template< typename IT, typename S = char >
-string strjoin( IT first, IT last, S const & delim = S() )
+string join( IT first, IT last, S const & delim = S())
 {
   std::ostringstream oss;
   if( first != last )
@@ -82,7 +61,7 @@ string strjoin( IT first, IT last, S const & delim = S() )
 }
 
 /// Subdivide string by delimiters
-string_array Tokenize( string const & str, string const & delimiters );
+string_array tokenize( string const & str, string const & delimiters );
 
 /**
  * @brief Retuns a string containing a padded value
@@ -90,13 +69,14 @@ string_array Tokenize( string const & str, string const & delimiters );
  * @param[in] size size of the padding
  */
 template< typename T >
-string PadValue( T value, int size )
+string padValue( T value, int size )
 {
   std::stringstream paddedStringStream;
   paddedStringStream << std::setfill( '0' ) << std::setw( size ) << value;
   return paddedStringStream.str();
 }
-}
-}
+
+} // namespace stringutilities
+} // namespace geosx
 
 #endif /* GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_ */

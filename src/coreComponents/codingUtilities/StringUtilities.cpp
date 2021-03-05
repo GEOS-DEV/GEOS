@@ -17,9 +17,6 @@
  */
 
 #include "codingUtilities/StringUtilities.hpp"
-//#include "codingUtilities/UnitManager.h"
-
-#include <stdarg.h>
 
 namespace geosx
 {
@@ -38,7 +35,7 @@ string toLower( string const & input )
 /**
  * String tokenizing function
  **/
-string_array Tokenize( const string & str, const string & delimiters )
+string_array tokenize( const string & str, const string & delimiters )
 {
   string_array tokens;
 

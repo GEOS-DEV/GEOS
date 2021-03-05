@@ -33,7 +33,7 @@ public:
    * @brief Build the VTM Writer
    * @param[in] filePath path to the file
    */
-  VTKVTMWriter( string const & filePath );
+  explicit VTKVTMWriter( string filePath );
 
   /*!
    * @brief Triggers the file output

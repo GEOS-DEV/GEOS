@@ -32,10 +32,16 @@ class VTKPVDWriter
 {
 public:
   /*!
-   * @brief Writer for PVD file
-   * @param[in] fileName the file name with the extension
+   * @brief Constructor
+   * @param[in] fileName the file name (with extension)
    */
-  VTKPVDWriter( string const & fileName );
+  explicit VTKPVDWriter( string fileName );
+
+  /*!
+   * @brief Set the output file name
+   * @param fileName the file name (with extension)
+   */
+  void setFileName( string fileName );
 
   /*!
    * @brief Triggers the file output
@@ -48,13 +54,14 @@ public:
    * @param[in] filePath path to the file associated with the time-step
    */
   void addData( real64 time, string const & filePath ) const;
+
 private:
 
   /// PVD XML file
   xmlWrapper::xmlDocument m_pvdFile;
 
   /// Name of the XML File
-  string const m_fileName;
+  string m_fileName;
 };
 }
 }
