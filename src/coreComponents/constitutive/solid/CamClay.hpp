@@ -171,25 +171,25 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 eps_s_trial;
   real64 eps_v_trial;
 
-    for(localIndex i=0; i<6; ++i)
-    {
-      stress[i] = m_oldStress[k][q][i];
-    }
-    
+  for( localIndex i=0; i<6; ++i )
+  {
+    stress[i] = m_oldStress[k][q][i];
+  }
+
   twoInvariant::stressDecomposition( stress,
                                      oldP,
                                      oldQ,
                                      oldDeviator );
 //**************** TO DO ***************************************
-    // TODO: Stress initialization needs to done outside of CamClay
-    
-    if (std::abs(oldP) < 1e-15)
-    {
-      oldP=p0;
-        stress[0] = p0; stress[1] = p0; stress[2] = p0;
-    }
+// TODO: Stress initialization needs to done outside of CamClay
+
+  if( std::abs( oldP ) < 1e-15 )
+  {
+    oldP=p0;
+    stress[0] = p0; stress[1] = p0; stress[2] = p0;
+  }
 //***************************************************************
-    
+
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
@@ -264,7 +264,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   if( yield < 1e-9 ) // elasticity
   {
 //    std::cout << "elastic" <<  "\n " << std::endl;
-      saveStress( k, q, stress );
+    saveStress( k, q, stress );
     return;
   }
 
