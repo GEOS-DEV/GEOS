@@ -301,14 +301,14 @@ void HyprePreconditioner::createAMG()
 
   /// TODO Why does this cause a crash?
 #if !defined(GEOSX_USE_HYPRE_CUDA)
-     // Set coarsest level solver
-     // (by default for coarsest grid size above 5,000 superlu_dist is used)
-     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetDSLUThreshold( m_precond, 5000 ) );
+  // Set coarsest level solver
+  // (by default for coarsest grid size above 5,000 superlu_dist is used)
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetDSLUThreshold( m_precond, 5000 ) );
 #endif
-     if( m_parameters.amg.coarseType == "direct" )
-     {
-       GEOSX_LAI_CHECK_ERROR( hypre_BoomerAMGSetCycleRelaxType( m_precond, 9, 3 ) );
-     }
+  if( m_parameters.amg.coarseType == "direct" )
+  {
+    GEOSX_LAI_CHECK_ERROR( hypre_BoomerAMGSetCycleRelaxType( m_precond, 9, 3 ) );
+  }
 
   // Set the number of sweeps
   if( m_parameters.amg.preOrPostSmoothing == "both" )
