@@ -182,7 +182,6 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-clang8.0.0-cuda10.1.243
     - CMAKE_BUILD_TYPE=Debug
-    - ENABLE_HYPRE="OFF"
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --build-exe-only"
   - stage: builds
     name: Centos7.6_gcc8.3.1_cuda10.1.243_release
@@ -190,7 +189,6 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
-    - ENABLE_HYPRE="OFF"
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
   - stage: builds
     name: Pangea2_gcc8.3.0_release
