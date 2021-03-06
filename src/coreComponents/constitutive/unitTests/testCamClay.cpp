@@ -109,27 +109,16 @@ void testCamClayDriver()
   CamClay::KernelWrapper cmw = cm.createKernelUpdates();
 
   StrainData data;
-  //data.strainIncrement[0] = -1e-4;
-  real64 inc = -1e-4;
+  real64 inc = -1e-3;
     real64 total = 0;
     data.strainIncrement[0] = inc;
-    data.strainIncrement[1] = inc;
-    data.strainIncrement[2] = inc;
+    data.strainIncrement[1] = 0;
+    data.strainIncrement[2] = 0;
     data.strainIncrement[3] = 0;
     data.strainIncrement[4] = 0;
     data.strainIncrement[5] = 0;
     
-    //cmw.smallStrainUpdate( k, 0, data.strainIncrement, stress, stiffness );
-    
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      real64 stress[6] = {-10,-10,-10,0,0,0};
-      cmw.saveState( k, 0, stress );
-        
-    } );
-    cm.saveConvergedState();
-    
-    
+  
   for( localIndex loadstep=0; loadstep < 50; ++loadstep )
   {
     forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -142,6 +131,8 @@ void testCamClayDriver()
       total = loadstep;
   }
 
+    
+    
   real64 stress[6] = {0};
   getStress( cmw, stress );
 
@@ -158,11 +149,15 @@ void testCamClayDriver()
 
   //real64 phi = friction * M_PI / 180;
   //real64 slope = -6 * sin( phi ) / ( 3 - sin( phi ) );
-    std::cout << invariantP << " " << invariantQ << " " << total << std::endl;
+  //std::cout << invariantP << " " << invariantQ << " " << total << std::endl;
+    
+
+    
   //EXPECT_TRUE( fabs( invariantQ / invariantP / slope - 1 ) < 1e-8 );
 
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
+    
   cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement,true) ;
 
   EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );

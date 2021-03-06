@@ -90,7 +90,7 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
-  using ElasticIsotropicUpdates::saveStress;
+  //using ElasticIsotropicUpdates::saveStress;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -171,13 +171,25 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 eps_s_trial;
   real64 eps_v_trial;
 
+    for(localIndex i=0; i<6; ++i)
+    {
+      stress[i] = m_oldStress[k][q][i];
+    }
+    
   twoInvariant::stressDecomposition( stress,
                                      oldP,
                                      oldQ,
                                      oldDeviator );
-
-
-
+//**************** TO DO ***************************************
+    // TODO: Stress initialization needs to done outside of CamClay
+    
+    if (std::abs(oldP) < 1e-15)
+    {
+      oldP=p0;
+        stress[0] = p0; stress[1] = p0; stress[2] = p0;
+    }
+//***************************************************************
+    
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
@@ -193,7 +205,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
                                      oldStrainElastic );
 
   // elastic predictor (assume strainIncrement is all elastic)
-  // TODO: define ElasticIsotropicPressureUpdates to call here
+  // TODO: define ElasticIsotropicPressureUpdates to call here, similar to the line below
   //ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
   for( localIndex i=0; i<6; ++i )
@@ -251,13 +263,13 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   if( yield < 1e-9 ) // elasticity
   {
-      std::cout << "elastic" <<  "\n " << std::endl;
-
+//    std::cout << "elastic" <<  "\n " << std::endl;
+      saveStress( k, q, stress );
     return;
   }
 
-  // else, plasticity (trial stress point lies outside yield surface)
-  std::cout << "plastic " <<  "\n " << std::endl;
+// else, plasticity (trial stress point lies outside yield surface)
+//   std::cout << "plastic " <<  "\n " << std::endl;
 
 
   real64 solution[3], residual[3], delta[3];
