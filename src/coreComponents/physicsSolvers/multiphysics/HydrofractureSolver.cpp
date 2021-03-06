@@ -132,18 +132,20 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                              real64 const & dt,
                                              DomainPartition & domain )
 {
+/*
   SortedArray<localIndex> const & tipNodes = m_surfaceGeneratorSolver->getTipNodes();
   for (localIndex tipNode : tipNodes)
   {
     std::cout << "tipNode " << tipNode << std::endl;
   }
+*/
 
   // In the beginning of the whole simulation, we need to do something
   // special
   if (time_n < 1.0e-9)
   {
-    std::cout << "In the beginning of the simulation, we need to something "
-              << "special in the ImplicitStepSetup." << std::endl;
+    //std::cout << "In the beginning of the simulation, we need to something "
+    //          << "special in the ImplicitStepSetup." << std::endl;
     UpdateDeformationForCoupling( domain, true, true, true );
   }
   else
@@ -176,8 +178,8 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
       {
         signedNodeDistance0[i] = signedNodeDistance[i];
       }
-      std::cout << signedNodeDistance.size() << std::endl;
-      std::cout << signedNodeDistance0.size() << std::endl;
+      //std::cout << signedNodeDistance.size() << std::endl;
+      //std::cout << signedNodeDistance0.size() << std::endl;
     }
   }
 
@@ -209,6 +211,7 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const & time_n,
 {
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+  FinalizedSignedDistance( domain );
 }
 
 void HydrofractureSolver::PostProcessInput()
@@ -286,7 +289,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
   array1d<real64> & signedNodeDistance = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
   array1d<real64> & signedNodeDistance0 = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance0 >();
   array2d<real64, nodes::TOTAL_DISPLACEMENT_PERM> const & totalDisplacement = nodeManager->totalDisplacement();
-  array2d<real64, nodes::INCR_DISPLACEMENT_PERM>  const & incrementalDisplacement = nodeManager->incrementalDisplacement();
+  //array2d<real64, nodes::INCR_DISPLACEMENT_PERM>  const & incrementalDisplacement = nodeManager->incrementalDisplacement();
   array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
 
   elementRegionManager->forElementSubRegions<FaceElementSubRegion>( [&] (FaceElementSubRegion & subRegion)
@@ -369,11 +372,12 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                                                            << faceElmtToFacesRelation[iFaceElmt][1] << std::endl;
 */
     } // for iFaceElmt < subRegion.size()
-    std::cout << "Fully opened face element size: " << fullyOpenFaceElmts.size() << std::endl;
-    std::cout << "Partially opened face element size: " << partiallyOpenFaceElmts.size() << std::endl;
+    //std::cout << "Fully opened face element size: " << fullyOpenFaceElmts.size() << std::endl;
+    //std::cout << "Partially opened face element size: " << partiallyOpenFaceElmts.size() << std::endl;
 
     if (isCalculateOpening)
     {
+/*
       // first, change the signed distance at nodes belonging to the fully
       // opened elements in -1.0e99
       for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
@@ -393,8 +397,8 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
           }
         }
       }
-
-      // then, apply the tip asymptotic solution to nodes belonging to the
+*/
+      // only apply the tip asymptotic solution to nodes belonging to the
       // partially opened elements
       for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
       {
@@ -422,8 +426,13 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
               else if (m_regimeTypeOption == RegimeTypeOption::ViscosityDominated)
               {
                 real64 const betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
-                real64 const b = Eprime/mup * dt * pow(openingMag/betam, 3.0);
-                GEOSX_ERROR_IF_LE(b, 0.0);
+                real64 b = Eprime/mup * dt * pow(openingMag/betam, 3.0);
+                //GEOSX_ERROR_IF_LE(b, 0.0);
+                if (b <= 0.0)
+                {
+                  std::cout << "Warning: negative opening = " << openingMag << std::endl;
+                  b = -b;
+                }
 
                 // the location of the node that is under split
                 real64 const nodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[parentNode] );
@@ -448,8 +457,8 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                     }
                   }
                 }
-                std::cout << "The previous signed distance of node " << parentNode << " is "
-                          << nodeF0 << std::endl;
+                //std::cout << "The previous signed distance of node " << parentNode << " is "
+                //          << nodeF0 << std::endl;
 
                 real64 const d = b * ( b - 4.0 * pow(nodeF0/3.0, 3) );
                 real64 const c = b - 2.0 * pow(nodeF0/3.0, 3);
@@ -476,7 +485,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                 }
 
                 GEOSX_ERROR_IF_GE(nodeF, 0.0);
-                GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-6);
+                GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-4);
                 signedNodeDistance[parentNode] = nodeF;
               }
               else
@@ -485,6 +494,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
               }
 
               signedNodeDistance[childNode] = signedNodeDistance[parentNode];
+/*
               std::cout << "Parent node " << parentNode
                         << ": coords = " << referencePosition(parentNode, 0) << ", "
                                          << referencePosition(parentNode, 1) << ", "
@@ -514,6 +524,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                                                 << incrementalDisplacement(childNode, 2) << std::endl;
               std::cout << "Child node " << childNode
                         << ": signed dist = " << signedNodeDistance[childNode] << std::endl;
+*/
             } // if (childNode >= 0)
           } // for (localIndex const parentNode : faceToNodes[parentFace])
         } // if (isFaceElmtPartiallyOpen[iFaceElmt])
@@ -620,6 +631,198 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
       CalculatePartiallyOpenElmtQuantities(domain, subRegion, partiallyOpenFaceElmts, Eprime, Kprime, mup, dt);
     }
 
+  } );
+}
+
+void HydrofractureSolver::FinalizedSignedDistance( DomainPartition & domain)
+{
+  Group * myProblem = domain.getParent();
+  EventManager * const myEventManager = myProblem->GetGroup<EventManager>("Events");
+  real64 dt = myEventManager->getReference<real64>(EventManager::viewKeyStruct::dtString);
+
+  MeshLevel * const meshLevel = domain.getMeshBody(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  FaceManager::NodeMapType const & faceToNodes = faceManager->nodeList();
+  array2d<real64> const & faceNormal = faceManager->faceNormal();
+  ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
+
+  array1d<localIndex> const & childNodeIndices = nodeManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  array1d<localIndex> const & childFaceIndices = faceManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+
+  array1d<real64> & signedNodeDistance = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
+  array1d<real64> & signedNodeDistance0 = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance0 >();
+  array2d<real64, nodes::TOTAL_DISPLACEMENT_PERM> const & totalDisplacement = nodeManager->totalDisplacement();
+  array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
+
+  SortedArray<localIndex> const & tipNodes = m_surfaceGeneratorSolver->getTipNodes();
+
+  elementRegionManager->forElementSubRegions<FaceElementSubRegion>( [&] (FaceElementSubRegion & subRegion)
+  {
+    // Get the shear modulus and bulk modulus from the constitutive model of
+    // the solid material. These two material properties are needed for the
+    // tip asymptotic relation
+    Group const * const constitutiveModels = subRegion.GetConstitutiveModels();
+    real64 shearModulus;
+    real64 bulkModulus;
+    constitutiveModels->forSubGroups<LinearElasticIsotropic>( [&shearModulus, &bulkModulus]
+                                                              (LinearElasticIsotropic const & solidModel)
+    {
+      shearModulus = solidModel.getReference<real64>
+                                (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
+      bulkModulus = solidModel.getReference<real64>
+                                (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
+    } );
+
+    real64 viscosity;
+    constitutiveModels->forSubGroups<SingleFluidBase>( [&viscosity]
+                                                       (SingleFluidBase const & fluidModel)
+    {
+      viscosity = fluidModel.defaultViscosity();
+    } );
+
+    real64 const toughness = m_surfaceGeneratorSolver->getReference<real64>("rockToughness");
+    real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+    real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+    real64 const Eprime = E/(1.0-nu*nu);
+    real64 const PI = 2 * acos(0.0);
+    real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+    real64 const mup = 12.0 * viscosity;
+
+    FaceElementSubRegion::FaceMapType const & faceElmtToFacesRelation = subRegion.faceList();
+    arrayView1d< integer const> const & isFaceElmtPartiallyOpen = subRegion.getExtrinsicData< extrinsicMeshData::IsFaceElmtPartiallyOpen >();
+
+    // first, change the signed distance at nodes belonging to the fully
+    // opened elements in -1.0e99
+    for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
+    {
+      if (!isFaceElmtPartiallyOpen[iFaceElmt])
+      {
+        localIndex const kf0 = faceElmtToFacesRelation[iFaceElmt][0];
+        localIndex const kf1 = faceElmtToFacesRelation[iFaceElmt][1];
+        localIndex const childFaceOfFace0 = childFaceIndices[kf0];
+        localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+
+        for (localIndex const parentNode : faceToNodes[parentFace])
+        {
+          real64 const nodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[parentNode] );
+          real64 nodeDistance = 1.0e99;
+
+          for (localIndex const tipNode : tipNodes)
+          {
+            real64 tipNodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[tipNode] );
+            LvArray::tensorOps::subtract< 3 >( tipNodeLoc, nodeLoc );
+            GEOSX_ERROR_IF_LE(signedNodeDistance[tipNode], 0.0);
+            nodeDistance = std::min(nodeDistance,
+                                    LvArray::tensorOps::l2Norm< 3 >( tipNodeLoc ) - signedNodeDistance[tipNode]);
+          }
+          signedNodeDistance[parentNode] = -nodeDistance;
+          localIndex const childNode = childNodeIndices[parentNode];
+          signedNodeDistance[childNode] = signedNodeDistance[parentNode];
+        }
+      }
+    }
+
+    // then, apply the tip asymptotic solution to nodes belonging to the
+    // partially opened elements
+    for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
+    {
+      if (isFaceElmtPartiallyOpen[iFaceElmt])
+      {
+        localIndex const kf0 = faceElmtToFacesRelation[iFaceElmt][0];
+        localIndex const kf1 = faceElmtToFacesRelation[iFaceElmt][1];
+        localIndex const childFaceOfFace0 = childFaceIndices[kf0];
+        localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+
+        for (localIndex const parentNode : faceToNodes[parentFace])
+        {
+          localIndex const childNode = childNodeIndices[parentNode];
+          if (childNode >= 0)
+          {
+            real64 opening[3] = {0.0, 0.0, 0.0};
+            LvArray::tensorOps::add< 3 >( opening, totalDisplacement[parentNode] );
+            LvArray::tensorOps::subtract< 3 >( opening, totalDisplacement[childNode] );
+            real64 const openingMag = -LvArray::tensorOps::AiBi< 3 >( opening, faceNormal[parentFace] );
+
+            if (m_regimeTypeOption == RegimeTypeOption::ToughnessDominated)
+            {
+              signedNodeDistance[parentNode] = -pow(openingMag*Eprime/Kprime, 2);
+            }
+            else if (m_regimeTypeOption == RegimeTypeOption::ViscosityDominated)
+            {
+              real64 const betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+              real64 b = Eprime/mup * dt * pow(openingMag/betam, 3.0);
+              //GEOSX_ERROR_IF_LE(b, 0.0);
+              if (b <= 0.0)
+              {
+                std::cout << "Warning: negative opening = " << openingMag << std::endl;
+                b = -b;
+              }
+
+              // the location of the node that is under split
+              real64 const nodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[parentNode] );
+              // the signed distance for the current node at the previous time step
+              real64 nodeF0 = 1.0e99;
+
+              if (signedNodeDistance0[parentNode] < 0.0)
+              {
+                nodeF0 = signedNodeDistance0[parentNode];
+              }
+              else
+              {
+                // loop over all the nodes to find the previous signed distance for the current node
+                for (localIndex iNode = 0 ; iNode < signedNodeDistance0.size(); iNode++)
+                {
+                  if ((signedNodeDistance0[iNode] >= 0) && (signedNodeDistance0[iNode] < 1.0e98))
+                  {
+                    real64 tipNodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[iNode] );
+                    LvArray::tensorOps::subtract< 3 >( tipNodeLoc, nodeLoc );
+                    nodeF0 = std::min(nodeF0,
+                                      LvArray::tensorOps::l2Norm< 3 >( tipNodeLoc ) + signedNodeDistance0[iNode]);
+                  }
+                }
+              }
+              //std::cout << "The previous signed distance of node " << parentNode << " is "
+              //          << nodeF0 << std::endl;
+
+              real64 const d = b * ( b - 4.0 * pow(nodeF0/3.0, 3) );
+              real64 const c = b - 2.0 * pow(nodeF0/3.0, 3);
+              real64 nodeF; // the unknown in the cubic equation
+              if (d > 0.0)
+              {
+                nodeF = nodeF0/3.0 - pow(c/2.0 - sqrt(d)/2.0, 1.0/3.0)
+                                   - pow(c/2.0 + sqrt(d)/2.0, 1.0/3.0);
+              }
+              else
+              {
+                // the arange of atan is [-pi/2, pi/2]
+                // theta is from 0 to pi
+                real64 theta;
+                if (c < 0.0)
+                {
+                  theta = atan(-sqrt(-d)/c);
+                }
+                else
+                {
+                  theta = atan(-sqrt(-d)/c) + PI;
+                }
+                nodeF = nodeF0/3.0 - 2.0 * std::abs(nodeF0)/3.0 * sin(theta/3.0 + PI/6.0);
+              }
+
+              GEOSX_ERROR_IF_GE(nodeF, 0.0);
+              GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-4);
+              signedNodeDistance[parentNode] = nodeF;
+            }
+            else
+            {
+              GEOSX_ERROR("Unknown propagation regime.");
+            }
+
+            signedNodeDistance[childNode] = signedNodeDistance[parentNode];
+          } // if (childNode >= 0)
+        } // for (localIndex const parentNode : faceToNodes[parentFace])
+      } // if (isFaceElmtPartiallyOpen[iFaceElmt])
+    } // for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
   } );
 }
 
@@ -1181,7 +1384,7 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
         cornerNodeIndex = parentNode;
       }
     }
-    std::cout << "corner node " << cornerNodeIndex << " => " << cornerNodeSignedDistance << std::endl;
+    //std::cout << "corner node " << cornerNodeIndex << " => " << cornerNodeSignedDistance << std::endl;
 
     real64 const nodeF = cornerNodeSignedDistance;
     // the location of the node that is under split
@@ -1213,9 +1416,11 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
         cornerNodeNeighbors.push_back(neighborNode);
       }
     }
+/*
     std::cout << "corner node neighbor size = " << cornerNodeNeighbors.size()
               << " : " << cornerNodeNeighbors[0]
               << " , " << cornerNodeNeighbors[1] << std::endl;
+*/
 
     real64 const dist0 = signedNodeDistance[cornerNodeNeighbors[0]];
     real64 const dist1 = signedNodeDistance[cornerNodeNeighbors[1]];
@@ -1246,7 +1451,7 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
       real64 gamma = (dist0 - dist1)/diag;
       if (std::abs(gamma) > 1.0)
       {
-        std::cout << "gamma = " << gamma << std::endl;
+        //std::cout << "gamma = " << gamma << std::endl;
         alpha = PI;
         //GEOSX_ERROR("no valid asin() value.");
       }
@@ -1255,7 +1460,7 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
         alpha = PI/2.0 - theta - asin(gamma);
       }
     }
-    std::cout << alpha << std::endl;
+    //std::cout << alpha << std::endl;
 
     bool alphaModified = false;
 
@@ -1319,10 +1524,11 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
     {
       GEOSX_ERROR("Unknown propagation regime.");
     }
-
+/*
     std::cout << "Face elmt " << faceElmt << " partial fluid vol = "
               << partiallyOpenFaceElmtFluidVol[faceElmt] << ", "
               << partiallyOpenFaceElmtArea[faceElmt]<< std::endl;
+*/
   }
 
 }
@@ -1343,7 +1549,7 @@ void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
   EdgeManager::NodeMapType const & edgeToNodes = edgeManager->nodeList();
   array1d<localIndex> const & childFaceIndices = faceManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
   FaceElementSubRegion::FaceMapType const & faceElmtToFacesRelation = subRegion.faceList();
-  FaceElementSubRegion::NodeMapType const & faceElmtToNodesRelation = subRegion.nodeList();
+  //FaceElementSubRegion::NodeMapType const & faceElmtToNodesRelation = subRegion.nodeList();
 
   // a set to store all the nodes located on the parent face of the partially opened
   // face element, some of these nodes are frozen with known signed distance as B.C. for
@@ -1368,11 +1574,13 @@ void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
     {
       allNodeSet.insert(parentNode);
     }
+/*
     std::cout << "Face Elmt " << faceElmt << " :" << std::endl;
     for (localIndex const node : faceElmtToNodesRelation[faceElmt])
     {
       std::cout << "Node " << node << " : " << signedNodeDistance[node] << std::endl;
     }
+*/
   } // for faceElmt : partiallyOpenFaceElmts
 
   // an unordered map to store the node status:
@@ -1612,7 +1820,7 @@ void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
       }
     } // if (narrowBandNodeSet.erase(minEntry.first))
   } // while(!narrowBandNodeSet.empty())
-
+/*
   std::cout << "After Eikonal solver: " << std::endl;
   for (localIndex const faceElmt : partiallyOpenFaceElmts)
   {
@@ -1622,7 +1830,7 @@ void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
       std::cout << "Node " << node << " : " << signedNodeDistance[node] << std::endl;
     }
   } // for faceElmt : partiallyOpenFaceElmts
-
+*/
 
 /*
   std::unordered_map<localIndex, std::pair<real64, localIndex>> dict;
@@ -1868,12 +2076,12 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
       {
         aperture[kfe] = partiallyOpenFaceElmtFluidVol[kfe]/partiallyOpenFaceElmtArea[kfe];
         effectiveAperture[kfe] = aperture[kfe];
-        std::cout << partiallyOpenFaceElmtFluidVol.size() <<
-                     partiallyOpenFaceElmtArea.size() << std::endl;
+        //std::cout << partiallyOpenFaceElmtFluidVol.size() <<
+        //             partiallyOpenFaceElmtArea.size() << std::endl;
       }
 
-      std::cout << "FaceElmt " << kfe << " aperture = " << aperture[kfe] << std::endl;
-      std::cout << "FaceElmt " << kfe << " dVol = " << deltaVolume[kfe] << std::endl;
+      //std::cout << "FaceElmt " << kfe << " aperture = " << aperture[kfe] << std::endl;
+      //std::cout << "FaceElmt " << kfe << " dVol = " << deltaVolume[kfe] << std::endl;
     } );
 
 //#if defined(USE_CUDA)
@@ -2471,7 +2679,7 @@ HydrofractureSolver::
 
     arrayView2d< real64 const > const dens = fluid.density();
 
-    arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
+    //arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
 
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();

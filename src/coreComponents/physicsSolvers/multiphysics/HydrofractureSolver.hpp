@@ -94,6 +94,8 @@ public:
                                     bool isCalculateEikonal,
                                     bool isCalculateGeometry);
 
+  void FinalizedSignedDistance( DomainPartition & domain);
+
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,

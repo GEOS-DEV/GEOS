@@ -1059,8 +1059,8 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                   LvArray::tensorOps::l2Norm< 3 >( tipNodeLoc ) + signedNodeDistance0[iNode]);
               }
             }
-            std::cout << "The previous signed distance of node " << nodeID << " is "
-                      << nodeF0 << std::endl;
+            //std::cout << "The previous signed distance of node " << nodeID << " is "
+            //          << nodeF0 << std::endl;
 
             real64 const velocity = (nodeF0 - nodeF)/dt;
             real64 const betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
@@ -1086,7 +1086,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
             break;
           }
         } // the signed distance is negative
-
+/*
         std::cout << "Parent node " << nodeID
                   << ": coords = " << referencePosition(nodeID, 0) << ", "
                                    << referencePosition(nodeID, 1) << ", "
@@ -1116,6 +1116,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                         << incrementalDisplacement(childNodeID, 2) << std::endl;
         std::cout << "Child node " << childNodeID
                   << ": signed dist = " << signedNodeDistance[childNodeID] << std::endl;
+*/
       } // m_nodeBasedSIF == 2
     }
   }
@@ -2994,7 +2995,8 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition & domain,
     array1d<real64> & signedNodeDistance = nodeManager.getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
     for( auto nodeIndex: m_tipNodes )
     {
-      std::cout << nodeIndex << ": " << signedNodeDistance[nodeIndex] << std::endl;
+      std::cout << "Node " << nodeIndex
+                << " signed distance = " << signedNodeDistance[nodeIndex] << std::endl;
       // the signed distance of the node is negative, meaning this node is behind
       // the fracture tip front
       if (signedNodeDistance[nodeIndex] < 0)
