@@ -425,7 +425,7 @@ if(DEFINED HYPRE_DIR)
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS blas lapack superlu_dist)
 
-    set(ENABLE_HYPRE ON CACHE BOOL "" FORCE)
+    set(ENABLE_HYPRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hypre)
 else()
     if(ENABLE_HYPRE)
