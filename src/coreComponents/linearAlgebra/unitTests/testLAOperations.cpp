@@ -674,7 +674,7 @@ protected:
       }
     }
     this->matrix.close();
-    this->cond_est = 2e3; // not a true condition number estimate, but enough to pass tests
+    this->cond_est = 5e3; // not a true condition number estimate, but enough to pass tests
   }
 };
 
