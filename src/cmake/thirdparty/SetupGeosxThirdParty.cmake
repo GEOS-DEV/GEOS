@@ -427,6 +427,7 @@ if(DEFINED HYPRE_DIR)
 
     if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
       set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )
+      set( GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "Linear algebra interface to use in solvers" FORCE )
     else()
       set(ENABLE_HYPRE ON CACHE BOOL "")
     endif()
