@@ -239,6 +239,75 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition & domain 
 {
   m_flowSolver->ResetStateToBeginningOfStep( domain );
   m_solidSolver->ResetStateToBeginningOfStep( domain );
+
+
+  // reset the initial guess for newly split nodes
+  Group * myProblem = domain.getParent();
+  EventManager * const myEventManager = myProblem->GetGroup<EventManager>("Events");
+  real64 time_n = myEventManager->getReference<real64>(EventManager::viewKeyStruct::timeString);
+
+  MeshLevel * const meshLevel = domain.getMeshBody(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  array1d<localIndex> const & childNodeIndices = nodeManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  array2d<real64, nodes::TOTAL_DISPLACEMENT_PERM> const & totalDisplacement = nodeManager->totalDisplacement();
+  array2d<real64, nodes::INCR_DISPLACEMENT_PERM>  const & incrementalDisplacement = nodeManager->incrementalDisplacement();
+  arrayView2d< real64 const > faceNormal = faceManager->faceNormal();
+  array1d<localIndex> const & childFaceIndices = faceManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  FaceManager::NodeMapType const & faceToNodes = faceManager->nodeList();
+
+  ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
+  elementRegionManager->forElementSubRegions<FaceElementSubRegion>( [&] (FaceElementSubRegion & subRegion)
+  {
+    array1d<integer> & isFaceElmtPartiallyOpen = subRegion.getExtrinsicData< extrinsicMeshData::IsFaceElmtPartiallyOpen >();
+    FaceElementSubRegion::FaceMapType const & faceElmtToFacesRelation = subRegion.faceList();
+
+    for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
+    {
+      if (isFaceElmtPartiallyOpen[iFaceElmt])
+      {
+        localIndex const kf0 = faceElmtToFacesRelation[iFaceElmt][0];
+        localIndex const kf1 = faceElmtToFacesRelation[iFaceElmt][1];
+        localIndex const childFaceOfFace0 = childFaceIndices[kf0];
+        localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+
+        for (localIndex const parentNode : faceToNodes[parentFace])
+        {
+          localIndex const childNode = childNodeIndices[parentNode];
+          if (childNode >= 0)
+          {
+            real64 opening[3] = {0.0, 0.0, 0.0};
+            LvArray::tensorOps::add< 3 >( opening, totalDisplacement[parentNode] );
+            LvArray::tensorOps::subtract< 3 >( opening, totalDisplacement[childNode] );
+            real64 const openingMag = -LvArray::tensorOps::AiBi< 3 >( opening, faceNormal[parentFace] );
+
+            if (std::abs(openingMag) < 1.0e-9 )
+            {
+              real64 initialDispMagnitude;
+              if (time_n > 1.0e-9)
+              {
+                initialDispMagnitude = 1.0e-5;
+              }
+              else
+              {
+                initialDispMagnitude = 1.0e-3;
+              }
+
+              real64 newDisp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[ parentFace ] );
+              LvArray::tensorOps::scale< 3 >( newDisp, -initialDispMagnitude );
+
+              // we need to modify the disp and increDisp both
+              LvArray::tensorOps::add< 3 >( incrementalDisplacement[parentNode], newDisp );
+              LvArray::tensorOps::add< 3 >( totalDisplacement[parentNode], newDisp );
+              LvArray::tensorOps::subtract< 3 >( incrementalDisplacement[childNode], newDisp );
+              LvArray::tensorOps::subtract< 3 >( totalDisplacement[childNode], newDisp );
+            }
+          } // if (childNode >= 0)
+        } // for (localIndex const parentNode : faceToNodes[parentFace])
+      } // if (isFaceElmtPartiallyOpen[iFaceElmt])
+    } // for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
+  } );
+
   // aperture should be recalculated
   UpdateDeformationForCoupling( domain, true, true, true );
 }
@@ -712,7 +781,7 @@ void HydrofractureSolver::FinalizedSignedDistance( DomainPartition & domain)
           {
             real64 tipNodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[tipNode] );
             LvArray::tensorOps::subtract< 3 >( tipNodeLoc, nodeLoc );
-            GEOSX_ERROR_IF_LE(signedNodeDistance[tipNode], 0.0);
+            //GEOSX_ERROR_IF_LE(signedNodeDistance[tipNode], 0.0);
             nodeDistance = std::min(nodeDistance,
                                     LvArray::tensorOps::l2Norm< 3 >( tipNodeLoc ) - signedNodeDistance[tipNode]);
           }

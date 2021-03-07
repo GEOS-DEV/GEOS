@@ -937,7 +937,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
 
       // we should initialize the displacement and its increment at the newly split node @nodeID
       // according to the its signed distance for signed distance based propagation condition
-      if (m_nodeBasedSIF == 2)
+      if (m_nodeBasedSIF >= 1)
       {
         localIndex hydroSolverIndex;
         this->getParent()->forSubGroups<HydrofractureSolver>( [&hydroSolverIndex] (SolverBase const & solver)
@@ -1037,11 +1037,13 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
           std::cout << "Provide an initial guess for node " << nodeID << " after split." << std::endl;
           if (hydroSolver->getRegimeTypeOption() == HydrofractureSolver::RegimeTypeOption::ToughnessDominated)
           {
+            GEOSX_ERROR_IF_EQ_MSG(m_nodeBasedSIF, 2, "For toughness-dominated case, nodeBasedSIF should be 1.");
             fullOpening = Kprime/Eprime * sqrt(std::fabs(signedNodeDistance[nodeID]));
             halfOpening = 0.5 * fullOpening;
           }
           else if (hydroSolver->getRegimeTypeOption() == HydrofractureSolver::RegimeTypeOption::ViscosityDominated)
           {
+            GEOSX_ERROR_IF_EQ_MSG(m_nodeBasedSIF, 1, "For viscosity-dominated case, nodeBasedSIF should be 2.");
             // the location of the node that is under split
             real64 const nodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[nodeID] );
             // the signed distance for the current node
