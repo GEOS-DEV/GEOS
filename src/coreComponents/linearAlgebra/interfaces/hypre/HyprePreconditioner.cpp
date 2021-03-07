@@ -99,24 +99,24 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
   return typeMap.at( type );
 }
 
-HYPRE_Int getHypreAMGCoarsenType( string const & type )
-{
-  static std::map< string, HYPRE_Int > const typeMap =
-  {
-    { "CLJP", 0 },
-    { "Ruge-Stueben", 3 },
-    { "Falgout", 6 },
-    { "CLJP", 7 },
-    { "PMIS", 8 },
-    { "PMISD", 9 },
-    { "HMIS", 10 },
-    { "CGC", 21 },
-    { "CGC-E", 22 }
-  };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG coarsen option: " << type );
-  return typeMap.at( type );
-}
+//HYPRE_Int getHypreAMGCoarsenType( string const & type )
+//{
+//  static std::map< string, HYPRE_Int > const typeMap =
+//  {
+//    { "CLJP", 0 },
+//    { "Ruge-Stueben", 3 },
+//    { "Falgout", 6 },
+//    { "CLJP", 7 },
+//    { "PMIS", 8 },
+//    { "PMISD", 9 },
+//    { "HMIS", 10 },
+//    { "CGC", 21 },
+//    { "CGC-E", 22 }
+//  };
+//
+//  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG coarsen option: " << type );
+//  return typeMap.at( type );
+//}
 
 void ConvertRigidBodyModes( array1d< HypreVector > const & nearNullKernel,
                             array1d< HYPRE_ParVector > & nullSpacePointer )
