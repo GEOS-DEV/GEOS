@@ -276,17 +276,17 @@ void HyprePreconditioner::createAMG()
     }
 
     // Coarsening options: Only PMIS is supported on GPU
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( m_precond, getHypreAMGCoarsenType( m_parameters.amg.coarseningType ) ) );
+    //GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( m_precond, getHypreAMGCoarsenType( m_parameters.amg.coarseningType ) ) );
 
     // Interpolation options: Use options 3, 6, 14 or 15.
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( m_precond, m_parameters.amg.interpolationType ) );
+    //GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( m_precond, m_parameters.amg.interpolationType ) );
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( m_precond, m_parameters.amg.numFunctions ) );
+    //GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( m_precond, m_parameters.amg.numFunctions ) );
 
-    if( m_parameters.amg.aggresiveNumLevels )
-    {
-      HYPRE_BoomerAMGSetAggNumLevels( m_precond, m_parameters.amg.aggresiveNumLevels ); // agg_num_levels = 1
-    }
+    //if( m_parameters.amg.aggresiveNumLevels )
+    //{
+    //  HYPRE_BoomerAMGSetAggNumLevels( m_precond, m_parameters.amg.aggresiveNumLevels ); // agg_num_levels = 1
+    //}
 //    HYPRE_BoomerAMGSetAggInterpType( m_precond, 5 ); // agg_interp_type = 5,7
 
     if( m_parameters.amg.smootherType == "chebyshev" )
