@@ -62,6 +62,7 @@ protected:
     constexpr static char const * rElemsString() { return "nr"; }
     constexpr static char const * tElemsString() { return "nt"; }
     constexpr static char const * rBiasString() { return "rBias"; }
+    constexpr static char const * trajectoryString() { return "trajectory"; }
   };
   /// @endcond
 
@@ -86,6 +87,9 @@ private:
 
   /// Bias in the radial direction
   real64 m_rBias;
+
+  /// Trajectory defined by coordinates of the wellbore centers
+  array2d< real64 > m_trajectory;
 
 };
 

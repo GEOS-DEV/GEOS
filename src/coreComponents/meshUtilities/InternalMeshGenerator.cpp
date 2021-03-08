@@ -41,7 +41,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "y-coordinates of each mesh block vertex" );
 
   registerWrapper( viewKeyStruct::zCoordsString(), &(m_vertices[2]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "z-coordinates of each mesh block vertex" );
 
@@ -56,7 +56,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "Number of elements in the y-direction within each mesh block" );
 
   registerWrapper( viewKeyStruct::zElemsString(), &(m_nElems[2]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Number of elements in the z-direction within each mesh block" );
 
@@ -464,8 +464,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       {
         for( int k = 0; k < numNodesInDir[2]; ++k )
         {
-          int index[3] =
-          { i, j, k };
+          int index[3] = { i, j, k };
+
           for( int a = 0; a < m_dim; ++a )
           {
             index[a] += firstElemIndexInPartition[a];

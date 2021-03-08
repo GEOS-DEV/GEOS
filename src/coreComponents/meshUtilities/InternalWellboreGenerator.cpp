@@ -58,12 +58,18 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Bias of element sizes in the radial direction" );
+
+  registerWrapper( viewKeyStruct::trajectoryString(), &m_trajectory ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Coordinates defining the wellbore trajectory" );
 }
 
 void InternalWellboreGenerator::postProcessInput()
 {
   m_vertices[0].resize( 2 );
   m_vertices[1].resize( 2 );
+  m_vertices[2].resize( 2 );
   m_nElems[0].resize( 1 );
   m_nElems[1].resize( 1 );
   m_nElemBias[0].resize( 1 );
@@ -72,6 +78,8 @@ void InternalWellboreGenerator::postProcessInput()
   m_vertices[0][1]  = m_rOut;
   m_vertices[1][0]  = 0;
   m_vertices[1][1]  = m_theta;
+  m_vertices[2][0]  = m_trajectory[0][2];
+  m_vertices[2][1]  = m_trajectory[1][2];
   m_nElems[0][0]    = m_rElems;
   m_nElems[1][0]    = m_tElems;
   m_nElemBias[0][0] = m_rBias;
@@ -98,8 +106,9 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
   {
-    real64 const xCoord = X( localNodeIndex, 0 );
-    real64 const yCoord = X( localNodeIndex, 1 );
+    real64 & xCoord = X( localNodeIndex, 0 );
+    real64 & yCoord = X( localNodeIndex, 1 );
+    real64 & zCoord = X( localNodeIndex, 2 );
     real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
 
     if( isEqual( rCoord, m_min[0], m_positionTolerance ) )
@@ -133,6 +142,28 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     {
       tposNodes.insert( localNodeIndex );
     }
+
+    // Well trajectory
+    real64 meshTheta = tCoord * M_PI / 180.0;
+    int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
+    real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
+    real64 meshRout = m_max[0] / cos( meshPhi );
+
+    //TODO testing simple trajectory
+    real64 xTopCenter = m_trajectory[0][0];
+    real64 yTopCenter = m_trajectory[0][1];
+    real64 zTop = m_min[2];
+
+    real64 xBottomCenter = m_trajectory[1][0];
+    real64 yBottomCenter = m_trajectory[1][1];
+    real64 zBottom = m_max[2];
+
+    real64 zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
+    real64 xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
+    real64 yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
+
+    xCoord += xCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] );
+    yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] );
   }
 }
 
