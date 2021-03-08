@@ -124,22 +124,25 @@ void AcousticWaveEquationSEM::postProcessInput()
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  //for( auto & mesh : MeshBodies->getSubGroups() )
+
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
 
     MeshLevel & meshLevel =  meshBody.getMeshLevel( 0 );
 
-    NodeManager & nodes = meshLevel.getNodeManager();
+    NodeManager & nodeManager = meshLevel.getNodeManager();
 
-    nodes.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
-                                 extrinsicMeshData::Pressure_n,
-                                 extrinsicMeshData::Pressure_np1,
-                                 extrinsicMeshData::ForcingRHS,
-                                 extrinsicMeshData::MassVector,
-                                 extrinsicMeshData::DampingVector,
-                                 extrinsicMeshData::StiffnessVector >( this->getName() );
+    nodeManager.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
+                                       extrinsicMeshData::Pressure_n,
+                                       extrinsicMeshData::Pressure_np1,
+                                       extrinsicMeshData::ForcingRHS,
+                                       extrinsicMeshData::MassVector,
+                                       extrinsicMeshData::DampingVector,
+                                       extrinsicMeshData::StiffnessVector,
+                                       extrinsicMeshData::FreeSurfaceNodeIndicator >( this->getName() );
 
+    FaceManager & faceManager = meshLevel.getFaceManager();
+    faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
 
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -196,8 +199,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex constexpr numNodesPerElem = FE_TYPE::numNodes;
         array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
 
         // loop over all the elements in the subRegion
@@ -283,8 +286,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 /// Evaluate basis functions at coord source on unit ref element
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
-
-                std::cout << "Ntest Ok "<< std::endl;
 
                 // save all the node indices and constant part of source term here
                 for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -425,7 +426,7 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
   // loop over all the sources
   for( localIndex ircv = 0; ircv < receiverConstants.size( 0 ); ++ircv )
   {
-    if( receiverIsLocal[ircv] == 1 ) // check if the receiver is on this MPI rank
+    if( receiverIsLocal[ircv] == 1 )
     {
       p_rcvs[ircv] = 0.0;
       // for all the nodes of the elem containing the receiver ircv
@@ -473,12 +474,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
+  real64 const time = 0.0;
+  applyFreeSurfaceBC( time, domain );
   precomputeSourceAndReceiverTerm( mesh );
 
   NodeManager & nodeManager = mesh.getNodeManager();
   FaceManager & faceManager = mesh.getFaceManager();
 
-  /// get the array of indicators: 1 if the node is on the boundary; 0 otherwise
+  /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
   arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
@@ -487,9 +490,15 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
   arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+
   /// damping matrix to be computed for each dof in the boundary of the mesh
   arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+
   damping.setValues< serialPolicy >( 0.0 );
+
+  /// get array of indicators: 1 if face is on the free surface; 0 otherwise
+  arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -516,8 +525,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-        constexpr localIndex numFacesPerElem = 6; // FE_TYPE::numNodes;
-        constexpr localIndex numNodesPerFace = 4; // FE_TYPE::numNodes;
+        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
+        localIndex const numNodesPerFace = 4;
 
         real64 N[numNodesPerElem];
         real64 gradN[ numNodesPerElem ][ 3 ];
@@ -551,17 +560,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
           for( localIndex kfe=0; kfe< numFacesPerElem; ++kfe )
           {
-            /// Face on the domain boundary
-            if( facesDomainBoundaryIndicator[elemsToFaces[k][kfe]]==1 )
+            localIndex const numFaceGl = elemsToFaces[k][kfe];
+            /// Face on the domain boundary and not on free surface
+            if( facesDomainBoundaryIndicator[numFaceGl]==1 && freeSurfaceFaceIndicator[numFaceGl]!=1 )
             {
-              //real64 xLocal[numNodesPerElem][3];
-              //for( localIndex a=0; a< numNodesPerElem; ++a )
-              //{
-              //  for( localIndex i=0; i<3; ++i )
-              //  {
-              //    xLocal[a][i] = X( elemsToNodes( k, a ), i );
-              //  }
-              //}
               for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
               {
                 FE_TYPE::calcN( q, N );
@@ -580,13 +582,12 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                   {
                     for( localIndex j = 0; j < 3; ++j )
                     {
-                      tmp[i] += invJ[j][i]*faceNormal[elemsToFaces[k][kfe]][j];
+                      tmp[i] += invJ[j][i]*faceNormal[numFaceGl][j];
                     }
                     ds +=tmp[i]*tmp[i];
                   }
                   ds = std::sqrt( ds );
 
-                  localIndex numFaceGl = elemsToFaces[k][kfe];
                   localIndex numNodeGl = facesToNodes[numFaceGl][a];
                   damping[numNodeGl] += alpha*detJ*ds*N[a];
                 }
@@ -616,21 +617,21 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 }
 
 
-void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time,
-                                                  DomainPartition & domain )
+void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   FunctionManager const & functionManager = getGlobalState().getFunctionManager();
 
-  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
+  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
-
-  arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-  arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-  arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
+  /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+
+  /// set array of indicators: 1 if a node is on on free surface; 0 otherwise
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
 
   fsManager.apply( time,
                    domain,
@@ -647,17 +648,17 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time,
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
       real64 const value = bc.getScale();
-
+      freeSurfaceFaceIndicator.setValues< serialPolicy >( value );
+      freeSurfaceNodeIndicator.setValues< serialPolicy >( value );
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
         localIndex const kf = targetSet[ i ];
+        freeSurfaceFaceIndicator[kf] = 1;
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
         for( localIndex a=0; a < numNodes; ++a )
         {
           localIndex const dof = faceToNodeMap( kf, a );
-          p_np1[dof] *= value;
-          p_n[dof]   *= value;
-          p_nm1[dof] *= value;
+          freeSurfaceNodeIndicator[dof] = 1;
         }
       }
     }
@@ -740,22 +741,25 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager & nodes = mesh.getNodeManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d< real64 > const mass = nodes.getExtrinsicData< extrinsicMeshData::MassVector >();
-  arrayView1d< real64 > const damping = nodes.getExtrinsicData< extrinsicMeshData::DampingVector >();
+  arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+  arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
-  arrayView1d< real64 > const p_nm1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-  arrayView1d< real64 > const p_n = nodes.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-  arrayView1d< real64 > const p_np1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+  arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+  arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+  arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodes.referencePosition().toViewConst();
+  /// get array of indicators: 1 if node on free surface; 0 otherwise
+  arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
   /// Vector to contain the product of the stiffness matrix R_h and the pressure p_n
-  arrayView1d< real64 > const stiffnessVector = nodes.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
+  arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
 
   /// Vector to compute rhs
-  arrayView1d< real64 > const rhs = nodes.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
+  arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -791,8 +795,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
           real64 xLocal[numNodesPerElem][3];
-          /// Local stiffness matrix for the element k
-          real64 Rh_k[numNodesPerElem][numNodesPerElem] = {{0}};
 
           for( localIndex a=0; a< numNodesPerElem; ++a )
           {
@@ -802,27 +804,23 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
             }
           }
 
-
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
-            ///Calculate the basis function N at the node q
             FE_TYPE::calcN( q, N );
-            ///Compute gradN = invJ*\hat{\nabla}N at the node q and return the determinant of the transformation matrix J
+
             real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-            //Rh_k = {{0}};
 
             for( localIndex i=0; i<numNodesPerElem; ++i )
             {
               for( localIndex j=0; j<numNodesPerElem; ++j )
               {
-                Rh_k[i][j] = 0.0;
+                real64 Rh_ij = 0.0;
                 for( localIndex a=0; a < 3; ++a )
                 {
-                  Rh_k[i][j] +=  detJ * gradN[i][a]*gradN[j][a];
+                  Rh_ij +=  detJ * gradN[i][a]*gradN[j][a];
                 }
 
-                ///Compute local Rh_k*p_n and save in the global vector
-                stiffnessVector[elemsToNodes[k][i]] += Rh_k[i][j]*p_n[elemsToNodes[k][j]];
+                stiffnessVector[elemsToNodes[k][i]] += Rh_ij*p_n[elemsToNodes[k][j]];
               }
 
             }
@@ -849,14 +847,17 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
-  for( localIndex a=0; a<nodes.size(); ++a )
+  for( localIndex a=0; a<nodeManager.size(); ++a )
   {
-    // pressure update here
-    p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
+    if( freeSurfaceNodeIndicator[a]!=1 )
+    {
+      p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
+    }
+    else
+    {
+      p_np1[a]=0.0;
+    }
   }
-
-  /// Apply free surface
-  applyFreeSurfaceBC( time_n, domain );
 
   /// Synchronize pressure fields
   std::map< string, string_array > fieldNames;
@@ -868,18 +869,18 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                 domain.getNeighbors(),
                                 true );
 
-  for( localIndex a=0; a<nodes.size(); ++a )
+  for( localIndex a=0; a<nodeManager.size(); ++a )
   {
-    /// update p_n and p_nm1
-    p_nm1[a]=p_n[a];
-    p_n[a] = p_np1[a];
+    if( freeSurfaceNodeIndicator[a]!=1 )
+    {
+      p_nm1[a]=p_n[a];
+      p_n[a] = p_np1[a];
+    }
 
-    /// reinit vector
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
   }
 
-  /// Compute the sismo trace for all receivers
   computeSismoTrace( cycleNumber, p_np1 );
 
 

@@ -242,6 +242,23 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector,
                            WRITE_AND_READ,
                            "Stiffness vector contains R_h*Pressure_n." );
 
+EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
+                           "freeSurfaceFaceIndicator",
+                           array1d< localIndex >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
+
+EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
+                           "freeSurfaceNodeIndicator",
+                           array1d< localIndex >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
+
+
 }
 
 
