@@ -99,24 +99,24 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
   return typeMap.at( type );
 }
 
-//HYPRE_Int getHypreAMGCoarsenType( string const & type )
-//{
-//  static std::map< string, HYPRE_Int > const typeMap =
-//  {
-//    { "CLJP", 0 },
-//    { "Ruge-Stueben", 3 },
-//    { "Falgout", 6 },
-//    { "CLJP", 7 },
-//    { "PMIS", 8 },
-//    { "PMISD", 9 },
-//    { "HMIS", 10 },
-//    { "CGC", 21 },
-//    { "CGC-E", 22 }
-//  };
-//
-//  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG coarsen option: " << type );
-//  return typeMap.at( type );
-//}
+HYPRE_Int getHypreAMGCoarsenType( string const & type )
+{
+  static std::map< string, HYPRE_Int > const typeMap =
+  {
+    { "CLJP", 0 },
+    { "Ruge-Stueben", 3 },
+    { "Falgout", 6 },
+    { "CLJP", 7 },
+    { "PMIS", 8 },
+    { "PMISD", 9 },
+    { "HMIS", 10 },
+    { "CGC", 21 },
+    { "CGC-E", 22 }
+  };
+
+  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG coarsen option: " << type );
+  return typeMap.at( type );
+}
 
 void ConvertRigidBodyModes( array1d< HypreVector > const & nearNullKernel,
                             array1d< HYPRE_ParVector > & nullSpacePointer )
@@ -276,18 +276,19 @@ void HyprePreconditioner::createAMG()
     }
 
     // Coarsening options: Only PMIS is supported on GPU
-    //GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( m_precond, getHypreAMGCoarsenType( m_parameters.amg.coarseningType ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( m_precond, getHypreAMGCoarsenType( m_parameters.amg.coarseningType ) ) );
 
     // Interpolation options: Use options 3, 6, 14 or 15.
-    //GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( m_precond, m_parameters.amg.interpolationType ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( m_precond, m_parameters.amg.interpolationType ) );
 
-    //GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( m_precond, m_parameters.amg.numFunctions ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( m_precond, m_parameters.amg.numFunctions ) );
 
-    //if( m_parameters.amg.aggresiveNumLevels )
-    //{
-    //  HYPRE_BoomerAMGSetAggNumLevels( m_precond, m_parameters.amg.aggresiveNumLevels ); // agg_num_levels = 1
-    //}
-//    HYPRE_BoomerAMGSetAggInterpType( m_precond, 5 ); // agg_interp_type = 5,7
+    if( m_parameters.amg.aggresiveNumLevels )
+    {
+      HYPRE_BoomerAMGSetAggNumLevels( m_precond, m_parameters.amg.aggresiveNumLevels ); // agg_num_levels = 1
+    }
+
+    HYPRE_BoomerAMGSetAggInterpType( m_precond, 5 ); // agg_interp_type = 5,7
 
     if( m_parameters.amg.smootherType == "chebyshev" )
     {

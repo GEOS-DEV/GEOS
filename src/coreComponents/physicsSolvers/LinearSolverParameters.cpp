@@ -127,13 +127,13 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                     "Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct" );
 
   registerWrapper( viewKeyStruct::amgCoarseningString(), &m_parameters.amg.coarseningType ).
-    setApplyDefaultValue( m_parameters.amg.coarseningType ).
+    setApplyDefaultValue( "HMIS" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG coarsening algorithm\n"
                     "Available options are: TODO" );
 
   registerWrapper( viewKeyStruct::amgInterpolationString(), &m_parameters.amg.interpolationType ).
-    setApplyDefaultValue( m_parameters.amg.interpolationType ).
+    setApplyDefaultValue( 6 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG interpolation algorithm\n"
                     "Available options are: TODO" );

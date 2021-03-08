@@ -585,10 +585,10 @@ Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct-
 		<xsd:attribute name="amgCoarseSolver" type="string" default="direct" />
 		<!--amgCoarseningType => AMG coarsening algorithm
 Available options are: TODO-->
-		<xsd:attribute name="amgCoarseningType" type="string" default="PMIS" />
+		<xsd:attribute name="amgCoarseningType" type="string" default="HMIS" />
 		<!--amgInterpolationType => AMG interpolation algorithm
 Available options are: TODO-->
-		<xsd:attribute name="amgInterpolationType" type="integer" default="0" />
+		<xsd:attribute name="amgInterpolationType" type="integer" default="6" />
 		<!--amgNullSpaceType => AMG near null space approximation-->
 		<xsd:attribute name="amgNullSpaceType" type="string" default="constantModes" />
 		<!--amgNumFunctions => AMG number of functions
