@@ -172,9 +172,14 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 {
   GEOSX_LAI_ASSERT( closed() );
 
-//#if !defined(GEOSX_USE_CUDA)
-//  localValues.move( LvArray::MemorySpace::CPU, false );
-//#endif
+#if !defined(GEOSX_USE_HYPRE_CUDA)
+  localValues.move( LvArray::MemorySpace::CPU, false );
+
+  using createPolicy = parallelHostPolicy;
+#else
+  using createPolicy = parallelDevicePolicy<>;
+#endif
+
   HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
   HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( localSize );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
@@ -184,17 +189,11 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 
   HYPRE_Real * const local_data = extractLocalVector();
 
-#if defined(GEOSX_USE_CUDA)
-  forAll< parallelDevicePolicy<> >( localValues.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< createPolicy >( localValues.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     local_data[i] = localValues[i];
   } );
-#else
-  for( localIndex i = 0; i < localValues.size(); ++i )
-  {
-    local_data[i] = localValues[i];
-  }
-#endif
+
 }
 
 bool HypreVector::created() const
