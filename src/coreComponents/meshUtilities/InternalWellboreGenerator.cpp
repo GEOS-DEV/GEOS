@@ -108,7 +108,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   {
     real64 & xCoord = X( localNodeIndex, 0 );
     real64 & yCoord = X( localNodeIndex, 1 );
-    real64 & zCoord = X( localNodeIndex, 2 );
+    real64 & const zCoord = X( localNodeIndex, 2 );
     real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
 
     if( isEqual( rCoord, m_min[0], m_positionTolerance ) )
@@ -149,7 +149,6 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
     real64 meshRout = m_max[0] / cos( meshPhi );
 
-    //TODO testing simple trajectory
     real64 xTopCenter = m_trajectory[0][0];
     real64 yTopCenter = m_trajectory[0][1];
     real64 zTop = m_min[2];
