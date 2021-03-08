@@ -31,7 +31,7 @@
       elementTypes="{ C3D8 }"
       radius="0.1"
       theta="180"
-      zCoords="{ 0, 1 }"
+      trajectory="{ { -0.3, 0.0, 1.0 }, {  0.3, 0.0, 0.0 } }"
       nr="5"
       nt="16"
       nz="{ 2 }"
