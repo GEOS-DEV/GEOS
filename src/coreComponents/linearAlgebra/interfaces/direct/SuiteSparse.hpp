@@ -22,6 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
+// Pre-define some suitesparse variables since they are not properly defined in the header for alternate index types.
 #if defined(GEOSX_USE_HYPRE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
 #define SuiteSparse_long int
 #define SuiteSparse_long_max 2147483647
