@@ -108,7 +108,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   {
     real64 & xCoord = X( localNodeIndex, 0 );
     real64 & yCoord = X( localNodeIndex, 1 );
-    real64 & const zCoord = X( localNodeIndex, 2 );
+    real64 const & zCoord = X( localNodeIndex, 2 );
     real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
 
     if( isEqual( rCoord, m_min[0], m_positionTolerance ) )
@@ -143,7 +143,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
       tposNodes.insert( localNodeIndex );
     }
 
-    // Well trajectory
+    // Change node coordinates with respect to well trajectory
     real64 meshTheta = tCoord * M_PI / 180.0;
     int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
     real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
@@ -157,12 +157,38 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     real64 yBottomCenter = m_trajectory[1][1];
     real64 zBottom = m_max[2];
 
+    //TODO correct the inclined borehole wall geometry
+
+
+/**
+    real64 dx = xBottomCenter - xTopCenter;
+    real64 dy = yBottomCenter - yTopCenter;
+    real64 dz = zBottom - zTop;
+    real64 dr = sqrt( dx*dx + dy*dy );
+    real64 theta0;
+
+    if( dy>=0 )
+    {
+      theta0 = acos( dx/dr );
+    }
+    else
+    {
+      theta0 = 2*M_PI - acos( dx/dr );
+    }
+
+    real64 dl =sqrt( dr*dr + dz*dz );
+
+    real64 dTheta = tCoord - theta0;
+    real64 tanDTheta = tan( dTheta );
+ */
+    real64 transformCoeff = 1.0;// sqrt ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta );
+
     real64 zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
     real64 xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
     real64 yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
 
-    xCoord += xCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] );
-    yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] );
+    xCoord += xCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
+    yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
   }
 }
 
