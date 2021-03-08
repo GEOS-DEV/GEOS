@@ -97,6 +97,11 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setApplyDefaultValue( MeshType::Cartesian ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Mesh type. Options are:\n* " + EnumStrings< MeshType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::positionToleranceString(), &m_positionTolerance ).
+    setApplyDefaultValue( 1e-10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "A position tolerance to verify if a node belong to a nodeset" );
 }
 
 /**

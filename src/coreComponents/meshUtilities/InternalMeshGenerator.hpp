@@ -99,6 +99,7 @@ protected:
     constexpr static char const * elementTypesString() { return "elementTypes"; }
     constexpr static char const * trianglePatternString() { return "trianglePattern"; }
     constexpr static char const * meshTypeString() { return "meshType"; }
+    constexpr static char const * positionToleranceString() { return "positionTolerance"; }
   };
   /// @endcond
 
@@ -114,7 +115,7 @@ protected:
   real64 m_max[3];
 
   /// Position tolerance for adding nodes to nodesets
-  real64 m_positionTolerance = 1e-10;
+  real64 m_positionTolerance;
 
   /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];
