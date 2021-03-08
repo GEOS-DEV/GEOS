@@ -177,7 +177,7 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
               m_ij_mat );
 }
 
-#if defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_HYPRE_CUDA)
 
 #define cudaCheckErrors( msg ) \
   do { \
@@ -190,6 +190,7 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
       exit( 1 ); \
     } \
   } while (0)
+
 
 void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                           MPI_Comm const & comm )
@@ -253,6 +254,12 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
                                                      localMatrix.getEntries() ) );
 
   close();
+}
+#else
+void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                          MPI_Comm const & comm )
+{
+  MatrixBase::create( localMatrix, comm );
 }
 #endif
 

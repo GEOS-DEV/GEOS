@@ -96,7 +96,6 @@ public:
 
   using MatrixBase::createWithLocalSize;
   using MatrixBase::createWithGlobalSize;
-  using MatrixBase::create;
   using MatrixBase::closed;
   using MatrixBase::assembled;
   using MatrixBase::insertable;
@@ -104,14 +103,8 @@ public:
   using MatrixBase::ready;
   using MatrixBase::residual;
 
-#if defined(GEOSX_LA_INTERFACE_HYPRE) && defined(GEOSX_USE_HYPRE_CUDA)
-  #define OVERRIDE_CREATE
-#endif
-
-#if defined(OVERRIDE_CREATE)
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                        MPI_Comm const & comm ) override final;
-#endif
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
