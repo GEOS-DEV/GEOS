@@ -357,13 +357,6 @@ void HypreSolver::solveKrylov( HypreMatrix & mat,
     HYPRE_BoomerAMGSetAggNumLevels( uu_amg_solver, 1 );
     HYPRE_BoomerAMGSetNumFunctions( uu_amg_solver, 3 );
 
-    // Relaxation options: Use options 18 or 7.
-    // Coarsening options: Only PMIS is supported
-    // Interpolation options: Use options 3, 6, 14 or 15.
-//    HYPRE_BoomerAMGSetRelaxType( uu_amg_solver, 7 );
-//    HYPRE_BoomerAMGSetCoarsenType( uu_amg_solver, 8 );
-//    HYPRE_BoomerAMGSetInterpType( uu_amg_solver, 3 );
-
     HYPRE_BoomerAMGSetup( uu_amg_solver, separateComponentMatrix.unwrapped(), nullptr, nullptr );
 
     HYPRE_MGRSetFSolver( precond.unwrapped(), HYPRE_BoomerAMGSolve, HYPRE_BoomerAMGSetup, uu_amg_solver );

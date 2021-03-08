@@ -334,8 +334,6 @@ std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool 
   setupMKL();
   setupLAI( argc, argv );
 
-
-
   if( parseCommandLine )
   {
     return parseCommandLineOptions( argc, argv );
