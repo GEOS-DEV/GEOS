@@ -426,10 +426,11 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 
   if( m_poroElasticFlag )
   {
-    assembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
-                                                               dofManager,
-                                                               localMatrix,
-                                                               localRhs );
+    // Do nothing, assembly done in SinglePhasePoroelasticKernel
+//    assembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
+//                                                               dofManager,
+//                                                               localMatrix,
+//                                                               localRhs );
   }
   else
   {

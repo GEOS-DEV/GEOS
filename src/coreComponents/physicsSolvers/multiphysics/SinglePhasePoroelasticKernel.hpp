@@ -19,7 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 
 namespace geosx
@@ -123,13 +123,13 @@ public:
                                  inputGravityVector[2] * inputGravityVector[2] ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] ).density() ),
+    m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
-    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString() ) )
-  {
-  }
+    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
+    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
+    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::referencePorosityString() ) )
+  {}
 
   //*****************************************************************************
   /**
@@ -155,6 +155,7 @@ public:
                                        localFlowResidual{ 0.0 },
                                        localDispFlowJacobian{ {0.0} },
                                        localFlowDispJacobian{ {0.0} },
+                                       localFlowFlowJacobian{ {0.0} },
                                        localFlowDofIndex{ 0 }
     {}
 
@@ -175,6 +176,7 @@ public:
     real64 localFlowResidual[1];
     real64 localDispFlowJacobian[numDispDofPerElem][1];
     real64 localFlowDispJacobian[1][numDispDofPerElem];
+    real64 localFlowFlowJacobian[1][1];
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localFlowDofIndex[1];
@@ -244,9 +246,15 @@ public:
     // --- Subtract pressure term
     //     For now we assume incompressible solid grains (biot's coefficient = 1)
     real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
+    real64 const biotSkeletonModulusInverse = 0.0; //TODO (biotCoefficient - referencePorosity)/bulkModulus
+    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
+    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local);
+    real64 const porosityNew = m_poroRef( k ) + biotCoefficient * volumetricStrainNew;// + DeltaPoro + biotCoefficient * volumetricStrainIncr + biotSkeletonModulusInverse * deltaPressure
+    real64 const porosityOld = m_poroRef( k ) + biotCoefficient * volumetricStrainOld;// +  DeltaPoro
+
     GEOSX_ERROR_IF_GT_MSG( abs( biotCoefficient - 1.0 ),
                            1e-10,
-                           "" );
+                           "Correct only for Biot's coefficient equal to 1" );
     real64 const biotTimesPressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
     totalStress[0] -= biotTimesPressure;
     totalStress[1] -= biotTimesPressure;
@@ -262,9 +270,7 @@ public:
                              m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
-      real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
-      real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
-      real64 mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * m_fluidDensity( k, q );
+      real64 mixtureDensity = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
       mixtureDensity *= detJxW;
       bodyForce[0] *= mixtureDensity;
       bodyForce[1] *= mixtureDensity;
@@ -301,12 +307,10 @@ public:
       stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][1] * detJxW;
       stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][2] * detJxW;
 
-      real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
-                      + dNdX[a][1] * stack.uhat_local[a][1]
-                      + dNdX[a][2] * stack.uhat_local[a][2];
-      Rf_tmp *= m_fluidDensity( k, q ) * biotCoefficient * detJxW;
-      stack.localFlowResidual[0] += Rf_tmp;
     }
+
+    stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
+    stack.localFlowFlowJacobian[0][0] += ( biotSkeletonModulusInverse * m_fluidDensity( k, q ) + m_dFluidDensity_dPressure( k, q ) * porosityNew ) * detJxW;
 
     if( m_gravityAcceleration > 0.0 )
     {
@@ -394,7 +398,10 @@ public:
                                                                               stack.localRowDofIndex,
                                                                               stack.localFlowDispJacobian[i],
                                                                               nUDof );
-
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                              stack.localFlowDofIndex,
+                                                                              stack.localFlowFlowJacobian[i],
+                                                                              nPDof );
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localFlowResidual[i] );
     }
 
@@ -422,6 +429,7 @@ protected:
   /// The rank global densities
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
+  arrayView1d< real64 const > const m_fluidDensityOld;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
   /// The global degree of freedom number
@@ -435,6 +443,8 @@ protected:
 
   /// The rank-global reference porosity array
   arrayView1d< real64 const > const m_poroRef;
+
+  arrayView1d< real64 const > const m_bulkModulus;
 
 
 };
