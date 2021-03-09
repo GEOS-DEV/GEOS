@@ -32,7 +32,7 @@ or_die python scripts/config-build.py \
               -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\" \
               -DCUDA_TOOLKIT_ROOT_DIR:PATH=${CUDA_TOOLKIT_ROOT_DIR:-/usr/local/cuda} \
               -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70} \
-              -DENABLE_HYPRE_CUDA:BOOL=${ENABLE_HYPRE_CUDA}
+              -DENABLE_HYPRE_CUDA:BOOL=${ENABLE_HYPRE_CUDA:-OFF}
 
 or_die cd ${GEOSX_BUILD_DIR}
 
