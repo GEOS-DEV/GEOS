@@ -283,10 +283,9 @@ struct AccumulationKernel
   GEOSX_FORCE_INLINE
   static void
   compute( localIndex const numPhases,
-           real64 const & volume,
-           real64 const & porosityOld,
-           real64 const & porosityNew,
-           real64 const & dPoro_dPres,
+           real64 const & poreVolOld,
+           real64 const & poreVolNew,
+           real64 const & dPoreVol_dP,
            arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseVolFracOld,
            arraySlice1d< real64 const > const & phaseVolFrac,
@@ -353,86 +352,6 @@ struct AccumulationKernel
             arrayView5d< real64 const > const & dPhaseCompFrac_dComp,
             CRSMatrixView< real64, globalIndex const > const & localMatrix,
             arrayView1d< real64 > const & localRhs );
-};
-
-/******************************** FluxKernel ********************************/
-
-/**
- * @brief Functions to assemble flux term contributions to residual and Jacobian
- */
-struct FluxKernel
-{
-
-  /**
-   * @brief The type for element-based data. Consists entirely of ArrayView's.
-   *
-   * Can be converted from ElementRegionManager::ElementViewConstAccessor
-   * by calling .toView() or .toViewConst() on an accessor instance
-   */
-  template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  compute( localIndex const stencilSize,
-           localIndex const numPhases,
-           arraySlice1d< localIndex const > const seri,
-           arraySlice1d< localIndex const > const sesri,
-           arraySlice1d< localIndex const > const sei,
-           arraySlice1d< real64 const > const stencilWeights,
-           ElementViewConst< arrayView1d< real64 const > > const & pres,
-           ElementViewConst< arrayView1d< real64 const > > const & dPres,
-           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-           ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-           ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-           ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-           ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-           ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-           ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-           ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-           ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
-           ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-           ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
-           ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-           ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
-           integer const capPressureFlag,
-           real64 const dt,
-           arraySlice1d< real64 > const localFlux,
-           arraySlice2d< real64 > const localFluxJacobian );
-
-
-  template< localIndex NC, typename STENCIL_TYPE >
-  static void
-  launch( localIndex const numPhases,
-          STENCIL_TYPE const & stencil,
-          globalIndex const rankOffset,
-          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
-          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
-          ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & dPres,
-          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-          ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-          ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-          ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-          ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-          ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-          ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-          ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-          ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-          ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-          ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
-          ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-          ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
-          ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-          ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
-          integer const capPressureFlag,
-          real64 const dt,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs );
 };
 
 /******************************** VolumeBalanceKernel ********************************/
@@ -508,7 +427,6 @@ struct ResidualNormKernel
   }
 
 };
-
 
 
 /******************************** SolutionCheckKernel ********************************/

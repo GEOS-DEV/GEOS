@@ -81,7 +81,7 @@ public:
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static string catalogName() { return "ParallelPlatesPermeability"; }

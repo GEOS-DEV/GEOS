@@ -364,7 +364,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString() ) );
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
   {
     updateState( subRegion, targetIndex );
   } );

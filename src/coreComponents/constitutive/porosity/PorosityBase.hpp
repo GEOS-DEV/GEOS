@@ -38,7 +38,7 @@ public:
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static string catalogName() { return "PorosityBase"; }
@@ -50,16 +50,18 @@ public:
     static constexpr char const * porosityString() { return "porosity"; }
     static constexpr char const * porosityOldString() { return "porosityOld"; }
     static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
+    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
+
 
   } viewKeys;
 
-  arrayView2d< real64 const > const & getPorosity() { return m_porosity.toViewConst(); }
+  arrayView2d< real64 const > const  getPorosity() const { return m_porosity; }
 
-  arrayView2d< real64 const > const & getPorosityOld() { return m_porosityOld.toViewConst(); }
+  arrayView2d< real64 const > const  getPorosityOld() const { return m_porosityOld; }
 
-  arrayView2d< real64 > const & getPorosityOld() { return m_porosityOld.toView(); }
+  arrayView2d< real64 > const getPorosityOld() { return m_porosityOld; }
 
-  arrayView2d< real64 const > const & dPorosity_dPressure() { return m_dPorosity_dPressure.toViewConst(); }
+  arrayView2d< real64 const > const  dPorosity_dPressure() const { return m_dPorosity_dPressure; }
 
 protected:
   virtual void postProcessInput() override;
@@ -69,6 +71,8 @@ protected:
   array2d< real64 > m_porosityOld;
 
   array2d< real64 > m_dPorosity_dPressure;
+
+  real64 m_referencePorosity;
 
 
 };

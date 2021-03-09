@@ -126,14 +126,14 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
-  template< bool ISPORO, typename POLICY >
+  template< typename POLICY >
   void accumulationLaunch( localIndex const targetIndex,
                            CellElementSubRegion & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
-  template< bool ISPORO, typename POLICY >
+  template< typename POLICY >
   void accumulationLaunch( localIndex const targetIndex,
                            SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
@@ -152,7 +152,7 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  template< bool ISPORO, typename POLICY >
+  template< typename POLICY >
   void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -170,7 +170,7 @@ public:
   virtual void
   assembleFluxTerms( real64 const time_n,
                      real64 const dt,
-                     DomainPartition const & domain,
+                     DomainPartition & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) = 0;
@@ -195,7 +195,8 @@ public:
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields
    */
-  virtual void updateState( Group & dataGroup, localIndex const targetIndex ) const;
+  template< typename SUBREGIONTYPE >
+  void updateState( SUBREGIONTYPE & dataGroup, localIndex const targetIndex ) const;
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -308,6 +309,17 @@ private:
   virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
 
 };
+
+template< typename SUBREGIONTYPE >
+void SinglePhaseBase::updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  updateFluidModel( subRegion, targetIndex );
+  updateSolidFlowProperties( subRegion, targetIndex );
+  updateMobility( subRegion, targetIndex );
+}
+
 
 } /* namespace geosx */
 

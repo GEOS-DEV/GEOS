@@ -65,13 +65,12 @@ public:
   template< typename VIEWTYPE >
   using PermeabilityViewAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
 
-  CellElementStencilTPFAWrapper( IndexContainerViewConstType  elementRegionIndices,
-                                 IndexContainerViewConstType  elementSubRegionIndices,
-                                 IndexContainerViewConstType  elementIndices,
-                                 WeightContainerViewConstType weights, )
+  CellElementStencilTPFAWrapper( IndexContainerType & elementRegionIndices,
+                                 IndexContainerType & elementSubRegionIndices,
+                                 IndexContainerType & elementIndices,
+                                 WeightContainerType & weights )
 
-  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
-   m_permeability()
+  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights )
   {
 
   }
@@ -88,13 +87,8 @@ public:
   /// Deleted move assignment operator
   CellElementStencilTPFAWrapper & operator=( CellElementStencilTPFAWrapper && ) = delete;
 
-  void computeTransmissibility( localIndex iconn,
-                                real64 (& transmissibility)[2] );
-
 private:
-  PermeabilityViewAccessor< array1d< real64 > > m_permeability;
 
-  PermeabilityViewAccessor< array1d< real64 > > m_dPerm_dPressure;
 };
 
 

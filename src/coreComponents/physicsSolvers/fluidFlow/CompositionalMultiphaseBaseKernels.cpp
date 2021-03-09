@@ -435,7 +435,6 @@ AccumulationKernel::
     real64 const dPoreVolume_dPres = volume[ei] * dPoro_dPres[ei][0];
 
     compute< NC >( numPhases,
-                   volume[ei],
                    poreVolumeOld,
                    poreVolumeNew,
                    dPoreVolume_dPres,
@@ -554,9 +553,8 @@ AccumulationKernel::
     real64 const dPoreVolume_dPres = 0.0;
 
     compute< NC >( numPhases,
-                   volume[ei],
-                   poreVolumeNew,
                    poreVolumeOld,
+                   poreVolumeNew,
                    dPoreVolume_dPres,
                    dCompFrac_dCompDens[ei],
                    phaseVolFracOld[ei],

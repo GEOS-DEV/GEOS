@@ -30,7 +30,7 @@ namespace constitutive
 ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::dPerm_dAperture(), &m_dPerm_dAperture );
+  registerWrapper( viewKeyStruct::dPerm_dApertureString(), &m_dPerm_dAperture );
 }
 
 ParallelPlatesPermeability::~ParallelPlatesPermeability() = default;
@@ -44,7 +44,7 @@ ParallelPlatesPermeability::deliverClone( string const & name,
   return clone;
 }
 
-void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group * const parent,
+void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
   m_dPerm_dAperture.resize(0, numConstitutivePointsPerParentIndex, 3 );

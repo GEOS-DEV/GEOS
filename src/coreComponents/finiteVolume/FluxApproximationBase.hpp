@@ -149,6 +149,26 @@ public:
   void forStencils( MeshLevel const & mesh, LAMBDA && lambda ) const;
 
   /**
+   * @brief Call a user-provided function for each stencil.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] mesh the mesh level containing the stencils
+   * @param[in] lambda The LAMBDA function
+   */
+  template< typename LAMBDA >
+  void forAllStencils( MeshLevel & mesh, LAMBDA && lambda );
+
+  /**
+   * @brief Call a user-provided function for the each stencil according to the provided TYPE.
+   * @tparam TYPE The type to be passed to forWrappers
+   * @tparam TYPES Other types to be passed to forWrappers
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] mesh the mesh level containing the stencils
+   * @param[in] lambda The LAMBDA function
+   */
+  template< typename TYPE, typename ... TYPES, typename LAMBDA >
+  void forStencils( MeshLevel & mesh, LAMBDA && lambda );
+
+  /**
    * @brief Add a new fracture stencil.
    * @param[in,out] mesh the mesh on which to add the fracture stencil
    * @param[in] faceElementRegionName the face element region name
@@ -300,6 +320,23 @@ void FluxApproximationBase::forStencils( MeshLevel const & mesh, LAMBDA && lambd
 {
   Group const & stencilGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ).getGroup( getName() );
   stencilGroup.forWrappers< TYPE, TYPES... >( [&] ( auto const & wrapper )
+  {
+    lambda( wrapper.reference() );
+  } );
+}
+
+template< typename LAMBDA >
+void FluxApproximationBase::forAllStencils( MeshLevel & mesh, LAMBDA && lambda )
+{
+  //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
+  forStencils< CellElementStencilTPFA, FaceElementStencil >( mesh, std::forward< LAMBDA >( lambda ) );
+}
+
+template< typename TYPE, typename ... TYPES, typename LAMBDA >
+void FluxApproximationBase::forStencils( MeshLevel  & mesh, LAMBDA && lambda )
+{
+  Group  & stencilGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ).getGroup( getName() );
+  stencilGroup.forWrappers< TYPE, TYPES... >( [&] ( auto & wrapper )
   {
     lambda( wrapper.reference() );
   } );

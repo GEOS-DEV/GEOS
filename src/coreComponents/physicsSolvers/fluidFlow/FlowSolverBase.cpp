@@ -39,7 +39,8 @@ FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
   m_fluidModelNames(),
-  m_solidModelNames(),
+  m_porosityModelNames(),
+  m_permeabilityModelNames(),
   m_poroElasticFlag( 0 ),
   m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
@@ -66,7 +67,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setSizedFromParent( 0 ).
     setDescription( "Names of porosity constitutive models for each region." );
 
-  this->registerWrapper( viewKeyStruct::permeabilityNamesString, &m_permeabilityModelNames ).
+  this->registerWrapper( viewKeyStruct::permeabilityNamesString(), &m_permeabilityModelNames ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Names of permeability constitutive models for each region." );
@@ -76,13 +77,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Initial estimate of the input flux used only for residual scaling. This should be "
                     "essentially equivalent to the input flux * dt." );
-
-  this->registerWrapper( viewKeyStruct::meanPermCoeffString(), &m_meanPermCoeff ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the "
-                    "calculation of permeability between elements." );
-
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -96,10 +90,6 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     forTargetSubRegions( mesh, [&]( localIndex const,
                                     ElementSubRegionBase & subRegion )
     {
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPerm_dPressureString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        reference().resizeDimension< 1 >( 3 );
-
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).
         setApplyDefaultValue( 0.0 );
     } );
@@ -112,10 +102,6 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
                                                                               SurfaceElementSubRegion & subRegion )
     {
       SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
-
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPerm_dPressureString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).
         setApplyDefaultValue( 0.0 );
@@ -137,8 +123,8 @@ void FlowSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
   checkModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString() );
-  checkModelNames( m_porosityModelNames, viewKeyStruct::solidNamesString() );
-  checkModelNames( m_permeabilityModelNames, viewKeyStruct::solidNamesString() );
+  checkModelNames( m_porosityModelNames, viewKeyStruct::porosityNamesString() );
+  checkModelNames( m_permeabilityModelNames, viewKeyStruct::permeabilityNamesString() );
 }
 
 void FlowSolverBase::initializePreSubGroups()
@@ -147,11 +133,12 @@ void FlowSolverBase::initializePreSubGroups()
 
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
 
-  // Validate solid models in regions (fluid models are validated by derived classes)
+  // Validate perm and porosity models in regions (fluid models are validated by derived classes)
   domain.getMeshBodies().forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-    validateModelMapping( meshLevel.getElemManager(), m_solidModelNames );
+    validateModelMapping( meshLevel.getElemManager(), m_permeabilityModelNames );
+    // validateModelMapping( meshLevel.getElemManager(), m_porosityModelNames );
   } );
 
   // fill stencil targetRegions
@@ -226,12 +213,12 @@ FlowSolverBase::~FlowSolverBase() = default;
 
 
 void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion,
-                                                localIndex const targetIndex )
+                                                localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  pressure = subRegion.getRerence< array1d<real64> >( viewKeyStruct::pressureString() );
-  deltaPressure = subRegion.getRerence< array1d<real64> >( viewKeyStruct::deltaPressureString() );
+  arrayView1d<real64 const > const & pressure = subRegion.getReference< array1d<real64> >( viewKeyStruct::pressureString() );
+  arrayView1d<real64 const > const & deltaPressure = subRegion.getReference< array1d<real64> >( viewKeyStruct::deltaPressureString() );
 
   // update porosity
   PressureDependentPorosity & porosityModel =
@@ -239,10 +226,10 @@ void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion
 
   PressureDependentPorosity::KernelWrapper porosityWrapper = porosityModel.createKernelWrapper();
 
-  PorosityKernel::launch( subRegion.size(),
-                          porosityWrapper,
-                          pressure,
-                          deltaPressure );
+  PorosityKernel::launch<parallelDevicePolicy<>>( subRegion.size(),
+                                                  porosityWrapper,
+                                                  pressure,
+                                                  deltaPressure );
 
   arrayView2d<real64 const > const & porosity = porosityModel.getPorosity();
 
@@ -260,7 +247,7 @@ void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion
 }
 
 void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subRegion,
-                                              localIndex const targetIndex )
+                                                localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -315,12 +302,16 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
   using keys = PermeabilityBase::viewKeyStruct;
 
   m_permeability.clear();
-  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::permeabilityString() );
+  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::permeabilityString(),
+                                                                                targetRegionNames(),
+                                                                                m_permeabilityModelNames );
   m_permeability.setName( getName() + "/accessors/" + keys::permeabilityString() );
 
   m_dPerm_dPressure.clear();
-  m_dPerm_dPressure = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::dPerm_dPressureString() );
-  m_dPerm_dPressure.setName( getName() + "/accessors/" + viewKeyStruct::dPerm_dPressureString() );
+  m_dPerm_dPressure = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::dPerm_dPressureString(),
+                                                                                   targetRegionNames(),
+                                                                                   m_permeabilityModelNames );
+  m_dPerm_dPressure.setName( getName() + "/accessors/" + keys::dPerm_dPressureString() );
 
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT

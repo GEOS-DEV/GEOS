@@ -26,9 +26,8 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-
 PressureDependentPorosity::PressureDependentPorosity( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent )
+  PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
       setInputFlag( InputFlags::REQUIRED ).
@@ -43,14 +42,14 @@ PressureDependentPorosity::~PressureDependentPorosity() = default;
 
 std::unique_ptr< ConstitutiveBase >
 PressureDependentPorosity::deliverClone( string const & name,
-                                Group * const parent ) const
+                                         Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
   return clone;
 }
 
-void PressureDependentPorosity::allocateConstitutiveData( dataRepository::Group * const parent,
+void PressureDependentPorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

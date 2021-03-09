@@ -77,8 +77,6 @@ public:
 
   arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
 
-  arrayView1d< string const > solidModelNames() const { return m_solidModelNames; }
-
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
 
 
@@ -105,14 +103,13 @@ public:
     static constexpr char const * aperture0String() { return "aperture_n"; }
     static constexpr char const * effectiveApertureString() { return "effectiveAperture"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
-    static constexpr char const * meanPermCoeffString() { return "meanPermCoeff"; }
   };
 
   void updateSolidFlowProperties( CellElementSubRegion & subRegion,
-                                  localIndex const targetIndex );
+                                  localIndex const targetIndex ) const;
 
   void updateSolidFlowProperties( SurfaceElementSubRegion & subRegion,
-                                  localIndex const targetIndex );
+                                  localIndex const targetIndex ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -178,8 +175,6 @@ protected:
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   real64 m_fluxEstimate;
-
-  real64 m_meanPermCoeff;
 
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;

@@ -34,22 +34,23 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::porosityOldString(), &m_porosityOld ).
       setPlotLevel( PlotLevel::LEVEL_3 );
-  registerWrapper( viewKeyStruct::porosityString(), &m_dPorosity_dPressure );
+  registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure );
+  registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity );
 }
 
 PorosityBase::~PorosityBase() = default;
 
 std::unique_ptr< ConstitutiveBase >
 PorosityBase::deliverClone( string const & name,
-                                Group * const parent ) const
+                            Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
   return clone;
 }
 
-void PorosityBase::allocateConstitutiveData( dataRepository::Group * const parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
+void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
+                                             localIndex const numConstitutivePointsPerParentIndex )
 {
   m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_porosityOld.resize( 0, numConstitutivePointsPerParentIndex );

@@ -33,7 +33,7 @@ namespace FlowSolverBaseKernels
 /******************************** PorosityKernel ********************************/
 struct PorosityKernel
 {
-  template<typename POROSITY_WRAPPER>
+  template< typename POLICY, typename POROSITY_WRAPPER>
   static void
   launch( localIndex const size,
           POROSITY_WRAPPER const & porWrapper,
@@ -50,10 +50,6 @@ struct PorosityKernel
   }
 
 };
-
-
-
-
 
 /******************************** PermeabilityKernel ********************************/
 

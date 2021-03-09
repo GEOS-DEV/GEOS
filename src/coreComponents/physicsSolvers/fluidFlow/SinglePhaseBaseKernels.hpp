@@ -135,12 +135,9 @@ struct AccumulationKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  compute( real64 const & dPres,
-           real64 const & densNew,
+  compute( real64 const & densNew,
            real64 const & densOld,
            real64 const & dDens_dPres,
-           real64 const & volume,
-           real64 const & dVol,
            real64 const & poreVolNew,
            real64 const & poreVolOld,
            real64 const & dPoreVol_dPres,
@@ -159,14 +156,13 @@ struct AccumulationKernel
                         globalIndex const rankOffset,
                         arrayView1d< globalIndex const > const & dofNumber,
                         arrayView1d< integer const > const & elemGhostRank,
-                        arrayView1d< real64 const > const & dPres,
                         arrayView1d< real64 const > const & densOld,
-                        arrayView1d< real64 const > const & poro,
-                        arrayView1d< real64 const > const & poroOld,
+                        arrayView2d< real64 const > const & porosityNew,
+                        arrayView2d< real64 const > const & porosityOld,
+                        arrayView2d< real64 const > const & dPoro_dPres,
                         arrayView1d< real64 const > const & volume,
                         arrayView2d< real64 const > const & dens,
                         arrayView2d< real64 const > const & dDens_dPres,
-                        real64 const biotCoefficient,
                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                         arrayView1d< real64 > const & localRhs )
     {
@@ -180,8 +176,7 @@ struct AccumulationKernel
           real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
           real64 const dPoreVol_dPres = volume[ei] * dPoro_dPres[ei][0];
 
-          compute( dPres[ei],
-                   dens[ei][0],
+          compute( dens[ei][0],
                    densOld[ei],
                    dDens_dPres[ei][0],
                    poreVolNew,
@@ -279,7 +274,6 @@ struct ResidualNormKernel
                       globalIndex const rankOffset,
                       arrayView1d< globalIndex const > const & presDofNumber,
                       arrayView1d< integer const > const & ghostRank,
-                      arrayView1d< real64 const > const & refPoro,
                       arrayView1d< real64 const > const & volume,
                       arrayView1d< real64 const > const & densOld,
                       real64 * localResidualNorm )
@@ -295,7 +289,7 @@ struct ResidualNormKernel
         localIndex const lid = presDofNumber[a] - rankOffset;
         real64 const val = localResidual[lid];
         localSum += val * val;
-        normSum += refPoro[a] * densOld[a] * volume[a];
+        normSum += densOld[a] * volume[a];
         count += 1;
       }
     } );

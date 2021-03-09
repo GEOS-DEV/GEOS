@@ -57,13 +57,13 @@ public:
   GEOSX_FORCE_INLINE
   void compute( real64 const & porosity,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dPorosity ) const override;
+                arraySlice1d< real64 > const & dPerm_dPorosity ) const;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void update( localIndex const k,
                localIndex const q,
-               real64 const & porosity ) const override
+               real64 const & porosity ) const
   {
     compute( porosity,
              m_permeability[k][q],
@@ -94,7 +94,7 @@ public:
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static string catalogName() { return "CarmanKozenyPermeability"; }

@@ -13,10 +13,10 @@
  */
 
 /**
- * @file FracturePermeability.cpp
+ * @file CarmanKozenyPermeability.cpp
  */
 
-#include "../permeability/CarmanKozenyPermeability.hpp"
+#include "CarmanKozenyPermeability.hpp"
 
 namespace geosx
 {
@@ -52,12 +52,15 @@ CarmanKozenyPermeability::deliverClone( string const & name,
   return clone;
 }
 
-void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group * const parent,
+void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   m_dPerm_dPorosity.resize( 0, numConstitutivePointsPerParentIndex, 3 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
+
+void CarmanKozenyPermeability::postProcessInput()
+{}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )
 

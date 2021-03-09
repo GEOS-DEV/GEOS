@@ -65,6 +65,8 @@ protected:
   PermeabilityBaseUpdate & operator=( PermeabilityBaseUpdate && ) = delete;
 
   arrayView3d< real64 > m_permeability;
+
+  arrayView3d< real64 > m_dPerm_dPressure;
 };
 
 
@@ -78,7 +80,7 @@ public:
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static string catalogName() { return "PermeabilityBase"; }
@@ -95,6 +97,8 @@ protected:
   virtual void postProcessInput() override;
 
   array3d< real64 > m_permeability;
+
+  array3d< real64 > dPerm_dPressure;
 
 };
 

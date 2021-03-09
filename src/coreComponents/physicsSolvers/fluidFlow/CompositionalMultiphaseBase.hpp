@@ -147,12 +147,6 @@ public:
   void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
-   * @brief Update all relevant solid models using current values of pressure
-   * @param dataGroup the group storing the required fields
-   */
-  void updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
-
-  /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param castedRelPerm the group storing the required fields
    */
@@ -174,7 +168,8 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  void updateState( Group & dataGroup, localIndex const targetIndex ) const;
+  template<typename SUBREGIONTYPE>
+  void updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const;
 
   /**
    * @brief Get the number of fluid components (species)
@@ -473,6 +468,20 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_phaseMobOld;
 
 };
+
+template< typename SUBREGIONTYPE >
+void CompositionalMultiphaseBase::updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  updateComponentFraction( subRegion );
+  updateFluidModel( subRegion, targetIndex );
+  updatePhaseVolumeFraction( subRegion, targetIndex );
+  updateSolidFlowProperties( subRegion, targetIndex );
+  updateRelPermModel( subRegion, targetIndex );
+  updatePhaseMobility( subRegion, targetIndex );
+  updateCapPressureModel( subRegion, targetIndex );
+}
 
 } // namespace geosx
 

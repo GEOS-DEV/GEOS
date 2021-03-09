@@ -85,13 +85,12 @@ public:
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
 
-  FaceElementStencilWrapper( IndexContainerViewConstType  elementRegionIndices,
-                             IndexContainerViewConstType  elementSubRegionIndices,
-                             IndexContainerViewConstType  elementIndices,
-                             WeightContainerViewConstType weights, )
+  FaceElementStencilWrapper( IndexContainerType & elementRegionIndices,
+                             IndexContainerType & elementSubRegionIndices,
+                             IndexContainerType & elementIndices,
+                             WeightContainerType & weights )
 
-  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
-   m_permeability()
+  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights )
   {
 
   }
@@ -108,14 +107,8 @@ public:
   /// Deleted move assignment operator
   FaceElementStencilWrapper & operator=( FaceElementStencilWrapper && ) = delete;
 
-  template<typename PERMTYPE >
-  void computeTransmissibility( localIndex iconn,
-                                PERMTYPE permeability,
-                                real64 (& transmissibility)[2] );
-
 private:
 
-  CoefficientAccessor< array1d< real64 > > m_permeability;
 };
 
 /**

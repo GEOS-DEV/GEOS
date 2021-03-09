@@ -44,7 +44,7 @@ PermeabilityBase::deliverClone( string const & name,
   return clone;
 }
 
-void PermeabilityBase::allocateConstitutiveData( dataRepository::Group * const parent,
+void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_permeability.resize( 0, numConstitutivePointsPerParentIndex, 3 );

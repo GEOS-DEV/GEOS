@@ -13,11 +13,11 @@
  */
 
 /**
- * @file PorosityBase.hpp
+ * @file PressureDependentPorosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_POROSITYBASE_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_POROSITYBASE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_POROSITY_PRESSUREDEPENDENTPOROSITY_HPP_
+#define GEOSX_CONSTITUTIVE_POROSITY_PRESSUREDEPENDENTPOROSITY_HPP_
 
 #include "PorosityBase.hpp"
 
@@ -40,42 +40,43 @@ public:
    * @return number of elements
    */
   GEOSX_HOST_DEVICE
-  localIndex numElems() const { return m_permeability.size( 0 ); }
+  localIndex numElems() const { return m_porosity.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
   GEOSX_HOST_DEVICE
-  localIndex numGauss() const { return m_permeability.size( 1 ); }
-
-protected:
+  localIndex numGauss() const { return m_porosity.size( 1 ); }
 
   PressureDependentPorosityUpdate( PorRelationType const & porRelation,
-                                   arrayView3d< real64 > const & porosity,
-                                   arrayView3d< real64 > const & dPorosity_dPressure )
+                                   arrayView2d< real64 > const & porosity,
+                                   arrayView2d< real64 > const & dPorosity_dPressure )
     : m_porosity( porosity ),
       m_dPorosity_dPressure( dPorosity_dPressure ),
       m_porRelation( porRelation )
   {}
 
   /// Default copy constructor
-  PressureDependentPorosityUpdate( PermeabilityBaseUpdate const & ) = default;
+  PressureDependentPorosityUpdate( PressureDependentPorosityUpdate const & ) = default;
 
   /// Default move constructor
-  PressureDependentPorosityUpdate( PermeabilityBaseUpdate && ) = default;
+  PressureDependentPorosityUpdate( PressureDependentPorosityUpdate && ) = default;
 
   /// Deleted copy assignment operator
-  PressureDependentPorosityUpdate & operator=( PermeabilityBaseUpdate const & ) = delete;
+  PressureDependentPorosityUpdate & operator=( PressureDependentPorosityUpdate const & ) = delete;
 
   /// Deleted move assignment operator
-  PressureDependentPorosityUpdate & operator=( PermeabilityBaseUpdate && ) = delete;
+  PressureDependentPorosityUpdate & operator=( PressureDependentPorosityUpdate && ) = delete;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void compute( real64 const & pressure,
-                arraySlice1d< real64 > const & porosity,
-                arraySlice1d< real64 > const & dPorosity_dPressure ) const;
+                real64 & porosity,
+                real64 & dPorosity_dPressure ) const
+  {
+    m_porRelation.compute( pressure, porosity, dPorosity_dPressure );
+  }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -89,9 +90,9 @@ protected:
   }
 
 private:
-  arrayView1d< real64 > m_porosity;
+  arrayView2d< real64 > m_porosity;
 
-  arrayView1d< real64 > m_dPorosity_dPressure;
+  arrayView2d< real64 > m_dPorosity_dPressure;
 
   PorRelationType m_porRelation;
 };
@@ -107,15 +108,17 @@ public:
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static string catalogName() { return "PressureDependentPorosity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
+    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * referencePressureString() { return "referencePressure"; }
   } viewKeys;
 
   using KernelWrapper = PressureDependentPorosityUpdate< ExponentApproximationType::Linear >;
@@ -138,23 +141,10 @@ protected:
   virtual void postProcessInput() override;
 
   real64 m_referencePressure;
-  real64 m_referencePorosity;
   real64 m_compressibility;
 
 
 };
-
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void PressureDependentPorosityUpdate::compute( real64 const & pressure,
-                                         arraySlice1d< real64 > const & porosity,
-                                         arraySlice1d< real64 > const & dPorosity_dPressure ) const
-{
-  m_porRelation.compute( pressure, porosity, dPorosity_dPressure );
-}
-
-
 
 
 }/* namespace constitutive */
@@ -162,4 +152,4 @@ void PressureDependentPorosityUpdate::compute( real64 const & pressure,
 } /* namespace geosx */
 
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_POROSITYBASE_HPP_
+#endif //GEOSX_CONSTITUTIVE_POROSITY_PRESSUREDEPENDENTPOROSITY_HPP_

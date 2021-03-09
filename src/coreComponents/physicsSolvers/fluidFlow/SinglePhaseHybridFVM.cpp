@@ -198,7 +198,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
 
 void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                               real64 const dt,
-                                              DomainPartition const & domain,
+                                              DomainPartition & domain,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
@@ -349,7 +349,6 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
 
     arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
@@ -358,7 +357,6 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                                                                                 rankOffset,
                                                                                 elemDofNumber,
                                                                                 elemGhostRank,
-                                                                                refPoro,
                                                                                 volume,
                                                                                 densOld,
                                                                                 localResidualNorm );
@@ -519,8 +517,8 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase & subRegion )
+  forTargetSubRegions<CellElementSubRegion>( mesh, [&]( localIndex const targetIndex,
+                                                        CellElementSubRegion & subRegion )
   {
     updateState( subRegion, targetIndex );
   } );

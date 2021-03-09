@@ -64,7 +64,7 @@ struct FluxKernel
    */
   template< typename STENCILWRAPPER_TYPE >
   static void
-    launch( STENCILWRAPPER_TYPE const & stencil,
+    launch( STENCILWRAPPER_TYPE const & stencilWrapper,
             real64 const dt,
             globalIndex const rankOffset,
             ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -78,24 +78,22 @@ struct FluxKernel
             ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
             ElementViewConst< arrayView3d< real64 const > > const & permeability,
             ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-            ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
-            R1Tensor const & gravityVector,
-            real64 const meanPermCoeff,
+            ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(transTMultiplier),
+            R1Tensor const & GEOSX_UNUSED_PARAM ( gravityVector ),
             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-            arrayView1d< real64 > const & localRhs,
-            CRSMatrixView< real64, localIndex const > const & dR_dAper )
+            arrayView1d< real64 > const & localRhs )
   {
     constexpr localIndex maxNumFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
     constexpr localIndex numFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
     constexpr localIndex maxStencilSize = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
     constexpr localIndex stencilSize  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
-    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-    typename STENCILWRAPPER_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
+    typename STENCILWRAPPER_TYPE::WeightContainerViewConstType const & weights = stencilWrapper.getWeights();
 
-    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
       // working arrays
       stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
@@ -103,16 +101,16 @@ struct FluxKernel
       stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissiblity, dTrans_dPressure[2];
+      real64 transmissiblity[2], dTrans_dPres[2];
       stencilWrapper.computeTransmissibility( iconn, permeability, transmissiblity );
-      stencilWrapper.dTrans_dPressure( iconn, dPerm_dPressure,  dTrans_dPressure );
+      stencilWrapper.dTrans_dPressure( iconn, dPerm_dPres,  dTrans_dPres );
 
       computeTPFA( stencilSize,
                    seri[iconn],
                    sesri[iconn],
                    sei[iconn],
                    transmissiblity,
-                   dTrans_dPressure,
+                   dTrans_dPres,
                    pres,
                    dPres,
                    gravCoef,
@@ -230,19 +228,21 @@ struct FluxKernel
   GEOSX_HOST_DEVICE
   static void
   computeTPFA( localIndex const numFluxElems,
-               arraySlice1d< localIndex const > const & stencilElementIndices,
-               arraySlice1d< real64 const > const & stencilWeights,
-               arrayView1d< real64 const > const & pres,
-               arrayView1d< real64 const > const & dPres,
-               arrayView1d< real64 const > const & gravCoef,
-               arrayView2d< real64 const > const & dens,
-               arrayView2d< real64 const > const & dDens_dPres,
-               arrayView1d< real64 const > const & mob,
-               arrayView1d< real64 const > const & dMob_dPres,
+               arraySlice1d< localIndex const > const & seri,
+               arraySlice1d< localIndex const > const & sesri,
+               arraySlice1d< localIndex const > const & sei,
+               real64 const (& transmissibility)[2],
+               real64 const (& dTrans_dPres)[2],
+               ElementViewConst< arrayView1d< real64 const > > const & pres,
+               ElementViewConst< arrayView1d< real64 const > > const & dPres,
+               ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+               ElementViewConst< arrayView2d< real64 const > > const & dens,
+               ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+               ElementViewConst< arrayView1d< real64 const > > const & mob,
+               ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                real64 const dt,
                arraySlice1d< real64 > const & flux,
-               arraySlice2d< real64 > const & fluxJacobian,
-               arraySlice2d< real64 > const & dFlux_dAperture );
+               arraySlice2d< real64 > const & fluxJacobian );
 
 
 };
