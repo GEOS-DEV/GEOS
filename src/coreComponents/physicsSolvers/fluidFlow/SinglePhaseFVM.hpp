@@ -88,7 +88,7 @@ public:
   using BASE::m_pressure;
   using BASE::m_deltaPressure;
   using BASE::m_deltaVolume;
-  using BASE::m_Permeability;
+  using BASE::m_permeability;
   using BASE::m_dPerm_dPressure;
   using BASE::m_mobility;
   using BASE::m_dMobility_dPres;
@@ -210,9 +210,6 @@ public:
 
   virtual void initializePreSubGroups() override;
 
-  template< typename SUBREGIONTYPE >
-  void updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const;
-
 private:
 
   /**
@@ -234,18 +231,6 @@ private:
   // no data needed here, see SinglePhaseBase
 
 };
-
-template< typename BASE >
-template< typename SUBREGIONTYPE >
-void SinglePhaseFVM< BASE >::updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  updateFluidModel( subRegion, targetIndex );
-  updateSolidFlowProperties( subRegion, targetIndex );
-  updateMobility( subRegion, targetIndex );
-}
-
 
 } /* namespace geosx */
 

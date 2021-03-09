@@ -107,6 +107,23 @@ public:
   /// Deleted move assignment operator
   FaceElementStencilWrapper & operator=( FaceElementStencilWrapper && ) = delete;
 
+  /**
+   * @brief Give the number of stencil entries.
+   * @return The number of stencil entries
+   */
+  virtual localIndex size() const override final
+  { return m_elementRegionIndices.size(); }
+
+  template< typename PERMTYPE >
+  void computeTransmissibility( localIndex iconn,
+                                PERMTYPE permeability,
+                                real64 (& transmissibility)[2] ) const;
+
+  template< typename PERMTYPE >
+  void dTrans_dPressure( localIndex iconn,
+                         PERMTYPE dPerm_dPressure,
+                         real64 (&dTrans_dPressure )[2] ) const;
+
 private:
 
 };
@@ -189,6 +206,52 @@ private:
   ArrayOfArrays< R1Tensor > m_cellCenterToEdgeCenters;
 
 };
+
+template< typename PERMTYPE >
+void FaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
+                                                         PERMTYPE permeability,
+                                                         real64 (& transmissibility)[2] ) const
+{
+  localIndex const er0  =  m_elementRegionIndices[iconn][0];
+  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
+  localIndex const ei0  =  m_elementIndices[iconn][0];
+
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
+
+  real64 const t0 = m_weights[iconn][0] * permeability[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
+  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
+
+  real64 const harmonicWeight   = t0*t1 / (t0+t1);
+  real64 const arithmeticWeight = (t0+t1)/2;
+
+  real64 const meanPermCoeff = 1.0; //TODO make it a member
+
+  transmissibility[0] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+  transmissibility[1] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+}
+
+template< typename PERMTYPE >
+void FaceElementStencilWrapper::dTrans_dPressure( localIndex iconn,
+                                                  PERMTYPE dPerm_dPressure,
+                                                  real64 (&dTrans_dPressure )[2] ) const
+{
+  localIndex const er0  =  m_elementRegionIndices[iconn][0];
+  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
+  localIndex const ei0  =  m_elementIndices[iconn][0];
+
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
+
+  real64 const dt0 = m_weights[iconn][0] * dPerm_dPressure[er0][esr0][ei0][0][0];
+  real64 const dt1 = m_weights[iconn][1] * dPerm_dPressure[er1][esr1][ei1][0][0];
+
+  // TODO fix this with proper derivative calculation.
+  dTrans_dPressure[0] = dt0;
+  dTrans_dPressure[1] = dt1;
+}
 
 } /* namespace geosx */
 

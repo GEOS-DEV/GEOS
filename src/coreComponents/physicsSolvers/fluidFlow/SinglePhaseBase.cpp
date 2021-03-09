@@ -429,7 +429,8 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const density = fluidProps.dens;
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
-  PorosityBase const & porosityModel = getConstitutiveModel<PorosityBase>( subRegion, m_porosityModelNames[targetIndex] );
+  PorosityBase const & porosityModel = getConstitutiveModel<PorosityBase>( subRegion,
+                                                                           m_porosityModelNames[targetIndex] );
 
   arrayView2d< real64 const > const & porosity    = porosityModel.getPorosity();
   arrayView2d< real64 const > const & porosityOld = porosityModel.getPorosityOld();

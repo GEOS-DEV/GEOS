@@ -149,14 +149,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition & domain )
 {
-//  GEOSX_UNUSED_VAR( dofManager );
-//  GEOSX_UNUSED_VAR( localSolution );
-//  GEOSX_UNUSED_VAR( scalingFactor);
-//  GEOSX_UNUSED_VAR( domain);
-
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  GEOSX_UNUSED_VAR(mesh);
 
   dofManager.addVectorToField( localSolution,
                                BASE::viewKeyStruct::pressureString(),
@@ -168,9 +161,13 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
-  forTargetSubRegions<CellElementSubRegion, SurfaceElementSubRegion>( mesh, [&] ( localIndex const targetIndex, auto & subRegion )
+  //GEOSX_UNUSED_VAR(mesh)
+  this->template forTargetSubRegions<CellElementSubRegion, SurfaceElementSubRegion>( mesh, [&] ( localIndex const targetIndex,
+                                                                                        auto & subRegion )
   {
-    updateState( subRegion, targetIndex );
+    //GEOSX_UNUSED_VAR(targetIndex)
+    //GEOSX_UNUSED_VAR(subRegion)
+    BASE::updateState( subRegion, targetIndex );
   } );
 }
 
@@ -226,8 +223,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
                         m_transTMultiplier.toNestedViewConst(),
                         this->gravityVector(),
                         localMatrix,
-                        localRhs,
-                        m_derivativeFluxResidual_dAperture->toViewConstSizes() );
+                        localRhs);
   } );
 }
 
