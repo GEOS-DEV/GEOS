@@ -22,6 +22,22 @@
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
+// Pre-define some suitesparse variables since they are not properly defined
+// in the header for alternate index types.
+#if GEOSX_GLOBALINDEX_TYPE_FLAG==0
+/// Set alias for SuiteSparse_long
+#define SuiteSparse_long int
+
+/// Set value for SuiteSparse_long_max
+#define SuiteSparse_long_max 2147483647
+
+/// Set string key for SuiteSparse_long
+#define SuiteSparse_long_idd "d"
+
+/// Set printf key for SuiteSparse_long
+#define SuiteSparse_long_id "%d"
+#endif
+
 #include <umfpack.h>
 
 namespace geosx

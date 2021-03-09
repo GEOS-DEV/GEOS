@@ -17,6 +17,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
+                          HYPRE_CUDA
                           MATHPRESSO
                           METIS
                           MPI

@@ -2376,7 +2376,11 @@ void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition co
   char output[108] = {0};
   sprintf( output,
            " Number of element for each fracture state:"
+#if defined(GEOSX_USE_HYPRE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+           " stick: %12i | slip:  %12i | open:  %12i",
+#else
            " stick: %12lli | slip:  %12lli | open:  %12lli",
+#endif
            numStick,
            numSlip,
            numOpen );

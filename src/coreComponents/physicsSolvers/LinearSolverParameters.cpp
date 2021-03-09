@@ -126,6 +126,30 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "AMG coarsest level solver/smoother type\n"
                     "Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct" );
 
+  registerWrapper( viewKeyStruct::amgCoarseningString(), &m_parameters.amg.coarseningType ).
+    setApplyDefaultValue( "HMIS" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG coarsening algorithm\n"
+                    "Available options are: TODO" );
+
+  registerWrapper( viewKeyStruct::amgInterpolationString(), &m_parameters.amg.interpolationType ).
+    setApplyDefaultValue( 6 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG interpolation algorithm\n"
+                    "Available options are: TODO" );
+
+  registerWrapper( viewKeyStruct::amgNumFunctionsString(), &m_parameters.amg.numFunctions ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG number of functions\n"
+                    "Available options are: TODO" );
+
+  registerWrapper( viewKeyStruct::amgAggresiveNumLevelsString(), &m_parameters.amg.aggresiveNumLevels ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG number levels for aggressive coarsening \n"
+                    "Available options are: TODO" );
+
   registerWrapper( viewKeyStruct::amgThresholdString(), &m_parameters.amg.threshold ).
     setApplyDefaultValue( m_parameters.amg.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).

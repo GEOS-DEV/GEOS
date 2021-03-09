@@ -112,6 +112,10 @@ public:
     /// AMG near null space type key
     static constexpr char const * amgNullSpaceTypeString() { return "amgNullSpaceType"; }
 
+    static constexpr char const * amgCoarseningString()         { return "amgCoarseningType";           } ///< AMG coarsening key
+    static constexpr char const * amgInterpolationString()      { return "amgInterpolationType";        }   ///< AMG interpolation key
+    static constexpr char const * amgNumFunctionsString()       { return "amgNumFunctions";             }   ///< AMG threshold key
+    static constexpr char const * amgAggresiveNumLevelsString() { return "amgAggresiveCoarseningLevels";}             ///< AMG threshold key
     /// ILU fill key
     static constexpr char const * iluFillString() { return "iluFill"; }
     /// ILU threshold key
