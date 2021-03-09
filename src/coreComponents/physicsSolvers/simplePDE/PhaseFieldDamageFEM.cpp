@@ -18,6 +18,7 @@
 
 #include "PhaseFieldDamageFEM.hpp"
 #include "PhaseFieldDamageFEMKernels.hpp"
+#include "PoroPhaseFieldDamageFEMKernels.hpp"
 #include <math.h>
 #include <vector>
 
@@ -230,11 +231,12 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
   localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
   localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
 
-  finiteElement::
-    regionBasedKernelApplication< serialPolicy,
-                                  constitutive::DamageBase,
-                                  CellElementSubRegion,
-                                  PhaseFieldDamageKernel >( *mesh,
+  if (m_pressureTerm == 0) {
+    finiteElement::
+      regionBasedKernelApplication< serialPolicy,
+				    constitutive::DamageBase,
+				    CellElementSubRegion,
+				    PhaseFieldDamageKernel >( *mesh,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),
                                                             m_solidModelNames,
@@ -244,6 +246,25 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                             localRhs,
                                                             m_fieldName,
                                                             m_localDissipationOption=="Linear" ? 1 : 2 );
+  }
+  else {
+    finiteElement::
+      regionBasedKernelApplication< serialPolicy,
+				    constitutive::DamageBase,
+				    CellElementSubRegion,
+				    PoroPhaseFieldDamageKernel >( *mesh,
+                                                            targetRegionNames(),
+                                                            this->getDiscretizationName(),
+                                                            m_solidModelNames,
+                                                            dofIndex,
+                                                            dofManager.rankOffset(),
+                                                            localMatrix,
+                                                            localRhs,
+                                                            m_fieldName,
+                                                            m_localDissipationOption=="Linear" ? 1 : 2 );
+    
+  }
+    
 #else // this has your changes to the old base code
   matrix.zero();
   rhs.zero();

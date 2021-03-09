@@ -1609,6 +1609,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
+			<xsd:element name="PoroDamageElasticIsotropic" type="PoroDamageElasticIsotropicType" />
+			<xsd:element name="PoroDamagePoroElasticIsotropic" type="PoroDamagePoroElasticIsotropicType" />
 			<xsd:element name="PoroDruckerPrager" type="PoroDruckerPragerType" />
 			<xsd:element name="PoroElasticIsotropic" type="PoroElasticIsotropicType" />
 			<xsd:element name="PoroElasticTransverseIsotropic" type="PoroElasticTransverseIsotropicType" />
@@ -1985,6 +1987,52 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />
 		<!--referencePressure => Reference pressure for fluid compressibility-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroDamageElasticIsotropicType">
+		<!--criticalFractureEnergy => Critical fracture energy-->
+		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
+		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
+		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--lengthScale => Length scale l in the phase-field equation-->
+		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroDamagePoroElasticIsotropicType">
+		<!--BiotCoefficient => Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
+		<!--compressibility => Pore volume compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--criticalFractureEnergy => Critical fracture energy-->
+		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
+		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
+		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--lengthScale => Length scale l in the phase-field equation-->
+		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

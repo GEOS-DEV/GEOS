@@ -14,8 +14,8 @@
 
 
 /**
- * @file Damage.hpp
- * @brief This class overrides the SSLE constitutive updates to account for a Damage field
+ * @file PoroDamage.hpp
+ * @brief This class overrides the SSLE constitutive updates to account for a PoroDamage field
  *
  * In a phase-field for fracture model, the damage variable affects the Elasticity equation
  * with the degradation of the stresses. Instead of sigma = C : epsilon, we have sigma = g(d)*C:epsilon,
@@ -39,8 +39,8 @@
  *
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_PORODAMAGE_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_PORODAMAGE_HPP_
 
 #include "constitutive/solid/SolidBase.hpp"
 
@@ -58,18 +58,18 @@ namespace constitutive
 //       directly through an arrayView, as it does not represent the true stress.
 
 template< typename UPDATE_BASE >
-class DamageUpdates : public UPDATE_BASE
+class PoroDamageUpdates : public UPDATE_BASE
 {
 public:
   template< typename ... PARAMS >
-  DamageUpdates( arrayView2d< real64 > const & inputDamage,
+  PoroDamageUpdates( arrayView2d< real64 > const & inputPoroDamage,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
-    m_damage( inputDamage ),
+    m_damage( inputPoroDamage ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
@@ -167,6 +167,14 @@ public:
     #endif
   }
 
+  //this function implements a modified Biot Coefficient that depends on the damage
+  GEOSX_HOST_DEVICE
+  virtual real64 getBiotCoefficient( localIndex const k, localIndex const q ) const override
+  {
+    real64 biotCoefficient = UPDATE_BASE::getBiotCoefficient( k,q );
+    return biotCoefficient + m_damage( k, q )*m_damage( k, q )*(1-biotCoefficient);
+  }
+
   arrayView2d< real64 > const m_damage;
   arrayView2d< real64 > const m_strainEnergyDensity;
   real64 const m_lengthScale;
@@ -176,21 +184,21 @@ public:
 
 
 
-class DamageBase : public SolidBase
+class PoroDamageBase : public SolidBase
 {};
 
 template< typename BASE >
-class Damage : public BASE
+class PoroDamage : public BASE
 {
 public:
 
   /// @typedef Alias for LinearElasticIsotropicUpdates
-  using KernelWrapper = DamageUpdates< typename BASE::KernelWrapper >;
+  using KernelWrapper = PoroDamageUpdates< typename BASE::KernelWrapper >;
 
-  Damage( string const & name, dataRepository::Group * const parent );
-  virtual ~Damage() override = default;
+  PoroDamage( string const & name, dataRepository::Group * const parent );
+  virtual ~PoroDamage() override = default;
 
-  static string catalogName() { return string( "Damage" ) + BASE::catalogName(); }
+  static string catalogName() { return string( "PoroDamage" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void postProcessInput() override;

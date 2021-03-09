@@ -22,6 +22,7 @@
 
 #include "NullModel.hpp"
 #include "solid/Damage.hpp"
+#include "solid/PoroDamage.hpp"
 #include "solid/DamageVolDev.hpp"
 #include "solid/DamageSpectral.hpp"
 #include "solid/DruckerPrager.hpp"
@@ -78,6 +79,10 @@ struct ConstitutivePassThru< SolidBase >
     else if( dynamic_cast< Damage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation ) )
     {
       lambda( static_cast< Damage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< PoroDamage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< PoroDamage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation) );
     }
     else if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
     {
@@ -215,6 +220,10 @@ struct ConstitutivePassThru< DamageBase >
     else if( dynamic_cast< Damage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation ) )
     {
       lambda( static_cast< Damage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< PoroDamage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< PoroDamage< PoroElastic < ElasticIsotropic > > * >( constitutiveRelation) );
     }
     else if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
     {

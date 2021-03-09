@@ -127,6 +127,10 @@ public:
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
+  void setPressureTerm() {
+    m_pressureTerm = 1;
+  }
+  
   enum class timeIntegrationOption
   {
     SteadyState,
@@ -177,7 +181,7 @@ private:
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
   array1d< string > m_solidModelNames;
-
+  integer m_pressureTerm;
   array1d< real64 > m_coeff;
   //  string m_coeffFieldName;
 

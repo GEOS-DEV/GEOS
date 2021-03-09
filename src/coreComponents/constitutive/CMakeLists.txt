@@ -34,6 +34,7 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
      solid/Damage.hpp
+     solid/PoroDamage.hpp
      solid/DamageVolDev.hpp
      solid/DamageSpectral.hpp
      solid/DamageSpectralUtilities.hpp
@@ -86,6 +87,7 @@ set( constitutive_sources
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp               
      solid/Damage.cpp
+     solid/PoroDamage.cpp
      solid/DamageVolDev.cpp
      solid/DamageSpectral.cpp
      solid/DruckerPrager.cpp

@@ -470,6 +470,20 @@ Element: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
 
 
+.. _XML_PoroDamageElasticIsotropic:
+
+Element: PoroDamageElasticIsotropic
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroDamageElasticIsotropic.rst
+
+
+.. _XML_PoroDamagePoroElasticIsotropic:
+
+Element: PoroDamagePoroElasticIsotropic
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroDamagePoroElasticIsotropic.rst
+
+
 .. _XML_PoroDruckerPrager:
 
 Element: PoroDruckerPrager
@@ -1242,6 +1256,20 @@ Datastructure: PhaseFieldFracture
 Datastructure: PoreVolumeCompressibleSolid
 ==========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
+
+
+.. _DATASTRUCTURE_PoroDamageElasticIsotropic:
+
+Datastructure: PoroDamageElasticIsotropic
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroDamageElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroDamagePoroElasticIsotropic:
+
+Datastructure: PoroDamagePoroElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroDamagePoroElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_PoroDruckerPrager:

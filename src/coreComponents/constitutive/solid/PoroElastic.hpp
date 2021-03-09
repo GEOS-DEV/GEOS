@@ -68,12 +68,14 @@ public:
    * @return Biot coefficient
    */
   GEOSX_HOST_DEVICE
-  real64 getBiotCoefficient() const
+  virtual real64 getBiotCoefficient( localIndex const k, localIndex const q ) const
   {
+    GEOSX_UNUSED_VAR( k )
+    GEOSX_UNUSED_VAR( q )
     return m_biotCoefficient;
   }
 
-private:
+protected:
   real64 m_biotCoefficient; ///< Scalar Biot coefficient
 
 };

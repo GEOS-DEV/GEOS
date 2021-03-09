@@ -23,6 +23,8 @@ MultiPhaseMultiComponentFluid         node         :ref:`XML_MultiPhaseMultiComp
 NullModel                             node         :ref:`XML_NullModel`                             
 ParticleFluid                         node         :ref:`XML_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node         :ref:`XML_PoreVolumeCompressibleSolid`           
+PoroDamageElasticIsotropic            node         :ref:`XML_PoroDamageElasticIsotropic`            
+PoroDamagePoroElasticIsotropic        node         :ref:`XML_PoroDamagePoroElasticIsotropic`        
 PoroDruckerPrager                     node         :ref:`XML_PoroDruckerPrager`                     
 PoroElasticIsotropic                  node         :ref:`XML_PoroElasticIsotropic`                  
 PoroElasticTransverseIsotropic        node         :ref:`XML_PoroElasticTransverseIsotropic`        

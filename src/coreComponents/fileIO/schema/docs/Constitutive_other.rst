@@ -23,6 +23,8 @@ MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiCo
 NullModel                             node :ref:`DATASTRUCTURE_NullModel`                             
 ParticleFluid                         node :ref:`DATASTRUCTURE_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           
+PoroDamageElasticIsotropic            node :ref:`DATASTRUCTURE_PoroDamageElasticIsotropic`            
+PoroDamagePoroElasticIsotropic        node :ref:`DATASTRUCTURE_PoroDamagePoroElasticIsotropic`        
 PoroDruckerPrager                     node :ref:`DATASTRUCTURE_PoroDruckerPrager`                     
 PoroElasticIsotropic                  node :ref:`DATASTRUCTURE_PoroElasticIsotropic`                  
 PoroElasticTransverseIsotropic        node :ref:`DATASTRUCTURE_PoroElasticTransverseIsotropic`        

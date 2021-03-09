@@ -122,6 +122,7 @@ void PoroelasticPhaseFieldSolver::postProcessInput()
     integer & minNewtonIterSolid = poroelasticSolver.getNonlinearSolverParameters().m_minIterNewton;
     PhaseFieldDamageFEM &
     damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
+    damageSolver.setPressureTerm();
     integer & minNewtonIterFluid = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
     //GEOSX_ERROR_IF( &poroelasticSolver == 0, "Poroelastic solver not found or invalid type: " << m_poroelasticSolverName );
     //GEOSX_ERROR_IF( &damageSolver == 0, "Damage solver not found or invalid type: " << m_damageSolverName );
