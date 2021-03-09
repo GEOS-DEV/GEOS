@@ -96,13 +96,15 @@ public:
 
   using MatrixBase::createWithLocalSize;
   using MatrixBase::createWithGlobalSize;
-  using MatrixBase::create;
   using MatrixBase::closed;
   using MatrixBase::assembled;
   using MatrixBase::insertable;
   using MatrixBase::modifiable;
   using MatrixBase::ready;
   using MatrixBase::residual;
+
+  virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                       MPI_Comm const & comm ) override final;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,

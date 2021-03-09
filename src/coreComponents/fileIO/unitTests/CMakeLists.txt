@@ -47,7 +47,7 @@ if ( ENABLE_MPI )
      blt_add_executable( NAME ${test_name}
                           SOURCES ${test}
                           OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                          DEPENDS_ON ${dependencyList}
+                          DEPENDS_ON ${dependencyList} 
                           )
 
       blt_add_test( NAME ${test_name}

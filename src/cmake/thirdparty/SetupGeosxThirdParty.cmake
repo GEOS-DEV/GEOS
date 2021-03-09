@@ -4,7 +4,11 @@
 
 macro(find_and_register)
     set(singleValueArgs NAME HEADER)
-    set(multiValueArgs INCLUDE_DIRECTORIES LIBRARY_DIRECTORIES LIBRARIES DEPENDS)
+    set(multiValueArgs INCLUDE_DIRECTORIES 
+                       LIBRARY_DIRECTORIES
+                       LIBRARIES 
+                       EXTRA_LIBRARIES 
+                       DEPENDS )
 
     ## parse the arguments
     cmake_parse_arguments(arg
@@ -49,7 +53,7 @@ macro(find_and_register)
 
     blt_register_library(NAME ${arg_NAME}
                          INCLUDES ${${arg_NAME}_INCLUDE_DIR}
-                         LIBRARIES ${${arg_NAME}_LIBRARIES}
+                         LIBRARIES ${${arg_NAME}_LIBRARIES} ${arg_EXTRA_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON
                          DEPENDS_ON ${arg_DEPENDS})
 
@@ -121,7 +125,7 @@ if(DEFINED HDF5_DIR)
                          LIBRARIES ${HDF5_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
-    set(ENABLE_HDF5 ON CACHE BOOL "" FORCE)
+    set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
 else()
     message(FATAL_ERROR "GEOSX requires hdf5, set HDF5_DIR to the hdf5 installation directory.")
@@ -155,7 +159,7 @@ if(DEFINED SILO_DIR)
                       LIBRARIES siloh5
                       DEPENDS hdf5)
 
-    set(ENABLE_SILO ON CACHE BOOL "" FORCE)
+    set(ENABLE_SILO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} silo)
 else()
     message(FATAL_ERROR "GEOSX requires Silo, set SILO_DIR to the Silo installation directory.")
@@ -171,7 +175,7 @@ if(DEFINED PUGIXML_DIR)
                  PATHS ${PUGIXML_DIR}
                  NO_DEFAULT_PATH)
 
-    set(ENABLE_PUGIXML ON CACHE BOOL "" FORCE)
+    set(ENABLE_PUGIXML ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} pugixml)
 else()
     message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
@@ -191,7 +195,7 @@ if(DEFINED RAJA_DIR)
     set_target_properties(RAJA
                           PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
 
-    set(ENABLE_RAJA ON CACHE BOOL "" FORCE)
+    set(ENABLE_RAJA ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} RAJA )
 else()
     message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
@@ -207,7 +211,7 @@ if(DEFINED UMPIRE_DIR)
                  PATHS ${UMPIRE_DIR}
                  NO_DEFAULT_PATH)
 
-    set(ENABLE_UMPIRE ON CACHE BOOL "" FORCE)
+    set(ENABLE_UMPIRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
 else()
     message(FATAL_ERROR "GEOSX requires Umpire, set UMPIRE_DIR to the Umpire installation directory.")
@@ -227,7 +231,7 @@ if(DEFINED CHAI_DIR)
     set_target_properties(chai
                           PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CHAI_INCLUDE_DIRS}")
 
-    set(ENABLE_CHAI ON CACHE BOOL "" FORCE)
+    set(ENABLE_CHAI ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} chai)
 else()
     message(FATAL_ERROR "GEOSX requires CHAI, set CHAI_DIR to the CHAI installation directory.")
@@ -248,7 +252,7 @@ if(DEFINED ADIAK_DIR)
                          LIBRARIES ${adiak_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
-    set(ENABLE_ADIAK ON CACHE BOOL "" FORCE)
+    set(ENABLE_ADIAK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} adiak)
 else()
     if(ENABLE_ADIAK)
@@ -274,7 +278,7 @@ if(DEFINED CALIPER_DIR)
                          LIBRARIES caliper
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
-    set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)
+    set(ENABLE_CALIPER ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} caliper)
 else()
     if(ENABLE_CALIPER)
@@ -297,7 +301,7 @@ if(DEFINED MATHPRESSO_DIR)
                       HEADER mathpresso/mathpresso.h
                       LIBRARIES mathpresso)
 
-    set(ENABLE_MATHPRESSO ON CACHE BOOL "" FORCE)
+    set(ENABLE_MATHPRESSO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} mathpresso)
 else()
     if(ENABLE_MATHPRESSO)
@@ -320,7 +324,7 @@ if(DEFINED METIS_DIR)
                       HEADER metis.h
                       LIBRARIES metis)
 
-    set(ENABLE_METIS ON CACHE BOOL "" FORCE)
+    set(ENABLE_METIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} metis)
 else()
     if(ENABLE_METIS)
@@ -344,7 +348,7 @@ if(DEFINED PARMETIS_DIR)
                       LIBRARIES parmetis
                       DEPENDS metis)
 
-    set(ENABLE_PARMETIS ON CACHE BOOL "" FORCE)
+    set(ENABLE_PARMETIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} parmetis)
 else()
     if(ENABLE_PARMETIS)
@@ -368,7 +372,7 @@ if(DEFINED SUPERLU_DIST_DIR)
                       LIBRARIES superlu_dist
                       DEPENDS parmetis blas lapack)
 
-    set(ENABLE_SUPERLU_DIST ON CACHE BOOL "" FORCE)
+    set(ENABLE_SUPERLU_DIST ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} superlu_dist)
 else()
     if(ENABLE_SUPERLU_DIST)
@@ -392,7 +396,7 @@ if(DEFINED SUITESPARSE_DIR)
                       LIBRARIES umfpack
                       DEPENDS blas lapack)
 
-    set(ENABLE_SUITESPARSE ON CACHE BOOL "" FORCE)
+    set(ENABLE_SUITESPARSE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} suitesparse)
 else()
     if(ENABLE_SUITESPARSE)
@@ -409,14 +413,27 @@ endif()
 if(DEFINED HYPRE_DIR)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
+    if( ENABLE_HYPRE_CUDA )
+        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
+    endif()
+
     find_and_register(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
+                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib 
                       HEADER HYPRE.h
                       LIBRARIES HYPRE
+                      EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS blas lapack superlu_dist)
 
-    set(ENABLE_HYPRE ON CACHE BOOL "" FORCE)
+    if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
+      set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
+      if( GEOSX_LA_INTERFACE STREQUAL "Hypre")
+        message( FATAL_ERROR "Hypre LAI selected, but ENABLE_HYPRE_CUDA not ON while ENABLE_CUDA is ON.")
+      endif()
+    else()
+      set(ENABLE_HYPRE ON CACHE BOOL "")
+    endif()
+    
     set(thirdPartyLibs ${thirdPartyLibs} hypre)
 else()
     if(ENABLE_HYPRE)
@@ -444,7 +461,11 @@ if(DEFINED TRILINOS_DIR)
                          LIBRARIES ${Trilinos_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
-    set(ENABLE_TRILINOS ON CACHE BOOL "" FORCE)
+    # This conditional is due to the lack of mixedInt support on hypre GPU.
+    # This can be removed when support is added into hypre.
+    if( NOT ENABLE_HYPRE_CUDA )
+        set(ENABLE_TRILINOS ON CACHE BOOL "")
+    endif()
     set(thirdPartyLibs ${thirdPartyLibs} trilinos)
 else()
     if(ENABLE_TRILINOS)
@@ -468,7 +489,7 @@ if(DEFINED PETSC_DIR)
                       LIBRARIES petsc
                       DEPENDS metis superlu_dist blas lapack)
 
-    set(ENABLE_PETSC ON CACHE BOOL "" FORCE)
+    set(ENABLE_PETSC ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} petsc)
 else()
     if(ENABLE_PETSC)
@@ -494,12 +515,12 @@ else()
         message(WARNING "ENABLE_VTK is ON but VTK_DIR isn't defined.")
     endif()
 
-    set(ENABLE_VTK OFF CACHE BOOL "" FORCE)
+    set(ENABLE_VTK OFF CACHE BOOL "")
     message(STATUS "Not using VTK")
 endif()
 
 ################################
-# unsrustify
+# uncrustify
 ################################
 if(UNCRUSTIFY_FOUND)
     message(STATUS "UNCRUSTIFY_EXECUTABLE = ${UNCRUSTIFY_EXECUTABLE}")
@@ -543,7 +564,7 @@ if(ENABLE_PYGEOSX)
     if(DEFINED ENABLE_PYLVARRAY AND NOT ENABLE_PYLVARRAY)
         message(FATAL_ERROR "Cannot build pygeosx without pylvarray")
     else()
-        set(ENABLE_PYLVARRAY ON CACHE BOOL "" FORCE)
+        set(ENABLE_PYLVARRAY ON CACHE BOOL "")
     endif()
 
     set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
