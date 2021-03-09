@@ -91,10 +91,13 @@
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
 
 /// The type that localIndex will be alaised to.
-#define GEOSX_LOCALINDEX_TYPE std::ptrdiff_t
+#define GEOSX_LOCALINDEX_TYPE long int
 
 /// The type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE long long int
+
+/// An integer flag representing the type that globalIndex will be aliased to.
+#define GEOSX_LOCALINDEX_TYPE_FLAG 1
 
 #endif  /* GEOSX_CONFIG_HPP */
 

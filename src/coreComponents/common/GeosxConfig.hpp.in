@@ -96,5 +96,8 @@
 /// The type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE @GEOSX_GLOBALINDEX_TYPE@
 
+/// An integer flag representing the type that globalIndex will be aliased to.
+#define GEOSX_LOCALINDEX_TYPE_FLAG @GEOSX_LOCALINDEX_TYPE_FLAG@
+
 #endif  /* GEOSX_CONFIG_HPP */
 
