@@ -106,11 +106,31 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
   {
+    // Get Cartesian coordinates of a reference centered vertical wellbore
     real64 & xCoord = X( localNodeIndex, 0 );
     real64 & yCoord = X( localNodeIndex, 1 );
     real64 const & zCoord = X( localNodeIndex, 2 );
-    real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
 
+    // Compute cylindrical coordinates of a reference centered vertical wellbore
+    real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
+    real64 tCoord;
+
+    if( rCoord < 1e-10 )
+    {
+      tCoord = 0.0;
+    }
+    else if( yCoord >= 0.0 )
+    {
+      tCoord = acos( xCoord/rCoord );
+    }
+    else
+    {
+      tCoord = 2 * M_PI - acos( xCoord/rCoord );
+    }
+
+    tCoord *= 180.0 / M_PI;
+
+    // Wellbore nodesets
     if( isEqual( rCoord, m_min[0], m_positionTolerance ) )
     {
       rnegNodes.insert( localNodeIndex );
@@ -121,19 +141,6 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
       rposNodes.insert( localNodeIndex );
     }
 
-    real64 tCoord;
-
-    if( yCoord>=0 )
-    {
-      tCoord = acos( xCoord/rCoord );
-    }
-    else
-    {
-      tCoord = 2*M_PI - acos( xCoord/rCoord );
-    }
-
-    tCoord *= 180/M_PI;
-
     if( isEqual( tCoord, m_min[1], m_positionTolerance ) )
     {
       tnegNodes.insert( localNodeIndex );
@@ -143,12 +150,13 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
       tposNodes.insert( localNodeIndex );
     }
 
-    // Change node coordinates with respect to well trajectory
+    // Radial distance of the outer square boundary of a reference centered vertical wellbore
     real64 meshTheta = tCoord * M_PI / 180.0;
     int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
     real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
     real64 meshRout = m_max[0] / cos( meshPhi );
 
+    // Wellbore trajectory
     real64 xTopCenter = m_trajectory[0][0];
     real64 yTopCenter = m_trajectory[0][1];
     real64 zTop = m_min[2];
@@ -157,32 +165,44 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     real64 yBottomCenter = m_trajectory[1][1];
     real64 zBottom = m_max[2];
 
-    //TODO correct the inclined borehole wall geometry
-
-
-/**
     real64 dx = xBottomCenter - xTopCenter;
     real64 dy = yBottomCenter - yTopCenter;
     real64 dz = zBottom - zTop;
     real64 dr = sqrt( dx*dx + dy*dy );
+    real64 dl = sqrt( dr*dr + dz*dz );
+
+    // Azimuth from x-axis
     real64 theta0;
 
-    if( dy>=0 )
+    if( dr < 1e-10 )
+    {
+      theta0 = 0.0;
+    }
+    else if( dy>=0.0 )
     {
       theta0 = acos( dx/dr );
     }
     else
     {
-      theta0 = 2*M_PI - acos( dx/dr );
+      theta0 = 2.0 * M_PI - acos( dx/dr );
     }
 
-    real64 dl =sqrt( dr*dr + dz*dz );
-
-    real64 dTheta = tCoord - theta0;
+    // The horizontal section of an inclined wellbore is an ellipse
+    // The principle directions of this ellipse is defined by dTheta = 0, and PI/2
+    real64 dTheta = meshTheta - theta0;
     real64 tanDTheta = tan( dTheta );
- */
-    real64 transformCoeff = 1.0;// sqrt ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta );
 
+    // Transform radial coordinate regarding the elliptical shape of the wellbore horizontal section
+    // This transformation ensures that the ourter square boundary is unchanged
+    real64 transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
+    real64 rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
+
+    // Compute transformed cartesian coordinates
+    xCoord = rCoordTransform * cos( meshTheta );
+    yCoord = rCoordTransform * sin( meshTheta );
+
+    // Moving the coordinate in the horizontal plane with respect to the center of the wellbore section
+    // This transformation ensures that the ourter square boundary is unchanged
     real64 zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
     real64 xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
     real64 yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
