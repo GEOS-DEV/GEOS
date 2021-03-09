@@ -32,6 +32,7 @@ or_die python scripts/config-build.py \
               -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\" \
               -DCUDA_TOOLKIT_ROOT_DIR:PATH=${CUDA_TOOLKIT_ROOT_DIR:-/usr/local/cuda} \
               -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70} \
+              -DENABLE_HYPRE:BOOL=${ENABLE_HYPRE_CUDA:-ON} \
               -DENABLE_HYPRE_CUDA:BOOL=${ENABLE_HYPRE_CUDA:-OFF} \
               -DENABLE_TRILINOS:BOOL=${ENABLE_TRILINOS:-ON}
 
