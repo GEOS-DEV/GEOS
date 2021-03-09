@@ -99,7 +99,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "Mesh type. Options are:\n* " + EnumStrings< MeshType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::positionToleranceString(), &m_positionTolerance ).
-    setApplyDefaultValue( 1e-10 ).
+    setApplyDefaultValue( 10 * std::numeric_limits< real64 >::epsilon() ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "A position tolerance to verify if a node belong to a nodeset" );
 }

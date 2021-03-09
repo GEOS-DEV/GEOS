@@ -115,7 +115,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
     real64 tCoord;
 
-    if( rCoord < 1e-10 )
+    if( rCoord < m_positionTolerance )
     {
       tCoord = 0.0;
     }
@@ -125,7 +125,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     }
     else
     {
-      tCoord = 2 * M_PI - acos( xCoord/rCoord );
+      tCoord = 2.0 * M_PI - acos( xCoord/rCoord );
     }
 
     tCoord *= 180.0 / M_PI;
@@ -174,7 +174,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     // Azimuth from x-axis
     real64 theta0;
 
-    if( dr < 1e-10 )
+    if( dr < m_positionTolerance )
     {
       theta0 = 0.0;
     }
