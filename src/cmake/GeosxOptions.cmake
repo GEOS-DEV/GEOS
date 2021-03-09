@@ -127,8 +127,15 @@ else()
 endif()
 
 
-set( GEOSX_LOCALINDEX_TYPE "std::ptrdiff_t" CACHE STRING "" )
-set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
+
+if( ENABLE_HYPRE_CUDA AND ( GEOSX_LA_INTERFACE STREQUAL "Hypre" ) )
+    set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
+    set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
+else()
+    set( GEOSX_LOCALINDEX_TYPE "std::ptrdiff_t" CACHE STRING "" )
+    set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
+endif()
+
 
 if( GEOSX_LOCALINDEX_TYPE STREQUAL "int" )
     set( GEOSX_LOCALINDEX_TYPE_FLAG "0" CACHE STRING "" FORCE )
