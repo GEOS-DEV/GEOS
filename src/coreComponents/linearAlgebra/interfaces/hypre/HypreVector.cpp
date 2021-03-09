@@ -32,6 +32,16 @@ namespace geosx
 
 // Check matching requirements on index/value types between GEOSX and Hypre
 
+// WARNING. We don't have consistent types between HYPRE_Int and localIndex.
+//          Decision needs to be made either to use bigint option, or change
+//          localIndex to int. We are getting away with this because we do not
+//          pass ( localIndex * ) to hypre except when it is on the GPU, in
+//          which case we are using int for localIndex.
+#if defined(GEOSX_USE_HYPRE_CUDA)
+static_assert( sizeof( HYPRE_Int ) == sizeof( localIndex ),
+               "HYPRE_Int and geosx::localIndex must have the same size" );
+#endif
+
 static_assert( sizeof( HYPRE_BigInt ) == sizeof( globalIndex ),
                "HYPRE_BigInt and geosx::globalIndex must have the same size" );
 
@@ -162,10 +172,15 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 {
   GEOSX_LAI_ASSERT( closed() );
 
+#if !defined(GEOSX_USE_HYPRE_CUDA)
   localValues.move( LvArray::MemorySpace::CPU, false );
 
-  HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
+  using createPolicy = parallelHostPolicy;
+#else
+  using createPolicy = parallelDevicePolicy<>;
+#endif
 
+  HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
   HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( localSize );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
 
@@ -173,10 +188,11 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
   finalize( m_ij_vector, m_par_vector );
 
   HYPRE_Real * const local_data = extractLocalVector();
-  for( localIndex i = 0; i < localValues.size(); ++i )
+
+  forAll< createPolicy >( localValues.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     local_data[i] = localValues[i];
-  }
+  } );
 
 }
 
@@ -415,7 +431,11 @@ void HypreVector::print( std::ostream & os ) const
       for( localIndex i = 0; i < localSize(); ++i )
       {
         sprintf( str,
-                 "%11i%20lli%24.10e\n",
+#if defined(GEOSX_USE_CUDA)
+                 "%i%20i%24.10e\n",
+#else
+                 "%i%20lli%24.10e\n",
+#endif
                  iRank,
                  firstRowID + LvArray::integerConversion< globalIndex >( i ),
                  local_data[i] );
