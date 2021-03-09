@@ -119,12 +119,40 @@ void SeparateComponentFilter( MATRIX const & src,
                               MATRIX & dst,
                               const localIndex dofsPerNode )
 {
+  GEOSX_MARK_FUNCTION;
   GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );
 
   const localIndex localRows  = src.numLocalRows();
   const localIndex maxEntries = src.maxRowLength();
   const localIndex maxDstEntries = maxEntries / dofsPerNode;
 
+#if defined(GEOSX_USE_HYPRE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+  CRSMatrix< real64 > tempMat;
+  tempMat.resize( localRows, src.numGlobalCols(), maxDstEntries );
+
+  for( globalIndex r=0; r<localRows; ++r )
+  {
+    array1d< globalIndex > srcIndices( maxEntries );;
+    array1d< real64 > srcValues( maxEntries );
+
+    globalIndex const row = r + src.ilower();
+    const globalIndex rowComponent = row % dofsPerNode;
+    const localIndex rowLength = src.globalRowLength( row );
+
+    src.getRowCopy( row, srcIndices, srcValues );
+
+    for( localIndex col=0; col<rowLength; ++col )
+    {
+      const globalIndex colComponent = srcIndices( col ) % dofsPerNode;
+      if( rowComponent == colComponent )
+      {
+        tempMat.insertNonZero( r, srcIndices( col ), srcValues( col ) );
+      }
+    }
+  }
+
+  dst.create( tempMat.toViewConst(), MPI_COMM_GEOSX );
+#else
   dst.createWithLocalSize( localRows, maxEntries, MPI_COMM_WORLD );
   dst.open();
 
@@ -157,6 +185,9 @@ void SeparateComponentFilter( MATRIX const & src,
     dst.insert( row, dstIndices.data(), dstValues.data(), k );
   }
   dst.close();
+#endif
+
+//  dst.print(std::cout);
 }
 
 template< typename VECTOR >

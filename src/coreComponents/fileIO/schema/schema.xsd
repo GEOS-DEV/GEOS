@@ -577,11 +577,23 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearSolverParametersType">
+		<!--amgAggresiveCoarseningLevels => AMG number levels for aggressive coarsening 
+Available options are: TODO-->
+		<xsd:attribute name="amgAggresiveCoarseningLevels" type="integer" default="0" />
 		<!--amgCoarseSolver => AMG coarsest level solver/smoother type
 Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct-->
 		<xsd:attribute name="amgCoarseSolver" type="string" default="direct" />
+		<!--amgCoarseningType => AMG coarsening algorithm
+Available options are: TODO-->
+		<xsd:attribute name="amgCoarseningType" type="string" default="HMIS" />
+		<!--amgInterpolationType => AMG interpolation algorithm
+Available options are: TODO-->
+		<xsd:attribute name="amgInterpolationType" type="integer" default="6" />
 		<!--amgNullSpaceType => AMG near null space approximation-->
 		<xsd:attribute name="amgNullSpaceType" type="string" default="constantModes" />
+		<!--amgNumFunctions => AMG number of functions
+Available options are: TODO-->
+		<xsd:attribute name="amgNumFunctions" type="integer" default="1" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
 		<!--amgSmootherType => AMG smoother type
