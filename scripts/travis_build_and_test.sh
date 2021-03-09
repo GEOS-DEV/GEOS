@@ -42,7 +42,7 @@ or_die python scripts/config-build.py \
               -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70} \
               -DENABLE_HYPRE:BOOL=${ENABLE_HYPRE:-ON} \
               -DENABLE_HYPRE_CUDA:BOOL=${ENABLE_HYPRE_CUDA:-OFF} \
-              -DENABLE_TRILINOS:BOOL=${ENABLE_TRILINOS:-ON}
+              -DENABLE_TRILINOS:BOOL=${ENABLE_TRILINOS:-ON} \
               -DGEOSX_LA_INTERFACE:STRING=${GEOSX_LA_INTERFACE}
 
 or_die cd ${GEOSX_BUILD_DIR}
