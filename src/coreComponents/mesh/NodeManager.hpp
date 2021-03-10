@@ -247,31 +247,31 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    /// String to access the reference position
+    /// @return String to access the reference position
     static constexpr char const * referencePositionString() { return "ReferencePosition"; }
 
-    /// String to access the location of the nodes
+    /// @return String to access the location of the nodes
     static constexpr char const * EmbSurfNodesPositionString() { return "EmbSurfNodesPosition"; }
 
-    /// String to access the displacement
+    /// @return String to access the displacement
     static constexpr char const * totalDisplacementString() { return "TotalDisplacement"; }
 
-    /// String to access the incremental displacement
+    /// @return String to access the incremental displacement
     static constexpr char const * incrementalDisplacementString() { return "IncrementalDisplacement"; }
 
-    /// String to access the edge map
+    /// @return String to access the edge map
     static constexpr char const * edgeListString() { return "edgeList"; }
 
-    /// String to access the face map
+    /// @return String to access the face map
     static constexpr char const * faceListString() { return "faceList"; }
 
-    /// String to access the element region map
+    /// @return String to access the element region map
     static constexpr char const * elementRegionListString() { return "elemRegionList"; }
 
-    /// String to access the element subregion map
+    /// @return String to access the element subregion map
     static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
 
-    /// String to access the element map
+    /// @return String to access the element map
     static constexpr char const * elementListString() { return "elemList"; }
 
     /// Accessor to reference position

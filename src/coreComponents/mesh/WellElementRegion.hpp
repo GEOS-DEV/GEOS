@@ -143,9 +143,9 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// String key for the well control name
+    /// @return String key for the well control name
     static constexpr char const * wellControlsString() { return "wellControlsName"; }
-    /// String key for the well generator name
+    /// @return String key for the well generator name
     static constexpr char const * wellGeneratorString() { return "wellGeneratorName"; }
 
     /// ViewKey for the well control name
