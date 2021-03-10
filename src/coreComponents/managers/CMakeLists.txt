@@ -93,7 +93,24 @@ endif()
 if( BUILD_OBJ_LIBS )
   set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit )
+  set( dependencyList 
+       common 
+       fileIO
+       linearAlgebra
+       mesh
+       physicsSolvers
+       fileIO
+       mpiCommunications
+       codingUtilities
+       dataRepository
+       finiteVolume
+       meshUtilities
+       finiteElement
+       constitutive
+       optionparser
+       RAJA
+       mpiCommunications
+       conduit )
 endif()
 
 if( ENABLE_MATHPRESSO )
