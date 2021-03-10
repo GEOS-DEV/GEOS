@@ -220,19 +220,19 @@ public:
    */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-    /// String key for the global number of perforations
+    /// @return String key for the global number of perforations
     static constexpr char const * numPerforationsGlobalString() { return "numPerforationsGlobal"; }
-    /// String key for the reservoir element region index
+    /// @return String key for the reservoir element region index
     static constexpr char const * reservoirElementRegionString() { return "reservoirElementRegion"; }
-    /// String key for the reservoir element subregion index
+    /// @return String key for the reservoir element subregion index
     static constexpr char const * reservoirElementSubregionString() { return "reservoirElementSubregion"; }
-    /// String key for the reservoir element index
+    /// @return String key for the reservoir element index
     static constexpr char const * reservoirElementIndexString() { return "reservoirElementIndex"; }
-    /// String key for the well element index
+    /// @return String key for the well element index
     static constexpr char const * wellElementIndexString() { return "wellElementIndex"; }
-    /// String key for the perforation location
+    /// @return String key for the perforation location
     static constexpr char const * locationString() { return "location"; }
-    /// String key for the well transmissibility
+    /// @return String key for the well transmissibility
     static constexpr char const * wellTransmissibilityString() { return "wellTransmissibility"; }
 
     /// ViewKey for the global number of perforations
@@ -245,10 +245,11 @@ public:
     dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString() };
     /// ViewKey for the well element index
     dataRepository::ViewKey wellElementIndex          = { wellElementIndexString() };
-    /// ViewKey for the well location
+    /// ViewKey for the perf location
     dataRepository::ViewKey location                  = { locationString() };
     /// ViewKey for the well transmissibility
     dataRepository::ViewKey wellTransmissibility      = { wellTransmissibilityString() };
+
   }
   /// ViewKey struct for the PerforationData class
   viewKeysPerforationData;

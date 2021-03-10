@@ -171,28 +171,28 @@ public:
    */
   struct viewKeyStruct
   {
-    /// The key for fieldName
+    /// @return The key for fieldName
     static constexpr char const * fieldNameString() { return "fieldName"; }
 
-    /// The key for coefficientName
+    /// @return The key for coefficientName
     static constexpr char const * coeffNameString() { return "coefficientName"; }
 
-    /// The key for targetRegions
+    /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
-    /// The key for areaRelTol
+    /// @return The key for areaRelTol
     static constexpr char const * areaRelativeToleranceString() { return "areaRelTol"; }
 
-    /// The key for transMultiplier
+    /// @return The key for transMultiplier
     static constexpr char const * transMultiplierString() { return "TransMultiplier"; }
 
 
     // Keys below are for wrappers registered on MeshLevel, not the current object
 
-    /// The key for cellStencil
+    /// @return The key for cellStencil
     static constexpr char const * cellStencilString() { return "cellStencil"; }
 
-    /// The key for fractureStencil
+    /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
   };
 
@@ -201,7 +201,7 @@ public:
    */
   struct groupKeyStruct
   {
-    /// Key under which the top-level group for all FV stencils will be registered on MeshLevel
+    /// @return Key under which the top-level group for all FV stencils will be registered on MeshLevel
     static constexpr auto stencilMeshGroupString() { return "finiteVolumeStencils"; }
   };
 

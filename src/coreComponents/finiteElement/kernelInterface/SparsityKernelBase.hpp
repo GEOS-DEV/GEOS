@@ -242,6 +242,7 @@ real64 fillSparsity( MeshLevel & mesh,
                      SparsityPattern< globalIndex > & inputSparsityPattern )
 {
   GEOSX_MARK_FUNCTION;
+
   regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,
                                 REGION_TYPE,

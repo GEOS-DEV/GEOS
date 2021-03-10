@@ -577,11 +577,23 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearSolverParametersType">
+		<!--amgAggresiveCoarseningLevels => AMG number levels for aggressive coarsening 
+Available options are: TODO-->
+		<xsd:attribute name="amgAggresiveCoarseningLevels" type="integer" default="0" />
 		<!--amgCoarseSolver => AMG coarsest level solver/smoother type
 Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct-->
 		<xsd:attribute name="amgCoarseSolver" type="string" default="direct" />
+		<!--amgCoarseningType => AMG coarsening algorithm
+Available options are: TODO-->
+		<xsd:attribute name="amgCoarseningType" type="string" default="HMIS" />
+		<!--amgInterpolationType => AMG interpolation algorithm
+Available options are: TODO-->
+		<xsd:attribute name="amgInterpolationType" type="integer" default="6" />
 		<!--amgNullSpaceType => AMG near null space approximation-->
 		<xsd:attribute name="amgNullSpaceType" type="string" default="constantModes" />
+		<!--amgNumFunctions => AMG number of functions
+Available options are: TODO-->
+		<xsd:attribute name="amgNumFunctions" type="integer" default="1" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
 		<!--amgSmootherType => AMG smoother type
@@ -832,9 +844,9 @@ the relative residual norm satisfies:
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
-		<!--plotFileRoot => (no description available)-->
-		<xsd:attribute name="plotFileRoot" type="string" default="" />
-		<!--plotLevel => (no description available)-->
+		<!--plotFileRoot => Name of the root file for this output.-->
+		<xsd:attribute name="plotFileRoot" type="string" default="VTK" />
+		<!--plotLevel => Level detail plot. Only fields with lower of equal plot level will be output.-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
 		<!--writeBinaryData => Output the data in binary format-->
 		<xsd:attribute name="writeBinaryData" type="integer" default="1" />
@@ -1652,6 +1664,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
+			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
@@ -1675,10 +1688,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--fluidType => Type of black-oil fluid. Valid options:
-* DeadOil
-* LiveOil-->
-		<xsd:attribute name="fluidType" type="geosx_constitutive_BlackOilFluid_FluidType" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--surfaceDensities => List of surface densities for each phase-->
@@ -1688,11 +1697,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_constitutive_BlackOilFluid_FluidType">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|DeadOil|LiveOil" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation
 The expected format is "{ gasExp, oilExp }", in that order-->
@@ -1879,6 +1883,36 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="DeadOilFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block. 
+The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
+For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
+		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="string_array" default="{}" />
+		<!--hydrocarbonViscosityTableNames => List of viscosity TableFunction names from the Functions block. 
+The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
+For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
+		<xsd:attribute name="hydrocarbonViscosityTableNames" type="string_array" default="{}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--surfaceDensities => List of surface mass densities for each phase-->
+		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
+		<!--tableFiles => List of filenames with input PVT tables (one per phase)-->
+		<xsd:attribute name="tableFiles" type="path_array" default="{}" />
+		<!--waterCompressibility => Water compressibility-->
+		<xsd:attribute name="waterCompressibility" type="real64" default="0" />
+		<!--waterFormationVolumeFactor => Water formation volume factor-->
+		<xsd:attribute name="waterFormationVolumeFactor" type="real64" default="0" />
+		<!--waterReferencePressure => Water reference pressure-->
+		<xsd:attribute name="waterReferencePressure" type="real64" default="0" />
+		<!--waterViscosity => Water viscosity-->
+		<xsd:attribute name="waterViscosity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

@@ -176,6 +176,13 @@ Element: DamageVolDevElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic.rst
 
 
+.. _XML_DeadOilFluid:
+
+Element: DeadOilFluid
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -934,6 +941,13 @@ Datastructure: DamageSpectralElasticIsotropic
 Datastructure: DamageVolDevElasticIsotropic
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DeadOilFluid:
+
+Datastructure: DeadOilFluid
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:

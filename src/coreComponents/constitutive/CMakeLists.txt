@@ -13,6 +13,7 @@ set( constitutive_headers
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
      contact/Coulomb.hpp
+     fluid/DeadOilFluid.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTFunctions/BrineCO2DensityFunction.hpp
      fluid/PVTFunctions/BrineViscosityFunction.hpp
@@ -72,6 +73,7 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactRelationBase.cpp
      contact/Coulomb.cpp
+     fluid/DeadOilFluid.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp     
      fluid/PVTFunctions/BrineCO2DensityFunction.cpp

@@ -16,6 +16,14 @@ function or_die () {
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
+if [[ $ENABLE_HYPRE == ON ]]; then
+    GEOSX_LA_INTERFACE="Hypre"
+else
+    GEOSX_LA_INTERFACE="Trilinos"
+fi
+
+echo $GEOSX_LA_INTERFACE
+
 # The -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root option is added for openmpi
 # which prevents from running as root user by default.
 # And by default, you are root in a docker container.
@@ -31,19 +39,23 @@ or_die python scripts/config-build.py \
               -DENABLE_CUDA:BOOL=${ENABLE_CUDA:-OFF} \
               -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\" \
               -DCUDA_TOOLKIT_ROOT_DIR:PATH=${CUDA_TOOLKIT_ROOT_DIR:-/usr/local/cuda} \
-              -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70}
+              -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70} \
+              -DENABLE_HYPRE:BOOL=${ENABLE_HYPRE:-ON} \
+              -DENABLE_HYPRE_CUDA:BOOL=${ENABLE_HYPRE_CUDA:-OFF} \
+              -DENABLE_TRILINOS:BOOL=${ENABLE_TRILINOS:-ON} \
+              -DGEOSX_LA_INTERFACE:STRING=${GEOSX_LA_INTERFACE}
 
 or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
 if [[ "$*" == *--test-code-style* ]]; then
-  or_die ctest -V -R "testUncrustifyCheck"
+  or_die ctest --output-on-failure -R "testUncrustifyCheck"
   exit 0
 fi
 
 # Documentation check
 if [[ "$*" == *--test-documentation* ]]; then
-  or_die ctest -V -R "testDoxygenCheck"
+  or_die ctest --output-on-failure -R "testDoxygenCheck"
   exit 0
 fi
 
@@ -57,7 +69,7 @@ fi
 
 # Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then
-  or_die ctest -V -E "testUncrustifyCheck|testDoxygenCheck"
+  or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
 exit 0
