@@ -13,7 +13,7 @@
       temperature="300"
       useMass="0">
       <NonlinearSolverParameters
-        newtonTol="1.0e-10"
+        newtonTol="1.0e-9"
         newtonMaxIter="15"
         maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
@@ -81,13 +81,12 @@
   </NumericalMethods>
 
   <Constitutive>
-    <BlackOilFluid
+    <DeadOilFluid
       name="fluid1"
-      fluidType="DeadOil"
-      phaseNames="{ oil, gas, water }"
-      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
-      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
-      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
+      phaseNames="{ oil, gas }"
+      surfaceDensities="{ 800.0, 0.9907 }"
+      componentMolarWeight="{ 114e-3, 16e-3 }"
+      tableFiles="{ pvdo.txt, pvdg.txt }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -96,10 +95,10 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
-      phaseRelPermExponent="{ 1.5, 1.5, 1.5 }"
-      phaseRelPermMaxValue="{ 0.9, 0.9, 0.9 }"/>
+      phaseNames="{ oil, gas }"
+      phaseMinVolumeFraction="{ 0.05, 0.05 }"
+      phaseRelPermExponent="{ 1.5, 1.5 }"
+      phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -166,14 +165,6 @@
       component="1"
       scale="0.4"/>
 
-    <FieldSpecification
-      name="initialComposition_water"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="globalCompFraction"
-      component="2"
-      scale="0.0"/>
   </FieldSpecifications>
 
   <Outputs>

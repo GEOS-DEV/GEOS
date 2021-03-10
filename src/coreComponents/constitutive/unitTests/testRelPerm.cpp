@@ -167,7 +167,7 @@ RelativePermeabilityBase & makeVanGenuchtenBakerRelPermThreePhase( string const 
 
 RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group & parent )
 {
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
 
   // 1) First, define the tables
 
@@ -191,14 +191,14 @@ RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group 
     values[i] = coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "water_swof" ) );
+  TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_swof" ) );
   table_w.setTableCoordinates( coordinates );
   table_w.setTableValues( values );
   table_w.reInitializeFunction();
 
   table_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & table_o = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "oil_swof" ) );
+  TableFunction & table_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_swof" ) );
   table_o.setTableCoordinates( coordinates );
   table_o.setTableValues( values );
   table_o.reInitializeFunction();
@@ -223,7 +223,7 @@ RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group 
 
 RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Group & parent )
 {
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
 
   // 1) First, define the tables
 
@@ -249,14 +249,14 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "water_swof" ) );
+  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_swof" ) );
   table_ow_w.setTableCoordinates( coordinates );
   table_ow_w.setTableValues( values );
   table_ow_w.reInitializeFunction();
 
   table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & table_ow_o = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "oil_swof" ) );
+  TableFunction & table_ow_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_swof" ) );
   table_ow_o.setTableCoordinates( coordinates );
   table_ow_o.setTableValues( values );
   table_ow_o.reInitializeFunction();
@@ -278,14 +278,14 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "gas_sgof" ) );
+  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_sgof" ) );
   table_og_g.setTableCoordinates( coordinates );
   table_og_g.setTableValues( values );
   table_og_g.reInitializeFunction();
 
   table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & table_og_o = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "oil_sgof" ) );
+  TableFunction & table_og_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_sgof" ) );
   table_og_o.setTableCoordinates( coordinates );
   table_og_o.setTableValues( values );
   table_og_o.reInitializeFunction();

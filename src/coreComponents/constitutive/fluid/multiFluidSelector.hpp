@@ -19,6 +19,7 @@
 #define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
+#include "constitutive/fluid/DeadOilFluid.hpp"
 #include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
 #include "constitutive/fluid/BlackOilFluid.hpp"
 #include "constitutive/fluid/MultiPhaseMultiComponentFluid.hpp"
@@ -33,7 +34,8 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< BlackOilFluid,
+  ConstitutivePassThruHandler< DeadOilFluid,
+                               BlackOilFluid,
                                CompositionalMultiphaseFluid,
                                MultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
@@ -42,7 +44,8 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< BlackOilFluid,
+  ConstitutivePassThruHandler< DeadOilFluid,
+                               BlackOilFluid,
                                CompositionalMultiphaseFluid,
                                MultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }

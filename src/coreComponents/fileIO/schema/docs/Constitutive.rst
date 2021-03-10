@@ -14,6 +14,7 @@ Coulomb                               node         :ref:`XML_Coulomb`
 DamageElasticIsotropic                node         :ref:`XML_DamageElasticIsotropic`                
 DamageSpectralElasticIsotropic        node         :ref:`XML_DamageSpectralElasticIsotropic`        
 DamageVolDevElasticIsotropic          node         :ref:`XML_DamageVolDevElasticIsotropic`          
+DeadOilFluid                          node         :ref:`XML_DeadOilFluid`                          
 DruckerPrager                         node         :ref:`XML_DruckerPrager`                         
 ElasticIsotropic                      node         :ref:`XML_ElasticIsotropic`                      
 ElasticTransverseIsotropic            node         :ref:`XML_ElasticTransverseIsotropic`            
