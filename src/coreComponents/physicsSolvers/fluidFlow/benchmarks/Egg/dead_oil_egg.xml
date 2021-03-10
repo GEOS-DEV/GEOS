@@ -12,7 +12,7 @@
       targetRegions="{ reservoir, wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5, wellRegion6, wellRegion7, wellRegion8, wellRegion9, wellRegion10, wellRegion11, wellRegion12 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        newtonMaxIter="20"
+        newtonMaxIter="25"
         newtonMinIter="1"
         dtCutIterLimit="0.9"
         dtIncIterLimit="0.6"
@@ -590,6 +590,7 @@
 
     <PeriodicEvent
       name="solverApplications"
+      maxEventDt="5e5"
       target="/Solvers/coupledFlowAndWells"/>
 
     <PeriodicEvent

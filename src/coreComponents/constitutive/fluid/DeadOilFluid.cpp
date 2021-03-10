@@ -104,7 +104,7 @@ void DeadOilFluid::readTable( string const & filename,
   while( is.getline( buf, buf_size ) )
   {
     string const str( buf );
-    string_array const strs = Tokenize( str, " " );
+    string_array const strs = stringutilities::tokenize( str, " " );
 
     if( strs.empty() )
     {
@@ -114,7 +114,7 @@ void DeadOilFluid::readTable( string const & filename,
     {
       continue;
     }
-    if( streq( strs[0], "--" ) )
+    if( strs[0] == "--" )
     {
       continue;
     }

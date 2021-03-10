@@ -4,7 +4,7 @@
   <Solvers>
     <CompositionalMultiphaseFVM
       name="compflow"
-      logLevel="4"
+      logLevel="1"
       discretization="fluidTPFA"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
