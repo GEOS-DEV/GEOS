@@ -133,7 +133,11 @@ struct LinearSolverParameters
     string cycleType = "V";                  ///< AMG cycle type
     string smootherType = "gaussSeidel";     ///< Smoother type
     string coarseType = "direct";            ///< Coarse-level solver/smoother
+    string coarseningType = "HMIS";          ///< Coarsening algorithm
+    integer interpolationType = 6;           ///< Coarsening algorithm
     integer numSweeps = 2;                   ///< Number of smoother sweeps
+    integer numFunctions = 1;                ///< Number of amg functions
+    integer aggresiveNumLevels = 0;          ///< Number of levels for aggressive coarsening.
     string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
     real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and
                                              ///< smoothed-aggregation AMG)
