@@ -192,10 +192,13 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
 
   NodeManager const & nodeManager = mesh.getNodeManager();
 
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  string const displacementDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  arrayView1d< globalIndex const > const & displacementDofNumber = nodeManager.getReference< globalIndex_array >( displacementDofKey );
 
-  string const compVarDofKey = dofManager.getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
+  string const flowDofKey = dofManager.getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
+
+  localIndex const numComponents = m_flowSolver->numFluidComponents();
+  localIndex const numPhases = m_flowSolver->numFluidPhases();
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
@@ -206,16 +209,21 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
                                     constitutive::PoroElasticBase,
                                     CellElementSubRegion,
                                     PoroelasticKernels::Multiphase >( mesh,
-                                                                    targetRegionNames(),
-                                                                    this->getDiscretizationName(),
-                                                                    m_solidSolver->solidMaterialNames(),
-                                                                    dispDofNumber,
-                                                                    compVarDofKey,
-                                                                    dofManager.rankOffset(),
-                                                                    localMatrix,
-                                                                    localRhs,
-                                                                    gravityVectorData,
-                                                                    m_flowSolver->fluidModelNames() ) ;
+                                                                      targetRegionNames(),
+                                                                      this->getDiscretizationName(),
+                                                                      m_solidSolver->solidMaterialNames(),
+                                                                      //
+                                                                      displacementDofNumber,
+                                                                      flowDofKey,
+                                                                      dofManager.rankOffset(),
+                                                                      //
+                                                                      gravityVectorData,
+                                                                      numComponents,
+                                                                      numPhases,
+                                                                      m_flowSolver->fluidModelNames(),
+                                                                      //
+                                                                      localMatrix,
+                                                                      localRhs ) ;
 
   // Face-based contributions (including pressure-dependent terms in the accumulation term of the mass balance equation)
   m_flowSolver->assembleSystem( time_n, dt,
@@ -272,6 +280,10 @@ void MultiphasePoroelasticSolver::solveSystem( DofManager const & dofManager,
                                                ParallelVector & solution )
 {
   solution.zero();
+
+  matrix.write( "Jacobian.mtx" );
+  GEOSX_ERROR("STOP");
+
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 }
 
