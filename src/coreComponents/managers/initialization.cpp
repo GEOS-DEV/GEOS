@@ -102,13 +102,13 @@ static void addUmpireHighWaterMarks()
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::sum( mark );
     std::size_t const maxMark = MpiWrapper::max( mark );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " total high water mark: " <<
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
                       std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " max high water mark: " <<
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
                       std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
 
-    pushStatsIntoAdiak( allocatorName + " total high water mark", mark );
-    pushStatsIntoAdiak( allocatorName + " max high water mark", mark );
+    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
+    pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 }
 

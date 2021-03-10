@@ -19,7 +19,6 @@
 
 #include "mpiCommunications/CommunicationTools.hpp"
 
-
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "managers/DomainPartition.hpp"
@@ -148,7 +147,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   for( std::size_t count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
-    MpiWrapper::waitany( commData.size,
+    MpiWrapper::waitAny( commData.size,
                          commData.mpiSizeRecvBufferRequest.data(),
                          &neighborIndex,
                          commData.mpiSizeRecvBufferStatus.data() );
@@ -180,7 +179,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   for( std::size_t count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
-    MpiWrapper::waitany( commData.size,
+    MpiWrapper::waitAny( commData.size,
                          commData.mpiRecvBufferRequest.data(),
                          &neighborIndex,
                          commData.mpiRecvBufferStatus.data() );
@@ -568,7 +567,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
   }
 
   /// Wait on the initial send requests.
-  MpiWrapper::waitall( nonLocalGhostsRequests.size(), nonLocalGhostsRequests.data(), MPI_STATUSES_IGNORE );
+  MpiWrapper::waitAll( nonLocalGhostsRequests.size(), nonLocalGhostsRequests.data(), MPI_STATUSES_IGNORE );
 }
 
 /**
@@ -734,11 +733,11 @@ void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, s
   icomm.fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   icomm.resize( neighbors.size() );
 
-  parallelDeviceEvents noEvents;
+  parallelDeviceEvents events;
   for( std::size_t neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    int const bufferSize = neighbor.packCommSizeForSync( fieldNames, mesh, icomm.commID, onDevice, noEvents );
+    int const bufferSize = neighbor.packCommSizeForSync( fieldNames, mesh, icomm.commID, onDevice, events );
 
     neighbor.mpiISendReceiveBufferSizes( icomm.commID,
                                          icomm.mpiSizeSendBufferRequest[neighborIndex],
@@ -747,6 +746,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, s
 
     neighbor.resizeSendBuffer( icomm.commID, bufferSize );
   }
+  waitAllDeviceEvents( events );
 }
 
 
@@ -758,16 +758,6 @@ void CommunicationTools::asyncPack( const std::map< string, string_array > & fie
                                     parallelDeviceEvents & events )
 {
   GEOSX_MARK_FUNCTION;
-  if( onDevice )
-  {
-    localIndex eventCount = 0;
-    for( const auto & sa : fieldNames )
-    {
-      eventCount += sa.second.size( );
-    }
-    eventCount *= neighbors.size( );
-    events.reserve( eventCount );
-  }
   for( NeighborCommunicator & neighbor : neighbors )
   {
     neighbor.packCommBufferForSync( fieldNames, mesh, icomm.commID, onDevice, events );
@@ -791,7 +781,7 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
   for( std::size_t count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
-    MpiWrapper::waitany( icomm.size,
+    MpiWrapper::waitAny( icomm.size,
                          icomm.mpiSizeRecvBufferRequest.data(),
                          &neighborIndex,
                          icomm.mpiSizeRecvBufferStatus.data() );
@@ -826,45 +816,24 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-  if( onDevice )
+  int recvCount = 0;
+  std::vector< int > neighborIndices;
+  neighborIndices.reserve( icomm.size );
+  MpiWrapper::testSome( icomm.size,
+                        icomm.mpiRecvBufferRequest.data(),
+                        &recvCount,
+                        &neighborIndices[0],
+                        icomm.mpiRecvBufferStatus.data() );
+
+  for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
   {
-    size_t eventCount = 0;
-    for( const auto & sa : icomm.fieldNames )
-    {
-      eventCount += sa.second.size( );
-    }
-    eventCount *= neighbors.size( );
-    if( eventCount > events.size( ) )
-    {
-      events.reserve( eventCount );
-    }
+    NeighborCommunicator & neighbor = neighbors[ neighborIndices[ recvIdx ] ];
+    neighbor.unpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, onDevice, events );
   }
 
-  int neighborIndex = 0;
-  int flag = 1;
-
-  while( flag && neighborIndex >= 0 )
-  {
-    flag = 0;
-    neighborIndex = -1;
-    MpiWrapper::testany( icomm.size,
-                         icomm.mpiRecvBufferRequest.data(),
-                         &neighborIndex,
-                         &flag,
-                         icomm.mpiRecvBufferStatus.data() );
-
-    // flag can true for MPI_REQUEST_NULLs from previous calls, so we also need to check that neighborIndex has been set
-    if( flag && neighborIndex >= 0 )
-    {
-      // unpack the recvd buffer
-      NeighborCommunicator & neighbor = neighbors[ neighborIndex ];
-      neighbor.unpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, onDevice, events );
-    }
-  }
-
-  // we don't want to check if the request is complete,
+  // we don't want to check if the request has completed,
   //  we want to check that we've processed the resulting buffer
-  //  which means that we've testany-d the request and it has been
+  //  which means that we've tested the request and it has been
   //  deallocated and set to MPI_REQUEST_NULL
   int allDone = true;
   const MPI_Request * reqs = icomm.mpiRecvBufferRequest.data( );
@@ -888,19 +857,18 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-  // wait to unpack any remaining buffers
-  while( !asyncUnpack( mesh, neighbors, icomm, onDevice, events ) )
-  { }
+  // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
+  GEOSX_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
   if( onDevice )
   {
     waitAllDeviceEvents( events );
   }
 
-  MpiWrapper::waitall( icomm.size,
+  MpiWrapper::waitAll( icomm.size,
                        icomm.mpiSizeSendBufferRequest.data(),
                        icomm.mpiSizeSendBufferStatus.data() );
 
-  MpiWrapper::waitall( icomm.size,
+  MpiWrapper::waitAll( icomm.size,
                        icomm.mpiSendBufferRequest.data(),
                        icomm.mpiSendBufferStatus.data() );
 

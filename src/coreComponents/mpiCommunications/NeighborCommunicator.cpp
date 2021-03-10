@@ -134,8 +134,8 @@ void NeighborCommunicator::mpiISendReceive( int const commID,
 {
   mpiISendReceiveBufferSizes( commID, mpiComm );
 
-  MpiWrapper::waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::waitAll( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::waitAll( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
 
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
@@ -163,8 +163,8 @@ void NeighborCommunicator::mpiISendReceive( buffer_unit_type const * const sendB
                    commID,
                    mpiComm );
 
-  MpiWrapper::waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::waitAll( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::waitAll( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
 
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
@@ -185,14 +185,14 @@ void NeighborCommunicator::mpiWaitAll( int const GEOSX_UNUSED_PARAM( commID ),
                                        MPI_Status & mpiReceiveStatus )
 
 {
-  MpiWrapper::waitall( 1, &mpiRecvRequest, &mpiReceiveStatus );
-  MpiWrapper::waitall( 1, &mpiSendRequest, &mpiSendStatus );
+  MpiWrapper::waitAll( 1, &mpiRecvRequest, &mpiReceiveStatus );
+  MpiWrapper::waitAll( 1, &mpiSendRequest, &mpiSendStatus );
 }
 
 void NeighborCommunicator::mpiWaitAll( int const commID )
 {
-  MpiWrapper::waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::waitAll( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::waitAll( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
 }
 
 void NeighborCommunicator::clear()
@@ -289,11 +289,12 @@ inline int GhostSize( NodeManager & nodeManager, arrayView1d< localIndex const >
   bufferSize += edgeManager.packUpDownMapsSize( edgeAdjacencyList );
   bufferSize += faceManager.packUpDownMapsSize( faceAdjacencyList );
   bufferSize += elemManager.PackUpDownMapsSize( elementAdjacencyList );
-  parallelDeviceEvents noEvents;
-  bufferSize += nodeManager.packSize( {}, nodeAdjacencyList, 0, false, noEvents );
-  bufferSize += edgeManager.packSize( {}, edgeAdjacencyList, 0, false, noEvents );
-  bufferSize += faceManager.packSize( {}, faceAdjacencyList, 0, false, noEvents );
+  parallelDeviceEvents events;
+  bufferSize += nodeManager.packSize( {}, nodeAdjacencyList, 0, false, events );
+  bufferSize += edgeManager.packSize( {}, edgeAdjacencyList, 0, false, events );
+  bufferSize += faceManager.packSize( {}, faceAdjacencyList, 0, false, events );
   bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
+  waitAllDeviceEvents( events );
   return bufferSize;
 }
 
@@ -312,11 +313,12 @@ inline int PackGhosts( buffer_unit_type * sendBufferPtr,
   packedSize += edgeManager.packUpDownMaps( sendBufferPtr, edgeAdjacencyList );
   packedSize += faceManager.packUpDownMaps( sendBufferPtr, faceAdjacencyList );
   packedSize += elemManager.PackUpDownMaps( sendBufferPtr, elementAdjacencyList );
-  parallelDeviceEvents noEvents;
-  packedSize += nodeManager.pack( sendBufferPtr, {}, nodeAdjacencyList, 0, false, noEvents );
-  packedSize += edgeManager.pack( sendBufferPtr, {}, edgeAdjacencyList, 0, false, noEvents );
-  packedSize += faceManager.pack( sendBufferPtr, {}, faceAdjacencyList, 0, false, noEvents );
+  parallelDeviceEvents events;
+  packedSize += nodeManager.pack( sendBufferPtr, {}, nodeAdjacencyList, 0, false, events );
+  packedSize += edgeManager.pack( sendBufferPtr, {}, edgeAdjacencyList, 0, false, events );
+  packedSize += faceManager.pack( sendBufferPtr, {}, faceAdjacencyList, 0, false, events );
   packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
+  waitAllDeviceEvents( events );
   return packedSize;
 }
 
@@ -416,11 +418,12 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, faceUnpackList, false, false );
   unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveListArray, false );
 
-  parallelDeviceEvents noEvents;
-  unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeUnpackList, 0, false, noEvents );
-  unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeUnpackList, 0, false, noEvents );
-  unpackedSize += faceManager.unpack( receiveBufferPtr, faceUnpackList, 0, false, noEvents );
+  parallelDeviceEvents events;
+  unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeUnpackList, 0, false, events );
+  unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeUnpackList, 0, false, events );
+  unpackedSize += faceManager.unpack( receiveBufferPtr, faceUnpackList, 0, false, events );
   unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyReceiveList );
+  waitAllDeviceEvents( events );
 }
 
 void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,

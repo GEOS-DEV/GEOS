@@ -190,9 +190,11 @@ public:
 
   static int test( MPI_Request * request, int * flag, MPI_Status * status );
 
-  static int testany( int count, MPI_Request array_of_requests[], int * idx, int * flags, MPI_Status array_of_statuses[] );
+  static int testAny( int count, MPI_Request array_of_requests[], int * idx, int * flags, MPI_Status array_of_statuses[] );
 
-  static int testall( int count, MPI_Request array_of_requests[], int * flags, MPI_Status array_of_statuses[] );
+  static int testSome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] );
+
+  static int testAll( int count, MPI_Request array_of_requests[], int * flags, MPI_Status array_of_statuses[] );
 
   /**
    * The same as test but doesn't deallocate requests regardless of their source.
@@ -214,7 +216,7 @@ public:
    * @param[out] flag Whether a request has completed or not
    * @param[out] status The current status of all requests
    **/
-  static int checkany( int count, MPI_Request array_of_requests[], int * idx, int * flag, MPI_Status array_of_statuses[] );
+  static int checkAny( int count, MPI_Request array_of_requests[], int * idx, int * flag, MPI_Status array_of_statuses[] );
 
   /**
    * The same as testall but doesn't deallocate requests regardless of their source.
@@ -225,15 +227,15 @@ public:
    * @param[out] flag Whether all requests have completed or not
    * @param[out] status The current status of all requests
    **/
-  static int checkall( int count, MPI_Request array_of_requests[], int * flag, MPI_Status array_of_statuses[] );
+  static int checkAll( int count, MPI_Request array_of_requests[], int * flag, MPI_Status array_of_statuses[] );
 
   static int wait( MPI_Request * request, MPI_Status * status );
 
-  static int waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status array_of_statuses[] );
+  static int waitAny( int count, MPI_Request array_of_requests[], int * indx, MPI_Status array_of_statuses[] );
 
-  static int waitsome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] );
+  static int waitSome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] );
 
-  static int waitall( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] );
+  static int waitAll( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] );
 
   static double wtime( void );
 

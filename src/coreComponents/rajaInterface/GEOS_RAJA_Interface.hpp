@@ -21,9 +21,25 @@
 // TPL includes
 #include <RAJA/RAJA.hpp>
 
+#include <chrono>
+#include <thread>
+
+// #define GEOSX_ASYNC_WAIT( UPPER, NANOSLEEP, TEST ) bool geosxAsyncWaitComplete = false; \
+//   for( long geosxAsyncWaitIdx = 0; geosxAsyncWaitIdx < UPPER; ++geosxAsyncWaitIdx ) \
+//   { \
+//     if( TEST ) \
+//     { \
+//       geosxAsyncWaitComplete = true; \
+//       break; \
+//     } \
+//     std::this_thread::sleep_for( std::chrono::nanoseconds( NANOSLEEP ) ); \
+//   } \
+//   GEOSX_ERROR_IF( !geosxAsyncWaitComplete, "Geosx async wait loop failed!" );
+
+#define GEOSX_ASYNC_WAIT( UPPER, NANOSLEEP, TEST ) while( ! TEST ) { }
+
 namespace geosx
 {
-
 
 using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;
@@ -162,8 +178,9 @@ RAJA_INLINE bool testAllDeviceEvents( parallelDeviceEvents & events )
 
 RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 {
-  while( !testAllDeviceEvents( events ) )
-  { }
+  // poll device events for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
+  // 10 nsecs ~= 30 clock cycles @ 3Ghz
+  GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
 template< typename POLICY, typename LAMBDA >
@@ -171,7 +188,6 @@ RAJA_INLINE void forAll( const localIndex end, LAMBDA && body )
 {
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
 }
-
 
 } // namespace geosx
 

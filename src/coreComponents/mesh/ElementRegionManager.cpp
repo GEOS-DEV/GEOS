@@ -272,7 +272,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
   packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
 
-  parallelDeviceEvents noEvents;
+  parallelDeviceEvents events;
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
@@ -288,16 +288,16 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
-        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, noEvents );
+        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
       }
       else
       {
-        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, noEvents );
+        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, events );
       }
     } );
   }
 
-  // if we start sizing async, poll the events for completion or change the signature to pass them out
+  waitAllDeviceEvents( events );
   return packedSize;
 }
 
@@ -328,7 +328,7 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
-  parallelDeviceEvents noEvents;
+  parallelDeviceEvents events;
   for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
   {
     string regionName;
@@ -347,11 +347,11 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
       /// THIS IS WRONG??
       arrayView1d< localIndex > & elemList = packList[kReg][esr];
 
-      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, noEvents );
+      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, events );
     } );
   }
 
-  // if we start packing on device + async, poll for completion or pass events back out
+  waitAllDeviceEvents( events );
   return unpackedSize;
 }
 
