@@ -676,12 +676,12 @@ struct PerforationKernel
           localIndex const numPhases,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
-          ElementViewConst< arrayView2d< real64 const > > const & resPhaseMob,
-          ElementViewConst< arrayView2d< real64 const > > const & dResPhaseMob_dPres,
-          ElementViewConst< arrayView3d< real64 const > > const & dResPhaseMob_dComp,
           ElementViewConst< arrayView2d< real64 const > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & dResPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const > > const & dResCompFrac_dCompDens,
+          ElementViewConst< arrayView3d< real64 const > > const & resPhaseDens,
+          ElementViewConst< arrayView3d< real64 const > > const & dResPhaseDens_dPres,
+          ElementViewConst< arrayView4d< real64 const > > const & dResPhaseDens_dComp,
           ElementViewConst< arrayView3d< real64 const > > const & resPhaseVisc,
           ElementViewConst< arrayView3d< real64 const > > const & dResPhaseVisc_dPres,
           ElementViewConst< arrayView4d< real64 const > > const & dResPhaseVisc_dComp,
@@ -737,8 +737,10 @@ struct PerforationKernel
       stackArray2d< real64, 2 * maxNumComp > dPhaseCompFrac_dP( 2, NC );
       stackArray3d< real64, 2 * maxNumComp * maxNumComp > dPhaseCompFrac_dC( 2, NC, NC );
 
+      stackArray1d< real64, maxNumComp > dDens_dC( NC );
       stackArray1d< real64, maxNumComp > dVisc_dC( NC );
       stackArray1d< real64, maxNumComp > dRelPerm_dC( NC );
+      stackArray1d< real64, maxNumComp > dMob_dC( NC );
 
       real64 dPotDiff_dP[ 2 ] = { 0.0 };
       stackArray2d< real64, 2 * maxNumComp > dPotDiff_dC( 2, NC );
@@ -824,24 +826,66 @@ struct PerforationKernel
         for( localIndex ip = 0; ip < NP; ++ip )
         {
 
+          // density
+          real64 const resDens = resPhaseDens[er][esr][ei][0][ip];
+          real64 const dResDens_dP  = dResPhaseDens_dPres[er][esr][ei][0][ip];
+          applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
+                          dResPhaseDens_dComp[er][esr][ei][0][ip],
+                          dDens_dC );
+
+          // viscosity
+          real64 const resVisc = resPhaseVisc[er][esr][ei][0][ip];
+          real64 const dResVisc_dP  = dResPhaseVisc_dPres[er][esr][ei][0][ip];
+          applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
+                          dResPhaseVisc_dComp[er][esr][ei][0][ip],
+                          dVisc_dC );
+
+          // relative permeability
+          real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
+          real64 dResRelPerm_dP = 0.0;
+          for( localIndex jc = 0; jc < NC; ++jc )
+          {
+            dRelPerm_dC[jc] = 0;
+          }
+
+          for( localIndex jp = 0; jp < NP; ++jp )
+          {
+            real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+            dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac_dPres[er][esr][ei][jp];
+
+            for( localIndex jc = 0; jc < NC; ++jc )
+            {
+              dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac_dComp[er][esr][ei][jp][jc];
+            }
+          }
+
+          // compute the reservoir phase mobility, including phase density
+          real64 const resPhaseMob = resDens * resRelPerm / resVisc;
+          real64 const dResPhaseMob_dPres = dResRelPerm_dP * resDens / resVisc
+                                            + resPhaseMob * (dResDens_dP / resDens - dResVisc_dP / resVisc);
+          for( localIndex jc = 0; jc < NC; ++jc )
+          {
+            dMob_dC[jc] = dRelPerm_dC[jc] * resDens / resVisc
+                          + resPhaseMob * (dDens_dC[jc] / resDens - dVisc_dC[jc] / resVisc);
+          }
+
           // compute the phase flux and derivatives using upstream cell mobility
-          flux = resPhaseMob[er][esr][ei][ip] * potDiff;
+          flux = resPhaseMob * potDiff;
 
           dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::RES] =
-            dResPhaseMob_dPres[er][esr][ei][ip] * potDiff
-            + resPhaseMob[er][esr][ei][ip] * dPotDiff_dP[CompositionalMultiphaseWell::SubRegionTag::RES];
+            dResPhaseMob_dPres * potDiff + resPhaseMob * dPotDiff_dP[CompositionalMultiphaseWell::SubRegionTag::RES];
 
           dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] =
-            resPhaseMob[er][esr][ei][ip] * dPotDiff_dP[CompositionalMultiphaseWell::SubRegionTag::WELL];
+            resPhaseMob *  dPotDiff_dP[CompositionalMultiphaseWell::SubRegionTag::WELL];
 
           for( localIndex ic = 0; ic < NC; ++ic )
           {
             dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic] =
-              dResPhaseMob_dComp[er][esr][ei][ip][ic] * potDiff
-              + resPhaseMob[er][esr][ei][ip] * dPotDiff_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic];
+              dMob_dC[ic] * potDiff
+              + resPhaseMob * dPotDiff_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic];
 
             dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic] =
-              resPhaseMob[er][esr][ei][ip] * dPotDiff_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic];
+              resPhaseMob * dPotDiff_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic];
           }
 
           // increment component fluxes

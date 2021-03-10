@@ -47,6 +47,9 @@ public:
   /// maximum dimensions for the coordinates in the table
   static constexpr localIndex maxDimensions = 4;
 
+  /// maximum number of corners
+  static constexpr localIndex maxNumCorners = 16;
+
   /**
    * @class KernelWrapper
    *
@@ -73,7 +76,7 @@ public:
                    localIndex dimensions,
                    arrayView1d< localIndex const > const & size,
                    arrayView1d< localIndex const > const & indexIncrement,
-                   localIndex const (&corners)[TableFunction::maxDimensions][16],
+                   localIndex const (&corners)[TableFunction::maxDimensions][maxNumCorners],
                    localIndex const numCorners );
 
     /// Default constructor for the kernel wrapper
@@ -108,7 +111,7 @@ public:
                  localIndex dimensions,
                  arrayView1d< localIndex const > const & size,
                  arrayView1d< localIndex const > const & indexIncrement,
-                 localIndex const (&corners)[TableFunction::maxDimensions][16],
+                 localIndex const (&corners)[TableFunction::maxDimensions][maxNumCorners],
                  localIndex const numCorners );
 
     /**
@@ -146,7 +149,7 @@ private:
      * @brief The corners of the box that surround the value in N dimensions
      * m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
      */
-    localIndex m_corners[TableFunction::maxDimensions][16];
+    localIndex m_corners[TableFunction::maxDimensions][maxNumCorners];
 
     /// The number of active table corners
     localIndex m_numCorners;
@@ -299,7 +302,7 @@ private:
    * @brief The corners of the box that surround the value in N dimensions
    * m_corners should be of size maxDimensions x (2^maxDimensions)
    */
-  localIndex m_corners[maxDimensions][16];
+  localIndex m_corners[maxDimensions][maxNumCorners];
 
   /// The number of active table corners
   localIndex m_numCorners;
