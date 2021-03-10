@@ -172,7 +172,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     real64 dr = sqrt( dx*dx + dy*dy );
     real64 dl = sqrt( dr*dr + dz*dz );
 
-    // Azimuth from x-axis
+    // Azimuth of the wellbore from x-axis
     real64 theta0;
 
     if( dr < m_coordinatePrecision )
@@ -189,12 +189,13 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     }
 
     // The horizontal section of an inclined wellbore is an ellipse
-    // The principle directions of this ellipse is defined by dTheta = 0, and PI/2
+    // The principle directions of this ellipse are defined by dTheta = 0, and PI/2
     real64 dTheta = meshTheta - theta0;
     real64 tanDTheta = tan( dTheta );
 
-    // Transform radial coordinate regarding the elliptical shape of the wellbore horizontal section
+    // Transform radial coordinate regarding the elliptical shape of the wellbore section in the horizontal plane
     // This transformation ensures that the ourter square boundary is unchanged
+    // TODO create a function in ComputationalGeometry class for this pure geometrical transformation
     real64 transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
     real64 rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
 
