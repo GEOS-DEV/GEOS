@@ -29,6 +29,7 @@
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "LvArray/src/output.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/GeosxState.hpp"
 #include "managers/ProblemManager.hpp"
