@@ -366,7 +366,7 @@ ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
   real64 monomInternalIntegrals[2] = { 0.0 };
   for( localIndex numSubTriangle = 0; numSubTriangle < numFaceVertices; ++numSubTriangle )
   {
-    localIndex nextVertex = (numSubTriangle+1)%numFaceVertices;
+    localIndex const nextVertex = (numSubTriangle+1)%numFaceVertices;
     // - compute value of 2D monomials at the quadrature point on the sub-triangle (the
     //   barycenter).
     //   The result is ((v(0)+v(1)+faceCenter)/3 - faceCenter) / faceDiameter =
