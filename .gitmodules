@@ -20,3 +20,6 @@
 [submodule "src/coreComponents/physicsSolvers/GEOSX_PTP"]
 	path = src/coreComponents/physicsSolvers/GEOSX_PTP
 	url = ../GEOSX_PTP.git
+[submodule "src/externalComponents/TC02350"]
+	path = src/externalComponents/TC02350
+	url = git@github.com:GEOSX/TC02350.git
