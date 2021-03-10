@@ -83,15 +83,15 @@ void FenghourCO2Viscosity::makeTable( array1d< string > const & inputPara )
 
   localIndex nP = coordinates[0].size();
   localIndex nT = coordinates[1].size();
-  array1d< real64 > valuesDensity( nP * nT );
-  array1d< real64 > valuesViscosity( nP * nT );
-  SpanWagnerCO2Density::calculateCO2Density( coordinates, valuesDensity );
-  calculateCO2Viscosity( coordinates, valuesDensity, valuesViscosity );
+  array1d< real64 > density( nP * nT );
+  array1d< real64 > viscosity( nP * nT );
+  SpanWagnerCO2Density::calculateCO2Density( coordinates, density );
+  calculateCO2Viscosity( coordinates, density, viscosity );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_CO2ViscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
   m_CO2ViscosityTable->setTableCoordinates( coordinates );
-  m_CO2ViscosityTable->setTableValues( valuesViscosity );
+  m_CO2ViscosityTable->setTableValues( viscosity );
   m_CO2ViscosityTable->reInitializeFunction();
   m_CO2ViscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }

@@ -176,8 +176,8 @@ CO2Solubility::CO2Solubility( array1d< string > const & inputPara,
   notFound = true;
   for( localIndex i = 0; i < phaseNames.size(); ++i )
   {
-    if( streq( phaseNames[i], "Water" ) || streq( phaseNames[i], "water" ) ||
-        streq( phaseNames[i], "Liquid" ) || streq( phaseNames[i], "liquid" ) )
+    if( phaseNames[i] == "Water" || phaseNames[i] == "water" ||
+        phaseNames[i] == "Liquid" || phaseNames[i] == "liquid" )
     {
       m_phaseLiquidIndex = i;
       notFound = false;

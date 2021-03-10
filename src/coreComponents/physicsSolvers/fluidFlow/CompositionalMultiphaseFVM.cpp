@@ -110,32 +110,30 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
    *       Or stop testing through the solver interface and test separate kernels instead.
    *       Finally, the problem should go away when fluid updates are executed on device.
    */
-  /*
-     forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
-     {
-     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
-     arrayView4d< real64 const > const & phaseCompFrac = fluid.phaseCompFraction();
-     arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-     arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+  {
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+    arrayView4d< real64 const > const & phaseCompFrac = fluid.phaseCompFraction();
+    arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
+    arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
 
-     arrayView3d< real64 const > const & phaseMassDens = fluid.phaseMassDensity();
-     arrayView3d< real64 const > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
-     arrayView4d< real64 const > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
+    arrayView3d< real64 const > const & phaseMassDens = fluid.phaseMassDensity();
+    arrayView3d< real64 const > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
+    arrayView4d< real64 const > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
 
-     forAll< parallelDevicePolicy<> >( subRegion.size(),
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
                                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp]
                                       GEOSX_HOST_DEVICE ( localIndex const )
-     {
+    {
       GEOSX_UNUSED_VAR( phaseCompFrac )
       GEOSX_UNUSED_VAR( dPhaseCompFrac_dPres )
       GEOSX_UNUSED_VAR( dPhaseCompFrac_dComp )
       GEOSX_UNUSED_VAR( phaseMassDens )
       GEOSX_UNUSED_VAR( dPhaseMassDens_dPres )
       GEOSX_UNUSED_VAR( dPhaseMassDens_dComp )
-     } );
-     } );
-   */
+    } );
+  } );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

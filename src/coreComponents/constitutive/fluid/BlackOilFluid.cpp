@@ -46,9 +46,6 @@ BlackOilFluid::BlackOilFluid( string const & name, Group * const parent )
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "List of filenames with input PVT tables" );
 
-  registerWrapper( viewKeyStruct::fluidTypeString(), &m_fluidType ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Type of black-oil fluid. Valid options:\n* " + EnumStrings< FluidType >::concat( "\n* " ) );
 }
 
 BlackOilFluid::~BlackOilFluid()
@@ -97,23 +94,7 @@ void BlackOilFluid::createFluid()
   std::vector< double > densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector< double > molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
 
-  switch( m_fluidType )
-  {
-    case FluidType::LiveOil:
-    {
-      m_fluid = pvt::MultiphaseSystemBuilder::buildLiveOil( phases, tableFiles, densities, molarWeights );
-      break;
-    }
-    case FluidType::DeadOil:
-    {
-      m_fluid = pvt::MultiphaseSystemBuilder::buildDeadOil( phases, tableFiles, densities, molarWeights );
-      break;
-    }
-    default:
-    {
-      GEOSX_ERROR( "Unknown fluid type" );
-    }
-  }
+  m_fluid = pvt::MultiphaseSystemBuilder::buildLiveOil( phases, tableFiles, densities, molarWeights );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, string const &, Group * const )

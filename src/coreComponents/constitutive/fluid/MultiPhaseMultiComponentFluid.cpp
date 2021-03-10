@@ -18,14 +18,15 @@
 #include "MultiPhaseMultiComponentFluid.hpp"
 
 #include "common/Path.hpp"
-#include "managers/ProblemManager.hpp"
+#include "constitutive/fluid/MultiFluidUtils.hpp"
+#include "PVTFunctions/FlashModelBase.hpp"
+#include "PVTFunctions/PVTFunctionBase.hpp"
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace PVTProps;
-using namespace stringutilities;
 
 namespace constitutive
 {
@@ -114,7 +115,8 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
     while( is.getline( buf, buf_size ) )
     {
       string const str( buf );
-      string_array const strs = Tokenize( str, " " );
+      string_array const strs = stringutilities::tokenize( str, " " );
+
       if( strs[0] == "DensityFun" )
       {
         if( strs[1] == "SpanWagnerCO2Density" )
@@ -163,7 +165,7 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
     while( is.getline( buf, buf_size ) )
     {
       string const str( buf );
-      string_array const strs = Tokenize( str, " " );
+      string_array const strs = stringutilities::tokenize( str, " " );
       if( strs[0] == "FlashModel" && strs[1] == "CO2Solubility" )
       {
         m_co2Solubility = std::make_unique< CO2Solubility >( strs, m_phaseNames, m_componentNames, m_componentMolarWeight );

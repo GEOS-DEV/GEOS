@@ -293,9 +293,9 @@ public:
    */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-    /// String key for the material list
+    /// @return String key for the material list
     static constexpr char const * materialListString() { return "materialList"; }
-    /// String key for the element subregions
+    /// @return String key for the element subregions
     static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
   };
 

@@ -39,6 +39,9 @@ public:
     m_componentMolarWeight( componentMolarWeight )
   {}
 
+  /// Default virtual destructor
+  virtual ~FlashModelBaseUpdate() = default;
+
   /// Default copy constructor
   FlashModelBaseUpdate( FlashModelBaseUpdate const & ) = default;
 

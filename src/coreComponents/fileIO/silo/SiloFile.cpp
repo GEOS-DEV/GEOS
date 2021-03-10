@@ -30,8 +30,6 @@
 #include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
@@ -251,7 +249,7 @@ SiloFile::SiloFile():
   m_driver( DB_HDF5 ),
   m_plotFileRoot( "plot" ),
   m_restartFileRoot( "restart" ),
-  m_siloDirectory( getGlobalState().getCommandLineOptions().outputDirectory + "/siloFiles" ),
+  m_siloDirectory( "siloFiles" ),
   m_fileName(),
   m_baseFileName(),
   m_emptyMeshes(),
@@ -284,7 +282,7 @@ void SiloFile::makeSiloDirectories()
 
   if( rank==0 )
   {
-    makeDirsForPath( m_siloDirectory + "/" + m_siloDataSubDirectory );
+    makeDirsForPath( joinPath( m_siloDirectory, m_siloDataSubDirectory ) );
   }
 }
 
@@ -376,7 +374,7 @@ void SiloFile::waitForBatonWrite( int const domainNumber,
   }
   sprintf( dirName, "domain_%05d", domainNumber );
 
-  string dataFilePathAndName = m_siloDirectory + "/" + m_siloDataSubDirectory + "/" + fileName;
+  string const dataFilePathAndName = joinPath( m_siloDirectory, m_siloDataSubDirectory, fileName );
   m_dbFilePtr = static_cast< DBfile * >( PMPIO_WaitForBaton( m_baton, dataFilePathAndName.c_str(), dirName ) );
 
   m_fileName = fileName;

@@ -51,7 +51,7 @@ BrineCO2Density::BrineCO2Density( array1d< string > const & inputPara,
   notFound = true;
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
-    if( componentNames[i] == "Water" || componentNames[i] == "water" )
+    if( componentNames[i] =="Water" || componentNames[i] == "water" )
     {
       m_waterIndex = i;
       notFound = false;

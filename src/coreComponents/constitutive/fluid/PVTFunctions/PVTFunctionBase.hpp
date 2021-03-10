@@ -40,6 +40,9 @@ public:
     m_componentMolarWeight( componentMolarWeight )
   {}
 
+  /// Default virtual destructor
+  virtual ~PVTFunctionBaseUpdate() = default;
+
   /// Default copy constructor
   PVTFunctionBaseUpdate( PVTFunctionBaseUpdate const & ) = default;
 

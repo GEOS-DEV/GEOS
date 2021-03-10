@@ -892,10 +892,10 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
     // 1.1. Apply BC to set the field values
-    fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                           time + dt,
-                                                                           subRegion,
-                                                                           viewKeyStruct::bcPressureString() );
+    fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
+                                                                       time + dt,
+                                                                       subRegion,
+                                                                       viewKeyStruct::bcPressureString() );
   } );
 
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
@@ -919,10 +919,10 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     bcStatusMap[subRegionName][setName][comp] = true;
 
     // 2.1. Apply BC to set the field values
-    fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                           time + dt,
-                                                                           subRegion,
-                                                                           viewKeyStruct::globalCompFractionString() );
+    fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
+                                                                       time + dt,
+                                                                       subRegion,
+                                                                       viewKeyStruct::globalCompFractionString() );
   } );
 
   // 2.3 Check consistency between composition BC applied to sets

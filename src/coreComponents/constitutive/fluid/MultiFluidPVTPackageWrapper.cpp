@@ -84,12 +84,12 @@ MultiFluidPVTPackageWrapper::deliverClone( string const & name,
 GEOSX_HOST_DEVICE
 void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 temperature,
-                                                 arraySlice1d< real64 const, 0 > const & composition,
-                                                 arraySlice1d< real64, 0 > const & phaseFrac,
-                                                 arraySlice1d< real64, 0 > const & phaseDens,
-                                                 arraySlice1d< real64, 0 > const & phaseMassDens,
-                                                 arraySlice1d< real64, 0 > const & phaseVisc,
-                                                 arraySlice2d< real64, 1 > const & phaseCompFrac,
+                                                 arraySlice1d< real64 const > const & composition,
+                                                 arraySlice1d< real64 > const & phaseFrac,
+                                                 arraySlice1d< real64 > const & phaseDens,
+                                                 arraySlice1d< real64 > const & phaseMassDens,
+                                                 arraySlice1d< real64 > const & phaseVisc,
+                                                 arraySlice2d< real64 > const & phaseCompFrac,
                                                  real64 & totalDens ) const
 {
 #ifndef __CUDACC__
@@ -203,7 +203,7 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
 GEOSX_HOST_DEVICE
 void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 temperature,
-                                                 arraySlice1d< real64 const, 0 > const & composition,
+                                                 arraySlice1d< real64 const > const & composition,
                                                  arraySlice1d< real64 > const & phaseFraction,
                                                  arraySlice1d< real64 > const & dPhaseFraction_dPressure,
                                                  arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
@@ -227,7 +227,7 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 & totalDensity,
                                                  real64 & dTotalDensity_dPressure,
                                                  real64 & dTotalDensity_dTemperature,
-                                                 arraySlice1d< real64, 0 > const & dTotalDensity_dGlobalCompFraction ) const
+                                                 arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
 {
 #ifndef __CUDACC__
 // 0. make shortcut structs to avoid long names (TODO maybe remove)

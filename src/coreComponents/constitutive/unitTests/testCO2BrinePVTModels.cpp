@@ -37,13 +37,13 @@ using namespace geosx::PVTProps;
 
 /// Input tables written into temporary files during testing
 
-static const char * pvtliquid_str = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0.2\n"
-                                    "ViscosityFun BrineViscosity 0.1";
+static const char * PVTLiquidString = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0.2\n"
+                                      "ViscosityFun BrineViscosity 0.1";
 
-static const char * pvtgas_str = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1\n"
-                                 "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 1";
+static const char * PVTGasString = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1\n"
+                                   "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 1";
 
-static const char * co2flash_str = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
+static const char * CO2FlashString = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
 
 void testValuesAgainstPreviousImplementation( PVTFunctionBaseUpdate const & pvtFunctionWrapper,
                                               real64 const pressure,
@@ -341,7 +341,7 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   while( is.getline( buf, buf_size ))
   {
     string const str( buf );
-    string_array const strs = Tokenize( str, " " );
+    string_array const strs = stringutilities::tokenize( str, " " );
 
     if( strs[0] == key )
     {
@@ -385,7 +385,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   while( is.getline( buf, buf_size ))
   {
     string const str( buf );
-    string_array const strs = Tokenize( str, " " );
+    string_array const strs = stringutilities::tokenize( str, " " );
 
     if( strs[0] == key )
     {
@@ -404,23 +404,21 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
 
 class BrineViscosityTest : public ::testing::Test
 {
-protected:
-
-  virtual void SetUp() override
+public:
+  BrineViscosityTest()
   {
-    writeTableToFile( filename, pvtliquid_str );
-
+    writeTableToFile( filename, PVTLiquidString );
     pvtFunction = makePVTFunction< BrineViscosity >( filename, key );
   }
 
-  virtual void TearDown() override
+  ~BrineViscosityTest()
   {
     removeFile( filename );
   }
 
+protected:
   string const key = "ViscosityFun";
   string const filename = "pvtliquid.txt";
-
   std::unique_ptr< BrineViscosity > pvtFunction;
 };
 
@@ -464,23 +462,21 @@ TEST_F( BrineViscosityTest, brineViscosityValuesAndDeriv )
 
 class FenghourCO2ViscosityTest : public ::testing::Test
 {
-protected:
-
-  virtual void SetUp() override
+public:
+  FenghourCO2ViscosityTest()
   {
-    writeTableToFile( filename, pvtgas_str );
-
+    writeTableToFile( filename, PVTGasString );
     pvtFunction = makePVTFunction< FenghourCO2Viscosity >( filename, key );
   }
 
-  virtual void TearDown() override
+  ~FenghourCO2ViscosityTest()
   {
     removeFile( filename );
   }
 
+protected:
   string const key = "ViscosityFun";
   string const filename = "pvtgas.txt";
-
   std::unique_ptr< FenghourCO2Viscosity > pvtFunction;
 };
 
@@ -525,23 +521,21 @@ TEST_F( FenghourCO2ViscosityTest, fenghourCO2ViscosityValuesAndDeriv )
 
 class BrineCO2DensityTest : public ::testing::Test
 {
-protected:
-
-  virtual void SetUp() override
+public:
+  BrineCO2DensityTest()
   {
-    writeTableToFile( filename, pvtliquid_str );
-
+    writeTableToFile( filename, PVTLiquidString );
     pvtFunction = makePVTFunction< BrineCO2Density >( filename, key );
   }
 
-  virtual void TearDown() override
+  ~BrineCO2DensityTest()
   {
     removeFile( filename );
   }
 
+protected:
   string const key = "DensityFun";
   string const filename = "pvtliquid.txt";
-
   std::unique_ptr< BrineCO2Density > pvtFunction;
 };
 
@@ -627,23 +621,21 @@ TEST_F( BrineCO2DensityTest, brineCO2DensityMolarValuesAndDeriv )
 
 class SpanWagnerCO2DensityTest : public ::testing::Test
 {
-protected:
-
-  virtual void SetUp() override
+public:
+  SpanWagnerCO2DensityTest()
   {
-    writeTableToFile( filename, pvtgas_str );
-
+    writeTableToFile( filename, PVTGasString );
     pvtFunction = makePVTFunction< SpanWagnerCO2Density >( filename, key );
   }
 
-  virtual void TearDown() override
+  ~SpanWagnerCO2DensityTest()
   {
     removeFile( filename );
   }
 
+protected:
   string const key = "DensityFun";
   string const filename = "pvtgas.txt";
-
   std::unique_ptr< SpanWagnerCO2Density > pvtFunction;
 };
 
@@ -726,23 +718,21 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMolarValuesAndDeriv )
 
 class CO2SolubilityTest : public ::testing::Test
 {
-protected:
-
-  virtual void SetUp() override
+public:
+  CO2SolubilityTest()
   {
-    writeTableToFile( filename, co2flash_str );
-
+    writeTableToFile( filename, CO2FlashString );
     flashModel = makeFlashModel< CO2Solubility >( filename, key );
   }
 
-  virtual void TearDown() override
+  ~CO2SolubilityTest()
   {
     removeFile( filename );
   }
 
+protected:
   string const key = "FlashModel";
   string const filename = "co2flash.txt";
-
   std::unique_ptr< CO2Solubility > flashModel;
 };
 
