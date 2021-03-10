@@ -107,6 +107,8 @@ public:
 
 private:
 
+  arrayView3d< real64 > m_faceNormal;
+  arrayView3d< real64 > m_cellToFaceVec;
 };
 
 
@@ -134,6 +136,13 @@ public:
                     localIndex const * const elementIndices,
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
+
+  void addVectors( localIndex const numPts,
+                   localIndex const * const elementRegionIndices,
+                   localIndex const * const elementSubRegionIndices,
+                   localIndex const * const elementIndices,
+                   real64 const * const weights,
+                   localIndex const connectorIndex );
 
   /**
    * @brief Return the stencil size.
@@ -168,6 +177,10 @@ public:
                             m_weights );
    }
 
+private:
+   array3d< real64 > m_faceNormal;
+   array3d< real64 > m_cellToFaceVec;
+
 };
 
 template< typename PERMTYPE >
@@ -175,24 +188,47 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
                                                              PERMTYPE permeability,
                                                              real64 (& transmissibility)[2] ) const
 {
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
+  real64 halfTrans[2];
 
-  localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  localIndex const ei1  =  m_elementIndices[iconn][1];
+  for ( localIndex i =0; i<2; i++ )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][i];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][i];
+    localIndex const ei  =  m_elementIndices[iconn][i];
 
-  real64 const t0 = m_weights[iconn][0] * permeability[er0][esr0][ei0][0][0];
-  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
+    halfTrans[i] = m_weights[iconn][i];
 
-  real64 const harmonicWeight   = t0*t1 / (t0+t1);
-  real64 const arithmeticWeight = (t0+t1)/2;
+    // Proper computation
+    real64 faceNormal[3], faceConormal[3];
+
+    LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
+
+    if( LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceNormal ) < 0.0 )
+    {
+      LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
+    }
+
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er][esr][ei][0], faceNormal);
+    halfTrans[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
+
+    // correct negative weight issue arising from non-K-orthogonal grids
+    if( halfTrans[i] < 0.0 )
+    {
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
+                                                permeability[er][esr][ei][0],
+                                                m_cellToFaceVec[iconn][i] );
+      halfTrans[i] = m_weights[iconn][i];
+      halfTrans[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
+    }
+  }
+
+  real64 const harmonicWeight   = halfTrans[0]*halfTrans[1] / (halfTrans[0]+halfTrans[1]);
+  real64 const arithmeticWeight = ( halfTrans[0]+halfTrans[1] )/ 2;
 
   real64 const meanPermCoeff = 1.0; //TODO make it a member
 
   transmissibility[0] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
-  transmissibility[1] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+  transmissibility[1] = meanPermCoeff * harmonicWeight - (1 - meanPermCoeff) * arithmeticWeight;
 }
 
 template< typename PERMTYPE >

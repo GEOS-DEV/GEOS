@@ -25,7 +25,10 @@ namespace geosx
 
 CellElementStencilTPFA::CellElementStencilTPFA():
   StencilBase< CellElementStencilTPFA_Traits, CellElementStencilTPFA >()
-{}
+{
+  m_faceNormal.resize(0, 2, 3);
+  m_cellToFaceVec.resize(0, 2, 3);
+}
 
 
 void CellElementStencilTPFA::add( localIndex const numPts,
@@ -52,6 +55,23 @@ void CellElementStencilTPFA::add( localIndex const numPts,
     m_weights( oldSize, a ) = weights[a];
   }
   m_connectorIndices[connectorIndex] = oldSize;
+
+
+}
+
+void CellElementStencilTPFA::addVectors( real64 const (& faceNormal)[2][3],
+                                         real64 const (& cellToFaceVec)[2][3]  )
+{
+  localIndex const oldSize = m_faceNormal.size( 0 );
+  localIndex const newSize = oldSize + 1;
+  m_faceNormal.resize( newSize );
+  m_cellToFaceVec.resize( newSize );
+
+  for ( localIndex a=0; a<2; a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( m_faceNormal(oldSize, a), faceNormal[a] );
+    LvArray::tensorOps::copy< 3 >( m_cellToFaceVec(oldSize, a), cellToFaceVec[a] );
+  }
 }
 
 } /* namespace geosx */
