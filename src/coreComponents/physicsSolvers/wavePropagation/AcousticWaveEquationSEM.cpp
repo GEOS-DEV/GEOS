@@ -159,10 +159,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  // get the position of the nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-  // get the source information
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
@@ -171,7 +169,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
   sourceConstants.setValues< serialPolicy >( -1 );
   sourceIsLocal.setValues< serialPolicy >( 0 );
 
-  // get the receiver information
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
@@ -188,7 +185,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                                                                        CellElementSubRegion & elementSubRegion )
     {
 
-      // get the face/node information
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
       finiteElement::FiniteElementBase const &
@@ -203,36 +199,26 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
 
-        // loop over all the elements in the subRegion
-        // this will potentially become a RAJA loop
         for( localIndex k = 0; k < elementSubRegion.size(); ++k )
         {
 
-          // collect the faces for this element
           for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
           {
             elementSubRegion.getFaceNodes( k, kf, faceNodes[kf] );
           }
 
-          // loop over all the sources that haven't been found yet
-          // If we don't care about having multiple sources, we can remove this loop
           for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
           {
-            // if the source has not been found yet
             if( sourceIsLocal[isrc] == 0 )
             {
-              // get the coordinates of the source
               real64 const coords[3] = { sourceCoordinates[isrc][0],
                                          sourceCoordinates[isrc][1],
                                          sourceCoordinates[isrc][2] };
 
-              // if the point is in the element, we can compute the constant part of the source term
-              // The search can be optimized a lot
               if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
               {
                 sourceIsLocal[isrc] = 1;
 
-                /// Get all the node of element k containing the source point
                 real64 xLocal[numNodesPerElem][3];
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
@@ -243,21 +229,18 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 }
 
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
-                real64 coordsOnRefElem[3]; // 3D coord of the source in Ref element
-                localIndex q=0; // index of node 0 in the element
+                real64 coordsOnRefElem[3];
+                localIndex q=0;
 
-                ///Compute invJ = DF^{-1}
                 real64 invJ[3][3]={{0}};
                 FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
 
-                /// compute (coords - coordsNode_0)
                 real64 coordsRef[3]={0};
                 for( localIndex i=0; i<3; ++i )
                 {
                   coordsRef[i] = coords[i] - xLocal[q][i];
                 }
 
-                /// Compute coordsOnRefElem = invJ*coordsRef
                 for( localIndex i=0; i<3; ++i )
                 {
                   // Init at (-1,-1,-1) as the origin of the referential elem
@@ -268,26 +251,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                   }
                 }
 
-                /* std::cout << " V1 coordsOnRefElem " << coordsOnRefElem[0] << " " << coordsOnRefElem[1] << " " << coordsOnRefElem[2] <<
-                   std::endl;
-
-                   if(numNodesPerElem ==8)
-                   {
-                    /// V2 to compute coords On ref Elem
-                    coordsOnRefElem[0] = -1.0 + 2.0*(coords[0]-xLocal[0][0])/(xLocal[1][0] - xLocal[0][0]);
-                    coordsOnRefElem[1] = -1.0 + 2.0*(coords[1]-xLocal[0][1])/(xLocal[2][1] - xLocal[0][1]);
-                    coordsOnRefElem[2] = -1.0 + 2.0*(coords[2]-xLocal[0][2])/(xLocal[4][2] - xLocal[0][2]);
-
-                    std::cout << " V2 coordsOnRefElem " << coordsOnRefElem[0] << " " << coordsOnRefElem[1] << " " << coordsOnRefElem[2] <<
-                       std::endl;
-                   }
-                 */
-
-                /// Evaluate basis functions at coord source on unit ref element
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
-                // save all the node indices and constant part of source term here
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
                   sourceNodeIds[isrc][a] = elemsToNodes[k][a];
@@ -298,24 +264,19 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
           } // End loop over all source
 
 
-          // loop over all the receiver that haven't been found yet
+          /// loop over all the receiver that haven't been found yet
           for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
           {
-            // if the receiver has not been found yet
             if( receiverIsLocal[ircv] == 0 )
             {
-              // get the coordinates of the source
               real64 const coords[3] = { receiverCoordinates[ircv][0],
                                          receiverCoordinates[ircv][1],
                                          receiverCoordinates[ircv][2] };
 
-              // if the point is in the element, we can construct the map receiver to elem nodes
-              // The search can be optimized a lot
               if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
               {
                 receiverIsLocal[ircv] = 1;
 
-                /// Get all the node of element k containing the source point
                 real64 xLocal[numNodesPerElem][3];
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
@@ -325,25 +286,21 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                   }
                 }
 
-                /// coordsOnRefElem = invJ*(coords-coordsNode_0)
-                real64 coordsOnRefElem[3]; // 3D coord of the source in Ref element
-                localIndex q=0; // index of node 0 in the element
+                real64 coordsOnRefElem[3];
+                localIndex q=0;
 
-                ///Compute invJ = DF^{-1}
                 real64 invJ[3][3]={{0}};
                 FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
 
-                /// compute (coords - coordsNode_0)
                 real64 coordsRef[3]={0};
                 for( localIndex i=0; i<3; ++i )
                 {
                   coordsRef[i] = coords[i] - xLocal[q][i];
                 }
 
-                /// Compute coordsOnRefElem = invJ*coordsRef
                 for( localIndex i=0; i<3; ++i )
                 {
-                  // Init at (-1,-1,-1) as the origin of the referential elem
+                  /// Init at (-1,-1,-1) as the origin of the referential elem
                   coordsOnRefElem[i] =-1.0;
                   for( localIndex j=0; j<3; ++j )
                   {
@@ -351,26 +308,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                   }
                 }
 
-                /* std::cout << " V1 coordsOnRefElem " << coordsOnRefElem[0] << " " << coordsOnRefElem[1] << " " << coordsOnRefElem[2] <<
-                   std::endl;
-
-                   if(numNodesPerElem ==8)
-                   {
-                    /// V2 to compute coords On ref Elem
-                    coordsOnRefElem[0] = -1.0 + 2.0*(coords[0]-xLocal[0][0])/(xLocal[1][0] - xLocal[0][0]);
-                    coordsOnRefElem[1] = -1.0 + 2.0*(coords[1]-xLocal[0][1])/(xLocal[2][1] - xLocal[0][1]);
-                    coordsOnRefElem[2] = -1.0 + 2.0*(coords[2]-xLocal[0][2])/(xLocal[4][2] - xLocal[0][2]);
-
-                    std::cout << " V2 coordsOnRefElem " << coordsOnRefElem[0] << " " << coordsOnRefElem[1] << " " << coordsOnRefElem[2] <<
-                       std::endl;
-                   }
-                 */
-
-                /// Evaluate basis functions at coord receiver on unit ref element
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
-                // save all the node indices and constant part of source term here
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
                   receiverNodeIds[ircv][a] = elemsToNodes[k][a];
@@ -389,22 +329,18 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 
 void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs )
 {
-  // get the precomputed source information
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
 
   real64 const fi = evaluateRickerOrder2( time, this->m_timeSourceFrequency );
 
-  // loop over all the sources
   for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
   {
-    if( sourceIsLocal[isrc] == 1 ) // check if the source is on this MPI rank
+    if( sourceIsLocal[isrc] == 1 )
     {
-      // for all the nodes
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        // multiply the precomputed part by the ricker
         rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * fi;
       }
     }
@@ -423,20 +359,16 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
 
   char filename[50];
 
-  // loop over all the sources
   for( localIndex ircv = 0; ircv < receiverConstants.size( 0 ); ++ircv )
   {
     if( receiverIsLocal[ircv] == 1 )
     {
       p_rcvs[ircv] = 0.0;
-      // for all the nodes of the elem containing the receiver ircv
       for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
       {
-        // multiply the precomputed part by the pressure
         p_rcvs[ircv] += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
       }
 
-      /// Define filename for sismo trace at receiver ircv
       sprintf( filename, "sismoTraceReceiver%0ld.txt", ircv );
       this->saveSismo( isismo, p_rcvs[ircv], filename );
     }

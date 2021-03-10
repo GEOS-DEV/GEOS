@@ -11,6 +11,8 @@ sourceConstants           real64_array2d                                      Co
 sourceIsLocal             localIndex_array                                    Flag that indicates whether the source is local to this MPI rank        
 sourceNodeIds             localIndex_array2d                                  Indices of the nodes (in the right order) for each source point         
 dampingVector             real64_array       :ref:`DATASTRUCTURE_nodeManager` Diagonal Damping Matrix.                                                
+freeSurfaceFaceIndicator  localIndex_array   :ref:`DATASTRUCTURE_FaceManager` Free surface indicator, 1 if a face is on free surface 0 otherwise.     
+freeSurfaceNodeIndicator  localIndex_array   :ref:`DATASTRUCTURE_nodeManager` Free surface indicator, 1 if a node is on free surface 0 otherwise.     
 massVector                real64_array       :ref:`DATASTRUCTURE_nodeManager` Diagonal Mass Matrix.                                                   
 pressure_n                real64_array       :ref:`DATASTRUCTURE_nodeManager` Scalar pressure at time n.                                              
 pressure_nm1              real64_array       :ref:`DATASTRUCTURE_nodeManager` Scalar pressure at time n-1.                                            

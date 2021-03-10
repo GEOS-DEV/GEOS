@@ -111,20 +111,6 @@ protected:
 
 private:
 
-  /**
-   * @brief Convert a mesh element point coordinate into a coorinate on the reference element
-   * @param coords coordinate of the point
-   * @param coordsOnRefElem to contain the coordinate computed in the reference element
-   * @param numElem index of the element containing the coords
-   * @param numNodesPerElem number of nodes per element
-   * @param elemsToNodes map obtain node global index from element index
-   */
-  //void computeCoordinateOnReferenceElement( array1d< real64 const > const & coords,
-  //array1d< real64 > & coordsOnRefElem,
-  //					     localIndex const & indexElem,
-  //					     localIndex const & numNodesPerElem,
-  //					     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes);
-
   /// Locates the source term and precomputes the constant part of the source term
   /// And locate receivers and pre_evaluate the basis functions at each receiver coordinate
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );

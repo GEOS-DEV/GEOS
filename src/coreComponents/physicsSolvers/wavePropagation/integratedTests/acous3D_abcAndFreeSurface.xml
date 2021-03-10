@@ -12,12 +12,9 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
-      sourceCoordinates="{ { 55, 55, 55 },
-                           { 10, 10, 14 } }"
-      timeSourceFrequency="5.0"
-      receiverCoordinates="{ { 5, 5, 11 },
-                             { 5, 50, 11 },
-                             { 5, 95, 11 } }"/>
+      sourceCoordinates="{ { 10.05, 10.05, 10.05 } }"
+      timeSourceFrequency="2.0"
+      receiverCoordinates="{ { 11.05, 10.05, 10.05 } }"/>
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
@@ -26,49 +23,58 @@
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 101 }"
-      yCoords="{ 0, 101 }"
-      zCoords="{ 0, 101 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
+      xCoords="{ 0, 20 }"
+      yCoords="{ 0, 20 }"
+      zCoords="{ 0, 20 }"
+      nx="{ 20 }"
+      ny="{ 20 }"
+      nz="{ 20 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
-  
-  <Events
-    maxTime="0.2">
 
+  <Geometry>
+    <!-- tag the free surface boundary using box -->
+    <Box
+      name="zpos"
+      xMin="-0.01, -0.01, 19.99"
+      xMax=" 20.01, 0.11, 20.01"/>
+
+  </Geometry>
+   
+  <Events
+      maxTime="0.2">
+    
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.005"
+      forceDt="0.0025"
       target="/Solvers/acousticSolver"/>
+    
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.1"
+      timeFrequency="0.025"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
     
     <!-- two events to output pressure in an hdf5 file -->    
-
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="0.005"
+      timeFrequency="0.0025"
       targetExactTimestep="1"
       target="/Tasks/pressureCollection"/>
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="0.05"
+      timeFrequency="0.025"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
-    
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.1"
       targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
-
+    
   </Events>
 
   <NumericalMethods>
@@ -94,7 +100,7 @@
   </Constitutive>
 
   <FieldSpecifications>
-    
+   
     <!-- 1) The initial pressure field -->
     <FieldSpecification
       name="initialPressure"
@@ -118,11 +124,18 @@
       initialCondition="1"
       objectPath="ElementRegions/Region/elementSubRegions/cb"
       fieldName="mediumVelocity"
-      scale="1500"
+      scale="150"
       setNames="{ all }"/>
 
-  </FieldSpecifications>
+    <!-- 3) The free surface condition the domain -->
+    <FieldSpecification
+      name="zposFreeSurface"
+      objectPath="faceManager"
+      fieldName="FreeSurface"
+      scale="0"
+      setNames="{ zpos }"/>
 
+  </FieldSpecifications>
 
   <!-- collect the pressure values at the nodes -->
   <Tasks>
@@ -149,5 +162,5 @@
       name="restartOutput"/>
     
   </Outputs>
-
+  
 </Problem>
