@@ -26,7 +26,14 @@ set(mpiCommunications_sources
 if( BUILD_OBJ_LIBS)
   set( dependencyList fileIO common trilinos )
 else()
-  set( dependencyList common )
+  set( dependencyList 
+       lvarray
+       common
+       mesh
+       managers
+       codingUtilities
+       dataRepository
+        )
 endif()
 
 
