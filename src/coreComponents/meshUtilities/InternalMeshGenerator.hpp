@@ -115,7 +115,7 @@ protected:
   real64 m_max[3];
 
   /// Position tolerance for adding nodes to nodesets
-  real64 m_positionTolerance;
+  real64 m_coordinatePrecision;
 
   /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];

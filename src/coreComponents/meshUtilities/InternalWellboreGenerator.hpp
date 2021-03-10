@@ -76,7 +76,7 @@ private:
   /// Farfield distance
   real64 m_rOut;
 
-  /// Maximum tangent angle
+  /// Maximum tangent angle in degrees
   real64 m_theta;
 
   /// Number of elements in radial direction

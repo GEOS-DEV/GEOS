@@ -98,6 +98,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
   Group & nodeSets = nodeManager.sets();
 
   // Wellbore nodesets
+  // rneg, rpos, tneg and tpos are the named used by the end-used in the input files. Consider modifying them with care.
   SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
   SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
   SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
@@ -115,7 +116,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
     real64 tCoord;
 
-    if( rCoord < m_positionTolerance )
+    if( rCoord < m_coordinatePrecision )
     {
       tCoord = 0.0;
     }
@@ -131,21 +132,21 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     tCoord *= 180.0 / M_PI;
 
     // Wellbore nodesets
-    if( isEqual( rCoord, m_min[0], m_positionTolerance ) )
+    if( isEqual( rCoord, m_min[0], m_coordinatePrecision ) )
     {
       rnegNodes.insert( localNodeIndex );
     }
 
-    if( isEqual( rCoord, m_max[0], m_positionTolerance ) )
+    if( isEqual( rCoord, m_max[0], m_coordinatePrecision ) )
     {
       rposNodes.insert( localNodeIndex );
     }
 
-    if( isEqual( tCoord, m_min[1], m_positionTolerance ) )
+    if( isEqual( tCoord, m_min[1], m_coordinatePrecision ) )
     {
       tnegNodes.insert( localNodeIndex );
     }
-    if( isEqual( tCoord, m_max[1], m_positionTolerance ) )
+    if( isEqual( tCoord, m_max[1], m_coordinatePrecision ) )
     {
       tposNodes.insert( localNodeIndex );
     }
@@ -174,7 +175,7 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     // Azimuth from x-axis
     real64 theta0;
 
-    if( dr < m_positionTolerance )
+    if( dr < m_coordinatePrecision )
     {
       theta0 = 0.0;
     }
