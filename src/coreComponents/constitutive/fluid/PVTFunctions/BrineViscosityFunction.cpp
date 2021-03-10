@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BrineViscosity.cpp
+ * @file BrineViscosityFunction.cpp
  */
 
 #include "constitutive/fluid/PVTFunctions/BrineViscosityFunction.hpp"
@@ -22,6 +22,9 @@ namespace geosx
 {
 
 using namespace stringutilities;
+
+namespace constitutive
+{
 
 namespace PVTProps
 {
@@ -74,5 +77,7 @@ BrineViscosity::KernelWrapper BrineViscosity::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineViscosity, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
+
+} // namespace constitutive
 
 } // end namespace geosx

@@ -13,11 +13,12 @@
  */
 
 /**
- * @file SpanWagnerCO2Density.cpp
+ * @file SpanWagnerCO2DensityFunction.cpp
  */
 
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
 
@@ -25,6 +26,9 @@ namespace geosx
 {
 
 using namespace stringutilities;
+
+namespace constitutive
+{
 
 namespace PVTProps
 {
@@ -143,18 +147,12 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( array1d< string > const & inputPara,
                    componentNames,
                    componentMolarWeight )
 {
-
-  bool notFound = true;
-  for( localIndex i = 0; i < componentNames.size(); ++i )
-  {
-    if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
-    {
-      m_CO2Index = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Component CO2 is not found!" );
+  array1d< string > expectedCO2ComponentNames;
+  expectedCO2ComponentNames.resize( 2 );
+  expectedCO2ComponentNames[0] = "CO2";
+  expectedCO2ComponentNames[1] = "co2";
+  bool found = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, m_CO2Index );
+  GEOSX_ERROR_IF( !found, "Component CO2 is not found!" );
 
   makeTable( inputPara );
 }
@@ -188,18 +186,13 @@ void SpanWagnerCO2Density::makeTable( array1d< string > const & inputPara )
     GEOSX_ERROR( "Invalid SpanWagnerCO2Density argument:" + string( e.what()) );
   }
 
-  real64 P = PStart;
-  while( P <= PEnd )
+  for( real64 P = PStart; P <= PEnd; P += dP )
   {
     coordinates[0].emplace_back( P );
-    P += dP;
   }
-
-  real64 T = TStart;
-  while( T <= TEnd )
+  for( real64 T = TStart; T <= TEnd; T += dT )
   {
     coordinates[1].emplace_back( T );
-    T += dT;
   }
 
   localIndex const nP = coordinates[0].size();
@@ -317,5 +310,7 @@ SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
 
 } // namespace PVTProps
+
+} // namespace constitutive
 
 } // namespace geosx

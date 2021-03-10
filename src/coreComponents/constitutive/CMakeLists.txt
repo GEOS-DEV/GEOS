@@ -22,6 +22,7 @@ set( constitutive_headers
      fluid/PVTFunctions/FlashModelBase.hpp
      fluid/PVTFunctions/PVTFunctionBase.hpp
      fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp
+     fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/SingleFluidBase.hpp
      fluid/singleFluidSelector.hpp
      fluid/MultiFluidBase.hpp

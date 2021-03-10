@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BrineCO2Density.hpp
+ * @file BrineCO2DensityFunction.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINECO2DENSITY_HPP_
@@ -24,6 +24,9 @@
 #include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
+{
+
+namespace constitutive
 {
 
 namespace PVTProps
@@ -223,6 +226,8 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
 }
 
 } // end namespace PVTProps
+
+} // end namespace constitutive
 
 } // end namespace geosx
 

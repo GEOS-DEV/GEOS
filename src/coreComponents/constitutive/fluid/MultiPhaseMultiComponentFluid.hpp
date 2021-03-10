@@ -21,11 +21,11 @@
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "PVTFunctions/BrineCO2DensityFunction.hpp"
-#include "PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
-#include "PVTFunctions/BrineViscosityFunction.hpp"
-#include "PVTFunctions/FenghourCO2ViscosityFunction.hpp"
-#include "PVTFunctions/CO2SolubilityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineCO2DensityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineViscosityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/CO2SolubilityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
 
 #include <memory>
 

@@ -13,11 +13,12 @@
  */
 
 /**
- * @file BrineCO2Density.cpp
+ * @file BrineCO2DensityFunction.cpp
  */
 
 #include "constitutive/fluid/PVTFunctions/BrineCO2DensityFunction.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
 
@@ -25,6 +26,9 @@ namespace geosx
 {
 
 using namespace stringutilities;
+
+namespace constitutive
+{
 
 namespace PVTProps
 {
@@ -36,29 +40,19 @@ BrineCO2Density::BrineCO2Density( array1d< string > const & inputPara,
                    componentNames,
                    componentMolarWeight )
 {
-  bool notFound = true;
-  for( localIndex i = 0; i < componentNames.size(); ++i )
-  {
-    if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
-    {
-      m_CO2Index = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Component CO2 is not found!" );
+  array1d< string > expectedCO2ComponentNames;
+  expectedCO2ComponentNames.resize( 2 );
+  expectedCO2ComponentNames[0] = "CO2";
+  expectedCO2ComponentNames[1] = "co2";
+  bool found = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, m_CO2Index );
+  GEOSX_ERROR_IF( !found, "Component CO2 is not found!" );
 
-  notFound = true;
-  for( localIndex i = 0; i < componentNames.size(); ++i )
-  {
-    if( componentNames[i] =="Water" || componentNames[i] == "water" )
-    {
-      m_waterIndex = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Component Water/Brine is not found!" );
+  array1d< string > expectedWaterComponentNames;
+  expectedWaterComponentNames.resize( 2 );
+  expectedWaterComponentNames[0] = "Water";
+  expectedWaterComponentNames[1] = "water";
+  found = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, m_waterIndex );
+  GEOSX_ERROR_IF( !found, "Component Water/Brine is not found!" );
 
   makeTable( inputPara );
 }
@@ -95,18 +89,13 @@ void BrineCO2Density::makeTable( array1d< string > const & inputPara )
     GEOSX_ERROR( "Invalid BrineCO2Density argument:" + string( e.what()) );
   }
 
-  real64 P = PStart;
-  while( P <= PEnd )
+  for( real64 P = PStart; P <= PEnd; P += dP )
   {
     coordinates[0].emplace_back( P );
-    P += dP;
   }
-
-  real64 T = TStart;
-  while( T <= TEnd )
+  for( real64 T = TStart; T <= TEnd; T += dT )
   {
     coordinates[1].emplace_back( T );
-    T += dT;
   }
 
   localIndex const nP = coordinates[0].size();
@@ -171,5 +160,7 @@ BrineCO2Density::KernelWrapper BrineCO2Density::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineCO2Density, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
 
 } // namespace PVTProps
+
+} // namespace constitutive
 
 } // namespace geosx

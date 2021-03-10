@@ -19,17 +19,19 @@
 
 #include "common/Path.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "PVTFunctions/FlashModelBase.hpp"
-#include "PVTFunctions/PVTFunctionBase.hpp"
+#include "constitutive/fluid/PVTFunctions/FlashModelBase.hpp"
+#include "constitutive/fluid/PVTFunctions/PVTFunctionBase.hpp"
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
 namespace geosx
 {
 
 using namespace dataRepository;
-using namespace PVTProps;
 
 namespace constitutive
 {
+
+using namespace PVTProps;
 
 MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
@@ -74,31 +76,23 @@ void MultiPhaseMultiComponentFluid::postProcessInput()
   GEOSX_ERROR_IF( numComps != 2, "The number of components in this model should be equal to 2" );
   GEOSX_ERROR_IF( m_phasePVTParaFiles.size() != 2, "The number of phasePVTParaFiles is not the same as the number of phases!" );
 
-  bool notFound = true;
-  for( localIndex i = 0; i < m_phaseNames.size(); ++i )
-  {
-    if( m_phaseNames[i] == "CO2" || m_phaseNames[i] == "co2" ||
-        m_phaseNames[i] == "gas" || m_phaseNames[i] == "Gas" )
-    {
-      m_phaseGasIndex = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Phase co2/gas is not found!" );
+  array1d< string > expectedGasPhaseNames;
+  expectedGasPhaseNames.resize( 4 );
+  expectedGasPhaseNames[0] = "CO2";
+  expectedGasPhaseNames[1] = "co2";
+  expectedGasPhaseNames[2] = "gas";
+  expectedGasPhaseNames[3] = "Gas";
+  bool found = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, m_phaseGasIndex );
+  GEOSX_ERROR_IF( !found, "Phase co2/gas is not found!" );
 
-  notFound = true;
-  for( localIndex i = 0; i < m_phaseNames.size(); ++i )
-  {
-    if( m_phaseNames[i] == "Water" || m_phaseNames[i] == "water" ||
-        m_phaseNames[i] == "Liquid" || m_phaseNames[i] == "liquid" )
-    {
-      m_phaseLiquidIndex = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Phase water/liquid is not found!" );
+  array1d< string > expectedWaterPhaseNames;
+  expectedWaterPhaseNames.resize( 4 );
+  expectedWaterPhaseNames[0] = "Water";
+  expectedWaterPhaseNames[1] = "water";
+  expectedWaterPhaseNames[2] = "Liquid";
+  expectedWaterPhaseNames[3] = "liquid";
+  found = PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, m_phaseLiquidIndex );
+  GEOSX_ERROR_IF( !found, "Phase water/liquid is not found!" );
 
   createPVTModels();
 }

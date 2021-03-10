@@ -26,6 +26,9 @@
 namespace geosx
 {
 
+namespace constitutive
+{
+
 namespace PVTProps
 {
 
@@ -159,6 +162,8 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
 }
 
 } // end namespace PVTProps
+
+} // end namespace constitutive
 
 } // end namespace geosx
 

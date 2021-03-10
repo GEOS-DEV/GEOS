@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BrineViscosity.hpp
+ * @file BrineViscosityFunction.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITY_HPP_
@@ -22,6 +22,9 @@
 #include "PVTFunctionBase.hpp"
 
 namespace geosx
+{
+
+namespace constitutive
 {
 
 namespace PVTProps
@@ -136,6 +139,8 @@ void BrineViscosityUpdate::compute( real64 const & pressure,
 }
 
 } // end namespace PVTProps
+
+} // end namespace constitutive
 
 } // end namespace geosx
 

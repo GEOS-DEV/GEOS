@@ -13,7 +13,7 @@
  */
 
 /**
- * @file FenghourCO2Viscosity.cpp
+ * @file FenghourCO2ViscosityFunction.cpp
  */
 
 #include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
@@ -23,6 +23,9 @@
 #include "managers/GeosxState.hpp"
 
 namespace geosx
+{
+
+namespace constitutive
 {
 
 namespace PVTProps
@@ -67,18 +70,13 @@ void FenghourCO2Viscosity::makeTable( array1d< string > const & inputPara )
     GEOSX_ERROR( "Invalid FenghourCO2Viscosity argument:" + string( e.what()) );
   }
 
-  real64 P = PStart;
-  while( P <= PEnd )
+  for( real64 P = PStart; P <= PEnd; P += dP )
   {
     coordinates[0].emplace_back( P );
-    P += dP;
   }
-
-  real64 T = TStart;
-  while( T <= TEnd )
+  for( real64 T = TStart; T <= TEnd; T += dT )
   {
     coordinates[1].emplace_back( T );
-    T += dT;
   }
 
   localIndex nP = coordinates[0].size();
@@ -160,5 +158,7 @@ FenghourCO2Viscosity::KernelWrapper FenghourCO2Viscosity::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
+
+} // namespace constitutive
 
 } // end namespace geosx

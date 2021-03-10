@@ -13,7 +13,7 @@
  */
 
 /**
- * @file FenghourCO2Viscosity.hpp
+ * @file FenghourCO2ViscosityFunction.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FENGHOURCO2VISCOSITY_HPP_
@@ -24,6 +24,9 @@
 #include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
+{
+
+namespace constitutive
 {
 
 namespace PVTProps
@@ -142,6 +145,8 @@ void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
 }
 
 } // end namespace PVTProps
+
+} // end namespace constitutive
 
 } // end namespace geosx
 

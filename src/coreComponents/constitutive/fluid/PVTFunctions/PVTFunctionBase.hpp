@@ -13,16 +13,19 @@
  */
 
 /**
- * @file NewPVTFunctionBase.hpp
+ * @file PVTFunctionBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NEWPVTFUNCTIONBASE_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NEWPVTFUNCTIONBASE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
 
 #include "codingUtilities/StringUtilities.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
 
 namespace geosx
+{
+
+namespace constitutive
 {
 
 namespace PVTProps
@@ -121,6 +124,8 @@ protected:
 
 } // end namespace PVTProps
 
+} // end namespace constitutive
+
 } // end namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_NEWPVTFUNCTIONBASE_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_

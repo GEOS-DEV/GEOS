@@ -26,6 +26,9 @@
 namespace geosx
 {
 
+namespace constitutive
+{
+
 namespace PVTProps
 {
 
@@ -292,6 +295,8 @@ void CO2SolubilityUpdate::compute( real64 const & pressure,
 }
 
 } // end namespace PVTProps
+
+} // end namespace constitutive
 
 } // end namespace geosx
 

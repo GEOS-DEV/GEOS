@@ -33,7 +33,7 @@ using namespace geosx::testing;
 using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
 using namespace geosx::stringutilities;
-using namespace geosx::PVTProps;
+using namespace geosx::constitutive::PVTProps;
 
 /// Input tables written into temporary files during testing
 

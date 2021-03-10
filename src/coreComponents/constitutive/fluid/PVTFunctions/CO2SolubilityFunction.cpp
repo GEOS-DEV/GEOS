@@ -13,11 +13,12 @@
  */
 
 /**
- * @file CO2Solubility.cpp
+ * @file CO2SolubilityFunction.cpp
  */
 
 #include "constitutive/fluid/PVTFunctions/CO2SolubilityFunction.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
 
@@ -26,6 +27,8 @@ namespace geosx
 
 using namespace stringutilities;
 
+namespace constitutive
+{
 
 namespace PVTProps
 {
@@ -136,55 +139,37 @@ CO2Solubility::CO2Solubility( array1d< string > const & inputPara,
   GEOSX_ERROR_IF( phaseNames.size() != 2, "The CO2Solubility model is a two-phase model" );
   GEOSX_ERROR_IF( componentNames.size() != 2, "The CO2Solubility model is a two-component model" );
 
-  bool notFound = true;
-  for( localIndex i = 0; i < componentNames.size(); ++i )
-  {
-    if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
-    {
-      m_CO2Index = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Component CO2 is not found!" );
+  array1d< string > expectedCO2ComponentNames;
+  expectedCO2ComponentNames.resize( 2 );
+  expectedCO2ComponentNames[0] = "CO2";
+  expectedCO2ComponentNames[1] = "co2";
+  bool found = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, m_CO2Index );
+  GEOSX_ERROR_IF( !found, "Component CO2 is not found!" );
 
-  notFound = true;
-  for( localIndex i = 0; i < componentNames.size(); ++i )
-  {
-    if( componentNames[i] == "Water" || componentNames[i] == "water" )
-    {
-      m_waterIndex = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Component Water/Brine is not found!" );
+  array1d< string > expectedWaterComponentNames;
+  expectedWaterComponentNames.resize( 2 );
+  expectedWaterComponentNames[0] = "Water";
+  expectedWaterComponentNames[1] = "water";
+  found = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, m_waterIndex );
+  GEOSX_ERROR_IF( !found, "Component Water/Brine is not found!" );
 
-  notFound = true;
-  for( localIndex i = 0; i < phaseNames.size(); ++i )
-  {
-    if( phaseNames[i] == "CO2" || phaseNames[i] == "co2" ||
-        phaseNames[i] == "gas" || phaseNames[i] == "Gas" )
-    {
-      m_phaseGasIndex = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Phase co2/gas is not found!" );
+  array1d< string > expectedGasPhaseNames;
+  expectedGasPhaseNames.resize( 4 );
+  expectedGasPhaseNames[0] = "CO2";
+  expectedGasPhaseNames[1] = "co2";
+  expectedGasPhaseNames[2] = "gas";
+  expectedGasPhaseNames[3] = "Gas";
+  found = PVTFunctionHelpers::findName( phaseNames, expectedGasPhaseNames, m_phaseGasIndex );
+  GEOSX_ERROR_IF( !found, "Phase co2/gas is not found!" );
 
-  notFound = true;
-  for( localIndex i = 0; i < phaseNames.size(); ++i )
-  {
-    if( phaseNames[i] == "Water" || phaseNames[i] == "water" ||
-        phaseNames[i] == "Liquid" || phaseNames[i] == "liquid" )
-    {
-      m_phaseLiquidIndex = i;
-      notFound = false;
-      break;
-    }
-  }
-  GEOSX_ERROR_IF( notFound, "Phase water/liquid is not found!" );
+  array1d< string > expectedWaterPhaseNames;
+  expectedWaterPhaseNames.resize( 4 );
+  expectedWaterPhaseNames[0] = "Water";
+  expectedWaterPhaseNames[1] = "water";
+  expectedWaterPhaseNames[2] = "Liquid";
+  expectedWaterPhaseNames[3] = "liquid";
+  found = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, m_phaseLiquidIndex );
+  GEOSX_ERROR_IF( !found, "Phase water/liquid is not found!" );
 
   makeTable( inputPara );
 }
@@ -221,18 +206,13 @@ void CO2Solubility::makeTable( array1d< string > const & inputPara )
     GEOSX_ERROR( "Invalid CO2Solubility argument:" + string( e.what()) );
   }
 
-  real64 P = PStart;
-  while( P <= PEnd )
+  for( real64 P = PStart; P <= PEnd; P += dP )
   {
     coordinates[0].emplace_back( P );
-    P += dP;
   }
-
-  real64 T = TStart;
-  while( T <= TEnd )
+  for( real64 T = TStart; T <= TEnd; T += dT )
   {
     coordinates[1].emplace_back( T );
-    T += dT;
   }
 
   localIndex const nP = coordinates[0].size();
@@ -340,5 +320,7 @@ CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, array1d< string > const &, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
+
+} // namespace constitutive
 
 } // end namespace geosx
