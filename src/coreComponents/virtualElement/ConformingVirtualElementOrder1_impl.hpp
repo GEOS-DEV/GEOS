@@ -421,8 +421,8 @@ ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
       basisTimesMonomNormalDerBoundaryInt[numVertex][i] *= 0.5*invFaceDiameter;
 
   // Compute integral mean of basis functions on this face.
-  real64 invFaceArea = 1.0/faceArea;
-  real64 monomialDerivativeInverse = (faceDiameter*faceDiameter)*invFaceArea;
+  real64 const invFaceArea = 1.0/faceArea;
+  real64 const monomialDerivativeInverse = (faceDiameter*faceDiameter)*invFaceArea;
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
   {
     real64 piNablaDofs[3];
