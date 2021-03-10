@@ -128,7 +128,8 @@ public:
     m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
-    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::referencePorosityString() ) )
+    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::referencePorosityString() ) ),
+    m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient() )
   {}
 
   //*****************************************************************************
@@ -226,45 +227,51 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    // Get displacement basis functions (N), their derivatives (dNdX) and the determinant of the
-    // Jacobian transformation matrix times the quadrature weight (detJxW)
+    // Get displacement: (i) basis functions (N), (ii) basis function
+    // derivatives (dNdX), and (iii) determinant of the Jacobian transformation
+    // matrix times the quadrature weight (detJxW)
     real64 N[numNodesPerElem];
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-
+    real64 dNdX[numNodesPerElem][3];
     FE_TYPE::calcN( q, N );
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     // Evaluate total stress tensor
-    real64 strainInc[6] = {0};
+    real64 strainIncrement[6] = {0};
     real64 totalStress[6];
 
     // --- Update effective stress tensor (stored in totalStress)
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
-    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
-    m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, totalStress, stiffness );
+    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
+    m_constitutiveUpdate.smallStrainUpdate( k, q, strainIncrement, totalStress, stiffness );
 
     // --- Subtract pressure term
-    //     For now we assume incompressible solid grains (biot's coefficient = 1)
-    real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
-    real64 const biotSkeletonModulusInverse = 0.0; //TODO (biotCoefficient - referencePorosity)/bulkModulus
-    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
-    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local);
-    real64 const porosityNew = m_poroRef( k ) + biotCoefficient * volumetricStrainNew;// + DeltaPoro + biotCoefficient * volumetricStrainIncr + biotSkeletonModulusInverse * deltaPressure
-    real64 const porosityOld = m_poroRef( k ) + biotCoefficient * volumetricStrainOld;// +  DeltaPoro
-
-    GEOSX_ERROR_IF_GT_MSG( abs( biotCoefficient - 1.0 ),
-                           1e-10,
-                           "Correct only for Biot's coefficient equal to 1" );
-    real64 const biotTimesPressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+    real64 const biotTimesPressure = m_biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
     totalStress[0] -= biotTimesPressure;
     totalStress[1] -= biotTimesPressure;
     totalStress[2] -= biotTimesPressure;
 
+    // Evaluate fluid phase mass content
+    // --- TODO: temporary solution -----------------------------------------------------------------------------------//
+    //           update PoroElastic Constitutive Model (PECM) such that:                                               //
+    //           (  i) the kernel has a view m_porosityOld to the field stored in PECM                                 //
+    //           ( ii) the newPororosity, stored in PECM, is updated as                                                //
+    //                 m_constitutiveUpdate.porosityUpdate( k, q, m_deltaFluidPressure, volStrainIncrement );          //
+    //           (iii) get methods for porosityNew, dPorosity_dFluidPressure, dPorosity_dVolStrainIncrement
+    real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
+    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);                          //
+    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local); //
+    real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
+                                                                                                                       //
+    GEOSX_ERROR_IF_GT_MSG( abs( m_biotCoefficient - 1.0 ),                                                             //
+                           1e-10,                                                                                      //
+                           "Correct only for Biot's coefficient equal to 1" );                                         //
+    // --------------------------------------------------------------------------------------------------------------- //
+    real64 const porosityNew = porosityOld
+                             + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
+                             + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
+
+
     // Evaluate body force vector
-    // --- Compute Lagrangian porosity assuming linear model poroelastic infinitesimal deformation
-    //     phi_n = phi_0 + biot * div (u_n,k - u_0)) + 1/N (p_n,k - p_0)
-    //
-    //     Note: since grains are assumed incompressible 1/N = 0
     real64  bodyForce[3] = { m_gravityVector[0],
                              m_gravityVector[1],
                              m_gravityVector[2]};
@@ -277,10 +284,9 @@ public:
       bodyForce[2] *= mixtureDensity;
     }
 
+    // Assemble local jacobian and residual
 
-    // Compute local linear momentum residual
-    // \int ( - symgrad(N) : totalStress + \eta \cdot bodyForce )
-
+    // --- Momentum balance
     for( localIndex i=0; i<6; ++i )
     {
       totalStress[i] *= -detJxW;
@@ -292,21 +298,21 @@ public:
                                      bodyForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
-    // Assemble local jacobian
-
-    // ---
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[ a * 3 + 0][0] += dNdX[a][0] * biotCoefficient * detJxW;
-      stack.localDispFlowJacobian[ a * 3 + 1][0] += dNdX[a][1] * biotCoefficient * detJxW;
-      stack.localDispFlowJacobian[ a * 3 + 2][0] += dNdX[a][2] * biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 0][0] += dNdX[a][0] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 1][0] += dNdX[a][1] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 2][0] += dNdX[a][2] * m_biotCoefficient * detJxW;
+    }
 
-      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][0] * detJxW;
-      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][1] * detJxW;
-      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * biotCoefficient * dNdX[a][2] * detJxW;
-
+    // --- Mass balance
+    for( integer a = 0; a < numNodesPerElem; ++a )
+    {
+      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][0] * detJxW;
+      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][1] * detJxW;
+      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][2] * detJxW;
     }
 
     stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
@@ -314,38 +320,16 @@ public:
 
     if( m_gravityAcceleration > 0.0 )
     {
-      // Considering this contribution yields nonsymmetry and requires fullBTDB
-#if 0
-      real64 dPoro_dVolStrain = biotCoefficient;
-      real64 dMixtureDens_dVolStrain = ( - m_solidDensity( k, q ) + m_fluidDensity( k, q ) ) * dPoro_dVolStrain;
-      dMixtureDens_dVolStrain *= detJxW;
-      for( integer a = 0; a < numNodesPerElem; ++a )
-      {
-        for( integer b = 0; b < numNodesPerElem; ++b )
-        {
-          stack.localJacobian[a * 3 + 0][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][0];
-          stack.localJacobian[a * 3 + 0][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][1];
-          stack.localJacobian[a * 3 + 0][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][2];
-          stack.localJacobian[a * 3 + 1][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][0];
-          stack.localJacobian[a * 3 + 1][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][1];
-          stack.localJacobian[a * 3 + 1][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][2];
-          stack.localJacobian[a * 3 + 2][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][0];
-          stack.localJacobian[a * 3 + 2][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][1];
-          stack.localJacobian[a * 3 + 2][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][2];
-        }
-      }
-#endif
-      //
-      real64 volumetricStrain = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
-      real64 porosity = m_poroRef( k ) + biotCoefficient * volumetricStrain;
-      real64 dMixtureDens_dFluidPres = porosity * m_dFluidDensity_dPressure( k, q );
+      // Assumptions: ( i) dMixtureDens_dVolStrain contribution is neglected
+      //              (ii) grains are assumed incompressible
+
+      real64 dMixtureDens_dFluidPres = porosityNew * m_dFluidDensity_dPressure( k, q );
       dMixtureDens_dFluidPres *= detJxW;
       for( integer a = 0; a < numNodesPerElem; ++a )
       {
         stack.localDispFlowJacobian[ a * 3 + 0][0] += N[a] * dMixtureDens_dFluidPres * m_gravityVector[0];
         stack.localDispFlowJacobian[ a * 3 + 1][0] += N[a] * dMixtureDens_dFluidPres * m_gravityVector[1];
         stack.localDispFlowJacobian[ a * 3 + 2][0] += N[a] * dMixtureDens_dFluidPres * m_gravityVector[2];
-
       }
     }
 
@@ -445,6 +429,8 @@ protected:
   arrayView1d< real64 const > const m_poroRef;
 
   arrayView1d< real64 const > const m_bulkModulus;
+
+  real64 const m_biotCoefficient;
 
 
 };
