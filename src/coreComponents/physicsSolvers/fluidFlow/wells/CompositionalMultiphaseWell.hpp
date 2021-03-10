@@ -409,13 +409,12 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResCompFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseMob_dCompDens;
-
   /// views into reservoir material fields
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseDens_dComp;
+
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseMassDens;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseVisc;
