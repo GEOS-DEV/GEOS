@@ -20,7 +20,8 @@
 #define GEOSX_CONSTITUTIVE_PERMEABILITY_PERMEABILITYSELECTOR_HPP
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
-#include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "ConstantPermeability.hpp"
+#include "CarmanKozenyPermeability.hpp"
 #include "ParallelPlatesPermeability.hpp"
 
 namespace geosx
@@ -41,7 +42,8 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( PermeabilityBase const & perm,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CarmanKozenyPermeability,
+  ConstitutivePassThruHandler< ConstantPermeability,
+                               CarmanKozenyPermeability,
                                ParallelPlatesPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -49,7 +51,8 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( PermeabilityBase & perm,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CarmanKozenyPermeability,
+  ConstitutivePassThruHandler< ConstantPermeability,
+                               CarmanKozenyPermeability,
                                ParallelPlatesPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
 }
 

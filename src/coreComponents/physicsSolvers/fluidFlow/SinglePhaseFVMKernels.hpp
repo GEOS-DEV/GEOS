@@ -104,22 +104,22 @@ struct FluxKernel
       stencilWrapper.computeTransmissibility( iconn, permeability, transmissiblity );
       stencilWrapper.dTrans_dPressure( iconn, dPerm_dPres,  dTrans_dPres );
 
-      computeTPFA( stencilSize,
-                   seri[iconn],
-                   sesri[iconn],
-                   sei[iconn],
-                   transmissiblity,
-                   dTrans_dPres,
-                   pres,
-                   dPres,
-                   gravCoef,
-                   dens,
-                   dDens_dPres,
-                   mob,
-                   dMob_dPres,
-                   dt,
-                   localFlux,
-                   localFluxJacobian );
+      compute( stencilSize,
+               seri[iconn],
+               sesri[iconn],
+               sei[iconn],
+               transmissiblity,
+               dTrans_dPres,
+               pres,
+               dPres,
+               gravCoef,
+               dens,
+               dDens_dPres,
+               mob,
+               dMob_dPres,
+               dt,
+               localFlux,
+               localFluxJacobian );
 
       // extract DOF numbers
       for( localIndex i = 0; i < stencilSize; ++i )
@@ -146,20 +146,19 @@ struct FluxKernel
    } );
   }
 
-
   /**
-   * @brief Compute flux and its derivatives for a given connection
+   * @brief Compute flux and its derivatives for a given tpfa connector.
    *
-   * This is a general version that assumes different element regions.
-   * See below for a specialized version for fluxes within a region.
+   *
    */
   GEOSX_HOST_DEVICE
   static void
-  compute( localIndex const stencilSize,
+  compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           arraySlice1d< real64 const > const & stencilWeights,
+           real64 const (& transmissibility)[2],
+           real64 const (& dTrans_dPres)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -170,80 +169,6 @@ struct FluxKernel
            real64 const dt,
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian );
-
-//  /**
-//   * @brief Compute flux and its derivatives for a given connection
-//   *.
-//   * This is a specialized version for fluxes within the same region.
-//   * See above for a general version.
-//   */
-//  GEOSX_HOST_DEVICE
-//  static void
-//  compute( localIndex const stencilSize,
-//           arraySlice1d< localIndex const > const &,
-//           arraySlice1d< localIndex const > const &,
-//           arraySlice1d< localIndex const > const & sei,
-//           arraySlice1d< real64 const > const & stencilWeights,
-//           arrayView1d< real64 const > const & pres,
-//           arrayView1d< real64 const > const & dPres,
-//           arrayView1d< real64 const > const & gravCoef,
-//           arrayView2d< real64 const > const & dens,
-//           arrayView2d< real64 const > const & dDens_dPres,
-//           arrayView1d< real64 const > const & mob,
-//           arrayView1d< real64 const > const & dMob_dPres,
-//           real64 const dt,
-//           arraySlice1d< real64 > const & flux,
-//           arraySlice2d< real64 > const & fluxJacobian );
-//
-//  /**
-//   * @brief Compute flux and its derivatives for a given multi-element connector.
-//   *
-//   * This is a specialized version that flux in a single region, and uses
-//   * element pairing instead of a proper junction.
-//   */
-//  GEOSX_HOST_DEVICE
-//  static void
-//    computeJunction( localIndex const numFluxElems,
-//                     arraySlice1d< localIndex const > const & stencilElementIndices,
-//                     arraySlice1d< real64 const > const & stencilWeights,
-//                     arrayView1d< real64 const > const & pres,
-//                     arrayView1d< real64 const > const & dPres,
-//                     arrayView1d< real64 const > const & gravCoef,
-//                     arrayView2d< real64 const > const & dens,
-//                     arrayView2d< real64 const > const & dDens_dPres,
-//                     arrayView1d< real64 const > const & mob,
-//                     arrayView1d< real64 const > const & dMob_dPres,
-//                     real64 const dt,
-//                     arraySlice1d< real64 > const & flux,
-//                     arraySlice2d< real64 > const & fluxJacobian,
-//                     arraySlice2d< real64 > const & dFlux_dAperture );
-
-  /**
-   * @brief Compute flux and its derivatives for a given multi-element connector.
-   *
-   * This is a specialized version that flux in a single region, and uses
-   * element pairing instead of a proper junction.
-   */
-  GEOSX_HOST_DEVICE
-  static void
-  computeTPFA( localIndex const numFluxElems,
-               arraySlice1d< localIndex const > const & seri,
-               arraySlice1d< localIndex const > const & sesri,
-               arraySlice1d< localIndex const > const & sei,
-               real64 const (& transmissibility)[2],
-               real64 const (& dTrans_dPres)[2],
-               ElementViewConst< arrayView1d< real64 const > > const & pres,
-               ElementViewConst< arrayView1d< real64 const > > const & dPres,
-               ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-               ElementViewConst< arrayView2d< real64 const > > const & dens,
-               ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-               ElementViewConst< arrayView1d< real64 const > > const & mob,
-               ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-               real64 const dt,
-               arraySlice1d< real64 > const & flux,
-               arraySlice2d< real64 > const & fluxJacobian );
-
-
 };
 
 

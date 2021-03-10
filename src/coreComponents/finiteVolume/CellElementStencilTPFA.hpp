@@ -68,9 +68,15 @@ public:
   CellElementStencilTPFAWrapper( IndexContainerType & elementRegionIndices,
                                  IndexContainerType & elementSubRegionIndices,
                                  IndexContainerType & elementIndices,
-                                 WeightContainerType & weights )
+                                 WeightContainerType & weights,
+                                 arrayView2d< real64 > const & faceNormal,
+                                 arrayView3d< real64 > const & cellToFaceVec,
+                                 arrayView1d< real64 > const & transMultiplier )
 
-  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights )
+  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
+  m_faceNormal( faceNormal ),
+  m_cellToFaceVec( cellToFaceVec ),
+  m_transMultiplier( transMultiplier )
   {
 
   }
@@ -107,8 +113,9 @@ public:
 
 private:
 
-  arrayView3d< real64 > m_faceNormal;
+  arrayView2d< real64 > m_faceNormal;
   arrayView3d< real64 > m_cellToFaceVec;
+  arrayView1d< real64 > m_transMultiplier;
 };
 
 
@@ -137,12 +144,9 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
-  void addVectors( localIndex const numPts,
-                   localIndex const * const elementRegionIndices,
-                   localIndex const * const elementSubRegionIndices,
-                   localIndex const * const elementIndices,
-                   real64 const * const weights,
-                   localIndex const connectorIndex );
+  void addVectors( real64 const & transMultiplier,
+                   real64 const (& faceNormal)[3],
+                   real64 const (& cellToFaceVec)[2][3] );
 
   /**
    * @brief Return the stencil size.
@@ -174,12 +178,16 @@ public:
      return StencilWrapper( m_elementRegionIndices,
                             m_elementSubRegionIndices,
                             m_elementIndices,
-                            m_weights );
+                            m_weights,
+                            m_faceNormal,
+                            m_cellToFaceVec,
+                            m_transMultiplier );
    }
 
 private:
-   array3d< real64 > m_faceNormal;
+   array2d< real64 > m_faceNormal;
    array3d< real64 > m_cellToFaceVec;
+   array1d< real64 > m_transMultiplier;
 
 };
 
@@ -189,6 +197,8 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
                                                              real64 (& transmissibility)[2] ) const
 {
   real64 halfTrans[2];
+
+  // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   for ( localIndex i =0; i<2; i++ )
   {
@@ -222,13 +232,18 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
     }
   }
 
+  // Do harmonic and arithmetic averaging
+
   real64 const harmonicWeight   = halfTrans[0]*halfTrans[1] / (halfTrans[0]+halfTrans[1]);
   real64 const arithmeticWeight = ( halfTrans[0]+halfTrans[1] )/ 2;
 
-  real64 const meanPermCoeff = 1.0; //TODO make it a member
+  real64 const meanPermCoeff = 1.0; //TODO make it a member if it is really necessary
 
-  transmissibility[0] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
-  transmissibility[1] = meanPermCoeff * harmonicWeight - (1 - meanPermCoeff) * arithmeticWeight;
+  real64 const value = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+  for( localIndex ke = 0; ke < 2; ++ke )
+  {
+    transmissibility[ke] = m_transMultiplier[iconn] * value * (ke == 0 ? 1 : -1);
+  }
 }
 
 template< typename PERMTYPE >
@@ -236,6 +251,7 @@ void CellElementStencilTPFAWrapper::dTrans_dPressure( localIndex iconn,
                                                       PERMTYPE dPerm_dPressure,
                                                       real64 (&dTrans_dPressure )[2] ) const
 {
+  // TODO: this derivative is still wrong
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];

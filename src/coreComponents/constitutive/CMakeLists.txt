@@ -57,6 +57,7 @@ set( constitutive_headers
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
      permeability/PermeabilityBase.hpp
+     permeability/ConstantPermeability.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/permeabilitySelector.hpp
@@ -109,6 +110,7 @@ set( constitutive_sources
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      relativePermeability/TableRelativePermeability.cpp     
      permeability/PermeabilityBase.cpp
+     permeability/ConstantPermeability.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      porosity/PorosityBase.cpp

@@ -72,9 +72,6 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
 
-//  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-//    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
-
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
 
@@ -94,7 +91,6 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
-  real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   forAll< serialPolicy >( faceManager.size(), [=, &stencil]( localIndex const kf )
   {
@@ -117,7 +113,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       return;
     }
 
-    real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
+    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[2][ 3 ];
     real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
     if( faceArea < areaTolerance )
@@ -131,8 +127,6 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     stackArray1d< real64, 2 > stencilWeights( 2 );
     stackArray1d< globalIndex, 2 > stencilCellsGlobalIndex( 2 );
 
-    real64 faceWeight = 0.0;
-
     for( localIndex ke = 0; ke < 2; ++ke )
     {
       localIndex const er  = elemRegionList[kf][ke];
@@ -144,38 +138,12 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       elementIndex[ke] = ei;
       stencilCellsGlobalIndex[ke] = elemGlobalIndex[er][esr][ei];
 
-      LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-      LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[er][esr][ei] );
+      LvArray::tensorOps::copy< 3 >( cellToFaceVec[ke], faceCenter );
+      LvArray::tensorOps::subtract< 3 >( cellToFaceVec[ke], elemCenter[er][esr][ei] );
 
-      if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
-      {
-        LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
-      }
+      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
 
-      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
-
-      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
-      real64 halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
-
-      // correct negative weight issue arising from non-K-orthogonal grids
-      if( halfWeight < 0.0 )
-      {
-        LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
-        halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
-      }
-
-      halfWeight *= faceArea / c2fDistance;
-      halfWeight = std::fmax( halfWeight, weightTolerance );
-
-      faceWeight += 1.0 / halfWeight;
-    }
-
-    GEOSX_ASSERT( faceWeight > 0.0 );
-    faceWeight = 1.0 / faceWeight;
-
-    for( localIndex ke = 0; ke < 2; ++ke )
-    {
-      stencilWeights[ke] = transMultiplier[kf] * faceWeight * (ke == 0 ? 1 : -1);
+      stencilWeights[ke] = faceArea / c2fDistance;
     }
 
     // Ensure elements are added to stencil in order of global indices
@@ -192,6 +160,8 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
                  elementIndex.data(),
                  stencilWeights.data(),
                  kf );
+
+    stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
   } );
 }
 

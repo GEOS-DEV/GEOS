@@ -8,7 +8,9 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
-      solidNames="{ rock }"
+      permeabilityModelNames="{ rock }"
+      porosityNames="{porosity}"
+      permeabilityNames="{permeability}"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -78,7 +80,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, porosity, permeability }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -92,48 +94,17 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
-      name="rock"
+    <PressureDependentPorosity
+      name="porosity"
       referencePressure="0.0"
       compressibility="1e-9"/>
+      
+    <ConstantPermeability
+      name="permeability"
+      permeabilityComponents="{1e-12, 1e-12, 1e-12}"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="referencePorosity"
-      scale="0.05"/>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
