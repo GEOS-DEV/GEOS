@@ -19,7 +19,17 @@ set( fileIO_sources
 if( BUILD_OBJ_LIBS)
   set( dependencyList common silo hdf5 pugixml RAJA  )
 else()
-  set( dependencyList common silo pugixml RAJA  )
+  set( dependencyList 
+       lvarray
+       common
+       mpiCommunications
+       managers
+       codingUtilities
+       dataRepository
+       constitutive
+       silo
+       pugixml
+       RAJA  )
 endif()
 
 if( ENABLE_MPI )
