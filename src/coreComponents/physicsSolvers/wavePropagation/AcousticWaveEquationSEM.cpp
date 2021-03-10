@@ -98,12 +98,11 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 void AcousticWaveEquationSEM::postProcessInput()
 {
 
-  // here we check that the correct number of dimensions has been provided
   GEOSX_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources" );
 
   GEOSX_ERROR_IF( m_receiverCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the sources" );
+                  "Invalid number of physical coordinates for the receivers" );
 
   localIndex const numNodesPerElem = 8;
 
@@ -207,6 +206,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
             elementSubRegion.getFaceNodes( k, kf, faceNodes[kf] );
           }
 
+          /// loop over all the source that haven't been found yet
           for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
           {
             if( sourceIsLocal[isrc] == 0 )
@@ -442,7 +442,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      /// get the map element to faces
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
 
       arrayView1d< real64 > const c = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
@@ -483,7 +482,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
-              /// update mass matrix
               mass[elemsToNodes[k][a]] +=  invC2 * detJ * N[a];
             }
           }
@@ -493,6 +491,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
           for( localIndex kfe=0; kfe< numFacesPerElem; ++kfe )
           {
             localIndex const numFaceGl = elemsToFaces[k][kfe];
+
             /// Face on the domain boundary and not on free surface
             if( facesDomainBoundaryIndicator[numFaceGl]==1 && freeSurfaceFaceIndicator[numFaceGl]!=1 )
             {
@@ -501,7 +500,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                 FE_TYPE::calcN( q, N );
                 real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
-                ///Compute invJ = DF^{-1}
                 real64 invJ[3][3]={{0}};
                 FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
 
@@ -557,6 +555,10 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
 
+  arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+  arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+  arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
@@ -580,17 +582,24 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
       real64 const value = bc.getScale();
-      freeSurfaceFaceIndicator.setValues< serialPolicy >( value );
-      freeSurfaceNodeIndicator.setValues< serialPolicy >( value );
+
+      freeSurfaceFaceIndicator.setValues< serialPolicy >( 0 );
+      freeSurfaceNodeIndicator.setValues< serialPolicy >( 0 );
+
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
         localIndex const kf = targetSet[ i ];
         freeSurfaceFaceIndicator[kf] = 1;
+
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
         for( localIndex a=0; a < numNodes; ++a )
         {
           localIndex const dof = faceToNodeMap( kf, a );
           freeSurfaceNodeIndicator[dof] = 1;
+
+          p_np1[dof] = value;
+          p_n[dof]   = value;
+          p_nm1[dof] = value;
         }
       }
     }
@@ -612,10 +621,8 @@ real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
 }
 
 
-/// Returns the value of a Ricker at time t0 with central Fourier frequency f0
 real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & t0, real64 const & f0 )
 {
-  // Center time
   real64 o_tpeak = 1.0/f0;
   real64 pulse = 0.0;
   if((t0 <= -0.9*o_tpeak) || (t0 >= 2.9*o_tpeak))
@@ -675,8 +682,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-  arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+  arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+  arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
   arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
   arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
@@ -687,10 +694,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
-  /// Vector to contain the product of the stiffness matrix R_h and the pressure p_n
   arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
 
-  /// Vector to compute rhs
   arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
@@ -774,7 +779,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
   } );
 
-  /// Add source term to rhs
   addSourceToRightHandSide( time_n, rhs );
 
   /// Calculate your time integrators
@@ -784,10 +788,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
       p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
-    }
-    else
-    {
-      p_np1[a]=0.0;
     }
   }
 
@@ -803,11 +803,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   for( localIndex a=0; a<nodeManager.size(); ++a )
   {
-    if( freeSurfaceNodeIndicator[a]!=1 )
-    {
-      p_nm1[a]=p_n[a];
-      p_n[a] = p_np1[a];
-    }
+    p_nm1[a]=p_n[a];
+    p_n[a] = p_np1[a];
 
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
