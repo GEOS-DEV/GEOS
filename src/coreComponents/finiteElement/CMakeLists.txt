@@ -31,7 +31,13 @@ set( finiteElement_sources
 if( BUILD_OBJ_LIBS)
   set( dependencyList dataRepository codingUtilities)
 else()
-  set( dependencyList common)
+  set( dependencyList 
+       common
+       mesh
+       codingUtilities
+       dataRepository
+       constitutive
+      )
 endif()
 
 if( ENABLE_OPENMP )
