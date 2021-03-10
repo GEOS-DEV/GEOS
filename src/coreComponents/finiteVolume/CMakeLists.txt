@@ -37,7 +37,15 @@ set( finiteVolume_sources
 if ( BUILD_OBJ_LIBS )
   set( dependencyList dataRepository codingUtilities managers)
 else()
-  set( dependencyList common)
+  set( dependencyList 
+       common
+       mesh
+       mpiCommunications
+       managers
+       codingUtilities
+       dataRepository
+       meshUtilities
+      )
 endif()
 
 if ( ENABLE_OPENMP )
