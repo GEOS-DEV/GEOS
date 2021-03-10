@@ -42,7 +42,11 @@ endif()
 if( BUILD_OBJ_LIBS )
   set (dependencyList common lvarray codingUtilities pugixml fileIO)
 else()
-  set( dependencyList common codingUtilities)
+  set( dependencyList 
+       common 
+       mpiCommunications
+       managers
+       codingUtilities)
 endif()
 
 if ( ENABLE_OPENMP )
