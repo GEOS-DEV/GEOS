@@ -128,9 +128,9 @@ real64 Par( real64 const & T, real64 const & P, real64 const * cc )
 
 }
 
-CO2Solubility::CO2Solubility( array1d< string > const & inputPara,
-                              array1d< string > const & phaseNames,
-                              array1d< string > const & componentNames,
+CO2Solubility::CO2Solubility( string_array const & inputPara,
+                              string_array const & phaseNames,
+                              string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight ):
   FlashModelBase( inputPara[1],
                   componentNames,
@@ -139,21 +139,21 @@ CO2Solubility::CO2Solubility( array1d< string > const & inputPara,
   GEOSX_ERROR_IF( phaseNames.size() != 2, "The CO2Solubility model is a two-phase model" );
   GEOSX_ERROR_IF( componentNames.size() != 2, "The CO2Solubility model is a two-component model" );
 
-  std::vector< string > const expectedCO2ComponentNames( { "CO2", "co2" } );
+  char const * expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
   GEOSX_ERROR_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(), "Component CO2 is not found!" );
 
-  std::vector< string > const expectedWaterComponentNames( { "Water", "water" } );
+  char const * expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
   GEOSX_ERROR_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(), "Component Water/Brine is not found!" );
 
-  std::vector< string > const expectedGasPhaseNames( { "CO2", "co2", "gas", "Gas" } );
+  char const * expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_phaseGasIndex = PVTFunctionHelpers::findName( phaseNames,
                                                   expectedGasPhaseNames );
   GEOSX_ERROR_IF( m_phaseGasIndex < 0 || m_phaseGasIndex >= phaseNames.size(),
                   "Phase co2/gas is not found!" );
 
-  std::vector< string > const expectedWaterPhaseNames( { "Water", "water", "Liquid", "liquid" } );
+  char const * expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames,
                                                      expectedWaterPhaseNames );
   GEOSX_ERROR_IF( m_phaseLiquidIndex < 0 || m_phaseLiquidIndex >= phaseNames.size(),
@@ -162,57 +162,23 @@ CO2Solubility::CO2Solubility( array1d< string > const & inputPara,
   makeTable( inputPara );
 }
 
-void CO2Solubility::makeTable( array1d< string > const & inputPara )
+void CO2Solubility::makeTable( string_array const & inputPara )
 {
-  real64 TStart = -1.0;
-  real64 TEnd = -1.0;
-  real64 dT = -1.0;
-  real64 PStart = -1.0;
-  real64 PEnd = -1.0;
-  real64 dP = -1.0;
-  real64 salinity = 0;
-
-  GEOSX_ERROR_IF( inputPara.size() < 9, "Invalid CO2Solubility input!" );
-
-  try
-  {
-    PStart = stod( inputPara[2] );
-    PEnd = stod( inputPara[3] );
-    dP = stod( inputPara[4] );
-
-    TStart = stod( inputPara[5] );
-    TEnd = stod( inputPara[6] );
-    dT = stod( inputPara[7] );
-
-    salinity = stod( inputPara[8] );
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOSX_ERROR( "Invalid CO2Solubility argument:" + string( e.what()) );
-  }
-
   PTTableCoordinates tableCoords;
-  for( real64 P = PStart; P <= PEnd; P += dP )
-  {
-    tableCoords.appendPressure( P );
-  }
-  for( real64 T = TStart; T <= TEnd; T += dT )
-  {
-    tableCoords.appendTemperature( T );
-  }
+  real64 const salinity = PVTFunctionHelpers::initializePropertyTableWithSalinity( inputPara, tableCoords );
 
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateCO2Solubility( tableCoords.get(), salinity, values );
+  calculateCO2Solubility( tableCoords, salinity, values );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_CO2SolubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
-  m_CO2SolubilityTable->setTableCoordinates( tableCoords.get() );
+  m_CO2SolubilityTable->setTableCoordinates( tableCoords.getCoords() );
   m_CO2SolubilityTable->setTableValues( values );
   m_CO2SolubilityTable->reInitializeFunction();
   m_CO2SolubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
 
-void CO2Solubility::calculateCO2Solubility( array1d< array1d< real64 > > const & coordinates,
+void CO2Solubility::calculateCO2Solubility( PTTableCoordinates const & tableCoords,
                                             real64 const & salinity,
                                             array1d< real64 > const & values )
 {
@@ -223,16 +189,13 @@ void CO2Solubility::calculateCO2Solubility( array1d< array1d< real64 > > const &
   constexpr real64 lambda[] = { -0.411370585, 6.07632013e-4, 97.5347708, 0, 0, 0, 0, -0.0237622469, 0.0170656236, 0, 1.41335834e-5 };
   constexpr real64 zeta[] = { 3.36389723e-4, -1.98298980e-5, 0, 0, 0, 0, 0, 2.12220830e-3, -5.24873303e-3, 0, 0 };
 
-  localIndex const numPressures = coordinates[0].size();
-  localIndex const numTemperatures = coordinates[1].size();
-
-  for( localIndex i = 0; i < numPressures; ++i )
+  for( localIndex i = 0; i < tableCoords.nPressures(); ++i )
   {
-    real64 const P = coordinates[0][i] / P_Pa_f;
+    real64 const P = tableCoords.getPressure( i ) / P_Pa_f;
 
-    for( localIndex j = 0; j < numTemperatures; ++j )
+    for( localIndex j = 0; j < tableCoords.nTemperatures(); ++j )
     {
-      real64 const T = coordinates[1][j];
+      real64 const T = tableCoords.getTemperature( j );
 
       // compute reduced volume by solving the CO2 equation of state
       real64 V_r = 0.0;
@@ -246,7 +209,7 @@ void CO2Solubility::calculateCO2Solubility( array1d< array1d< real64 > > const &
 
       // mole fraction of CO2 in vapor phase, equation (4) of Duan and Sun (2003)
       real64 const y_CO2 = (P - detail::PWater( T ))/P;
-      values[j*numPressures+i] = y_CO2 * P / exp( logK );
+      values[j*tableCoords.nPressures()+i] = y_CO2 * P / exp( logK );
     }
   }
 }
@@ -301,7 +264,7 @@ CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper()
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, array1d< string > const &, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

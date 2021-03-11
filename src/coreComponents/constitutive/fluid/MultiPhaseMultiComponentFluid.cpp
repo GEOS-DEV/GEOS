@@ -76,13 +76,13 @@ void MultiPhaseMultiComponentFluid::postProcessInput()
   GEOSX_ERROR_IF( numComps != 2, "The number of components in this model should be equal to 2" );
   GEOSX_ERROR_IF( m_phasePVTParaFiles.size() != 2, "The number of phasePVTParaFiles is not the same as the number of phases!" );
 
-  std::vector< string > const expectedGasPhaseNames( { "CO2", "co2", "gas", "Gas" } );
+  char const * expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_phaseGasIndex = PVTFunctionHelpers::findName( m_phaseNames,
                                                   expectedGasPhaseNames );
   GEOSX_ERROR_IF( m_phaseGasIndex < 0 || m_phaseGasIndex >= m_phaseNames.size(),
                   "Phase co2/gas is not found!" );
 
-  std::vector< string > const expectedWaterPhaseNames( { "Water", "water", "Liquid", "liquid" } );
+  char const * expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( m_phaseNames,
                                                      expectedWaterPhaseNames );
   GEOSX_ERROR_IF( m_phaseLiquidIndex < 0 || m_phaseLiquidIndex >= m_phaseNames.size(),

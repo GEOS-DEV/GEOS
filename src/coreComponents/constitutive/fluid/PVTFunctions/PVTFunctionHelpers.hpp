@@ -28,6 +28,27 @@ namespace constitutive
 namespace PVTProps
 {
 
+class PTTableCoordinates
+{
+public:
+  PTTableCoordinates()
+  { coords.resize( 2 ); }
+
+  localIndex nPressures() const { return coords[0].size(); }
+  localIndex nTemperatures() const { return coords[1].size(); }
+
+  void appendPressure( const real64 & pres ) { coords[0].emplace_back( pres ); }
+  void appendTemperature( const real64 & temp ) { coords[1].emplace_back( temp ); }
+
+  real64 const & getPressure( localIndex i ) const { return coords[0][i]; }
+  real64 const & getTemperature( localIndex i ) const { return coords[1][i]; }
+
+  array1d< array1d< real64 > > const & getCoords() const { return coords; }
+
+private:
+  array1d< array1d< real64 > > coords;
+};
+
 struct PVTFunctionHelpers
 {
 
@@ -49,24 +70,86 @@ struct PVTFunctionHelpers
     return id;
   }
 
-};
+  static real64
+  initializePropertyTableWithSalinity( string_array const & inputParameters,
+                                       PTTableCoordinates & tableCoords )
+  {
+    real64 TStart = -1.0;
+    real64 TEnd = -1.0;
+    real64 dT = -1.0;
+    real64 PStart = -1.0;
+    real64 PEnd = -1.0;
+    real64 dP = -1.0;
+    real64 salinity = -1.0;
 
-class PTTableCoordinates
-{
-public:
-  PTTableCoordinates()
-  { coords.resize( 2 ); }
+    GEOSX_ERROR_IF( inputParameters.size() != 9, "Invalid property input!" );
 
-  localIndex nPressures() const { return coords[0].size(); }
-  localIndex nTemperatures() const { return coords[1].size(); }
+    try
+    {
+      PStart = stod( inputParameters[2] );
+      PEnd = stod( inputParameters[3] );
+      dP = stod( inputParameters[4] );
 
-  void appendPressure( const real64 & pres ) { coords[0].emplace_back( pres ); }
-  void appendTemperature( const real64 & temp ) { coords[1].emplace_back( temp ); }
+      TStart = stod( inputParameters[5] );
+      TEnd = stod( inputParameters[6] );
+      dT = stod( inputParameters[7] );
 
-  array1d< array1d< real64 > > const & get() const { return coords; }
+      salinity = stod( inputParameters[8] );
+    }
+    catch( const std::invalid_argument & e )
+    {
+      GEOSX_ERROR( "Invalid BrineCO2Density argument:" + string( e.what()) );
+    }
 
-private:
-  array1d< array1d< real64 > > coords;
+    for( real64 P = PStart; P <= PEnd; P += dP )
+    {
+      tableCoords.appendPressure( P );
+    }
+    for( real64 T = TStart; T <= TEnd; T += dT )
+    {
+      tableCoords.appendTemperature( T );
+    }
+    return salinity;
+  }
+
+  static void
+  initializePropertyTable( string_array const & inputParameters,
+                           PTTableCoordinates & tableCoords )
+  {
+    real64 TStart = -1.0;
+    real64 TEnd = -1.0;
+    real64 dT = -1.0;
+    real64 PStart = -1.0;
+    real64 PEnd = -1.0;
+    real64 dP = -1.0;
+
+    GEOSX_ERROR_IF( inputParameters.size() != 8, "Invalid property input!" );
+
+    try
+    {
+      PStart = stod( inputParameters[2] );
+      PEnd = stod( inputParameters[3] );
+      dP = stod( inputParameters[4] );
+
+      TStart = stod( inputParameters[5] );
+      TEnd = stod( inputParameters[6] );
+      dT = stod( inputParameters[7] );
+    }
+    catch( const std::invalid_argument & e )
+    {
+      GEOSX_ERROR( "Invalid property argument:" + string( e.what()) );
+    }
+
+    for( real64 P = PStart; P <= PEnd; P += dP )
+    {
+      tableCoords.appendPressure( P );
+    }
+    for( real64 T = TStart; T <= TEnd; T += dT )
+    {
+      tableCoords.appendTemperature( T );
+    }
+  }
+
 };
 
 } // namespace PVTProps

@@ -21,6 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
@@ -78,8 +79,8 @@ class FenghourCO2Viscosity : public PVTFunctionBase
 {
 public:
 
-  FenghourCO2Viscosity( array1d< string > const & inputPara,
-                        array1d< string > const & componentNames,
+  FenghourCO2Viscosity( string_array const & inputPara,
+                        string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight );
   ~FenghourCO2Viscosity() override {}
 
@@ -103,11 +104,11 @@ public:
 
 private:
 
-  void makeTable( array1d< string > const & inputPara );
+  void makeTable( string_array const & inputPara );
 
-  void calculateCO2Viscosity( array1d< array1d< real64 > > const & coordinates,
-                              array1d< real64 > const & valuesDensity,
-                              array1d< real64 > const & valuesViscosity );
+  void calculateCO2Viscosity( PVTProps::PTTableCoordinates const & tableCoords,
+                              array1d< real64 > const & density,
+                              array1d< real64 > const & viscosity );
 
   void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
                                      real64 const & density,

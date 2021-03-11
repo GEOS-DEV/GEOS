@@ -21,6 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
@@ -83,8 +84,8 @@ class SpanWagnerCO2Density : public PVTFunctionBase
 {
 public:
 
-  SpanWagnerCO2Density( array1d< string > const & inputPara,
-                        array1d< string > const & componentNames,
+  SpanWagnerCO2Density( string_array const & inputPara,
+                        string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight );
 
   ~SpanWagnerCO2Density() override {}
@@ -108,12 +109,12 @@ public:
   KernelWrapper createKernelWrapper();
 
   static
-  void calculateCO2Density( array1d< array1d< real64 > > const & coordinates,
-                            array1d< real64 > const & values );
+  void calculateCO2Density( PVTProps::PTTableCoordinates const & tableCoords,
+                            array1d< real64 > const & densities );
 
 private:
 
-  void makeTable( array1d< string > const & inputPara );
+  void makeTable( string_array const & inputPara );
 
   static
   void spanWagnerCO2DensityFunction( real64 const & T,

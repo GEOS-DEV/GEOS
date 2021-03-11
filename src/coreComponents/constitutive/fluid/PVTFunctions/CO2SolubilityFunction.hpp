@@ -21,6 +21,7 @@
 
 #include "FlashModelBase.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
@@ -103,9 +104,9 @@ class CO2Solubility : public FlashModelBase
 {
 public:
 
-  CO2Solubility( array1d< string > const & inputPara,
-                 array1d< string > const & phaseNames,
-                 array1d< string > const & componentNames,
+  CO2Solubility( string_array const & inputPara,
+                 string_array const & phaseNames,
+                 string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight );
 
   ~CO2Solubility() override {}
@@ -125,9 +126,9 @@ public:
 
 private:
 
-  void makeTable( array1d< string > const & inputPara );
+  void makeTable( string_array const & inputPara );
 
-  void calculateCO2Solubility( array1d< array1d< real64 > > const & coordinates,
+  void calculateCO2Solubility( PVTProps::PTTableCoordinates const & tableCoords,
                                real64 const & salinity,
                                array1d< real64 > const & values );
 

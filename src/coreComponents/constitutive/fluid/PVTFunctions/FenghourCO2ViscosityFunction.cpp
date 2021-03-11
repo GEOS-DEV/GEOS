@@ -18,7 +18,6 @@
 
 #include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
 
-#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
@@ -32,8 +31,8 @@ namespace constitutive
 namespace PVTProps
 {
 
-FenghourCO2Viscosity::FenghourCO2Viscosity( array1d< string > const & inputPara,
-                                            array1d< string > const & componentNames,
+FenghourCO2Viscosity::FenghourCO2Viscosity( string_array const & inputPara,
+                                            string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( inputPara[1],
                    componentNames,
@@ -42,52 +41,21 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( array1d< string > const & inputPara,
   makeTable( inputPara );
 }
 
-void FenghourCO2Viscosity::makeTable( array1d< string > const & inputPara )
+void FenghourCO2Viscosity::makeTable( string_array const & inputPara )
 {
-  real64 TStart = -1.0;
-  real64 TEnd = -1.0;
-  real64 dT = -1.0;
-  real64 PStart = -1.0;
-  real64 PEnd = -1.0;
-  real64 dP = -1.0;
-
-  GEOSX_ERROR_IF( inputPara.size() < 8, "Invalid FenghourCO2Viscosity input!" );
-
-  try
-  {
-    PStart = stod( inputPara[2] );
-    PEnd = stod( inputPara[3] );
-    dP = stod( inputPara[4] );
-
-    TStart = stod( inputPara[5] );
-    TEnd = stod( inputPara[6] );
-    dT = stod( inputPara[7] );
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOSX_ERROR( "Invalid FenghourCO2Viscosity argument:" + string( e.what()) );
-  }
-
   PTTableCoordinates tableCoords;
-  for( real64 P = PStart; P <= PEnd; P += dP )
-  {
-    tableCoords.appendPressure( P );
-  }
-  for( real64 T = TStart; T <= TEnd; T += dT )
-  {
-    tableCoords.appendTemperature( T );
-  }
+  PVTFunctionHelpers::initializePropertyTable( inputPara, tableCoords );
 
   localIndex const nP = tableCoords.nPressures();
   localIndex const nT = tableCoords.nTemperatures();
   array1d< real64 > density( nP * nT );
   array1d< real64 > viscosity( nP * nT );
-  SpanWagnerCO2Density::calculateCO2Density( tableCoords.get(), density );
-  calculateCO2Viscosity( tableCoords.get(), density, viscosity );
+  SpanWagnerCO2Density::calculateCO2Density( tableCoords, density );
+  calculateCO2Viscosity( tableCoords, density, viscosity );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_CO2ViscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
-  m_CO2ViscosityTable->setTableCoordinates( tableCoords.get() );
+  m_CO2ViscosityTable->setTableCoordinates( tableCoords.getCoords() );
   m_CO2ViscosityTable->setTableValues( viscosity );
   m_CO2ViscosityTable->reInitializeFunction();
   m_CO2ViscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -129,20 +97,17 @@ void FenghourCO2Viscosity::fenghourCO2ViscosityFunction( real64 const & temperat
   viscosity = 1e-6 * (vlimit + vxcess + vcrit);
 }
 
-void FenghourCO2Viscosity::calculateCO2Viscosity( array1d< array1d< real64 > > const & coordinates,
-                                                  array1d< real64 > const & valuesDensity,
-                                                  array1d< real64 > const & valuesViscosity )
+void FenghourCO2Viscosity::calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
+                                                  array1d< real64 > const & densities,
+                                                  array1d< real64 > const & viscosities )
 {
-  localIndex const numPressures = coordinates[0].size();
-  localIndex const numTemperatures = coordinates[1].size();
-
-  for( localIndex i = 0; i < numPressures; ++i )
+  for( localIndex i = 0; i < tableCoords.nPressures(); ++i )
   {
-    for( localIndex j = 0; j < numTemperatures; ++j )
+    for( localIndex j = 0; j < tableCoords.nTemperatures(); ++j )
     {
-      fenghourCO2ViscosityFunction( coordinates[1][j],
-                                    valuesDensity[j*numPressures+i],
-                                    valuesViscosity[j*numPressures+i] );
+      fenghourCO2ViscosityFunction( tableCoords.getTemperature( j ),
+                                    densities[j*tableCoords.nPressures()+i],
+                                    viscosities[j*tableCoords.nPressures()+i] );
     }
   }
 }
@@ -154,7 +119,7 @@ FenghourCO2Viscosity::KernelWrapper FenghourCO2Viscosity::createKernelWrapper()
                         m_CO2ViscosityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

@@ -35,91 +35,91 @@ using namespace geosx::constitutive::PVTProps;
 
 /// Black-oil tables written into temporary files during testing
 
-static const char * PVTGString = "#\tPg(Pa)\t\tRv(sm3/sm3)\tBg(m3/sm3)\tVisc(Pa.s)\n"
-                                 "\n"
-                                 "\t3000000\t\t0.000132\t0.04234\t    0.00001344\n"
-                                 "\t\t\t\t0\t\t\t0.04231\t    0.00001389\n"
-                                 "\t6000000\t\t0.000124\t0.02046\t    0.0000142\n"
-                                 "\t\t\t\t0\t\t\t0.02043\t    0.0000145\n"
-                                 "\t9000000\t\t0.000126\t0.01328\t    0.00001526\n"
-                                 "\t\t\t\t0\t\t\t0.01325\t    0.00001532\n"
-                                 "   12000000\t\t0.000135\t0.00977\t    0.0000166\n"
-                                 "\t\t\t\t0\t\t\t0.00973\t    0.00001634\n"
-                                 "   15000000\t\t0.000149\t0.00773\t    0.00001818\n"
-                                 "\t\t\t\t0\t\t\t0.00769\t    0.00001752\n"
-                                 "   18000000\t\t0.000163\t0.006426\t0.00001994\n"
-                                 "\t\t\t\t0\t\t\t0.006405\t0.00001883\n"
-                                 "   21000000\t\t0.000191\t0.005541\t0.00002181\n"
-                                 "\t\t\t\t0\t\t\t0.005553\t0.00002021\n"
-                                 "   24000000\t\t0.000225\t0.004919\t0.0000237\n"
-                                 "\t\t\t\t0\t\t\t0.004952\t0.00002163\n"
-                                 "   27000000\t\t0.000272\t0.004471\t0.00002559\n"
-                                 "\t\t\t\t0\t\t\t0.004511\t0.00002305\n"
-                                 "   29500000\t\t0.000354\t0.004194\t0.00002714\n"
-                                 "\t\t\t\t0\t\t\t0.004225\t0.00002423\n"
-                                 "   31000000\t\t0.000403\t0.004031\t0.00002806\n"
-                                 "\t\t\t\t0.000354\t0.004059\t0.00002768\n"
-                                 "   33000000\t\t0.000354\t0.00391\t    0.00002832\n"
-                                 "\t\t\t\t0\t\t\t0.003913\t0.00002583\n"
-                                 "   53000000\t\t0.000479\t0.003868\t0.00002935\n"
-                                 "\t\t\t\t0.000354\t0.0039\t\t0.00002842\n"
-                                 "\t\t\t\t0\t\t\t0.003903\t0.00002593";
+static const char * pvtgTableContent = "#\tPg(Pa)\t\tRv(sm3/sm3)\tBg(m3/sm3)\tVisc(Pa.s)\n"
+                                       "\n"
+                                       "\t3000000\t\t0.000132\t0.04234\t    0.00001344\n"
+                                       "\t\t\t\t0\t\t\t0.04231\t    0.00001389\n"
+                                       "\t6000000\t\t0.000124\t0.02046\t    0.0000142\n"
+                                       "\t\t\t\t0\t\t\t0.02043\t    0.0000145\n"
+                                       "\t9000000\t\t0.000126\t0.01328\t    0.00001526\n"
+                                       "\t\t\t\t0\t\t\t0.01325\t    0.00001532\n"
+                                       "   12000000\t\t0.000135\t0.00977\t    0.0000166\n"
+                                       "\t\t\t\t0\t\t\t0.00973\t    0.00001634\n"
+                                       "   15000000\t\t0.000149\t0.00773\t    0.00001818\n"
+                                       "\t\t\t\t0\t\t\t0.00769\t    0.00001752\n"
+                                       "   18000000\t\t0.000163\t0.006426\t0.00001994\n"
+                                       "\t\t\t\t0\t\t\t0.006405\t0.00001883\n"
+                                       "   21000000\t\t0.000191\t0.005541\t0.00002181\n"
+                                       "\t\t\t\t0\t\t\t0.005553\t0.00002021\n"
+                                       "   24000000\t\t0.000225\t0.004919\t0.0000237\n"
+                                       "\t\t\t\t0\t\t\t0.004952\t0.00002163\n"
+                                       "   27000000\t\t0.000272\t0.004471\t0.00002559\n"
+                                       "\t\t\t\t0\t\t\t0.004511\t0.00002305\n"
+                                       "   29500000\t\t0.000354\t0.004194\t0.00002714\n"
+                                       "\t\t\t\t0\t\t\t0.004225\t0.00002423\n"
+                                       "   31000000\t\t0.000403\t0.004031\t0.00002806\n"
+                                       "\t\t\t\t0.000354\t0.004059\t0.00002768\n"
+                                       "   33000000\t\t0.000354\t0.00391\t    0.00002832\n"
+                                       "\t\t\t\t0\t\t\t0.003913\t0.00002583\n"
+                                       "   53000000\t\t0.000479\t0.003868\t0.00002935\n"
+                                       "\t\t\t\t0.000354\t0.0039\t\t0.00002842\n"
+                                       "\t\t\t\t0\t\t\t0.003903\t0.00002593";
 
-static const char * PVTOString = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
-                                 "\n"
-                                 "  2\t            2000000\t    1.02\t    0.000975\n"
-                                 "  5\t            5000000\t    1.03\t    0.00091\n"
-                                 " 10\t            10000000\t1.04\t    0.00083\n"
-                                 " 15\t            20000000\t1.05\t    0.000695\n"
-                                 "                90000000\t1.03\t    0.000985  -- some line comment\n"
-                                 " 30\t            30000000\t1.07\t    0.000594\n"
-                                 " 40\t            40000000\t1.08\t    0.00051\n"
-                                 "                50000000\t1.07\t    0.000549  -- another one\n"
-                                 "                90000000\t1.06\t    0.00074\n"
-                                 " 50\t            50000000.7\t1.09\t    0.000449\n"
-                                 "                90000000.7\t1.08\t    0.000605";
+static const char * pvtoTableContent = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
+                                       "\n"
+                                       "  2\t            2000000\t    1.02\t    0.000975\n"
+                                       "  5\t            5000000\t    1.03\t    0.00091\n"
+                                       " 10\t            10000000\t1.04\t    0.00083\n"
+                                       " 15\t            20000000\t1.05\t    0.000695\n"
+                                       "                90000000\t1.03\t    0.000985  -- some line comment\n"
+                                       " 30\t            30000000\t1.07\t    0.000594\n"
+                                       " 40\t            40000000\t1.08\t    0.00051\n"
+                                       "                50000000\t1.07\t    0.000549  -- another one\n"
+                                       "                90000000\t1.06\t    0.00074\n"
+                                       " 50\t            50000000.7\t1.09\t    0.000449\n"
+                                       "                90000000.7\t1.08\t    0.000605";
 
-static const char * PVTWString = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
-                                 "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
+static const char * pvtwTableContent = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
+                                       "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
 
 /// Dead-oil tables written into temporary files during testing
 
-static const char * PVDGString = "# Pg(Pa) Bg(m3/sm3) Visc(Pa.s)\n"
-                                 "3000000  0.04234  0.00001344\n"
-                                 "6000000  0.02046  0.0000142\n"
-                                 "9000000  0.01328  0.00001526\n"
-                                 "12000000 0.00977  0.0000166\n"
-                                 "15000000 0.00773  0.00001818\n"
-                                 "18000000 0.006426 0.00001994\n"
-                                 "21000000 0.005541 0.00002181\n"
-                                 "24000000 0.004919 0.0000237\n"
-                                 "27000000 0.004471 0.00002559\n"
-                                 "29500000 0.004194 0.00002714\n"
-                                 "31000000 0.004031 0.00002806\n"
-                                 "33000000 0.00391  0.00002832\n"
-                                 "53000000 0.003868 0.00002935";
+static const char * pvdgTableContent = "# Pg(Pa) Bg(m3/sm3) Visc(Pa.s)\n"
+                                       "3000000  0.04234  0.00001344\n"
+                                       "6000000  0.02046  0.0000142\n"
+                                       "9000000  0.01328  0.00001526\n"
+                                       "12000000 0.00977  0.0000166\n"
+                                       "15000000 0.00773  0.00001818\n"
+                                       "18000000 0.006426 0.00001994\n"
+                                       "21000000 0.005541 0.00002181\n"
+                                       "24000000 0.004919 0.0000237\n"
+                                       "27000000 0.004471 0.00002559\n"
+                                       "29500000 0.004194 0.00002714\n"
+                                       "31000000 0.004031 0.00002806\n"
+                                       "33000000 0.00391  0.00002832\n"
+                                       "53000000 0.003868 0.00002935";
 
-static const char * PVDOString = "#P[Pa] Bo[m3/sm3] Visc(Pa.s)\n"
-                                 "2000000  1.02 0.000975\n"
-                                 "5000000  1.03 0.00091\n"
-                                 "10000000 1.04 0.00083\n"
-                                 "20000000 1.05 0.000695\n"
-                                 "30000000 1.07 0.000594\n"
-                                 "40000000 1.08 0.00051\n"
-                                 "50000000.7 1.09 0.000449";
+static const char * pvdoTableContent = "#P[Pa] Bo[m3/sm3] Visc(Pa.s)\n"
+                                       "2000000  1.02 0.000975\n"
+                                       "5000000  1.03 0.00091\n"
+                                       "10000000 1.04 0.00083\n"
+                                       "20000000 1.05 0.000695\n"
+                                       "30000000 1.07 0.000594\n"
+                                       "40000000 1.08 0.00051\n"
+                                       "50000000.7 1.09 0.000449";
 
-static const char * PVDWString = "# Pref[bar] Bw[m3/sm3] Cp[1/bar]     Visc[cP]\n"
-                                 " 30600000.1 1.03  0.00000000041 0.0003";
+static const char * pvdwTableContent = "# Pref[bar] Bw[m3/sm3] Cp[1/bar]     Visc[cP]\n"
+                                       " 30600000.1 1.03  0.00000000041 0.0003";
 
 // CO2-brine model
 
-static const char * PVTLiquidString = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0.2\n"
-                                      "ViscosityFun BrineViscosity 0.1";
+static const char * pvtLiquidTableContent = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0.2\n"
+                                            "ViscosityFun BrineViscosity 0.1";
 
-static const char * PVTGasString = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1\n"
-                                   "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 1";
+static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1\n"
+                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 1";
 
-static const char * CO2FlashString = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
+static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
 
 void testNumericalDerivatives( MultiFluidBase & fluid,
                                Group & parent,
@@ -656,9 +656,9 @@ class LiveOilFluidTest : public CompositionalFluidTestBase
 public:
   LiveOilFluidTest()
   {
-    writeTableToFile( "pvto.txt", PVTOString );
-    writeTableToFile( "pvtg.txt", PVTGString );
-    writeTableToFile( "pvtw.txt", PVTWString );
+    writeTableToFile( "pvto.txt", pvtoTableContent );
+    writeTableToFile( "pvtg.txt", pvtgTableContent );
+    writeTableToFile( "pvtw.txt", pvtwTableContent );
 
     parent.resize( 1 );
     fluid = &makeLiveOilFluid( "fluid", &parent );
@@ -714,9 +714,9 @@ public:
 
   DeadOilFluidTest()
   {
-    writeTableToFile( "pvdo.txt", PVDOString );
-    writeTableToFile( "pvdg.txt", PVDGString );
-    writeTableToFile( "pvdw.txt", PVDWString );
+    writeTableToFile( "pvdo.txt", pvdoTableContent );
+    writeTableToFile( "pvdg.txt", pvdgTableContent );
+    writeTableToFile( "pvdw.txt", pvdwTableContent );
 
     parent.resize( 1 );
     fluid = &makeDeadOilFluid( "fluid", &parent );
@@ -835,9 +835,9 @@ protected:
 
   MultiPhaseMultiComponentFluidTest()
   {
-    writeTableToFile( "pvtliquid.txt", PVTLiquidString );
-    writeTableToFile( "pvtgas.txt", PVTGasString );
-    writeTableToFile( "co2flash.txt", CO2FlashString );
+    writeTableToFile( "pvtliquid.txt", pvtLiquidTableContent );
+    writeTableToFile( "pvtgas.txt", pvtGasTableContent );
+    writeTableToFile( "co2flash.txt", co2FlashTableContent );
 
     parent.resize( 1 );
     fluid = &makeMultiPhaseMultiComponentFluid( "fluid", &parent );

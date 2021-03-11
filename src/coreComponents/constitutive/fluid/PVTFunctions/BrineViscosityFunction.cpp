@@ -29,8 +29,8 @@ namespace constitutive
 namespace PVTProps
 {
 
-BrineViscosity::BrineViscosity( array1d< string > const & inputPara,
-                                array1d< string > const & componentNames,
+BrineViscosity::BrineViscosity( string_array const & inputPara,
+                                string_array const & componentNames,
                                 array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( inputPara[1],
                    componentNames,
@@ -39,7 +39,7 @@ BrineViscosity::BrineViscosity( array1d< string > const & inputPara,
   makeCoefficients( inputPara );
 }
 
-void BrineViscosity::makeCoefficients( array1d< string > const & inputPara )
+void BrineViscosity::makeCoefficients( string_array const & inputPara )
 {
   // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
   constexpr real64 a = 0.0816;
@@ -74,7 +74,7 @@ BrineViscosity::KernelWrapper BrineViscosity::createKernelWrapper()
                         m_coef1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineViscosity, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineViscosity, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

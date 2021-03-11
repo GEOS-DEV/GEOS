@@ -80,8 +80,8 @@ class BrineViscosity : public PVTFunctionBase
 {
 public:
 
-  BrineViscosity( array1d< string > const & inputPara,
-                  array1d< string > const & componentNames,
+  BrineViscosity( string_array const & inputPara,
+                  string_array const & componentNames,
                   array1d< real64 > const & componentMolarWeight );
 
   ~BrineViscosity() override {}
@@ -106,7 +106,7 @@ public:
 
 private:
 
-  void makeCoefficients( array1d< string > const & inputPara );
+  void makeCoefficients( string_array const & inputPara );
 
   real64 m_coef0;
 

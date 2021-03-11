@@ -18,7 +18,6 @@
 
 #include "constitutive/fluid/PVTFunctions/BrineCO2DensityFunction.hpp"
 
-#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
 
@@ -33,77 +32,43 @@ namespace constitutive
 namespace PVTProps
 {
 
-BrineCO2Density::BrineCO2Density( array1d< string > const & inputPara,
-                                  array1d< string > const & componentNames,
+BrineCO2Density::BrineCO2Density( string_array const & inputPara,
+                                  string_array const & componentNames,
                                   array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( inputPara[1],
                    componentNames,
                    componentMolarWeight )
 {
-  std::vector< string > const expectedCO2ComponentNames( { "CO2", "co2" } );
+  char const * expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
   GEOSX_ERROR_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(), "Component CO2 is not found!" );
 
-  std::vector< string > const expectedWaterComponentNames( { "Water", "water" } );
+  char const * expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
   GEOSX_ERROR_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(), "Component Water/Brine is not found!" );
 
   makeTable( inputPara );
 }
 
-void BrineCO2Density::makeTable( array1d< string > const & inputPara )
+void BrineCO2Density::makeTable( string_array const & inputPara )
 {
-  real64 TStart = -1.0;
-  real64 TEnd = -1.0;
-  real64 dT = -1.0;
-  real64 PStart = -1.0;
-  real64 PEnd = -1.0;
-  real64 dP = -1.0;
-  real64 salinity = 0.0;
-
-  GEOSX_ERROR_IF( inputPara.size() < 9, "Invalid BrineCO2Density input!" );
-
-  try
-  {
-    PStart = stod( inputPara[2] );
-    PEnd = stod( inputPara[3] );
-    dP = stod( inputPara[4] );
-
-    TStart = stod( inputPara[5] );
-    TEnd = stod( inputPara[6] );
-    dT = stod( inputPara[7] );
-
-    salinity = stod( inputPara[8] );
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOSX_ERROR( "Invalid BrineCO2Density argument:" + string( e.what()) );
-  }
-
   PTTableCoordinates tableCoords;
-  for( real64 P = PStart; P <= PEnd; P += dP )
-  {
-    tableCoords.appendPressure( P );
-  }
-  for( real64 T = TStart; T <= TEnd; T += dT )
-  {
-    tableCoords.appendTemperature( T );
-  }
+  real64 const salinity = PVTFunctionHelpers::initializePropertyTableWithSalinity( inputPara, tableCoords );
 
-  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateBrineDensity( tableCoords.get(), salinity, values );
+  array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
+  calculateBrineDensity( tableCoords, salinity, densities );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_brineDensityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "brineDensityTable" ) );
-  m_brineDensityTable->setTableCoordinates( tableCoords.get() );
-  m_brineDensityTable->setTableValues( values );
+  m_brineDensityTable->setTableCoordinates( tableCoords.getCoords() );
+  m_brineDensityTable->setTableValues( densities );
   m_brineDensityTable->reInitializeFunction();
   m_brineDensityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
 
-void BrineCO2Density::calculateBrineDensity( array1d< array1d< real64 > > const & coordinates,
+void BrineCO2Density::calculateBrineDensity( PTTableCoordinates const & tableCoords,
                                              real64 const & salinity,
-                                             array1d< real64 > const & values )
+                                             array1d< real64 > const & densities )
 {
   // these coefficients come from Phillips et al. (1981), equations (4) and (5), pages 14 and 15
   constexpr real64 c1 = -9.9595;
@@ -119,20 +84,17 @@ void BrineCO2Density::calculateBrineDensity( array1d< array1d< real64 > > const 
   constexpr real64 CC = -8.750567;
   constexpr real64 DD = 2.663107;
 
-  localIndex const numPressures = coordinates[0].size();
-  localIndex const numTemperatures = coordinates[1].size();
-
-  for( localIndex i = 0; i < numPressures; ++i )
+  for( localIndex i = 0; i < tableCoords.nPressures(); ++i )
   {
-    real64 const P = coordinates[0][i] / 1e5;
+    real64 const P = tableCoords.getPressure( i ) / 1e5;
 
-    for( localIndex j = 0; j < numTemperatures; ++j )
+    for( localIndex j = 0; j < tableCoords.nTemperatures(); ++j )
     {
       // see Phillips et al. (1981), equations (4) and (5), pages 14 and 15
       real64 const x = c1 * exp( a1 * salinity )
-                       + c2 * exp( a2 * coordinates[1][j] )
+                       + c2 * exp( a2 * tableCoords.getTemperature( j ) )
                        + c3 * exp( a3 * P );
-      values[j*numPressures+i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
+      densities[j*tableCoords.nPressures()+i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
     }
   }
 }
@@ -146,7 +108,7 @@ BrineCO2Density::KernelWrapper BrineCO2Density::createKernelWrapper()
                         m_waterIndex );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineCO2Density, array1d< string > const &, array1d< string > const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineCO2Density, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

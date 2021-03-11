@@ -21,6 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
@@ -88,8 +89,8 @@ class BrineCO2Density : public PVTFunctionBase
 {
 public:
 
-  BrineCO2Density( array1d< string > const & inputPara,
-                   array1d< string > const & componentNames,
+  BrineCO2Density( string_array const & inputPara,
+                   string_array const & componentNames,
                    array1d< real64 > const & componentMolarWeight );
 
   ~BrineCO2Density() override {}
@@ -115,11 +116,11 @@ public:
 
 private:
 
-  void makeTable( array1d< string > const & inputPara );
+  void makeTable( string_array const & inputPara );
 
-  void calculateBrineDensity( array1d< array1d< real64 > > const & coordinates,
+  void calculateBrineDensity( PVTProps::PTTableCoordinates const & tableCoords,
                               real64 const & salinity,
-                              array1d< real64 > const & values );
+                              array1d< real64 > const & densities );
 
   /// Table with brine density tabulated as a function of (P,T,sal)
   TableFunction * m_brineDensityTable;
