@@ -35,7 +35,7 @@ public:
 private:
   // GEOSX_HOST_DEVICE
   static void
-  ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+  computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                         arraySlice1d< localIndex const > const & faceToNodes,
                         arraySlice1d< localIndex const > const & faceToEdges,
                         real64 const & faceArea,
@@ -59,7 +59,7 @@ public:
 
   // GEOSX_HOST_DEVICE
   static void
-  ComputeProjectors( localIndex const & cellIndex,
+  computeProjectors( localIndex const & cellIndex,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                      CellBlock::NodeMapType const & cellToNodeMap,
                      CellBlock::FaceMapType const & elementToFaceMap,
@@ -121,13 +121,13 @@ public:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   // GEOSX_HOST_DEVICE
-  static real64 ComputeDiameter( POINT_COORDS_TYPE points,
+  static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
     array1d< localIndex > selectAllPoints( numPoints );
     for( localIndex i = 0; i < numPoints; ++i )
       selectAllPoints[i] = i;
-    return ComputeDiameter< DIMENSION, POINT_COORDS_TYPE,
+    return computeDiameter< DIMENSION, POINT_COORDS_TYPE,
                             array1d< localIndex > const & >( points,
                                                              selectAllPoints,
                                                              numPoints );
@@ -135,7 +135,7 @@ public:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
   // GEOSX_HOST_DEVICE
-  static real64 ComputeDiameter( POINT_COORDS_TYPE points,
+  static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  POINT_SELECTION_TYPE selectedPoints,
                                  localIndex const & numSelectedPoints )
   {

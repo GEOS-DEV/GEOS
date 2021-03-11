@@ -294,7 +294,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       {
         if( elemGhostRank[cellIndex] < 0 )
         {
-          VEM::ComputeProjectors( cellIndex, nodesCoords, elemToNodeMap, elementToFaceMap,
+          VEM::computeProjectors( cellIndex, nodesCoords, elemToNodeMap, elementToFaceMap,
                                   faceToNodeMap, faceToEdgeMap, edgeToNodeMap,
                                   faceCenters, faceNormals, faceAreas,
                                   elemCenters[cellIndex], elemVolumes[cellIndex] );

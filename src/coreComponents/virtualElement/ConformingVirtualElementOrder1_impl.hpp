@@ -41,7 +41,7 @@ m_basisDerivativesIntegralMean[ConformingVirtualElementOrder1< MCN, MFN >::maxSu
 template< localIndex MCN, localIndex MFN >
 // GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
-ComputeProjectors( localIndex const & cellIndex,
+computeProjectors( localIndex const & cellIndex,
                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                    CellBlock::NodeMapType const & cellToNodeMap,
                    CellBlock::FaceMapType const & elementToFaceMap,
@@ -62,7 +62,7 @@ ComputeProjectors( localIndex const & cellIndex,
 
   // Compute cell diameter.
   real64 cellDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
-                        ComputeDiameter< 3 >
+                        computeDiameter< 3 >
                           ( nodesCoords, cellToNodeMap[cellIndex], numCellPoints );
   real64 const invCellDiameter = 1.0/cellDiameter;
 
@@ -89,7 +89,7 @@ ComputeProjectors( localIndex const & cellIndex,
     // - compute integrals calling auxiliary method
     real64 faceBasisIntegrals[MFN];
     real64 threeDMonomialIntegrals[3] = { 0.0 };
-    ComputeFaceIntegrals( nodesCoords,
+    computeFaceIntegrals( nodesCoords,
                           faceToNodes,
                           faceToEdgeMap[faceIndex],
                           faceArea,
@@ -251,7 +251,7 @@ ComputeProjectors( localIndex const & cellIndex,
 template< localIndex MCN, localIndex MFN >
 // GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
-ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                       arraySlice1d< localIndex const > const & faceToNodes,
                       arraySlice1d< localIndex const > const & faceToEdges,
                       real64 const & faceArea,
@@ -288,7 +288,7 @@ ComputeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
       faceRotationMatrix( 2, 2 )*nodesCoords( faceToNodes( numVertex ), 2 );
   }
   faceDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
-                 ComputeDiameter< 2,
+                 computeDiameter< 2,
                                   array2d< real64 > const & >( faceRotatedVertices,
                                                                numFaceVertices );
   real64 const invFaceDiameter = 1.0/faceDiameter;

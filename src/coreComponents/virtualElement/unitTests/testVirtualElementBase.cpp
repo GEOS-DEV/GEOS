@@ -199,7 +199,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   localIndex const numCells = cellSubRegion.getElementVolume().size();
   for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
-    ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >::ComputeProjectors( cellIndex,
+    ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >::computeProjectors( cellIndex,
                                                                                      nodesCoords,
                                                                                      cellToNodeMap,
                                                                                      elementToFaceMap,
