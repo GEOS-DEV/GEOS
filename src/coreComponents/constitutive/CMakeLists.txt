@@ -112,7 +112,12 @@ set( constitutive_sources
 if( BUILD_OBJ_LIBS)
   set( dependencyList dataRepository)
 else()
-  set( dependencyList common )
+  set( dependencyList 
+       common
+       managers
+       codingUtilities
+       dataRepository
+     )
 endif()
 
 
