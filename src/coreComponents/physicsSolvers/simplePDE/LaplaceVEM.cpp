@@ -256,7 +256,6 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   using VEM = virtualElement::ConformingVirtualElementOrder1< m_maxCellNodes, m_maxFaceNodes >;
 
   MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elementManager = mesh.getElemManager();
   NodeManager & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -275,10 +274,10 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
   real64 const diffusion = 1.0;
 
-  // begin region loop
-  for( localIndex er=0; er<elementManager.numRegions(); ++er )
+  forTargetRegionsComplete( mesh, [&]( localIndex const,
+                                       localIndex const,
+                                       ElementRegionBase & elementRegion )
   {
-    CellElementRegion const & elementRegion = elementManager.getRegion< CellElementRegion >( er );
     elementRegion.forElementSubRegions< CellElementSubRegion >
       ( [&]( CellElementSubRegion const & elemSubRegion )
     {
@@ -335,7 +334,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
         }
       }
     } );
-  }
+  } );
 
   // finiteElement::
   //   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
