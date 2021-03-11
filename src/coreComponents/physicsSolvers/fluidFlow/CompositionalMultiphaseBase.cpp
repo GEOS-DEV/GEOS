@@ -640,10 +640,13 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
-  assembleAccumulationTerms( domain,
-                             dofManager,
-                             localMatrix,
-                             localRhs );
+  if( !m_poroElasticFlag )
+  {
+    assembleAccumulationTerms( domain,
+                               dofManager,
+                               localMatrix,
+                               localRhs );
+  }
 
   assembleFluxTerms( dt,
                      domain,

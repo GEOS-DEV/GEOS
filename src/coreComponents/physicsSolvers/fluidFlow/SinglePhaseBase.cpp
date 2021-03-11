@@ -424,16 +424,16 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_poroElasticFlag )
+  if( !m_poroElasticFlag )
   {
-    // Do nothing, assembly done in SinglePhasePoroelasticKernel
+//    // Do nothing, assembly done in SinglePhasePoroelasticKernel
 //    assembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
 //                                                               dofManager,
 //                                                               localMatrix,
 //                                                               localRhs );
-  }
-  else
-  {
+//  }
+//  else
+//  {
     assembleAccumulationTerms< false, parallelDevicePolicy<> >( domain,
                                                                 dofManager,
                                                                 localMatrix,

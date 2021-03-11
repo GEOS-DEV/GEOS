@@ -102,7 +102,7 @@ public:
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3],
-               arrayView1d< string const > const & fluidModelNames):
+               arrayView1d< string const > const & fluidModelNames ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -122,13 +122,13 @@ public:
                                  inputGravityVector[1] * inputGravityVector[1] +
                                  inputGravityVector[2] * inputGravityVector[2] ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidDensity( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] ).density() ),
+    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
     m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
-    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel<constitutive::SingleFluidBase>( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
-    m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
+    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
+    m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
-    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::referencePorosityString() ) ),
+    m_poroRef( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::referencePorosityString() ) ),
     m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient() )
   {}
 
@@ -150,14 +150,14 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-                                       xLocal(),
-                                       u_local(),
-                                       uhat_local(),
-                                       localFlowResidual{ 0.0 },
-                                       localDispFlowJacobian{ {0.0} },
-                                       localFlowDispJacobian{ {0.0} },
-                                       localFlowFlowJacobian{ {0.0} },
-                                       localFlowDofIndex{ 0 }
+            xLocal(),
+            u_local(),
+            uhat_local(),
+            localFlowResidual{ 0.0 },
+      localDispFlowJacobian{ {0.0} },
+      localFlowDispJacobian{ {0.0} },
+      localFlowFlowJacobian{ {0.0} },
+      localFlowDofIndex{ 0 }
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -258,23 +258,24 @@ public:
     //                 m_constitutiveUpdate.porosityUpdate( k, q, m_deltaFluidPressure, volStrainIncrement );          //
     //           (iii) get methods for porosityNew, dPorosity_dFluidPressure, dPorosity_dVolStrainIncrement
     real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
-    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);                          //
-    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local); //
+    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                          //
+    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local ); //
     real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
+    real64 const dPorosity_dPressure = biotSkeletonModulusInverse;                                                     //
                                                                                                                        //
     GEOSX_ERROR_IF_GT_MSG( abs( m_biotCoefficient - 1.0 ),                                                             //
                            1e-10,                                                                                      //
                            "Correct only for Biot's coefficient equal to 1" );                                         //
     // --------------------------------------------------------------------------------------------------------------- //
     real64 const porosityNew = porosityOld
-                             + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
-                             + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
+                               + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
+                               + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
 
 
     // Evaluate body force vector
-    real64  bodyForce[3] = { m_gravityVector[0],
-                             m_gravityVector[1],
-                             m_gravityVector[2]};
+    real64 bodyForce[3] = { m_gravityVector[0],
+                            m_gravityVector[1],
+                            m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
       real64 mixtureDensity = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
@@ -307,17 +308,6 @@ public:
       stack.localDispFlowJacobian[ a * 3 + 2][0] += dNdX[a][2] * m_biotCoefficient * detJxW;
     }
 
-    // --- Mass balance
-    for( integer a = 0; a < numNodesPerElem; ++a )
-    {
-      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][0] * detJxW;
-      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][1] * detJxW;
-      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][2] * detJxW;
-    }
-
-    stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
-    stack.localFlowFlowJacobian[0][0] += ( biotSkeletonModulusInverse * m_fluidDensity( k, q ) + m_dFluidDensity_dPressure( k, q ) * porosityNew ) * detJxW;
-
     if( m_gravityAcceleration > 0.0 )
     {
       // Assumptions: ( i) dMixtureDens_dVolStrain contribution is neglected
@@ -332,6 +322,17 @@ public:
         stack.localDispFlowJacobian[ a * 3 + 2][0] += N[a] * dMixtureDens_dFluidPres * m_gravityVector[2];
       }
     }
+
+    // --- Mass balance accumulation
+    for( integer a = 0; a < numNodesPerElem; ++a )
+    {
+      stack.localFlowDispJacobian[ 0][a * 3 + 0] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][0] * detJxW;
+      stack.localFlowDispJacobian[ 0][a * 3 + 1] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][1] * detJxW;
+      stack.localFlowDispJacobian[ 0][a * 3 + 2] += m_fluidDensity( k, q ) * m_biotCoefficient * dNdX[a][2] * detJxW;
+    }
+
+    stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
+    stack.localFlowFlowJacobian[0][0] += ( dPorosity_dPressure * m_fluidDensity( k, q ) + m_dFluidDensity_dPressure( k, q ) * porosityNew ) * detJxW;
 
   }
 

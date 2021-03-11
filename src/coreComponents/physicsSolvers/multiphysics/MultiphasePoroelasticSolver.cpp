@@ -42,7 +42,6 @@
 
 
 
-
 namespace geosx
 {
 
@@ -50,7 +49,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 MultiphasePoroelasticSolver::MultiphasePoroelasticSolver( const string & name,
-                                                      Group * const parent ):
+                                                          Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
@@ -142,7 +141,9 @@ void MultiphasePoroelasticSolver::postProcessInput()
 }
 
 void MultiphasePoroelasticSolver::initializePostInitialConditionsPreSubGroups()
-{}
+{
+  m_flowSolver->setPoroElasticCoupling();
+}
 
 MultiphasePoroelasticSolver::~MultiphasePoroelasticSolver()
 {
@@ -202,9 +203,9 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  // Cell-based contributions (except pressure-dependent terms in the accumulation term of the mass balance equation)
+  // Cell-based contributions
   m_solidSolver->getMaxForce() =
-      finiteElement::
+    finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PoroElasticBase,
                                     CellElementSubRegion,
@@ -223,7 +224,7 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
                                                                       m_flowSolver->fluidModelNames(),
                                                                       //
                                                                       localMatrix,
-                                                                      localRhs ) ;
+                                                                      localRhs );
 
   // Face-based contributions (including pressure-dependent terms in the accumulation term of the mass balance equation)
   m_flowSolver->assembleSystem( time_n, dt,
@@ -282,7 +283,7 @@ void MultiphasePoroelasticSolver::solveSystem( DofManager const & dofManager,
   solution.zero();
 
   matrix.write( "Jacobian.mtx" );
-  GEOSX_ERROR("STOP");
+  GEOSX_ERROR( "STOP" );
 
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 }

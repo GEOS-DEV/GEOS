@@ -103,7 +103,7 @@ public:
               localIndex const numPhases,
               arrayView1d< string const > const & fluidModelNames,
               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-              arrayView1d< real64 > const & inputRhs):
+              arrayView1d< real64 > const & inputRhs ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -124,25 +124,34 @@ public:
                                  inputGravityVector[2] * inputGravityVector[2] ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     //
-    m_fluidPhaseDensity( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).phaseDensity() ),
-    m_fluidPhaseCompFrac( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).phaseCompFraction() ),
+    m_fluidPhaseDensity( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseDensity() ),
+    m_fluidPhaseDensityOld( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseDensityOldString() ) ),
+    m_dFluidPhaseDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).dPhaseDensity_dPressure() ),
+    m_dFluidPhaseDensity_dGlobalCompFraction( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).dPhaseDensity_dGlobalCompFraction() ),
+    m_fluidPhaseCompFrac( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseCompFraction() ),
+    m_fluidPhaseCompFracOld( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseComponentFractionOldString() ) ),
+    m_dFluidPhaseCompFrac_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).dPhaseCompFraction_dPressure() ),
     //
-    m_fluidPhaseMassDensity( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).phaseMassDensity() ),
-//    m_dFluidPhaseMassDensity_dPressure( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).dPhaseMassDensity_dPressure() ),
-//    m_dFluidPhaseMassDensity_dGlobalCompFraction( elementSubRegion.template getConstitutiveModel<constitutive::MultiFluidBase>( fluidModelNames[targetRegionIndex] ).dPhaseMassDensity_dGlobalCompFraction() ),
+    m_fluidPhaseMassDensity( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseMassDensity() ),
     //
     m_fluidPhaseSaturation( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString() )),
-//    m_dFluidPhaseSaturation_dPressure( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString() )),
-//    m_dFluidPhaseSaturation_dGlobalCompFraction( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() )),
+    m_fluidPhaseSaturationOld( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionOldString() )),
+    m_dFluidPhaseSaturation_dPressure( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString() )),
+    m_dFluidPhaseSaturation_dGlobalCompDensity( elementSubRegion.template getReference< array3d< real64 > >(
+                                                  CompositionalMultiphaseBase::viewKeyStruct:: dPhaseVolumeFraction_dGlobalCompDensityString() )),
     //
-//    m_dGlobalCompFraction_dGlobalCompDensity( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() )),
+    m_dGlobalCompFraction_dGlobalCompDensity( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() )),
+//    //
+    m_dFluidPhaseCompFraction_dGlobalCompFraction( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >(
+                                                     fluidModelNames[targetRegionIndex] ).dPhaseCompFraction_dGlobalCompFraction() ),
     //
-    m_flowDofNumber(elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
+    m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
-    m_poroRef(elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString() ) ),
+    m_poroRef( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString() ) ),
     m_numComponents( numComponents ),
-    m_numPhases( numPhases )
+    m_numPhases( numPhases ),
+    m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient() )
   {
     if( m_numComponents > numMaxComponentsMultiphasePoroelastic )
     {
@@ -168,13 +177,14 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-                                       xLocal(),
-                                       u_local(),
-                                       uhat_local(),
-                                       localFlowResidual{ 0.0 },
-                                       localDispFlowJacobian{ {0.0} },
-                                       localFlowDispJacobian{ {0.0} },
-                                       localFlowDofIndex{ 0 }
+            xLocal(),
+            u_local(),
+            uhat_local(),
+            localFlowResidual{ 0.0 },
+      localDispFlowJacobian{ {0.0} },
+      localFlowDispJacobian{ {0.0} },
+      localFlowFlowJacobian{ {0.0} },
+      localFlowDofIndex{ 0 }
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -194,6 +204,7 @@ public:
     real64 localFlowResidual[numMaxComponentsMultiphasePoroelastic];
     real64 localDispFlowJacobian[numDispDofPerElem][numMaxComponentsMultiphasePoroelastic + 1];
     real64 localFlowDispJacobian[numMaxComponentsMultiphasePoroelastic][numDispDofPerElem];
+    real64 localFlowFlowJacobian[numMaxComponentsMultiphasePoroelastic][numMaxComponentsMultiphasePoroelastic + 1];
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localFlowDofIndex[numMaxComponentsMultiphasePoroelastic+1];
@@ -233,8 +244,6 @@ public:
     for( int flowDofIndex=0; flowDofIndex<numMaxComponentsMultiphasePoroelastic+1; ++flowDofIndex )
     {
       stack.localFlowDofIndex[flowDofIndex] = m_flowDofNumber[k] + flowDofIndex;
-//      GEOSX_LOG_RANK_VAR( flowDofIndex );
-//      GEOSX_LOG_RANK_VAR( stack.localFlowDofIndex[flowDofIndex] );
     }
 
   }
@@ -245,68 +254,72 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    // For now we assume incompressible solid grains (biot's coefficient = 1)
-    const real64 biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
-    GEOSX_ERROR_IF_GT_MSG( abs( biotCoefficient - 1.0 ),
-                           1e-10,
-                           "" );
+    localIndex const NC = m_numComponents;
+    localIndex const NP = m_numPhases;
 
-    // Get displacement basis functions (N), their derivatives (dNdX) and the determinant of the
-    // Jacobian transformation matrix times the quadrature weight (detJxW)
+    // Get displacement: (i) basis functions (N), (ii) basis function
+    // derivatives (dNdX), and (iii) determinant of the Jacobian transformation
+    // matrix times the quadrature weight (detJxW)
     real64 N[numNodesPerElem];
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-
+    real64 dNdX[numNodesPerElem][3];
     FE_TYPE::calcN( q, N );
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     // Evaluate total stress tensor
-    real64 strainInc[6] = {0};
+    real64 strainIncrement[6] = {0};
     real64 totalStress[6];
 
     // --- Update effective stress tensor (stored in totalStress)
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
-    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
-    m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, totalStress, stiffness );
+    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
+    m_constitutiveUpdate.smallStrainUpdate( k, q, strainIncrement, totalStress, stiffness );
 
     // --- Subtract pressure term
-    real64 const biotTimesPressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+    real64 const biotTimesPressure = m_biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
     totalStress[0] -= biotTimesPressure;
     totalStress[1] -= biotTimesPressure;
     totalStress[2] -= biotTimesPressure;
 
-    // --- Compute new and old porosity
-    real64 volumetricStrain    = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local);
-//    real64 volumetricStrainInc = strainInc[0] + strainInc[1] + strainInc[2];
-    real64 poroNew = m_poroRef( k ) + biotCoefficient * volumetricStrain;
-//    real64 poroOld = poroNew - + biotCoefficient * volumetricStrainInc;
+    // Evaluate fluid phase mass content
+    // --- TODO: temporary solution -----------------------------------------------------------------------------------//
+    //           see SinglePhasePoromechanicsKernel                                                                    //
+    real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
+    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                          //
+    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local ); //
+    real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
+    real64 const dPorosity_dPressure = biotSkeletonModulusInverse;                                                     //
+                                                                                                                       //
+    GEOSX_ERROR_IF_GT_MSG( abs( m_biotCoefficient - 1.0 ),                                                             //
+                           1e-10,                                                                                      //
+                           "Correct only for Biot's coefficient equal to 1" );                                         //
+    // --------------------------------------------------------------------------------------------------------------- //
+    real64 const porosityNew = porosityOld
+                               + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
+                               + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
 
     // Evaluate body force vector
-    // --- Compute Lagrangian porosity assuming linear model poroelastic infinitesimal deformation
-    //     phi_n = phi_0 + biot * div (u_n,k - u_0)) + 1/N (p_n,k - p_0)
-    //
-    //     Note: since grains are assumed incompressible 1/N = 0
-    real64  bodyForce[3] = { m_gravityVector[0],
-                             m_gravityVector[1],
-                             m_gravityVector[2]};
+    real64 bodyForce[3] = { m_gravityVector[0],
+                            m_gravityVector[1],
+                            m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
       // Compute mixture density
-      real64 mixtureDensity = m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
-      for( localIndex iPhase = 1; iPhase < m_numPhases; ++iPhase )
+      real64 mixtureDensity = m_fluidPhaseSaturation( k, 0 ) * m_fluidPhaseMassDensity( k, q, 0 );
+      for( localIndex i = 1; i < NP; ++i )
       {
-        mixtureDensity += m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
+        mixtureDensity += m_fluidPhaseSaturation( k, i ) * m_fluidPhaseMassDensity( k, q, i );
       }
-      mixtureDensity *= poroNew;
-      mixtureDensity += ( 1.0 - poroNew ) * m_solidDensity( k, q );
+      mixtureDensity *= porosityNew;
+      mixtureDensity += ( 1.0 - porosityNew ) * m_solidDensity( k, q );
       mixtureDensity *= detJxW;
       bodyForce[0] *= mixtureDensity;
       bodyForce[1] *= mixtureDensity;
       bodyForce[2] *= mixtureDensity;
     }
 
-    // Compute local linear momentum residual
-    // \int ( - symgrad(N) : totalStress + \eta \cdot bodyForce )
+    // Assemble local jacobian and residual
 
+    // --- Momentum balance
     for( localIndex i=0; i<6; ++i )
     {
       totalStress[i] *= -detJxW;
@@ -318,10 +331,14 @@ public:
                                      bodyForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
-    // Assemble local jacobian
-
-    // ---
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+
+    for( integer a = 0; a < numNodesPerElem; ++a )
+    {
+      stack.localDispFlowJacobian[ a * 3 + 0][0] += dNdX[a][0] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 1][0] += dNdX[a][1] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[ a * 3 + 2][0] += dNdX[a][2] * m_biotCoefficient * detJxW;
+    }
 
 //    if( m_gravityAcceleration > 0.0 )
 //    {
@@ -352,63 +369,80 @@ public:
 //#endif
 //    }
 
-    for( integer a = 0; a < numNodesPerElem; ++a )
-    {
-      stack.localDispFlowJacobian[ a * 3 + 0][0] += biotCoefficient * dNdX[a][0] * detJxW;
-      stack.localDispFlowJacobian[ a * 3 + 1][0] += biotCoefficient * dNdX[a][1] * detJxW;
-      stack.localDispFlowJacobian[ a * 3 + 2][0] += biotCoefficient * dNdX[a][2] * detJxW;
-    }
+    // --- Mass balance accumulation
+    // --- --- sum contributions to component accumulation from each phase
 
-    real64 phaseCompAmount[numMaxComponentsMultiphasePoroelastic] = { 0.0 };
-    for( localIndex ip = 0; ip < m_numPhases; ++ip )
+    // --- --- temporary work arrays
+    real64 dPhaseAmount_dC[numMaxComponentsMultiphasePoroelastic];
+    real64 dPhaseCompFrac_dC[numMaxComponentsMultiphasePoroelastic];
+    real64 componentAmount[numMaxComponentsMultiphasePoroelastic] = { 0.0 };
+
+    for( localIndex ip = 0; ip < NP; ++ip )
     {
-      real64 tmp = biotCoefficient
-                 * m_fluidPhaseDensity( k, q, ip )
-                 * m_fluidPhaseSaturation( k, ip )
-                 * detJxW;
-      for( localIndex ic = 0; ic < m_numComponents; ++ic )
+      real64 const phaseAmountNew = porosityNew * m_fluidPhaseSaturation( k, ip ) * m_fluidPhaseDensity( k, q, ip );
+      real64 const phaseAmountOld = porosityOld * m_fluidPhaseSaturationOld( k, ip ) * m_fluidPhaseDensityOld( k, ip );
+
+      real64 const dPhaseAmount_dP = dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) * m_fluidPhaseDensity( k, q, ip )
+                                     + porosityNew * (m_dFluidPhaseSaturation_dPressure( k, ip ) * m_fluidPhaseDensity( k, q, ip )
+                                                      + m_fluidPhaseSaturation( k, ip ) * m_dFluidPhaseDensity_dPressure( k, q, ip ) );
+
+      // assemble density dependence
+      applyChainRule( NC,
+                      m_dGlobalCompFraction_dGlobalCompDensity[k],
+                      m_dFluidPhaseDensity_dGlobalCompFraction[k][q][ip],
+                      dPhaseAmount_dC );
+
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
-        phaseCompAmount[ic] += tmp * m_fluidPhaseCompFrac( k, q, ip,ic );
+        dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * m_fluidPhaseSaturation( k, ip )
+                              + m_fluidPhaseDensity( k, q, ip ) * m_dFluidPhaseSaturation_dGlobalCompDensity( k, ip, jc );
+        dPhaseAmount_dC[jc] *= porosityNew;
       }
-    }
-    for( localIndex ic = 0; ic < m_numComponents; ++ic )
-    {
-      for( integer a = 0; a < numNodesPerElem; ++a )
+
+      // ic - index of component whose conservation equation is assembled
+      // (i.e. row number in local matrix)
+      real64 const fluidPhaseDensityTimesFluidPhaseSaturation = m_fluidPhaseDensity( k, q, ip ) * m_fluidPhaseSaturation( k, ip );
+      for( localIndex ic = 0; ic < NC; ++ic )
       {
-        stack.localFlowDispJacobian[ic][a * 3 + 0] += phaseCompAmount[ic] * dNdX[a][0];
-        stack.localFlowDispJacobian[ic][a * 3 + 1] += phaseCompAmount[ic] * dNdX[a][1];
-        stack.localFlowDispJacobian[ic][a * 3 + 2] += phaseCompAmount[ic] * dNdX[a][2];
-      }
-    }
+        real64 const phaseCompAmountNew = phaseAmountNew * m_fluidPhaseCompFrac( k, q, ip, ic );
+        real64 const phaseCompAmountOld = phaseAmountOld * m_fluidPhaseCompFracOld( k, ip, ic );
 
+        real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * m_fluidPhaseCompFrac( k, q, ip, ic )
+                                           + phaseAmountNew * m_dFluidPhaseCompFrac_dPressure( k, q, ip, ic );
 
+        componentAmount[ic] =  fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
 
-    for( integer a = 0; a < numNodesPerElem; ++a )
-    {
-      for( localIndex ip = 0; ip < m_numPhases; ++ip )
-      {
-        for( localIndex ic = 0; ic < m_numComponents; ++ic )
+        stack.localFlowResidual[ic] += ( phaseCompAmountNew - phaseCompAmountOld ) * detJxW;
+        stack.localFlowFlowJacobian[ic][0] += dPhaseCompAmount_dP * detJxW;;
+
+        // jc - index of component w.r.t. whose compositional var the derivative is being taken
+        // (i.e. col number in local matrix)
+
+        // assemble phase composition dependence
+        applyChainRule( NC,
+                        m_dGlobalCompFraction_dGlobalCompDensity[k],
+                        m_dFluidPhaseCompFraction_dGlobalCompFraction[k][q][ip][ic],
+                        dPhaseCompFrac_dC );
+
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
-          real64 tmp = biotCoefficient
-                     * m_fluidPhaseDensity( k, q, ip )
-                     * m_fluidPhaseCompFrac( k, q, ip,ic )
-                     * m_fluidPhaseSaturation( k, ip )
-                     * detJxW;
-          for( localIndex iDim = 0; iDim < 3; ++iDim )
-          {
-            stack.localFlowDispJacobian[ic][a * 3 + 0] += tmp * dNdX[a][iDim];
-          }
+          real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
+                                             + m_fluidPhaseCompFrac( k, q, ip, ic ) * dPhaseAmount_dC[jc];
+          stack.localFlowFlowJacobian[ic][jc + 1] += dPhaseCompAmount_dC  * detJxW;
         }
       }
-//      real64 Rf_tmp =   dNdX[a][0] * stack.uhat_local[a][0]
-//                      + dNdX[a][1] * stack.uhat_local[a][1]
-//                      + dNdX[a][2] * stack.uhat_local[a][2];
-//      Rf_tmp *= m_fluidPhaseMassDensity( k, q, 0 ) * biotCoefficient * detJxW;
-//      stack.localFlowResidual[0] += Rf_tmp;
+
+      for( localIndex ic = 0; ic < m_numComponents; ++ic )
+      {
+        for( integer a = 0; a < numNodesPerElem; ++a )
+        {
+          stack.localFlowDispJacobian[ic][a * 3 + 0] += m_biotCoefficient * componentAmount[ic] * dNdX[a][0] * detJxW;
+          stack.localFlowDispJacobian[ic][a * 3 + 1] += m_biotCoefficient * componentAmount[ic] * dNdX[a][1] * detJxW;
+          stack.localFlowDispJacobian[ic][a * 3 + 2] += m_biotCoefficient * componentAmount[ic] * dNdX[a][2] * detJxW;
+        }
+      }
+
     }
-
-
-
   }
 
   /**
@@ -488,17 +522,26 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > const m_solidDensity;
   arrayView3d< real64 const > const m_fluidPhaseDensity;
+  arrayView2d< real64 const > const m_fluidPhaseDensityOld;
+  arrayView3d< real64 const > const m_dFluidPhaseDensity_dPressure;
+  arrayView4d< real64 const > const m_dFluidPhaseDensity_dGlobalCompFraction;
   arrayView4d< real64 const > const m_fluidPhaseCompFrac;
+  arrayView3d< real64 const > const m_fluidPhaseCompFracOld;
+  arrayView4d< real64 const > const m_dFluidPhaseCompFrac_dPressure;
 
   arrayView3d< real64 const > const m_fluidPhaseMassDensity;
   arrayView3d< real64 const > const m_dFluidPhaseMassDensity_dPressure;
   arrayView4d< real64 const > const m_dFluidPhaseMassDensity_dGlobalCompFraction;
 
   arrayView2d< real64 const > const m_fluidPhaseSaturation;
+  arrayView2d< real64 const > const m_fluidPhaseSaturationOld;
   arrayView2d< real64 const > const m_dFluidPhaseSaturation_dPressure;
   arrayView3d< real64 const > const m_dFluidPhaseSaturation_dGlobalCompFraction;
+  arrayView3d< real64 const > const m_dFluidPhaseSaturation_dGlobalCompDensity;
 
   arrayView3d< real64 const > const m_dGlobalCompFraction_dGlobalCompDensity;
+
+  arrayView5d< real64 const > const m_dFluidPhaseCompFraction_dGlobalCompFraction;
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_flowDofNumber;
@@ -518,6 +561,8 @@ protected:
   /// Number of phases
   localIndex const m_numPhases;
 
+  /// Biot's coefficient
+  real64 const m_biotCoefficient;
 };
 
 

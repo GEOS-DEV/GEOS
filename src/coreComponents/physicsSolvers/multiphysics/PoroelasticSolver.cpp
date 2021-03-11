@@ -177,9 +177,10 @@ void PoroelasticSolver::postProcessInput()
 
 void PoroelasticSolver::initializePostInitialConditionsPreSubGroups()
 {
+  m_flowSolver->setPoroElasticCoupling();
+
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
-    m_flowSolver->setPoroElasticCoupling();
     // Calculate initial total mean stress
     updateDeformationForCoupling( getGlobalState().getProblemManager().getDomainPartition() );
   }
@@ -343,9 +344,9 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  // Cell-based contributions (except pressure-dependent terms in the accumulation term of the mass balance equation)
+  // Cell-based contributions
   m_solidSolver->getMaxForce() =
-      finiteElement::
+    finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PoroElasticBase,
                                     CellElementSubRegion,
@@ -359,7 +360,7 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
                                                                        localMatrix,
                                                                        localRhs,
                                                                        gravityVectorData,
-                                                                       m_flowSolver->fluidModelNames() ) ;
+                                                                       m_flowSolver->fluidModelNames() );
 
   // Face-based contributions (including pressure-dependent terms in the accumulation term of the mass balance equation)
   m_flowSolver->assembleSystem( time_n, dt,
