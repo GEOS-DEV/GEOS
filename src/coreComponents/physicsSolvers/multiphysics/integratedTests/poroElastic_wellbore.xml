@@ -1,0 +1,272 @@
+<!--Note
+Apply boundary pore pressure using faceManager work only with increasing xCoord, yCoord or zCoord
+This issue was observed also for InternalMesh
+
+Example: it works well if xCoord="{ 1, 2 }" 
+  but it does not work if xCoord="{ 2, 1 }" 
+-->
+
+<Problem>
+	<!--Tables-->
+	<Functions>
+		<TableFunction 
+			name="timeFunction"
+			inputVarNames="{time}"
+			coordinates="{0.0, 0.1, 1e6}"
+			values="{0.0, 1.0, 1.0}" 
+		/>
+	</Functions>
+
+	<!--Mesh/Geometry-->
+	<Mesh>
+        <InternalWellbore
+      		name="mesh1"
+      		elementTypes="{ C3D8 }"
+      		radius="0.1"
+      		theta="90"
+      		trajectory="{ { 0.0, 0.0, 0.0 }, {  0.0, 0.0, 1.0 } }"
+      		nr="40"
+      		nt="30"
+      		nz="{ 1 }"
+      		rOut="2.0"
+      		rBias="-0.5"
+      		cellBlockNames="{ Omega_HEX }"
+      		meshType="CylindricalSquareBoundary"
+ 		/>
+	</Mesh>
+
+	<!--Rock properties-->
+	<Constitutive>
+		<PoroElasticIsotropic 
+			name="rock"
+			defaultDensity="0"
+			defaultBulkModulus="11039657020.4"
+			defaultShearModulus="8662741799.83"
+			BiotCoefficient="0.771"
+		/>
+		<CompressibleSinglePhaseFluid 
+			name="water"
+			defaultDensity="1000"
+			defaultViscosity="0.001"
+			referencePressure="0e6"
+			referenceDensity="1000"
+			compressibility="1.78403329184e-10"
+			referenceViscosity="0.001"
+			viscosibility="0.0"
+		/>
+	</Constitutive>
+
+	<!--Assign rock/fluid properties-->
+	<ElementRegions>
+		<CellElementRegion 
+			name="Omega" 
+			cellBlocks="{Omega_HEX}" 
+			materialList="{rock, water}"
+		/>
+	</ElementRegions>
+
+	<!--Boundary conditions-->
+	<FieldSpecifications>
+		<FieldSpecification 
+			name="permx"
+			component="0"
+			initialCondition="1"  
+			setNames="{all}"
+			objectPath="ElementRegions/Omega/Omega_HEX"
+			fieldName="permeability"
+			scale="1e-17"
+		/>
+
+		<FieldSpecification 
+			name="permy"
+			component="1"
+			initialCondition="1"
+			setNames="{all}"
+			objectPath="ElementRegions/Omega/Omega_HEX"
+			fieldName="permeability"
+			scale="1e-17"
+		/>
+
+		<FieldSpecification 
+			name="permz"
+			component="2"
+			initialCondition="1"
+			setNames="{all}"
+			objectPath="ElementRegions/Omega/Omega_HEX"
+			fieldName="permeability"
+			scale="1e-17"
+		/>
+
+		<FieldSpecification 
+			name="referencePorosity"
+			initialCondition="1"
+			setNames="{all}"
+			objectPath="ElementRegions/Omega/Omega_HEX"
+			fieldName="referencePorosity"
+			scale="0.3"
+		/>
+
+		<FieldSpecification 
+			name="initialPressure"
+			initialCondition="1"
+			setNames="{all}"
+			objectPath="ElementRegions/Omega/Omega_HEX"
+			fieldName="pressure"
+			scale="0e6"
+		/>
+
+		<FieldSpecification 
+			name="tnegconstraint"    
+			objectPath="nodeManager" 
+			fieldName="TotalDisplacement" 
+			component="1" 
+			scale="0.0" 
+			setNames="{tneg}"
+		/>
+
+		<FieldSpecification 
+			name="tposconstraint"    
+			objectPath="nodeManager" 
+			fieldName="TotalDisplacement" 
+			component="0" 
+			scale="0.0" 
+			setNames="{tpos}"
+		/>
+
+		<FieldSpecification 
+			name="xconstraint"    
+			objectPath="nodeManager" 
+			fieldName="TotalDisplacement" 
+			component="0" 
+			scale="0.0" 
+			setNames="{xpos}"
+		/>
+
+		<FieldSpecification 
+			name="yconstraint"    
+			objectPath="nodeManager" 
+			fieldName="TotalDisplacement" 
+			component="1" 
+			scale="0.0" 
+			setNames="{ypos}"
+		/>
+
+		<FieldSpecification 
+			name="zconstraint" 
+			objectPath="nodeManager" 
+			fieldName="TotalDisplacement" 
+			component="2" 
+			scale="0.0" 
+			setNames="{zneg, zpos}"
+		/>
+
+		<FieldSpecification 
+			name="farPressure"
+			objectPath="faceManager"
+			fieldName="pressure"
+			scale="0"
+            setNames="{xpos, ypos}"
+		/>  
+		<!--Borehole pressure-->
+		<FieldSpecification 
+			name="innerPressure"
+			objectPath="faceManager"
+			fieldName="pressure"
+			scale="10e6"
+            setNames="{rneg}"/>
+	</FieldSpecifications>
+
+	<!--Output-->
+	<Outputs>
+		<Silo name="siloOutput"/>
+	</Outputs>
+
+	<!--Solvers-->
+	<Solvers gravityVector="0.0, 0.0, 0.0">
+    <Poroelastic
+      name="poroSolve"
+      solidSolverName="lagsolve"
+      fluidSolverName="SinglePhaseFlow"
+      couplingTypeOption="SIM_FixedStress"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Omega }">
+      <NonlinearSolverParameters
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        logLevel="2"/>
+    </Poroelastic>
+
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Omega }"
+      solidMaterialNames="{ rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="5"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-8"
+        logLevel="2"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Omega }"
+      fluidNames="{ water }"
+      solidNames="{ rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-8"
+        logLevel="2"/>
+    </SinglePhaseFVM>
+	</Solvers>
+  
+	<!--Solver application-->
+	<Events maxTime="78.0">
+		<PeriodicEvent 
+			name="outputs"
+			timeFrequency="7.8"
+			targetExactTimestep="78.0"
+			target="/Outputs/siloOutput"
+		/>
+
+		<PeriodicEvent 
+			name="solverApplication0"
+			beginTime="0"
+			endTime="78.0"   
+			forceDt="0.78"
+			target="/Solvers/poroSolve"
+		/>
+	</Events>
+
+	<NumericalMethods>
+		<BasisFunctions>
+			<LagrangeBasis3 name="linearBasis" degree="1"/>
+		</BasisFunctions>
+		<QuadratureRules>
+			<GaussQuadrature3 name="gaussian" degree="2"/>
+		</QuadratureRules>
+		<FiniteElements>
+			<FiniteElementSpace 
+				name="FE1" 
+				order="1"
+			/>
+		</FiniteElements>
+		<FiniteVolume>
+			<TwoPointFluxApproximation 
+				name="singlePhaseTPFA"
+				fieldName="pressure"
+				coefficientName="permeability"
+			/>
+		</FiniteVolume>
+	</NumericalMethods>
+</Problem>
