@@ -43,6 +43,7 @@ public:
   /**
    * @brief Get the shape function projected derivatives at a given quadrature point.
    * @details The output contains the integral mean of derivatives.
+   * @tparam LEAF Type of the derived virtual element implementation.
    * @param q The quadrature point index.
    * @param gradN Return array of the shape function projected derivatives. Size will be @ref
    * getNumSupportPoints() x 3.
@@ -57,6 +58,7 @@ public:
 
   /**
    * @brief Get a value of the stabilization matrix.
+   * @tparam LEAF Type of the derived virtual element implementation.
    * @param iBasisFunction The row index.
    * @param jBasisFunction The column index.
    * @return The requested value.
@@ -71,6 +73,7 @@ public:
   /**
    * @brief Get the shape function projections at a given quadrature point.
    * @details The output contains the integral mean of functions
+   * @tparam LEAF Type of the derived virtual element implementation.
    * @param q The quadrature point index.
    * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
    */
@@ -84,6 +87,7 @@ public:
 
   /**
    * @brief Get the integration weight for a quadrature point.
+   * @tparam LEAF Type of the derived virtual element implementation.
    * @param q Index of the quadrature point.
    * @return The weight.
    */
@@ -94,17 +98,27 @@ public:
     return LEAF::getTransformedQuadratureWeight( q );
   }
 
-  // /**
-  //  * @brief Virtual getter for the number of quadrature points per element.
-  //  * @return The number of quadrature points per element.
-  //  */
-  // virtual localIndex getNumQuadraturePoints() const = 0;
+  /**
+   * @brief Getter for the number of quadrature points per element.
+   * @tparam LEAF Type of the derived virtual element implementation.
+   * @return The number of quadrature points per element.
+   */
+  template< typename LEAF >
+  localIndex getNumQuadraturePoints() const
+  {
+    return LEAF::getNumQuadraturePoints();
+  }
 
-  // /**
-  //  * @brief Virtual getter for the number of support points per element.
-  //  * @return The number of support points per element.
-  //  */
-  // virtual localIndex getNumSupportPoints() const = 0;
+  /**
+   * @brief Getter for the number of support points per element.
+   * @tparam LEAF Type of the derived virtual element implementation.
+   * @return The number of support points per element.
+   */
+  template< typename LEAF >
+  localIndex getNumSupportPoints() const
+  {
+    return LEAF::getNumSupportPoints();
+  }
 };
 }
 }
