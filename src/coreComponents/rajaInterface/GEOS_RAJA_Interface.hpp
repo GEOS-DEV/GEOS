@@ -24,19 +24,7 @@
 #include <chrono>
 #include <thread>
 
-// #define GEOSX_ASYNC_WAIT( UPPER, NANOSLEEP, TEST ) bool geosxAsyncWaitComplete = false; \
-//   for( long geosxAsyncWaitIdx = 0; geosxAsyncWaitIdx < UPPER; ++geosxAsyncWaitIdx ) \
-//   { \
-//     if( TEST ) \
-//     { \
-//       geosxAsyncWaitComplete = true; \
-//       break; \
-//     } \
-//     std::this_thread::sleep_for( std::chrono::nanoseconds( NANOSLEEP ) ); \
-//   } \
-//   GEOSX_ERROR_IF( !geosxAsyncWaitComplete, "Geosx async wait loop failed!" );
-
-#define GEOSX_ASYNC_WAIT( UPPER, NANOSLEEP, TEST ) while( ! TEST ) { }
+#define GEOSX_ASYNC_WAIT( UPPER, NANOSLEEP, TEST ) while( !TEST ) { }
 
 namespace geosx
 {
