@@ -121,10 +121,10 @@ using size_t      = std::size_t;
 using integer     = std::int32_t;
 
 /// Local index type (for indexing objects within an MPI partition).
-using localIndex  = std::ptrdiff_t;
+using localIndex  = GEOSX_LOCALINDEX_TYPE;
 
 /// Global index type (for indexing objects across MPI partitions).
-using globalIndex = long long int;//std::int64_t;
+using globalIndex = GEOSX_GLOBALINDEX_TYPE;
 
 /// String type.
 using string      = std::string;
@@ -322,11 +322,11 @@ template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
 using SparsityPatternView = LvArray::SparsityPatternView< COL_INDEX, INDEX_TYPE const, LvArray::ChaiBuffer >;
 
 /// Alias for CRS Matrix class.
-template< typename T, typename COL_INDEX=localIndex >
+template< typename T, typename COL_INDEX=globalIndex >
 using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex, LvArray::ChaiBuffer >;
 
 /// Alias for CRS Matrix View.
-template< typename T, typename COL_INDEX=localIndex >
+template< typename T, typename COL_INDEX=globalIndex >
 using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, LvArray::ChaiBuffer >;
 
 ///@}
