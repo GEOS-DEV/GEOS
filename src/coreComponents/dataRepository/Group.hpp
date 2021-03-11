@@ -331,7 +331,7 @@ public:
   }
 
   /**
-   * @copydoc getGroup( string const & )
+   * @copydoc getGroup( KEY const & )
    */
   template< typename T = Group, typename KEY = void >
   T const & getGroup( KEY const & key ) const
@@ -482,7 +482,7 @@ public:
   }
 
   /**
-   * @copydoc forSubGroups(LAMBDA)
+   * @copydoc forSubGroups(LAMBDA &&)
    */
   template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( LAMBDA && lambda ) const
@@ -497,7 +497,7 @@ public:
   }
 
   /**
-   * @copybrief forSubGroups(LAMBDA)
+   * @copybrief forSubGroups(LAMBDA &&)
    * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
    * @tparam GROUPTYPES       a variadic list of types that will be used in the attempted casting of group.
    * @tparam LOOKUP_CONTAINER type of container of subgroup lookup keys (names or indices), must support range-based for
@@ -522,7 +522,7 @@ public:
   }
 
   /**
-   * @copybrief forSubGroups(LAMBDA)
+   * @copybrief forSubGroups(LAMBDA &&)
    * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
    * @tparam GROUPTYPES       a variadic list of types that will be used in the attempted casting of group.
    * @tparam LOOKUP_CONTAINER type of container of subgroup lookup keys (names or indices), must support range-based for
@@ -574,7 +574,7 @@ public:
   }
 
   /**
-   * @copydoc forWrappers(LAMBDA)
+   * @copydoc forWrappers(LAMBDA &&)
    */
   template< typename LAMBDA >
   void forWrappers( LAMBDA && lambda ) const

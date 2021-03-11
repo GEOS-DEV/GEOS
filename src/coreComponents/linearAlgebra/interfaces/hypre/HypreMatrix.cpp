@@ -23,6 +23,7 @@
 #include "_hypre_IJ_mv.h"
 #include "_hypre_parcsr_mv.h"
 #include "HypreUtils.hpp"
+#include "LvArray/src/output.hpp"
 
 #include <iomanip>
 
@@ -176,6 +177,92 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
               m_ij_mat );
 }
 
+#if defined(GEOSX_USE_HYPRE_CUDA)
+
+#define cudaCheckErrors( msg ) \
+  do { \
+    cudaError_t __err = cudaGetLastError(); \
+    if( __err != cudaSuccess ) { \
+      fprintf( stderr, "Fatal error: %s (%s at %s:%d)\n", \
+               msg, cudaGetErrorString( __err ), \
+               __FILE__, __LINE__ ); \
+      fprintf( stderr, "*** FAILED - ABORTING\n" ); \
+      exit( 1 ); \
+    } \
+  } while (0)
+
+
+void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                          MPI_Comm const & comm )
+{
+  localIndex maxEntriesPerRow = 0;
+  for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+  {
+    maxEntriesPerRow = std::max( maxEntriesPerRow, localMatrix.numNonZeros( i ) );
+  }
+
+  createWithLocalSize( localMatrix.numRows(),
+                       localMatrix.numRows(),
+                       maxEntriesPerRow,
+                       comm );
+
+  globalIndex const rankOffset = ilower();
+
+  array1d< globalIndex > rows( localMatrix.numRows() );
+  array1d< HYPRE_Int > sizes( localMatrix.numRows() );
+  array1d< HYPRE_Int > offsets( localMatrix.numRows() );
+  localIndex const * const pSizes = localMatrix.getSizes();
+  localIndex const * const pOffsets = localMatrix.getOffsets();
+
+  for( localIndex row=0; row<localMatrix.numRows(); ++row )
+  {
+    rows[row] = row + rankOffset;
+    sizes[row] = pSizes[row];
+    offsets[row] = pOffsets[row];
+  }
+
+  localMatrix.move( LvArray::MemorySpace::GPU, false );
+  rows.move( LvArray::MemorySpace::GPU, false );
+  sizes.move( LvArray::MemorySpace::GPU, false );
+  offsets.move( LvArray::MemorySpace::GPU, false );
+
+  open();
+
+
+#if 0
+  int const numRanks = MpiWrapper::commSize();
+  int const rank = MpiWrapper::commRank();
+  for( int kRank = 0; kRank<numRanks; ++kRank )
+  {
+    if( rank==kRank )
+    {
+      LvArray::print< parallelDevicePolicy< 32 > >( localMatrix.toViewConst() );
+    }
+    MpiWrapper::barrier();
+  }
+
+#endif
+
+
+  cudaCheckErrors( "you have a cuda error" );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues2( m_ij_mat,
+                                                     localMatrix.numRows(),
+                                                     sizes.data(),
+                                                     rows.data(),
+                                                     offsets.data(),
+                                                     localMatrix.getColumns(),
+                                                     localMatrix.getEntries() ) );
+
+  close();
+}
+#else
+void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                          MPI_Comm const & comm )
+{
+  MatrixBase::create( localMatrix, comm );
+}
+#endif
+
 void HypreMatrix::createWithLocalSize( localIndex const localRows,
                                        localIndex const localCols,
                                        localIndex const maxEntriesPerRow,
@@ -267,6 +354,8 @@ void HypreMatrix::close()
   m_assembled = true;
 }
 
+
+
 bool HypreMatrix::created() const
 {
   return m_ij_mat != nullptr;
@@ -354,18 +443,35 @@ void HypreMatrix::set( globalIndex const rowIndex,
                                                   values ) );
 }
 
-void HypreMatrix::insert( globalIndex const rowIndex,
+void HypreMatrix::insert( globalIndex const rowIndex0,
                           globalIndex const * colIndices,
                           real64 const * values,
                           localIndex size )
 {
   GEOSX_LAI_ASSERT( insertable() );
 
-  HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( size );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  array1d< globalIndex > rowIndexDevice( 1 );
+  array1d< HYPRE_Int > ncolsDevice( 1 );
+
+  rowIndexDevice[0] = rowIndex0;
+  ncolsDevice[0] = LvArray::integerConversion< HYPRE_Int >( size );
+
+  rowIndexDevice.move( LvArray::MemorySpace::GPU, false );
+  ncolsDevice.move( LvArray::MemorySpace::GPU, false );
+
+  globalIndex const * const rowIndex = rowIndexDevice.data();
+  HYPRE_Int * const ncols = ncolsDevice.data();
+#else
+  globalIndex const * const rowIndex = &rowIndex0;
+  HYPRE_Int hypreSize = size;
+  HYPRE_Int * const ncols = &hypreSize;
+#endif
+
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                     1,
-                                                    &ncols,
-                                                    toHYPRE_BigInt( &rowIndex ),
+                                                    ncols,
+                                                    rowIndex,
                                                     toHYPRE_BigInt( colIndices ),
                                                     values ) );
 }
@@ -1214,7 +1320,11 @@ void HypreMatrix::print( std::ostream & os ) const
         {
 
           sprintf( str,
-                   "%11i%20lli%20lli%24.10e\n",
+#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+                   "%i%20i%20i%24.10e\n",
+#else
+                   "%i%20lli%20lli%24.10e\n",
+#endif
                    iRank,
                    firstRowID + LvArray::integerConversion< globalIndex >( i ),
                    firstDiagColID + LvArray::integerConversion< globalIndex >( diag_JA[j] ),
@@ -1224,7 +1334,11 @@ void HypreMatrix::print( std::ostream & os ) const
         for( HYPRE_Int j = offdiag_IA[i]; j < offdiag_IA[i + 1]; ++j )
         {
           sprintf( str,
-                   "%11i%20lli%20lli%24.10e\n",
+#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+                   "%i%20i%20i%24.10e\n",
+#else
+                   "%i%20lli%20lli%24.10e\n",
+#endif
                    iRank,
                    firstRowID + LvArray::integerConversion< globalIndex >( i ),
                    col_map_offdiag[ offdiag_JA[j] ],

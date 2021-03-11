@@ -122,7 +122,7 @@ void PackCollection::filterGhostIndices( localIndex const setIndex,
 ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & domain )
 {
   dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  string_array const targetTokens = stringutilities::Tokenize( m_objectPath, "/" );
+  string_array const targetTokens = stringutilities::tokenize( m_objectPath, "/" );
   localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
   for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )

@@ -54,8 +54,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   bool const freshInit = ( m_recordCount == 0 );
 
   string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
-  makeDirsForPath( outputDirectory );
-  string const outputFile = outputDirectory + "/" + m_filename;
+  string const outputFile = joinPath( outputDirectory, m_filename );
 
   // rank == 0 do time output for the collector
   for( localIndex ii = 0; ii < collector.getCollectionCount( ); ++ii )
@@ -107,8 +106,12 @@ void TimeHistoryOutput::initializePostSubGroups()
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
     string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
-    makeDirsForPath( outputDirectory );
-    string const outputFile = outputDirectory + "/" + m_filename;
+    if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+    {
+      makeDirsForPath( outputDirectory );
+    }
+    MpiWrapper::barrier( MPI_COMM_GEOSX );
+    string const outputFile = joinPath( outputDirectory, m_filename );
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
 

@@ -131,17 +131,17 @@ public:
    */
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
-    /// String key for the constitutive point volume fraction
+    /// @return String key for the constitutive point volume fraction
     static constexpr char const * constitutivePointVolumeFractionString() { return "ConstitutivePointVolumeFraction"; }
-    /// String key for the derivatives of the shape functions with respect to the reference configuration
+    /// @return String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr char const * dNdXString() { return "dNdX"; }
-    /// String key for the derivative of the jacobian.
+    /// @return String key for the derivative of the jacobian.
     static constexpr char const * detJString() { return "detJ"; }
-    /// String key for the constitutive grouping
+    /// @return String key for the constitutive grouping
     static constexpr char const * constitutiveGroupingString() { return "ConstitutiveGrouping"; }
-    /// String key for the constitutive map
+    /// @return String key for the constitutive map
     static constexpr char const * constitutiveMapString() { return "ConstitutiveMap"; }
-    /// String key to embSurfMap
+    /// @return String key to embSurfMap
     static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
