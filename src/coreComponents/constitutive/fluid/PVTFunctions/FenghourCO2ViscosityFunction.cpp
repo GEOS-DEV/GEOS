@@ -18,6 +18,7 @@
 
 #include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
@@ -43,9 +44,6 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( array1d< string > const & inputPara,
 
 void FenghourCO2Viscosity::makeTable( array1d< string > const & inputPara )
 {
-  array1d< array1d< real64 > > coordinates;
-  coordinates.resize( 2 );
-
   real64 TStart = -1.0;
   real64 TEnd = -1.0;
   real64 dT = -1.0;
@@ -70,25 +68,26 @@ void FenghourCO2Viscosity::makeTable( array1d< string > const & inputPara )
     GEOSX_ERROR( "Invalid FenghourCO2Viscosity argument:" + string( e.what()) );
   }
 
+  PTTableCoordinates tableCoords;
   for( real64 P = PStart; P <= PEnd; P += dP )
   {
-    coordinates[0].emplace_back( P );
+    tableCoords.appendPressure( P );
   }
   for( real64 T = TStart; T <= TEnd; T += dT )
   {
-    coordinates[1].emplace_back( T );
+    tableCoords.appendTemperature( T );
   }
 
-  localIndex nP = coordinates[0].size();
-  localIndex nT = coordinates[1].size();
+  localIndex const nP = tableCoords.nPressures();
+  localIndex const nT = tableCoords.nTemperatures();
   array1d< real64 > density( nP * nT );
   array1d< real64 > viscosity( nP * nT );
-  SpanWagnerCO2Density::calculateCO2Density( coordinates, density );
-  calculateCO2Viscosity( coordinates, density, viscosity );
+  SpanWagnerCO2Density::calculateCO2Density( tableCoords.get(), density );
+  calculateCO2Viscosity( tableCoords.get(), density, viscosity );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_CO2ViscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
-  m_CO2ViscosityTable->setTableCoordinates( coordinates );
+  m_CO2ViscosityTable->setTableCoordinates( tableCoords.get() );
   m_CO2ViscosityTable->setTableValues( viscosity );
   m_CO2ViscosityTable->reInitializeFunction();
   m_CO2ViscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );

@@ -139,46 +139,31 @@ CO2Solubility::CO2Solubility( array1d< string > const & inputPara,
   GEOSX_ERROR_IF( phaseNames.size() != 2, "The CO2Solubility model is a two-phase model" );
   GEOSX_ERROR_IF( componentNames.size() != 2, "The CO2Solubility model is a two-component model" );
 
-  array1d< string > expectedCO2ComponentNames;
-  expectedCO2ComponentNames.resize( 2 );
-  expectedCO2ComponentNames[0] = "CO2";
-  expectedCO2ComponentNames[1] = "co2";
-  bool found = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, m_CO2Index );
-  GEOSX_ERROR_IF( !found, "Component CO2 is not found!" );
+  std::vector< string > const expectedCO2ComponentNames( { "CO2", "co2" } );
+  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
+  GEOSX_ERROR_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(), "Component CO2 is not found!" );
 
-  array1d< string > expectedWaterComponentNames;
-  expectedWaterComponentNames.resize( 2 );
-  expectedWaterComponentNames[0] = "Water";
-  expectedWaterComponentNames[1] = "water";
-  found = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, m_waterIndex );
-  GEOSX_ERROR_IF( !found, "Component Water/Brine is not found!" );
+  std::vector< string > const expectedWaterComponentNames( { "Water", "water" } );
+  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
+  GEOSX_ERROR_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(), "Component Water/Brine is not found!" );
 
-  array1d< string > expectedGasPhaseNames;
-  expectedGasPhaseNames.resize( 4 );
-  expectedGasPhaseNames[0] = "CO2";
-  expectedGasPhaseNames[1] = "co2";
-  expectedGasPhaseNames[2] = "gas";
-  expectedGasPhaseNames[3] = "Gas";
-  found = PVTFunctionHelpers::findName( phaseNames, expectedGasPhaseNames, m_phaseGasIndex );
-  GEOSX_ERROR_IF( !found, "Phase co2/gas is not found!" );
+  std::vector< string > const expectedGasPhaseNames( { "CO2", "co2", "gas", "Gas" } );
+  m_phaseGasIndex = PVTFunctionHelpers::findName( phaseNames,
+                                                  expectedGasPhaseNames );
+  GEOSX_ERROR_IF( m_phaseGasIndex < 0 || m_phaseGasIndex >= phaseNames.size(),
+                  "Phase co2/gas is not found!" );
 
-  array1d< string > expectedWaterPhaseNames;
-  expectedWaterPhaseNames.resize( 4 );
-  expectedWaterPhaseNames[0] = "Water";
-  expectedWaterPhaseNames[1] = "water";
-  expectedWaterPhaseNames[2] = "Liquid";
-  expectedWaterPhaseNames[3] = "liquid";
-  found = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, m_phaseLiquidIndex );
-  GEOSX_ERROR_IF( !found, "Phase water/liquid is not found!" );
+  std::vector< string > const expectedWaterPhaseNames( { "Water", "water", "Liquid", "liquid" } );
+  m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames,
+                                                     expectedWaterPhaseNames );
+  GEOSX_ERROR_IF( m_phaseLiquidIndex < 0 || m_phaseLiquidIndex >= phaseNames.size(),
+                  "Phase water/liquid is not found!" );
 
   makeTable( inputPara );
 }
 
 void CO2Solubility::makeTable( array1d< string > const & inputPara )
 {
-  array1d< array1d< real64 > > coordinates;
-  coordinates.resize( 2 );
-
   real64 TStart = -1.0;
   real64 TEnd = -1.0;
   real64 dT = -1.0;
@@ -206,23 +191,22 @@ void CO2Solubility::makeTable( array1d< string > const & inputPara )
     GEOSX_ERROR( "Invalid CO2Solubility argument:" + string( e.what()) );
   }
 
+  PTTableCoordinates tableCoords;
   for( real64 P = PStart; P <= PEnd; P += dP )
   {
-    coordinates[0].emplace_back( P );
+    tableCoords.appendPressure( P );
   }
   for( real64 T = TStart; T <= TEnd; T += dT )
   {
-    coordinates[1].emplace_back( T );
+    tableCoords.appendTemperature( T );
   }
 
-  localIndex const nP = coordinates[0].size();
-  localIndex const nT = coordinates[1].size();
-  array1d< real64 > values( nP * nT );
-  calculateCO2Solubility( coordinates, salinity, values );
+  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
+  calculateCO2Solubility( tableCoords.get(), salinity, values );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_CO2SolubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
-  m_CO2SolubilityTable->setTableCoordinates( coordinates );
+  m_CO2SolubilityTable->setTableCoordinates( tableCoords.get() );
   m_CO2SolubilityTable->setTableValues( values );
   m_CO2SolubilityTable->reInitializeFunction();
   m_CO2SolubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );

@@ -147,21 +147,15 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( array1d< string > const & inputPara,
                    componentNames,
                    componentMolarWeight )
 {
-  array1d< string > expectedCO2ComponentNames;
-  expectedCO2ComponentNames.resize( 2 );
-  expectedCO2ComponentNames[0] = "CO2";
-  expectedCO2ComponentNames[1] = "co2";
-  bool found = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, m_CO2Index );
-  GEOSX_ERROR_IF( !found, "Component CO2 is not found!" );
+  std::vector< string > const expectedCO2ComponentNames( { "CO2", "co2" } );
+  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
+  GEOSX_ERROR_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(), "Component CO2 is not found!" );
 
   makeTable( inputPara );
 }
 
 void SpanWagnerCO2Density::makeTable( array1d< string > const & inputPara )
 {
-  array1d< array1d< real64 > > coordinates;
-  coordinates.resize( 2 );
-
   real64 TStart = -1.0;
   real64 TEnd = -1.0;
   real64 dT = -1.0;
@@ -186,23 +180,24 @@ void SpanWagnerCO2Density::makeTable( array1d< string > const & inputPara )
     GEOSX_ERROR( "Invalid SpanWagnerCO2Density argument:" + string( e.what()) );
   }
 
+  PTTableCoordinates tableCoords;
   for( real64 P = PStart; P <= PEnd; P += dP )
   {
-    coordinates[0].emplace_back( P );
+    tableCoords.appendPressure( P );
   }
   for( real64 T = TStart; T <= TEnd; T += dT )
   {
-    coordinates[1].emplace_back( T );
+    tableCoords.appendTemperature( T );
   }
 
-  localIndex const nP = coordinates[0].size();
-  localIndex const nT = coordinates[1].size();
+  localIndex const nP = tableCoords.nPressures();
+  localIndex const nT = tableCoords.nTemperatures();
   array1d< real64 > values( nP * nT );
-  calculateCO2Density( coordinates, values );
+  calculateCO2Density( tableCoords.get(), values );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_CO2DensityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
-  m_CO2DensityTable->setTableCoordinates( coordinates );
+  m_CO2DensityTable->setTableCoordinates( tableCoords.get() );
   m_CO2DensityTable->setTableValues( values );
   m_CO2DensityTable->reInitializeFunction();
   m_CO2DensityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );

@@ -35,30 +35,38 @@ struct PVTFunctionHelpers
    * @brief Look for the expectedNames in the names provided by the user
    * @param[in] inputNames phase or component names provided by the user
    * @param[in] expectedNames expected names that can be accepted by GEOSX
-   * @param[inout] id the index of the phase or component that was found
-   * @return true is an expectedName was found in the inputNames, false otherwise
+   * @return the index of the phase or component that was found
    */
-  static bool
-  findName( array1d< string > const & inputNames,
-            array1d< string > const & expectedNames,
-            localIndex & id )
+  template< typename InputRange, typename ExpectedRange >
+  static localIndex
+  findName( InputRange const & inputNames,
+            ExpectedRange const & expectedNames )
   {
-    id = -1;
-    for( localIndex i = 0; i < inputNames.size(); ++i )
-    {
-      string const input = inputNames[i];
-      for( localIndex j = 0; j < expectedNames.size(); ++j )
-      {
-        if( input == expectedNames[j] )
-        {
-          id = i;
-          return true;
-        }
-      }
-    }
-    return false;
+    using std::begin;
+    using std::end;
+    auto it = std::find_first_of( begin( inputNames ), end( inputNames ), begin( expectedNames ), end( expectedNames ) );
+    localIndex const id = std::distance( begin( inputNames ), it );
+    return id;
   }
 
+};
+
+class PTTableCoordinates
+{
+public:
+  PTTableCoordinates()
+  { coords.resize( 2 ); }
+
+  localIndex nPressures() const { return coords[0].size(); }
+  localIndex nTemperatures() const { return coords[1].size(); }
+
+  void appendPressure( const real64 & pres ) { coords[0].emplace_back( pres ); }
+  void appendTemperature( const real64 & temp ) { coords[1].emplace_back( temp ); }
+
+  array1d< array1d< real64 > > const & get() const { return coords; }
+
+private:
+  array1d< array1d< real64 > > coords;
 };
 
 } // namespace PVTProps

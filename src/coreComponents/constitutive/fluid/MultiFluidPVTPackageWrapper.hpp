@@ -165,7 +165,9 @@ public:
                        real64 const temperature,
                        arraySlice1d< real64 const > const & composition ) const override
   {
-#ifndef __CUDACC__
+#ifdef __CUDACC__
+    GEOSX_ERROR( "This function cannot be used on GPU" );
+#else
     compute( pressure,
              temperature,
              composition,

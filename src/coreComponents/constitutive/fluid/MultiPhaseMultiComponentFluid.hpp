@@ -38,17 +38,22 @@ namespace constitutive
 /**
  * @brief Kernel wrapper class for MultiPhaseMultiComponentFluid.
  */
+template< typename BRINEVISCWRAPPER,
+          typename CO2VISCWRAPPER,
+          typename BRINEDENSWRAPPER,
+          typename CO2DENSWRAPPER,
+          typename FLASHWRAPPER >
 class MultiPhaseMultiComponentFluidUpdate final : public MultiFluidBaseUpdate
 {
 public:
 
   MultiPhaseMultiComponentFluidUpdate( localIndex const phaseGasIndex,
                                        localIndex const phaseLiquidIndex,
-                                       arrayView1d< PVTProps::BrineViscosity::KernelWrapper const > const & brineViscosityWrapper,
-                                       arrayView1d< PVTProps::FenghourCO2Viscosity::KernelWrapper const > const & co2ViscosityWrapper,
-                                       arrayView1d< PVTProps::BrineCO2Density::KernelWrapper const > const & brineDensityWrapper,
-                                       arrayView1d< PVTProps::SpanWagnerCO2Density::KernelWrapper const > const & co2DensityWrapper,
-                                       arrayView1d< PVTProps::CO2Solubility::KernelWrapper const > const & co2SolubilityWrapper,
+                                       arrayView1d< BRINEVISCWRAPPER const > const & brineViscosityWrapper,
+                                       arrayView1d< CO2VISCWRAPPER const > const & co2ViscosityWrapper,
+                                       arrayView1d< BRINEDENSWRAPPER const > const & brineDensityWrapper,
+                                       arrayView1d< CO2DENSWRAPPER const > const & co2DensityWrapper,
+                                       arrayView1d< FLASHWRAPPER const > const & co2SolubilityWrapper,
                                        arrayView1d< real64 const > const & componentMolarWeight,
                                        bool useMass,
                                        arrayView3d< real64 > const & phaseFraction,
@@ -210,19 +215,19 @@ private:
   localIndex const m_phaseLiquidIndex;
 
   /// Kernel wrapper for brine viscosity updates
-  arrayView1d< PVTProps::BrineViscosity::KernelWrapper const > const m_brineViscosityWrapper;
+  arrayView1d< BRINEVISCWRAPPER const > const m_brineViscosityWrapper;
 
   /// Kernel wrapper for CO2 viscosity updates
-  arrayView1d< PVTProps::FenghourCO2Viscosity::KernelWrapper const > const m_co2ViscosityWrapper;
+  arrayView1d< CO2VISCWRAPPER const > const m_co2ViscosityWrapper;
 
   /// Kernel wrapper for brine density updates
-  arrayView1d< PVTProps::BrineCO2Density::KernelWrapper const > const m_brineDensityWrapper;
+  arrayView1d< BRINEDENSWRAPPER const > const m_brineDensityWrapper;
 
   /// Kernel wrapper for CO2 density updates
-  arrayView1d< PVTProps::SpanWagnerCO2Density::KernelWrapper const > const m_co2DensityWrapper;
+  arrayView1d< CO2DENSWRAPPER const > const m_co2DensityWrapper;
 
   /// Kernel wrapper for phase fraction and phase component fraction updates
-  arrayView1d< PVTProps::CO2Solubility::KernelWrapper const > const m_co2SolubilityWrapper;
+  arrayView1d< FLASHWRAPPER const > const m_co2SolubilityWrapper;
 };
 
 class MultiPhaseMultiComponentFluid : public MultiFluidBase
@@ -245,7 +250,11 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = MultiPhaseMultiComponentFluidUpdate;
+  using KernelWrapper = MultiPhaseMultiComponentFluidUpdate< PVTProps::BrineViscosity::KernelWrapper,
+                                                             PVTProps::FenghourCO2Viscosity::KernelWrapper,
+                                                             PVTProps::BrineCO2Density::KernelWrapper,
+                                                             PVTProps::SpanWagnerCO2Density::KernelWrapper,
+                                                             PVTProps::CO2Solubility::KernelWrapper >;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -351,17 +360,18 @@ private:
 
 };
 
+template<>
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void MultiPhaseMultiComponentFluidUpdate::compute( real64 pressure,
-                                                   real64 temperature,
-                                                   arraySlice1d< real64 const > const & composition,
-                                                   arraySlice1d< real64 > const & phaseFraction,
-                                                   arraySlice1d< real64 > const & phaseDensity,
-                                                   arraySlice1d< real64 > const & phaseMassDensity,
-                                                   arraySlice1d< real64 > const & phaseViscosity,
-                                                   arraySlice2d< real64 > const & phaseCompFraction,
-                                                   real64 & totalDensity ) const
+void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
+                                                            real64 temperature,
+                                                            arraySlice1d< real64 const > const & composition,
+                                                            arraySlice1d< real64 > const & phaseFraction,
+                                                            arraySlice1d< real64 > const & phaseDensity,
+                                                            arraySlice1d< real64 > const & phaseMassDensity,
+                                                            arraySlice1d< real64 > const & phaseViscosity,
+                                                            arraySlice2d< real64 > const & phaseCompFraction,
+                                                            real64 & totalDensity ) const
 {
   constexpr localIndex numComps = 2;
   constexpr localIndex numPhases = 2;
@@ -538,35 +548,36 @@ void MultiPhaseMultiComponentFluidUpdate::compute( real64 pressure,
   }
 }
 
+template<>
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void MultiPhaseMultiComponentFluidUpdate::compute( real64 pressure,
-                                                   real64 temperature,
-                                                   arraySlice1d< real64 const > const & composition,
-                                                   arraySlice1d< real64 > const & phaseFraction,
-                                                   arraySlice1d< real64 > const & dPhaseFraction_dPressure,
-                                                   arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
-                                                   arraySlice2d< real64 > const & dPhaseFraction_dGlobalCompFraction,
-                                                   arraySlice1d< real64 > const & phaseDensity,
-                                                   arraySlice1d< real64 > const & dPhaseDensity_dPressure,
-                                                   arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
-                                                   arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
-                                                   arraySlice1d< real64 > const & phaseMassDensity,
-                                                   arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
-                                                   arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
-                                                   arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
-                                                   arraySlice1d< real64 > const & phaseViscosity,
-                                                   arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
-                                                   arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
-                                                   arraySlice2d< real64 > const & dPhaseViscosity_dGlobalCompFraction,
-                                                   arraySlice2d< real64 > const & phaseCompFraction,
-                                                   arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
-                                                   arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
-                                                   arraySlice3d< real64 > const & dPhaseCompFraction_dGlobalCompFraction,
-                                                   real64 & totalDensity,
-                                                   real64 & dTotalDensity_dPressure,
-                                                   real64 & dTotalDensity_dTemperature,
-                                                   arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
+void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
+                                                            real64 temperature,
+                                                            arraySlice1d< real64 const > const & composition,
+                                                            arraySlice1d< real64 > const & phaseFraction,
+                                                            arraySlice1d< real64 > const & dPhaseFraction_dPressure,
+                                                            arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
+                                                            arraySlice2d< real64 > const & dPhaseFraction_dGlobalCompFraction,
+                                                            arraySlice1d< real64 > const & phaseDensity,
+                                                            arraySlice1d< real64 > const & dPhaseDensity_dPressure,
+                                                            arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
+                                                            arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                                                            arraySlice1d< real64 > const & phaseMassDensity,
+                                                            arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
+                                                            arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
+                                                            arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
+                                                            arraySlice1d< real64 > const & phaseViscosity,
+                                                            arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
+                                                            arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
+                                                            arraySlice2d< real64 > const & dPhaseViscosity_dGlobalCompFraction,
+                                                            arraySlice2d< real64 > const & phaseCompFraction,
+                                                            arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
+                                                            arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
+                                                            arraySlice3d< real64 > const & dPhaseCompFraction_dGlobalCompFraction,
+                                                            real64 & totalDensity,
+                                                            real64 & dTotalDensity_dPressure,
+                                                            real64 & dTotalDensity_dTemperature,
+                                                            arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
 {
   // 0. make shortcut structs to avoid long names (TODO maybe remove)
   CompositionalVarContainer< 1 > phaseFrac {

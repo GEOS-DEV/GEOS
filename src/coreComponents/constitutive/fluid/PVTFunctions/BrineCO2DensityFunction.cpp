@@ -40,28 +40,19 @@ BrineCO2Density::BrineCO2Density( array1d< string > const & inputPara,
                    componentNames,
                    componentMolarWeight )
 {
-  array1d< string > expectedCO2ComponentNames;
-  expectedCO2ComponentNames.resize( 2 );
-  expectedCO2ComponentNames[0] = "CO2";
-  expectedCO2ComponentNames[1] = "co2";
-  bool found = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, m_CO2Index );
-  GEOSX_ERROR_IF( !found, "Component CO2 is not found!" );
+  std::vector< string > const expectedCO2ComponentNames( { "CO2", "co2" } );
+  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
+  GEOSX_ERROR_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(), "Component CO2 is not found!" );
 
-  array1d< string > expectedWaterComponentNames;
-  expectedWaterComponentNames.resize( 2 );
-  expectedWaterComponentNames[0] = "Water";
-  expectedWaterComponentNames[1] = "water";
-  found = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, m_waterIndex );
-  GEOSX_ERROR_IF( !found, "Component Water/Brine is not found!" );
+  std::vector< string > const expectedWaterComponentNames( { "Water", "water" } );
+  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
+  GEOSX_ERROR_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(), "Component Water/Brine is not found!" );
 
   makeTable( inputPara );
 }
 
 void BrineCO2Density::makeTable( array1d< string > const & inputPara )
 {
-  array1d< array1d< real64 > > coordinates;
-  coordinates.resize( 2 );
-
   real64 TStart = -1.0;
   real64 TEnd = -1.0;
   real64 dT = -1.0;
@@ -89,24 +80,22 @@ void BrineCO2Density::makeTable( array1d< string > const & inputPara )
     GEOSX_ERROR( "Invalid BrineCO2Density argument:" + string( e.what()) );
   }
 
+  PTTableCoordinates tableCoords;
   for( real64 P = PStart; P <= PEnd; P += dP )
   {
-    coordinates[0].emplace_back( P );
+    tableCoords.appendPressure( P );
   }
   for( real64 T = TStart; T <= TEnd; T += dT )
   {
-    coordinates[1].emplace_back( T );
+    tableCoords.appendTemperature( T );
   }
 
-  localIndex const nP = coordinates[0].size();
-  localIndex const nT = coordinates[1].size();
-
-  array1d< real64 > values( nP * nT );
-  calculateBrineDensity( coordinates, salinity, values );
+  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
+  calculateBrineDensity( tableCoords.get(), salinity, values );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_brineDensityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "brineDensityTable" ) );
-  m_brineDensityTable->setTableCoordinates( coordinates );
+  m_brineDensityTable->setTableCoordinates( tableCoords.get() );
   m_brineDensityTable->setTableValues( values );
   m_brineDensityTable->reInitializeFunction();
   m_brineDensityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
