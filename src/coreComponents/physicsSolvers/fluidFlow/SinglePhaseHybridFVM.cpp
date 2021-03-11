@@ -517,8 +517,8 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
-  forTargetSubRegions<CellElementSubRegion>( mesh, [&]( localIndex const targetIndex,
-                                                        CellElementSubRegion & subRegion )
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
   {
     updateState( subRegion, targetIndex );
   } );

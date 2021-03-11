@@ -447,7 +447,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
 
   localIndex const NC = m_numComponents;
 
-  forTargetSubRegions<CellElementSubRegion, SurfaceElementSubRegion>( mesh, [&]( localIndex const targetIndex, auto & subRegion )
+  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
   {
     // 1. Assume global component fractions have been prescribed.
     // Initialize constitutive state to get fluid density.
@@ -546,7 +546,7 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh ) const
     arrayView3d< real64 const > const phaseDens = fluid.phaseDensity();
     arrayView4d< real64 const > const phaseCompFrac = fluid.phaseCompFraction();
 
-    PorosityBase & porosityModel = getConstitutiveModel<PorosityBase>(subRegion, m_porosityModelNames[targetIndex] );
+    PorosityBase & porosityModel = getConstitutiveModel< PorosityBase >( subRegion, m_porosityModelNames[targetIndex] );
     arrayView2d< real64 const > const & poro = porosityModel.getPorosity();
     arrayView2d< real64 > const & poroOld = porosityModel.getPorosityOld();
 
@@ -659,7 +659,7 @@ void CompositionalMultiphaseBase::accumulationLaunch( localIndex const targetInd
   arrayView3d< real64 const > const & phaseCompFracOld =
     subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString() );
 
-  PorosityBase const & porosityModel = getConstitutiveModel<PorosityBase>( subRegion, m_porosityModelNames[targetIndex] );
+  PorosityBase const & porosityModel = getConstitutiveModel< PorosityBase >( subRegion, m_porosityModelNames[targetIndex] );
 
   arrayView2d< real64 const > const & porosity    = porosityModel.getPorosity();
   arrayView2d< real64 const > const & porosityOld = porosityModel.getPorosityOld();
@@ -808,11 +808,11 @@ void CompositionalMultiphaseBase::assembleVolumeBalanceTerms( DomainPartition co
     arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
 
-    PorosityBase const & porosityModel = getConstitutiveModel<PorosityBase>( subRegion, m_porosityModelNames[targetIndex] );
+    PorosityBase const & porosityModel = getConstitutiveModel< PorosityBase >( subRegion, m_porosityModelNames[targetIndex] );
     arrayView2d< real64 const > const & porosity =
-        porosityModel.getPorosity();
+      porosityModel.getPorosity();
     arrayView2d< real64 const > const & dPoro_dPres =
-        porosityModel.dPorosity_dPressure();
+      porosityModel.dPorosity_dPressure();
 
     KernelLaunchSelector2< VolumeBalanceKernel >( m_numComponents, m_numPhases,
                                                   subRegion.size(),
@@ -1108,7 +1108,7 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  forTargetSubRegions<CellElementSubRegion, SurfaceElementSubRegion>( mesh, [&]( localIndex const targetIndex, auto & subRegion )
+  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
   {
     arrayView1d< real64 > const & dPres =
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );

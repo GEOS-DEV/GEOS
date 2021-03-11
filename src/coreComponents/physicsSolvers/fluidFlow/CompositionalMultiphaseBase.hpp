@@ -168,7 +168,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  template<typename SUBREGIONTYPE>
+  template< typename SUBREGIONTYPE >
   void updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const;
 
   /**

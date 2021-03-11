@@ -52,13 +52,13 @@ void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & par
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   std::cout << "I want to make sure the size is already ..." << parent.size() << std::endl;
-  for ( localIndex ei=0; ei < parent.size(); ei++ )
+  for( localIndex ei=0; ei < parent.size(); ei++ )
   {
-    for (localIndex q=0; q < numConstitutivePointsPerParentIndex; q++)
+    for( localIndex q=0; q < numConstitutivePointsPerParentIndex; q++ )
     {
-       m_permeability[ei][q][0] =  m_permeabilityComponents[0];
-       m_permeability[ei][q][1] =  m_permeabilityComponents[1];
-       m_permeability[ei][q][2] =  m_permeabilityComponents[2];
+      m_permeability[ei][q][0] =  m_permeabilityComponents[0];
+      m_permeability[ei][q][1] =  m_permeabilityComponents[1];
+      m_permeability[ei][q][2] =  m_permeabilityComponents[2];
     }
   }
 }

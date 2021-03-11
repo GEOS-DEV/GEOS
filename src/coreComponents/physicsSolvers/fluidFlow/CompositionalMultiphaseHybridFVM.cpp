@@ -822,8 +822,8 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
 
   // 4. update secondary variables
 
-  forTargetSubRegions<CellElementSubRegion>( mesh, [&]( localIndex const targetIndex,
-                                                        CellElementSubRegion & subRegion )
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
   {
     updateState( subRegion, targetIndex );
   } );

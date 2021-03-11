@@ -53,9 +53,9 @@ public:
                localIndex const q,
                real64 const & porosity ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(porosity);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( porosity );
   }
 
 private:

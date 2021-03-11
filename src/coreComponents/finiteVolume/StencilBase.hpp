@@ -30,16 +30,15 @@ template< typename LEAFCLASSTRAITS >
 class StencilWrapperBase
 {
 public:
-  StencilWrapperBase( typename LEAFCLASSTRAITS::IndexContainerType &  elementRegionIndices,
+  StencilWrapperBase( typename LEAFCLASSTRAITS::IndexContainerType & elementRegionIndices,
                       typename LEAFCLASSTRAITS::IndexContainerType & elementSubRegionIndices,
                       typename LEAFCLASSTRAITS::IndexContainerType & elementIndices,
                       typename LEAFCLASSTRAITS::WeightContainerType & weights ):
-  m_elementRegionIndices( elementRegionIndices.toViewConst() ),
-  m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
-  m_elementIndices( elementIndices.toViewConst() ),
-  m_weights( weights.toViewConst() )
-  {
-  };
+    m_elementRegionIndices( elementRegionIndices.toViewConst() ),
+    m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
+    m_elementIndices( elementIndices.toViewConst() ),
+    m_weights( weights.toViewConst() )
+  {};
 
   /// Default copy constructor
   StencilWrapperBase( StencilWrapperBase const & ) = default;
@@ -89,17 +88,17 @@ public:
 
 
   /**
-    * @brief Give the number of stencil entries.
-    * @return The number of stencil entries
-    */
-   virtual localIndex size() const = 0;
+   * @brief Give the number of stencil entries.
+   * @return The number of stencil entries
+   */
+  virtual localIndex size() const = 0;
 
 protected:
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType  m_elementRegionIndices;
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementRegionIndices;
 
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType  m_elementSubRegionIndices;
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementSubRegionIndices;
 
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType  m_elementIndices;
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementIndices;
 
   typename LEAFCLASSTRAITS::WeightContainerViewConstType m_weights;
 

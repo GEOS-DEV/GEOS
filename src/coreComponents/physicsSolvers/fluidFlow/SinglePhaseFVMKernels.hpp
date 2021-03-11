@@ -64,24 +64,24 @@ struct FluxKernel
    */
   template< typename STENCILWRAPPER_TYPE >
   static void
-    launch( STENCILWRAPPER_TYPE const & stencilWrapper,
-            real64 const dt,
-            globalIndex const rankOffset,
-            ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
-            ElementViewConst< arrayView1d< integer const > > const & ghostRank,
-            ElementViewConst< arrayView1d< real64 const > > const & pres,
-            ElementViewConst< arrayView1d< real64 const > > const & dPres,
-            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-            ElementViewConst< arrayView2d< real64 const > > const & dens,
-            ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-            ElementViewConst< arrayView1d< real64 const > > const & mob,
-            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-            ElementViewConst< arrayView3d< real64 const > > const & permeability,
-            ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-            ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(transTMultiplier),
-            R1Tensor const & GEOSX_UNUSED_PARAM ( gravityVector ),
-            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-            arrayView1d< real64 > const & localRhs )
+  launch( STENCILWRAPPER_TYPE const & stencilWrapper,
+          real64 const dt,
+          globalIndex const rankOffset,
+          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+          ElementViewConst< arrayView1d< real64 const > > const & pres,
+          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const > > const & dens,
+          ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & mob,
+          ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+          R1Tensor const & GEOSX_UNUSED_PARAM ( gravityVector ),
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs )
   {
     constexpr localIndex maxNumFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
     constexpr localIndex numFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
@@ -102,7 +102,7 @@ struct FluxKernel
       // compute transmissibility
       real64 transmissiblity[2], dTrans_dPres[2];
       stencilWrapper.computeTransmissibility( iconn, permeability, transmissiblity );
-      stencilWrapper.dTrans_dPressure( iconn, dPerm_dPres,  dTrans_dPres );
+      stencilWrapper.dTrans_dPressure( iconn, dPerm_dPres, dTrans_dPres );
 
       compute( stencilSize,
                seri[iconn],
@@ -143,7 +143,7 @@ struct FluxKernel
                                                                             stencilSize );
         }
       }
-   } );
+    } );
   }
 
   /**
@@ -157,8 +157,8 @@ struct FluxKernel
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (& transmissibility)[2],
-           real64 const (& dTrans_dPres)[2],
+           real64 const (&transmissibility)[2],
+           real64 const (&dTrans_dPres)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,

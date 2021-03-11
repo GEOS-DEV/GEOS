@@ -30,12 +30,19 @@ PressureDependentPorosity::PressureDependentPorosity( string const & name, Group
   PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "Solid compressibility" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Solid compressibility" );
 
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "Reference pressure for fluid compressibility" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Reference pressure for fluid compressibility" );
+
+  registerWrapper( viewKeyStruct::defaultRefererencePorosityString(), &m_defaultReferencePorosity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value of the reference porosity" );
+
+  registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
+    setDefaultValue( m_defaultReferencePorosity );
 }
 
 PressureDependentPorosity::~PressureDependentPorosity() = default;

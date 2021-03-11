@@ -203,7 +203,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                                                    auto & subRegion )
+                                                                                   auto & subRegion )
   {
     ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
 
@@ -429,8 +429,8 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const density = fluidProps.dens;
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
-  PorosityBase const & porosityModel = getConstitutiveModel<PorosityBase>( subRegion,
-                                                                           m_porosityModelNames[targetIndex] );
+  PorosityBase const & porosityModel = getConstitutiveModel< PorosityBase >( subRegion,
+                                                                             m_porosityModelNames[targetIndex] );
 
   arrayView2d< real64 const > const & porosity    = porosityModel.getPorosity();
   arrayView2d< real64 const > const & porosityOld = porosityModel.getPorosityOld();
@@ -664,7 +664,7 @@ void SinglePhaseBase::backupFields( MeshLevel & mesh ) const
     ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & dens = getFluidProperties( fluid ).dens;
 
-    PorosityBase & porosityModel = getConstitutiveModel<PorosityBase>(subRegion, m_porosityModelNames[targetIndex] );
+    PorosityBase & porosityModel = getConstitutiveModel< PorosityBase >( subRegion, m_porosityModelNames[targetIndex] );
     arrayView2d< real64 const > const & poro = porosityModel.getPorosity();
     arrayView2d< real64 > const & poroOld = porosityModel.getPorosityOld();
 

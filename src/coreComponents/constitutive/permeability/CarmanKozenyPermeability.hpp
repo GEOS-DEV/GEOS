@@ -145,9 +145,9 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
                                               arraySlice1d< real64 > const & permeability,
                                               arraySlice1d< real64 > const & dPerm_dPorosity ) const
 {
-  real64 const permValue = pow( m_sphericity*m_particleDiameter, 2) * pow( porosity, 3 )
-      / (150 * pow( (1 - porosity), 2 ) );
-  real64 const dPerm_dPorValue = pow( m_sphericity*m_particleDiameter, 2) * pow( porosity, 3 );
+  real64 const permValue = pow( m_sphericity*m_particleDiameter, 2 ) * pow( porosity, 3 )
+                           / (150 * pow( (1 - porosity), 2 ) );
+  real64 const dPerm_dPorValue = pow( m_sphericity*m_particleDiameter, 2 ) * pow( porosity, 3 );
 
   for( localIndex i=0; i < permeability.size(); i++ )
   {

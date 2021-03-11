@@ -33,7 +33,7 @@ namespace FlowSolverBaseKernels
 /******************************** PorosityKernel ********************************/
 struct PorosityKernel
 {
-  template< typename POLICY, typename POROSITY_WRAPPER>
+  template< typename POLICY, typename POROSITY_WRAPPER >
   static void
   launch( localIndex const size,
           POROSITY_WRAPPER const & porWrapper,
@@ -42,10 +42,10 @@ struct PorosityKernel
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-     for( localIndex q = 0; q < porWrapper.numGauss(); ++q )
-     {
-       porWrapper.update( k, q, pres[k] + dPres[k] );
-     }
+      for( localIndex q = 0; q < porWrapper.numGauss(); ++q )
+      {
+        porWrapper.update( k, q, pres[k] + dPres[k] );
+      }
     } );
   }
 

@@ -28,12 +28,9 @@ namespace geosx
 namespace constitutive
 {
 
-template< ExponentApproximationType POR_EAT >
 class PressureDependentPorosityUpdate
 {
 public:
-
-  using PorRelationType = ExponentialRelation< real64, POR_EAT >;
 
   /**
    * @brief Get number of elements in this wrapper.
@@ -49,12 +46,16 @@ public:
   GEOSX_HOST_DEVICE
   localIndex numGauss() const { return m_porosity.size( 1 ); }
 
-  PressureDependentPorosityUpdate( PorRelationType const & porRelation,
-                                   arrayView2d< real64 > const & porosity,
-                                   arrayView2d< real64 > const & dPorosity_dPressure )
+  PressureDependentPorosityUpdate( arrayView2d< real64 > const & porosity,
+                                   arrayView2d< real64 > const & dPorosity_dPressure,
+                                   arrayView1d< real64 > const & referencePorosity,
+                                   real64 const & referencePressure,
+                                   real64 const & compressibility )
     : m_porosity( porosity ),
-      m_dPorosity_dPressure( dPorosity_dPressure ),
-      m_porRelation( porRelation )
+    m_dPorosity_dPressure( dPorosity_dPressure ),
+    m_referencePorosity( referencePorosity ),
+    m_referencePressure( referencePressure ),
+    m_compressibility ( compressibility )
   {}
 
   /// Default copy constructor
@@ -73,9 +74,12 @@ public:
   GEOSX_FORCE_INLINE
   void compute( real64 const & pressure,
                 real64 & porosity,
-                real64 & dPorosity_dPressure ) const
+                real64 & dPorosity_dPressure,
+                real64 const & referencePorosity ) const
   {
-    m_porRelation.compute( pressure, porosity, dPorosity_dPressure );
+
+    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
+    dPorosity_dPressure =  m_compressibility * porosity;
   }
 
   GEOSX_HOST_DEVICE
@@ -86,15 +90,22 @@ public:
   {
     compute( pressure,
              m_porosity[k][q],
-             m_dPorosity_dPressure[k][q] );
+             m_dPorosity_dPressure[k][q],
+             m_referencePorosity[k] );
   }
 
 private:
   arrayView2d< real64 > m_porosity;
 
+  arrayView2d< real64 > m_porosityOld;
+
   arrayView2d< real64 > m_dPorosity_dPressure;
 
-  PorRelationType m_porRelation;
+  arrayView1d< real64 > m_referencePorosity;
+
+  real64 m_referencePressure;
+
+  real64 m_compressibility;
 };
 
 
@@ -119,9 +130,11 @@ public:
   {
     static constexpr char const * compressibilityString() { return "compressibility"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
+    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
+    static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
   } viewKeys;
 
-  using KernelWrapper = PressureDependentPorosityUpdate< ExponentApproximationType::Linear >;
+  using KernelWrapper = PressureDependentPorosityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -129,11 +142,11 @@ public:
    */
   KernelWrapper createKernelWrapper()
   {
-      return KernelWrapper( KernelWrapper::PorRelationType( m_referencePressure,
-                                                            m_referencePorosity,
-                                                            m_compressibility ),
-                            m_porosity,
-                            m_dPorosity_dPressure );
+    return KernelWrapper( m_porosity,
+                          m_dPorosity_dPressure,
+                          m_referencePorosity,
+                          m_referencePressure,
+                          m_compressibility );
   }
 
 
@@ -142,7 +155,8 @@ protected:
 
   real64 m_referencePressure;
   real64 m_compressibility;
-
+  array1d< real64 > m_referencePorosity;
+  real64 m_defaultReferencePorosity;
 
 };
 

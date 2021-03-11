@@ -217,21 +217,21 @@ void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d<real64 const > const & pressure = subRegion.getReference< array1d<real64> >( viewKeyStruct::pressureString() );
-  arrayView1d<real64 const > const & deltaPressure = subRegion.getReference< array1d<real64> >( viewKeyStruct::deltaPressureString() );
+  arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+  arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
   // update porosity
   PressureDependentPorosity & porosityModel =
-     getConstitutiveModel< PressureDependentPorosity >( subRegion, m_porosityModelNames[targetIndex] );
+    getConstitutiveModel< PressureDependentPorosity >( subRegion, m_porosityModelNames[targetIndex] );
 
   PressureDependentPorosity::KernelWrapper porosityWrapper = porosityModel.createKernelWrapper();
 
-  PorosityKernel::launch<parallelDevicePolicy<>>( subRegion.size(),
-                                                  porosityWrapper,
-                                                  pressure,
-                                                  deltaPressure );
+  PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                    porosityWrapper,
+                                                    pressure,
+                                                    deltaPressure );
 
-  arrayView2d<real64 const > const & porosity = porosityModel.getPorosity();
+  arrayView2d< real64 const > const & porosity = porosityModel.getPorosity();
 
   PermeabilityBase & perm =
     getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );

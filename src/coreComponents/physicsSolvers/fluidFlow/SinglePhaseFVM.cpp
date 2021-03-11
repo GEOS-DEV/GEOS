@@ -162,8 +162,8 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
   //GEOSX_UNUSED_VAR(mesh)
-  this->template forTargetSubRegions<CellElementSubRegion, SurfaceElementSubRegion>( mesh, [&] ( localIndex const targetIndex,
-                                                                                        auto & subRegion )
+  this->template forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
+                                                                                                   auto & subRegion )
   {
     //GEOSX_UNUSED_VAR(targetIndex)
     //GEOSX_UNUSED_VAR(subRegion)
@@ -174,10 +174,10 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 template< typename BASE >
 void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
                                                 real64 const dt,
-                                                DomainPartition  & domain,
-                                                DofManager const & dofManager ,
+                                                DomainPartition & domain,
+                                                DofManager const & dofManager,
                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                arrayView1d< real64 > const &  localRhs )
+                                                arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -193,7 +193,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NumericalMethodsManager  & numericalMethodManager = domain.getNumericalMethodManager();
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
@@ -223,7 +223,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
                         m_transTMultiplier.toNestedViewConst(),
                         this->gravityVector(),
                         localMatrix,
-                        localRhs);
+                        localRhs );
   } );
 }
 

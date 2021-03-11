@@ -77,7 +77,7 @@ struct FaceElementStencil_Traits
 
 
 class FaceElementStencilWrapper : public StencilWrapperBase< FaceElementStencil_Traits >,
-   public FaceElementStencil_Traits
+  public FaceElementStencil_Traits
 {
 public:
   template< typename VIEWTYPE >
@@ -90,10 +90,8 @@ public:
                              IndexContainerType & elementIndices,
                              WeightContainerType & weights )
 
-  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights )
-  {
-
-  }
+    : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights )
+  {}
 
   /// Default copy constructor
   FaceElementStencilWrapper( FaceElementStencilWrapper const & ) = default;
@@ -117,12 +115,12 @@ public:
   template< typename PERMTYPE >
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
-                                real64 (& transmissibility)[2] ) const;
+                                real64 ( &transmissibility )[2] ) const;
 
   template< typename PERMTYPE >
   void dTrans_dPressure( localIndex iconn,
                          PERMTYPE dPerm_dPressure,
-                         real64 (&dTrans_dPressure )[2] ) const;
+                         real64 ( &dTrans_dPressure )[2] ) const;
 
 private:
 
@@ -235,7 +233,7 @@ void FaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
 template< typename PERMTYPE >
 void FaceElementStencilWrapper::dTrans_dPressure( localIndex iconn,
                                                   PERMTYPE dPerm_dPressure,
-                                                  real64 (&dTrans_dPressure )[2] ) const
+                                                  real64 (& dTrans_dPressure )[2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];

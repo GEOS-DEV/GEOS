@@ -333,9 +333,9 @@ void FluxApproximationBase::forAllStencils( MeshLevel & mesh, LAMBDA && lambda )
 }
 
 template< typename TYPE, typename ... TYPES, typename LAMBDA >
-void FluxApproximationBase::forStencils( MeshLevel  & mesh, LAMBDA && lambda )
+void FluxApproximationBase::forStencils( MeshLevel & mesh, LAMBDA && lambda )
 {
-  Group  & stencilGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ).getGroup( getName() );
+  Group & stencilGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ).getGroup( getName() );
   stencilGroup.forWrappers< TYPE, TYPES... >( [&] ( auto & wrapper )
   {
     lambda( wrapper.reference() );

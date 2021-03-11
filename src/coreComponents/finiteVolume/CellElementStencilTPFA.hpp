@@ -57,7 +57,7 @@ struct CellElementStencilTPFA_Traits
 };
 
 class CellElementStencilTPFAWrapper : public StencilWrapperBase< CellElementStencilTPFA_Traits >,
-   public CellElementStencilTPFA_Traits
+  public CellElementStencilTPFA_Traits
 {
 public:
   template< typename VIEWTYPE >
@@ -73,13 +73,11 @@ public:
                                  arrayView3d< real64 > const & cellToFaceVec,
                                  arrayView1d< real64 > const & transMultiplier )
 
-  :StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
-  m_faceNormal( faceNormal ),
-  m_cellToFaceVec( cellToFaceVec ),
-  m_transMultiplier( transMultiplier )
-  {
-
-  }
+    : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
+    m_faceNormal( faceNormal ),
+    m_cellToFaceVec( cellToFaceVec ),
+    m_transMultiplier( transMultiplier )
+  {}
 
   /// Default copy constructor
   CellElementStencilTPFAWrapper( CellElementStencilTPFAWrapper const & ) = default;
@@ -97,12 +95,12 @@ public:
   template< typename PERMTYPE >
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
-                                real64 (& transmissibility)[2] ) const;
+                                real64 ( &transmissibility )[2] ) const;
 
   template< typename PERMTYPE >
   void dTrans_dPressure( localIndex iconn,
                          PERMTYPE dPerm_dPressure,
-                         real64 (&dTrans_dPressure )[2] ) const;
+                         real64 ( &dTrans_dPressure )[2] ) const;
 
   /**
    * @brief Give the number of stencil entries.
@@ -145,8 +143,8 @@ public:
                     localIndex const connectorIndex ) override final;
 
   void addVectors( real64 const & transMultiplier,
-                   real64 const (& faceNormal)[3],
-                   real64 const (& cellToFaceVec)[2][3] );
+                   real64 const (&faceNormal)[3],
+                   real64 const (&cellToFaceVec)[2][3] );
 
   /**
    * @brief Return the stencil size.
@@ -167,27 +165,27 @@ public:
   }
 
   /// Type of kernel wrapper for in-kernel update
-   using StencilWrapper = CellElementStencilTPFAWrapper;
+  using StencilWrapper = CellElementStencilTPFAWrapper;
 
-   /**
-    * @brief Create an update kernel wrapper.
-    * @return the wrapper
-    */
-   StencilWrapper createStencilWrapper()
-   {
-     return StencilWrapper( m_elementRegionIndices,
-                            m_elementSubRegionIndices,
-                            m_elementIndices,
-                            m_weights,
-                            m_faceNormal,
-                            m_cellToFaceVec,
-                            m_transMultiplier );
-   }
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  StencilWrapper createStencilWrapper()
+  {
+    return StencilWrapper( m_elementRegionIndices,
+                           m_elementSubRegionIndices,
+                           m_elementIndices,
+                           m_weights,
+                           m_faceNormal,
+                           m_cellToFaceVec,
+                           m_transMultiplier );
+  }
 
 private:
-   array2d< real64 > m_faceNormal;
-   array3d< real64 > m_cellToFaceVec;
-   array1d< real64 > m_transMultiplier;
+  array2d< real64 > m_faceNormal;
+  array3d< real64 > m_cellToFaceVec;
+  array1d< real64 > m_transMultiplier;
 
 };
 
@@ -200,7 +198,7 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
-  for ( localIndex i =0; i<2; i++ )
+  for( localIndex i =0; i<2; i++ )
   {
     localIndex const er  =  m_elementRegionIndices[iconn][i];
     localIndex const esr =  m_elementSubRegionIndices[iconn][i];
@@ -218,7 +216,7 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
       LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
     }
 
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er][esr][ei][0], faceNormal);
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er][esr][ei][0], faceNormal );
     halfTrans[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
 
     // correct negative weight issue arising from non-K-orthogonal grids
@@ -249,7 +247,7 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
 template< typename PERMTYPE >
 void CellElementStencilTPFAWrapper::dTrans_dPressure( localIndex iconn,
                                                       PERMTYPE dPerm_dPressure,
-                                                      real64 (&dTrans_dPressure )[2] ) const
+                                                      real64 (& dTrans_dPressure )[2] ) const
 {
   // TODO: this derivative is still wrong
   localIndex const er0  =  m_elementRegionIndices[iconn][0];

@@ -34,7 +34,7 @@ public:
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dAperture )
     : PermeabilityBaseUpdate( permeability ),
-      m_dPerm_dAperture( dPerm_dAperture )
+    m_dPerm_dAperture( dPerm_dAperture )
   {}
 
   /// Default copy constructor
@@ -52,14 +52,14 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void compute( real64 const & effectiveAperture,
-                        arraySlice1d< real64 > const & permeability,
-                        arraySlice1d< real64 > const & dPerm_dAperture ) const;
+                arraySlice1d< real64 > const & permeability,
+                arraySlice1d< real64 > const & dPerm_dAperture ) const;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void update( localIndex const k,
-                       localIndex const q,
-                       real64 const & effectiveAperture ) const
+               localIndex const q,
+               real64 const & effectiveAperture ) const
   {
     compute( effectiveAperture,
              m_permeability[k][q],
@@ -123,7 +123,7 @@ void ParallelPlatesPermeabilityUpdate::compute( real64 const & effectiveAperture
   real64 const perm  = effectiveAperture*effectiveAperture*effectiveAperture / 12;
   real64 const dPerm = effectiveAperture*effectiveAperture / 12;
 
-  for(int dim=0; dim < 3; dim++)
+  for( int dim=0; dim < 3; dim++ )
   {
     permeability[dim]     = perm;
     dPerm_dAperture[dim]  = dPerm;
