@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
-//#include "LvArray/src/streamIO.hpp"
+#include "LvArray/src/output.hpp"
 
 namespace geosx
 {

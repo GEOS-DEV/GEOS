@@ -234,8 +234,6 @@ public:
     static constexpr char const * locationString() { return "location"; }
     /// @return String key for the well transmissibility
     static constexpr char const * wellTransmissibilityString() { return "wellTransmissibility"; }
-    /// @return String key for the perforation direction
-    static constexpr char const * directionString() { return "direction"; }
 
     /// ViewKey for the global number of perforations
     dataRepository::ViewKey numPerforationsGlobal     = { numPerforationsGlobalString() };
@@ -251,8 +249,6 @@ public:
     dataRepository::ViewKey location                  = { locationString() };
     /// ViewKey for the well transmissibility
     dataRepository::ViewKey wellTransmissibility      = { wellTransmissibilityString() };
-    /// ViewKey for the perf direction
-    dataRepository::ViewKey direction                 = { directionString() };
 
   }
   /// ViewKey struct for the PerforationData class
