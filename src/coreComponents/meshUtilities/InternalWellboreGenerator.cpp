@@ -29,7 +29,8 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
   m_trajectory(),
   m_cartesianOuterBoundary(),
   m_isFullAnnulus(false),
-  m_autoSpaceRadialElems(0)
+  m_autoSpaceRadialElems(0),
+  m_radialCoords( this->m_setCoords[0] )
 {
 
   getWrapper< array1d< real64 > >( viewKeyStruct::xCoordsString() ).
@@ -116,7 +117,6 @@ void InternalWellboreGenerator::postProcessInput()
   m_nElems[1][0]    = m_tElems;
   m_nElemBias[0][0] = m_rBias;
 
-  InternalMeshGenerator::postProcessInput();
 
 
   arrayView1d<real64 const> const theta = m_vertices[1];
@@ -138,8 +138,8 @@ void InternalWellboreGenerator::postProcessInput()
       real64 const rInner = m_vertices[0][iBlock];
       real64 const rOuter = m_vertices[0][iBlock+1];
 
-      real64 const tElemSizeInner = 2 * M_PI * rInner * ( dTheta / 360 ) / m_nElems[1][0];
-      real64 const tElemSizeOuter = 2 * M_PI * rOuter * ( dTheta / 360 ) / m_nElems[1][0];
+      real64 const tElemSizeInner = rInner * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
+      real64 const tElemSizeOuter = rOuter * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
 
       if( iBlock==0 )
       {
@@ -148,13 +148,19 @@ void InternalWellboreGenerator::postProcessInput()
 
       localIndex actualNumberOfRadialElements = 0;
       real64 scalingFactor = 0;
+
+      printf( "  i   r_i      t_i     rip1_0    tip1_0    r_ip1\n" );
       for( localIndex i=0; i<m_nElems[0][iBlock]*10; ++i )
       {
-        real64 const r_ip1_0 = ( m_radialCoords.back() +  tElemSizeInner ) ;
-        real64 const tElemSize_ip1_0 = 2 * M_PI * r_ip1_0 * ( dTheta / 360 ) / m_nElems[1][0];
+        real64 const t_i =  m_radialCoords.back() * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
+        real64 const r_ip1_0 = ( m_radialCoords.back() +  t_i ) ;
+        real64 const tElemSize_ip1_0 =  r_ip1_0 * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
+
 
         constexpr real64 c = 0.5;
-        real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * tElemSizeInner + c * tElemSize_ip1_0;
+        real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * t_i + c * tElemSize_ip1_0;
+
+        printf( "%5ld %8.4f %8.4f %8.4f %8.4f %8.4f \n", i, m_radialCoords.back(), t_i, r_ip1_0, tElemSize_ip1_0, r_ip1 );
 
 
         // if the radius of the next layer is bigger than rOuter, we figure
@@ -164,16 +170,18 @@ void InternalWellboreGenerator::postProcessInput()
           real64 const overshoot = r_ip1 - rOuter;
           real64 const undershoot = rOuter - m_radialCoords.back();
 
-          if( overshoot > undershoot )
+          if( overshoot < undershoot )
           {
+            // use the overshot value
             m_radialCoords.emplace_back(r_ip1);
             actualNumberOfRadialElements = i+1;
-            scalingFactor = ( rOuter - rInner ) / ( r_ip1 - rInner );
+            scalingFactor =  ( r_ip1 - rInner )/ ( rOuter - rInner );
           }
           else
           {
+            // use the undershot value
             actualNumberOfRadialElements = i;
-            scalingFactor = ( m_radialCoords.back() - rInner ) / ( rOuter - rInner );
+            scalingFactor = ( rOuter - rInner ) / ( m_radialCoords.back() - rInner );
           }
           break;
         }
@@ -195,133 +203,136 @@ void InternalWellboreGenerator::postProcessInput()
     std::cout<<m_radialCoords<<std::endl;
   }
 
+
+  InternalMeshGenerator::postProcessInput();
+
 }
 
 void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 {
   InternalMeshGenerator::generateMesh( domain );
 
-  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
-  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
-  Group & nodeSets = nodeManager.sets();
-
-  // Wellbore nodesets
-  // rneg, rpos, tneg and tpos are the named used by the end-used in the input files. Consider modifying them with care.
-  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
-  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
-  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
-  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
-
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-  for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
-  {
-    // Get Cartesian coordinates of a reference centered vertical wellbore
-    real64 & xCoord = X( localNodeIndex, 0 );
-    real64 & yCoord = X( localNodeIndex, 1 );
-    real64 const & zCoord = X( localNodeIndex, 2 );
-
-    // Compute cylindrical coordinates of a reference centered vertical wellbore
-    real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
-    real64 tCoord;
-
-    if( rCoord < m_coordinatePrecision )
-    {
-      tCoord = 0.0;
-    }
-    else if( yCoord >= 0.0 )
-    {
-      tCoord = acos( xCoord/rCoord );
-    }
-    else
-    {
-      tCoord = 2.0 * M_PI - acos( xCoord/rCoord );
-    }
-
-    tCoord *= 180.0 / M_PI;
-
-    // Wellbore nodesets
-    if( isEqual( rCoord, m_min[0], m_coordinatePrecision ) )
-    {
-      rnegNodes.insert( localNodeIndex );
-    }
-
-    if( isEqual( rCoord, m_max[0], m_coordinatePrecision ) )
-    {
-      rposNodes.insert( localNodeIndex );
-    }
-
-    if( isEqual( tCoord, m_min[1], m_coordinatePrecision ) )
-    {
-      tnegNodes.insert( localNodeIndex );
-    }
-    if( isEqual( tCoord, m_max[1], m_coordinatePrecision ) )
-    {
-      tposNodes.insert( localNodeIndex );
-    }
-
-    // Radial distance of the outer square boundary of a reference centered vertical wellbore
-    real64 meshTheta = tCoord * M_PI / 180.0;
-    int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
-    real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
-    real64 meshRout = m_max[0] / cos( meshPhi );
-
-    // Wellbore trajectory
-    real64 xTopCenter = m_trajectory[0][0];
-    real64 yTopCenter = m_trajectory[0][1];
-    real64 zTop = m_min[2];
-
-    real64 xBottomCenter = m_trajectory[1][0];
-    real64 yBottomCenter = m_trajectory[1][1];
-    real64 zBottom = m_max[2];
-
-    real64 dx = xBottomCenter - xTopCenter;
-    real64 dy = yBottomCenter - yTopCenter;
-    real64 dz = zBottom - zTop;
-    real64 dr = sqrt( dx*dx + dy*dy );
-    real64 dl = sqrt( dr*dr + dz*dz );
-
-    // Azimuth of the wellbore from x-axis
-    real64 theta0;
-
-    if( dr < m_coordinatePrecision )
-    {
-      theta0 = 0.0;
-    }
-    else if( dy>=0.0 )
-    {
-      theta0 = acos( dx/dr );
-    }
-    else
-    {
-      theta0 = 2.0 * M_PI - acos( dx/dr );
-    }
-
-    // The horizontal section of an inclined wellbore is an ellipse
-    // The principle directions of this ellipse are defined by dTheta = 0, and PI/2
-    real64 dTheta = meshTheta - theta0;
-    real64 tanDTheta = tan( dTheta );
-
-    // Transform radial coordinate regarding the elliptical shape of the wellbore section in the horizontal plane
-    // This transformation ensures that the ourter square boundary is unchanged
-    // TODO create a function in ComputationalGeometry class for this pure geometrical transformation
-    real64 transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
-    real64 rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
-
-    // Compute transformed cartesian coordinates
-    xCoord = rCoordTransform * cos( meshTheta );
-    yCoord = rCoordTransform * sin( meshTheta );
-
-    // Moving the coordinate in the horizontal plane with respect to the center of the wellbore section
-    // This transformation ensures that the ourter square boundary is unchanged
-    real64 zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
-    real64 xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
-    real64 yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
-
-    xCoord += xCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
-    yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
-  }
+//  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
+//  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
+//  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
+//  NodeManager & nodeManager = meshLevel0.getNodeManager();
+//  Group & nodeSets = nodeManager.sets();
+//
+//  // Wellbore nodesets
+//  // rneg, rpos, tneg and tpos are the named used by the end-used in the input files. Consider modifying them with care.
+//  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
+//  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
+//  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
+//  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
+//
+//  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+//  for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
+//  {
+//    // Get Cartesian coordinates of a reference centered vertical wellbore
+//    real64 & xCoord = X( localNodeIndex, 0 );
+//    real64 & yCoord = X( localNodeIndex, 1 );
+//    real64 const & zCoord = X( localNodeIndex, 2 );
+//
+//    // Compute cylindrical coordinates of a reference centered vertical wellbore
+//    real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
+//    real64 tCoord;
+//
+//    if( rCoord < m_coordinatePrecision )
+//    {
+//      tCoord = 0.0;
+//    }
+//    else if( yCoord >= 0.0 )
+//    {
+//      tCoord = acos( xCoord/rCoord );
+//    }
+//    else
+//    {
+//      tCoord = 2.0 * M_PI - acos( xCoord/rCoord );
+//    }
+//
+//    tCoord *= 180.0 / M_PI;
+//
+//    // Wellbore nodesets
+//    if( isEqual( rCoord, m_min[0], m_coordinatePrecision ) )
+//    {
+//      rnegNodes.insert( localNodeIndex );
+//    }
+//
+//    if( isEqual( rCoord, m_max[0], m_coordinatePrecision ) )
+//    {
+//      rposNodes.insert( localNodeIndex );
+//    }
+//
+//    if( isEqual( tCoord, m_min[1], m_coordinatePrecision ) )
+//    {
+//      tnegNodes.insert( localNodeIndex );
+//    }
+//    if( isEqual( tCoord, m_max[1], m_coordinatePrecision ) )
+//    {
+//      tposNodes.insert( localNodeIndex );
+//    }
+//
+//    // Radial distance of the outer square boundary of a reference centered vertical wellbore
+//    real64 meshTheta = tCoord * M_PI / 180.0;
+//    int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
+//    real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
+//    real64 meshRout = m_max[0] / cos( meshPhi );
+//
+//    // Wellbore trajectory
+//    real64 xTopCenter = m_trajectory[0][0];
+//    real64 yTopCenter = m_trajectory[0][1];
+//    real64 zTop = m_min[2];
+//
+//    real64 xBottomCenter = m_trajectory[1][0];
+//    real64 yBottomCenter = m_trajectory[1][1];
+//    real64 zBottom = m_max[2];
+//
+//    real64 dx = xBottomCenter - xTopCenter;
+//    real64 dy = yBottomCenter - yTopCenter;
+//    real64 dz = zBottom - zTop;
+//    real64 dr = sqrt( dx*dx + dy*dy );
+//    real64 dl = sqrt( dr*dr + dz*dz );
+//
+//    // Azimuth of the wellbore from x-axis
+//    real64 theta0;
+//
+//    if( dr < m_coordinatePrecision )
+//    {
+//      theta0 = 0.0;
+//    }
+//    else if( dy>=0.0 )
+//    {
+//      theta0 = acos( dx/dr );
+//    }
+//    else
+//    {
+//      theta0 = 2.0 * M_PI - acos( dx/dr );
+//    }
+//
+//    // The horizontal section of an inclined wellbore is an ellipse
+//    // The principle directions of this ellipse are defined by dTheta = 0, and PI/2
+//    real64 dTheta = meshTheta - theta0;
+//    real64 tanDTheta = tan( dTheta );
+//
+//    // Transform radial coordinate regarding the elliptical shape of the wellbore section in the horizontal plane
+//    // This transformation ensures that the outer square boundary is unchanged
+//    // TODO create a function in ComputationalGeometry class for this pure geometrical transformation
+//    real64 transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
+//    real64 rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
+//
+//    // Compute transformed cartesian coordinates
+//    xCoord = rCoordTransform * cos( meshTheta );
+//    yCoord = rCoordTransform * sin( meshTheta );
+//
+//    // Moving the coordinate in the horizontal plane with respect to the center of the wellbore section
+//    // This transformation ensures that the ourter square boundary is unchanged
+//    real64 zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
+//    real64 xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
+//    real64 yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
+//
+//    xCoord += xCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
+//    yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
+//  }
 }
 
 void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (&numNodesInDir)[3] )
@@ -380,7 +391,7 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   // Map to radial mesh
-  for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
+  for( localIndex iN = 0; iN<nodeManager.size(); ++iN )
   {
     real64 meshTheta = X[iN][1] * M_PI / 180.0;
     int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));

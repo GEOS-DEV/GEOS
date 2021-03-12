@@ -30,14 +30,13 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       radius="{0.1, 2.0}"
-      theta="{0, 180}"
+      theta="{0, 360}"
       zCoords="{0,1}"
       trajectory="{ { -0.0, 0.0, 0.0 },
                     {  0.0, 0.0, 0.0 } }"
       nr="{2}"
-      nt="{8}"
+      nt="{16}"
       nz="{ 1 }"
-      rBias="{-0.0}"
       autoSpaceRadialElems="1"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"
@@ -46,7 +45,7 @@
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
-    maxTime="10.0">
+    maxTime="1.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <!-- SPHINX_Execution -->

@@ -106,7 +106,7 @@ private:
 
   int m_autoSpaceRadialElems;
 
-  array1d<real64> m_radialCoords;
+  array1d<real64> & m_radialCoords;
 
 
 };
