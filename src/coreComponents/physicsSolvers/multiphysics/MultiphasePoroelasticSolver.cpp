@@ -281,10 +281,6 @@ void MultiphasePoroelasticSolver::solveSystem( DofManager const & dofManager,
                                                ParallelVector & solution )
 {
   solution.zero();
-
-  matrix.write( "Jacobian.mtx" );
-  GEOSX_ERROR( "STOP" );
-
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 }
 

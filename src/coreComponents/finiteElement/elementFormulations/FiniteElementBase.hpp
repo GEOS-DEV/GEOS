@@ -211,7 +211,8 @@ public:
    * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
    * @tparam GRADIENT_TYPE The type of the array object holding the shape
    * @param gradN The basis function gradients at a point in the element.
-   * @param gradVar The symmetric gradient in Voigt notation.
+   * @param var The vector valued support field that the gradient operator will
+   *  be applied to.
    * @return The trace of the symetric gradient tensor.
    *
    */

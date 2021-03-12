@@ -73,6 +73,7 @@ public:
    * @param nodeManager Reference to the NodeManager object.
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
    * @param inputDofNumber The dof number for the primary field.
    * @param rankOffset dof index offset of current rank
    * @param inputMatrix Reference to the Jacobian matrix.

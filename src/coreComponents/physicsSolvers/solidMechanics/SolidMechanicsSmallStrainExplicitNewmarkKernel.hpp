@@ -90,6 +90,7 @@ public:
    * @param nodeManager Reference to the NodeManager object.
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
    * @param dt The time interval for the step.
    * @param elementListName The name of the entry that holds the list of
    *   elements to be processed during this kernel launch.
