@@ -237,7 +237,7 @@ private:
    * @note In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
    */
   template< typename OUT_VECTOR >
-  inline void getNodePosition( int const * a, int trianglePattern, OUT_VECTOR && X )
+  inline void getNodePosition( int const (&a)[3], int trianglePattern, OUT_VECTOR && X )
   {
     real64 xInterval( 0 );
 

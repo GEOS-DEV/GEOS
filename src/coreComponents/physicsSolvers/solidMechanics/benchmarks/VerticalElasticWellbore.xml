@@ -30,15 +30,16 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       radius="{0.1, 2.0}"
-      theta="{0, 360}"
+      theta="{0, 180}"
       zCoords="{0,1}"
       trajectory="{ { -0.0, 0.0, 0.0 },
                     {  0.0, 0.0, 0.0 } }"
-      nr="{4}"
+      nr="{2}"
       nt="{8}"
       nz="{ 1 }"
-      rBias="{-0.9}"
-      useCartesianOuterBoundary="1"
+      rBias="{-0.0}"
+      autoSpaceRadialElems="1"
+      useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"
       />
   </Mesh>
