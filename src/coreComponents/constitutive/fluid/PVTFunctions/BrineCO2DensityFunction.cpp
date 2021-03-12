@@ -36,7 +36,7 @@ BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
 
-    if( streq( componentNames[i], "CO2" ) || streq( componentNames[i], "co2" ))
+    if( componentNames[i] == "CO2" || componentNames[i] == "co2" )
     {
       m_CO2Index = i;
       notFound = 0;
@@ -52,7 +52,7 @@ BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara
   for( localIndex i = 0; i < componentNames.size(); ++i )
   {
 
-    if( streq( componentNames[i], "Water" ) || streq( componentNames[i], "water" ))
+    if( componentNames[i] =="Water" || componentNames[i] == "water" )
     {
       m_waterIndex = i;
       notFound = 0;

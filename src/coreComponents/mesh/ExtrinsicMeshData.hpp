@@ -46,7 +46,7 @@
 /** @brief Trait struct for NAME data */ \
   struct NAME \
   { \
-    /** The key for registration with the data repository. */ \
+    /** @brief @return The key for registration with the data repository. */ \
     static constexpr char const * key() \
     { return KEY; } \
     /** The actual type to be registered. */ \

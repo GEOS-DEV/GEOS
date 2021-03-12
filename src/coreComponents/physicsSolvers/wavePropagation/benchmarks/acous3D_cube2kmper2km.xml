@@ -32,6 +32,19 @@
       cellBlockNames="{ cb }"/>
   </Mesh>
 
+  <Geometry>
+    <!-- <Box
+      name="zneg"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 2000.01, 2000.01 , 0.01"/>
+    -->
+    <Box
+      name="zpos"
+      xMin="-0.01, -0.01, 1999.99"
+      xMax=" 2000.01, 0.11, 2000.01"/>
+
+  </Geometry>
+
    
   <Events
     maxTime="0.08">
@@ -105,6 +118,13 @@
       scale="1500"
       setNames="{ all }"/>
 
+    <!-- 4) The free surface condition the domain -->
+    <FieldSpecification
+      name="zposFreeSurface"
+      objectPath="faceManager"
+      fieldName="FreeSurface"
+      scale="0.0"
+      setNames="{ zpos }"/>
     
 
   </FieldSpecifications>

@@ -3,7 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
@@ -24,7 +24,7 @@
         dtIncIterLimit="0.3"/>
       <LinearSolverParameters
         solverType="direct"/>
-    </CompositionalMultiphaseFlow>
+    </CompositionalMultiphaseFVM>
   </Solvers>
 
   <Mesh>

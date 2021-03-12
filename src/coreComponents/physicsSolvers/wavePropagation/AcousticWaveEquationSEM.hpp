@@ -1,8 +1,20 @@
 /*
- * WaveEquation.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Jan 12, 2021
- *      Author: settgast
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+
+/**
+ * @file AcousticWaveEquationSEM.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
@@ -73,21 +85,19 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr auto varName = "varName";
+    static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
+    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
+    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
+    static constexpr char const * sourceIsLocalString() { return "sourceIsLocal"; }
 
-    static constexpr auto sourceCoordinatesString = "sourceCoordinates";
-    static constexpr auto sourceNodeIdsString     = "sourceNodeIds";
-    static constexpr auto sourceConstantsString   = "sourceConstants";
-    static constexpr auto sourceIsLocalString     = "sourceIsLocal";
+    static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
 
-    static constexpr auto timeSourceFrequencyString = "timeSourceFrequency";
+    static constexpr char const * receiverCoordinatesString() { return "receiverCoordinates"; }
+    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
+    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
+    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
-    static constexpr auto receiverCoordinatesString = "receiverCoordinates";
-    static constexpr auto receiverNodeIdsString     = "receiverNodeIds";
-    static constexpr auto receiverConstantsString   = "receiverConstants";
-    static constexpr auto receiverIsLocalString     = "receiverIsLocal";
-
-    static constexpr auto pressureNp1AtReceiversString   = "pressureNp1AtReceivers";
+    static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
 
 
   } waveEquationViewKeys;
@@ -101,26 +111,15 @@ protected:
 
 private:
 
-  /**
-   * @brief Convert a mesh element point coordinate into a coorinate on the reference element
-   * @param coords coordinate of the point
-   * @param coordsOnRefElem to contain the coordinate computed in the reference element
-   * @param numElem index of the element containing the coords
-   * @param numNodesPerElem number of nodes per element
-   * @param elemsToNodes map obtain node global index from element index
-   */
-  //void computeCoordinateOnReferenceElement( array1d< real64 const > const & coords,
-  //array1d< real64 > & coordsOnRefElem,
-  //					     localIndex const & indexElem,
-  //					     localIndex const & numNodesPerElem,
-  //					     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes);
-
   /// Locates the source term and precomputes the constant part of the source term
   /// And locate receivers and pre_evaluate the basis functions at each receiver coordinate
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
   /// Multiply the precomputed term by the ricker and add to the right-hand side
   void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs );
+
+  /// Apply free surface condition to the face define in the geometry box from the xml
+  void applyFreeSurfaceBC( real64 const time, DomainPartition & domain );
 
   /// Compute the pressure at each receiver coordinate in one time step
   void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const pressure_np1 );
@@ -228,6 +227,23 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Stiffness vector contains R_h*Pressure_n." );
+
+EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
+                           "freeSurfaceFaceIndicator",
+                           array1d< localIndex >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
+
+EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceNodeIndicator,
+                           "freeSurfaceNodeIndicator",
+                           array1d< localIndex >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
+
 
 }
 

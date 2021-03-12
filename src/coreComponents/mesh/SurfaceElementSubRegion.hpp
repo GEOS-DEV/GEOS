@@ -195,23 +195,23 @@ public:
    */
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
-    /// Face element to cell regions map string.
+    /// @return Face element to cell regions map string.
     static constexpr char const * surfaceElementsToCellRegionsString() { return "fractureElementsToCellRegions"; }
 
-    /// Face element to cell subregions map string.
+    /// @return Face element to cell subregions map string.
     static constexpr char const * surfaceElementsToCellSubRegionsString() { return "fractureElementsToCellSubRegions"; }
 
-    /// Face element to cell indices map string.
+    /// @return Face element to cell indices map string.
     static constexpr char const * surfaceElementsToCellIndexString() { return "fractureElementsToCellIndices"; }
 
 
-    /// Embedded surface element aperture string
+    /// @return Embedded surface element aperture string
     static constexpr char const * elementApertureString() { return "elementAperture"; }
 
-    /// Embedded surface element surface are string
+    /// @return Embedded surface element surface are string
     static constexpr char const * elementAreaString() { return "elementArea"; }
 
-    /// Mass creation string.
+    /// @return Mass creation string.
     constexpr static char const * creationMassString() { return "creationMass"; }
   };
 
