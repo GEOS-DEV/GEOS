@@ -95,6 +95,10 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
 
 void InternalWellboreGenerator::postProcessInput()
 {
+
+//  m_vertices[2][0]  = m_trajectory[0][2];
+//  m_vertices[2][1]  = m_trajectory[1][2];
+
   InternalMeshGenerator::postProcessInput();
 
 
