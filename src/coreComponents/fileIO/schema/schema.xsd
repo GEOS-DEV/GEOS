@@ -546,7 +546,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="InternalWellboreType">
 		<!--autoSpaceRadialElems => Automatically set number and spacing of elements in the radial direction. This overrides the values of nr!!-->
-		<xsd:attribute name="autoSpaceRadialElems" type="integer" default="0" />
+		<xsd:attribute name="autoSpaceRadialElems" type="integer_array" default="{0}" />
 		<!--cellBlockNames => Names of each mesh block-->
 		<xsd:attribute name="cellBlockNames" type="string_array" use="required" />
 		<!--elementTypes => Element types of each mesh block-->
@@ -569,8 +569,8 @@
 		<xsd:attribute name="trajectory" type="real64_array2d" default="{{0}}" />
 		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
-		<!--useCartesianOuterBoundary => Enforce a Cartesian aligned outer boundary on the outer block-->
-		<xsd:attribute name="useCartesianOuterBoundary" type="integer" default="0" />
+		<!--useCartesianOuterBoundary => Enforce a Cartesian aligned outer boundary on the outer block starting with the radial block specified in this value-->
+		<xsd:attribute name="useCartesianOuterBoundary" type="integer" default="1000000" />
 		<!--xBias => Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
 		<xsd:attribute name="xBias" type="real64_array" default="{1}" />
 		<!--yBias => Bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->

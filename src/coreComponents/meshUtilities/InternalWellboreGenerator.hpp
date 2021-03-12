@@ -104,7 +104,7 @@ private:
 
   bool m_isFullAnnulus;
 
-  int m_autoSpaceRadialElems;
+  array1d<int> m_autoSpaceRadialElems;
 
   array1d<real64> & m_radialCoords;
 

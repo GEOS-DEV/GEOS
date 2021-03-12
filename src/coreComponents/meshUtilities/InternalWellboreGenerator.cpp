@@ -29,7 +29,7 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
   m_trajectory(),
   m_cartesianOuterBoundary(),
   m_isFullAnnulus(false),
-  m_autoSpaceRadialElems(0),
+  m_autoSpaceRadialElems(),
   m_radialCoords( this->m_setCoords[0] )
 {
 
@@ -80,13 +80,13 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
 
 
   registerWrapper( viewKeyStruct::cartesianOuterBoundaryString(), &m_cartesianOuterBoundary ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 1000000 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Enforce a Cartesian aligned outer boundary on the outer block" );
+    setDescription( "Enforce a Cartesian aligned outer boundary on the outer "
+                    "block starting with the radial block specified in this value" );
 
   registerWrapper( viewKeyStruct::autoSpaceRadialElemsString(), &m_autoSpaceRadialElems ).
-    setApplyDefaultValue( 0 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Automatically set number and spacing of elements in the radial direction. "
@@ -129,7 +129,7 @@ void InternalWellboreGenerator::postProcessInput()
   }
 
   // automatically set radial coordinates
-  if( m_autoSpaceRadialElems )
+  if( m_autoSpaceRadialElems.size()>0 )
   {
     localIndex const numRadialBlocks = m_vertices[0].size()-1;
 
@@ -138,67 +138,84 @@ void InternalWellboreGenerator::postProcessInput()
       real64 const rInner = m_vertices[0][iBlock];
       real64 const rOuter = m_vertices[0][iBlock+1];
 
-      real64 const tElemSizeInner = rInner * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
-      real64 const tElemSizeOuter = rOuter * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
-
       if( iBlock==0 )
       {
         m_radialCoords.emplace_back( rInner );
       }
 
-      localIndex actualNumberOfRadialElements = 0;
-      real64 scalingFactor = 0;
-
-      printf( "  i   r_i      t_i     rip1_0    tip1_0    r_ip1\n" );
-      for( localIndex i=0; i<m_nElems[0][iBlock]*10; ++i )
+      if( m_autoSpaceRadialElems[iBlock] == 1 )
       {
-        real64 const t_i =  m_radialCoords.back() * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
-        real64 const r_ip1_0 = ( m_radialCoords.back() +  t_i ) ;
-        real64 const tElemSize_ip1_0 =  r_ip1_0 * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
+
+        localIndex const startingIndex = m_radialCoords.size()-1;
+        real64 const tElemSizeInner = rInner * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
+        real64 const tElemSizeOuter = rOuter * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
 
 
-        constexpr real64 c = 0.5;
-        real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * t_i + c * tElemSize_ip1_0;
+        localIndex actualNumberOfRadialElements = 0;
+        real64 scalingFactor = 0;
 
-        printf( "%5ld %8.4f %8.4f %8.4f %8.4f %8.4f \n", i, m_radialCoords.back(), t_i, r_ip1_0, tElemSize_ip1_0, r_ip1 );
-
-
-        // if the radius of the next layer is bigger than rOuter, we figure
-        // out where to cut off the layer.
-        if( r_ip1 > rOuter )
+        printf( "  i   r_i      t_i     rip1_0    tip1_0    r_ip1\n" );
+        for( localIndex i=0; i<m_nElems[0][iBlock]*10; ++i )
         {
-          real64 const overshoot = r_ip1 - rOuter;
-          real64 const undershoot = rOuter - m_radialCoords.back();
+          real64 const t_i =  m_radialCoords.back() * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
+          real64 const r_ip1_0 = ( m_radialCoords.back() +  t_i ) ;
+          real64 const tElemSize_ip1_0 =  r_ip1_0 * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
 
-          if( overshoot < undershoot )
+
+          constexpr real64 c = 0.5;
+          real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * t_i + c * tElemSize_ip1_0;
+
+          printf( "%5ld %8.4f %8.4f %8.4f %8.4f %8.4f \n", i, m_radialCoords.back(), t_i, r_ip1_0, tElemSize_ip1_0, r_ip1 );
+
+
+          // if the radius of the next layer is bigger than rOuter, we figure
+          // out where to cut off the layer.
+          if( r_ip1 > rOuter )
           {
-            // use the overshot value
-            m_radialCoords.emplace_back(r_ip1);
-            actualNumberOfRadialElements = i+1;
-            scalingFactor =  ( r_ip1 - rInner )/ ( rOuter - rInner );
+            real64 const overshoot = r_ip1 - rOuter;
+            real64 const undershoot = rOuter - m_radialCoords.back();
+
+            if( overshoot < undershoot )
+            {
+              // use and append the overshot value
+              m_radialCoords.emplace_back(r_ip1);
+              actualNumberOfRadialElements = i+1;
+              scalingFactor =  ( rOuter - rInner ) / ( r_ip1 - rInner ) ;
+            }
+            else
+            {
+              // use the undershot value...throw away the overshot value.
+              actualNumberOfRadialElements = i;
+              scalingFactor = ( rOuter - rInner ) / ( m_radialCoords.back() - rInner );
+            }
+            break;
           }
           else
           {
-            // use the undershot value
-            actualNumberOfRadialElements = i;
-            scalingFactor = ( rOuter - rInner ) / ( m_radialCoords.back() - rInner );
+            m_radialCoords.emplace_back(r_ip1);
           }
-          break;
         }
-        else
+        std::cout<<actualNumberOfRadialElements<<", "<<scalingFactor<<std::endl;
+        std::cout<<m_radialCoords.size()<<std::endl;
+
+        m_nElems[0][iBlock] = actualNumberOfRadialElements;
+        for( localIndex i=startingIndex; i<m_radialCoords.size(); ++i )
         {
-          m_radialCoords.emplace_back(r_ip1);
+          m_radialCoords[i] = ( m_radialCoords[i] - rInner ) * scalingFactor + rInner;
+        }
+
+      }
+      else
+      {
+        real64 min = m_vertices[0][iBlock];
+        real64 max = m_vertices[0][iBlock+1];
+        real64 const h = (max-min) / m_nElems[0][iBlock];
+        localIndex const numNodes = m_nElems[0][iBlock] + 1;
+        for( localIndex i=1; i<numNodes; ++i )
+        {
+          m_radialCoords.emplace_back( min +  i * h );
         }
       }
-      std::cout<<actualNumberOfRadialElements<<", "<<scalingFactor<<std::endl;
-      std::cout<<m_radialCoords.size()<<std::endl;
-
-      m_nElems[0][iBlock] = actualNumberOfRadialElements;
-      for( localIndex i=0; i<m_radialCoords.size(); ++i )
-      {
-        m_radialCoords[i] = ( m_radialCoords[i] - rInner ) * scalingFactor + rInner;
-      }
-
     }
     std::cout<<m_radialCoords<<std::endl;
   }
@@ -390,6 +407,11 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
 {
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
+
+  real64 const cartesianMappingInnerRadius = m_cartesianOuterBoundary<m_vertices[0].size() ?
+                                             m_vertices[0][m_cartesianOuterBoundary] :
+                                             1e99;
+
   // Map to radial mesh
   for( localIndex iN = 0; iN<nodeManager.size(); ++iN )
   {
@@ -399,7 +421,7 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
     real64 meshRout = m_max[0] / cos( meshPhi );
     real64 meshRact;
 
-    if( m_cartesianOuterBoundary )
+    if( X[iN][0] > cartesianMappingInnerRadius )
     {
       meshRact = ( ( meshRout - m_min[0] ) / ( m_max[0] - m_min[0] ) ) * ( X[iN][0] - m_min[0] ) + m_min[0];
     }
