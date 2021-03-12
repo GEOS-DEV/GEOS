@@ -33,65 +33,113 @@ namespace constitutive
 
 using namespace PVTProps;
 
-MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
-  MultiFluidBase( name, parent )
+namespace
 {
-  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Names of the files defining the parameters of the viscosity and density models" );
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH > class
+  TwoPhaseCatalogNames {};
 
-  registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Name of the file defining the parameters of the flash model" );
+template<> class
+  TwoPhaseCatalogNames< PVTProps::BrineCO2Density,
+                        PVTProps::BrineViscosity,
+                        PVTProps::SpanWagnerCO2Density,
+                        PVTProps::FenghourCO2Viscosity,
+                        PVTProps::CO2Solubility >
+{
+public:
+  static string name() { return "CO2BrineFluid"; }
+};
+} // end namespace
+
+// provide a definition for catalogName()
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+string MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::catalogName()
+{
+  return TwoPhaseCatalogNames< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::name();
 }
 
-MultiPhaseMultiComponentFluid::~MultiPhaseMultiComponentFluid()
-{}
+// explicit instantiation of the model template; unfortunately we can't use CO2BrineFluid alias for this
+template class MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
+                                              PVTProps::BrineViscosity,
+                                              PVTProps::SpanWagnerCO2Density,
+                                              PVTProps::FenghourCO2Viscosity,
+                                              PVTProps::CO2Solubility >;
 
+// template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+// MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::
+// MultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
+//   MultiFluidBase( name, parent )
+// {
+//   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
+//     setInputFlag( InputFlags::REQUIRED ).
+//     setRestartFlags( RestartFlags::NO_WRITE ).
+//     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
+//   registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
+//     setInputFlag( InputFlags::REQUIRED ).
+//     setRestartFlags( RestartFlags::NO_WRITE ).
+//     setDescription( "Name of the file defining the parameters of the flash model" );
+// }
+
+// template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+// MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::
+// ~MultiPhaseMultiComponentFluid()
+// {}
+
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
 std::unique_ptr< ConstitutiveBase >
-MultiPhaseMultiComponentFluid::deliverClone( string const & name,
-                                             Group * const parent ) const
+MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::
+deliverClone( string const & name, Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
 
   MultiPhaseMultiComponentFluid * const newConstitutiveRelation = dynamic_cast< MultiPhaseMultiComponentFluid * >(clone.get());
-  newConstitutiveRelation->m_phaseGasIndex = this->m_phaseGasIndex;
-  newConstitutiveRelation->m_phaseLiquidIndex = this->m_phaseLiquidIndex;
+  newConstitutiveRelation->m_p1Index = this->m_p1Index;
+  newConstitutiveRelation->m_p2Index = this->m_p2Index;
 
   newConstitutiveRelation->createPVTModels();
 
   return clone;
 }
 
-void MultiPhaseMultiComponentFluid::postProcessInput()
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
   localIndex const numPhases = numFluidPhases();
   localIndex const numComps = numFluidComponents();
-  GEOSX_ERROR_IF( numPhases != 2, "The number of phases in this model should be equal to 2" );
-  GEOSX_ERROR_IF( numComps != 2, "The number of components in this model should be equal to 2" );
-  GEOSX_ERROR_IF( m_phasePVTParaFiles.size() != 2, "The number of phasePVTParaFiles is not the same as the number of phases!" );
+  GEOSX_THROW_IF( numPhases != 2,
+                  "The number of phases in this model should be equal to 2",
+                  InputError );
+  GEOSX_THROW_IF( numComps != 2,
+                  "The number of components in this model should be equal to 2",
+                  InputError );
+  GEOSX_THROW_IF( m_phasePVTParaFiles.size() != 2,
+                  "The number of phasePVTParaFiles is not the same as the number of phases!",
+                  InputError );
 
-  char const * expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
-  m_phaseGasIndex = PVTFunctionHelpers::findName( m_phaseNames,
-                                                  expectedGasPhaseNames );
-  GEOSX_ERROR_IF( m_phaseGasIndex < 0 || m_phaseGasIndex >= m_phaseNames.size(),
-                  "Phase co2/gas is not found!" );
+  // NOTE: for now, the names of the phases are still hardcoded here
+  // Later, we could read them from the XML file and we would then have a general class here
 
   char const * expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
-  m_phaseLiquidIndex = PVTFunctionHelpers::findName( m_phaseNames,
-                                                     expectedWaterPhaseNames );
-  GEOSX_ERROR_IF( m_phaseLiquidIndex < 0 || m_phaseLiquidIndex >= m_phaseNames.size(),
-                  "Phase water/liquid is not found!" );
+  m_p1Index = PVTFunctionHelpers::findName( m_phaseNames,
+                                            expectedWaterPhaseNames );
+  GEOSX_THROW_IF( m_p1Index < 0 || m_p1Index >= m_phaseNames.size(),
+                  "Phase water/liquid is not found!",
+                  InputError );
+
+  char const * expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
+  m_p2Index = PVTFunctionHelpers::findName( m_phaseNames,
+                                            expectedGasPhaseNames );
+  GEOSX_THROW_IF( m_p2Index < 0 || m_p2Index >= m_phaseNames.size(),
+                  "Phase co2/gas is not found!",
+                  InputError );
 
   createPVTModels();
 }
 
-void MultiPhaseMultiComponentFluid::createPVTModels()
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::createPVTModels()
 {
   // 1) Create the viscosity and density models
   for( string const & filename : m_phasePVTParaFiles )
@@ -100,6 +148,9 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
     constexpr std::streamsize buf_size = 256;
     char buf[buf_size];
 
+    // NOTE: for now, the names of the models are still hardcoded here
+    // Later, we could read them from the XML file and we would then have a general class here
+
     while( is.getline( buf, buf_size ) )
     {
       string const str( buf );
@@ -107,42 +158,50 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
 
       if( strs[0] == "DensityFun" )
       {
-        if( strs[1] == "SpanWagnerCO2Density" )
+        if( strs[1] == "BrineCO2Density" )
         {
-          m_co2Density = std::make_unique< SpanWagnerCO2Density >( strs, m_componentNames, m_componentMolarWeight );
-          m_co2DensityWrapper.emplace_back( m_co2Density->createKernelWrapper() );
+          m_p1Density = std::make_unique< P1DENS >( strs, m_componentNames, m_componentMolarWeight );
+          m_p1DensityWrapper.emplace_back( m_p1Density->createKernelWrapper() );
         }
-        else if( strs[1] == "BrineCO2Density" )
+        else if( strs[1] == "SpanWagnerCO2Density" )
         {
-          m_brineDensity = std::make_unique< BrineCO2Density >( strs, m_componentNames, m_componentMolarWeight );
-          m_brineDensityWrapper.emplace_back( m_brineDensity->createKernelWrapper() );
+          m_p2Density = std::make_unique< P2DENS >( strs, m_componentNames, m_componentMolarWeight );
+          m_p2DensityWrapper.emplace_back( m_p2Density->createKernelWrapper() );
         }
       }
       else if( strs[0] == "ViscosityFun" )
       {
-        if( strs[1] == "FenghourCO2Viscosity" )
+        if( strs[1] == "BrineViscosity" )
         {
-          m_co2Viscosity = std::make_unique< FenghourCO2Viscosity >( strs, m_componentNames, m_componentMolarWeight );
-          m_co2ViscosityWrapper.emplace_back( m_co2Viscosity->createKernelWrapper() );
+          m_p1Viscosity = std::make_unique< P1VISC >( strs, m_componentNames, m_componentMolarWeight );
+          m_p1ViscosityWrapper.emplace_back( m_p1Viscosity->createKernelWrapper() );
         }
-        else if( strs[1] == "BrineViscosity" )
+        else if( strs[1] == "FenghourCO2Viscosity" )
         {
-          m_brineViscosity = std::make_unique< BrineViscosity >( strs, m_componentNames, m_componentMolarWeight );
-          m_brineViscosityWrapper.emplace_back( m_brineViscosity->createKernelWrapper() );
+          m_p2Viscosity = std::make_unique< P2VISC >( strs, m_componentNames, m_componentMolarWeight );
+          m_p2ViscosityWrapper.emplace_back( m_p2Viscosity->createKernelWrapper() );
         }
       }
       else
       {
-        GEOSX_ERROR( "Error: Invalid PVT function: " << strs[0] << "." );
+        GEOSX_THROW( "Error: Invalid PVT function: " << strs[0] << ".", InputError );
       }
     }
     is.close();
   }
 
-  GEOSX_ERROR_IF( m_co2Density == nullptr, "SpanWagnerCO2Density model not found" );
-  GEOSX_ERROR_IF( m_brineDensity == nullptr, "BrineCO2Density model not found" );
-  GEOSX_ERROR_IF( m_co2Viscosity == nullptr, "FenghourCO2Viscosity model not found" );
-  GEOSX_ERROR_IF( m_brineViscosity == nullptr, "BrineViscosity model not found" );
+  GEOSX_THROW_IF( m_p1Density == nullptr,
+                  "BrineCO2Density model not found",
+                  InputError );
+  GEOSX_THROW_IF( m_p2Density == nullptr,
+                  "SpanWagnerCO2Density model not found",
+                  InputError );
+  GEOSX_THROW_IF( m_p1Viscosity == nullptr,
+                  "BrineViscosity model not found",
+                  InputError );
+  GEOSX_THROW_IF( m_p2Viscosity == nullptr,
+                  "FenghourCO2Viscosity model not found",
+                  InputError );
 
   // 2) Create the flash model
   {
@@ -156,21 +215,23 @@ void MultiPhaseMultiComponentFluid::createPVTModels()
       string_array const strs = stringutilities::tokenize( str, " " );
       if( strs[0] == "FlashModel" && strs[1] == "CO2Solubility" )
       {
-        m_co2Solubility = std::make_unique< CO2Solubility >( strs, m_phaseNames, m_componentNames, m_componentMolarWeight );
-        m_co2SolubilityWrapper.emplace_back( m_co2Solubility->createKernelWrapper() );
+        m_flash = std::make_unique< FLASH >( strs, m_phaseNames, m_componentNames, m_componentMolarWeight );
+        m_flashWrapper.emplace_back( m_flash->createKernelWrapper() );
       }
       else
       {
-        GEOSX_ERROR( "Error: Invalid flash model: " << strs[0] << ", " << strs[1] << "." );
+        GEOSX_THROW( "Error: Invalid flash model: " << strs[0] << ", " << strs[1] << ".", InputError );
       }
     }
     is.close();
   }
 
-  GEOSX_ERROR_IF( m_co2Solubility == nullptr, "CO2Solubility model not found" );
+  GEOSX_THROW_IF( m_flash == nullptr,
+                  "CO2Solubility model not found",
+                  InputError );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseMultiComponentFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineFluid, string const &, Group * const )
 
 } //namespace constitutive
 

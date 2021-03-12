@@ -41,11 +41,15 @@ BrineCO2Density::BrineCO2Density( string_array const & inputPara,
 {
   char const * expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
-  GEOSX_ERROR_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(), "Component CO2 is not found!" );
+  GEOSX_THROW_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(),
+                  "Component CO2 is not found!",
+                  InputError );
 
   char const * expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
-  GEOSX_ERROR_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(), "Component Water/Brine is not found!" );
+  GEOSX_THROW_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(),
+                  "Component Water/Brine is not found!",
+                  InputError );
 
   makeTable( inputPara );
 }
@@ -84,17 +88,20 @@ void BrineCO2Density::calculateBrineDensity( PTTableCoordinates const & tableCoo
   constexpr real64 CC = -8.750567;
   constexpr real64 DD = 2.663107;
 
-  for( localIndex i = 0; i < tableCoords.nPressures(); ++i )
+  localIndex const nPressures = tableCoords.nPressures();
+  localIndex const nTemperatures = tableCoords.nTemperatures();
+
+  for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const P = tableCoords.getPressure( i ) / 1e5;
 
-    for( localIndex j = 0; j < tableCoords.nTemperatures(); ++j )
+    for( localIndex j = 0; j < nTemperatures; ++j )
     {
       // see Phillips et al. (1981), equations (4) and (5), pages 14 and 15
       real64 const x = c1 * exp( a1 * salinity )
                        + c2 * exp( a2 * tableCoords.getTemperature( j ) )
                        + c3 * exp( a3 * P );
-      densities[j*tableCoords.nPressures()+i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
+      densities[j*nPressures+i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
     }
   }
 }

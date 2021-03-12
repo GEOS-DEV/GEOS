@@ -89,7 +89,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <MultiPhaseMultiComponentFluid
+    <CO2BrineFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"

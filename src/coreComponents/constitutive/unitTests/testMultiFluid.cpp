@@ -22,7 +22,6 @@
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
 
-
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
@@ -281,7 +280,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   } );
 }
 
-void testValuesAgainstPreviousImplementation( MultiPhaseMultiComponentFluid::KernelWrapper const & wrapper,
+void testValuesAgainstPreviousImplementation( CO2BrineFluid::KernelWrapper const & wrapper,
                                               real64 const P,
                                               real64 const T,
                                               arraySlice1d< real64 > const & composition,
@@ -802,9 +801,15 @@ TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
   }
 }
 
+template class MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
+                                              PVTProps::BrineViscosity,
+                                              PVTProps::SpanWagnerCO2Density,
+                                              PVTProps::FenghourCO2Viscosity,
+                                              PVTProps::CO2Solubility >;
+
 MultiFluidBase & makeMultiPhaseMultiComponentFluid( string const & name, Group * parent )
 {
-  MultiPhaseMultiComponentFluid & fluid = parent->registerGroup< MultiPhaseMultiComponentFluid >( name );
+  CO2BrineFluid & fluid = parent->registerGroup< CO2BrineFluid >( name );
 
   auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 2 );
@@ -818,11 +823,11 @@ MultiFluidBase & makeMultiPhaseMultiComponentFluid( string const & name, Group *
   phaseNames.resize( 2 );
   phaseNames[0] = "gas"; phaseNames[1] = "liquid";
 
-  auto & phasePVTParaFileNames = fluid.getReference< path_array >( MultiPhaseMultiComponentFluid::viewKeyStruct::phasePVTParaFilesString() );
+  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrineFluid::viewKeyStruct::phasePVTParaFilesString() );
   phasePVTParaFileNames.resize( 2 );
   phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
 
-  auto & flashModelParaFileName = fluid.getReference< Path >( MultiPhaseMultiComponentFluid::viewKeyStruct::flashModelParaFileString() );
+  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrineFluid::viewKeyStruct::flashModelParaFileString() );
   flashModelParaFileName = "co2flash.txt";
 
   fluid.postProcessInputRecursive();
@@ -855,7 +860,7 @@ protected:
 
 };
 
-// TEMPORARY CODE TO VALIDATE NEW IMPLEMENTATION
+
 TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMolar )
 {
   fluid->setMassFlag( false );
@@ -869,8 +874,8 @@ TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMol
 
   fluid->allocateConstitutiveData( fluid->getParent(), 1 );
 
-  MultiPhaseMultiComponentFluid::KernelWrapper wrapper =
-    dynamicCast< MultiPhaseMultiComponentFluid * >( fluid )->createKernelWrapper();
+  CO2BrineFluid::KernelWrapper wrapper =
+    dynamicCast< CO2BrineFluid * >( fluid )->createKernelWrapper();
 
   real64 const savedTotalDens[] =
   { 5881.8128183956969224, 5869.522096458530541, 5854.9469601674582009, 9180.9455320478591602, 9157.2045503913905122, 9129.1751063784995495, 15755.475565136142905, 15696.691553847707837,
@@ -934,8 +939,8 @@ TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMas
 
   fluid->allocateConstitutiveData( fluid->getParent(), 1 );
 
-  MultiPhaseMultiComponentFluid::KernelWrapper wrapper =
-    dynamicCast< MultiPhaseMultiComponentFluid * >( fluid )->createKernelWrapper();
+  CO2BrineFluid::KernelWrapper wrapper =
+    dynamicCast< CO2BrineFluid * >( fluid )->createKernelWrapper();
 
   real64 const savedTotalDens[] =
   { 238.33977561940088208, 237.86350488026934613, 237.29874890241927687, 354.01144731214282046, 353.18618684355078585, 352.21120673560858449, 550.02182875764299297, 548.3889751707506548,

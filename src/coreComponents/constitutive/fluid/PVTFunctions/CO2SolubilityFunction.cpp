@@ -136,28 +136,38 @@ CO2Solubility::CO2Solubility( string_array const & inputPara,
                   componentNames,
                   componentMolarWeight )
 {
-  GEOSX_ERROR_IF( phaseNames.size() != 2, "The CO2Solubility model is a two-phase model" );
-  GEOSX_ERROR_IF( componentNames.size() != 2, "The CO2Solubility model is a two-component model" );
+  GEOSX_THROW_IF( phaseNames.size() != 2,
+                  "The CO2Solubility model is a two-phase model",
+                  InputError );
+  GEOSX_THROW_IF( componentNames.size() != 2,
+                  "The CO2Solubility model is a two-component model",
+                  InputError );
 
   char const * expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
-  GEOSX_ERROR_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(), "Component CO2 is not found!" );
+  GEOSX_THROW_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(),
+                  "Component CO2 is not found!",
+                  InputError );
 
   char const * expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
-  GEOSX_ERROR_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(), "Component Water/Brine is not found!" );
+  GEOSX_THROW_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(),
+                  "Component Water/Brine is not found!",
+                  InputError );
 
   char const * expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_phaseGasIndex = PVTFunctionHelpers::findName( phaseNames,
                                                   expectedGasPhaseNames );
-  GEOSX_ERROR_IF( m_phaseGasIndex < 0 || m_phaseGasIndex >= phaseNames.size(),
-                  "Phase co2/gas is not found!" );
+  GEOSX_THROW_IF( m_phaseGasIndex < 0 || m_phaseGasIndex >= phaseNames.size(),
+                  "Phase co2/gas is not found!",
+                  InputError );
 
   char const * expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames,
                                                      expectedWaterPhaseNames );
-  GEOSX_ERROR_IF( m_phaseLiquidIndex < 0 || m_phaseLiquidIndex >= phaseNames.size(),
-                  "Phase water/liquid is not found!" );
+  GEOSX_THROW_IF( m_phaseLiquidIndex < 0 || m_phaseLiquidIndex >= phaseNames.size(),
+                  "Phase water/liquid is not found!",
+                  InputError );
 
   makeTable( inputPara );
 }
@@ -189,11 +199,14 @@ void CO2Solubility::calculateCO2Solubility( PTTableCoordinates const & tableCoor
   constexpr real64 lambda[] = { -0.411370585, 6.07632013e-4, 97.5347708, 0, 0, 0, 0, -0.0237622469, 0.0170656236, 0, 1.41335834e-5 };
   constexpr real64 zeta[] = { 3.36389723e-4, -1.98298980e-5, 0, 0, 0, 0, 0, 2.12220830e-3, -5.24873303e-3, 0, 0 };
 
-  for( localIndex i = 0; i < tableCoords.nPressures(); ++i )
+  localIndex const nPressures = tableCoords.nPressures();
+  localIndex const nTemperatures = tableCoords.nTemperatures();
+
+  for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const P = tableCoords.getPressure( i ) / P_Pa_f;
 
-    for( localIndex j = 0; j < tableCoords.nTemperatures(); ++j )
+    for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const T = tableCoords.getTemperature( j );
 
@@ -245,7 +258,9 @@ void CO2Solubility::CO2SolubilityFunction( real64 const & T,
       break;
     }
 
-    GEOSX_ERROR_IF( count > 50, "CO2Solubility NR convergence fails! " << "dre = " << dre << ", eps = " << eps );
+    GEOSX_THROW_IF( count > 50,
+                    "CO2Solubility NR convergence fails! " << "dre = " << dre << ", eps = " << eps,
+                    InputError );
 
     count++;
     V_r += dre;

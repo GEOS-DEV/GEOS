@@ -38,22 +38,18 @@ namespace constitutive
 /**
  * @brief Kernel wrapper class for MultiPhaseMultiComponentFluid.
  */
-template< typename BRINEVISCWRAPPER,
-          typename CO2VISCWRAPPER,
-          typename BRINEDENSWRAPPER,
-          typename CO2DENSWRAPPER,
-          typename FLASHWRAPPER >
+template< typename P1DENSWRAPPER, typename P1VISCWRAPPER, typename P2DENSWRAPPER, typename P2VISCWRAPPER, typename FLASHWRAPPER >
 class MultiPhaseMultiComponentFluidUpdate final : public MultiFluidBaseUpdate
 {
 public:
 
-  MultiPhaseMultiComponentFluidUpdate( localIndex const phaseGasIndex,
-                                       localIndex const phaseLiquidIndex,
-                                       arrayView1d< BRINEVISCWRAPPER const > const & brineViscosityWrapper,
-                                       arrayView1d< CO2VISCWRAPPER const > const & co2ViscosityWrapper,
-                                       arrayView1d< BRINEDENSWRAPPER const > const & brineDensityWrapper,
-                                       arrayView1d< CO2DENSWRAPPER const > const & co2DensityWrapper,
-                                       arrayView1d< FLASHWRAPPER const > const & co2SolubilityWrapper,
+  MultiPhaseMultiComponentFluidUpdate( localIndex const p1Index,
+                                       localIndex const p2Index,
+                                       arrayView1d< P1DENSWRAPPER const > const & p1DensityWrapper,
+                                       arrayView1d< P1VISCWRAPPER const > const & p1ViscosityWrapper,
+                                       arrayView1d< P2DENSWRAPPER const > const & p2DensityWrapper,
+                                       arrayView1d< P2VISCWRAPPER const > const & p2ViscosityWrapper,
+                                       arrayView1d< FLASHWRAPPER const > const & flashWrapper,
                                        arrayView1d< real64 const > const & componentMolarWeight,
                                        bool useMass,
                                        arrayView3d< real64 > const & phaseFraction,
@@ -106,13 +102,13 @@ public:
                             dTotalDensity_dPressure,
                             dTotalDensity_dTemperature,
                             dTotalDensity_dGlobalCompFraction ),
-    m_phaseGasIndex( phaseGasIndex ),
-    m_phaseLiquidIndex( phaseLiquidIndex ),
-    m_brineViscosityWrapper( brineViscosityWrapper ),
-    m_co2ViscosityWrapper( co2ViscosityWrapper ),
-    m_brineDensityWrapper( brineDensityWrapper ),
-    m_co2DensityWrapper( co2DensityWrapper ),
-    m_co2SolubilityWrapper( co2SolubilityWrapper )
+    m_p1Index( p1Index ),
+    m_p2Index( p2Index ),
+    m_p1DensityWrapper( p1DensityWrapper ),
+    m_p1ViscosityWrapper( p1ViscosityWrapper ),
+    m_p2DensityWrapper( p2DensityWrapper ),
+    m_p2ViscosityWrapper( p2ViscosityWrapper ),
+    m_flashWrapper( flashWrapper )
   {}
 
   /// Default copy constructor
@@ -208,28 +204,29 @@ public:
 
 private:
 
-  /// Index of the gas phase
-  localIndex const m_phaseGasIndex;
-
   /// Index of the liquid phase
-  localIndex const m_phaseLiquidIndex;
+  localIndex const m_p1Index;
 
-  /// Kernel wrapper for brine viscosity updates
-  arrayView1d< BRINEVISCWRAPPER const > const m_brineViscosityWrapper;
-
-  /// Kernel wrapper for CO2 viscosity updates
-  arrayView1d< CO2VISCWRAPPER const > const m_co2ViscosityWrapper;
+  /// Index of the gas phase
+  localIndex const m_p2Index;
 
   /// Kernel wrapper for brine density updates
-  arrayView1d< BRINEDENSWRAPPER const > const m_brineDensityWrapper;
+  arrayView1d< P1DENSWRAPPER const > const m_p1DensityWrapper;
+
+  /// Kernel wrapper for brine viscosity updates
+  arrayView1d< P1VISCWRAPPER const > const m_p1ViscosityWrapper;
 
   /// Kernel wrapper for CO2 density updates
-  arrayView1d< CO2DENSWRAPPER const > const m_co2DensityWrapper;
+  arrayView1d< P2DENSWRAPPER const > const m_p2DensityWrapper;
+
+  /// Kernel wrapper for CO2 viscosity updates
+  arrayView1d< P2VISCWRAPPER const > const m_p2ViscosityWrapper;
 
   /// Kernel wrapper for phase fraction and phase component fraction updates
-  arrayView1d< FLASHWRAPPER const > const m_co2SolubilityWrapper;
+  arrayView1d< FLASHWRAPPER const > const m_flashWrapper;
 };
 
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
 class MultiPhaseMultiComponentFluid : public MultiFluidBase
 {
 public:
@@ -238,23 +235,23 @@ public:
 
   MultiPhaseMultiComponentFluid( string const & name, Group * const parent );
 
-  virtual ~MultiPhaseMultiComponentFluid() override;
+  virtual ~MultiPhaseMultiComponentFluid() override {};
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
 
-  static string catalogName() { return "MultiPhaseMultiComponentFluid"; }
+  static string catalogName();
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = MultiPhaseMultiComponentFluidUpdate< PVTProps::BrineViscosity::KernelWrapper,
-                                                             PVTProps::FenghourCO2Viscosity::KernelWrapper,
-                                                             PVTProps::BrineCO2Density::KernelWrapper,
-                                                             PVTProps::SpanWagnerCO2Density::KernelWrapper,
-                                                             PVTProps::CO2Solubility::KernelWrapper >;
+  using KernelWrapper = MultiPhaseMultiComponentFluidUpdate< typename P1DENS::KernelWrapper,
+                                                             typename P1VISC::KernelWrapper,
+                                                             typename P2DENS::KernelWrapper,
+                                                             typename P2VISC::KernelWrapper,
+                                                             typename FLASH::KernelWrapper >;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -262,13 +259,13 @@ public:
    */
   KernelWrapper createKernelWrapper()
   {
-    return KernelWrapper( m_phaseGasIndex,
-                          m_phaseLiquidIndex,
-                          m_brineViscosityWrapper.toViewConst(),
-                          m_co2ViscosityWrapper.toViewConst(),
-                          m_brineDensityWrapper.toViewConst(),
-                          m_co2DensityWrapper.toViewConst(),
-                          m_co2SolubilityWrapper.toViewConst(),
+    return KernelWrapper( m_p1Index,
+                          m_p2Index,
+                          m_p1DensityWrapper.toViewConst(),
+                          m_p1ViscosityWrapper.toViewConst(),
+                          m_p2DensityWrapper.toViewConst(),
+                          m_p2ViscosityWrapper.toViewConst(),
+                          m_flashWrapper.toViewConst(),
                           m_componentMolarWeight.toViewConst(),
                           m_useMass,
                           m_phaseFraction,
@@ -303,7 +300,6 @@ public:
     static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
   } viewKeysMultiPhaseMultiComponentFluid;
 
-
 protected:
 
   virtual void postProcessInput() override;
@@ -318,65 +314,87 @@ private:
   /// Name of the file defining the flash model
   Path m_flashModelParaFile;
 
-  /// Index of the gas phase
-  localIndex m_phaseGasIndex;
-
   /// Index of the liquid phase
-  localIndex m_phaseLiquidIndex;
+  localIndex m_p1Index;
 
-  // TODO: Here I hard-coded all the types to avoid the virtual calls in the compute function.
-  //       See if there is a way to reintroduce them. If it is not possible, the class should be
-  //       renamed because it is not "multi-phase, multi-component", but just CO2-brine.
-
-  /// Pointer to the brine viscosity model
-  std::unique_ptr< PVTProps::BrineViscosity > m_brineViscosity;
-
-  /// Pointer to the CO2 viscosity model
-  std::unique_ptr< PVTProps::FenghourCO2Viscosity > m_co2Viscosity;
+  /// Index of the gas phase
+  localIndex m_p2Index;
 
   /// Pointer to the brine density model
-  std::unique_ptr< PVTProps::BrineCO2Density > m_brineDensity;
-
-  /// Pointer to the CO2 density model
-  std::unique_ptr< PVTProps::SpanWagnerCO2Density > m_co2Density;
-
-  /// Pointer to the flash model
-  std::unique_ptr< PVTProps::CO2Solubility > m_co2Solubility;
+  std::unique_ptr< P1DENS > m_p1Density;
 
   /// Pointer to the brine viscosity model
-  array1d< PVTProps::BrineViscosity::KernelWrapper > m_brineViscosityWrapper;
-
-  /// Pointer to the CO2 viscosity model
-  array1d< PVTProps::FenghourCO2Viscosity::KernelWrapper > m_co2ViscosityWrapper;
-
-  /// Pointer to the brine density model
-  array1d< PVTProps::BrineCO2Density::KernelWrapper > m_brineDensityWrapper;
+  std::unique_ptr< P1VISC > m_p1Viscosity;
 
   /// Pointer to the CO2 density model
-  array1d< PVTProps::SpanWagnerCO2Density::KernelWrapper > m_co2DensityWrapper;
+  std::unique_ptr< P2DENS > m_p2Density;
+
+  /// Pointer to the CO2 viscosity model
+  std::unique_ptr< P2VISC > m_p2Viscosity;
 
   /// Pointer to the flash model
-  array1d< PVTProps::CO2Solubility::KernelWrapper > m_co2SolubilityWrapper;
+  std::unique_ptr< FLASH > m_flash;
+
+  /// Pointer to the brine density model
+  array1d< typename P1DENS::KernelWrapper > m_p1DensityWrapper;
+
+  /// Pointer to the brine viscosity model
+  array1d< typename P1VISC::KernelWrapper > m_p1ViscosityWrapper;
+
+  /// Pointer to the CO2 density model
+  array1d< typename P2DENS::KernelWrapper > m_p2DensityWrapper;
+
+  /// Pointer to the CO2 viscosity model
+  array1d< typename P2VISC::KernelWrapper > m_p2ViscosityWrapper;
+
+  /// Pointer to the flash model
+  array1d< typename FLASH::KernelWrapper > m_flashWrapper;
 
 };
 
-template<>
+// this alias will be useful in constitutive dispatch
+using CO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
+                                                     PVTProps::BrineViscosity,
+                                                     PVTProps::SpanWagnerCO2Density,
+                                                     PVTProps::FenghourCO2Viscosity,
+                                                     PVTProps::CO2Solubility >;
+
+// The constructor is in the hpp for one reason: the testMultiFluid won't link if the constructor is in the cpp
+// I could not find a workaround
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::
+MultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
+  MultiFluidBase( name, parent )
+{
+  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+    setDescription( "Names of the files defining the parameters of the viscosity and density models" );
+
+  registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+    setDescription( "Name of the file defining the parameters of the flash model" );
+}
+
+template< typename P1DENSWRAPPER, typename P1VISCWRAPPER, typename P2DENSWRAPPER, typename P2VISCWRAPPER, typename FLASHWRAPPER >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
-                                                            real64 temperature,
-                                                            arraySlice1d< real64 const > const & composition,
-                                                            arraySlice1d< real64 > const & phaseFraction,
-                                                            arraySlice1d< real64 > const & phaseDensity,
-                                                            arraySlice1d< real64 > const & phaseMassDensity,
-                                                            arraySlice1d< real64 > const & phaseViscosity,
-                                                            arraySlice2d< real64 > const & phaseCompFraction,
-                                                            real64 & totalDensity ) const
+void MultiPhaseMultiComponentFluidUpdate< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VISCWRAPPER, FLASHWRAPPER >::
+compute( real64 pressure,
+         real64 temperature,
+         arraySlice1d< real64 const > const & composition,
+         arraySlice1d< real64 > const & phaseFraction,
+         arraySlice1d< real64 > const & phaseDensity,
+         arraySlice1d< real64 > const & phaseMassDensity,
+         arraySlice1d< real64 > const & phaseViscosity,
+         arraySlice2d< real64 > const & phaseCompFraction,
+         real64 & totalDensity ) const
 {
   constexpr localIndex numComps = 2;
   constexpr localIndex numPhases = 2;
-  localIndex const ipGas = m_phaseGasIndex;
-  localIndex const ipLiq = m_phaseLiquidIndex;
+  localIndex const ip1 = m_p1Index;
+  localIndex const ip2 = m_p2Index;
 
   // for now, compute the derivatives and discard them
   stackArray1d< real64, numPhases > dPhaseFrac_dPres( numPhases );
@@ -425,35 +443,35 @@ void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
   // 2. Compute phase fractions and phase component fractions
 
   real64 const temperatureInCelsius = temperature - 273.15;
-  m_co2SolubilityWrapper[0].compute( pressure,
-                                     temperatureInCelsius,
-                                     compMoleFrac,
-                                     phaseFraction, dPhaseFrac_dPres, dPhaseFrac_dTemp, dPhaseFrac_dComp,
-                                     phaseCompFraction, dPhaseCompFrac_dPres, dPhaseCompFrac_dTemp, dPhaseCompFrac_dComp );
+  m_flashWrapper[0].compute( pressure,
+                             temperatureInCelsius,
+                             compMoleFrac,
+                             phaseFraction, dPhaseFrac_dPres, dPhaseFrac_dTemp, dPhaseFrac_dComp,
+                             phaseCompFraction, dPhaseCompFrac_dPres, dPhaseCompFrac_dTemp, dPhaseCompFrac_dComp );
 
   // 3. Compute phase densities and phase viscosities
 
-  m_co2DensityWrapper[0].compute( pressure,
-                                  temperatureInCelsius,
-                                  phaseCompFraction[ipGas],
-                                  phaseDensity[ipGas], dPhaseDens_dPres, dPhaseDens_dTemp, dPhaseDens_dComp,
-                                  m_useMass );
-  m_co2ViscosityWrapper[0].compute( pressure,
-                                    temperatureInCelsius,
-                                    phaseCompFraction[ipGas],
-                                    phaseViscosity[ipGas], dPhaseVisc_dPres, dPhaseVisc_dTemp, dPhaseVisc_dComp,
-                                    m_useMass );
+  m_p1DensityWrapper[0].compute( pressure,
+                                 temperatureInCelsius,
+                                 phaseCompFraction[ip1],
+                                 phaseDensity[ip1], dPhaseDens_dPres, dPhaseDens_dTemp, dPhaseDens_dComp,
+                                 m_useMass );
+  m_p1ViscosityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction[ip1],
+                                   phaseViscosity[ip1], dPhaseVisc_dPres, dPhaseVisc_dTemp, dPhaseVisc_dComp,
+                                   m_useMass );
 
-  m_brineDensityWrapper[0].compute( pressure,
-                                    temperatureInCelsius,
-                                    phaseCompFraction[ipLiq],
-                                    phaseDensity[ipLiq], dPhaseDens_dPres, dPhaseDens_dTemp, dPhaseDens_dComp,
-                                    m_useMass );
-  m_brineViscosityWrapper[0].compute( pressure,
-                                      temperatureInCelsius,
-                                      phaseCompFraction[ipLiq],
-                                      phaseViscosity[ipLiq], dPhaseVisc_dPres, dPhaseVisc_dTemp, dPhaseVisc_dComp,
-                                      m_useMass );
+  m_p2DensityWrapper[0].compute( pressure,
+                                 temperatureInCelsius,
+                                 phaseCompFraction[ip2],
+                                 phaseDensity[ip2], dPhaseDens_dPres, dPhaseDens_dTemp, dPhaseDens_dComp,
+                                 m_useMass );
+  m_p2ViscosityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction[ip2],
+                                   phaseViscosity[ip2], dPhaseVisc_dPres, dPhaseVisc_dTemp, dPhaseVisc_dComp,
+                                   m_useMass );
 
   // 4. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
 
@@ -472,18 +490,19 @@ void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
     real64 dPhaseMolarDens_dPres = 0.0;
     real64 dPhaseMolarDens_dTemp = 0.0;
     stackArray1d< real64, numComps > dPhaseMolarDens_dComp( 2 );
-    m_co2DensityWrapper[0].compute( pressure,
-                                    temperatureInCelsius,
-                                    phaseCompFraction[ipGas],
-                                    phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
-                                    0 );
-    phaseMW[ipGas] =  phaseDensity[ipGas] / phaseMolarDens;
-    m_brineDensityWrapper[0].compute( pressure,
-                                      temperatureInCelsius,
-                                      phaseCompFraction[ipLiq],
-                                      phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
-                                      0 );
-    phaseMW[ipLiq] =  phaseDensity[ipLiq] / phaseMolarDens;
+    m_p1DensityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction[ip1],
+                                   phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
+                                   0 );
+    phaseMW[ip1] =  phaseDensity[ip1] / phaseMolarDens;
+
+    m_p2DensityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction[ip2],
+                                   phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
+                                   0 );
+    phaseMW[ip2] =  phaseDensity[ip2] / phaseMolarDens;
 
     // 4.1.1. Compute mass of each phase and total mass (on a 1-mole basis)
     for( localIndex ip = 0; ip < numPhases; ++ip )
@@ -517,18 +536,18 @@ void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
   else
   {
     // for now, we have to compute the phase mass density here
-    m_co2DensityWrapper[0].compute( pressure,
-                                    temperatureInCelsius,
-                                    phaseCompFraction[ipGas],
-                                    phaseMassDensity[ipGas], dPhaseMassDens_dPres,
-                                    dPhaseMassDens_dTemp, dPhaseMassDens_dComp,
-                                    true );
-    m_brineDensityWrapper[0].compute( pressure,
-                                      temperatureInCelsius,
-                                      phaseCompFraction[ipLiq],
-                                      phaseMassDensity[ipLiq], dPhaseMassDens_dPres,
-                                      dPhaseMassDens_dTemp, dPhaseMassDens_dComp,
-                                      true );
+    m_p1DensityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction[ip1],
+                                   phaseMassDensity[ip1], dPhaseMassDens_dPres,
+                                   dPhaseMassDens_dTemp, dPhaseMassDens_dComp,
+                                   true );
+    m_p2DensityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction[ip2],
+                                   phaseMassDensity[ip2], dPhaseMassDens_dPres,
+                                   dPhaseMassDens_dTemp, dPhaseMassDens_dComp,
+                                   true );
   }
 
   // TODO: extract the following piece of code and write a function that can be used here and in MultiFluidPVTPackageWrapper
@@ -548,36 +567,37 @@ void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
   }
 }
 
-template<>
+template< typename P1DENSWRAPPER, typename P1VISCWRAPPER, typename P2DENSWRAPPER, typename P2VISCWRAPPER, typename FLASHWRAPPER >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
-                                                            real64 temperature,
-                                                            arraySlice1d< real64 const > const & composition,
-                                                            arraySlice1d< real64 > const & phaseFraction,
-                                                            arraySlice1d< real64 > const & dPhaseFraction_dPressure,
-                                                            arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
-                                                            arraySlice2d< real64 > const & dPhaseFraction_dGlobalCompFraction,
-                                                            arraySlice1d< real64 > const & phaseDensity,
-                                                            arraySlice1d< real64 > const & dPhaseDensity_dPressure,
-                                                            arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
-                                                            arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
-                                                            arraySlice1d< real64 > const & phaseMassDensity,
-                                                            arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
-                                                            arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
-                                                            arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
-                                                            arraySlice1d< real64 > const & phaseViscosity,
-                                                            arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
-                                                            arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
-                                                            arraySlice2d< real64 > const & dPhaseViscosity_dGlobalCompFraction,
-                                                            arraySlice2d< real64 > const & phaseCompFraction,
-                                                            arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
-                                                            arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
-                                                            arraySlice3d< real64 > const & dPhaseCompFraction_dGlobalCompFraction,
-                                                            real64 & totalDensity,
-                                                            real64 & dTotalDensity_dPressure,
-                                                            real64 & dTotalDensity_dTemperature,
-                                                            arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
+void MultiPhaseMultiComponentFluidUpdate< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VISCWRAPPER, FLASHWRAPPER >::
+compute( real64 pressure,
+         real64 temperature,
+         arraySlice1d< real64 const > const & composition,
+         arraySlice1d< real64 > const & phaseFraction,
+         arraySlice1d< real64 > const & dPhaseFraction_dPressure,
+         arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
+         arraySlice2d< real64 > const & dPhaseFraction_dGlobalCompFraction,
+         arraySlice1d< real64 > const & phaseDensity,
+         arraySlice1d< real64 > const & dPhaseDensity_dPressure,
+         arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
+         arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+         arraySlice1d< real64 > const & phaseMassDensity,
+         arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
+         arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
+         arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
+         arraySlice1d< real64 > const & phaseViscosity,
+         arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
+         arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
+         arraySlice2d< real64 > const & dPhaseViscosity_dGlobalCompFraction,
+         arraySlice2d< real64 > const & phaseCompFraction,
+         arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
+         arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
+         arraySlice3d< real64 > const & dPhaseCompFraction_dGlobalCompFraction,
+         real64 & totalDensity,
+         real64 & dTotalDensity_dPressure,
+         real64 & dTotalDensity_dTemperature,
+         arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
 {
   // 0. make shortcut structs to avoid long names (TODO maybe remove)
   CompositionalVarContainer< 1 > phaseFrac {
@@ -629,8 +649,8 @@ void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
 
   constexpr localIndex numComps = 2;
   constexpr localIndex numPhases = 2;
-  localIndex const ipGas = m_phaseGasIndex;
-  localIndex const ipLiq = m_phaseLiquidIndex;
+  localIndex const ip1 = m_p1Index;
+  localIndex const ip2 = m_p2Index;
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
@@ -671,35 +691,34 @@ void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
   // 2. Compute phase fractions and phase component fractions
 
   real64 const temperatureInCelsius = temperature - 273.15;
-  m_co2SolubilityWrapper[0].compute( pressure,
-                                     temperatureInCelsius,
-                                     compMoleFrac,
-                                     phaseFrac.value, phaseFrac.dPres, phaseFrac.dTemp, phaseFrac.dComp,
-                                     phaseCompFrac.value, phaseCompFrac.dPres, phaseCompFrac.dTemp, phaseCompFrac.dComp );
+  m_flashWrapper[0].compute( pressure,
+                             temperatureInCelsius,
+                             compMoleFrac,
+                             phaseFrac.value, phaseFrac.dPres, phaseFrac.dTemp, phaseFrac.dComp,
+                             phaseCompFrac.value, phaseCompFrac.dPres, phaseCompFrac.dTemp, phaseCompFrac.dComp );
 
   // 3. Compute phase densities and phase viscosities
 
-  m_co2DensityWrapper[0].compute( pressure,
-                                  temperatureInCelsius,
-                                  phaseCompFrac.value[ipGas],
-                                  phaseDens.value[ipGas], phaseDens.dPres[ipGas], phaseDens.dTemp[ipGas], phaseDens.dComp[ipGas],
-                                  m_useMass );
-  m_co2ViscosityWrapper[0].compute( pressure,
-                                    temperatureInCelsius,
-                                    phaseCompFrac.value[ipGas],
-                                    phaseVisc.value[ipGas], phaseVisc.dPres[ipGas], phaseVisc.dTemp[ipGas], phaseVisc.dComp[ipGas],
-                                    m_useMass );
-
-  m_brineDensityWrapper[0].compute( pressure,
-                                    temperatureInCelsius,
-                                    phaseCompFrac.value[ipLiq],
-                                    phaseDens.value[ipLiq], phaseDens.dPres[ipLiq], phaseDens.dTemp[ipLiq], phaseDens.dComp[ipLiq],
-                                    m_useMass );
-  m_brineViscosityWrapper[0].compute( pressure,
-                                      temperatureInCelsius,
-                                      phaseCompFrac.value[ipLiq],
-                                      phaseVisc.value[ipLiq], phaseVisc.dPres[ipLiq], phaseVisc.dTemp[ipLiq], phaseVisc.dComp[ipLiq],
-                                      m_useMass );
+  m_p1DensityWrapper[0].compute( pressure,
+                                 temperatureInCelsius,
+                                 phaseCompFrac.value[ip1],
+                                 phaseDens.value[ip1], phaseDens.dPres[ip1], phaseDens.dTemp[ip1], phaseDens.dComp[ip1],
+                                 m_useMass );
+  m_p1ViscosityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFrac.value[ip1],
+                                   phaseVisc.value[ip1], phaseVisc.dPres[ip1], phaseVisc.dTemp[ip1], phaseVisc.dComp[ip1],
+                                   m_useMass );
+  m_p2DensityWrapper[0].compute( pressure,
+                                 temperatureInCelsius,
+                                 phaseCompFrac.value[ip2],
+                                 phaseDens.value[ip2], phaseDens.dPres[ip2], phaseDens.dTemp[ip2], phaseDens.dComp[ip2],
+                                 m_useMass );
+  m_p2ViscosityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFrac.value[ip2],
+                                   phaseVisc.value[ip2], phaseVisc.dPres[ip2], phaseVisc.dTemp[ip2], phaseVisc.dComp[ip2],
+                                   m_useMass );
 
   // 4. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
 
@@ -724,29 +743,29 @@ void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
     real64 dPhaseMolarDens_dPres = 0.0;
     real64 dPhaseMolarDens_dTemp = 0.0;
     stackArray1d< real64, numComps > dPhaseMolarDens_dComp( 2 );
-    m_co2DensityWrapper[0].compute( pressure,
-                                    temperatureInCelsius,
-                                    phaseCompFrac.value[ipGas],
-                                    phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
-                                    0 );
-    phaseMW[ipGas] =  phaseDens.value[ipGas] / phaseMolarDens;
-    dPhaseMW_dPres[ipGas] = phaseDens.dPres[ipGas] / phaseMolarDens - phaseMW[ipGas]*dPhaseMolarDens_dPres / phaseMolarDens;
-    dPhaseMW_dTemp[ipGas] = phaseDens.dTemp[ipGas] / phaseMolarDens - phaseMW[ipGas]*dPhaseMolarDens_dTemp / phaseMolarDens;
+    m_p2DensityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFrac.value[ip2],
+                                   phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
+                                   0 );
+    phaseMW[ip2] =  phaseDens.value[ip2] / phaseMolarDens;
+    dPhaseMW_dPres[ip2] = phaseDens.dPres[ip2] / phaseMolarDens - phaseMW[ip2]*dPhaseMolarDens_dPres / phaseMolarDens;
+    dPhaseMW_dTemp[ip2] = phaseDens.dTemp[ip2] / phaseMolarDens - phaseMW[ip2]*dPhaseMolarDens_dTemp / phaseMolarDens;
     for( localIndex ic = 0; ic < numComps; ++ic )
     {
-      dPhaseMW_dComp[ipGas][ic] = phaseDens.dComp[ipGas][ic] / phaseMolarDens - phaseMW[ipGas]*dPhaseMolarDens_dComp[ic] / phaseMolarDens;
+      dPhaseMW_dComp[ip2][ic] = phaseDens.dComp[ip2][ic] / phaseMolarDens - phaseMW[ip2]*dPhaseMolarDens_dComp[ic] / phaseMolarDens;
     }
-    m_brineDensityWrapper[0].compute( pressure,
-                                      temperatureInCelsius,
-                                      phaseCompFrac.value[ipLiq],
-                                      phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
-                                      0 );
-    phaseMW[ipLiq] =  phaseDens.value[ipLiq] / phaseMolarDens;
-    dPhaseMW_dPres[ipLiq] = phaseDens.dPres[ipLiq] / phaseMolarDens - phaseMW[ipLiq]*dPhaseMolarDens_dPres / phaseMolarDens;
-    dPhaseMW_dTemp[ipLiq] = phaseDens.dTemp[ipLiq] / phaseMolarDens - phaseMW[ipLiq]*dPhaseMolarDens_dTemp / phaseMolarDens;
+    m_p1DensityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFrac.value[ip1],
+                                   phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
+                                   0 );
+    phaseMW[ip1] =  phaseDens.value[ip1] / phaseMolarDens;
+    dPhaseMW_dPres[ip1] = phaseDens.dPres[ip1] / phaseMolarDens - phaseMW[ip1]*dPhaseMolarDens_dPres / phaseMolarDens;
+    dPhaseMW_dTemp[ip1] = phaseDens.dTemp[ip1] / phaseMolarDens - phaseMW[ip1]*dPhaseMolarDens_dTemp / phaseMolarDens;
     for( localIndex ic = 0; ic < numComps; ++ic )
     {
-      dPhaseMW_dComp[ipLiq][ic] = phaseDens.dComp[ipLiq][ic] / phaseMolarDens - phaseMW[ipLiq]*dPhaseMolarDens_dComp[ic]/phaseMolarDens;
+      dPhaseMW_dComp[ip1][ic] = phaseDens.dComp[ip1][ic] / phaseMolarDens - phaseMW[ip1]*dPhaseMolarDens_dComp[ic]/phaseMolarDens;
     }
 
 
@@ -836,18 +855,18 @@ void MultiPhaseMultiComponentFluid::KernelWrapper::compute( real64 pressure,
   else
   {
     // for now, we have to compute the phase mass density here
-    m_co2DensityWrapper[0].compute( pressure,
-                                    temperatureInCelsius,
-                                    phaseCompFrac.value[ipGas],
-                                    phaseMassDens.value[ipGas], phaseMassDens.dPres[ipGas],
-                                    phaseMassDens.dTemp[ipGas], phaseMassDens.dComp[ipGas],
-                                    true );
-    m_brineDensityWrapper[0].compute( pressure,
-                                      temperatureInCelsius,
-                                      phaseCompFrac.value[ipLiq],
-                                      phaseMassDens.value[ipLiq], phaseMassDens.dPres[ipLiq],
-                                      phaseMassDens.dTemp[ipLiq], phaseMassDens.dComp[ipLiq],
-                                      true );
+    m_p1DensityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFrac.value[ip1],
+                                   phaseMassDens.value[ip1], phaseMassDens.dPres[ip1],
+                                   phaseMassDens.dTemp[ip1], phaseMassDens.dComp[ip1],
+                                   true );
+    m_p2DensityWrapper[0].compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFrac.value[ip2],
+                                   phaseMassDens.value[ip2], phaseMassDens.dPres[ip2],
+                                   phaseMassDens.dTemp[ip2], phaseMassDens.dComp[ip2],
+                                   true );
   }
 
   // TODO: extract the following piece of code and write a function that can be used here and in MultiFluidPVTPackageWrapper

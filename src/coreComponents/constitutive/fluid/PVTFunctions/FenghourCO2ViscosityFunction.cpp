@@ -43,8 +43,9 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string_array const & inputPara,
 
 void FenghourCO2Viscosity::makeTable( string_array const & inputPara )
 {
+  localIndex const expectedNumParameters = 8;
   PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputPara, tableCoords );
+  PVTFunctionHelpers::initializePropertyTable( inputPara, expectedNumParameters, tableCoords );
 
   localIndex const nP = tableCoords.nPressures();
   localIndex const nT = tableCoords.nTemperatures();
@@ -101,13 +102,17 @@ void FenghourCO2Viscosity::calculateCO2Viscosity( PTTableCoordinates const & tab
                                                   array1d< real64 > const & densities,
                                                   array1d< real64 > const & viscosities )
 {
-  for( localIndex i = 0; i < tableCoords.nPressures(); ++i )
+
+  localIndex const nPressures = tableCoords.nPressures();
+  localIndex const nTemperatures = tableCoords.nTemperatures();
+
+  for( localIndex i = 0; i < nPressures; ++i )
   {
-    for( localIndex j = 0; j < tableCoords.nTemperatures(); ++j )
+    for( localIndex j = 0; j < nTemperatures; ++j )
     {
       fenghourCO2ViscosityFunction( tableCoords.getTemperature( j ),
-                                    densities[j*tableCoords.nPressures()+i],
-                                    viscosities[j*tableCoords.nPressures()+i] );
+                                    densities[j*nPressures+i],
+                                    viscosities[j*nPressures+i] );
     }
   }
 }

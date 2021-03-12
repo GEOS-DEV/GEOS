@@ -86,7 +86,7 @@ class FlashModelBase
 public:
 
   FlashModelBase( string const & name,
-                  array1d< string > const & componentNames,
+                  string_array const & componentNames,
                   array1d< real64 > const & componentMolarWeight ):
     m_modelName( name ),
     m_componentNames( componentNames ),
@@ -95,9 +95,9 @@ public:
 
   virtual ~FlashModelBase() = default;
 
-  using CatalogInterface = dataRepository::CatalogInterface< FlashModelBase, array1d< string > const &,
-                                                             array1d< string > const &,
-                                                             array1d< string > const &,
+  using CatalogInterface = dataRepository::CatalogInterface< FlashModelBase, string_array const &,
+                                                             string_array const &,
+                                                             string_array const &,
                                                              array1d< real64 > const & >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
@@ -115,7 +115,7 @@ protected:
   string m_modelName;
 
   /// Array storing the name of the components
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
 
   /// Array storing the component molar weights
   array1d< real64 > m_componentMolarWeight;

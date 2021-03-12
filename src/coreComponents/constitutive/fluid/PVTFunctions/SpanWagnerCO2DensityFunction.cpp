@@ -148,15 +148,18 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string_array const & inputPara,
 {
   char const * expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
-  GEOSX_ERROR_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(), "Component CO2 is not found!" );
+  GEOSX_THROW_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(),
+                  "Component CO2 is not found!",
+                  InputError );
 
   makeTable( inputPara );
 }
 
 void SpanWagnerCO2Density::makeTable( string_array const & inputPara )
 {
+  localIndex const expectedNumParameters = 8;
   PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputPara, tableCoords );
+  PVTFunctionHelpers::initializePropertyTable( inputPara, expectedNumParameters, tableCoords );
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Density( tableCoords, densities );
@@ -176,13 +179,16 @@ void SpanWagnerCO2Density::calculateCO2Density( PTTableCoordinates const & table
 
   constexpr real64 TK_f = 273.15;
 
-  for( localIndex i = 0; i < tableCoords.nPressures(); ++i )
+  localIndex const nPressures = tableCoords.nPressures();
+  localIndex const nTemperatures = tableCoords.nTemperatures();
+
+  for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const PPa = tableCoords.getPressure( i );
-    for( localIndex j = 0; j < tableCoords.nTemperatures(); ++j )
+    for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TK = tableCoords.getTemperature( j ) + TK_f;
-      spanWagnerCO2DensityFunction( TK, PPa, densities[j*tableCoords.nPressures()+i], &detail::f );
+      spanWagnerCO2DensityFunction( TK, PPa, densities[j*nPressures+i], &detail::f );
     }
   }
 }

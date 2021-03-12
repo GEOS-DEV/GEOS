@@ -34,18 +34,25 @@ public:
   PTTableCoordinates()
   { coords.resize( 2 ); }
 
-  localIndex nPressures() const { return coords[0].size(); }
-  localIndex nTemperatures() const { return coords[1].size(); }
+  localIndex nPressures() const { return coords[coordType::PRES].size(); }
+  localIndex nTemperatures() const { return coords[coordType::TEMP].size(); }
 
-  void appendPressure( const real64 & pres ) { coords[0].emplace_back( pres ); }
-  void appendTemperature( const real64 & temp ) { coords[1].emplace_back( temp ); }
+  void appendPressure( const real64 & pres ) { coords[coordType::PRES].emplace_back( pres ); }
+  void appendTemperature( const real64 & temp ) { coords[coordType::TEMP].emplace_back( temp ); }
 
-  real64 const & getPressure( localIndex i ) const { return coords[0][i]; }
-  real64 const & getTemperature( localIndex i ) const { return coords[1][i]; }
+  real64 const & getPressure( localIndex i ) const { return coords[coordType::PRES][i]; }
+  real64 const & getTemperature( localIndex i ) const { return coords[coordType::TEMP][i]; }
 
   array1d< array1d< real64 > > const & getCoords() const { return coords; }
 
 private:
+
+  struct coordType
+  {
+    static constexpr integer PRES = 0;
+    static constexpr integer TEMP = 1;
+  };
+
   array1d< array1d< real64 > > coords;
 };
 
@@ -70,60 +77,47 @@ struct PVTFunctionHelpers
     return id;
   }
 
+  /**
+   * @brief Populate the coordinate table with pressure and temperature
+   * @param[in] inputParameters the strings reads in the file provided by the user
+   * @param[inout] tableCoords the (p,T) coordinates of the table
+   */
   static real64
   initializePropertyTableWithSalinity( string_array const & inputParameters,
                                        PTTableCoordinates & tableCoords )
   {
-    real64 TStart = -1.0;
-    real64 TEnd = -1.0;
-    real64 dT = -1.0;
-    real64 PStart = -1.0;
-    real64 PEnd = -1.0;
-    real64 dP = -1.0;
-    real64 salinity = -1.0;
-
-    GEOSX_ERROR_IF( inputParameters.size() != 9, "Invalid property input!" );
-
+    localIndex const expectedNumParameters = 9;
+    real64 salinity = 0.0;
+    initializePropertyTable( inputParameters, expectedNumParameters, tableCoords );
     try
     {
-      PStart = stod( inputParameters[2] );
-      PEnd = stod( inputParameters[3] );
-      dP = stod( inputParameters[4] );
-
-      TStart = stod( inputParameters[5] );
-      TEnd = stod( inputParameters[6] );
-      dT = stod( inputParameters[7] );
-
       salinity = stod( inputParameters[8] );
     }
     catch( const std::invalid_argument & e )
     {
-      GEOSX_ERROR( "Invalid BrineCO2Density argument:" + string( e.what()) );
-    }
-
-    for( real64 P = PStart; P <= PEnd; P += dP )
-    {
-      tableCoords.appendPressure( P );
-    }
-    for( real64 T = TStart; T <= TEnd; T += dT )
-    {
-      tableCoords.appendTemperature( T );
+      GEOSX_THROW( "Invalid property argument:" + string( e.what()),
+                   InputError );
     }
     return salinity;
   }
 
+  /**
+   * @brief Populate the coordinate table with pressure and temperature
+   * @param[in] inputParameters the strings reads in the file provided by the user
+   * @param[in] expectedNumParameters the number of expected parameters in the file provided by the user
+   * @param[inout] tableCoords the (p,T) coordinates of the table
+   */
   static void
   initializePropertyTable( string_array const & inputParameters,
+                           localIndex const expectedNumParameters,
                            PTTableCoordinates & tableCoords )
-  {
-    real64 TStart = -1.0;
-    real64 TEnd = -1.0;
-    real64 dT = -1.0;
-    real64 PStart = -1.0;
-    real64 PEnd = -1.0;
-    real64 dP = -1.0;
 
-    GEOSX_ERROR_IF( inputParameters.size() != 8, "Invalid property input!" );
+  {
+    real64 TStart, TEnd, dT, PStart, PEnd, dP;
+
+    GEOSX_THROW_IF( inputParameters.size() != expectedNumParameters,
+                    "Invalid property input!",
+                    InputError );
 
     try
     {
@@ -134,19 +128,20 @@ struct PVTFunctionHelpers
       TStart = stod( inputParameters[5] );
       TEnd = stod( inputParameters[6] );
       dT = stod( inputParameters[7] );
+
+      for( real64 P = PStart; P <= PEnd; P += dP )
+      {
+        tableCoords.appendPressure( P );
+      }
+      for( real64 T = TStart; T <= TEnd; T += dT )
+      {
+        tableCoords.appendTemperature( T );
+      }
     }
     catch( const std::invalid_argument & e )
     {
-      GEOSX_ERROR( "Invalid property argument:" + string( e.what()) );
-    }
-
-    for( real64 P = PStart; P <= PEnd; P += dP )
-    {
-      tableCoords.appendPressure( P );
-    }
-    for( real64 T = TStart; T <= TEnd; T += dT )
-    {
-      tableCoords.appendTemperature( T );
+      GEOSX_THROW( "Invalid property argument:" + string( e.what()),
+                   InputError );
     }
   }
 

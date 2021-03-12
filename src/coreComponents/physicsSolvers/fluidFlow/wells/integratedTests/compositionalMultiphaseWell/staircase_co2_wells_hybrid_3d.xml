@@ -143,7 +143,7 @@
   </NumericalMethods>
 
   <Constitutive>
-    <MultiPhaseMultiComponentFluid
+    <CO2BrineFluid
       name="fluid1"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
