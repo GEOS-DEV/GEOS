@@ -96,11 +96,17 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
 
 void InternalWellboreGenerator::postProcessInput()
 {
-
+// This should be done in the coordinateTransformation function
 //  m_vertices[2][0]  = m_trajectory[0][2];
 //  m_vertices[2][1]  = m_trajectory[1][2];
 
+  GEOSX_ERROR_IF( m_nElems[1].size()>1,
+                  "Only one block in the theta direction is currently supported. "
+                  "This is specified by the nt keyword in InternalWellbore");
 
+  GEOSX_ERROR_IF( m_nElems[2].size()>1,
+                  "Only one block in the z direction is currently supported. "
+                  "This is specified by the nz keyword in InternalWellbore");
 
   arrayView1d<real64 const> const theta = m_vertices[1];
   real64 const dTheta = theta.back() - theta[0];
@@ -236,6 +242,8 @@ void InternalWellboreGenerator::postProcessInput()
 void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 {
   InternalMeshGenerator::generateMesh( domain );
+
+  // This should be done in the coordinateTransformation function, and then this override should be removed.
 
 //  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
 //  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
@@ -415,6 +423,11 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
 {
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
+  Group & nodeSets = nodeManager.sets();
+  SortedArray< localIndex > & xnegNodes = nodeSets.getReference< SortedArray< localIndex > >( string( "xneg" ) );
+  SortedArray< localIndex > & xposNodes = nodeSets.getReference< SortedArray< localIndex > >( string( "xpos" ) );
+  SortedArray< localIndex > & ynegNodes = nodeSets.getReference< SortedArray< localIndex > >( string( "yneg" ) );
+  SortedArray< localIndex > & yposNodes = nodeSets.getReference< SortedArray< localIndex > >( string( "ypos" ) );
 
   real64 const cartesianMappingInnerRadius = m_cartesianOuterBoundary<m_vertices[0].size() ?
                                              m_vertices[0][m_cartesianOuterBoundary] :
@@ -442,25 +455,25 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
     X[iN][1] = meshRact * sin( meshTheta );
 
     // Add mapped values to nodesets
-//    if( m_meshType == MeshType::CylindricalSquareBoundary )
-//    {
-//      if( isEqual( X[iN][0], -1 * m_max[0], m_coordinatePrecision ) )
-//      {
-//        xnegNodes.insert( iN );
-//      }
-//      if( isEqual( X[iN][0], m_max[0], m_coordinatePrecision ) )
-//      {
-//        xposNodes.insert( iN );
-//      }
-//      if( isEqual( X[iN][1], -1 * m_max[0], m_coordinatePrecision ) )
-//      {
-//        ynegNodes.insert( iN );
-//      }
-//      if( isEqual( X[iN][1], m_max[0], m_coordinatePrecision ) )
-//      {
-//        yposNodes.insert( iN );
-//      }
-//    }
+    if( m_cartesianOuterBoundary<m_vertices[0].size() )
+    {
+      if( isEqual( X[iN][0], -1 * m_max[0], m_coordinatePrecision ) )
+      {
+        xnegNodes.insert( iN );
+      }
+      if( isEqual( X[iN][0], m_max[0], m_coordinatePrecision ) )
+      {
+        xposNodes.insert( iN );
+      }
+      if( isEqual( X[iN][1], -1 * m_max[0], m_coordinatePrecision ) )
+      {
+        ynegNodes.insert( iN );
+      }
+      if( isEqual( X[iN][1], m_max[0], m_coordinatePrecision ) )
+      {
+        yposNodes.insert( iN );
+      }
+    }
   }
 }
 
