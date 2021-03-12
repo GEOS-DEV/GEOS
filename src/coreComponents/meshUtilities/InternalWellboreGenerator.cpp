@@ -25,7 +25,11 @@ namespace geosx
 using namespace dataRepository;
 
 InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group * const parent ):
-  InternalMeshGenerator( name, parent )
+  InternalMeshGenerator( name, parent ),
+  m_trajectory(),
+  m_cartesianOuterBoundary(),
+  m_isFullAnnulus(false),
+  m_autoSpaceRadialElems(0)
 {
 
   getWrapper< array1d< real64 > >( viewKeyStruct::xCoordsString() ).
@@ -80,29 +84,97 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Enforce a Cartesian aligned outer boundary on the outer block" );
 
+  registerWrapper( viewKeyStruct::autoSpaceRadialElemsString(), &m_autoSpaceRadialElems ).
+    setApplyDefaultValue( 0 ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Automatically set number and spacing of elements in the radial direction. "
+                    "This overrides the values of nr!!" );
+
 }
 
-//void InternalWellboreGenerator::postProcessInput()
-//{
-//  m_vertices[0].resize( 2 );
-//  m_vertices[1].resize( 2 );
-//  m_vertices[2].resize( 2 );
-//  m_nElems[0].resize( 1 );
-//  m_nElems[1].resize( 1 );
-//  m_nElemBias[0].resize( 1 );
-//
-//  m_vertices[0][0]  = m_radius;
-//  m_vertices[0][1]  = m_rOut;
-//  m_vertices[1][0]  = 0;
-//  m_vertices[1][1]  = m_theta;
-//  m_vertices[2][0]  = m_trajectory[0][2];
-//  m_vertices[2][1]  = m_trajectory[1][2];
-//  m_nElems[0][0]    = m_rElems;
-//  m_nElems[1][0]    = m_tElems;
-//  m_nElemBias[0][0] = m_rBias;
-//
-//  InternalMeshGenerator::postProcessInput();
-//}
+void InternalWellboreGenerator::postProcessInput()
+{
+  InternalMeshGenerator::postProcessInput();
+
+
+  arrayView1d<real64 const> const theta = m_vertices[1];
+  real64 const dTheta = theta.back() - theta[0];
+
+  // enable full annulus corrections if the mesh is 360 degrees
+  if( dTheta >= 360.0 - 1e-99 )
+  {
+    m_isFullAnnulus = true;
+  }
+
+  // automatically set radial coordinates
+  if( m_autoSpaceRadialElems )
+  {
+    localIndex const numRadialBlocks = m_vertices[0].size()-1;
+
+    for( localIndex iBlock=0; iBlock<numRadialBlocks; ++iBlock )
+    {
+      real64 const rInner = m_vertices[0][iBlock];
+      real64 const rOuter = m_vertices[0][iBlock+1];
+
+      real64 const tElemSizeInner = 2 * M_PI * rInner * ( dTheta / 360 ) / m_nElems[1][0];
+      real64 const tElemSizeOuter = 2 * M_PI * rOuter * ( dTheta / 360 ) / m_nElems[1][0];
+
+      if( iBlock==0 )
+      {
+        m_radialCoords.emplace_back( rInner );
+      }
+
+      localIndex actualNumberOfRadialElements = 0;
+      real64 scalingFactor = 0;
+      for( localIndex i=0; i<m_nElems[0][iBlock]*10; ++i )
+      {
+        real64 const r_ip1_0 = ( m_radialCoords.back() +  tElemSizeInner ) ;
+        real64 const tElemSize_ip1_0 = 2 * M_PI * r_ip1_0 * ( dTheta / 360 ) / m_nElems[1][0];
+
+        constexpr real64 c = 0.5;
+        real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * tElemSizeInner + c * tElemSize_ip1_0;
+
+
+        // if the radius of the next layer is bigger than rOuter, we figure
+        // out where to cut off the layer.
+        if( r_ip1 > rOuter )
+        {
+          real64 const overshoot = r_ip1 - rOuter;
+          real64 const undershoot = rOuter - m_radialCoords.back();
+
+          if( overshoot > undershoot )
+          {
+            m_radialCoords.emplace_back(r_ip1);
+            actualNumberOfRadialElements = i+1;
+            scalingFactor = ( rOuter - rInner ) / ( r_ip1 - rInner );
+          }
+          else
+          {
+            actualNumberOfRadialElements = i;
+            scalingFactor = ( m_radialCoords.back() - rInner ) / ( rOuter - rInner );
+          }
+          break;
+        }
+        else
+        {
+          m_radialCoords.emplace_back(r_ip1);
+        }
+      }
+      std::cout<<actualNumberOfRadialElements<<", "<<scalingFactor<<std::endl;
+      std::cout<<m_radialCoords.size()<<std::endl;
+
+      m_nElems[0][iBlock] = actualNumberOfRadialElements;
+      for( localIndex i=0; i<m_radialCoords.size(); ++i )
+      {
+        m_radialCoords[i] = ( m_radialCoords[i] - rInner ) * scalingFactor + rInner;
+      }
+
+    }
+    std::cout<<m_radialCoords<<std::endl;
+  }
+
+}
 
 void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 {
@@ -234,7 +306,10 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (&numNodesInDir)[3] )
 {
   GEOSX_UNUSED_VAR(numNodesInDir);
-  numNodesInDir[1] -= 1;
+  if( m_isFullAnnulus )
+  {
+    numNodesInDir[1] -= 1;
+  }
 }
 
 void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( int (&index)[3],
@@ -244,9 +319,12 @@ void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( int (&in
                                              real64 const tol )
 {
   GEOSX_UNUSED_VAR( minExtent );
-  if( isEqual( X[ 1 ], maxExtent[1], tol ) )
+  if( m_isFullAnnulus )
   {
-    index[1] = 0;
+    if( isEqual( X[ 1 ], maxExtent[1], tol ) )
+    {
+      index[1] = 0;
+    }
   }
 }
 
@@ -263,14 +341,17 @@ void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( integer co
                                                                       localIndex (&nodeOfBox)[8] )
 {
   GEOSX_UNUSED_VAR( i, k, iBlock, kBlock );
-  setConnectivityForPeriodicBoundary( 1,
-                                      j,
-                                      jBlock,
-                                      globalIJK,
-                                      numElemsInDirForBlock,
-                                      numNodesInDir,
-                                      firstElemIndexInPartition,
-                                      nodeOfBox );
+  if( m_isFullAnnulus )
+  {
+    setConnectivityForPeriodicBoundary( 1,
+                                        j,
+                                        jBlock,
+                                        globalIJK,
+                                        numElemsInDirForBlock,
+                                        numNodesInDir,
+                                        firstElemIndexInPartition,
+                                        nodeOfBox );
+  }
 }
 
 void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeManager )

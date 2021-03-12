@@ -88,17 +88,26 @@ protected:
     constexpr static char const * rBiasString() { return "rBias"; }
     constexpr static char const * trajectoryString() { return "trajectory"; }
     constexpr static char const * cartesianOuterBoundaryString() { return "useCartesianOuterBoundary"; }
+    constexpr static char const * autoSpaceRadialElemsString() { return "autoSpaceRadialElems"; }
   };
   /// @endcond
 
-//  void postProcessInput() override final;
+  void postProcessInput() override final;
 
 private:
 
-  int m_cartesianOuterBoundary;
 
   /// Trajectory defined by coordinates of the wellbore centers
   array2d< real64 > m_trajectory;
+
+  int m_cartesianOuterBoundary;
+
+  bool m_isFullAnnulus;
+
+  int m_autoSpaceRadialElems;
+
+  array1d<real64> m_radialCoords;
+
 
 };
 
