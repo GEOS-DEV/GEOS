@@ -1,3 +1,4 @@
+
 /*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
@@ -82,17 +83,38 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
 {
   static std::map< string, HYPRE_Int > const typeMap =
   {
+    { "default", -1 },
     { "jacobi", 0 },
     { "hybridForwardGaussSeidel", 3 },
     { "hybridBackwardGaussSeidel", 4 },
     { "hybridSymmetricGaussSeidel", 6 },
     { "gaussSeidel", 6 },
+    { "GPUjacobi", 7 },
     { "L1hybridSymmetricGaussSeidel", 8 },
     { "chebyshev", 16 },
     { "L1jacobi", 18 },
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG relaxation option: " << type );
+  return typeMap.at( type );
+}
+
+HYPRE_Int getHypreAMGCoarsenType( string const & type )
+{
+  static std::map< string, HYPRE_Int > const typeMap =
+  {
+    { "CLJP", 0 },
+    { "Ruge-Stueben", 3 },
+    { "Falgout", 6 },
+    { "CLJP", 7 },
+    { "PMIS", 8 },
+    { "PMISD", 9 },
+    { "HMIS", 10 },
+    { "CGC", 21 },
+    { "CGC-E", 22 }
+  };
+
+  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG coarsen option: " << type );
   return typeMap.at( type );
 }
 
@@ -246,7 +268,27 @@ void HyprePreconditioner::createAMG()
   }
   else
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( m_precond, getHypreAMGRelaxationType( m_parameters.amg.smootherType ) ) );
+
+    HYPRE_Int const relaxType = getHypreAMGRelaxationType( m_parameters.amg.smootherType );
+    if( relaxType>-1 )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( m_precond, getHypreAMGRelaxationType( m_parameters.amg.smootherType ) ) );
+    }
+
+    // Coarsening options: Only PMIS is supported on GPU
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( m_precond, getHypreAMGCoarsenType( m_parameters.amg.coarseningType ) ) );
+
+    // Interpolation options: Use options 3, 6, 14 or 15.
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( m_precond, m_parameters.amg.interpolationType ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( m_precond, m_parameters.amg.numFunctions ) );
+
+    if( m_parameters.amg.aggresiveNumLevels )
+    {
+      HYPRE_BoomerAMGSetAggNumLevels( m_precond, m_parameters.amg.aggresiveNumLevels ); // agg_num_levels = 1
+    }
+
+    HYPRE_BoomerAMGSetAggInterpType( m_precond, 5 ); // agg_interp_type = 5,7
 
     if( m_parameters.amg.smootherType == "chebyshev" )
     {
@@ -258,9 +300,12 @@ void HyprePreconditioner::createAMG()
     }
   }
 
+  /// TODO Why does this cause a crash?
+#if !defined(GEOSX_USE_HYPRE_CUDA)
   // Set coarsest level solver
   // (by default for coarsest grid size above 5,000 superlu_dist is used)
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetDSLUThreshold( m_precond, 5000 ) );
+#endif
   if( m_parameters.amg.coarseType == "direct" )
   {
     GEOSX_LAI_CHECK_ERROR( hypre_BoomerAMGSetCycleRelaxType( m_precond, 9, 3 ) );
@@ -428,7 +473,7 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
     m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
   }
-  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseFlow" )
+  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseFVM" )
   {
     // Labels description stored in point_marker_array
     //             0 = pressure
@@ -539,13 +584,18 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
     mgr_nlevels = 3;
 
     /* options for solvers at each level */
-    HYPRE_Int mgr_gsmooth_type = 16; // ILU(0)
-    HYPRE_Int mgr_num_gsmooth_sweeps = 1;
+    HYPRE_Int mgr_gsmooth_type = 16;
+    HYPRE_Int mgr_num_gsmooth_sweeps = 0;
 
     mgr_level_interp_type.resize( mgr_nlevels );
     mgr_level_interp_type[0] = 2;
     mgr_level_interp_type[1] = 2;
     mgr_level_interp_type[2] = 2;
+
+    mgr_coarse_grid_method.resize( mgr_nlevels );
+    mgr_coarse_grid_method[0] = 1;
+    mgr_coarse_grid_method[1] = 1;
+    mgr_coarse_grid_method[2] = 0;
 
     mgr_level_frelax_method.resize( mgr_nlevels );
     mgr_level_frelax_method[0] = 0; // Jacobi
@@ -590,12 +640,111 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
       mgr_cindexes[iLevel] = lv_cindexes[iLevel].data();
     }
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &aux_precond ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( aux_precond, 0 ) ); // Block Jacobi - ILU
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( aux_precond, 0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( aux_precond, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetTol( aux_precond, 0.0 ) );
 
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRDirectSolverCreate( &aux_precond ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( m_precond, mgr_bsize, mgr_nlevels,
+                                                                  mgr_num_cindexes.data(),
+                                                                  mgr_cindexes.data(),
+                                                                  m_auxData->point_marker_array.data() ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( m_precond, mgr_level_frelax_method.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( m_precond, 1e-14 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( m_precond, 15 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( m_precond, mgr_level_interp_type.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( m_precond, mgr_coarse_grid_method.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( m_precond, mgr_gsmooth_type ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, mgr_num_gsmooth_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCoarseSolver( m_precond,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_MGRDirectSolverSolve,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_MGRDirectSolverSetup,
+                                aux_precond )
+      );
+
+    m_functions->aux_destroy = HYPRE_MGRDirectSolverDestroy;
+  }
+  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseHybridFVM" )
+  {
+    // Labels description stored in point_marker_array
+    //                         0 = pressure
+    //                         1 = density
+    //                       ... = ... (densities)
+    // numCellCenteredLabels - 1 = density
+    // numLabels - 1             = face pressure
+    //
+    // 3-level MGR reduction strategy inspired from CompositionalMultiphaseReservoir
+    // 1st level: eliminate the density associated with the volume constraint
+    // 2nd level: eliminate the rest of the densities
+    // 3rd level: eliminate the cell-centered pressure
+    // The coarse grid is the interface pressure system and is solved with BoomerAMG
+
+
+    HYPRE_Int numCellCenteredLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
+    HYPRE_Int numFaceCenteredLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
+    HYPRE_Int numLabels = numCellCenteredLabels + numFaceCenteredLabels;
+
+    mgr_bsize = numLabels;
+    mgr_nlevels = 3;
+
+    /* options for solvers at each level */
+    HYPRE_Int mgr_gsmooth_type = 16;
+    HYPRE_Int mgr_num_gsmooth_sweeps = 0;
+
+    mgr_level_interp_type.resize( mgr_nlevels );
+    mgr_level_interp_type[0] = 2;
+    mgr_level_interp_type[1] = 2;
+    mgr_level_interp_type[2] = 2;
+
+    mgr_level_frelax_method.resize( mgr_nlevels );
+    mgr_level_frelax_method[0] = 0; // Jacobi
+    mgr_level_frelax_method[1] = 0; // Jacobi
+    mgr_level_frelax_method[2] = 0; // Jacobi
+
+    mgr_num_cindexes.resize( mgr_nlevels );
+    mgr_num_cindexes[0] = mgr_bsize - 1; // eliminate the last density
+    mgr_num_cindexes[1] = 2;             // eliminate all other densities
+    mgr_num_cindexes[2] = 1;             // eliminate cell centered pressure
+
+    lv_cindexes.resize( mgr_nlevels );
+    for( int cid=0; cid < mgr_bsize; cid++ )
+    {
+      // All points except the last reservoir density
+      // which corresponds to the volume constraint equation
+      if( cid != numCellCenteredLabels - 1 )
+      {
+        lv_cindexes[0].push_back( cid );
+      }
+    }
+    for( auto & cid : lv_cindexes[0] )
+    {
+      // eliminate all other densities
+      if( cid == 0 || cid == numLabels - 1 )
+      {
+        lv_cindexes[1].push_back( cid );
+      }
+    }
+    for( auto & cid : lv_cindexes[1] )
+    {
+      // eliminate the cell-centered pressure
+      if( cid == numLabels - 1 )
+      {
+        lv_cindexes[2].push_back( cid );
+      }
+    }
+
+    mgr_cindexes.resize( mgr_nlevels );
+    for( HYPRE_Int iLevel = 0; iLevel < mgr_nlevels; ++iLevel )
+    {
+      mgr_cindexes[iLevel] = lv_cindexes[iLevel].data();
+    }
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &aux_precond ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( aux_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( aux_precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( aux_precond, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( aux_precond, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( m_precond, mgr_bsize, mgr_nlevels,
                                                                   mgr_num_cindexes.data(),
                                                                   mgr_cindexes.data(),
@@ -608,12 +757,12 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, mgr_num_gsmooth_sweeps ) );
     GEOSX_LAI_CHECK_ERROR(
       HYPRE_MGRSetCoarseSolver( m_precond,
-                                (HYPRE_PtrToParSolverFcn)HYPRE_ILUSolve,
-                                (HYPRE_PtrToParSolverFcn)HYPRE_ILUSetup,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSolve,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSetup,
                                 aux_precond )
       );
 
-    m_functions->aux_destroy = HYPRE_ILUDestroy;
+    m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
   }
   else if( m_parameters.mgr.strategy == "LagrangianContactMechanics" )
   {

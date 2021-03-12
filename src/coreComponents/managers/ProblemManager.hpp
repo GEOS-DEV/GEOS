@@ -220,7 +220,7 @@ public:
   /// Child group viewKeys
   struct groupKeysStruct
   {
-    ///< Numerical methods string
+    /// @return Numerical methods string
     static constexpr char const * numericalMethodsManagerString() { return "NumericalMethods"; }
     dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key

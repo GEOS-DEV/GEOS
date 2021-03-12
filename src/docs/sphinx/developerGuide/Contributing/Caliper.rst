@@ -26,7 +26,7 @@ Configuring Caliper
   
 Caliper configuration is done by specifying a string to initialize Caliper with via the
 `-t` option. A few options are listed below but we refer the reader to
-`Caliper <https://github.com/LLNL/Caliper/blob/releases/v2.3.0/doc/ConfigManagerAPI.md>`_ for the full Caliper tutorial.
+`Caliper Config <https://software.llnl.gov/Caliper/BuiltinConfigurations.html>`_ for the full Caliper tutorial.
 
 * ``-t runtime-report`` Will make Caliper print aggregated timing information to standard out.
 * ``-t runtime-report,aggregate_across_ranks=false`` Will make Caliper write per rank timing information to standard out.
@@ -40,7 +40,7 @@ Adiak is a library that allows the addition of meta-data to the Caliper Spot out
 This meta-data allows you to easily slice and dice the timings available in the Spot web server. To export meta-data
 use the `adiak::value` function.
 
-See `Adiak <https://github.com/LLNL/Adiak/blob/f27ba674b88c2435e5e3245acbda9fc0a57bf88f/docs/Adiak%20API.docx>`_
+See `Adiak API <https://github.com/LLNL/Adiak/blob/f27ba674b88c2435e5e3245acbda9fc0a57bf88f/docs/Adiak%20API.docx>`_
 for the full Adiak documentation.
 
 

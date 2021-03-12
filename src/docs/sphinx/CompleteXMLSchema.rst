@@ -85,11 +85,11 @@ Element: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction.rst
 
 
-.. _XML_CompositionalMultiphaseFlow:
+.. _XML_CompositionalMultiphaseFVM:
 
-Element: CompositionalMultiphaseFlow
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow.rst
+Element: CompositionalMultiphaseFVM
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM.rst
 
 
 .. _XML_CompositionalMultiphaseFluid:
@@ -97,6 +97,13 @@ Element: CompositionalMultiphaseFlow
 Element: CompositionalMultiphaseFluid
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
+
+
+.. _XML_CompositionalMultiphaseHybridFVM:
+
+Element: CompositionalMultiphaseHybridFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM.rst
 
 
 .. _XML_CompositionalMultiphaseReservoir:
@@ -167,6 +174,13 @@ Element: DamageSpectralElasticIsotropic
 Element: DamageVolDevElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic.rst
+
+
+.. _XML_DeadOilFluid:
+
+Element: DeadOilFluid
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid.rst
 
 
 .. _XML_Dirichlet:
@@ -831,11 +845,11 @@ Datastructure: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction_other.rst
 
 
-.. _DATASTRUCTURE_CompositionalMultiphaseFlow:
+.. _DATASTRUCTURE_CompositionalMultiphaseFVM:
 
-Datastructure: CompositionalMultiphaseFlow
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow_other.rst
+Datastructure: CompositionalMultiphaseFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseFluid:
@@ -843,6 +857,13 @@ Datastructure: CompositionalMultiphaseFlow
 Datastructure: CompositionalMultiphaseFluid
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseHybridFVM:
+
+Datastructure: CompositionalMultiphaseHybridFVM
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseReservoir:
@@ -920,6 +941,13 @@ Datastructure: DamageSpectralElasticIsotropic
 Datastructure: DamageVolDevElasticIsotropic
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DeadOilFluid:
+
+Datastructure: DeadOilFluid
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:

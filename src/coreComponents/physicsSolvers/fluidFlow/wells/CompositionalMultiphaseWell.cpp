@@ -34,7 +34,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/PerforationData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
@@ -102,7 +102,7 @@ void CompositionalMultiphaseWell::postProcessInput()
   WellSolverBase::postProcessInput();
   checkModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString() );
 
-  CompositionalMultiphaseFlow const & flowSolver = getParent().getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
+  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
   GEOSX_UNUSED_VAR( flowSolver );
 
   GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
@@ -226,7 +226,8 @@ void CompareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 void CompositionalMultiphaseWell::validateConstitutiveModels( MeshLevel const & meshLevel, ConstitutiveManager const & cm ) const
 {
-  CompositionalMultiphaseFlow const & flowSolver = getParent().getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
+  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+
   arrayView1d< string const > const & flowTargetRegionNames = flowSolver.targetRegionNames();
   arrayView1d< string const > const & flowFluidModels = flowSolver.fluidModelNames();
   arrayView1d< string const > const & flowRelPermModels = flowSolver.relPermModelNames();
@@ -428,7 +429,7 @@ void CompositionalMultiphaseWell::updateComponentFraction( WellElementSubRegion 
   arrayView2d< real64 const > const & dCompDens =
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString() );
 
-  CompositionalMultiphaseFlowKernels::KernelLaunchSelector1< CompositionalMultiphaseFlowKernels::ComponentFractionKernel
+  CompositionalMultiphaseBaseKernels::KernelLaunchSelector1< CompositionalMultiphaseBaseKernels::ComponentFractionKernel
                                                              >( numFluidComponents(),
                                                                 subRegion.size(),
                                                                 compDens,
@@ -691,7 +692,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    CompositionalMultiphaseFlowKernels::FluidUpdateKernel::launch< serialPolicy >( subRegion.size(),
+    CompositionalMultiphaseBaseKernels::FluidUpdateKernel::launch< serialPolicy >( subRegion.size(),
                                                                                    fluidWrapper,
                                                                                    pres,
                                                                                    dPres,
@@ -732,7 +733,7 @@ void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegio
   arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
   arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
 
-  CompositionalMultiphaseFlowKernels::KernelLaunchSelector2< CompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel
+  CompositionalMultiphaseBaseKernels::KernelLaunchSelector2< CompositionalMultiphaseBaseKernels::PhaseVolumeFractionKernel
                                                              >( numFluidComponents(), numFluidPhases(),
                                                                 subRegion.size(),
                                                                 compDens,
@@ -884,7 +885,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
     {
       typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-      CompositionalMultiphaseFlowKernels::FluidUpdateKernel::launch< serialPolicy >( subRegion.size(),
+      CompositionalMultiphaseBaseKernels::FluidUpdateKernel::launch< serialPolicy >( subRegion.size(),
                                                                                      fluidWrapper,
                                                                                      wellElemPressure,
                                                                                      m_temperature,
@@ -1236,12 +1237,12 @@ void CompositionalMultiphaseWell::computePerforationRates( WellElementSubRegion 
                                                        numFluidPhases(),
                                                        m_resPres.toNestedViewConst(),
                                                        m_deltaResPres.toNestedViewConst(),
-                                                       m_resPhaseMob.toNestedViewConst(),
-                                                       m_dResPhaseMob_dPres.toNestedViewConst(),
-                                                       m_dResPhaseMob_dCompDens.toNestedViewConst(),
                                                        m_dResPhaseVolFrac_dPres.toNestedViewConst(),
                                                        m_dResPhaseVolFrac_dCompDens.toNestedViewConst(),
                                                        m_dResCompFrac_dCompDens.toNestedViewConst(),
+                                                       m_resPhaseDens.toNestedViewConst(),
+                                                       m_dResPhaseDens_dPres.toNestedViewConst(),
+                                                       m_dResPhaseDens_dComp.toNestedViewConst(),
                                                        m_resPhaseVisc.toNestedViewConst(),
                                                        m_dResPhaseVisc_dPres.toNestedViewConst(),
                                                        m_dResPhaseVisc_dComp.toNestedViewConst(),
@@ -1397,10 +1398,10 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  CompositionalMultiphaseFlow & flowSolver = getParent().getGroup< CompositionalMultiphaseFlow >( getFlowSolverName() );
+  CompositionalMultiphaseBase & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
 
   {
-    using keys = CompositionalMultiphaseFlow::viewKeyStruct;
+    using keys = CompositionalMultiphaseBase::viewKeyStruct;
 
     m_resPres.clear();
     m_resPres = elemManager.constructArrayViewAccessor< real64, 1 >( keys::pressureString() );
@@ -1418,18 +1419,6 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
     m_dResCompFrac_dCompDens = elemManager.constructArrayViewAccessor< real64, 3 >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
     m_dResCompFrac_dCompDens.setName( getName() + "/accessors/" + keys::dGlobalCompFraction_dGlobalCompDensityString() );
 
-    m_resPhaseMob.clear();
-    m_resPhaseMob = elemManager.constructArrayViewAccessor< real64, 2 >( keys::phaseMobilityString() );
-    m_resPhaseMob.setName( getName() + "/accessors/" + keys::phaseMobilityString() );
-
-    m_dResPhaseMob_dPres.clear();
-    m_dResPhaseMob_dPres = elemManager.constructArrayViewAccessor< real64, 2 >( keys::dPhaseMobility_dPressureString() );
-    m_dResPhaseMob_dPres.setName( getName() + "/accessors/" + keys::dPhaseMobility_dPressureString() );
-
-    m_dResPhaseMob_dCompDens.clear();
-    m_dResPhaseMob_dCompDens = elemManager.constructArrayViewAccessor< real64, 3 >( keys::dPhaseMobility_dGlobalCompDensityString() );
-    m_dResPhaseMob_dCompDens.setName( getName() + "/accessors/" + keys::dPhaseMobility_dGlobalCompDensityString() );
-
     m_resPhaseVolFrac.clear();
     m_resPhaseVolFrac = elemManager.constructArrayViewAccessor< real64, 2 >( keys::phaseVolumeFractionString() );
     m_resPhaseVolFrac.setName( getName() + "/accessors/" + keys::phaseVolumeFractionString() );
@@ -1445,6 +1434,25 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
   }
   {
     using keys = MultiFluidBase::viewKeyStruct;
+
+    m_resPhaseDens.clear();
+    m_resPhaseDens = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::phaseDensityString(),
+                                                                                  flowSolver.targetRegionNames(),
+                                                                                  flowSolver.fluidModelNames() );
+    m_resPhaseDens.setName( getName() + "/accessors/" + keys::phaseDensityString() );
+
+    m_dResPhaseDens_dPres.clear();
+    m_dResPhaseDens_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseDensity_dPressureString(),
+                                                                                         flowSolver.targetRegionNames(),
+                                                                                         flowSolver.fluidModelNames() );
+    m_dResPhaseDens_dPres.setName( getName() + "/accessors/" + keys::dPhaseDensity_dPressureString() );
+
+    m_dResPhaseDens_dComp.clear();
+    m_dResPhaseDens_dComp = elemManager.constructMaterialArrayViewAccessor< real64, 4 >( keys::dPhaseDensity_dGlobalCompFractionString(),
+                                                                                         flowSolver.targetRegionNames(),
+                                                                                         flowSolver.fluidModelNames() );
+    m_dResPhaseDens_dComp.setName( getName() + "/accessors/" + keys::dPhaseDensity_dGlobalCompFractionString() );
+
 
     m_resPhaseMassDens.clear();
     m_resPhaseMassDens = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::phaseMassDensityString(),
