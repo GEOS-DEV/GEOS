@@ -74,6 +74,11 @@ public:
 
   virtual void coordinateTransformation( NodeManager & nodeManager ) override final;
 
+  virtual inline bool isCartesian() const override final
+  {
+    return false;
+  }
+
 
 protected:
 

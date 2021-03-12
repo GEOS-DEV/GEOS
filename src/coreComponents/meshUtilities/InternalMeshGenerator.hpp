@@ -69,7 +69,10 @@ public:
 
   void remapMesh ( dataRepository::Group & domain ) override;
 
-
+  virtual inline bool isCartesian() const
+  {
+    return true;
+  }
 
 
   virtual void reduceNumNodesForPeriodicBoundary( integer (&)[3] ) {};

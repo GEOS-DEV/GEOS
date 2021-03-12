@@ -475,7 +475,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
 
           // Cartesian-specific nodesets
-//          if( isCartesian() )
+          if( isCartesian() )
           {
             if( isEqual( X( localNodeIndex, 0 ), m_min[0], m_coordinatePrecision ) )
             {
