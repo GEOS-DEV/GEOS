@@ -11,8 +11,8 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="0"
-      targetRegions="{ Omega }"
-      solidMaterialNames="{ shale }">
+      targetRegions="{ casing, cement, rock }"
+      solidMaterialNames="{ steel, cement, shale }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -28,18 +28,18 @@
   <Mesh>
     <InternalWellbore
       name="mesh1"
-      elementTypes="{ C3D8 }"
-      radius="{0.1, 2.0}"
+      elementTypes="{ C3D8, C3D8, C3D8 }"
+      radius="{0.1, 0.2, 0.5, 2.0}"
       theta="{0, 360}"
       zCoords="{0,1}"
       trajectory="{ { -0.0, 0.0, 0.0 },
                     {  0.0, 0.0, 0.0 } }"
-      nr="{2}"
+      nr="{4,2,2}"
       nt="{16}"
       nz="{ 1 }"
-      autoSpaceRadialElems="1"
-      useCartesianOuterBoundary="0"
-      cellBlockNames="{ cb1 }"
+      autoSpaceRadialElems="{0,1,1}"
+      useCartesianOuterBoundary="2"
+      cellBlockNames="{ casing, cement, rock }"
       />
   </Mesh>
 
@@ -83,13 +83,37 @@
   <!-- SPHINX_FEDiscretizationEnd -->
   <ElementRegions>
     <CellElementRegion
-      name="Omega"
-      cellBlocks="{ cb1 }"
+      name="casing"
+      cellBlocks="{ casing }"
+      materialList="{ steel }"/>
+      
+    <CellElementRegion
+      name="cement"
+      cellBlocks="{ cement }"
+      materialList="{ cement }"/>
+
+    <CellElementRegion
+      name="rock"
+      cellBlocks="{ rock }"
       materialList="{ shale }"/>
+
+      
   </ElementRegions>
 
   <Constitutive>
     <!-- SPHINX_Material -->
+    <ElasticIsotropic
+      name="steel"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+
+    <ElasticIsotropic
+      name="cement"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+
     <ElasticIsotropic
       name="shale"
       defaultDensity="2700"
