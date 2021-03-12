@@ -306,6 +306,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -325,6 +326,21 @@
 		<xsd:attribute name="meshLevels" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType" />
+	<xsd:complexType name="InternalWellboreType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Level0" type="Level0Type" />
+		</xsd:choice>
+		<!--nx => Number of elements in the x-direction within each mesh block-->
+		<xsd:attribute name="nx" type="integer_array" />
+		<!--ny => Number of elements in the y-direction within each mesh block-->
+		<xsd:attribute name="ny" type="integer_array" />
+		<!--xCoords => x-coordinates of each mesh block vertex-->
+		<xsd:attribute name="xCoords" type="real64_array" />
+		<!--yCoords => y-coordinates of each mesh block vertex-->
+		<xsd:attribute name="yCoords" type="real64_array" />
+		<!--meshLevels => (no description available)-->
+		<xsd:attribute name="meshLevels" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="PAMELAMeshGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Level0" type="Level0Type" />
@@ -1297,6 +1313,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>

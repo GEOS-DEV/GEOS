@@ -51,10 +51,34 @@ public:
 
   void generateMesh( DomainPartition & domain ) override final;
 
+
+  virtual void reduceNumNodesForPeriodicBoundary( integer (&numNodes)[3] ) override final;
+
+  virtual void setNodeGlobalIndicesOnPeriodicBoundary( int (&index)[3],
+                                               real64 (&minExtent)[3],
+                                               real64 (&maxExtent)[3],
+                                               arraySlice1d<real64 const> const & X,
+                                               real64 const tol ) override final;
+
+  virtual void setConnectivityForPeriodicBoundaries( integer const i,
+                                                     integer const j,
+                                                     integer const k,
+                                                     integer const iBlock,
+                                                     integer const jBlock,
+                                                     integer const kBlock,
+                                                     int (&globalIJK)[3],
+                                                     int const (&numElemsInDirForBlock)[3],
+                                                     integer const (&numNodesInDir)[3],
+                                                     int const (&firstElemIndexInPartition)[3],
+                                                     localIndex (&nodeOfBox)[8] ) override final;
+
+  virtual void coordinateTransformation( NodeManager & nodeManager ) override final;
+
+
 protected:
 
   ///@cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
+  struct viewKeyStruct : public InternalMeshGenerator::viewKeyStruct
   {
     constexpr static char const * radiusString() { return "radius"; }
     constexpr static char const * thetaString() { return "theta"; }
@@ -63,30 +87,15 @@ protected:
     constexpr static char const * tElemsString() { return "nt"; }
     constexpr static char const * rBiasString() { return "rBias"; }
     constexpr static char const * trajectoryString() { return "trajectory"; }
+    constexpr static char const * cartesianOuterBoundaryString() { return "useCartesianOuterBoundary"; }
   };
   /// @endcond
 
-  void postProcessInput() override final;
+//  void postProcessInput() override final;
 
 private:
 
-  /// Wellbore radius
-  real64 m_radius;
-
-  /// Farfield distance
-  real64 m_rOut;
-
-  /// Maximum tangent angle in degrees
-  real64 m_theta;
-
-  /// Number of elements in radial direction
-  real64 m_rElems;
-
-  /// Number of elements in tangent direction
-  real64 m_tElems;
-
-  /// Bias in the radial direction
-  real64 m_rBias;
+  int m_cartesianOuterBoundary;
 
   /// Trajectory defined by coordinates of the wellbore centers
   array2d< real64 > m_trajectory;

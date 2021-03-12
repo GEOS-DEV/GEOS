@@ -49,18 +49,6 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  /**
-   * @enum MeshType
-   *
-   * The options for mesh type
-   */
-  enum class MeshType : integer
-  {
-    Cartesian,
-    Cylindrical,
-    CylindricalSquareBoundary
-  };
-
   void generateElementRegions( DomainPartition & domain ) override;
 
   /**
@@ -80,6 +68,63 @@ public:
                                      const int size ) override;
 
   void remapMesh ( dataRepository::Group & domain ) override;
+
+
+
+
+  virtual void reduceNumNodesForPeriodicBoundary( integer (&)[3] ) {};
+
+  virtual void setNodeGlobalIndicesOnPeriodicBoundary( int (&index)[3],
+                                               real64 (&minExtent)[3],
+                                               real64 (&maxExtent)[3],
+                                               arraySlice1d<real64 const> const & X,
+                                               real64 const tol )
+  {
+    GEOSX_UNUSED_VAR( index, minExtent, maxExtent, X, tol);
+  }
+
+  virtual void setConnectivityForPeriodicBoundaries( integer const i,
+                                                     integer const j,
+                                                     integer const k,
+                                                     integer const iBlock,
+                                                     integer const jBlock,
+                                                     integer const kBlock,
+                                                     int (&globalIJK)[3],
+                                                     int const (&numElemsInDirForBlock)[3],
+                                                     integer const (&numNodesInDir)[3],
+                                                     int const (&firstElemIndexInPartition)[3],
+                                                     localIndex (&nodeOfBox)[8] )
+  {
+    GEOSX_UNUSED_VAR( i, j, k, iBlock, jBlock, kBlock,
+                      globalIJK, numElemsInDirForBlock, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
+  }
+
+  inline void setConnectivityForPeriodicBoundary( int const component,
+                                                  integer const index,
+                                                  integer const blockIndex,
+                                                  int (&globalIJK)[3],
+                                                  int const (&numElemsInDirForBlock)[3],
+                                                  integer const (&numNodesInDir)[3],
+                                                  int const (&firstElemIndexInPartition)[3],
+                                                  localIndex (&nodeOfBox)[8] )
+  {
+    if( index == numElemsInDirForBlock[component] - 1 && blockIndex == m_nElems[component].size() - 1 )
+    {
+      // Last set of elements
+      globalIJK[component] = -1;
+      localIndex const firstNodeIndexR = numNodesInDir[1] * numNodesInDir[2] * ( globalIJK[0] - firstElemIndexInPartition[0] ) +
+                                         numNodesInDir[2] * ( globalIJK[1] - firstElemIndexInPartition[1] ) +
+                                         ( globalIJK[2] - firstElemIndexInPartition[2] );
+      nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR;
+      nodeOfBox[3] = numNodesInDir[2] + firstNodeIndexR;
+      nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR + 1;
+      nodeOfBox[7] = numNodesInDir[2] + firstNodeIndexR + 1;
+    }
+  }
+
+
+  virtual void coordinateTransformation( NodeManager & ) {}
+
 
 protected:
 
@@ -157,12 +202,6 @@ private:
 
   /// Random seed for generation of the node perturbation field
   int m_randSeed = 0;
-
-  /**
-   * @brief Knob to map onto a radial mesh.
-   * @note if 0 mesh is not radial, if positive mesh is, it larger than 1
-   */
-  MeshType m_meshType = MeshType::Cartesian;
 
   /// Skew angle in radians for skewed mesh generation
   real64 m_skewAngle = 0;
@@ -279,27 +318,10 @@ private:
 
 public:
 
-  /**
-   * @brief Check if the mesh is a cartesian mesh.
-   * @return true if the Internal mesh is cartesian, false else
-   */
-  inline bool isCartesian()
-  {
-    return m_meshType == MeshType::Cartesian;
-  }
-
-  /**
-   * @brief Check if the mesh is a radial mesh.
-   * @return true if the Internal mesh is radial, false else
-   */
-  inline bool isRadial()
-  {
-    return m_meshType == MeshType::Cylindrical || m_meshType == MeshType::CylindricalSquareBoundary;
-  }
 
 };
 
-ENUM_STRINGS( InternalMeshGenerator::MeshType, "Cartesian", "Cylindrical", "CylindricalSquareBoundary" )
+//ENUM_STRINGS( InternalMeshGenerator::MeshType, "Cartesian", "Cylindrical", "CylindricalSquareBoundary" )
 
 } /* namespace geosx */
 

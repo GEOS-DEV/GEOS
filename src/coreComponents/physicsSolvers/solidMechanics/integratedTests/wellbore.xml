@@ -29,14 +29,15 @@
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="0.1"
-      theta="180"
-      trajectory="{ { -0.3, 0.0, 1.0 }, {  0.3, 0.3, 0.0 } }"
-      nr="5"
-      nt="16"
+      radius="{ 0.1, 2 }"
+      theta="{ 0, 180 }"
+      zCoords="{0,1}"
+      trajectory="{ { -0.3, 0.0, 1.0 },
+                    {  0.3, 0.3, 0.0 } }"
+      nr="{5}"
+      nt="{16}"
       nz="{ 2 }"
-      cellBlockNames="{ cb1 }"
-      meshType="CylindricalSquareBoundary"/>
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <!-- SPHINX_WellboreMeshEnd -->
