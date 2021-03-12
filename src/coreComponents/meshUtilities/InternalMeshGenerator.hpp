@@ -171,6 +171,8 @@ protected:
   /// Ndim x nElem spatialized array of element bias
   array1d< real64 > m_nElemBias[3];
 
+  array1d<real64> m_setCoords[3];
+
 private:
 
   /// String array of region names
@@ -208,6 +210,8 @@ private:
 
   /// Skew center for skew mesh generation
   real64 m_skewCenter[3] = { 0, 0, 0 };
+
+
 
   /**
    * @brief Convert ndim node spatialized index to node global index.
@@ -257,6 +261,12 @@ private:
 
     for( int i=0; i<3; ++i )
     {
+      if( m_setCoords[i].size()>0 )
+      {
+        X[i] = m_setCoords[i][a[i]];
+      }
+      else
+      {
 
       int startingIndex = 0;
       int endingIndex = 0;
@@ -298,6 +308,7 @@ private:
       if( i==0 ) xInterval = (max-min) / m_nElems[i][block];
       if( trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex )
         X[0] -= xInterval * 0.5;
+    }
     }
   }
 
