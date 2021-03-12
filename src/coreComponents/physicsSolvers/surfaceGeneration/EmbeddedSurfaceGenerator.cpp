@@ -33,10 +33,8 @@
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
 
-#ifdef USE_GEOSX_PTP
-#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
-#endif
-#include <set>
+#include "EmbeddedSurfacesParallelSynchronization.hpp"
+
 
 namespace geosx
 {
@@ -181,6 +179,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   localIndex numOfPoints = nodeManager.embSurfNodesPosition().size( 0 );
 
   embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+
+  // Synchronize fields
+  EmbeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel, domain.getNeighbors() );
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
