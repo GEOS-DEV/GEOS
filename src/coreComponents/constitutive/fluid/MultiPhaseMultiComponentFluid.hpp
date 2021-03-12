@@ -359,24 +359,6 @@ using CO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
                                                      PVTProps::FenghourCO2Viscosity,
                                                      PVTProps::CO2Solubility >;
 
-// The constructor is in the hpp for one reason: the testMultiFluid won't link if the constructor is in the cpp
-// I could not find a workaround
-template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
-MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::
-MultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
-  MultiFluidBase( name, parent )
-{
-  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
-    setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-    setDescription( "Names of the files defining the parameters of the viscosity and density models" );
-
-  registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
-    setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-    setDescription( "Name of the file defining the parameters of the flash model" );
-}
-
 template< typename P1DENSWRAPPER, typename P1VISCWRAPPER, typename P2DENSWRAPPER, typename P2VISCWRAPPER, typename FLASHWRAPPER >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

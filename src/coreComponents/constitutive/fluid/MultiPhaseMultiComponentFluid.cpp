@@ -57,33 +57,21 @@ string MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::c
   return TwoPhaseCatalogNames< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::name();
 }
 
-// explicit instantiation of the model template; unfortunately we can't use CO2BrineFluid alias for this
-template class MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
-                                              PVTProps::BrineViscosity,
-                                              PVTProps::SpanWagnerCO2Density,
-                                              PVTProps::FenghourCO2Viscosity,
-                                              PVTProps::CO2Solubility >;
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::
+MultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
+  MultiFluidBase( name, parent )
+{
+  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
-// template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
-// MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::
-// MultiPhaseMultiComponentFluid( string const & name, Group * const parent ):
-//   MultiFluidBase( name, parent )
-// {
-//   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
-//     setInputFlag( InputFlags::REQUIRED ).
-//     setRestartFlags( RestartFlags::NO_WRITE ).
-//     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
-
-//   registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
-//     setInputFlag( InputFlags::REQUIRED ).
-//     setRestartFlags( RestartFlags::NO_WRITE ).
-//     setDescription( "Name of the file defining the parameters of the flash model" );
-// }
-
-// template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
-// MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::
-// ~MultiPhaseMultiComponentFluid()
-// {}
+  registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Name of the file defining the parameters of the flash model" );
+}
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
 std::unique_ptr< ConstitutiveBase >
@@ -230,6 +218,13 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
                   "CO2Solubility model not found",
                   InputError );
 }
+
+// explicit instantiation of the model template; unfortunately we can't use CO2BrineFluid alias for this
+template class MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
+                                              PVTProps::BrineViscosity,
+                                              PVTProps::SpanWagnerCO2Density,
+                                              PVTProps::FenghourCO2Viscosity,
+                                              PVTProps::CO2Solubility >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineFluid, string const &, Group * const )
 
