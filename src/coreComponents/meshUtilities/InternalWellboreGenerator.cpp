@@ -27,33 +27,42 @@ using namespace dataRepository;
 InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group * const parent ):
   InternalMeshGenerator( name, parent )
 {
-  registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
+
+  getWrapper< array1d< real64 > >( viewKeyStruct::xCoordsString() ).
+    setInputFlag( InputFlags::FALSE );
+
+  getWrapper< array1d< real64 > >( viewKeyStruct::yCoordsString() ).
+    setInputFlag( InputFlags::FALSE );
+
+  getWrapper< array1d< integer > >( viewKeyStruct::xElemsString() ).
+    setInputFlag( InputFlags::FALSE );
+
+  getWrapper< array1d< integer > >( viewKeyStruct::yElemsString() ).
+    setInputFlag( InputFlags::FALSE );
+
+
+  registerWrapper( viewKeyStruct::radiusString(), &(m_vertices[0]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Wellbore radius" );
 
-  registerWrapper( viewKeyStruct::thetaString(), &m_theta ).
+  registerWrapper( viewKeyStruct::thetaString(), &(m_vertices[1]) ).
     setApplyDefaultValue( 360.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Tangent angle defining geometry size: 90 for quarter, 180 for half and 360 for full wellbore geometry" );
 
-  registerWrapper( viewKeyStruct::rOutString(), &m_rOut ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Farfield distance from wellbore center" );
-
-  registerWrapper( viewKeyStruct::rElemsString(), &m_rElems ).
+  registerWrapper( viewKeyStruct::rElemsString(), &(m_nElems[0]) ).
     setApplyDefaultValue( 10 ).
     setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of elements in the radial direction" );
 
-  registerWrapper( viewKeyStruct::tElemsString(), &m_tElems ).
+  registerWrapper( viewKeyStruct::tElemsString(), &(m_nElems[1]) ).
     setApplyDefaultValue( 40 ).
     setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of elements in the tangent direction" );
 
-  registerWrapper( viewKeyStruct::rBiasString(), &m_rBias ).
+  registerWrapper( viewKeyStruct::rBiasString(), &(m_nElemBias[0]) ).
     setApplyDefaultValue( -0.8 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -63,29 +72,37 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Coordinates defining the wellbore trajectory" );
+
+
+  registerWrapper( viewKeyStruct::cartesianOuterBoundaryString(), &m_cartesianOuterBoundary ).
+    setApplyDefaultValue( 0 ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Enforce a Cartesian aligned outer boundary on the outer block" );
+
 }
 
-void InternalWellboreGenerator::postProcessInput()
-{
-  m_vertices[0].resize( 2 );
-  m_vertices[1].resize( 2 );
-  m_vertices[2].resize( 2 );
-  m_nElems[0].resize( 1 );
-  m_nElems[1].resize( 1 );
-  m_nElemBias[0].resize( 1 );
-
-  m_vertices[0][0]  = m_radius;
-  m_vertices[0][1]  = m_rOut;
-  m_vertices[1][0]  = 0;
-  m_vertices[1][1]  = m_theta;
-  m_vertices[2][0]  = m_trajectory[0][2];
-  m_vertices[2][1]  = m_trajectory[1][2];
-  m_nElems[0][0]    = m_rElems;
-  m_nElems[1][0]    = m_tElems;
-  m_nElemBias[0][0] = m_rBias;
-
-  InternalMeshGenerator::postProcessInput();
-}
+//void InternalWellboreGenerator::postProcessInput()
+//{
+//  m_vertices[0].resize( 2 );
+//  m_vertices[1].resize( 2 );
+//  m_vertices[2].resize( 2 );
+//  m_nElems[0].resize( 1 );
+//  m_nElems[1].resize( 1 );
+//  m_nElemBias[0].resize( 1 );
+//
+//  m_vertices[0][0]  = m_radius;
+//  m_vertices[0][1]  = m_rOut;
+//  m_vertices[1][0]  = 0;
+//  m_vertices[1][1]  = m_theta;
+//  m_vertices[2][0]  = m_trajectory[0][2];
+//  m_vertices[2][1]  = m_trajectory[1][2];
+//  m_nElems[0][0]    = m_rElems;
+//  m_nElems[1][0]    = m_tElems;
+//  m_nElemBias[0][0] = m_rBias;
+//
+//  InternalMeshGenerator::postProcessInput();
+//}
 
 void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 {
@@ -213,6 +230,97 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
     yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
   }
 }
+
+void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (&numNodesInDir)[3] )
+{
+  GEOSX_UNUSED_VAR(numNodesInDir);
+  numNodesInDir[1] -= 1;
+}
+
+void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( int (&index)[3],
+                                             real64 (&minExtent)[3],
+                                             real64 (&maxExtent)[3],
+                                             arraySlice1d<real64 const> const & X,
+                                             real64 const tol )
+{
+  GEOSX_UNUSED_VAR( minExtent );
+  if( isEqual( X[ 1 ], maxExtent[1], tol ) )
+  {
+    index[1] = 0;
+  }
+}
+
+void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( integer const i,
+                                                                      integer const j,
+                                                                      integer const k,
+                                                                      integer const iBlock,
+                                                                      integer const jBlock,
+                                                                      integer const kBlock,
+                                                                      int (&globalIJK)[3],
+                                                                      int const (&numElemsInDirForBlock)[3],
+                                                                      integer const (&numNodesInDir)[3],
+                                                                      int const (&firstElemIndexInPartition)[3],
+                                                                      localIndex (&nodeOfBox)[8] )
+{
+  GEOSX_UNUSED_VAR( i, k, iBlock, kBlock );
+  setConnectivityForPeriodicBoundary( 1,
+                                      j,
+                                      jBlock,
+                                      globalIJK,
+                                      numElemsInDirForBlock,
+                                      numNodesInDir,
+                                      firstElemIndexInPartition,
+                                      nodeOfBox );
+}
+
+void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeManager )
+{
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+  // Map to radial mesh
+  for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
+  {
+    real64 meshTheta = X[iN][1] * M_PI / 180.0;
+    int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
+    real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
+    real64 meshRout = m_max[0] / cos( meshPhi );
+    real64 meshRact;
+
+    if( m_cartesianOuterBoundary )
+    {
+      meshRact = ( ( meshRout - m_min[0] ) / ( m_max[0] - m_min[0] ) ) * ( X[iN][0] - m_min[0] ) + m_min[0];
+    }
+    else
+    {
+      meshRact = X[iN][0];
+    }
+
+    X[iN][0] = meshRact * cos( meshTheta );
+    X[iN][1] = meshRact * sin( meshTheta );
+
+    // Add mapped values to nodesets
+//    if( m_meshType == MeshType::CylindricalSquareBoundary )
+//    {
+//      if( isEqual( X[iN][0], -1 * m_max[0], m_coordinatePrecision ) )
+//      {
+//        xnegNodes.insert( iN );
+//      }
+//      if( isEqual( X[iN][0], m_max[0], m_coordinatePrecision ) )
+//      {
+//        xposNodes.insert( iN );
+//      }
+//      if( isEqual( X[iN][1], -1 * m_max[0], m_coordinatePrecision ) )
+//      {
+//        ynegNodes.insert( iN );
+//      }
+//      if( isEqual( X[iN][1], m_max[0], m_coordinatePrecision ) )
+//      {
+//        yposNodes.insert( iN );
+//      }
+//    }
+  }
+}
+
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )
 } /* namespace geosx */

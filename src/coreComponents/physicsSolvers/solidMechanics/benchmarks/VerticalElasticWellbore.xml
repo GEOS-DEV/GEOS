@@ -29,16 +29,18 @@
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="0.1"
-      theta="90"
-      trajectory="{ { 0.0, 0.0, 1.0 }, {  0.0, 0.0, 0.0 } }"
-      nr="40"
-      nt="30"
+      radius="{0.1, 2.0}"
+      theta="{0, 360}"
+      zCoords="{0,1}"
+      trajectory="{ { -0.0, 0.0, 0.0 },
+                    {  0.0, 0.0, 0.0 } }"
+      nr="{4}"
+      nt="{8}"
       nz="{ 1 }"
-      rOut="2.0"
-      rBias="-0.9"
+      rBias="{-0.9}"
+      useCartesianOuterBoundary="1"
       cellBlockNames="{ cb1 }"
-      meshType="CylindricalSquareBoundary"/>
+      />
   </Mesh>
 
   <!-- SPHINX_WellboreMeshEnd -->
