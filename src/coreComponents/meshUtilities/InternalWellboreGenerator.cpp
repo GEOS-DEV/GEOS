@@ -133,35 +133,54 @@ void InternalWellboreGenerator::postProcessInput()
   {
     localIndex const numRadialBlocks = m_vertices[0].size()-1;
 
+    // loop over blocks in the radial direction (i-direction).
     for( localIndex iBlock=0; iBlock<numRadialBlocks; ++iBlock )
     {
       real64 const rInner = m_vertices[0][iBlock];
       real64 const rOuter = m_vertices[0][iBlock+1];
 
+      // if we are on the first block, always insert the inner radius as the
+      // fixed inner boundary.
       if( iBlock==0 )
       {
         m_radialCoords.emplace_back( rInner );
       }
 
+      // Are we going to auto-size this block??
       if( m_autoSpaceRadialElems[iBlock] == 1 )
       {
 
+        // We have to set the starting index for this block so that we skip any
+        // values that are fixed from the last block when we scale the radial
+        // coordinates.
         localIndex const startingIndex = m_radialCoords.size()-1;
+
+        // Estimate the spacing along the inner outer radius t = r theta
         real64 const tElemSizeInner = rInner * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
-        real64 const tElemSizeOuter = rOuter * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
 
-
+        // keep a count of actual number of radial elements...we will resize
+        // the number of elements later.
         localIndex actualNumberOfRadialElements = 0;
+
+        // This is the factor so that all the coordinates end up s.t. the inner
+        // and outer radial coordinates are preserved.
         real64 scalingFactor = 0;
 
         printf( "  i   r_i      t_i     rip1_0    tip1_0    r_ip1\n" );
-        for( localIndex i=0; i<m_nElems[0][iBlock]*10; ++i )
+
+        // Loop over an excessive number of elements in the radial direction.
+        // This bound needs to be more than we will end up with.
+        for( localIndex i=0; i<(m_nElems[0][iBlock]+1)*100; ++i )
         {
+          // approximate the theta direction size at i, and approximate the
+          // radius at (i+1).
           real64 const t_i =  m_radialCoords.back() * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
           real64 const r_ip1_0 = ( m_radialCoords.back() +  t_i ) ;
+
+          // approximate the theta direction size at the approximated radius.
           real64 const tElemSize_ip1_0 =  r_ip1_0 * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
 
-
+          // set the next radius a some combination of the inner and outer radius for this "element".
           constexpr real64 c = 0.5;
           real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * t_i + c * tElemSize_ip1_0;
 
@@ -198,7 +217,12 @@ void InternalWellboreGenerator::postProcessInput()
         std::cout<<actualNumberOfRadialElements<<", "<<scalingFactor<<std::endl;
         std::cout<<m_radialCoords.size()<<std::endl;
 
+        // set the number of actual radial elements specified by the auto
+        // spacing
         m_nElems[0][iBlock] = actualNumberOfRadialElements;
+
+        // scale the coordinates to ensure they align with the inner and outer
+        // radius of the block.
         for( localIndex i=startingIndex; i<m_radialCoords.size(); ++i )
         {
           m_radialCoords[i] = ( m_radialCoords[i] - rInner ) * scalingFactor + rInner;
@@ -207,6 +231,7 @@ void InternalWellboreGenerator::postProcessInput()
       }
       else
       {
+        // even/fixed spacing option
         real64 min = m_vertices[0][iBlock];
         real64 max = m_vertices[0][iBlock+1];
         real64 const h = (max-min) / m_nElems[0][iBlock];
