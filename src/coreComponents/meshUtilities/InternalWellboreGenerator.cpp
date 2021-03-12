@@ -144,9 +144,6 @@ void InternalWellboreGenerator::postProcessInput()
         // coordinates.
         localIndex const startingIndex = m_radialCoords.size()-1;
 
-        // Estimate the spacing along the inner outer radius t = r theta
-        real64 const tElemSizeInner = rInner * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
-
         // keep a count of actual number of radial elements...we will resize
         // the number of elements later.
         localIndex actualNumberOfRadialElements = 0;
@@ -433,6 +430,8 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
                                              m_vertices[0][m_cartesianOuterBoundary] :
                                              1e99;
 
+
+
   // Map to radial mesh
   for( localIndex iN = 0; iN<nodeManager.size(); ++iN )
   {
@@ -442,9 +441,11 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
     real64 meshRout = m_max[0] / cos( meshPhi );
     real64 meshRact;
 
+
     if( X[iN][0] > cartesianMappingInnerRadius )
     {
-      meshRact = ( ( meshRout - m_min[0] ) / ( m_max[0] - m_min[0] ) ) * ( X[iN][0] - m_min[0] ) + m_min[0];
+      real64 const cartesianScaling = ( meshRout - cartesianMappingInnerRadius ) / ( m_max[0] - cartesianMappingInnerRadius );
+      meshRact = cartesianScaling * ( X[iN][0] - cartesianMappingInnerRadius ) + cartesianMappingInnerRadius;
     }
     else
     {
