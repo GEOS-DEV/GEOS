@@ -216,19 +216,19 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
               if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
               {
                 sourceIsLocal[isrc] = 1;
-                std::cout << "I found the source in element " << k << " at location ("
-                          << coords[0] << ", " << coords[1] << ", " << coords[2] << ")" << std::endl;
+                //std::cout << "I found the source in element " << k << " at location ("
+                //          << coords[0] << ", " << coords[1] << ", " << coords[2] << ")" << std::endl;
                 /// Get all the node of element k containing the source point
                 real64 xLocal[numNodesPerElem][3];
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
-                  std::cout << " For node " << a;
+                  //std::cout << " For node " << a;
                   for( localIndex i=0; i<3; ++i )
                   {
                     xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                    std::cout << " x_"<< i << " = " << xLocal[a][i];
+                    //std::cout << " x_"<< i << " = " << xLocal[a][i];
                   }
-                  std::cout << " " << std::endl;
+                  //std::cout << " " << std::endl;
                 }
 
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
@@ -276,7 +276,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
-                std::cout << "Ntest Ok "<< std::endl;
+              //  std::cout << "Ntest Ok "<< std::endl;
 
                 // save all the node indices and constant part of source term here
                 for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -285,7 +285,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                   sourceNodeIds[isrc][a] = elemsToNodes[k][a];
                   sourceConstants[isrc][a] = Ntest[a];
 
-                  std::cout << "For source #" << isrc << " I save node #" << sourceNodeIds[isrc][a] << " and constant value = " << sourceConstants[isrc][a] << std::endl;
+                //  std::cout << "For source #" << isrc << " I save node #" << sourceNodeIds[isrc][a] << " and constant value = " << sourceConstants[isrc][a] << std::endl;
 
                 }
               }
@@ -309,20 +309,20 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
               if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
               {
                 receiverIsLocal[ircv] = 1;
-                std::cout << "I found the receiver in element " << k << " at location ("
-                          << coords[0] << ", " << coords[1] << ", " << coords[2] << ")" << std::endl;
+              //  std::cout << "I found the receiver in element " << k << " at location ("
+                //          << coords[0] << ", " << coords[1] << ", " << coords[2] << ")" << std::endl;
 
                 /// Get all the node of element k containing the source point
                 real64 xLocal[numNodesPerElem][3];
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
-                  std::cout << " For node " << a;
+                //  std::cout << " For node " << a;
                   for( localIndex i=0; i<3; ++i )
                   {
                     xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                    std::cout << " x_"<< i << " = " << xLocal[a][i];
+                //    std::cout << " x_"<< i << " = " << xLocal[a][i];
                   }
-                  std::cout << " " << std::endl;
+                //  std::cout << " " << std::endl;
                 }
 
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
@@ -370,7 +370,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
-                std::cout << "Ntest Ok receiver "<< std::endl;
+              //  std::cout << "Ntest Ok receiver "<< std::endl;
 
                 // save all the node indices and constant part of source term here
                 for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -379,7 +379,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                   receiverNodeIds[ircv][a] = elemsToNodes[k][a];
                   receiverConstants[ircv][a] = Ntest[a];
 
-                  std::cout << "For receiver #" << ircv << " I save node #" << receiverNodeIds[ircv][a] <<  " and constant value = " << receiverConstants[ircv][a] << std::endl;
+                //  std::cout << "For receiver #" << ircv << " I save node #" << receiverNodeIds[ircv][a] <<  " and constant value = " << receiverConstants[ircv][a] << std::endl;
 
                 }
               }
@@ -702,6 +702,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  
+  if (time_n <= 0.006)
+  {
+    this->postProcessInput();
+    this->precomputeSourceAndReceiverTerm( mesh );
+  }		
 
   NodeManager & nodes = mesh.getNodeManager();
 
