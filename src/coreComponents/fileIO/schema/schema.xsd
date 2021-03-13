@@ -1552,6 +1552,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="PackCollection" type="PackCollectionType" />
+			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType">
@@ -1566,12 +1567,29 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="TriaxialDriverType">
+		<!--material => Solid material to test-->
+		<xsd:attribute name="material" type="string" use="required" />
+		<!--mode => Test mode [triaxial, volumetric, oedometer]-->
+		<xsd:attribute name="mode" type="string" use="required" />
+		<!--output => Output file-->
+		<xsd:attribute name="output" type="string" use="required" />
+		<!--steps => Number of load steps to take-->
+		<xsd:attribute name="steps" type="integer" use="required" />
+		<!--strainFunction => Function controlling strain loading (role depends on test mode)-->
+		<xsd:attribute name="strainFunction" type="string" use="required" />
+		<!--stressFunction => Function controlling stress loading (role depends on test mode)-->
+		<xsd:attribute name="stressFunction" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
+			<xsd:element name="CamClay" type="CamClayType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="Contact" type="ContactType" />
@@ -1587,6 +1605,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
+			<xsd:element name="PoroCamClay" type="PoroCamClayType" />
 			<xsd:element name="PoroDruckerPrager" type="PoroDruckerPragerType" />
 			<xsd:element name="PoroElasticIsotropic" type="PoroElasticIsotropicType" />
 			<xsd:element name="PoroElasticTransverseIsotropic" type="PoroElasticTransverseIsotropicType" />
@@ -1663,6 +1682,34 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="{1}" />
 		<!--phaseRelPermMaxValue => Maximum rel perm value for each phase-->
 		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CamClayType">
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultCslSlope => Slope of the critical state line-->
+		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultPreConsolidationPressure => Initial preconsolidation pressure-->
+		<xsd:attribute name="defaultPreConsolidationPressure" type="real64" default="5e+06" />
+		<!--defaultRecompressionIndex => Recompresion index-->
+		<xsd:attribute name="defaultRecompressionIndex" type="real64" default="0.002" />
+		<!--defaultRefPressure => Reference pressure-->
+		<xsd:attribute name="defaultRefPressure" type="real64" default="1" />
+		<!--defaultRefStrainVol => Reference volumetric strain-->
+		<xsd:attribute name="defaultRefStrainVol" type="real64" default="1e-06" />
+		<!--defaultShapeParameter => Shape parameter for the yield surface-->
+		<xsd:attribute name="defaultShapeParameter" type="real64" default="1" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultVirginCompressionIndex => Virgin Compression index-->
+		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1942,6 +1989,40 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />
 		<!--referencePressure => Reference pressure for fluid compressibility-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroCamClayType">
+		<!--BiotCoefficient => Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
+		<!--compressibility => Pore volume compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultCslSlope => Slope of the critical state line-->
+		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultPreConsolidationPressure => Initial preconsolidation pressure-->
+		<xsd:attribute name="defaultPreConsolidationPressure" type="real64" default="5e+06" />
+		<!--defaultRecompressionIndex => Recompresion index-->
+		<xsd:attribute name="defaultRecompressionIndex" type="real64" default="0.002" />
+		<!--defaultRefPressure => Reference pressure-->
+		<xsd:attribute name="defaultRefPressure" type="real64" default="1" />
+		<!--defaultRefStrainVol => Reference volumetric strain-->
+		<xsd:attribute name="defaultRefStrainVol" type="real64" default="1e-06" />
+		<!--defaultShapeParameter => Shape parameter for the yield surface-->
+		<xsd:attribute name="defaultShapeParameter" type="real64" default="1" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultVirginCompressionIndex => Virgin Compression index-->
+		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

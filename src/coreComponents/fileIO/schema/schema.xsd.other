@@ -633,9 +633,11 @@
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="PackCollection" type="PackCollectionType" />
+			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType" />
+	<xsd:complexType name="TriaxialDriverType" />
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
 		<xsd:attribute name="beginFromRestart" type="integer" />
@@ -679,6 +681,7 @@
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
+			<xsd:element name="CamClay" type="CamClayType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="Contact" type="ContactType" />
@@ -694,6 +697,7 @@
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
+			<xsd:element name="PoroCamClay" type="PoroCamClayType" />
 			<xsd:element name="PoroDruckerPrager" type="PoroDruckerPragerType" />
 			<xsd:element name="PoroElasticIsotropic" type="PoroElasticIsotropicType" />
 			<xsd:element name="PoroElasticTransverseIsotropic" type="PoroElasticTransverseIsotropicType" />
@@ -791,6 +795,34 @@
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
 		<xsd:attribute name="volFracScale" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="CamClayType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--cslSlope => Slope of the critical state line-->
+		<xsd:attribute name="cslSlope" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldPreConsolidationPressure => Old preconsolidation pressure-->
+		<xsd:attribute name="oldPreConsolidationPressure" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--preConsolidationPressure => New preconsolidation pressure-->
+		<xsd:attribute name="preConsolidationPressure" type="real64_array2d" />
+		<!--recompressionIndex => Recompression index-->
+		<xsd:attribute name="recompressionIndex" type="real64_array" />
+		<!--refPressure => Reference pressure-->
+		<xsd:attribute name="refPressure" type="real64_array" />
+		<!--refStrainVol => eference volumetric strain-->
+		<xsd:attribute name="refStrainVol" type="real64_array" />
+		<!--shapeParameter => Shape parameter for the yield surface-->
+		<xsd:attribute name="shapeParameter" type="real64_array" />
+		<!--shearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--virginCompressionIndex => Virgin compression index-->
+		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
@@ -1064,6 +1096,38 @@
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroCamClayType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--cslSlope => Slope of the critical state line-->
+		<xsd:attribute name="cslSlope" type="real64_array" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldPreConsolidationPressure => Old preconsolidation pressure-->
+		<xsd:attribute name="oldPreConsolidationPressure" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--preConsolidationPressure => New preconsolidation pressure-->
+		<xsd:attribute name="preConsolidationPressure" type="real64_array2d" />
+		<!--recompressionIndex => Recompression index-->
+		<xsd:attribute name="recompressionIndex" type="real64_array" />
+		<!--refPressure => Reference pressure-->
+		<xsd:attribute name="refPressure" type="real64_array" />
+		<!--refStrainVol => eference volumetric strain-->
+		<xsd:attribute name="refStrainVol" type="real64_array" />
+		<!--shapeParameter => Shape parameter for the yield surface-->
+		<xsd:attribute name="shapeParameter" type="real64_array" />
+		<!--shearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--virginCompressionIndex => Virgin compression index-->
+		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroDruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->

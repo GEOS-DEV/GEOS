@@ -50,6 +50,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
+     solid/TriaxialDriver.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -99,6 +100,7 @@ set( constitutive_sources
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
      solid/SolidBase.cpp
+     solid/TriaxialDriver.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp

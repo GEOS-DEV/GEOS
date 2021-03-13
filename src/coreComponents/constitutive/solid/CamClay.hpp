@@ -159,7 +159,6 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 pc    = oldPc;
   real64 bulkModulus  = -p0/Cr;
 
-
   // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
   real64 oldP;
@@ -180,15 +179,6 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
                                      oldP,
                                      oldQ,
                                      oldDeviator );
-//**************** TO DO ***************************************
-// TODO: Stress initialization needs to done outside of CamClay
-
-  if( std::abs( oldP ) < 1e-15 )
-  {
-    oldP=p0;
-    stress[0] = p0; stress[1] = p0; stress[2] = p0;
-  }
-//***************************************************************
 
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
@@ -263,7 +253,6 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   if( yield < 1e-9 ) // elasticity
   {
-//    std::cout << "elastic" <<  "\n " << std::endl;
     saveStress( k, q, stress );
     return;
   }

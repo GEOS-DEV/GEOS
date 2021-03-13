@@ -7,6 +7,7 @@ BlackOilFluid                         node         :ref:`XML_BlackOilFluid`
 BrooksCoreyBakerRelativePermeability  node         :ref:`XML_BrooksCoreyBakerRelativePermeability`  
 BrooksCoreyCapillaryPressure          node         :ref:`XML_BrooksCoreyCapillaryPressure`          
 BrooksCoreyRelativePermeability       node         :ref:`XML_BrooksCoreyRelativePermeability`       
+CamClay                               node         :ref:`XML_CamClay`                               
 CompositionalMultiphaseFluid          node         :ref:`XML_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node         :ref:`XML_CompressibleSinglePhaseFluid`          
 Contact                               node         :ref:`XML_Contact`                               
@@ -22,6 +23,7 @@ MultiPhaseMultiComponentFluid         node         :ref:`XML_MultiPhaseMultiComp
 NullModel                             node         :ref:`XML_NullModel`                             
 ParticleFluid                         node         :ref:`XML_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node         :ref:`XML_PoreVolumeCompressibleSolid`           
+PoroCamClay                           node         :ref:`XML_PoroCamClay`                           
 PoroDruckerPrager                     node         :ref:`XML_PoroDruckerPrager`                     
 PoroElasticIsotropic                  node         :ref:`XML_PoroElasticIsotropic`                  
 PoroElasticTransverseIsotropic        node         :ref:`XML_PoroElasticTransverseIsotropic`        

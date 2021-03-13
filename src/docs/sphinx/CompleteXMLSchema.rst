@@ -64,6 +64,13 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
+.. _XML_CamClay:
+
+Element: CamClay
+================
+.. include:: ../../coreComponents/fileIO/schema/docs/CamClay.rst
+
+
 .. _XML_CellElementRegion:
 
 Element: CellElementRegion
@@ -463,6 +470,13 @@ Element: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
 
 
+.. _XML_PoroCamClay:
+
+Element: PoroCamClay
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroCamClay.rst
+
+
 .. _XML_PoroDruckerPrager:
 
 Element: PoroDruckerPrager
@@ -687,6 +701,13 @@ Element: TimeHistory
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
 
 
+.. _XML_TriaxialDriver:
+
+Element: TriaxialDriver
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/TriaxialDriver.rst
+
+
 .. _XML_TwoPointFluxApproximation:
 
 Element: TwoPointFluxApproximation
@@ -801,6 +822,13 @@ Datastructure: BrooksCoreyCapillaryPressure
 Datastructure: BrooksCoreyRelativePermeability
 ==============================================
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
+
+
+.. _DATASTRUCTURE_CamClay:
+
+Datastructure: CamClay
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/CamClay_other.rst
 
 
 .. _DATASTRUCTURE_CellElementRegion:
@@ -1230,6 +1258,13 @@ Datastructure: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
 
 
+.. _DATASTRUCTURE_PoroCamClay:
+
+Datastructure: PoroCamClay
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroCamClay_other.rst
+
+
 .. _DATASTRUCTURE_PoroDruckerPrager:
 
 Datastructure: PoroDruckerPrager
@@ -1452,6 +1487,13 @@ Datastructure: ThickPlane
 Datastructure: TimeHistory
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
+
+
+.. _DATASTRUCTURE_TriaxialDriver:
+
+Datastructure: TriaxialDriver
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/TriaxialDriver_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:

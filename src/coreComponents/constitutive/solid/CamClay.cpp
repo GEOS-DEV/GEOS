@@ -134,11 +134,15 @@ void CamClay::postProcessInput()
 {
   ElasticIsotropic::postProcessInput();
 
-  GEOSX_THROW_IF( m_defaultCslSlope <= 0, "Negative slope of critical state line detected", InputError );
-  GEOSX_THROW_IF( m_defaultRecompressionIndex <= 0, "Negative recompresion index detected", InputError );
-  GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= 0, "Negative virgin compression index detected", InputError );
+  GEOSX_THROW_IF( m_defaultCslSlope <= 0, "Non-positive slope of critical state line detected", InputError );
+  GEOSX_THROW_IF( m_defaultRecompressionIndex <= 0, "Non-positive recompresion index detected", InputError );
+  GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= 0, "Non-positive virgin compression index detected", InputError );
   GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex, "Recompression index should exceed virgin recompression index", InputError );
 
+  real64 poisson = conversions::BulkModAndShearMod::toPoissonRatio( -1*m_defaultRefPressure/m_defaultRecompressionIndex, m_defaultShearModulus );
+  GEOSX_THROW_IF( poisson < 0, "Elastic parameters lead to negative Poisson ratio at reference pressure", InputError );
+
+  std::cout << poisson << std::endl;
 
   // set results as array default values
 

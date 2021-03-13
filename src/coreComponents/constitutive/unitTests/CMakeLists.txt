@@ -9,6 +9,7 @@ set( gtest_geosx_tests
      testElasticIsotropic.cpp
      testPropertyConversions.cpp
      testRelPerm.cpp
+     testTriaxial.cpp
    )
 
 set( dependencyList gtest )
