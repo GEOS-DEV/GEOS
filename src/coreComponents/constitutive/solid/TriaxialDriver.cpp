@@ -61,7 +61,7 @@ void TriaxialDriver::postProcessInput()
 {
   // initialize table functions
 
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();    
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
 
   TableFunction & strainFunction = functionManager.getGroup< TableFunction >( m_strainFunctionName );
   TableFunction & stressFunction = functionManager.getGroup< TableFunction >( m_stressFunctionName );
@@ -73,24 +73,24 @@ void TriaxialDriver::postProcessInput()
 
   ArrayOfArraysView< real64 > coordinates = strainFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
-  real64 const maxTime = coordinates[0][coordinates.sizeOfArray(0)-1];
+  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
   real64 const dt = (maxTime-minTime) / m_numSteps;
-  
+
   // resize data arrays
 
   localIndex const length = m_numSteps+1;
 
-  m_time.resize(length);  
-  m_axialStrain.resize(length);  
-  m_axialStress.resize(length);  
-  m_radialStrain.resize(length);  
-  m_radialStress.resize(length);  
+  m_time.resize( length );
+  m_axialStrain.resize( length );
+  m_axialStress.resize( length );
+  m_radialStrain.resize( length );
+  m_radialStress.resize( length );
 
   // set time array
 
-  for(localIndex n=0; n<length; ++n)
+  for( localIndex n=0; n<length; ++n )
   {
-    m_time[n] = minTime + n*dt; 
+    m_time[n] = minTime + n*dt;
   }
 
   // set other arrays based on testing mode
@@ -98,17 +98,16 @@ void TriaxialDriver::postProcessInput()
 
   if( m_mode == "triaxial" ) // specified axial strain and radial stress
   {
-    for(localIndex n=0; n<length; ++n)
+    for( localIndex n=0; n<length; ++n )
     {
       m_axialStrain[n] = strainFunction.evaluate( &m_time[n] );
       m_radialStress[n] = stressFunction.evaluate( &m_time[n] );
     }
     m_axialStress[0] = stressFunction.evaluate( &m_time[0] ); // init stress
   }
-
   else if( m_mode == "volumetric" ) // specified axial strain = radial strain
   {
-    for(localIndex n=0; n<length; ++n)
+    for( localIndex n=0; n<length; ++n )
     {
       m_axialStrain[n] = strainFunction.evaluate( &m_time[n] );
       m_radialStrain[n] = m_axialStrain[n];
@@ -119,42 +118,41 @@ void TriaxialDriver::postProcessInput()
   }
   else if( m_mode == "oedometer" ) // specified axial strain, zero radial strain
   {
-    for(localIndex n=0; n<length; ++n)
+    for( localIndex n=0; n<length; ++n )
     {
       m_axialStrain[n] = strainFunction.evaluate( &m_time[n] );
     }
     m_axialStress[0] = stressFunction.evaluate( &m_time[0] ); // init stress
     m_radialStress[0] = stressFunction.evaluate( &m_time[0] ); // init stress
   }
-
   else // unrecognized option
   {
-    GEOSX_THROW("Test mode \'" << m_mode << "\' not recognized.", InputError );
+    GEOSX_THROW( "Test mode \'" << m_mode << "\' not recognized.", InputError );
   }
 }
 
 
 void TriaxialDriver::outputResults()
 {
-  FILE* fp = fopen(m_outputFileName.c_str(),"w");
+  FILE * fp = fopen( m_outputFileName.c_str(), "w" );
 
-  fprintf(fp,"# column 1 = time\n");
-  fprintf(fp,"# column 2 = axial strain\n");
-  fprintf(fp,"# column 3 = radial strain\n");
-  fprintf(fp,"# column 4 = axial stress\n");
-  fprintf(fp,"# column 5 = radial stress\n");
+  fprintf( fp, "# column 1 = time\n" );
+  fprintf( fp, "# column 2 = axial strain\n" );
+  fprintf( fp, "# column 3 = radial strain\n" );
+  fprintf( fp, "# column 4 = axial stress\n" );
+  fprintf( fp, "# column 5 = radial stress\n" );
 
   for( localIndex n=0; n<m_time.size(); ++n )
   {
-    fprintf(fp,
-            "%.4e %.4e %.4e %.4e %.4e\n",
-            m_time[n],
-            m_axialStrain[n],
-            m_radialStrain[n],
-            m_axialStress[n],
-            m_radialStress[n] );
+    fprintf( fp,
+             "%.4e %.4e %.4e %.4e %.4e\n",
+             m_time[n],
+             m_axialStrain[n],
+             m_radialStrain[n],
+             m_axialStress[n],
+             m_radialStress[n] );
   }
-  fclose(fp);
+  fclose( fp );
 }
 
 

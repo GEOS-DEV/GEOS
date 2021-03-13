@@ -61,7 +61,7 @@ void triaxialDriver()
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   FunctionBase & function = functionManager.getGroup< FunctionBase >( "timeFunction" );
 
-  TableFunction & table = dynamicCast< TableFunction & >(function);
+  TableFunction & table = dynamicCast< TableFunction & >( function );
 
   table.initializeFunction();
 
@@ -70,14 +70,14 @@ void triaxialDriver()
 
   std::cout << result << std::endl;
 /*
-  // create a Cam-Clay model, and test xml input
-  conduit::Node node;
-  dataRepository::Group rootGroup( "root", node );
-  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
+   // create a Cam-Clay model, and test xml input
+   conduit::Node node;
+   dataRepository::Group rootGroup( "root", node );
+   ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
 
-  //real64 const friction = 30.0; // will use later in checks
+   //real64 const friction = 30.0; // will use later in checks
 
-  string const inputStream =
+   string const inputStream =
     "<Constitutive>"
     "   <CamClay"
     "      name=\"granite\" "
@@ -93,54 +93,54 @@ void triaxialDriver()
     "      defaultRecompressionIndex=\"0.018\"/>"
     "</Constitutive>";
 
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(),
+   xmlWrapper::xmlDocument xmlDocument;
+   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(),
                                                              inputStream.size() );
-  if( !xmlResult )
-  {
+   if( !xmlResult )
+   {
     GEOSX_LOG_RANK_0( "XML parsed with errors!" );
     GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-  }
+   }
 
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
-  constitutiveManager.postProcessInputRecursive();
+   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
+   constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+   constitutiveManager.postProcessInputRecursive();
 
-  localIndex constexpr numElem = 2;
-  localIndex constexpr numQuad = 4;
+   localIndex constexpr numElem = 2;
+   localIndex constexpr numQuad = 4;
 
-  dataRepository::Group disc( "discretization", &rootGroup );
-  disc.resize( numElem );
+   dataRepository::Group disc( "discretization", &rootGroup );
+   disc.resize( numElem );
 
-  CamClay & cm = constitutiveManager.getConstitutiveRelation< CamClay >( "granite" );
-  cm.allocateConstitutiveData( disc, numQuad );
+   CamClay & cm = constitutiveManager.getConstitutiveRelation< CamClay >( "granite" );
+   cm.allocateConstitutiveData( disc, numQuad );
 
-  // confirm allocation sizes
+   // confirm allocation sizes
 
-  EXPECT_EQ( cm.size(), numElem );
-  EXPECT_EQ( cm.numQuadraturePoints(), numQuad );
+   EXPECT_EQ( cm.size(), numElem );
+   EXPECT_EQ( cm.numQuadraturePoints(), numQuad );
 
-  // use updates class to run a uniaxial compression test.  the material
-  // begins with some cohesion, but it quickly degrades to zero under
-  // plastic loading.  at the end of the loading, we confirm the
-  // stress point lies on the correctly-positioned yield surface.
+   // use updates class to run a uniaxial compression test.  the material
+   // begins with some cohesion, but it quickly degrades to zero under
+   // plastic loading.  at the end of the loading, we confirm the
+   // stress point lies on the correctly-positioned yield surface.
 
-  CamClay::KernelWrapper cmw = cm.createKernelUpdates();
+   CamClay::KernelWrapper cmw = cm.createKernelUpdates();
 
-  StrainData data;
-  real64 inc = -1e-3;
-  real64 total = 0;
-  data.strainIncrement[0] = inc;
-  data.strainIncrement[1] = 0;
-  data.strainIncrement[2] = 0;
-  data.strainIncrement[3] = 0;
-  data.strainIncrement[4] = 0;
-  data.strainIncrement[5] = 0;
+   StrainData data;
+   real64 inc = -1e-3;
+   real64 total = 0;
+   data.strainIncrement[0] = inc;
+   data.strainIncrement[1] = 0;
+   data.strainIncrement[2] = 0;
+   data.strainIncrement[3] = 0;
+   data.strainIncrement[4] = 0;
+   data.strainIncrement[5] = 0;
 
 
-  for( localIndex loadstep=0; loadstep < 50; ++loadstep )
-  {
+   for( localIndex loadstep=0; loadstep < 50; ++loadstep )
+   {
     forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       real64 stress[6] = {0};
@@ -149,39 +149,39 @@ void triaxialDriver()
     } );
     cm.saveConvergedState();
     total = loadstep;
-  }
+   }
 
 
 
-  real64 stress[6] = {0};
-  getStress( cmw, stress );
+   real64 stress[6] = {0};
+   getStress( cmw, stress );
 
-  // loading was set up to drive to total cohesion loss (c=0), at which
-  // point the Q/P ratio should equal the slope of the DP yield surface:
+   // loading was set up to drive to total cohesion loss (c=0), at which
+   // point the Q/P ratio should equal the slope of the DP yield surface:
 
-  real64 invariantP, invariantQ;
-  real64 deviator[6];
+   real64 invariantP, invariantQ;
+   real64 deviator[6];
 
-  twoInvariant::stressDecomposition( stress,
+   twoInvariant::stressDecomposition( stress,
                                      invariantP,
                                      invariantQ,
                                      deviator );
 
-  //real64 phi = friction * M_PI / 180;
-  //real64 slope = -6 * sin( phi ) / ( 3 - sin( phi ) );
-  //std::cout << invariantP << " " << invariantQ << " " << total << std::endl;
+   //real64 phi = friction * M_PI / 180;
+   //real64 slope = -6 * sin( phi ) / ( 3 - sin( phi ) );
+   //std::cout << invariantP << " " << invariantQ << " " << total << std::endl;
 
 
 
-  //EXPECT_TRUE( fabs( invariantQ / invariantP / slope - 1 ) < 1e-8 );
+   //EXPECT_TRUE( fabs( invariantQ / invariantP / slope - 1 ) < 1e-8 );
 
-  // we now use a finite-difference check of tangent stiffness to confirm
-  // the analytical form is working properly.
+   // we now use a finite-difference check of tangent stiffness to confirm
+   // the analytical form is working properly.
 
-  cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement, true );
+   cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement, true );
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
-*/
+   EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+ */
 }
 
 
@@ -209,4 +209,3 @@ int main( int argc, char * * argv )
 
   return result;
 }
-

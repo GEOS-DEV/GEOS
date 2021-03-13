@@ -46,7 +46,7 @@ class TriaxialDriver : public TaskBase
 {
 public:
   TriaxialDriver( const string & name,
-                            Group * const parent );
+                  Group * const parent );
   ~TriaxialDriver() override;
 
   static string catalogName() { return "TriaxialDriver"; }
@@ -58,7 +58,7 @@ public:
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override
   {
-    GEOSX_THROW_IF( MpiWrapper::commRank() > 0, 
+    GEOSX_THROW_IF( MpiWrapper::commRank() > 0,
                     "Triaxial Driver should only be run in serial",
                     std::runtime_error );
 
@@ -66,14 +66,14 @@ public:
     ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
     SolidBase & solid = constitutiveManager.getGroup< SolidBase >( m_solidMaterialName );
 
-    GEOSX_LOG_RANK_0("Launching Triaxial Driver");
-    GEOSX_LOG_RANK_0("  Material .......... " << m_solidMaterialName);
-    GEOSX_LOG_RANK_0("  Type .............. " << solid.getCatalogName() );
-    GEOSX_LOG_RANK_0("  Mode .............. " << m_mode);
-    GEOSX_LOG_RANK_0("  Strain Function ... " << m_strainFunctionName);
-    GEOSX_LOG_RANK_0("  Stress Function ... " << m_stressFunctionName);
-    GEOSX_LOG_RANK_0("  Steps ............. " << m_numSteps);
-    GEOSX_LOG_RANK_0("  Output ............ " << m_outputFileName);
+    GEOSX_LOG_RANK_0( "Launching Triaxial Driver" );
+    GEOSX_LOG_RANK_0( "  Material .......... " << m_solidMaterialName );
+    GEOSX_LOG_RANK_0( "  Type .............. " << solid.getCatalogName() );
+    GEOSX_LOG_RANK_0( "  Mode .............. " << m_mode );
+    GEOSX_LOG_RANK_0( "  Strain Function ... " << m_strainFunctionName );
+    GEOSX_LOG_RANK_0( "  Stress Function ... " << m_stressFunctionName );
+    GEOSX_LOG_RANK_0( "  Steps ............. " << m_numSteps );
+    GEOSX_LOG_RANK_0( "  Output ............ " << m_outputFileName );
 
     conduit::Node node;
     dataRepository::Group rootGroup( "root", node );
@@ -95,24 +95,24 @@ public:
       real64 strainIncrement[6] = {};
       real64 stiffness[6][6] = {{}};
 
-      if( m_mode == "triaxial" ) 
+      if( m_mode == "triaxial" )
       {
         //printf("Timestep | Newton | Residual\n");
-        for(localIndex n=1; n<m_time.size(); ++n)
+        for( localIndex n=1; n<m_time.size(); ++n )
         {
           strainIncrement[0] = m_axialStrain[n]-m_axialStrain[n-1];
           strainIncrement[1] = 0;
           strainIncrement[2] = 0;
 
           //printf("\n");
-          for(localIndex k=0; k<25; ++k)
+          for( localIndex k=0; k<25; ++k )
           {
             constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
- 
-            real64 norm = fabs(stress[1]-m_radialStress[n])/(fabs(m_radialStress[n])+1);
+
+            real64 norm = fabs( stress[1]-m_radialStress[n] )/(fabs( m_radialStress[n] )+1);
             //printf("%8ld   %6ld   %.2e\n",n,k,norm);
 
-            if(norm < 1e-5)
+            if( norm < 1e-5 )
             {
               break;
             }
@@ -121,16 +121,16 @@ public:
               strainIncrement[1] -= (stress[1]-m_radialStress[n]) / (stiffness[1][1]+stiffness[1][2]);
               strainIncrement[2] = strainIncrement[1];
             }
-          } 
+          }
           castedSolid.saveConvergedState();
 
           m_axialStress[n] = stress[0];
           m_radialStrain[n] = m_radialStrain[n-1]+strainIncrement[1];
         }
       }
-      else if( m_mode == "volumetric" || m_mode == "oedometer" ) 
+      else if( m_mode == "volumetric" || m_mode == "oedometer" )
       {
-        for(localIndex n=1; n<m_time.size(); ++n)
+        for( localIndex n=1; n<m_time.size(); ++n )
         {
           strainIncrement[0] = m_axialStrain[n]-m_axialStrain[n-1];
           strainIncrement[1] = m_radialStrain[n]-m_radialStrain[n-1];
@@ -145,10 +145,10 @@ public:
       }
       else
       {
-        GEOSX_THROW("Test mode \'" << m_mode << "\' not recognized.", InputError );
+        GEOSX_THROW( "Test mode \'" << m_mode << "\' not recognized.", InputError );
       }
 
-    });
+    } );
 
     outputResults();
     return false;
@@ -176,14 +176,14 @@ private:
   string m_mode; ///< Test mode: triaxial, volumetric, oedometer
   string m_strainFunctionName; ///< Time-dependent function controlling strain (role depends on test mode)
   string m_stressFunctionName; ///< Time-dependent function controlling stress (role depends on test mode)
-  int    m_numSteps; ///< Number of load steps
-  string m_outputFileName; ///< Output file name 
+  int m_numSteps;    ///< Number of load steps
+  string m_outputFileName; ///< Output file name
 
-  array1d< real64 > m_time; 
-  array1d< real64 > m_axialStrain; 
-  array1d< real64 > m_axialStress; 
-  array1d< real64 > m_radialStrain; 
-  array1d< real64 > m_radialStress; 
+  array1d< real64 > m_time;
+  array1d< real64 > m_axialStrain;
+  array1d< real64 > m_axialStress;
+  array1d< real64 > m_radialStrain;
+  array1d< real64 > m_radialStress;
 };
 
 } /* namespace geosx */
