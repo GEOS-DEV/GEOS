@@ -314,8 +314,8 @@ public:
       // Assumptions: ( i) dMixtureDens_dVolStrain contribution is neglected
       //              (ii) grains are assumed incompressible
 
-      real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( - m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
-                                             + porosityNew * m_dFluidDensity_dPressure( k, q );
+      real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
+                                            + porosityNew * m_dFluidDensity_dPressure( k, q );
       for( integer a = 0; a < numNodesPerElem; ++a )
       {
         stack.localDispFlowJacobian[ a * 3 + 0][0] += N[a] * dMixtureDens_dPressure * m_gravityVector[0] * detJxW;

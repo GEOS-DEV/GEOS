@@ -472,7 +472,7 @@ public:
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localFlowDofIndex,
                                                                               stack.localFlowFlowJacobian[i],
-                                                                              m_numComponents + 1  );
+                                                                              m_numComponents + 1 );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localFlowResidual[i] );
     }
