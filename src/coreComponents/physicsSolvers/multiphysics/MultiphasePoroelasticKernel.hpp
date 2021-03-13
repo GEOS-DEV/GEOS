@@ -284,12 +284,12 @@ public:
     // --- TODO: temporary solution -----------------------------------------------------------------------------------//
     //           see SinglePhasePoromechanicsKernel                                                                    //
     real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
-    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                          //
-    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local ); //
+    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                         //
+    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local );//
     real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
     real64 const dPorosity_dPressure = biotSkeletonModulusInverse;                                                     //
-                                                                                                                       //
-    GEOSX_ERROR_IF_GT_MSG( fabs( m_biotCoefficient - 1.0 ),                                                             //
+    real64 const dPorosity_dVolStrainIncrement =  m_biotCoefficient;                                                   //
+    GEOSX_ERROR_IF_GT_MSG( fabs( m_biotCoefficient - 1.0 ),                                                            //
                            1e-10,                                                                                      //
                            "Correct only for Biot's coefficient equal to 1" );                                         //
     // --------------------------------------------------------------------------------------------------------------- //
@@ -340,34 +340,12 @@ public:
       stack.localDispFlowJacobian[ a * 3 + 2][0] += dNdX[a][2] * m_biotCoefficient * detJxW;
     }
 
-//    if( m_gravityAcceleration > 0.0 )
-//    {
-//      // Considering this contribution yields nonsymmetry and requires fullBTDB
-//#if 0
-//      real64 dPoro_dVolStrain = biotCoefficient;
-//      real64 dMixtureDens_dVolStrain = - m_solidDensity( k, q ) + m_fluidPhaseSaturation( k, 0) * m_fluidPhaseMassDensity( k, q, 0 );
-//      for( localIndex iPhase = 1; iPhase < m_numPhases; ++iPhase )
-//      {
-//        dMixtureDens_dVolStrain += m_fluidPhaseSaturation( k, iPhase) * m_fluidPhaseMassDensity( k, q, iPhase );
-//      }
-//      dMixtureDens_dVolStrain *= dPoro_dVolStrain * detJxW;
-//      for( integer a = 0; a < numNodesPerElem; ++a )
-//      {
-//        for( integer b = 0; b < numNodesPerElem; ++b )
-//        {
-//          stack.localJacobian[a * 3 + 0][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][0];
-//          stack.localJacobian[a * 3 + 0][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][1];
-//          stack.localJacobian[a * 3 + 0][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[0] * dNdX[b][2];
-//          stack.localJacobian[a * 3 + 1][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][0];
-//          stack.localJacobian[a * 3 + 1][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][1];
-//          stack.localJacobian[a * 3 + 1][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[1] * dNdX[b][2];
-//          stack.localJacobian[a * 3 + 2][b * 3 + 0] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][0];
-//          stack.localJacobian[a * 3 + 2][b * 3 + 1] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][1];
-//          stack.localJacobian[a * 3 + 2][b * 3 + 2] += N[a] * dMixtureDens_dVolStrain * m_gravityVector[2] * dNdX[b][2];
-//        }
-//       }
-//#endif
-//    }
+    if( m_gravityAcceleration > 0.0 )
+    {
+      // Assumptions: (  i) dMixtureDens_dVolStrain contribution is neglected
+      //              ( ii) grains are assumed incompressible
+      //              (iii) TODO add dMixtureDens_dPressure and dMixtureDens_dGlobalCompDensity
+    }
 
     // --- Mass balance accumulation
     // --- --- sum contributions to component accumulation from each phase
@@ -410,7 +388,7 @@ public:
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * m_fluidPhaseCompFrac( k, q, ip, ic )
                                            + phaseAmountNew * m_dFluidPhaseCompFrac_dPressure( k, q, ip, ic );
 
-        componentAmount[ic] =  fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
+        componentAmount[ic] = fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
 
         stack.localFlowResidual[ic] += ( phaseCompAmountNew - phaseCompAmountOld ) * detJxW;
         stack.localFlowFlowJacobian[ic][0] += dPhaseCompAmount_dP * detJxW;;
@@ -431,17 +409,15 @@ public:
           stack.localFlowFlowJacobian[ic][jc + 1] += dPhaseCompAmount_dC  * detJxW;
         }
       }
-
-      for( localIndex ic = 0; ic < m_numComponents; ++ic )
+    }
+    for( localIndex ic = 0; ic < m_numComponents; ++ic )
+    {
+      for( integer a = 0; a < numNodesPerElem; ++a )
       {
-        for( integer a = 0; a < numNodesPerElem; ++a )
-        {
-          stack.localFlowDispJacobian[ic][a * 3 + 0] += m_biotCoefficient * componentAmount[ic] * dNdX[a][0] * detJxW;
-          stack.localFlowDispJacobian[ic][a * 3 + 1] += m_biotCoefficient * componentAmount[ic] * dNdX[a][1] * detJxW;
-          stack.localFlowDispJacobian[ic][a * 3 + 2] += m_biotCoefficient * componentAmount[ic] * dNdX[a][2] * detJxW;
-        }
+        stack.localFlowDispJacobian[ic][a * 3 + 0] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][0] * detJxW;
+        stack.localFlowDispJacobian[ic][a * 3 + 1] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][1] * detJxW;
+        stack.localFlowDispJacobian[ic][a * 3 + 2] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][2] * detJxW;
       }
-
     }
   }
 
@@ -454,7 +430,6 @@ public:
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
-//    GEOSX_LOG_RANK_VAR( k ); ///delete line
     real64 maxForce = 0;
 
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
@@ -494,6 +469,10 @@ public:
                                                                               stack.localRowDofIndex,
                                                                               stack.localFlowDispJacobian[i],
                                                                               nUDof );
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                              stack.localFlowDofIndex,
+                                                                              stack.localFlowFlowJacobian[i],
+                                                                              m_numComponents + 1  );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localFlowResidual[i] );
     }

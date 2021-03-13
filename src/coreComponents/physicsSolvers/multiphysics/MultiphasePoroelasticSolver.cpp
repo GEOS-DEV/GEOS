@@ -280,6 +280,8 @@ void MultiphasePoroelasticSolver::solveSystem( DofManager const & dofManager,
                                                ParallelVector & rhs,
                                                ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
+
   solution.zero();
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 }
