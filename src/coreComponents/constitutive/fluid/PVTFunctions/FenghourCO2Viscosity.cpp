@@ -13,12 +13,12 @@
  */
 
 /**
- * @file FenghourCO2ViscosityFunction.cpp
+ * @file FenghourCO2Viscosity.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
 
-#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
 
@@ -43,15 +43,28 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string_array const & inputPara,
 
 void FenghourCO2Viscosity::makeTable( string_array const & inputPara )
 {
-  localIndex const expectedNumParameters = 8;
   PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputPara, expectedNumParameters, tableCoords );
+  PVTFunctionHelpers::initializePropertyTable( inputPara, tableCoords );
+
+  real64 tolerance = 1e-10;
+  try
+  {
+    if( inputPara.size() >= 9 )
+    {
+      tolerance = stod( inputPara[8] );
+    }
+  }
+  catch( const std::invalid_argument & e )
+  {
+    GEOSX_THROW( "Invalid property argument:" + string( e.what()),
+                 InputError );
+  }
 
   localIndex const nP = tableCoords.nPressures();
   localIndex const nT = tableCoords.nTemperatures();
   array1d< real64 > density( nP * nT );
   array1d< real64 > viscosity( nP * nT );
-  SpanWagnerCO2Density::calculateCO2Density( tableCoords, density );
+  SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, density );
   calculateCO2Viscosity( tableCoords, density, viscosity );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();

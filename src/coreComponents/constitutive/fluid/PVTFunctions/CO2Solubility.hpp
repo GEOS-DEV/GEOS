@@ -128,11 +128,13 @@ private:
 
   void makeTable( string_array const & inputPara );
 
-  void calculateCO2Solubility( PVTProps::PTTableCoordinates const & tableCoords,
+  void calculateCO2Solubility( real64 const & tolerance,
+                               PVTProps::PTTableCoordinates const & tableCoords,
                                real64 const & salinity,
                                array1d< real64 > const & values );
 
-  void CO2SolubilityFunction( real64 const & T,
+  void CO2SolubilityFunction( real64 const & tolerance,
+                              real64 const & T,
                               real64 const & P,
                               real64 & V_r,
                               real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ) );

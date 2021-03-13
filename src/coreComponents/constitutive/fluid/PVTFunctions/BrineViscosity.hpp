@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BrineViscosityFunction.hpp
+ * @file BrineViscosity.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITY_HPP_

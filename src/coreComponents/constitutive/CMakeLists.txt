@@ -15,13 +15,13 @@ set( constitutive_headers
      contact/Coulomb.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
-     fluid/PVTFunctions/BrineCO2DensityFunction.hpp
-     fluid/PVTFunctions/BrineViscosityFunction.hpp
-     fluid/PVTFunctions/CO2SolubilityFunction.hpp
-     fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
+     fluid/PVTFunctions/BrineCO2Density.hpp
+     fluid/PVTFunctions/BrineViscosity.hpp
+     fluid/PVTFunctions/CO2Solubility.hpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
      fluid/PVTFunctions/PVTFunctionBase.hpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.hpp
      fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/SingleFluidBase.hpp
      fluid/singleFluidSelector.hpp
@@ -76,11 +76,11 @@ set( constitutive_sources
      fluid/DeadOilFluid.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp
-     fluid/PVTFunctions/BrineCO2DensityFunction.cpp
-     fluid/PVTFunctions/BrineViscosityFunction.cpp
-     fluid/PVTFunctions/CO2SolubilityFunction.cpp
-     fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp
+     fluid/PVTFunctions/BrineCO2Density.cpp
+     fluid/PVTFunctions/BrineViscosity.cpp
+     fluid/PVTFunctions/CO2Solubility.cpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.cpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.cpp
      fluid/SingleFluidBase.cpp
      fluid/MultiFluidBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp

@@ -61,6 +61,8 @@ struct PVTFunctionHelpers
 
   /**
    * @brief Look for the expectedNames in the names provided by the user
+   * @tparam InputRange type of the input range
+   * @tparam ExpectedRange type of the expected range
    * @param[in] inputNames phase or component names provided by the user
    * @param[in] expectedNames expected names that can be accepted by GEOSX
    * @return the index of the phase or component that was found
@@ -82,52 +84,24 @@ struct PVTFunctionHelpers
    * @param[in] inputParameters the strings reads in the file provided by the user
    * @param[inout] tableCoords the (p,T) coordinates of the table
    */
-  static real64
-  initializePropertyTableWithSalinity( string_array const & inputParameters,
-                                       PTTableCoordinates & tableCoords )
-  {
-    localIndex const expectedNumParameters = 9;
-    real64 salinity = 0.0;
-    initializePropertyTable( inputParameters, expectedNumParameters, tableCoords );
-    try
-    {
-      salinity = stod( inputParameters[8] );
-    }
-    catch( const std::invalid_argument & e )
-    {
-      GEOSX_THROW( "Invalid property argument:" + string( e.what()),
-                   InputError );
-    }
-    return salinity;
-  }
-
-  /**
-   * @brief Populate the coordinate table with pressure and temperature
-   * @param[in] inputParameters the strings reads in the file provided by the user
-   * @param[in] expectedNumParameters the number of expected parameters in the file provided by the user
-   * @param[inout] tableCoords the (p,T) coordinates of the table
-   */
   static void
   initializePropertyTable( string_array const & inputParameters,
-                           localIndex const expectedNumParameters,
                            PTTableCoordinates & tableCoords )
 
   {
-    real64 TStart, TEnd, dT, PStart, PEnd, dP;
-
-    GEOSX_THROW_IF( inputParameters.size() != expectedNumParameters,
+    GEOSX_THROW_IF( inputParameters.size() < 8,
                     "Invalid property input!",
                     InputError );
 
     try
     {
-      PStart = stod( inputParameters[2] );
-      PEnd = stod( inputParameters[3] );
-      dP = stod( inputParameters[4] );
+      real64 const PStart = stod( inputParameters[2] );
+      real64 const PEnd = stod( inputParameters[3] );
+      real64 const dP = stod( inputParameters[4] );
 
-      TStart = stod( inputParameters[5] );
-      TEnd = stod( inputParameters[6] );
-      dT = stod( inputParameters[7] );
+      real64 const TStart = stod( inputParameters[5] );
+      real64 const TEnd = stod( inputParameters[6] );
+      real64 const dT = stod( inputParameters[7] );
 
       for( real64 P = PStart; P <= PEnd; P += dP )
       {

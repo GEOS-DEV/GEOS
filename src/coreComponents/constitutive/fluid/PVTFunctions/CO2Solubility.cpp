@@ -13,10 +13,10 @@
  */
 
 /**
- * @file CO2SolubilityFunction.cpp
+ * @file CO2Solubility.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/CO2SolubilityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/FunctionManager.hpp"
@@ -174,11 +174,33 @@ CO2Solubility::CO2Solubility( string_array const & inputPara,
 
 void CO2Solubility::makeTable( string_array const & inputPara )
 {
+  // initialize the (p,T) coordinates
   PTTableCoordinates tableCoords;
-  real64 const salinity = PVTFunctionHelpers::initializePropertyTableWithSalinity( inputPara, tableCoords );
+  PVTFunctionHelpers::initializePropertyTable( inputPara, tableCoords );
+
+  // initialize salinity and tolerance
+  GEOSX_THROW_IF( inputPara.size() < 9,
+                  "Invalid property input!",
+                  InputError );
+
+  real64 tolerance = 1e-9;
+  real64 salinity = 0.0;
+  try
+  {
+    salinity = stod( inputPara[8] );
+    if( inputPara.size() >= 10 )
+    {
+      tolerance = stod( inputPara[9] );
+    }
+  }
+  catch( const std::invalid_argument & e )
+  {
+    GEOSX_THROW( "Invalid property argument:" + string( e.what()),
+                 InputError );
+  }
 
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateCO2Solubility( tableCoords, salinity, values );
+  calculateCO2Solubility( tolerance, tableCoords, salinity, values );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_CO2SolubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
@@ -188,7 +210,8 @@ void CO2Solubility::makeTable( string_array const & inputPara )
   m_CO2SolubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
 
-void CO2Solubility::calculateCO2Solubility( PTTableCoordinates const & tableCoords,
+void CO2Solubility::calculateCO2Solubility( real64 const & tolerance,
+                                            PTTableCoordinates const & tableCoords,
                                             real64 const & salinity,
                                             array1d< real64 > const & values )
 {
@@ -212,7 +235,7 @@ void CO2Solubility::calculateCO2Solubility( PTTableCoordinates const & tableCoor
 
       // compute reduced volume by solving the CO2 equation of state
       real64 V_r = 0.0;
-      CO2SolubilityFunction( T, P, V_r, &detail::ff );
+      CO2SolubilityFunction( tolerance, T, P, V_r, &detail::ff );
 
       // compute equation (6) of Duan and Sun (2003)
       real64 const logK = detail::Par( T+T_K_f, P, mu )
@@ -222,18 +245,17 @@ void CO2Solubility::calculateCO2Solubility( PTTableCoordinates const & tableCoor
 
       // mole fraction of CO2 in vapor phase, equation (4) of Duan and Sun (2003)
       real64 const y_CO2 = (P - detail::PWater( T ))/P;
-      values[j*tableCoords.nPressures()+i] = y_CO2 * P / exp( logK );
+      values[j*nPressures+i] = y_CO2 * P / exp( logK );
     }
   }
 }
 
-void CO2Solubility::CO2SolubilityFunction( real64 const & T,
+void CO2Solubility::CO2SolubilityFunction( real64 const & tolerance,
+                                           real64 const & T,
                                            real64 const & P,
                                            real64 & V_r,
                                            real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ) )
 {
-
-  constexpr real64 eps = 1e-9;
   constexpr real64 dx = 1e-10;
   int count = 0;
   real64 Vr_int = 0.05;
@@ -253,13 +275,13 @@ void CO2Solubility::CO2SolubilityFunction( real64 const & T,
     real64 const v1 = (*f)( T, P, V_r+dx );
     real64 const dre = -v0/((v1-v0)/dx);
 
-    if( fabs( dre ) < eps )
+    if( fabs( dre ) < tolerance )
     {
       break;
     }
 
     GEOSX_THROW_IF( count > 50,
-                    "CO2Solubility NR convergence fails! " << "dre = " << dre << ", eps = " << eps,
+                    "CO2Solubility NR convergence fails! " << "dre = " << dre << ", tolerance = " << tolerance,
                     InputError );
 
     count++;

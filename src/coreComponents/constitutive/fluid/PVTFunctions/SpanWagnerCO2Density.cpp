@@ -13,10 +13,10 @@
  */
 
 /**
- * @file SpanWagnerCO2DensityFunction.cpp
+ * @file SpanWagnerCO2Density.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
@@ -157,12 +157,25 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string_array const & inputPara,
 
 void SpanWagnerCO2Density::makeTable( string_array const & inputPara )
 {
-  localIndex const expectedNumParameters = 8;
   PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputPara, expectedNumParameters, tableCoords );
+  PVTFunctionHelpers::initializePropertyTable( inputPara, tableCoords );
+
+  real64 tolerance = 1e-10;
+  try
+  {
+    if( inputPara.size() >= 9 )
+    {
+      tolerance = stod( inputPara[8] );
+    }
+  }
+  catch( const std::invalid_argument & e )
+  {
+    GEOSX_THROW( "Invalid property argument:" + string( e.what()),
+                 InputError );
+  }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateCO2Density( tableCoords, densities );
+  calculateCO2Density( tolerance, tableCoords, densities );
 
   FunctionManager & functionManager = getGlobalState().getFunctionManager();
   m_CO2DensityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
@@ -173,7 +186,8 @@ void SpanWagnerCO2Density::makeTable( string_array const & inputPara )
 }
 
 
-void SpanWagnerCO2Density::calculateCO2Density( PTTableCoordinates const & tableCoords,
+void SpanWagnerCO2Density::calculateCO2Density( real64 const & tolerance,
+                                                PTTableCoordinates const & tableCoords,
                                                 array1d< real64 > const & densities )
 {
 
@@ -188,12 +202,13 @@ void SpanWagnerCO2Density::calculateCO2Density( PTTableCoordinates const & table
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TK = tableCoords.getTemperature( j ) + TK_f;
-      spanWagnerCO2DensityFunction( TK, PPa, densities[j*nPressures+i], &detail::f );
+      spanWagnerCO2DensityFunction( tolerance, TK, PPa, densities[j*nPressures+i], &detail::f );
     }
   }
 }
 
-void SpanWagnerCO2Density::spanWagnerCO2DensityFunction( real64 const & T,
+void SpanWagnerCO2Density::spanWagnerCO2DensityFunction( real64 const & tolerance,
+                                                         real64 const & T,
                                                          real64 const & P,
                                                          real64 & rho,
                                                          real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ) )
@@ -210,7 +225,6 @@ void SpanWagnerCO2Density::spanWagnerCO2DensityFunction( real64 const & T,
   constexpr real64 lda[] = { 1.9245108, -0.62385555, -0.32731127, 0.39245142 };
   constexpr real64 ldt[] = { 0.340, 0.5, 1.6666666667, 1.833333333 };
 
-  real64 const eps = 1e-10;
   real64 const dx = 1e-10;
   int count = 0;
 
@@ -251,12 +265,12 @@ void SpanWagnerCO2Density::spanWagnerCO2DensityFunction( real64 const & T,
     real64 const v0 = (*f)( T, P, rho );
     real64 const v1 = (*f)( T, P, rho+dx );
     real64 const dre = -v0/((v1-v0)/dx);
-    if( fabs( dre ) < eps )
+    if( fabs( dre ) < tolerance )
     {
       break;
     }
 
-    GEOSX_ERROR_IF( count > 50, "SpanWagnerCO2Density NR convergence fails! " << "dre = " << dre << ", eps = " << eps );
+    GEOSX_ERROR_IF( count > 50, "SpanWagnerCO2Density NR convergence fails! " << "dre = " << dre << ", tolerance = " << tolerance );
 
     count++;
     rho += dre;

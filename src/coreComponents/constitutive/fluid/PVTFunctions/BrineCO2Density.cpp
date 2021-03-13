@@ -13,10 +13,10 @@
  */
 
 /**
- * @file BrineCO2DensityFunction.cpp
+ * @file BrineCO2Density.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/BrineCO2DensityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineCO2Density.hpp"
 
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
@@ -56,8 +56,24 @@ BrineCO2Density::BrineCO2Density( string_array const & inputPara,
 
 void BrineCO2Density::makeTable( string_array const & inputPara )
 {
+  // initialize the (p,T) coordinates
   PTTableCoordinates tableCoords;
-  real64 const salinity = PVTFunctionHelpers::initializePropertyTableWithSalinity( inputPara, tableCoords );
+  PVTFunctionHelpers::initializePropertyTable( inputPara, tableCoords );
+
+  // initialize salinity
+  GEOSX_THROW_IF( inputPara.size() < 9,
+                  "Invalid property input!",
+                  InputError );
+  real64 salinity = 0.0;
+  try
+  {
+    salinity = stod( inputPara[8] );
+  }
+  catch( const std::invalid_argument & e )
+  {
+    GEOSX_THROW( "Invalid property argument:" + string( e.what()),
+                 InputError );
+  }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateBrineDensity( tableCoords, salinity, densities );

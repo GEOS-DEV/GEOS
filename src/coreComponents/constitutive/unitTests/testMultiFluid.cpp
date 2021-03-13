@@ -801,12 +801,6 @@ TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
   }
 }
 
-template class MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
-                                              PVTProps::BrineViscosity,
-                                              PVTProps::SpanWagnerCO2Density,
-                                              PVTProps::FenghourCO2Viscosity,
-                                              PVTProps::CO2Solubility >;
-
 MultiFluidBase & makeMultiPhaseMultiComponentFluid( string const & name, Group * parent )
 {
   CO2BrineFluid & fluid = parent->registerGroup< CO2BrineFluid >( name );

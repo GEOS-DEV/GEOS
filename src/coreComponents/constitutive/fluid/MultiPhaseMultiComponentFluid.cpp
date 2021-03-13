@@ -146,12 +146,12 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
 
       if( strs[0] == "DensityFun" )
       {
-        if( strs[1] == "BrineCO2Density" )
+        if( strs[1] == P1DENS::catalogName() )
         {
           m_p1Density = std::make_unique< P1DENS >( strs, m_componentNames, m_componentMolarWeight );
           m_p1DensityWrapper.emplace_back( m_p1Density->createKernelWrapper() );
         }
-        else if( strs[1] == "SpanWagnerCO2Density" )
+        else if( strs[1] == P2DENS::catalogName() )
         {
           m_p2Density = std::make_unique< P2DENS >( strs, m_componentNames, m_componentMolarWeight );
           m_p2DensityWrapper.emplace_back( m_p2Density->createKernelWrapper() );
@@ -159,12 +159,12 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
       }
       else if( strs[0] == "ViscosityFun" )
       {
-        if( strs[1] == "BrineViscosity" )
+        if( strs[1] == P1VISC::catalogName() )
         {
           m_p1Viscosity = std::make_unique< P1VISC >( strs, m_componentNames, m_componentMolarWeight );
           m_p1ViscosityWrapper.emplace_back( m_p1Viscosity->createKernelWrapper() );
         }
-        else if( strs[1] == "FenghourCO2Viscosity" )
+        else if( strs[1] == P2VISC::catalogName() )
         {
           m_p2Viscosity = std::make_unique< P2VISC >( strs, m_componentNames, m_componentMolarWeight );
           m_p2ViscosityWrapper.emplace_back( m_p2Viscosity->createKernelWrapper() );
@@ -179,16 +179,16 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
   }
 
   GEOSX_THROW_IF( m_p1Density == nullptr,
-                  "BrineCO2Density model not found",
+                  P1DENS::catalogName() << " model not found",
                   InputError );
   GEOSX_THROW_IF( m_p2Density == nullptr,
-                  "SpanWagnerCO2Density model not found",
+                  P2DENS::catalogName() << " model not found",
                   InputError );
   GEOSX_THROW_IF( m_p1Viscosity == nullptr,
-                  "BrineViscosity model not found",
+                  P1VISC::catalogName() << " model not found",
                   InputError );
   GEOSX_THROW_IF( m_p2Viscosity == nullptr,
-                  "FenghourCO2Viscosity model not found",
+                  P2VISC::catalogName() << " model not found",
                   InputError );
 
   // 2) Create the flash model
@@ -201,7 +201,7 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
     {
       string const str( buf );
       string_array const strs = stringutilities::tokenize( str, " " );
-      if( strs[0] == "FlashModel" && strs[1] == "CO2Solubility" )
+      if( strs[0] == "FlashModel" && strs[1] == FLASH::catalogName() )
       {
         m_flash = std::make_unique< FLASH >( strs, m_phaseNames, m_componentNames, m_componentMolarWeight );
         m_flashWrapper.emplace_back( m_flash->createKernelWrapper() );
@@ -215,7 +215,7 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
   }
 
   GEOSX_THROW_IF( m_flash == nullptr,
-                  "CO2Solubility model not found",
+                  FLASH::catalogName() << " not found",
                   InputError );
 }
 

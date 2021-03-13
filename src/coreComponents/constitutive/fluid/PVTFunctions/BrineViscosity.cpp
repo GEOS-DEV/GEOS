@@ -13,10 +13,10 @@
  */
 
 /**
- * @file BrineViscosityFunction.cpp
+ * @file BrineViscosity.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/BrineViscosityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineViscosity.hpp"
 
 namespace geosx
 {

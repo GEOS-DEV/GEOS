@@ -21,11 +21,11 @@
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineCO2DensityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineViscosityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/CO2SolubilityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineCO2Density.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
+#include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 
 #include <memory>
 
@@ -334,6 +334,14 @@ private:
 
   /// Pointer to the flash model
   std::unique_ptr< FLASH > m_flash;
+
+  // Note: here is the reason why I am storing **arrays of** wrappers instead of just storing wrappers
+
+  // - If I store the wrappers here and pass them to the update class, then the total size of kernel arguments
+  //   exceeds 4 KB, which the upper limit allowed by the compiler.
+  // - To circumvent this problem, I store **arrays of** wrappers here, and then I can pass the arrayViews
+  //   to the kernel. In that case, the total size of kernel arguments is much smaller, so everything works fine.
+  //   This workaround is a little bit odd, because it forces us to keep these arrays of size 1 here...
 
   /// Pointer to the brine density model
   array1d< typename P1DENS::KernelWrapper > m_p1DensityWrapper;

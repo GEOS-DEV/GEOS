@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BrineCO2DensityFunction.hpp
+ * @file BrineCO2Density.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINECO2DENSITY_HPP_
