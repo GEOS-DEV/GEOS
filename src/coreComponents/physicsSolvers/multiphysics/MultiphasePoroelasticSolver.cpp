@@ -142,7 +142,7 @@ void MultiphasePoroelasticSolver::postProcessInput()
 
 void MultiphasePoroelasticSolver::initializePostInitialConditionsPreSubGroups()
 {
-  m_flowSolver->setPoroElasticCoupling();
+  m_flowSolver->setFullyImplicitPoroElasticCoupling();
 }
 
 MultiphasePoroelasticSolver::~MultiphasePoroelasticSolver()

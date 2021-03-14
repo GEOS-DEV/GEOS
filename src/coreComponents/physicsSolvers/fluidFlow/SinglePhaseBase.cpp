@@ -424,16 +424,17 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  if( !m_poroElasticFlag )
+  if( m_poroElasticFlag == PoroElasticCouplingTypeOption::SIM_FixedStress )
   {
-//    // Do nothing, assembly done in SinglePhasePoroelasticKernel
-//    assembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
-//                                                               dofManager,
-//                                                               localMatrix,
-//                                                               localRhs );
-//  }
-//  else
-//  {
+    // For fully implicit simulation accumulation assembly done in
+    // SinglePhasePoroelasticKernel
+    assembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
+                                                               dofManager,
+                                                               localMatrix,
+                                                               localRhs );
+  }
+  else if( m_poroElasticFlag == PoroElasticCouplingTypeOption::Uncoupled )
+  {
     assembleAccumulationTerms< false, parallelDevicePolicy<> >( domain,
                                                                 dofManager,
                                                                 localMatrix,

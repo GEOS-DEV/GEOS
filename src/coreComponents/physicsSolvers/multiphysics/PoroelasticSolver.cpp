@@ -177,10 +177,13 @@ void PoroelasticSolver::postProcessInput()
 
 void PoroelasticSolver::initializePostInitialConditionsPreSubGroups()
 {
-  m_flowSolver->setPoroElasticCoupling();
-
-  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::FIM )
   {
+    m_flowSolver->setFullyImplicitPoroElasticCoupling();
+  }
+  else if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
+  {
+    m_flowSolver->setSequentialImplicitFixedStressPoroElasticCoupling();
     // Calculate initial total mean stress
     updateDeformationForCoupling( getGlobalState().getProblemManager().getDomainPartition() );
   }

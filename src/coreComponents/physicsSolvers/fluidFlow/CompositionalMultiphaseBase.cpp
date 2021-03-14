@@ -640,7 +640,7 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
-  if( !m_poroElasticFlag )
+  if( m_poroElasticFlag != PoroElasticCouplingTypeOption::FIM )
   {
     assembleAccumulationTerms( domain,
                                dofManager,
