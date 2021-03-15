@@ -41,6 +41,24 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
+void NewObjectLists::insert( ModifiedObjectLists const & newObjects )
+{
+  newNodes.insert( newObjects.newNodes.begin(),
+                   newObjects.newNodes.end() );
+
+  newEdges.insert( newObjects.newEdges.begin(),
+                   newObjects.newEdges.end() );
+
+  for( auto & iter : newObjects.newElements )
+  {
+    std::pair< localIndex, localIndex > const & key = iter.first;
+    std::set< localIndex > const & values = iter.second;
+    newElements[key].insert( values.begin(), values.end() );
+  }
+
+}
+
+
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent )
@@ -88,6 +106,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   localIndex localNumberOfSurfaceElems         = 0;
+
+  NewObjectLists newObjects;
 
   // Loop over all the fracture planes
   geometricObjManager.forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
@@ -181,7 +201,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 
   // Synchronize fields
-  EmbeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel, domain.getNeighbors() );
+  EmbeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel, domain.getNeighbors(), newObjects );
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
