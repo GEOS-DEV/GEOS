@@ -227,7 +227,10 @@ public:
 
       }
       //add pressure driving term
-      stack.localResidual[ a ] += (m_fluidPressure(k)+m_deltaFluidPressure(k))*traceOfStrain*N[a];
+      //linear pressure degradation
+      stack.localResidual[ a ] += detJ*(m_fluidPressure(k)+m_deltaFluidPressure(k))*traceOfStrain*N[a]*ell/Gc;
+      //quadratic pressure degradation
+      //stack.localResidual[ a ] += 2.0*detJ*(1.0 - qp_damage)*(m_fluidPressure(k)+m_deltaFluidPressure(k))*traceOfStrain*N[a]*ell/Gc;
       
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
@@ -246,7 +249,10 @@ public:
                                            );
         }
 	//add pressure terms
-	//nothing, since pressure term doesn't depend on d. 
+	//nothing, since pressure term doesn't depend on d. (Linear pressure degradation)
+	//quadratic pressure degradation
+	//stack.localJacobian[ a ][ b ] -= detJ * N[a] * N[b] * (-2.0 * m_fluidPressure(k)+m_deltaFluidPressure(k))*traceOfStrain;
+        
       }
     }
   }
