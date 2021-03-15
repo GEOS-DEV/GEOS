@@ -435,7 +435,7 @@ protected:
 };
 
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace PoroelasticKernels
 
 } // namespace geosx
 
