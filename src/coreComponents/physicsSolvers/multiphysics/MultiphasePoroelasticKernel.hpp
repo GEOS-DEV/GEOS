@@ -119,9 +119,7 @@ public:
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_gravityAcceleration( sqrt( inputGravityVector[0] * inputGravityVector[0] +
-                                 inputGravityVector[1] * inputGravityVector[1] +
-                                 inputGravityVector[2] * inputGravityVector[2] ) ),
+    m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     //
     m_fluidPhaseDensity( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseDensity() ),
@@ -192,7 +190,7 @@ public:
     int xLocal;
 #else
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
 #endif
 
     /// Stack storage for the element local nodal displacement
@@ -232,10 +230,10 @@ public:
       for( int i=0; i<3; ++i )
       {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+        stack.xLocal[a][i] = m_X[localNodeIndex][i];
 #endif
-        stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
-        stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
+        stack.u_local[a][i] = m_disp[localNodeIndex][i];
+        stack.uhat_local[a][i] = m_uhat[localNodeIndex][i];
         stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
         stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
       }
@@ -335,9 +333,9 @@ public:
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[ a * 3 + 0][0] += dNdX[a][0] * m_biotCoefficient * detJxW;
-      stack.localDispFlowJacobian[ a * 3 + 1][0] += dNdX[a][1] * m_biotCoefficient * detJxW;
-      stack.localDispFlowJacobian[ a * 3 + 2][0] += dNdX[a][2] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * m_biotCoefficient * detJxW;
     }
 
     if( m_gravityAcceleration > 0.0 )
@@ -406,7 +404,7 @@ public:
         {
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
                                              + m_fluidPhaseCompFrac( k, q, ip, ic ) * dPhaseAmount_dC[jc];
-          stack.localFlowFlowJacobian[ic][jc + 1] += dPhaseCompAmount_dC  * detJxW;
+          stack.localFlowFlowJacobian[ic][jc+1] += dPhaseCompAmount_dC  * detJxW;
         }
       }
     }
@@ -414,9 +412,9 @@ public:
     {
       for( integer a = 0; a < numNodesPerElem; ++a )
       {
-        stack.localFlowDispJacobian[ic][a * 3 + 0] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][0] * detJxW;
-        stack.localFlowDispJacobian[ic][a * 3 + 1] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][1] * detJxW;
-        stack.localFlowDispJacobian[ic][a * 3 + 2] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][2] * detJxW;
+        stack.localFlowDispJacobian[ic][a*3+0] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][0] * detJxW;
+        stack.localFlowDispJacobian[ic][a*3+1] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][1] * detJxW;
+        stack.localFlowDispJacobian[ic][a*3+2] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][2] * detJxW;
       }
     }
   }
@@ -442,15 +440,15 @@ public:
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
-        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint * localNode + dim] - m_dofRankOffset );
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,
-                                                                                stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
+                                                                                stack.localJacobian[numDofPerTestSupportPoint * localNode + dim],
                                                                                 numNodesPerElem * numDofPerTrialSupportPoint );
 
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
-        maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidual[numDofPerTestSupportPoint * localNode + dim] );
+        maxForce = fmax( maxForce, fabs( stack.localResidual[numDofPerTestSupportPoint * localNode + dim] ) );
 
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localFlowDofIndex,
@@ -462,7 +460,7 @@ public:
 
     for( localIndex i = 0; i < m_numComponents; ++i )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[ i ] - m_dofRankOffset );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[i] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() )
         continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
@@ -474,7 +472,7 @@ public:
                                                                               stack.localFlowFlowJacobian[i],
                                                                               m_numComponents + 1 );
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localFlowResidual[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localFlowResidual[i] );
     }
 
 
