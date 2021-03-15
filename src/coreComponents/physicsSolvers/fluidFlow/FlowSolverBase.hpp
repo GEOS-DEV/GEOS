@@ -71,9 +71,7 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  void setFullyImplicitPoroElasticCoupling() { m_poroElasticFlag = PoroElasticCouplingTypeOption::FIM; }
-
-  void setSequentialImplicitFixedStressPoroElasticCoupling() { m_poroElasticFlag = PoroElasticCouplingTypeOption::SIM_FixedStress; }
+  void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
@@ -85,13 +83,6 @@ public:
 
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
-
-  enum class PoroElasticCouplingTypeOption : integer
-  {
-    Uncoupled,
-    FIM,
-    SIM_FixedStress
-  };
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -164,7 +155,7 @@ protected:
   array1d< string > m_solidModelNames;
 
   /// flag to determine whether or not coupled with solid solver
-  PoroElasticCouplingTypeOption m_poroElasticFlag;
+  integer m_poroElasticFlag;
 
   /// flag to determine whether or not coupled with wells
   integer m_coupledWellsFlag;

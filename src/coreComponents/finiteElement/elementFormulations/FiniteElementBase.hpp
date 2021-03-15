@@ -555,7 +555,7 @@ real64 FiniteElementBase::symmetricGradientTrace( GRADIENT_TYPE const & gradN,
 
   for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
-    result += gradN[a][0] * var[a][0] + gradN[a][1] * var[a][1] + gradN[a][2] * var[a][2];
+    result = result + gradN[a][0] * var[a][0] + gradN[a][1] * var[a][1] + gradN[a][2] * var[a][2];
   }
   return result;
 }

@@ -129,8 +129,6 @@ protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override;
-
   string m_solidSolverName;
   string m_flowSolverName;
 

@@ -177,13 +177,9 @@ void PoroelasticSolver::postProcessInput()
 
 void PoroelasticSolver::initializePostInitialConditionsPreSubGroups()
 {
-  if( m_couplingTypeOption == CouplingTypeOption::FIM )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
-    m_flowSolver->setFullyImplicitPoroElasticCoupling();
-  }
-  else if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
-  {
-    m_flowSolver->setSequentialImplicitFixedStressPoroElasticCoupling();
+    m_flowSolver->setPoroElasticCoupling();
     // Calculate initial total mean stress
     updateDeformationForCoupling( getGlobalState().getProblemManager().getDomainPartition() );
   }
@@ -365,12 +361,12 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
                                                                        gravityVectorData,
                                                                        m_flowSolver->fluidModelNames() );
 
-  // Face-based contributions (including pressure-dependent terms in the accumulation term of the mass balance equation)
-  m_flowSolver->assembleSystem( time_n, dt,
-                                domain,
-                                dofManager,
-                                localMatrix,
-                                localRhs );
+  // Face-based contributions
+  m_flowSolver->assembleFluxTerms( time_n, dt,
+                                   domain,
+                                   dofManager,
+                                   localMatrix,
+                                   localRhs );
 
 }
 

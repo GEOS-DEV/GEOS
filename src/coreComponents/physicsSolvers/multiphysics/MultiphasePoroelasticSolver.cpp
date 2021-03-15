@@ -140,11 +140,6 @@ void MultiphasePoroelasticSolver::postProcessInput()
 
 }
 
-void MultiphasePoroelasticSolver::initializePostInitialConditionsPreSubGroups()
-{
-  m_flowSolver->setFullyImplicitPoroElasticCoupling();
-}
-
 MultiphasePoroelasticSolver::~MultiphasePoroelasticSolver()
 {
   // TODO Auto-generated destructor stub
@@ -187,8 +182,10 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-
   GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time_n );
+
   MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -226,12 +223,21 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
                                                                       localMatrix,
                                                                       localRhs );
 
-  // Face-based contributions (including pressure-dependent terms in the accumulation term of the mass balance equation)
-  m_flowSolver->assembleSystem( time_n, dt,
-                                domain,
-                                dofManager,
-                                localMatrix,
-                                localRhs );
+
+
+  // Face-based contributions
+  m_flowSolver->assembleFluxTerms( dt,
+                                   domain,
+                                   dofManager,
+                                   localMatrix,
+                                   localRhs );
+
+  // Cell-based contribution
+  // TODO: move in PoroelasticKernels
+  m_flowSolver->assembleVolumeBalanceTerms( domain,
+                                            dofManager,
+                                            localMatrix,
+                                            localRhs );
 
 }
 
