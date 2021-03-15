@@ -142,8 +142,6 @@ void CamClay::postProcessInput()
   real64 poisson = conversions::BulkModAndShearMod::toPoissonRatio( -1*m_defaultRefPressure/m_defaultRecompressionIndex, m_defaultShearModulus );
   GEOSX_THROW_IF( poisson < 0, "Elastic parameters lead to negative Poisson ratio at reference pressure", InputError );
 
-  std::cout << poisson << std::endl;
-
   // set results as array default values
 
   getWrapper< array2d< real64 > >( viewKeyStruct::oldPreConsolidationPressureString() ).

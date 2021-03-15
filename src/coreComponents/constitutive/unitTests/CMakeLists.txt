@@ -3,13 +3,13 @@
 #
 
 set( gtest_geosx_tests
+     testCamClay.cpp
      testDamage.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
      testPropertyConversions.cpp
      testRelPerm.cpp
-     testTriaxial.cpp
    )
 
 set( dependencyList gtest )

@@ -47,6 +47,22 @@ void getStress( CMW const cmw,
 }
 
 
+template< typename CMW >
+void setStress( CMW cmw,
+                real64 const (& stress)[6] )
+{
+  forAll< serialPolicy >( 1, [&stress, cmw] ( localIndex const k )
+  {
+    cmw.m_oldStress( k, 0, 0 ) = stress[0];
+    cmw.m_oldStress( k, 0, 1 ) = stress[1];
+    cmw.m_oldStress( k, 0, 2 ) = stress[2];
+    cmw.m_oldStress( k, 0, 3 ) = stress[3];
+    cmw.m_oldStress( k, 0, 4 ) = stress[4];
+    cmw.m_oldStress( k, 0, 5 ) = stress[5];
+  } );
+}
+
+
 template< typename POLICY >
 void testCamClayDriver()
 {
@@ -55,22 +71,20 @@ void testCamClayDriver()
   dataRepository::Group rootGroup( "root", node );
   ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
 
-  //real64 const friction = 30.0; // will use later in checks
-
   string const inputStream =
     "<Constitutive>"
     "   <CamClay"
     "      name=\"granite\" "
     "      defaultDensity=\"2700\" "
-    "      defaultRefPressure=\"-10.0\" "
-    "      defaultRefStrainVol=\"-1e-4\" "
-    "      defaultShearModulus=\"5400.0\" "        //TODO: this leads to negative Poisson ratio!
-    "      defaultBulkModulus=\"5400.0\" "
-    "      defaultPreConsolidationPressure =\"-90.0\" "
+    "      defaultRefPressure=\"-1.0\" "
+    "      defaultRefStrainVol=\"0.0\" "
+    "      defaultShearModulus=\"200.0\" "       
+    "      defaultBulkModulus=\"0.0\" " // TODO: remove as free parameter
+    "      defaultPreConsolidationPressure =\"-1.5\" "
     "      defaultShapeParameter=\"1.0\" "
     "      defaultCslSlope=\"1.05\" "
-    "      defaultVirginCompressionIndex=\"0.13\" "
-    "      defaultRecompressionIndex=\"0.018\"/>"
+    "      defaultVirginCompressionIndex=\"0.02\" "
+    "      defaultRecompressionIndex=\"0.002\"/>"
     "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
@@ -109,17 +123,20 @@ void testCamClayDriver()
   CamClay::KernelWrapper cmw = cm.createKernelUpdates();
 
   StrainData data;
-  real64 inc = -1e-3;
-  real64 total = 0;
-  data.strainIncrement[0] = inc;
-  data.strainIncrement[1] = 0;
-  data.strainIncrement[2] = 0;
-  data.strainIncrement[3] = 0;
-  data.strainIncrement[4] = 0;
-  data.strainIncrement[5] = 0;
+  data.strainIncrement[0] = -1e-4;
 
+  // set initial stress
 
-  for( localIndex loadstep=0; loadstep < 50; ++loadstep )
+  real64 stress[6] = {0};
+  stress[0] = -1.5;
+  stress[1] = -1.5;
+  stress[2] = -1.5;
+
+  setStress( cmw, stress );
+
+  // run loading
+
+  for( localIndex loadstep=0; loadstep < 500; ++loadstep )
   {
     forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -128,16 +145,11 @@ void testCamClayDriver()
       cmw.smallStrainUpdate( k, 0, data.strainIncrement, stress, stiffness );
     } );
     cm.saveConvergedState();
-    total = loadstep;
   }
 
+  // get final stress state in p-q space
 
-
-  real64 stress[6] = {0};
   getStress( cmw, stress );
-
-  // loading was set up to drive to total cohesion loss (c=0), at which
-  // point the Q/P ratio should equal the slope of the DP yield surface:
 
   real64 invariantP, invariantQ;
   real64 deviator[6];
@@ -147,13 +159,7 @@ void testCamClayDriver()
                                      invariantQ,
                                      deviator );
 
-  //real64 phi = friction * M_PI / 180;
-  //real64 slope = -6 * sin( phi ) / ( 3 - sin( phi ) );
-  //std::cout << invariantP << " " << invariantQ << " " << total << std::endl;
-
-
-
-  //EXPECT_TRUE( fabs( invariantQ / invariantP / slope - 1 ) < 1e-8 );
+  //EXPECT_TRUE( ... to be determined ... );
 
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
@@ -165,7 +171,7 @@ void testCamClayDriver()
 
 
 #ifdef USE_CUDA
-TEST( CamClayTests, testCamClayHost )
+TEST( CamClayTests, testCamClayDevice )
 {
   testCamClayDriver< geosx::parallelDevicePolicy< > >();
 }
