@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers>
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
@@ -21,7 +21,8 @@
         solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </CompositionalMultiphaseFlow>
+    </CompositionalMultiphaseFVM>
+
   </Solvers>
 
   <Mesh>
@@ -103,7 +104,6 @@
   <Constitutive>
     <BlackOilFluid
       name="fluid1"
-      fluidType="LiveOil"
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"

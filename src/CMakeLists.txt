@@ -47,8 +47,8 @@ add_subdirectory(thirdparty)
 # Add components
 ################################
 set( externalComponentsLinkList "" ) 
-add_subdirectory(externalComponents)
 add_subdirectory(coreComponents)
+add_subdirectory(externalComponents)
 add_subdirectory(main)
 
 
@@ -81,7 +81,7 @@ if( ENABLE_OPENMP )
 endif()
 
 if( ENABLE_CUDA )
-  set( extraComponentsLinkList ${extraComponentsLinkList} cuda ) 
+  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
 endif()
 
 if ( GEOSX_BUILD_SHARED_LIBS )

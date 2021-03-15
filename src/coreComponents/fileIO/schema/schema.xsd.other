@@ -393,7 +393,8 @@
 	<xsd:complexType name="ParameterType" />
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
+			<xsd:element name="CompositionalMultiphaseFVM" type="CompositionalMultiphaseFVMType" />
+			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
@@ -417,7 +418,15 @@
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="CompositionalMultiphaseFlowType">
+	<xsd:complexType name="CompositionalMultiphaseFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -689,6 +698,7 @@
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
+			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
@@ -943,6 +953,58 @@
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="DeadOilFluidType">
+		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseCompFraction_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseCompFraction_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseDensity_dTemperature" type="real64_array3d" />
+		<!--dPhaseFraction_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseFraction_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
+		<!--dPhaseFraction_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
+		<!--dPhaseMassDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseMassDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseMassDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dTemperature" type="real64_array3d" />
+		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseViscosity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseViscosity_dPressure" type="real64_array3d" />
+		<!--dPhaseViscosity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseViscosity_dTemperature" type="real64_array3d" />
+		<!--dTotalDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dTotalDensity_dGlobalCompFraction" type="real64_array3d" />
+		<!--dTotalDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
+		<!--dTotalDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--phaseCompFraction => (no description available)-->
+		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--phaseDensity => (no description available)-->
+		<xsd:attribute name="phaseDensity" type="real64_array3d" />
+		<!--phaseFraction => (no description available)-->
+		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseMassDensity => (no description available)-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
+		<!--phaseViscosity => (no description available)-->
+		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
+		<!--totalDensity => (no description available)-->
+		<xsd:attribute name="totalDensity" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -1417,7 +1479,7 @@
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
-		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
+		<!--deltaFacePressure => (no description available)-->
 		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
@@ -1435,7 +1497,7 @@
 		<xsd:attribute name="faceCenter" type="real64_array2d" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="real64_array2d" />
-		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseFVM, SinglePhaseHybridFVM, SinglePhaseProppantFVM-->
+		<!--facePressure => An array that holds the pressures at the faces. => CompositionalMultiphaseFVM, CompositionalMultiphaseHybridFVM, SinglePhaseFVM, SinglePhaseHybridFVM, SinglePhaseProppantFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
@@ -1449,6 +1511,8 @@
 		<xsd:attribute name="isFaceSeparable" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--mimGravityCoefficient => (no description available)-->
+		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->

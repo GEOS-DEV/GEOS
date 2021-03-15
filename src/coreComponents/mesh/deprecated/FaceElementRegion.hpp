@@ -127,10 +127,10 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// Fracture set string
+    /// @return Fracture set string
     static constexpr char const * fractureSetString() { return "fractureSet"; }
 
-    /// Default aperture string
+    /// @return Default aperture string
     static constexpr char const * defaultApertureString() { return "defaultAperture"; }
   };
 

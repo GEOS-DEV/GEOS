@@ -18,6 +18,8 @@
 
 #include "VTKOutput.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 
 namespace geosx
 {
@@ -27,14 +29,16 @@ using namespace dataRepository;
 VTKOutput::VTKOutput( string const & name,
                       Group * const parent ):
   OutputBase( name, parent ),
-  m_plotFileRoot(),
+  m_plotFileRoot( name ),
   m_writeFaceMesh(),
   m_plotLevel(),
-  m_writer( name )
+  m_writeBinaryData( 1 ),
+  m_writer( getGlobalState().getCommandLineOptions().outputDirectory + '/' + m_plotFileRoot )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
+    setDefaultValue( m_plotFileRoot ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "" );
+    setDescription( "Name of the root file for this output." );
 
   registerWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -43,7 +47,7 @@ VTKOutput::VTKOutput( string const & name,
   registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "" );
+    setDescription( "Level detail plot. Only fields with lower of equal plot level will be output." );
 
   registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
     setApplyDefaultValue( 1 ).
@@ -55,7 +59,10 @@ VTKOutput::VTKOutput( string const & name,
 VTKOutput::~VTKOutput()
 {}
 
-
+void VTKOutput::postProcessInput()
+{
+  m_writer.setOutputLocation( getGlobalState().getCommandLineOptions().outputDirectory, m_plotFileRoot );
+}
 
 bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
