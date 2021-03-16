@@ -29,28 +29,19 @@ namespace PoroelasticKernels
 {
 
 /**
- * @brief Implements kernels for solving quasi-static equilibrium.
+ * @brief Implements kernels for solving quasi-static single-phase poromechanics.
  * @copydoc geosx::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
- * ### QuasiStatic Description
+ * ### SinglePhasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
- * quasi-static equilibrium equations using one of the
+ * quasi-static single-phase poromechanics problem using one of the
  * "finite element kernel application" functions such as
  * geosx::finiteElement::RegionBasedKernelApplication.
  *
- * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
- * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
- * @p NUM_TRIAL_SUPPORT_POINTS_PER_ELEM, which are assumed to be equal. This
- * results in the @p UNUSED template parameter as only the NUM_NODES_PER_ELEM
- * is passed to the ImplicitKernelBase template to form the base class.
- *
- * Additionally, the number of degrees of freedom per support point for both
- * the test and trial spaces are specified as `3` when specifying the base
- * class.
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,

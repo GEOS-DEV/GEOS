@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SinglePhasePoroelasticKernel.hpp
+ * @file MultiphasePoroelasticKernel.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICKERNEL_HPP_
@@ -28,28 +28,19 @@ namespace PoroelasticKernels
 {
 
 /**
- * @brief Implements kernels for solving quasi-static equilibrium.
+ * @brief Implements kernels for solving quasi-static multiphase poromechanics.
  * @copydoc geosx::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
- * ### QuasiStatic Description
+ * ### MultiphasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
- * quasi-static equilibrium equations using one of the
+ * quasi-static multiphase poromechanics problem using one of the
  * "finite element kernel application" functions such as
  * geosx::finiteElement::RegionBasedKernelApplication.
  *
- * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
- * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
- * @p NUM_TRIAL_SUPPORT_POINTS_PER_ELEM, which are assumed to be equal. This
- * results in the @p UNUSED template parameter as only the NUM_NODES_PER_ELEM
- * is passed to the ImplicitKernelBase template to form the base class.
- *
- * Additionally, the number of degrees of freedom per support point for both
- * the test and trial spaces are specified as `3` when specifying the base
- * class.
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -121,7 +112,6 @@ public:
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    //
     m_fluidPhaseDensity( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseDensity() ),
     m_fluidPhaseDensityOld( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseDensityOldString() ) ),
     m_dFluidPhaseDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).dPhaseDensity_dPressure() ),
@@ -129,20 +119,15 @@ public:
     m_fluidPhaseCompFrac( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseCompFraction() ),
     m_fluidPhaseCompFracOld( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseComponentFractionOldString() ) ),
     m_dFluidPhaseCompFrac_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).dPhaseCompFraction_dPressure() ),
-    //
     m_fluidPhaseMassDensity( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseMassDensity() ),
-    //
     m_fluidPhaseSaturation( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString() )),
     m_fluidPhaseSaturationOld( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionOldString() )),
     m_dFluidPhaseSaturation_dPressure( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString() )),
     m_dFluidPhaseSaturation_dGlobalCompDensity( elementSubRegion.template getReference< array3d< real64 > >(
                                                   CompositionalMultiphaseBase::viewKeyStruct:: dPhaseVolumeFraction_dGlobalCompDensityString() )),
-    //
     m_dGlobalCompFraction_dGlobalCompDensity( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() )),
-//    //
     m_dFluidPhaseCompFraction_dGlobalCompFraction( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >(
                                                      fluidModelNames[targetRegionIndex] ).dPhaseCompFraction_dGlobalCompFraction() ),
-    //
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
@@ -214,7 +199,7 @@ public:
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
    *
-   * For the SinglePhase implementation, global values from the displacement,
+   * For the Multiphase implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
@@ -549,4 +534,4 @@ protected:
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPOROELASTICKERNEL_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICKERNEL_HPP_
