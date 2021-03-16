@@ -29,7 +29,7 @@ namespace constitutive
 namespace conversions
 {
 
-/// @namespace Bulk modulus and shear modulus as input
+/// @namespace Bulk modulus and Shear modulus as input
 namespace BulkModAndShearMod
 {
 
@@ -41,9 +41,10 @@ namespace BulkModAndShearMod
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod( real64 const & K, real64 const & G )
+real64 toYoungsMod( real64 const & K, 
+                    real64 const & G )
 {
-  return 9 * K * G / ( 3 * K + G );
+  return 9.0 * K * G / ( 3.0 * K + G );
 }
 
 /**
@@ -54,9 +55,10 @@ real64 toYoungsMod( real64 const & K, real64 const & G )
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toPoissonRatio( real64 const & K, real64 const & G )
+real64 toPoissonRatio( real64 const & K, 
+                       real64 const & G )
 {
-  return ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+  return ( 3.0 * K - 2.0 * G ) / ( 6.0 * K + 2.0 * G );
 }
 
 /**
@@ -67,41 +69,58 @@ real64 toPoissonRatio( real64 const & K, real64 const & G )
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toFirstLame( real64 const & K, real64 const & G )
+real64 toFirstLame( real64 const & K, 
+                    real64 const & G )
 {
-  return K - 2 * G / 3;
+  return K - 2.0 * G / 3.0;
 }
 
 } /* namespace BulkModeAndShearMod */
 
-/// @namespace Young's modulus and Poisson ratio as input
+/// @namespace Young's modulus and Poisson's ratio as input
 namespace YoungsModAndPoissonRatio
 {
 
 /**
- * @brief Compute bulk modulus
+ * @brief Compute Bulk modulus
  * @param[in] E Young's modulus
  * @param[in] nu Poisson's ratio
  * @return Bulk modulus
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toBulkMod( real64 const & E, real64 const & nu )
+real64 toBulkMod( real64 const & E, 
+                  real64 const & nu )
 {
-  return E / (3 * ( 1 - 2*nu ) );
+  return E / ( 3.0 - 6.0 * nu );
 }
 
 /**
- * @brief Compute bulk modulus
+ * @brief Compute Shear modulus
  * @param[in] E Young's modulus
  * @param[in] nu Poisson's ratio
  * @return Shear modulus
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toShearMod( real64 const & E, real64 const & nu )
+real64 toShearMod( real64 const & E, 
+                   real64 const & nu )
 {
-  return E / (2 * ( 1 + nu ) );
+  return E / ( 2.0 + 2.0 * nu );
+}
+
+/**
+ * @brief Compute First Lamé parameter
+ * @param[in] E Young's modulus
+ * @param[in] nu Poisson's ratio
+ * @return First Lamé parameter
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 toFirstLame( real64 const & E, 
+                    real64 const & nu )
+{
+  return E * nu / ( 1.0 + nu ) / ( 1.0 - 2.0 * nu );
 }
 
 } /* namespace YoungsModAndPoissonRatio*/
@@ -111,16 +130,17 @@ namespace ShearModAndPoissonRatio
 {
 
 /**
- * @brief Compute bulk modulus
+ * @brief Compute Bulk modulus
  * @param[in] G Shear modulus
  * @param[in] nu Poisson's ratio
  * @return Bulk modulus
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toBulkMod( real64 const & G, real64 const & nu )
+real64 toBulkMod( real64 const & G, 
+                  real64 const & nu )
 {
-  return 2 * G * ( 1 + nu ) / ( 3 * ( 1 - 2 * nu ) );
+  return G * ( 2.0 + 2.0 * nu ) / ( 3.0 - 6.0 * nu );
 }
 
 /**
@@ -131,9 +151,24 @@ real64 toBulkMod( real64 const & G, real64 const & nu )
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod( real64 const & G, real64 const & nu )
+real64 toYoungsMod( real64 const & G, 
+                    real64 const & nu )
 {
-  return 2 * G * ( 1 + nu );
+  return 2.0 * G * ( 1.0 + nu );
+}
+
+/**
+ * @brief Compute First Lamé parameter
+ * @param[in] G Shear modulus
+ * @param[in] nu Poisson's ratio
+ * @return First Lamé parameter
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 toFirstLame( real64 const & G, 
+                    real64 const & nu )
+{
+  return 2.0 * G * nu / ( 1.0 - 2.0 * nu );
 }
 
 } /* namespace ShearModAndPoissonRatio*/
@@ -150,9 +185,10 @@ namespace BulkModAndPoissonRatio
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod( real64 const & K, real64 const & nu )
+real64 toYoungsMod( real64 const & K, 
+                    real64 const & nu )
 {
-  return 3 * K * ( 1 - 2 * nu );
+  return K * ( 3.0 - 6.0 * nu );
 }
 
 /**
@@ -163,14 +199,29 @@ real64 toYoungsMod( real64 const & K, real64 const & nu )
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toShearMod( real64 const & K, real64 const & nu )
+real64 toShearMod( real64 const & K, 
+                   real64 const & nu )
 {
-  return 3 * K * ( 1 - 2 * nu) / ( 2 * ( 1 + nu ) );
+  return K * ( 3.0 - 6.0 * nu) / ( 2.0 + 2.0 * nu );
+}
+
+/**
+ * @brief Compute First Lamé parameter
+ * @param[in] K Bulk modulus
+ * @param[in] nu Poisson's ratio
+ * @return First Lamé parameter
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 toFirstLame( real64 const & K, 
+                    real64 const & nu )
+{
+  return 3.0 * K * nu / ( 1.0 + nu );
 }
 
 } /* namespace BulkModAndPoissonRatio */
 
-/// @namespace Bulk modulus and Young's modulus
+/// @namespace Bulk modulus and Young's modulus as input
 namespace BulkModAndYoungsMod
 {
 
@@ -182,38 +233,55 @@ namespace BulkModAndYoungsMod
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toShearMod( real64 const & K, real64 const & E )
+real64 toShearMod( real64 const & K, 
+                   real64 const & E )
 {
-  return 3 * K * E / ( 9 * K - E );
+  return 3.0 * K * E / ( 9.0 * K - E );
 }
 
 /**
- * @brief Compute Poisson ratio
+ * @brief Compute Poisson's ratio
  * @param[in] K Bulk modulus
  * @param[in] E Young's modulus
  * @return Poisson's ratio
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toPoissonRatio( real64 const & K, real64 const & E )
+real64 toPoissonRatio( real64 const & K, 
+                       real64 const & E )
 {
-  return ( 3 * K - E ) / ( 6 * K);
+  return ( 3.0 * K - E ) / ( 6.0 * K); 
+}
+
+/**
+ * @brief Compute First Lamé parameter
+ * @param[in] K Bulk modulus
+ * @param[in] E Young's modulus
+ * @return First Lamé parameter
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 toFirstLame( real64 const & K, 
+                    real64 const & E )
+{
+  return K * ( 9.0 * K - 3.0 * E ) / ( 9.0 * K - E );
 }
 
 } /* namespace BulkModAndYoungsMod */
 
-/// @namespace Shear modulus and Young's modulus
+/// @namespace Shear modulus and Young's modulus as input
 namespace ShearModAndYoungsMod
 {
 /**
- * @brief Compute Poisson ratio
+ * @brief Compute Poisson's ratio
  * @param[in] G Shear modulus
  * @param[in] E Young's modulus
  * @return Poisson's ratio
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toPoissonRatio( real64 const & G, real64 const & E )
+real64 toPoissonRatio( real64 const & G, 
+                       real64 const & E )
 {
   return 0.5 * E / G - 1.0;
 }
@@ -226,12 +294,423 @@ real64 toPoissonRatio( real64 const & G, real64 const & E )
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toBulkMod( real64 const & G, real64 const & E )
+real64 toBulkMod( real64 const & G, 
+                  real64 const & E )
 {
-  return E * G / ( 3 * ( 3 * G - E ) );
+  return E * G / ( 9.0 * G - 3.0 * E );
+}
+
+/**
+ * @brief Compute First Lamé parameter
+ * @param[in] G Shear modulus
+ * @param[in] E Young's modulus
+ * @return First Lamé parameter
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 toFirstLame( real64 const & G, 
+                    real64 const & E )
+{
+  return ( E - 2.0 * G ) * G / ( 3.0 * G - E );
 }
 
 } /* namespace ShearModAndYoungsMod*/
+
+
+/// @namespace Compute Biot coefficient from different input combinations
+namespace BiotCoefficient
+{
+
+/**
+ * @brief Compute Biot's coefficient
+ * @param[in] K drained Bulk modulus
+ * @param[in] Ks Bulk modulus of the solid phase
+ * @return Biot's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKKs( real64 const & K, 
+               real64 const & Ks )
+{
+  return 1.0 - K / Ks;
+}
+
+/**
+ * @brief Compute Biot's coefficient
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] K drained Bulk modulus
+ * @param[in] M Biot's modulus
+ * @return Biot's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuKM( real64 const & Ku, 
+                real64 const & K, 
+                real64 const & M )
+{
+  return sqrt( ( Ku - K ) / M );
+}
+
+
+/**
+ * @brief Compute Biot's coefficient
+ * @param[in] Lu undrained Lamé modulus
+ * @param[in] L drained Lamé modulus
+ * @param[in] M Biot's modulus
+ * @return Biot's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useLuLM( real64 const & Lu, 
+                real64 const & L, 
+                real64 const & M )
+{
+  return sqrt( ( Lu - L ) / M );
+}
+
+/**
+ * @brief Compute Biot's coefficient
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] K drained Bulk modulus
+ * @param[in] B Skempton's coefficient
+ * @return Biot's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuKB( real64 const & Ku, 
+                real64 const & K, 
+                real64 const & B )
+{
+  return ( Ku - K ) / Ku / B;
+}
+
+/**
+ * @brief Compute Biot's coefficient
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] M Biot's modulus
+ * @param[in] B Skempton's coefficient
+ * @return Biot's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuMB( real64 const & Ku, 
+                real64 const & M, 
+                real64 const & B )
+{
+  return Ku * B / M;
+}
+
+/**
+ * @brief Compute Biot's coefficient
+ * @param[in] nuu undrained Poisson's ratio
+ * @param[in] nu drained Poisson's ratio
+ * @param[in] B Skempton's coefficient
+ * @return Biot's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useNuuNuB( real64 const & nuu, 
+                  real64 const & nu, 
+                  real64 const & B )
+{
+  return 3.0 * ( nuu - nu ) / B / ( 1.0 - 2.0 * nu ) / ( 1.0 + nuu );
+}
+
+} /* BiotCoefficient */
+
+/// @namespace Compute Biot modulus from different input combinations
+namespace BiotModulus
+{
+/**
+ * @brief Compute Biot's modulus
+ * @param[in] Ks Bulk modulus of the solid phase
+ * @param[in] Kf Bulk modulus of the fluid phase
+ * @param[in] alpha Biot's coefficient
+ * @param[in] phi porosity
+ * @return Biot's modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKsKfBiotCoeffPorosity( real64 const & Ks, 
+                                 real64 const & Kf, 
+                                 real64 const & alpha, 
+                                 real64 const & phi )
+{
+  return 1.0 / ( phi / Kf + ( alpha - phi ) / Ks );
+}
+
+/**
+ * @brief Compute Biot's modulus
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] K drained Bulk modulus
+ * @param[in] alpha Biot's coefficient
+ * @return Biot's modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuKBiotCoeff( real64 const & Ku, 
+                        real64 const & K, 
+                        real64 const & alpha )
+{
+  return ( Ku - K ) / alpha / alpha;
+}
+
+/**
+ * @brief Compute Biot's modulus
+ * @param[in] Lu undrained Lamé modulus
+ * @param[in] L drained Lamé modulus
+ * @param[in] alpha Biot's coefficient
+ * @return Biot's modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useLuLBiotCoeff( real64 const & Lu, 
+                        real64 const & L, 
+                        real64 const & alpha )
+{
+  return ( Lu - L ) / alpha / alpha;
+}
+
+/**
+ * @brief Compute Biot's modulus
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] B Skempton's coefficient
+ * @param[in] alpha Biot's coefficient
+ * @return Biot's modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuBBiotCoeff( real64 const & Ku, 
+                        real64 const & B, 
+                        real64 const & alpha )
+{
+  return Ku * B / alpha;
+}
+
+/**
+ * @brief Compute Biot's modulus
+ * @param[in] K drained Bulk modulus
+ * @param[in] B Skempton's coefficient
+ * @param[in] alpha Biot's coefficient
+ * @return Biot's modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKBBiotCoeff( real64 const & K, 
+                       real64 const & B, 
+                       real64 const & alpha )
+{
+  return K * B / alpha / ( 1.0 - alpha * B );
+}
+
+/**
+ * @brief Compute Biot's modulus
+ * @param[in] G Shear modulus
+ * @param[in] nuu undrained Poisson's ratio
+ * @param[in] nu drained Poisson's ratio
+ * @param[in] alpha Biot's coefficient
+ * @return Biot's modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useGNuuNuBiotCoeff( real64 const & G, 
+                           real64 const & nuu, 
+                           real64 const & nu, 
+                           real64 const & alpha )
+{
+  return 2.0 * G * ( nuu - nu ) / alpha / alpha / ( 1.0 - 2.0 * nuu ) / ( 1.0 - 2.0 * nu );
+}
+
+} /* BiotModulus */
+
+/// @namespace Compute Skempton coefficient from different input combinations
+namespace SkemptonCoefficient
+{
+/**
+ * @brief Compute Skempton's coefficient
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] M Biot's modulus
+ * @param[in] alpha Biot's coefficient
+ * @return Skempton's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuMBiotCoeff( real64 const & Ku, 
+                        real64 const & M, 
+                        real64 const & alpha )
+{
+  return  M * alpha / Ku;
+}
+
+/**
+ * @brief Compute Skempton's coefficient
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] K drained Bulk modulus
+ * @param[in] alpha Biot's coefficient
+ * @return Skempton's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuKBiotCoeff( real64 const & Ku, 
+                        real64 const & K, 
+                        real64 const & alpha )
+{
+  return ( Ku - K ) / Ku / alpha;
+}
+
+/**
+ * @brief Compute Skempton's coefficient
+ * @param[in] nuu undrained Poisson's ratio
+ * @param[in] nu drained Poisson's ratio
+ * @param[in] alpha Biot's coefficient
+ * @return Skempton's coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useNuuNuBiotCoeff( real64 const & nuu, 
+                          real64 const & nu, 
+                          real64 const & alpha )
+{
+  return 3.0 * ( nuu - nu ) / alpha / ( 1.0 - 2.0 * nu ) / ( 1.0 + nuu );
+}
+
+} /* SkemptonCoefficient */
+
+/// @namespace Compute undrained Bulk modulus from different input combinations
+namespace UndrainedBulkMod
+{
+/**
+ * @brief Compute undrained Bulk modulus
+ * @param[in] K drained Bulk modulus
+ * @param[in] M Biot's modulus
+ * @param[in] alpha Biot's coefficient
+ * @return Undrained Bulk modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKMBiotCoeff( real64 const & K, 
+                       real64 const & M, 
+                       real64 const & alpha )
+{
+  return K + M * alpha * alpha;
+}
+
+/**
+ * @brief Compute undrained Bulk modulus
+ * @param[in] B Skempton's coefficient
+ * @param[in] M Biot's modulus
+ * @param[in] alpha Biot's coefficient
+ * @return Undrained Bulk modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useBMBiotCoeff( real64 const & B, 
+                       real64 const & M, 
+                       real64 const & alpha )
+{
+  return M * alpha / B;
+}
+
+/**
+ * @brief Compute undrained Bulk modulus
+ * @param[in] K drained Bulk modulus
+ * @param[in] B Skempton's coefficient
+ * @param[in] alpha Biot's coefficient
+ * @return Undrained Bulk modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKBBiotCoeff( real64 const & K, 
+                       real64 const & B, 
+                       real64 const & alpha )
+{
+  return K / ( 1.0 -  alpha * B );
+}
+
+} /* UndrainedBulkMod */
+
+
+/// @namespace Compute drained Bulk modulus from different input combinations
+namespace DrainedBulkMod
+{
+/**
+ * @brief Compute drained Bulk modulus
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] M Biot's modulus
+ * @param[in] alpha Biot's coefficient
+ * @return Drained Bulk modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuMBiotCoeff( real64 const & Ku, 
+                        real64 const & M, 
+                        real64 const & alpha )
+{
+  return Ku - M * alpha * alpha;
+}
+
+/**
+ * @brief Compute drained Bulk modulus
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] B Skempton's coefficient
+ * @param[in] alpha Biot's coefficient
+ * @return Drained Bulk modulus
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuBBiotCoeff( real64 const & Ku, 
+                        real64 const & B, 
+                        real64 const & alpha )
+{
+  return Ku * ( 1.0 -  alpha * B );
+}
+
+} /* DrainedBulkMod */
+
+/// @namespace Compute diffusion coefficient from different input combinations
+namespace DiffusionCoeff
+{
+/**
+ * @brief Compute diffusion coefficient
+ * @param[in] Ku undrained Bulk modulus
+ * @param[in] K drained Bulk modulus
+ * @param[in] G Shear modulus
+ * @param[in] M Biot's modulus
+ * @param[in] kappa ratio permeability/fluid dynamic viscosity
+ * @return Diffusion coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useKuKGMKappa( real64 const & Ku, 
+                      real64 const & K, 
+                      real64 const & G, 
+                      real64 const & M, 
+                      real64 const & kappa )
+{
+  return kappa * M * ( 3.0 * K + 4.0 * G ) / ( 3.0 * Ku + 4.0 * G );
+}
+
+/**
+ * @brief Compute diffusion coefficient
+ * @param[in] nuu undrained Poisson's ratio
+ * @param[in] nu drained Poisson's ratio
+ * @param[in] G Shear modulus
+ * @param[in] alpha Biot's coefficient
+ * @param[in] kappa ratio permeability/fluid dynamic viscosity
+ * @return Diffusion coefficient
+ */
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 useNuuNuGBiotCoeffKappa( real64 const & nuu, 
+                                real64 const & nu, 
+                                real64 const & G, 
+                                real64 const & alpha, 
+                                real64 const & kappa )
+{
+  return 2.0 * kappa * G * ( 1.0 - nu ) * ( nuu - nu ) / alpha / alpha / ( 1.0 - 2.0 * nu ) / ( 1.0 - 2.0 * nu ) / ( 1.0 - nuu );
+}
+
+} /* DiffusionCoeff */
 
 } /* namespace conversions */
 
