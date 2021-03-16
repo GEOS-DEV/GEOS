@@ -78,7 +78,7 @@ HydrofractureSolver::HydrofractureSolver( const string & name,
 
   m_numResolves[0] = 0;
 
-  m_linearSolverParameters.get().mgr.strategy = "Hydrofracture";
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hydrofracture;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
   m_linearSolverParameters.get().dofsPerNode = 3;
