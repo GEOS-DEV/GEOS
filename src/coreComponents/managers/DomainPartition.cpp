@@ -219,7 +219,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
     m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
   }
 
-  MpiWrapper::waitall( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
+  MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
 
 #endif
 

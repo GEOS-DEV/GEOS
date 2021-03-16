@@ -177,7 +177,9 @@ void PackCollection::collect( DomainPartition & domain,
     array1d< localIndex > setIndices( numIndices );
     filterGhostIndices( collectionIdx, setIndices, ghostRank );
     // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the indices
-    target.packByIndex( buffer, setIndices, false, true );
+    parallelDeviceEvents events;
+    target.packByIndex( buffer, setIndices, false, true, events );
+    // todo: poll events
   }
 
 }

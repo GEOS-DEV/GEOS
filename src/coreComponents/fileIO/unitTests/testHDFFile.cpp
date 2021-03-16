@@ -50,7 +50,9 @@ TEST( testHDFIO, ArrayHistory )
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );
-    bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ));
+    parallelDeviceEvents packEvents;
+    bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ), packEvents );
+    waitAllDeviceEvents( packEvents );
 
     io.write( );
 
@@ -71,7 +73,9 @@ TEST( testHDFIO, ArrayHistory )
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );
-    bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ));
+    parallelDeviceEvents packEvents;
+    bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ), packEvents );
+    waitAllDeviceEvents( packEvents );
 
     io.write( );
 
@@ -102,7 +106,9 @@ TEST( testHDFIO, IdxArrayHistory )
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );
-    bufferOps::PackDataByIndexDevice< true >( buffer, arr.toViewConst( ), idx.toViewConst( ) );
+    parallelDeviceEvents packEvents;
+    bufferOps::PackDataByIndexDevice< true >( buffer, arr.toViewConst( ), idx.toViewConst( ), packEvents );
+    waitAllDeviceEvents( packEvents );
 
     io.write( );
   }

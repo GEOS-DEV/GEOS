@@ -519,7 +519,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key() ) );
   fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {

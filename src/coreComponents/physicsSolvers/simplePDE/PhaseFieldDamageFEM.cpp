@@ -429,7 +429,8 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
                                                               mesh,
-                                                              domain.getNeighbors() );
+                                                              domain.getNeighbors(),
+                                                              false );
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(
