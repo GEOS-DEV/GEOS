@@ -22,6 +22,7 @@
 #include "MpiWrapper.hpp"
 
 #include "common/DataTypes.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
 
@@ -268,19 +269,22 @@ public:
   void packCommBufferForSync( std::map< string, string_array > const & fieldNames,
                               MeshLevel const & meshLevel,
                               int const commID,
-                              bool on_device = false );
+                              bool onDevice,
+                              parallelDeviceEvents & events );
 
   int packCommSizeForSync( std::map< string, string_array > const & fieldNames,
                            MeshLevel const & meshLevel,
                            int const commID,
-                           bool on_device = false );
+                           bool onDevice,
+                           parallelDeviceEvents & events );
 
   void sendRecvBuffers( int const commID );
 
   void unpackBufferForSync( std::map< string, string_array > const & fieldNames,
                             MeshLevel & meshLevel,
                             int const commID,
-                            bool on_device = false );
+                            bool onDevice,
+                            parallelDeviceEvents & events );
 
   void setNeighborRank( int const rank ) { m_neighborRank = rank; }
   int neighborRank() const { return m_neighborRank; }

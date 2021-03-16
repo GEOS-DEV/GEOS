@@ -272,6 +272,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
   packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
 
+  parallelDeviceEvents events;
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
@@ -287,23 +288,18 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
-        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0 );
+        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
       }
       else
       {
-        packedSize += subRegion.packSize( wrapperNames, elemList, 0 );
+        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, events );
       }
     } );
   }
 
+  waitAllDeviceEvents( events );
   return packedSize;
 }
-//template int ElementRegionManager::PackPrivate<true>( buffer_unit_type * &,
-//                                                      string_array const &,
-//                                                      ElementViewAccessor<arrayView1d<localIndex>> const & ) const;
-//template int ElementRegionManager::PackPrivate<false>( buffer_unit_type * &,
-//                                                      string_array const &,
-//                                                      ElementViewAccessor<arrayView1d<localIndex>> const & ) const;
 
 
 int ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
@@ -332,6 +328,7 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
+  parallelDeviceEvents events;
   for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
   {
     string regionName;
@@ -350,13 +347,13 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
       /// THIS IS WRONG??
       arrayView1d< localIndex > & elemList = packList[kReg][esr];
 
-      unpackedSize += subRegion.unpack( buffer, elemList, 0 );
+      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, events );
     } );
   }
 
+  waitAllDeviceEvents( events );
   return unpackedSize;
 }
-
 
 int ElementRegionManager::PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
