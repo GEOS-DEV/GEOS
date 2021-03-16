@@ -1516,7 +1516,7 @@
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="contactForce" type="real64_array2d" />
-		<!--dampingVector => Diagonal Damping Matrix. => AcousticSEM-->
+		<!--dampingVector => Diagonal of the Damping Matrix. => AcousticSEM-->
 		<xsd:attribute name="dampingVector" type="real64_array" />
 		<!--degreeFromCrack => Distance to the crack in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
@@ -1546,7 +1546,7 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--massVector => Diagonal Mass Matrix. => AcousticSEM-->
+		<!--massVector => Diagonal of the Mass Matrix. => AcousticSEM-->
 		<xsd:attribute name="massVector" type="real64_array" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />

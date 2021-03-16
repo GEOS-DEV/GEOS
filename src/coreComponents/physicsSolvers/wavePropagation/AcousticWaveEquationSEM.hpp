@@ -68,17 +68,32 @@ public:
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
-  /// Returns the value of a Ricker at time t0 with central frequency f0
+  /**
+   * @brief Compute the value of a Ricker (a Gaussian function)
+   * @param time_n time to evaluate the Ricker
+   * @param f0 central frequency
+   * @return the value of the Gaussian evaluated a time_n with f0
+   */
   virtual
-  real64 evaluateRicker( real64 const & t0, real64 const & f0 );
+  real64 evaluateRicker( real64 const & time_n, real64 const & f0 );
 
-  /// Returns the value of the first derivative of a Ricker at time t0 with central frequency f0
+  /**
+   * @brief Compute the value of a Ricker (first derivative of a Gaussian)
+   * @param time_n time to evaluate the Ricker
+   * @param f0 central frequency
+   * @return the value of the first derivative of the Gaussian evaluated a time_n with f0
+   */
   virtual
-  real64 evaluateRickerOrder1( real64 const & t, real64 const & f0 );
+  real64 evaluateRickerOrder1( real64 const & time_n, real64 const & f0 );
 
-  /// Returns the value of the second derivative of a Ricker at time t0 with central frequency f0
+  /**
+   * @brief Compute the value of a Ricker (2nd derivative of a Gaussian)
+   * @param t time to evaluate the Ricker
+   * @param f0 central frequency
+   * @return the value of the second derivative of the Gaussian evaluated a time_n with f0
+   */
   virtual
-  real64 evaluateRickerOrder2( real64 const & t, real64 const & f0 );
+  real64 evaluateRickerOrder2( real64 const & time_n, real64 const & f0 );
 
   /**@}*/
 
@@ -99,6 +114,9 @@ public:
 
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
 
+    static constexpr char const * rickerOrderString() { return "rickerOrder"; }
+    static constexpr char const * outputSismoTraceString() { return "outputSismoTrace"; }
+
 
   } waveEquationViewKeys;
 
@@ -111,20 +129,40 @@ protected:
 
 private:
 
-  /// Locates the source term and precomputes the constant part of the source term
-  /// And locate receivers and pre_evaluate the basis functions at each receiver coordinate
+  /**
+   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
+   * corresponding elements nodes.
+   * @param mesh mesh of the computational domain
+   */
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
-  /// Multiply the precomputed term by the ricker and add to the right-hand side
-  void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs );
+  /**
+   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
+   * @param time_n the time of evaluation of the source
+   * @param rhs the right hand side vector to be computed
+   */
+  void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs );
 
-  /// Apply free surface condition to the face define in the geometry box from the xml
+  /**
+   * @brief Apply free surface condition to the face define in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
   void applyFreeSurfaceBC( real64 const time, DomainPartition & domain );
 
-  /// Compute the pressure at each receiver coordinate in one time step
+  /**
+   * @brief Compute the pressure at each receiver coordinate in one time step
+   * @param num_timeStep the cycle number of timestep
+   * @param pressure_np1 the array to save the pressure value at the receiver position
+   */
   void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const pressure_np1 );
 
-  /// save the sismo trace in file
+  /**
+   * @brief Save the sismo trace in file
+   * @param isismo index number of the sismo trace
+   * @param val_pressure value of the pressure for isismo
+   * @param filename name of the output file
+   */
   void saveSismo( localIndex isismo, real64 val_pressure, char *filename );
 
   /// Coordinates of the sources in the mesh
@@ -156,6 +194,13 @@ private:
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array1d< real64 > m_pressureNp1AtReceivers;
+
+
+  /// Flag that indicates the order of the Ricker to be used, order 2 by default
+  localIndex m_rickerOrder;
+
+  /// Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise
+  localIndex m_outputSismoTrace;
 
 
 
@@ -202,7 +247,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Diagonal Mass Matrix." );
+                           "Diagonal of the Mass Matrix." );
 
 EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
                            "dampingVector",
@@ -210,7 +255,7 @@ EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Diagonal Damping Matrix." );
+                           "Diagonal of the Damping Matrix." );
 
 EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
                            "mediumVelocity",
