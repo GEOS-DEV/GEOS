@@ -74,6 +74,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   }
   if( freshInit )
   {
+    GEOSX_MARK_SCOPE( "Fresh Time-hist initialization." );
     // do any 1-time metadata output
     localIndex metaCollectorCount = collector.getNumMetaCollectors( );
     DomainPartition & domainGroup = pm.getDomainPartition();
