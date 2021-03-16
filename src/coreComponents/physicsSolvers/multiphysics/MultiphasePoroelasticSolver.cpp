@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PoroelasticSolver.cpp
+ * @file MultiphasePoroelasticSolver.cpp
  *
  */
 

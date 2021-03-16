@@ -443,24 +443,23 @@ public:
       }
     }
 
-    for( localIndex i = 0; i < m_numComponents; ++i )
+    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[0] - m_dofRankOffset );
+    if( 0 <= dof && dof < m_matrix.numRows() )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[i] - m_dofRankOffset );
-      if( dof < 0 || dof >= m_matrix.numRows() )
-        continue;
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                              stack.localRowDofIndex,
-                                                                              stack.localFlowDispJacobian[i],
-                                                                              nUDof );
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                              stack.localFlowDofIndex,
-                                                                              stack.localFlowFlowJacobian[i],
-                                                                              m_numComponents + 1 );
+      for( localIndex i = 0; i < m_numComponents; ++i )
+      {
+        m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( dof + i,
+                                                                        stack.localRowDofIndex,
+                                                                        stack.localFlowDispJacobian[i],
+                                                                        nUDof );
+        m_matrix.template addToRow< serialAtomic >( dof + i,
+                                                    stack.localFlowDofIndex,
+                                                    stack.localFlowFlowJacobian[i],
+                                                    m_numComponents + 1 );
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localFlowResidual[i] );
+        RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+i], stack.localFlowResidual[i] );
+      }
     }
-
-
 
     return maxForce;
   }

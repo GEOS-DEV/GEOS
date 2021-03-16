@@ -339,7 +339,6 @@ public:
 
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
-    constexpr int nPDof = 1;
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
@@ -359,28 +358,25 @@ public:
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localFlowDofIndex,
                                                                                 stack.localDispFlowJacobian[numDofPerTestSupportPoint * localNode + dim],
-                                                                                nPDof );
+                                                                                1 );
 
       }
     }
 
-    for( localIndex i = 0; i < nPDof; ++i )
+
+    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[0] - m_dofRankOffset );
+    if( 0 <= dof && dof < m_matrix.numRows() )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[i] - m_dofRankOffset );
-      if( dof < 0 || dof >= m_matrix.numRows() )
-        continue;
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                              stack.localRowDofIndex,
-                                                                              stack.localFlowDispJacobian[i],
-                                                                              nUDof );
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                              stack.localFlowDofIndex,
-                                                                              stack.localFlowFlowJacobian[i],
-                                                                              nPDof );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localFlowResidual[i] );
+      m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( dof,
+                                                                      stack.localRowDofIndex,
+                                                                      stack.localFlowDispJacobian[0],
+                                                                      nUDof );
+      m_matrix.template addToRow< serialAtomic >( dof,
+                                                  stack.localFlowDofIndex,
+                                                  stack.localFlowFlowJacobian[0],
+                                                  1 );
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localFlowResidual[0] );
     }
-
-
 
     return maxForce;
   }

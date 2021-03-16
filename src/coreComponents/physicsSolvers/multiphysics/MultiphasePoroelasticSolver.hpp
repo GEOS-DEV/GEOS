@@ -142,7 +142,7 @@ protected:
 
 };
 
-ENUM_STRINGS( MultiphasePoroelasticSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
+ENUM_STRINGS( MultiphasePoroelasticSolver::CouplingTypeOption, "FIM" )
 
 } /* namespace geosx */
 
