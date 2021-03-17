@@ -701,6 +701,13 @@ Element: TimeHistory
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
 
 
+.. _XML_TriaxialDriver:
+
+Element: TriaxialDriver
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/TriaxialDriver.rst
+
+
 .. _XML_TwoPointFluxApproximation:
 
 Element: TwoPointFluxApproximation
@@ -1480,6 +1487,13 @@ Datastructure: ThickPlane
 Datastructure: TimeHistory
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
+
+
+.. _DATASTRUCTURE_TriaxialDriver:
+
+Datastructure: TriaxialDriver
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/TriaxialDriver_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:
