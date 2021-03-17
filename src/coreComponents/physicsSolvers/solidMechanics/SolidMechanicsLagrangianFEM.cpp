@@ -35,6 +35,7 @@
 #include "managers/ProblemManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/FieldSpecification/TractionBoundaryCondition.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -727,88 +728,13 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
                         Group &,
                         string const & )
   {
-    string const & functionName = bc.getFunctionName();
-
-    globalIndex_array nodeDOF;
-    real64_array nodeRHS;
-
-    // The flag component = 0, 1 and 2 are for the traction in the three orthogonal directions
-    // in the global cartesian coordinate system
-    // The flag component = -1 is for the normal traction
-
-    integer const component = bc.getComponent();
-
-    if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
-    {
-      real64 value = bc.getScale();
-      if( !functionName.empty() )
-      {
-        FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
-        value *= function.evaluate( &time );
-      }
-
-      forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const kf = targetSet[ i ];
-        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a<numNodes; ++a )
-        {
-          if( component != -1 )
-          {
-            localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
-            if( dof < 0 || dof >= localRhs.size() )
-              continue;
-            RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof], value * faceArea[kf] / numNodes );
-          }
-          else // Apply traction normal to the face
-          {
-            for( int normalComponent = 0; normalComponent < 3; ++normalComponent )
-            {
-              localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + normalComponent - dofRankOffset;
-              if( dof < 0 || dof >= localRhs.size() )
-                continue;
-              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof],
-                                                       faceNormal( kf, normalComponent ) * value * faceArea[kf] / numNodes );
-            }
-          }
-        }
-      } );
-    }
-    else
-    {
-      FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
-      array1d< real64 > resultsArray( targetSet.size() );
-      resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
-      function.evaluate( faceManager, time, targetSet, resultsArray );
-      arrayView1d< real64 const > const results = resultsArray;
-
-      forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const kf = targetSet[ i ];
-        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a<numNodes; ++a )
-        {
-          if( component != -1 )
-          {
-            localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
-            if( dof < 0 || dof >= localRhs.size() )
-              continue;
-            RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof], results[kf] * faceArea[kf] / numNodes );
-          }
-          else // Apply normal traction to the face
-          {
-            for( int normalComponent = 0; normalComponent < 3; ++normalComponent )
-            {
-              localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + normalComponent - dofRankOffset;
-              if( dof < 0 || dof >= localRhs.size() )
-                continue;
-              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof],
-                                                       faceNormal( kf, normalComponent ) * results[kf] * faceArea[kf] / numNodes );
-            }
-          }
-        }
-      } );
-    }
+    TractionBoundaryCondition const & tbc = dynamic_cast<TractionBoundaryCondition const &>(bc);
+    tbc.launch( time,
+                blockLocalDofNumber,
+                dofRankOffset,
+                faceManager,
+                targetSet,
+                localRhs );
   } );
 }
 

@@ -45,7 +45,7 @@
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
-    maxTime="1.0">
+    maxTime="5.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <!-- SPHINX_Execution -->
@@ -125,37 +125,22 @@
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
-    <FieldSpecification
-      name="tnegConstraint"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="1"
-      scale="0.0"
-      setNames="{ tneg }"/>
 
     <FieldSpecification
-      name="tposConstraint"
+      name="xnegConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ tpos }"/>
+      setNames="{ rneg }"/>
 
     <FieldSpecification
-      name="xConstraint"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="0"
-      scale="0.0"
-      setNames="{ xpos }"/>
-
-    <FieldSpecification
-      name="yposConstraint"
+      name="ynegConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ ypos }"/>
+      setNames="{ rneg }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -165,14 +150,24 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
+    <Traction
+      name="insituStress"
+      objectPath="faceManager"
+      tractionType="2"
+      scale="1.0e6"
+      inputStress="{ -1,-2,-3, 0, 0, 0 }"
+      functionName="timeFunction"
+      setNames="{ xneg,xpos,yneg,ypos }"/>
+
+    <!--Traction
       name="innerPressure"
       objectPath="faceManager"
-      fieldName="Traction"
-      component="-1"
+      tractionType="1"
       scale="-1.0e6"
       functionName="timeFunction"
-      setNames="{ rneg }"/>
+      setNames="{ rneg }"/-->
+      
+      
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->

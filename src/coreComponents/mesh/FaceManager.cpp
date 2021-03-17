@@ -604,7 +604,7 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
 
     // This needs to be done somewhere else, also we probably shouldn't be orienting the normals like this.
     // Set normal orientation according to a global criterion
-    computationalGeometry::FixNormalOrientation_3D( m_faceNormal[ faceID ] );
+//    computationalGeometry::FixNormalOrientation_3D( m_faceNormal[ faceID ] );
   } );
 }
 

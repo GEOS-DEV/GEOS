@@ -708,6 +708,13 @@ Element: TimeHistory
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
 
 
+.. _XML_Traction:
+
+Element: Traction
+=================
+.. include:: ../../coreComponents/fileIO/schema/docs/Traction.rst
+
+
 .. _XML_TwoPointFluxApproximation:
 
 Element: TwoPointFluxApproximation
@@ -1494,6 +1501,13 @@ Datastructure: ThickPlane
 Datastructure: TimeHistory
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
+
+
+.. _DATASTRUCTURE_Traction:
+
+Datastructure: Traction
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/Traction_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:
