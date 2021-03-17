@@ -338,6 +338,7 @@ void HDFHistIO::write( )
       m_writeHead++;
     }
   }
+  m_sizeChanged = false;
   m_localIdxCounts_buffered.clear( );
   emptyBuffer( );
 }
