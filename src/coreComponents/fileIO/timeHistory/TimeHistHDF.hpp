@@ -196,7 +196,7 @@ private:
   globalIndex m_globalIdxCount;
   ///
   globalIndex m_globalIdxHighwater;
-  /// TODO: figure this shiz out
+  /// TODO: figure chunking issue out
   /// Chunk size is equal to the smallest index count for a participating rank
   ///  this might be a problem with changing sizes... since the min won't always stay min, 
   ///   and a larger chunk size than the min idx count is an error according to hdf5
@@ -225,7 +225,7 @@ private:
   /// The communicator with only members of the m_comm comm which have nonzero ammounts of local data (required for chunking output ->
   /// growing the data size in the file)
   MPI_Comm m_subcomm;
-  /// Whether the size of the collected data has changed, but the file hasn't been adjusted to accomodate the change
+  /// Whether the size of the collected data has changed between writes to file
   bool m_sizeChanged;
 };
 
