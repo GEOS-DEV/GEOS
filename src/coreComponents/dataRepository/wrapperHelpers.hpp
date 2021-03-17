@@ -652,13 +652,13 @@ UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
 
 template< bool DO_PACKING, typename T >
 inline std::enable_if_t< bufferOps::is_container< T > || bufferOps::can_memcpy< T >, localIndex >
-PackDevice( buffer_unit_type * & buffer, T const & var )
-{ return bufferOps::PackDevice< DO_PACKING >( buffer, var ); }
+PackDevice( buffer_unit_type * & buffer, T const & var, parallelDeviceEvents & events )
+{ return bufferOps::PackDevice< DO_PACKING >( buffer, var, events ); }
 
 
 template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
-PackDevice( buffer_unit_type * &, T const & )
+PackDevice( buffer_unit_type * &, T const &, parallelDeviceEvents & )
 {
   GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
                ") on device but type is not packable on device." );
@@ -667,12 +667,12 @@ PackDevice( buffer_unit_type * &, T const & )
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-PackByIndexDevice( buffer_unit_type * & buffer, T const & var, IDX & idx )
-{ return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx ); }
+PackByIndexDevice( buffer_unit_type * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
+{ return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx, events ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-PackByIndexDevice( buffer_unit_type * &, T const &, IDX & )
+PackByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
   GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
                ") on device but type is not packable by index." );
@@ -681,38 +681,38 @@ PackByIndexDevice( buffer_unit_type * &, T const &, IDX & )
 
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDevice( buffer_unit_type const * & buffer, T const & var )
-{ return bufferOps::UnpackDevice( buffer, var ); }
+UnpackDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events )
+{ return bufferOps::UnpackDevice( buffer, var, events ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDevice( buffer_unit_type const * &, T const & )
+UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 { return 0; }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx )
-{ return bufferOps::UnpackByIndexDevice( buffer, var, idx ); }
+UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
+{ return bufferOps::UnpackByIndexDevice( buffer, var, idx, events ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
+UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents & )
 { return 0; }
 
 
 template< bool DO_PACKING, typename T >
 localIndex
-PackDataDevice( buffer_unit_type * & buffer, T const & var )
-{ return bufferOps::PackDataDevice< DO_PACKING >( buffer, var ); }
+PackDataDevice( buffer_unit_type * & buffer, T const & var, parallelDeviceEvents & events )
+{ return bufferOps::PackDataDevice< DO_PACKING >( buffer, var, events ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-PackDataByIndexDevice( buffer_unit_type * & buffer, T const & var, IDX & idx )
-{ return bufferOps::PackDataByIndexDevice< DO_PACKING >( buffer, var, idx ); }
+PackDataByIndexDevice( buffer_unit_type * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
+{ return bufferOps::PackDataByIndexDevice< DO_PACKING >( buffer, var, idx, events ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX & )
+PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
   GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
   return 0;
@@ -720,22 +720,22 @@ PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX & )
 
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDataDevice( buffer_unit_type const * & buffer, T const & var )
-{ return bufferOps::UnpackDataDevice( buffer, var ); }
+UnpackDataDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events )
+{ return bufferOps::UnpackDataDevice( buffer, var, events ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataDevice( buffer_unit_type const * &, T const & )
+UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 { return 0; }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx )
-{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx ); }
+UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
+{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx, events ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX & )
+UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents & )
 { return 0; }
 #if defined(GEOSX_USE_PYGEOSX)
 
