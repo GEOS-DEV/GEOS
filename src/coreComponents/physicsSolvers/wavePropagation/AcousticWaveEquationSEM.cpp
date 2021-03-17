@@ -228,42 +228,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                                          sourceCoordinates[isrc][1],
                                          sourceCoordinates[isrc][2] };
 
-              if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
+              real64 coordsOnRefElem[3]{};
+              bool const sourceFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords, coordsOnRefElem, k, faceNodes, elemsToNodes, X );
+              if( sourceFound )
               {
                 sourceIsLocal[isrc] = 1;
-
-                real64 xLocal[numNodesPerElem][3];
-                for( localIndex a=0; a< numNodesPerElem; ++a )
-                {
-                  for( localIndex i=0; i<3; ++i )
-                  {
-                    xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                  }
-                }
-
-                /// coordsOnRefElem = invJ*(coords-coordsNode_0)
-                real64 coordsOnRefElem[3];
-                localIndex q=0;
-
-                real64 invJ[3][3]={{0}};
-                FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-
-                real64 coordsRef[3]={0};
-                for( localIndex i=0; i<3; ++i )
-                {
-                  coordsRef[i] = coords[i] - xLocal[q][i];
-                }
-
-                for( localIndex i=0; i<3; ++i )
-                {
-                  // Init at (-1,-1,-1) as the origin of the referential elem
-                  coordsOnRefElem[i] =-1.0;
-                  for( localIndex j=0; j<3; ++j )
-                  {
-                    coordsOnRefElem[i] += invJ[i][j]*coordsRef[j];
-                  }
-                }
-
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
@@ -286,40 +255,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                                          receiverCoordinates[ircv][1],
                                          receiverCoordinates[ircv][2] };
 
-              if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
+              real64 coordsOnRefElem[3]{};
+              bool const receiverFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords, coordsOnRefElem, k, faceNodes, elemsToNodes, X );
+              if( receiverFound )
               {
                 receiverIsLocal[ircv] = 1;
-
-                real64 xLocal[numNodesPerElem][3];
-                for( localIndex a=0; a< numNodesPerElem; ++a )
-                {
-                  for( localIndex i=0; i<3; ++i )
-                  {
-                    xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                  }
-                }
-
-                real64 coordsOnRefElem[3];
-                localIndex q=0;
-
-                real64 invJ[3][3]={{0}};
-                FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-
-                real64 coordsRef[3]={0};
-                for( localIndex i=0; i<3; ++i )
-                {
-                  coordsRef[i] = coords[i] - xLocal[q][i];
-                }
-
-                for( localIndex i=0; i<3; ++i )
-                {
-                  /// Init at (-1,-1,-1) as the origin of the referential elem
-                  coordsOnRefElem[i] =-1.0;
-                  for( localIndex j=0; j<3; ++j )
-                  {
-                    coordsOnRefElem[i] += invJ[i][j]*coordsRef[j];
-                  }
-                }
 
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );

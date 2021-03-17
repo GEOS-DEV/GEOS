@@ -129,6 +129,25 @@ protected:
 
 private:
 
+
+  /**
+   * @brief Convert a mesh element point coordinate into a coorinate on the reference element
+   * @param coords coordinate of the point
+   * @param coordsOnRefElem to contain the coordinate computed in the reference element
+   * @param indexElement index of the element containing the coords
+   * @param faceNodes array of face of the element
+   * @param elemsToNodes map to obtaint global nodes from element index
+   * @param X array of mesh nodes coordinates
+   * @return true if coords is inside the element num index
+   */
+  template< typename FE_TYPE >
+  bool computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+                                             real64 ( &coordsOnRefElem )[3],
+                                             localIndex const & indexElement,
+                                             array1d< array1d< localIndex > > const & faceNodes,
+                                             arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                             arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X );
+
   /**
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
@@ -205,6 +224,57 @@ private:
 
 
 };
+
+
+template< typename FE_TYPE >
+bool AcousticWaveEquationSEM::computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+                                                                    real64 (& coordsOnRefElem)[3],
+                                                                    localIndex const & indexElement,
+                                                                    array1d< array1d< localIndex > > const & faceNodes,
+                                                                    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
+{
+  if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
+  {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+    real64 xLocal[numNodesPerElem][3];
+    for( localIndex a=0; a< numNodesPerElem; ++a )
+    {
+      for( localIndex i=0; i<3; ++i )
+      {
+        xLocal[a][i] = X( elemsToNodes( indexElement, a ), i );
+      }
+    }
+
+    /// coordsOnRefElem = invJ*(coords-coordsNode_0)
+    localIndex q=0;
+
+    real64 invJ[3][3]={{0}};
+    FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
+
+    real64 coordsRef[3]={0};
+    for( localIndex i=0; i<3; ++i )
+    {
+      coordsRef[i] = coords[i] - xLocal[q][i];
+    }
+
+    for( localIndex i=0; i<3; ++i )
+    {
+      // Init at (-1,-1,-1) as the origin of the referential elem
+      coordsOnRefElem[i] =-1.0;
+      for( localIndex j=0; j<3; ++j )
+      {
+        coordsOnRefElem[i] += invJ[i][j]*coordsRef[j];
+      }
+    }
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
 
 namespace extrinsicMeshData
 {
