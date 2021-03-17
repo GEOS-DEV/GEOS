@@ -270,7 +270,7 @@ void HDFHistIO::init( bool existsOkay )
 
 void HDFHistIO::write( )
 {
-  // check for dirty on the global comm due to account for migration in addition to local size changes
+  // check if the size has changed on any process in the primary comm
   bool anyChanged = false;
   MpiWrapper::allReduce( &m_sizeChanged, &anyChanged, 1, MPI_LOR, m_comm );
   m_sizeChanged = anyChanged;
