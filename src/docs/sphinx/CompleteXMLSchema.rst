@@ -365,6 +365,13 @@ Element: LinearSolverParameters
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters.rst
 
 
+.. _XML_MaterialPointMethod:
+
+Element: MaterialPointMethod
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/MaterialPointMethod.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
@@ -1137,6 +1144,13 @@ Datastructure: Level0
 Datastructure: LinearSolverParameters
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters_other.rst
+
+
+.. _DATASTRUCTURE_MaterialPointMethod:
+
+Datastructure: MaterialPointMethod
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MaterialPointMethod_other.rst
 
 
 .. _DATASTRUCTURE_Mesh:

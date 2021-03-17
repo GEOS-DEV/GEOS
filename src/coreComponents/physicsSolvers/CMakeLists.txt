@@ -33,6 +33,7 @@ set( physicsSolvers_headers
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/WellControls.hpp
+     materialPointMethod/MaterialPointMethod.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/LagrangianContactSolver.hpp
@@ -86,6 +87,7 @@ set( physicsSolvers_sources
      fluidFlow/wells/SinglePhaseWell.cpp          
      fluidFlow/wells/CompositionalMultiphaseWell.cpp     
      fluidFlow/wells/WellControls.cpp     
+     materialPointMethod/MaterialPointMethod.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactSolver.cpp

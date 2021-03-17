@@ -12,6 +12,7 @@ FlowProppantTransport            node :ref:`DATASTRUCTURE_FlowProppantTransport`
 Hydrofracture                    node :ref:`DATASTRUCTURE_Hydrofracture`                    
 LagrangianContact                node :ref:`DATASTRUCTURE_LagrangianContact`                
 LaplaceFEM                       node :ref:`DATASTRUCTURE_LaplaceFEM`                       
+MaterialPointMethod              node :ref:`DATASTRUCTURE_MaterialPointMethod`              
 PhaseFieldDamageFEM              node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node :ref:`DATASTRUCTURE_PhaseFieldFracture`               
 Poroelastic                      node :ref:`DATASTRUCTURE_Poroelastic`                      
