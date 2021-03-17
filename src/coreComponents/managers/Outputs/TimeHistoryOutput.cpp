@@ -63,6 +63,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
     collector.registerBufferCall( ii, [this, ii, &pm, &collector]()
     { 
+      collector.updateSetsIndices( pm.getDomainPartition() );
       HistoryMetadata metadata = collector.getMetadata( pm, ii );
       m_io[ii]->updateCollectingCount( metadata.getDims( )[0] );
       return m_io[ii]->getBufferHead( ); 
