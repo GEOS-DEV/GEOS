@@ -31,6 +31,7 @@ set(managers_headers
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
     FieldSpecification/SourceFluxBoundaryCondition.hpp
+    FieldSpecification/TractionBoundaryCondition.hpp
     initialization.hpp
     GeosxState.hpp
    )
@@ -67,6 +68,7 @@ set(managers_sources
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp
     FieldSpecification/SourceFluxBoundaryCondition.cpp
+    FieldSpecification/TractionBoundaryCondition.cpp
     initialization.cpp
     GeosxState.cpp
    )

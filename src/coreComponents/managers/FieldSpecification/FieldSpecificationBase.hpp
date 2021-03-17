@@ -461,7 +461,7 @@ public:
    * @param[in] time Time
    * @return const reference to m_direction
    */
-  virtual const R1Tensor & getDirection( real64 time )
+  virtual R1Tensor const & getDirection( real64 time ) const
   {
     GEOSX_UNUSED_VAR( time );
     return m_direction;
@@ -559,7 +559,7 @@ public:
 
 
 protected:
-  void postProcessInput() override final;
+  virtual void postProcessInput() override;
 
   /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
   bool m_normalizeBySetSize;

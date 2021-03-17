@@ -426,6 +426,14 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
   SortedArray< localIndex > & ynegNodes = nodeSets.getReference< SortedArray< localIndex > >( string( "yneg" ) );
   SortedArray< localIndex > & yposNodes = nodeSets.getReference< SortedArray< localIndex > >( string( "ypos" ) );
 
+  //  // Wellbore nodesets
+  //  // rneg, rpos, tneg and tpos are the named used by the end-used in the input files. Consider modifying them with care.
+    SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
+    SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
+    SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
+    SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
+
+
   real64 const cartesianMappingInnerRadius = m_cartesianOuterBoundary<m_vertices[0].size() ?
                                              m_vertices[0][m_cartesianOuterBoundary] :
                                              1e99;
@@ -433,48 +441,71 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
 
 
   // Map to radial mesh
-  for( localIndex iN = 0; iN<nodeManager.size(); ++iN )
+  for( localIndex a = 0; a<nodeManager.size(); ++a )
   {
-    real64 meshTheta = X[iN][1] * M_PI / 180.0;
+    real64 meshTheta = X[a][1] * M_PI / 180.0;
     int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
     real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
     real64 meshRout = m_max[0] / cos( meshPhi );
     real64 meshRact;
 
 
-    if( X[iN][0] > cartesianMappingInnerRadius )
+    if( X[a][0] > cartesianMappingInnerRadius )
     {
       real64 const cartesianScaling = ( meshRout - cartesianMappingInnerRadius ) / ( m_max[0] - cartesianMappingInnerRadius );
-      meshRact = cartesianScaling * ( X[iN][0] - cartesianMappingInnerRadius ) + cartesianMappingInnerRadius;
+      meshRact = cartesianScaling * ( X[a][0] - cartesianMappingInnerRadius ) + cartesianMappingInnerRadius;
     }
     else
     {
-      meshRact = X[iN][0];
+      meshRact = X[a][0];
     }
 
-    X[iN][0] = meshRact * cos( meshTheta );
-    X[iN][1] = meshRact * sin( meshTheta );
+
+    // Wellbore nodesets
+    if( isEqual( X[a][0], m_min[0], m_coordinatePrecision ) )
+    {
+      rnegNodes.insert( a );
+    }
+
+    if( isEqual( X[a][0], m_max[0], m_coordinatePrecision ) )
+    {
+      rposNodes.insert( a );
+    }
+
+    if( isEqual( X[a][1], m_min[1], m_coordinatePrecision ) )
+    {
+      tnegNodes.insert( a );
+    }
+    if( isEqual( X[a][1], m_max[1], m_coordinatePrecision ) )
+    {
+      tposNodes.insert( a );
+    }
+
+
+    X[a][0] = meshRact * cos( meshTheta );
+    X[a][1] = meshRact * sin( meshTheta );
 
     // Add mapped values to nodesets
     if( m_cartesianOuterBoundary<m_vertices[0].size() )
     {
-      if( isEqual( X[iN][0], -1 * m_max[0], m_coordinatePrecision ) )
+      if( isEqual( X[a][0], -1 * m_max[0], m_coordinatePrecision ) )
       {
-        xnegNodes.insert( iN );
+        xnegNodes.insert( a );
       }
-      if( isEqual( X[iN][0], m_max[0], m_coordinatePrecision ) )
+      if( isEqual( X[a][0], m_max[0], m_coordinatePrecision ) )
       {
-        xposNodes.insert( iN );
+        xposNodes.insert( a );
       }
-      if( isEqual( X[iN][1], -1 * m_max[0], m_coordinatePrecision ) )
+      if( isEqual( X[a][1], -1 * m_max[0], m_coordinatePrecision ) )
       {
-        ynegNodes.insert( iN );
+        ynegNodes.insert( a );
       }
-      if( isEqual( X[iN][1], m_max[0], m_coordinatePrecision ) )
+      if( isEqual( X[a][1], m_max[0], m_coordinatePrecision ) )
       {
-        yposNodes.insert( iN );
+        yposNodes.insert( a );
       }
     }
+
   }
 }
 

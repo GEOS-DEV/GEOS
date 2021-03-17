@@ -262,11 +262,18 @@
 			<xsd:element name="Dirichlet" type="DirichletType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
+			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType" />
 	<xsd:complexType name="FieldSpecificationType" />
 	<xsd:complexType name="SourceFluxType" />
+	<xsd:complexType name="TractionType">
+		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<xsd:attribute name="component" type="integer" />
+		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" />
+	</xsd:complexType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />

@@ -11,8 +11,8 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="0"
-      targetRegions="{ casing, cement, rock }"
-      solidMaterialNames="{ steel, cement, shale }">
+      targetRegions="{ casing }"
+      solidMaterialNames="{ steel }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -28,20 +28,33 @@
   <Mesh>
     <InternalWellbore
       name="mesh1"
-      elementTypes="{ C3D8, C3D8, C3D8 }"
-      radius="{0.1, 0.2, 0.5, 2.0}"
+      elementTypes="{ C3D8 }"
+      radius="{0.1, 0.5}"
       theta="{0, 360}"
       zCoords="{0,1}"
       trajectory="{ { -0.0, 0.0, 0.0 },
                     {  0.0, 0.0, 0.0 } }"
-      nr="{4,2,2}"
+      nr="{4}"
       nt="{16}"
-      nz="{ 1 }"
-      autoSpaceRadialElems="{0,1,1}"
+      nz="{1}"
+      autoSpaceRadialElems="{1}"
       useCartesianOuterBoundary="2"
-      cellBlockNames="{ casing, cement, rock }"
+      cellBlockNames="{ casing }"
       />
   </Mesh>
+  
+  <Geometry>
+    <Box
+      name="xConstraint"
+      xMin="-0.01, -1e9, -1e9"
+      xMax=" 0.01,  1e9,  1e9"/>
+
+    <Box
+      name="yConstraint"
+      xMin="-1e9, -0.01, -1e9"
+      xMax=" 1e9,  0.01,  1e9"/>
+  </Geometry>
+  
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
@@ -87,17 +100,6 @@
       cellBlocks="{ casing }"
       materialList="{ steel }"/>
       
-    <CellElementRegion
-      name="cement"
-      cellBlocks="{ cement }"
-      materialList="{ cement }"/>
-
-    <CellElementRegion
-      name="rock"
-      cellBlocks="{ rock }"
-      materialList="{ shale }"/>
-
-      
   </ElementRegions>
 
   <Constitutive>
@@ -132,7 +134,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ rneg }"/>
+      setNames="{ xConstraint }"/>
 
     <FieldSpecification
       name="ynegConstraint"
@@ -140,7 +142,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ rneg }"/>
+      setNames="{ yConstraint }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -155,17 +157,16 @@
       objectPath="faceManager"
       tractionType="2"
       scale="1.0e6"
-      inputStress="{ -1,-2,-3, 0, 0, 0 }"
-      functionName="timeFunction"
-      setNames="{ xneg,xpos,yneg,ypos }"/>
+      inputStress="{ -1,-1.5,-2, 0, 0, 0 }"
+      setNames="{ rpos }"/>
 
-    <!--Traction
+    <Traction
       name="innerPressure"
       objectPath="faceManager"
       tractionType="1"
       scale="-1.0e6"
       functionName="timeFunction"
-      setNames="{ rneg }"/-->
+      setNames="{ rneg }"/>
       
       
   </FieldSpecifications>
@@ -176,8 +177,8 @@
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 10.0 }"
-      values="{ 0.0, 10.0 }"/>
+      coordinates="{ 0.0, 1.0, 10.0 }"
+      values="{ 0.0, 0.0, 10.0 }"/>
   </Functions>
 
   <!-- SPHINX_TableFunctionEnd -->
