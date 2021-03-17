@@ -22,6 +22,7 @@
 #include "MpiWrapper.hpp"
 
 #include "common/DataTypes.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/GeosxState.hpp"
 
 #include <set>
@@ -110,24 +111,48 @@ public:
   void synchronizeFields( const std::map< string, string_array > & fieldNames,
                           MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & allNeighbors,
-                          bool on_device = false );
+                          bool onDevice );
 
   void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
                                      MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
-                                     bool on_device = false );
+                                     bool onDevice );
 
   void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
                                 MeshLevel & mesh,
                                 std::vector< NeighborCommunicator > & allNeighbors,
                                 MPI_iCommData & icomm,
-                                bool on_device = false );
+                                bool onDevice );
+
+  void asyncPack( const std::map< string, string_array > & fieldNames,
+                  MeshLevel & mesh,
+                  std::vector< NeighborCommunicator > & neighbors,
+                  MPI_iCommData & icomm,
+                  bool onDevice,
+                  parallelDeviceEvents & events );
+
+  void asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
+                      MPI_iCommData & icomm,
+                      bool onDevice,
+                      parallelDeviceEvents & events );
 
   void synchronizeUnpack( MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & neighbors,
                           MPI_iCommData & icomm,
-                          bool on_device = false );
+                          bool onDevice );
+
+  bool asyncUnpack( MeshLevel & mesh,
+                    std::vector< NeighborCommunicator > & neighbors,
+                    MPI_iCommData & icomm,
+                    bool onDevice,
+                    parallelDeviceEvents & events );
+
+  void finalizeUnpack( MeshLevel & mesh,
+                       std::vector< NeighborCommunicator > & neighbors,
+                       MPI_iCommData & icomm,
+                       bool onDevice,
+                       parallelDeviceEvents & events );
 
 private:
   std::set< int > m_freeCommIDs;
