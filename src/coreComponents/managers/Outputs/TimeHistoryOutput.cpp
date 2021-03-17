@@ -61,10 +61,16 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   {
     HistoryMetadata metadata = collector.getMetadata( pm, ii );
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
-    collector.registerBufferCall( ii, [this, ii]() { return m_io[ii]->getBufferHead( ); } );
+    collector.registerBufferCall( ii, [this, ii, &pm, &collector]()
+    { 
+      HistoryMetadata metadata = collector.getMetadata( pm, ii );
+      m_io[ii]->updateCollectingCount( metadata.getDims( )[0] );
+      return m_io[ii]->getBufferHead( ); 
+    } );
     m_io.back()->init( !freshInit );
   }
 
+  // rank == 0 does time output for the collector
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetadata( );

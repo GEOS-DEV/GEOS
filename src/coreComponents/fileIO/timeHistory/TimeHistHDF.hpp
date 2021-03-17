@@ -167,13 +167,21 @@ public:
   /// @copydoc geosx::BufferedHistoryIO::compressInFile
   virtual void compressInFile( ) override;
 
+  /// @copydoc geosx::BufferedHistoryIO::updateCollectingCount
+  virtual void updateCollectingCount( localIndex count ) override;
+
+protected:
+
+  void setupPartition( globalIndex localIdxCount );
+
+  void updateDatasetExtent( hsize_t rowLimit );
+
   /**
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
    * @param bufferedCount The number of buffered states to use to determine if the file needs to be resized.
    */
-  inline void resizeFileIfNeeded( localIndex bufferedCount );
+  void resizeFileIfNeeded( localIndex bufferedCount );
 
-protected:
   virtual void resizeBuffer( ) override;
 
 private:
@@ -186,6 +194,13 @@ private:
   globalIndex m_globalIdxOffset;
   /// The global index count for this mpi rank for this data set
   globalIndex m_globalIdxCount;
+  ///
+  globalIndex m_globalIdxHighwater;
+  /// TODO: figure this shiz out
+  /// Chunk size is equal to the smallest index count for a participating rank
+  ///  this might be a problem with changing sizes... since the min won't always stay min, 
+  ///   and a larger chunk size than the min idx count is an error according to hdf5
+  hsize_t m_chunkSize;
   /// The current limit in discrete history counts for this data set in the file
   localIndex m_writeLimit;
   /// The current history count for this data set in the file
@@ -201,6 +216,8 @@ private:
   hsize_t m_rank;
   /// The dimensions of the data set
   std::vector< hsize_t > m_dims;
+  ///
+  std::vector< globalIndex > m_localIdxCounts_buffered;
   /// The name of the data set
   string m_name;
   /// The communicator across which the data set is distributed
@@ -208,6 +225,8 @@ private:
   /// The communicator with only members of the m_comm comm which have nonzero ammounts of local data (required for chunking output ->
   /// growing the data size in the file)
   MPI_Comm m_subcomm;
+  /// Whether the size of the collected data has changed, but the file hasn't been adjusted to accomodate the change
+  bool m_sizeChanged;
 };
 
 

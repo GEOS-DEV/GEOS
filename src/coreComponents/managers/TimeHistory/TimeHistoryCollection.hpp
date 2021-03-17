@@ -102,7 +102,7 @@ public:
       GEOSX_ERROR_IF( m_bufferCalls[collectionIdx] == nullptr,
                       "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
       // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
-      // TODO : grab the metadata again, determine if the size has changed, update the buffer call if so...
+
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
       updateSetsIndices( domain );
       collect( domain, time_n, dt, collectionIdx, buffer );
