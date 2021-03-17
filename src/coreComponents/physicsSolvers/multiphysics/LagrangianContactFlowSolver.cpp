@@ -1782,8 +1782,8 @@ void LagrangianContactFlowSolver::solveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  rhs.write( "rhs.petsc", LAIOutputFormat::MATRIX_MARKET );
-  matrix.write( "matrix.petsc", LAIOutputFormat::NATIVE_BINARY );
+  //rhs.write( "rhs.petsc", LAIOutputFormat::MATRIX_MARKET );
+  //matrix.write( "matrix.petsc", LAIOutputFormat::NATIVE_BINARY );
 
   if( getLogLevel() > 3 )
   {
