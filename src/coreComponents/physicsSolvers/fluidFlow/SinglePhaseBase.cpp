@@ -426,6 +426,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 
   if( m_poroElasticFlag )
   {
+    // Used in SIM_FixedStress poroelastic solver
     assembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
                                                                dofManager,
                                                                localMatrix,

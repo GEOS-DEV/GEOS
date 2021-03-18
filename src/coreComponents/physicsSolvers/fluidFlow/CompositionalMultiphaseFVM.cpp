@@ -50,7 +50,7 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
   CompositionalMultiphaseBase( name, parent )
 {
 
-  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseFVM";
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
 }
 
