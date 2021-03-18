@@ -211,7 +211,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
 
-        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+        forAll< serialPolicy >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
         {
 
           for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
@@ -220,7 +220,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
           }
 
           /// loop over all the source that haven't been found yet
-          for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
+          forAll< serialPolicy >( sourceCoordinates.size( 0 ), [=] ( localIndex const isrc )
           {
             if( sourceIsLocal[isrc] == 0 )
             {
@@ -243,11 +243,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 }
               }
             }
-          } // End loop over all source
+          } ); // End loop over all source
 
 
           /// loop over all the receiver that haven't been found yet
-          for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
+          forAll< serialPolicy >( receiverCoordinates.size( 0 ), [=] ( localIndex const ircv )
           {
             if( receiverIsLocal[ircv] == 0 )
             {
@@ -271,9 +271,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 }
               }
             }
-          } // End loop over receiver
+          } ); // End loop over receiver
 
-        } // End loop over elements
+        } ); // End loop over elements
       } );
     } );
   } );
@@ -415,11 +415,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = 4;
 
-        real64 N[numNodesPerElem];
-        real64 gradN[ numNodesPerElem ][ 3 ];
-
         /// Loop over elements
-        for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
+        forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
           real64 const invC2 = 1.0 / ( c[k] * c[k] );
           real64 xLocal[numNodesPerElem][3];
@@ -430,6 +427,9 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
               xLocal[a][i] = X( elemsToNodes( k, a ), i );
             }
           }
+
+          real64 N[numNodesPerElem];
+          real64 gradN[ numNodesPerElem ][ 3 ];
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
@@ -479,8 +479,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                 }
               }
             }
-          } // end loop over element
-        }
+          }
+        } ); // end loop over element
       } );
     } );
   } );
@@ -645,9 +645,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-        real64 gradN[ numNodesPerElem ][ 3 ];
-
-        for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
+        forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
           real64 xLocal[numNodesPerElem][3];
 
@@ -659,6 +657,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
             }
           }
 
+          real64 gradN[ numNodesPerElem ][ 3 ];
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
 
@@ -668,20 +667,13 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
             {
               for( localIndex j=0; j<numNodesPerElem; ++j )
               {
-                real64 Rh_ij = 0.0;
-                for( localIndex a=0; a < 3; ++a )
-                {
-                  Rh_ij +=  detJ * gradN[i][a]*gradN[j][a];
-                }
+                real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
 
                 stiffnessVector[elemsToNodes[k][i]] += Rh_ij*p_n[elemsToNodes[k][j]];
               }
-
             }
-
           }
-
-        }
+        } );
       } );
     } );
   } );
