@@ -19,6 +19,7 @@ from print import *
 # Get the MPI rank
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
+print("rank="+ str(rank))
 
 def callback(matrix, array):
     pass
