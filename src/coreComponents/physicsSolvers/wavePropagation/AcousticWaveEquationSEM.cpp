@@ -607,12 +607,14 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  
-  if (time_n <= 0.006)
+
+  ///Use to reinit params if pygeox set time_n to zero
+  if( time_n <= dt*1e-9 )
   {
-    this->postProcessInput();
-    this->precomputeSourceAndReceiverTerm( mesh );
-  }		
+    applyFreeSurfaceBC( time_n, domain );
+    postProcessInput();
+    precomputeSourceAndReceiverTerm( mesh );
+  }
 
   NodeManager & nodeManager = mesh.getNodeManager();
 

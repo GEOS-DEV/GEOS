@@ -42,7 +42,7 @@
 
    
   <Events
-    maxTime="0.08">
+    maxTime="1.5">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
@@ -50,12 +50,25 @@
       forceDt="0.005"
       target="/Solvers/acousticSolver"/>
     <!-- generate an output that can be read from VTK -->
- 
     <PeriodicEvent
-      name="python"
-      cycleFrequency="10"
+      name="vtk"
+      timeFrequency="0.05"
       targetExactTimestep="0"
-      target="/Outputs/pythonOutput"/>
+      target="/Outputs/vtkOutput"/>
+    
+    <!-- two events to output pressure in an hdf5 file -->    
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="0.005"
+      targetExactTimestep="1"
+      target="/Tasks/pressureCollection"/>
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="0.05"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
+    
   </Events>
 
   <NumericalMethods>
