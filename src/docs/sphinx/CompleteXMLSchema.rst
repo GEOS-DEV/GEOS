@@ -176,6 +176,13 @@ Element: DamageVolDevElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic.rst
 
 
+.. _XML_DeadOilFluid:
+
+Element: DeadOilFluid
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -370,6 +377,13 @@ Element: Mesh
 Element: MultiPhaseMultiComponentFluid
 ======================================
 .. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
+
+
+.. _XML_MultiphasePoroelastic:
+
+Element: MultiphasePoroelastic
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic.rst
 
 
 .. _XML_NonlinearSolverParameters:
@@ -929,6 +943,13 @@ Datastructure: DamageVolDevElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_DeadOilFluid:
+
+Datastructure: DeadOilFluid
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -1144,6 +1165,13 @@ Datastructure: MeshBodies
 Datastructure: MultiPhaseMultiComponentFluid
 ============================================
 .. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
+
+
+.. _DATASTRUCTURE_MultiphasePoroelastic:
+
+Datastructure: MultiphasePoroelastic
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:

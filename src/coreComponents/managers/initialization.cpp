@@ -101,10 +101,14 @@ static void addUmpireHighWaterMarks()
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::sum( mark );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " <<
+    std::size_t const maxMark = MpiWrapper::max( mark );
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
                       std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
+                      std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
 
-    pushStatsIntoAdiak( allocatorName + " high water mark", mark );
+    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
+    pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 }
 
@@ -454,9 +458,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
   GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
 
-  string xmlDir, xmlName;
-  splitPath( commandLineOptions.inputFileName, xmlDir, xmlName );
-  adiak::value( "XML File", xmlName );
+  adiak::value( "XML File", splitPath( commandLineOptions.inputFileName ).second );
   adiak::value( "Problem name", commandLineOptions.problemName );
 
   // MPI info

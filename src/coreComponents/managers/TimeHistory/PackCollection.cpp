@@ -122,7 +122,7 @@ void PackCollection::filterGhostIndices( localIndex const setIndex,
 ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & domain )
 {
   dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  string_array const targetTokens = stringutilities::Tokenize( m_objectPath, "/" );
+  string_array const targetTokens = stringutilities::tokenize( m_objectPath, "/" );
   localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
   for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
@@ -177,7 +177,9 @@ void PackCollection::collect( DomainPartition & domain,
     array1d< localIndex > setIndices( numIndices );
     filterGhostIndices( collectionIdx, setIndices, ghostRank );
     // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the indices
-    target.packByIndex( buffer, setIndices, false, true );
+    parallelDeviceEvents events;
+    target.packByIndex( buffer, setIndices, false, true, events );
+    // todo: poll events
   }
 
 }
