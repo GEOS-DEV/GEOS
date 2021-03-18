@@ -45,7 +45,7 @@
       logLevel="0"
       contactRelationName="fractureContact"
       solidMaterialNames="{rock}"
-      targetRegions="{Region2}">
+      targetRegions="{Region2, Fracture}">
       <NonlinearSolverParameters
         newtonMaxIter="5"
         newtonTol="1.0e-6"/>
@@ -89,7 +89,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
       materialList="{ water, rock }"/>
@@ -106,7 +106,7 @@
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"

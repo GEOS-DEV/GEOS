@@ -1,9 +1,9 @@
 
 import sys
 from mpi4py import MPI
-import matplotlib.pyplot as plt
 import pygeosx
 from pygeosx_tools import wrapper, xml
+import matplotlib.pyplot as plt
 
 
 # Get the MPI rank

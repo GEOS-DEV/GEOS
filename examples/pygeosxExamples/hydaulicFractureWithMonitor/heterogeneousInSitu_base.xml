@@ -149,7 +149,7 @@
       compressibility="5e-10"
       defaultDensity="1000"/>
 
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="rock"
       compressibility="1.6155088853e-18"
       defaultShearModulus="1.0e9"
