@@ -28,7 +28,7 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
   InternalMeshGenerator( name, parent ),
   m_trajectory(),
   m_cartesianOuterBoundary(),
-  m_isFullAnnulus(false),
+  m_isFullAnnulus( false ),
   m_autoSpaceRadialElems(),
   m_radialCoords( this->m_setCoords[0] )
 {
@@ -102,13 +102,13 @@ void InternalWellboreGenerator::postProcessInput()
 
   GEOSX_ERROR_IF( m_nElems[1].size()>1,
                   "Only one block in the theta direction is currently supported. "
-                  "This is specified by the nt keyword in InternalWellbore");
+                  "This is specified by the nt keyword in InternalWellbore" );
 
   GEOSX_ERROR_IF( m_nElems[2].size()>1,
                   "Only one block in the z direction is currently supported. "
-                  "This is specified by the nz keyword in InternalWellbore");
+                  "This is specified by the nz keyword in InternalWellbore" );
 
-  arrayView1d<real64 const> const theta = m_vertices[1];
+  arrayView1d< real64 const > const theta = m_vertices[1];
   real64 const dTheta = theta.back() - theta[0];
 
   // enable full annulus corrections if the mesh is 360 degrees
@@ -161,7 +161,7 @@ void InternalWellboreGenerator::postProcessInput()
           // approximate the theta direction size at i, and approximate the
           // radius at (i+1).
           real64 const t_i =  m_radialCoords.back() * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
-          real64 const r_ip1_0 = ( m_radialCoords.back() +  t_i ) ;
+          real64 const r_ip1_0 = ( m_radialCoords.back() +  t_i );
 
           // approximate the theta direction size at the approximated radius.
           real64 const tElemSize_ip1_0 =  r_ip1_0 * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
@@ -183,9 +183,9 @@ void InternalWellboreGenerator::postProcessInput()
             if( overshoot < undershoot )
             {
               // use and append the overshot value
-              m_radialCoords.emplace_back(r_ip1);
+              m_radialCoords.emplace_back( r_ip1 );
               actualNumberOfRadialElements = i+1;
-              scalingFactor =  ( rOuter - rInner ) / ( r_ip1 - rInner ) ;
+              scalingFactor =  ( rOuter - rInner ) / ( r_ip1 - rInner );
             }
             else
             {
@@ -197,7 +197,7 @@ void InternalWellboreGenerator::postProcessInput()
           }
           else
           {
-            m_radialCoords.emplace_back(r_ip1);
+            m_radialCoords.emplace_back( r_ip1 );
           }
         }
         std::cout<<actualNumberOfRadialElements<<", "<<scalingFactor<<std::endl;
@@ -365,20 +365,20 @@ void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
 //  }
 }
 
-void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (&numNodesInDir)[3] )
+void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (& numNodesInDir)[3] )
 {
-  GEOSX_UNUSED_VAR(numNodesInDir);
+  GEOSX_UNUSED_VAR( numNodesInDir );
   if( m_isFullAnnulus )
   {
     numNodesInDir[1] -= 1;
   }
 }
 
-void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( int (&index)[3],
-                                             real64 (&minExtent)[3],
-                                             real64 (&maxExtent)[3],
-                                             arraySlice1d<real64 const> const & X,
-                                             real64 const tol )
+void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],
+                                                                        real64 (& minExtent)[3],
+                                                                        real64 (& maxExtent)[3],
+                                                                        arraySlice1d< real64 const > const & X,
+                                                                        real64 const tol )
 {
   GEOSX_UNUSED_VAR( minExtent );
   if( m_isFullAnnulus )
@@ -396,11 +396,11 @@ void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( integer co
                                                                       integer const iBlock,
                                                                       integer const jBlock,
                                                                       integer const kBlock,
-                                                                      int (&globalIJK)[3],
+                                                                      int (& globalIJK)[3],
                                                                       int const (&numElemsInDirForBlock)[3],
                                                                       integer const (&numNodesInDir)[3],
                                                                       int const (&firstElemIndexInPartition)[3],
-                                                                      localIndex (&nodeOfBox)[8] )
+                                                                      localIndex (& nodeOfBox)[8] )
 {
   GEOSX_UNUSED_VAR( i, k, iBlock, kBlock );
   if( m_isFullAnnulus )
@@ -428,10 +428,10 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
 
   //  // Wellbore nodesets
   //  // rneg, rpos, tneg and tpos are the named used by the end-used in the input files. Consider modifying them with care.
-    SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
-    SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
-    SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
-    SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
+  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
+  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
+  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
+  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
 
 
   real64 const cartesianMappingInnerRadius = m_cartesianOuterBoundary<m_vertices[0].size() ?

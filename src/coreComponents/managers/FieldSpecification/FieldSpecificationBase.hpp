@@ -95,16 +95,16 @@ public:
 
 
   /// Deleted copy constructor
-  FieldSpecificationBase( FieldSpecificationBase const &other ) = delete;
+  FieldSpecificationBase( FieldSpecificationBase const & other ) = delete;
 
   /// Defaulted move constructor
   FieldSpecificationBase( FieldSpecificationBase && other ) = default;
 
   /// deleted copy assignment
-  FieldSpecificationBase& operator=( FieldSpecificationBase const & other ) = delete;
+  FieldSpecificationBase & operator=( FieldSpecificationBase const & other ) = delete;
 
   /// deleted move assignement
-  FieldSpecificationBase& operator=( FieldSpecificationBase && other ) = delete;
+  FieldSpecificationBase & operator=( FieldSpecificationBase && other ) = delete;
 
 
 

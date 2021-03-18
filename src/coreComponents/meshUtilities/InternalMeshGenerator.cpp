@@ -440,7 +440,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   {
     numNodesInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 2;
   }
-  reduceNumNodesForPeriodicBoundary(numNodesInDir);
+  reduceNumNodesForPeriodicBoundary( numNodesInDir );
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   nodeManager.resize( numNodes );
@@ -467,10 +467,10 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
           // Alter global node map for radial mesh
           setNodeGlobalIndicesOnPeriodicBoundary( index,
-                                          m_min,
-                                          m_max,
-                                          X[localNodeIndex],
-                                          m_coordinatePrecision );
+                                                  m_min,
+                                                  m_max,
+                                                  X[localNodeIndex],
+                                                  m_coordinatePrecision );
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
 
