@@ -236,6 +236,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
+
                 for( localIndex a=0; a< numNodesPerElem; ++a )
                 {
                   sourceNodeIds[isrc][a] = elemsToNodes[k][a];
@@ -606,6 +607,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  
+  if (time_n <= 0.006)
+  {
+    this->postProcessInput();
+    this->precomputeSourceAndReceiverTerm( mesh );
+  }		
 
   NodeManager & nodeManager = mesh.getNodeManager();
 
