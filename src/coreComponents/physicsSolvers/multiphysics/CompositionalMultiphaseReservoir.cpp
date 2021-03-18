@@ -35,7 +35,7 @@ CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const string
                                                                     Group * const parent ):
   ReservoirSolverBase( name, parent )
 {
-  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseReservoir";
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoir;
 }
 
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()

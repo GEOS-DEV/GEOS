@@ -402,7 +402,8 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
   std::vector< HYPRE_Int > mgr_level_interp_type;
   std::vector< HYPRE_Int > mgr_level_frelax_method;
 
-  if( ( m_parameters.mgr.strategy == "Poroelastic" ) | ( m_parameters.mgr.strategy == "Hydrofracture" ) )
+  if( ( m_parameters.mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhasePoroelastic) |
+      ( m_parameters.mgr.strategy == LinearSolverParameters::MGR::StrategyType::hydrofracture ) )
   {
     // Note: at the moment we assume single-phase flow poroelasticity
     //
@@ -443,7 +444,7 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
     mgr_level_interp_type[0] = 2; //diagonal scaling (Jacobi)
 
     mgr_coarse_grid_method.resize( mgr_nlevels );
-    if( m_parameters.mgr.strategy == "Poroelastic" )
+    if( m_parameters.mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhasePoroelastic )
     {
       mgr_coarse_grid_method[0] = 1; //diagonal sparsification
     }
@@ -473,7 +474,7 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
     m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
   }
-  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseFVM" )
+  else if( m_parameters.mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM )
   {
     // Labels description stored in point_marker_array
     //             0 = pressure
@@ -555,7 +556,7 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
       );
     m_functions->aux_destroy = HYPRE_ILUDestroy;
   }
-  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseReservoir" )
+  else if( m_parameters.mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoir )
   {
     // Labels description stored in point_marker_array
     //                0 = reservoir pressure
@@ -665,7 +666,7 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
     m_functions->aux_destroy = HYPRE_MGRDirectSolverDestroy;
   }
-  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseHybridFVM" )
+  else if( m_parameters.mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
   {
     // Labels description stored in point_marker_array
     //                         0 = pressure
@@ -764,7 +765,7 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
     m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
   }
-  else if( m_parameters.mgr.strategy == "LagrangianContactMechanics" )
+  else if( m_parameters.mgr.strategy == LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics )
   {
     // Contact mechanis with face-centered lagrangian multipliers
     //
