@@ -93,6 +93,21 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
+
+  /// Deleted copy constructor
+  FieldSpecificationBase( FieldSpecificationBase const &other ) = delete;
+
+  /// Defaulted move constructor
+  FieldSpecificationBase( FieldSpecificationBase && other ) = default;
+
+  /// deleted copy assignment
+  FieldSpecificationBase& operator=( FieldSpecificationBase const & other ) = delete;
+
+  /// deleted move assignement
+  FieldSpecificationBase& operator=( FieldSpecificationBase && other ) = delete;
+
+
+
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
    * @param[in] field the field to apply the value to.

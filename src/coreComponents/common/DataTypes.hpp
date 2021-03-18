@@ -509,6 +509,7 @@ public:
       {std::type_index( typeid(localIndex)), "localIndex"},
       {std::type_index( typeid(globalIndex)), "globalIndex"},
       {std::type_index( typeid(R1Tensor)), "R1Tensor"},
+      {std::type_index( typeid(VoigtTensor)), "VoigtTensor"},
       {std::type_index( typeid(integer_array)), "integer_array"},
       {std::type_index( typeid(real32_array)), "real32_array"},
       {std::type_index( typeid(real64_array)), "real64_array"},
@@ -557,6 +558,7 @@ public:
     real32_id,           //!< real32_id
     real64_id,           //!< real64_id
     r1Tensor_id,         //!< r1Tensor_id
+    voightTensor_id,     //!< voightTensor_id
     r2Tensor_id,         //!< r2Tensor_id
     r2SymTensor_id,      //!< r2SymTensor_id
     integer_array_id,    //!< integer_array_id
@@ -604,6 +606,7 @@ public:
       { std::type_index( typeid(real32)), TypeIDs::real32_id },
       { std::type_index( typeid(real64)), TypeIDs::real64_id },
       { std::type_index( typeid(R1Tensor)), TypeIDs::r1Tensor_id },
+      { std::type_index( typeid(VoigtTensor)), TypeIDs::voightTensor_id },
       { std::type_index( typeid(integer_array)), TypeIDs::integer_array_id },
       { std::type_index( typeid(localIndex_array)), TypeIDs::localIndex_array_id },
       { std::type_index( typeid(globalIndex_array)), TypeIDs::globalIndex_array_id },
@@ -742,6 +745,7 @@ private:
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
+      {"VoightTensor", constructArrayRegex( ri, 1 )},
       {"integer_array", constructArrayRegex( ri, 1 )},
       {"localIndex_array", constructArrayRegex( ri, 1 )},
       {"globalIndex_array", constructArrayRegex( ri, 1 )},
