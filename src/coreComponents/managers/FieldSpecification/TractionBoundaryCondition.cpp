@@ -1,11 +1,24 @@
 /*
- * TractionBoundaryCondition.cpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Mar 15, 2021
- *      Author: settgast
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file TractionBoundaryCondition.hpp
  */
 
 #include "TractionBoundaryCondition.hpp"
+
+#include "managers/Functions/TableFunction.hpp"
 
 namespace geosx
 {
@@ -15,7 +28,10 @@ using namespace dataRepository;
 TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group * parent ):
   FieldSpecificationBase( name, parent ),
   m_tractionType(0),
-  m_inputStress{}
+  m_inputStress{}//,
+//  m_stressFunctionNames(),
+//  m_useStressFunctions(false),
+//  m_stressFunctions{nullptr}
 {
   registerWrapper( viewKeyStruct::tractionTypeString(), &m_tractionType ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -27,7 +43,12 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 
   registerWrapper( viewKeyStruct::inputStressString(), &m_inputStress ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Input stress for tractionType option 2:\n" );
+    setDescription( "Input stress for tractionType option 2.\n" );
+
+//  registerWrapper( viewKeyStruct::stressFunctionString(), &m_stressFunctionNames ).
+//    setInputFlag( InputFlags::OPTIONAL ).
+//    setDescription( "Function names for description of stress for tractionType "
+//                    "option 2. Overrides m_inputStress.\n" );
 
 
   getWrapper<string>( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
@@ -43,13 +64,27 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 
 void TractionBoundaryCondition::postProcessInput()
 {
-
+//  localIndex const numStressFunctionsNames = m_stressFunctionNames.size();
+//  GEOSX_ERROR_IF( numStressFunctionsNames > 0 && numStressFunctionsNames<6,
+//                  "Either 0 or 6 stress functions must be specified using stressFunctions" );
+//
+//  if( numStressFunctionsNames==6 )
+//  {
+//    m_useStressFunctions = true;
+//  }
 }
 
 void TractionBoundaryCondition::initializePreSubGroups()
 {
-  string const & functionName = this->getFunctionName();
-
+//  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+//
+//  if( m_useStressFunctions )
+//  {
+//    for( localIndex i=0; i<6; ++i )
+//    {
+//      m_stressFunctions[i] = &( functionManager.getGroup< TableFunction >( m_stressFunctionNames[i] ) );
+//    }
+//  }
 }
 
 
@@ -79,9 +114,8 @@ void TractionBoundaryCondition::launch( real64 const time,
   Tensor<real64, 6> inputStress = m_inputStress;
 
   real64 tractionMagnitude0;
-  array1d< real64 > resultsArray( targetSet.size() );
+  array1d< real64 > tractionMagnitudeArray( targetSet.size() );
   bool spatialFunction = false;
-
 
   if( functionName.empty() )
   {
@@ -96,14 +130,14 @@ void TractionBoundaryCondition::launch( real64 const time,
     }
     else
     {
-      resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
-      function.evaluate( faceManager, time, targetSet, resultsArray );
+      tractionMagnitudeArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
+      function.evaluate( faceManager, time, targetSet, tractionMagnitudeArray );
       spatialFunction = true;
       tractionMagnitude0 = 1e99;
     }
   }
 
-  arrayView1d< real64 const > const results = resultsArray;
+  arrayView1d< real64 const > const tractionMagnitudeArrayView = tractionMagnitudeArray;
 
   {
     forAll< serialPolicy >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
@@ -112,7 +146,7 @@ void TractionBoundaryCondition::launch( real64 const time,
       localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
 
       // TODO consider dispatch if appropriate
-      real64 const tractionMagnitude = spatialFunction ? results[i] : tractionMagnitude0;
+      real64 const tractionMagnitude = spatialFunction ? tractionMagnitudeArrayView[i] : tractionMagnitude0;
 
       real64 traction[3];
       // TODO consider dispatch if appropriate
@@ -122,17 +156,25 @@ void TractionBoundaryCondition::launch( real64 const time,
         traction[1] = tractionMagnitude * direction[1];
         traction[2] = tractionMagnitude * direction[2];
       }
-      else if( tractionType==1 )
+      else
       {
-        traction[0] = tractionMagnitude * faceNormal(kf,0);
-        traction[1] = tractionMagnitude * faceNormal(kf,1);
-        traction[2] = tractionMagnitude * faceNormal(kf,2);
-      }
-      else if( tractionType==2 )
-      {
-        traction[0] = tractionMagnitude * ( inputStress[0] * faceNormal(kf,0) + inputStress[5] * faceNormal(kf,1) + inputStress[4] * faceNormal(kf,2) );
-        traction[1] = tractionMagnitude * ( inputStress[5] * faceNormal(kf,0) + inputStress[1] * faceNormal(kf,1) + inputStress[3] * faceNormal(kf,2) );
-        traction[2] = tractionMagnitude * ( inputStress[4] * faceNormal(kf,0) + inputStress[3] * faceNormal(kf,1) + inputStress[2] * faceNormal(kf,2) );
+        real64 const temp[3] = { tractionMagnitude * faceNormal(kf,0),
+                                 tractionMagnitude * faceNormal(kf,1),
+                                 tractionMagnitude * faceNormal(kf,2) };
+
+        if( tractionType==1 )
+        {
+          traction[0] = temp[0];
+          traction[1] = temp[1];
+          traction[2] = temp[2];
+        }
+        else if( tractionType==2 )
+        {
+          traction[0] = inputStress[0] * temp[0] + inputStress[5] * temp[1] + inputStress[4] * temp[2] ;
+          traction[1] = inputStress[5] * temp[0] + inputStress[1] * temp[1] + inputStress[3] * temp[2] ;
+          traction[2] = inputStress[4] * temp[0] + inputStress[3] * temp[1] + inputStress[2] * temp[2] ;
+        }
+
       }
 
       // TODO replace with proper FEM integration
