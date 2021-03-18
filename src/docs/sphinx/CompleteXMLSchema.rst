@@ -379,6 +379,13 @@ Element: Mesh
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
 
 
+.. _XML_MultiphasePoroelastic:
+
+Element: MultiphasePoroelastic
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic.rst
+
+
 .. _XML_NonlinearSolverParameters:
 
 Element: NonlinearSolverParameters
@@ -1158,6 +1165,13 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
+
+
+.. _DATASTRUCTURE_MultiphasePoroelastic:
+
+Datastructure: MultiphasePoroelastic
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:

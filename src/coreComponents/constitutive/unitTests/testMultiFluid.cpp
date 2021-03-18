@@ -261,15 +261,16 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       }
       compNew[jc] += dC;
 
-      // Note: in PVTPackage, derivatives are obtained with finite-difference approx
+      // Note: in PVTPackage, derivatives are obtained with finite-difference approx **with normalization of the comp fraction**
       //       The component fraction is perturbed (just as above), and then all the component fractions are normalized (as below)
-      //       But, in the native DO model and in CO2Brine, derivatives are computed analytically. Say, in the 2-phase DO, that you want
-      //       to compute the derivatives of phase fraction wrt component fraction. Analytically we have
-      //          dPhaseFraction_dGlobalFraction[ic][jc] = (ic == jc)
-      //       which is correct but will fail the test below. Instead, the finite-difference approx a la PVTPackage yields
-      //          dPhaseFraction_dGlobalFraction[ic][jc] = (ic == jc) ? 1-composition[ic] : -composition[ic]
-      //       because of the normalization. The second option is, in my opinion, not correct, unless I missed some
-      //       cancellations that happen after when we differentiate wrt component densities. Hence the flag below.
+      //       But, in the native DO model and in CO2Brine, derivatives are computed analytically, which results in different
+      //       derivatives wrt component fractions--although the derivatives wrt component densities obtained with the chain rule
+      //       in the solver will be very similar (see discussion on PR #1325 on GitHub).
+      //
+      //       Since both approaches--FD approximation of derivatives with normalization, and analytical derivatives--are correct,
+      //       we have to support both when we check the intermediate derivatives wrt component fractions below. Therefore, if the
+      //       PVTPackage is used, then we normalize the perturbed component fractions before taking the FD approx. If the native
+      //       DO or CO2-brine models are used, we skip the normalization below.
       if( usePVTPackage )
       {
         // renormalize

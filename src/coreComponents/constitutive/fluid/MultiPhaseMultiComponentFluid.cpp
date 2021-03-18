@@ -136,9 +136,6 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
     constexpr std::streamsize buf_size = 256;
     char buf[buf_size];
 
-    // NOTE: for now, the names of the models are still hardcoded here
-    // Later, we could read them from the XML file and we would then have a general class here
-
     while( is.getline( buf, buf_size ) )
     {
       string const str( buf );
