@@ -3,7 +3,6 @@
 <Problem>
   <Solvers>
     <!-- define the solver -->
-    <!-- we'll have to discuss the cflFactor with Randy -->
     <!-- define the source coordinates -->
     <!-- define the time source frequency -->
     <!-- define the receiver coordinates -->
@@ -18,7 +17,6 @@
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->
-  <!-- there is also an option to import external meshes -->
   <Mesh>
     <InternalMesh
       name="mesh"
@@ -69,6 +67,7 @@
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
 
+    <!-- restart event -->
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.1"
@@ -93,8 +92,6 @@
   </ElementRegions>
 
   <Constitutive>
-    
-    <!-- add something here if needed -->
     <NullModel
       name="nullModel"/>
   </Constitutive>

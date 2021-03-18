@@ -65,6 +65,9 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #define GEOSX_USE_HYPRE
 
+/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_CUDA)
+#define GEOSX_USE_HYPRE_CUDA
+
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
 
@@ -77,6 +80,7 @@
 /// Macro defined when PETSc interface is selected
 /* #undef GEOSX_LA_INTERFACE_PETSC */
 
+
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #define FORTRAN_MANGLE_NO_UNDERSCORE
 
@@ -85,6 +89,18 @@
 
 /// CMake option CMAKE_BUILD_TYPE
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
+
+/// The type that localIndex will be alaised to.
+#define GEOSX_LOCALINDEX_TYPE std::ptrdiff_t
+
+/// An integer flag representing the type that localIndex will be aliased to.
+#define GEOSX_LOCALINDEX_TYPE_FLAG 3
+
+/// The type that globalIndex will be aliased to.
+#define GEOSX_GLOBALINDEX_TYPE long long int
+
+/// An integer flag representing the type that globalIndex will be aliased to.
+#define GEOSX_GLOBALINDEX_TYPE_FLAG 2
 
 #endif  /* GEOSX_CONFIG_HPP */
 

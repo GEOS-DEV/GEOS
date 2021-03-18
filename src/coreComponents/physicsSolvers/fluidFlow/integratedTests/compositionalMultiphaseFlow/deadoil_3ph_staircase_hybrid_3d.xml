@@ -7,7 +7,7 @@
       logLevel="1"
       discretization="fluidHM"
       targetRegions="{ Channel }"
-      fluidNames="{ fluid1 }"
+      fluidNames="{ fluid }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       temperature="300"
@@ -28,7 +28,7 @@
   <Mesh>
 
     <InternalMesh
-      name="mesh1"
+      name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 5, 10 }"
       yCoords="{ 0, 5, 10 }"
@@ -93,7 +93,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ fluid1, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -111,9 +111,8 @@
   </NumericalMethods>
 
   <Constitutive>
-    <BlackOilFluid
-      name="fluid1"
-      fluidType="DeadOil"
+    <DeadOilFluid
+      name="fluid"
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
@@ -140,7 +139,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="permy_channel"
@@ -149,7 +148,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="permz_channel"
@@ -158,7 +157,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-15"/>
+      scale="1.0e-16"/>
 
     <FieldSpecification
       name="porosity_channel"
@@ -213,7 +212,7 @@
       component="2"
       scale="0.001"/>
 
-    <!-- Injection pressure: ~10 bar -->
+    <!-- Injection pressure: ~100 bar -->
     <FieldSpecification
       name="sourceTermPressure"
       objectPath="ElementRegions/Channel"
@@ -246,12 +245,12 @@
       component="2"
       scale="0.8"/>
 
-    <!-- Production pressure: ~2 bar, -->
+    <!-- Production pressure: ~50 bar, -->
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Channel"
       fieldName="pressure"
-      scale="2e5"
+      scale="5e6"
       setNames="{ sink }"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->

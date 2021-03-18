@@ -519,7 +519,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key() ) );
   fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
@@ -3830,7 +3830,7 @@ int SurfaceGenerator::checkOrphanElement ( ElementRegionManager & elementManager
                                                   getSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][k] );
 
 
-      unsigned int nRuptureFace = 0;
+      int nRuptureFace = 0;
       arrayView2d< localIndex > & elementsToFaces = elementSubRegion.faceList();
       for( localIndex a=0; a < elementsToFaces.size( 1 ); ++a )
       {

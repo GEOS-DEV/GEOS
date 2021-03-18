@@ -29,6 +29,7 @@
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "LvArray/src/output.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/GeosxState.hpp"
 #include "managers/ProblemManager.hpp"
@@ -642,7 +643,12 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  getGlobalState().getCommunicationTools().synchronizePackSendRecv( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
+  parallelDeviceEvents packEvents;
+  getGlobalState().getCommunicationTools().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
+
+  waitAllDeviceEvents( packEvents );
+
+  getGlobalState().getCommunicationTools().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
 
   explicitKernelDispatch( mesh,
                           targetRegionNames(),
@@ -653,10 +659,11 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
-
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  getGlobalState().getCommunicationTools().synchronizeUnpack( mesh, domain.getNeighbors(), m_iComm, true );
+  // this includes  a device sync after launching all the unpacking kernels
+  parallelDeviceEvents unpackEvents;
+  getGlobalState().getCommunicationTools().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
   return dt;
 }
