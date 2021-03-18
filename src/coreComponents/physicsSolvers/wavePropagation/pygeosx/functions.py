@@ -17,28 +17,16 @@ from segy import *
 from print import *
 
     
-    
-def callback(matrix, array):
-    pass
-    
-    
-    
+
     
 def shot_simul(shot_list, dt):
-    problem = initialize()   
-    
+    problem = initialize()      
     do_shots(problem, shot_list, dt)
     
     
-       
-
+   
 def initialize():
     problem = pygeosx.reinit(sys.argv)
-    
-    try:
-        problem.get_group("Solvers/acousticSolver", None).register(callback)
-    except AttributeError:
-        pass
 
     pygeosx.apply_initial_conditions()
     
@@ -54,25 +42,21 @@ def do_shots(problem, shot_list, dt):
     #Get Wrappers
     src_pos_geosx   = acoustic_group.get_wrapper("sourceCoordinates").value()
     src_pos_geosx.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-    src_pos_geosx   = src_pos_geosx.to_numpy()
     
-    rcv_pos_geosx_temp   = acoustic_group.get_wrapper("receiverCoordinates").value()
-    rcv_pos_geosx_temp.set_access_level(pygeosx.pylvarray.RESIZEABLE)
+    rcv_pos_geosx   = acoustic_group.get_wrapper("receiverCoordinates").value()
+    rcv_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
     
     pressure_geosx  = acoustic_group.get_wrapper("pressureNp1AtReceivers").value()
-    pressure_geosx  = pressure_geosx.to_numpy()
     
     pressure_nm1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/pressure_nm1").value()
     pressure_nm1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-    pressure_nm1 = pressure_nm1.to_numpy()
     
     pressure_n = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/pressure_n").value()
     pressure_n.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-    pressure_n = pressure_n.to_numpy()
     
     pressure_np1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/pressure_np1").value()
     pressure_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-    pressure_np1 = pressure_np1.to_numpy()
+    
     
     dt_geosx        = problem.get_wrapper("Events/solverApplications/forceDt").value()
     maxT            = problem.get_wrapper("Events/maxTime").value()
@@ -81,8 +65,6 @@ def do_shots(problem, shot_list, dt):
     cflFactor       = problem.get_wrapper("Solvers/acousticSolver/cflFactor").value()[0]
     curr_time       = problem.get_wrapper("Events/time").value()
     
-    
-    #Calculate dt using the inner sphere radius of the smallest element
     
     cycle_freq[0] = 1
     dt_geosx[0]   = dt       
@@ -100,26 +82,21 @@ def do_shots(problem, shot_list, dt):
     src_pos          = shot_list[ishot].getSource().getCoord()       
     rcv_pos_list     = shot_list[ishot].getReceiverSet().getSetCoord() 
     
-    src_pos_geosx[0] = src_pos 
-    rcv_pos_geosx_temp.resize(len(rcv_pos_list))    
-    rcv_pos_geosx    = rcv_pos_geosx_temp.to_numpy()
-    rcv_pos_geosx[:] = rcv_pos_list[:]
+    src_pos_geosx.to_numpy()[0] = src_pos 
+    rcv_pos_geosx.resize(len(rcv_pos_list))    
+    rcv_pos_geosx.to_numpy()[:] = rcv_pos_list[:]
     
     #Update shot flag
     shot_list[ishot].flagUpdate("In Progress")
     print_flag(shot_list)
     
-    while (np.array([shot.getFlag() for shot in shot_list]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
-        #Extract pressure
-        pressure_geosx = acoustic_group.get_wrapper("pressureNp1AtReceivers").value()
-        pressure_geosx = pressure_geosx.to_numpy()
-        
+    while (np.array([shot.getFlag() for shot in shot_list]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:        
         #Save pressure
         if cycle[0] < (ishot+1) * maxCycle:
-            pressure_at_receivers[cycle[0] - ishot * maxCycle, :] = pressure_geosx[:] 
+            pressure_at_receivers[cycle[0] - ishot * maxCycle, :] = pressure_geosx.to_numpy()[:]
             
         else:
-            pressure_at_receivers[maxCycle, :] = pressure_geosx[:] 
+            pressure_at_receivers[maxCycle, :] = pressure_geosx.to_numpy()[:]
             print_pressure(pressure_at_receivers, ishot)
            
             #Segy export and flag update
@@ -128,9 +105,9 @@ def do_shots(problem, shot_list, dt):
             
             #Reset time/pressure to 0
             curr_time[0]    = 0.0
-            pressure_nm1[:] = 0.0
-            pressure_n[:]   = 0.0
-            pressure_np1[:] = 0.0
+            pressure_nm1.to_numpy()[:] = 0.0
+            pressure_n.to_numpy()[:]   = 0.0
+            pressure_np1.to_numpy()[:] = 0.0
            
             #Increment shot
             ishot += 1             
@@ -141,10 +118,9 @@ def do_shots(problem, shot_list, dt):
                 src_pos          = shot_list[ishot].getSource().getCoord()       
                 rcv_pos_list     = shot_list[ishot].getReceiverSet().getSetCoord() 
     
-                src_pos_geosx[0] = src_pos 
-                rcv_pos_geosx_temp.resize(len(rcv_pos_list))    
-                rcv_pos_geosx    = rcv_pos_geosx_temp.to_numpy()
-                rcv_pos_geosx[:] = rcv_pos_list[:]
+                src_pos_geosx.to_numpy()[0] = src_pos 
+                rcv_pos_geosx.resize(len(rcv_pos_list))    
+                rcv_pos_geosx.to_numpy()[:] = rcv_pos_list[:]
                 
                 #Update shot flag
                 shot_list[ishot].flagUpdate("In Progress") 

@@ -14,26 +14,20 @@ from functions import *
 def initialize_pyMesh(problem):
 
     node_manager = problem.get_group("domain/MeshBodies/mesh/Level0/nodeManager")
-   # print_group(node_manager)
-    node_list = node_manager.get_wrapper("ReferencePosition").value().to_numpy()
 
-    number_of_node = len(node_list)
+    number_of_node = len(node_manager.get_wrapper("ReferencePosition").value().to_numpy())
     
-    boundary_ind = node_manager.get_wrapper("domainBoundaryIndicator").value().to_numpy()	
     boundary_node_list = []    
     for i in range(number_of_node):
-    	if boundary_ind[i]==1:
+    	if node_manager.get_wrapper("domainBoundaryIndicator").value().to_numpy()[i]==1:
     	     boundary_node_list.append(i)
     	     
 
     elem_manager = problem.get_group("domain/MeshBodies/mesh/Level0/ElementRegions/elementRegionsGroup/Region/elementSubRegions/cb")
   
-    elem_volume = elem_manager.get_wrapper("elementVolume").value().to_numpy()
-    elem_center = elem_manager.get_wrapper("elementCenter").value().to_numpy()
     elem_speed  = problem.get_wrapper("FieldSpecifications/cellVelocity/scale").value()[0]
     
-    node_list_per_elem = elem_manager.get_wrapper("nodeList").value().to_numpy()
-    number_of_elem = len(node_list_per_elem)
+    number_of_elem = len(elem_manager.get_wrapper("nodeList").value().to_numpy())
     
     nb_node_per_elem = elem_manager.get_wrapper("numNodesPerElement").value()[0]
     if nb_node_per_elem==8:
@@ -44,11 +38,19 @@ def initialize_pyMesh(problem):
     	disc_ord=5
     
     
-    Node_list = [Node(node_list[i], i) for i in range(number_of_node)]
+    Node_list = [Node(node_manager.get_wrapper("ReferencePosition").value().to_numpy()[i], i) for i in range(number_of_node)]
     node_array=np.array(Node_list)
-    Elem_list = [Element(node_array[node_list_per_elem[i]].tolist(), elem_speed, elem_center[i], elem_volume[i], i) for i in range(number_of_elem)]
+    Elem_list = [Element(node_array[elem_manager.get_wrapper("nodeList").value().to_numpy()[i]].tolist(), 
+                         elem_speed, 
+                         elem_manager.get_wrapper("elementCenter").value().to_numpy()[i], 
+                         elem_manager.get_wrapper("elementVolume").value().to_numpy()[i], 
+                         i) 
+                         for i in range(number_of_elem)]
    
-    mesh = Mesh(Elem_list, Node_list, node_array[boundary_node_list].tolist(), disc_ord)
+    mesh = Mesh(Elem_list, 
+                Node_list, 
+                node_array[boundary_node_list].tolist(), 
+                disc_ord)
     
     return mesh
     
