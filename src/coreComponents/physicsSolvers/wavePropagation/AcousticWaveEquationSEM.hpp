@@ -71,29 +71,12 @@ public:
   /**
    * @brief Compute the value of a Ricker (a Gaussian function)
    * @param time_n time to evaluate the Ricker
-   * @param f0 central frequency
-   * @return the value of the Gaussian evaluated a time_n with f0
+   * @param f0 central frequency of the Ricker
+   * @param order order of the ricker
+   * @return the value of a Ricker evaluated a time_n with f0
    */
   virtual
-  real64 evaluateRicker( real64 const & time_n, real64 const & f0 );
-
-  /**
-   * @brief Compute the value of a Ricker (first derivative of a Gaussian)
-   * @param time_n time to evaluate the Ricker
-   * @param f0 central frequency
-   * @return the value of the first derivative of the Gaussian evaluated a time_n with f0
-   */
-  virtual
-  real64 evaluateRickerOrder1( real64 const & time_n, real64 const & f0 );
-
-  /**
-   * @brief Compute the value of a Ricker (2nd derivative of a Gaussian)
-   * @param t time to evaluate the Ricker
-   * @param f0 central frequency
-   * @return the value of the second derivative of the Gaussian evaluated a time_n with f0
-   */
-  virtual
-  real64 evaluateRickerOrder2( real64 const & time_n, real64 const & f0 );
+  real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
 
   /**@}*/
 

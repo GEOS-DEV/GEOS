@@ -285,27 +285,8 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
-  real64 fi = 0;
-  switch( this->m_rickerOrder )
-  {
-    case 2:
-    {
-      fi = evaluateRickerOrder2( time_n, this->m_timeSourceFrequency );
-    }
-    break;
-    case 1:
-    {
-      fi = evaluateRickerOrder1( time_n, this->m_timeSourceFrequency );
-    }
-    break;
-    case 0:
-    {
-      fi = evaluateRicker( time_n, this->m_timeSourceFrequency );
-    }
-    break;
-    default:
-      GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
-  }
+
+  real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
 
   for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
   {
@@ -580,46 +561,36 @@ real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
   return explicitStep( time_n, dt, cycleNumber, domain );
 }
 
-real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & time_n, real64 const & f0 )
+real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
 {
   real64 o_tpeak = 1.0/f0;
   real64 pulse = 0.0;
   if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
     return pulse;
 
-  real64 const pi = 2.0*acos( 0 );
-  real64 const tmp = f0*time_n-1.0;
-  pulse = -(time_n-1)*exp( -2*(tmp*pi)*(tmp*pi) );
-
-  return pulse;
-}
-
-
-real64 AcousticWaveEquationSEM::evaluateRickerOrder1( real64 const & time_n, real64 const & f0 )
-{
-  real64 o_tpeak = 1.0/f0;
-  real64 pulse = 0.0;
-
-  if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-    return pulse;
-
-  real64 const pi = 2.0*acos( 0 );
+  constexpr real64 pi = M_PI;
   real64 const lam = (f0*pi)*(f0*pi);
-  pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
 
-  return pulse;
-}
-
-real64 AcousticWaveEquationSEM::evaluateRickerOrder2( real64 const & time_n, real64 const & f0 )
-{
-  real64 o_tpeak = 1.0/f0;
-  real64 pulse = 0.0;
-  if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
-    return pulse;
-
-  real64 const pi = 2.0*acos( 0 );
-  real64 const lam = (f0*pi)*(f0*pi);
-  pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+  switch( order )
+  {
+    case 2:
+    {
+      pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+    }
+    break;
+    case 1:
+    {
+      pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+    }
+    break;
+    case 0:
+    {
+      pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
+    }
+    break;
+    default:
+      GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
+  }
 
   return pulse;
 }
@@ -674,7 +645,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-        real64 N[numNodesPerElem];
         real64 gradN[ numNodesPerElem ][ 3 ];
 
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
@@ -691,7 +661,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
-            FE_TYPE::calcN( q, N );
 
             real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
@@ -721,13 +690,13 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
-  for( localIndex a=0; a<nodeManager.size(); ++a )
+  forAll< serialPolicy >( nodeManager.size(), [=] ( localIndex const a )
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
       p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
     }
-  }
+  } );
 
   /// Synchronize pressure fields
   std::map< string, string_array > fieldNames;
