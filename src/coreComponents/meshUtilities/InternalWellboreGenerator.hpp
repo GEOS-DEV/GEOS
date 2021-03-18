@@ -52,13 +52,13 @@ public:
   void generateMesh( DomainPartition & domain ) override final;
 
 
-  virtual void reduceNumNodesForPeriodicBoundary( integer (&numNodes)[3] ) override final;
+  virtual void reduceNumNodesForPeriodicBoundary( integer ( &numNodes )[3] ) override final;
 
-  virtual void setNodeGlobalIndicesOnPeriodicBoundary( int (&index)[3],
-                                               real64 (&minExtent)[3],
-                                               real64 (&maxExtent)[3],
-                                               arraySlice1d<real64 const> const & X,
-                                               real64 const tol ) override final;
+  virtual void setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],
+                                                       real64 ( &minExtent )[3],
+                                                       real64 ( &maxExtent )[3],
+                                                       arraySlice1d< real64 const > const & X,
+                                                       real64 const tol ) override final;
 
   virtual void setConnectivityForPeriodicBoundaries( integer const i,
                                                      integer const j,
@@ -66,11 +66,11 @@ public:
                                                      integer const iBlock,
                                                      integer const jBlock,
                                                      integer const kBlock,
-                                                     int (&globalIJK)[3],
+                                                     int (& globalIJK)[3],
                                                      int const (&numElemsInDirForBlock)[3],
                                                      integer const (&numNodesInDir)[3],
                                                      int const (&firstElemIndexInPartition)[3],
-                                                     localIndex (&nodeOfBox)[8] ) override final;
+                                                     localIndex ( &nodeOfBox )[8] ) override final;
 
   virtual void coordinateTransformation( NodeManager & nodeManager ) override final;
 
@@ -109,9 +109,9 @@ private:
 
   bool m_isFullAnnulus;
 
-  array1d<int> m_autoSpaceRadialElems;
+  array1d< int > m_autoSpaceRadialElems;
 
-  array1d<real64> & m_radialCoords;
+  array1d< real64 > & m_radialCoords;
 
 
 };

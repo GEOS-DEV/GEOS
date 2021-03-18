@@ -51,10 +51,10 @@ public:
   TractionBoundaryCondition( TractionBoundaryCondition && other ) = default;
 
   /// deleted copy assignment operator
-  TractionBoundaryCondition& operator=( TractionBoundaryCondition const & other ) = delete;
+  TractionBoundaryCondition & operator=( TractionBoundaryCondition const & other ) = delete;
 
   /// deleted move assignment operator
-  TractionBoundaryCondition& operator=( TractionBoundaryCondition &&other ) = delete;
+  TractionBoundaryCondition & operator=( TractionBoundaryCondition && other ) = delete;
 
 
   /**
@@ -78,7 +78,7 @@ public:
                globalIndex const dofRankOffset,
                FaceManager const & faceManager,
                SortedArrayView< localIndex const > const & targetSet,
-               arrayView1d< real64 > const & localRhs ) const ;
+               arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief View keys

@@ -724,7 +724,7 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
                         Group &,
                         string const & )
   {
-    TractionBoundaryCondition const & tbc = dynamic_cast<TractionBoundaryCondition const &>(bc);
+    TractionBoundaryCondition const & tbc = dynamic_cast< TractionBoundaryCondition const & >(bc);
     tbc.launch( time,
                 blockLocalDofNumber,
                 dofRankOffset,

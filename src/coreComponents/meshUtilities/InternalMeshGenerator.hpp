@@ -77,13 +77,13 @@ public:
 
   virtual void reduceNumNodesForPeriodicBoundary( integer (&)[3] ) {};
 
-  virtual void setNodeGlobalIndicesOnPeriodicBoundary( int (&index)[3],
-                                               real64 (&minExtent)[3],
-                                               real64 (&maxExtent)[3],
-                                               arraySlice1d<real64 const> const & X,
-                                               real64 const tol )
+  virtual void setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],
+                                                       real64 (& minExtent)[3],
+                                                       real64 (& maxExtent)[3],
+                                                       arraySlice1d< real64 const > const & X,
+                                                       real64 const tol )
   {
-    GEOSX_UNUSED_VAR( index, minExtent, maxExtent, X, tol);
+    GEOSX_UNUSED_VAR( index, minExtent, maxExtent, X, tol );
   }
 
   virtual void setConnectivityForPeriodicBoundaries( integer const i,
@@ -92,11 +92,11 @@ public:
                                                      integer const iBlock,
                                                      integer const jBlock,
                                                      integer const kBlock,
-                                                     int (&globalIJK)[3],
+                                                     int (& globalIJK)[3],
                                                      int const (&numElemsInDirForBlock)[3],
                                                      integer const (&numNodesInDir)[3],
                                                      int const (&firstElemIndexInPartition)[3],
-                                                     localIndex (&nodeOfBox)[8] )
+                                                     localIndex (& nodeOfBox)[8] )
   {
     GEOSX_UNUSED_VAR( i, j, k, iBlock, jBlock, kBlock,
                       globalIJK, numElemsInDirForBlock, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
@@ -105,11 +105,11 @@ public:
   inline void setConnectivityForPeriodicBoundary( int const component,
                                                   integer const index,
                                                   integer const blockIndex,
-                                                  int (&globalIJK)[3],
+                                                  int (& globalIJK)[3],
                                                   int const (&numElemsInDirForBlock)[3],
                                                   integer const (&numNodesInDir)[3],
                                                   int const (&firstElemIndexInPartition)[3],
-                                                  localIndex (&nodeOfBox)[8] )
+                                                  localIndex (& nodeOfBox)[8] )
   {
     if( index == numElemsInDirForBlock[component] - 1 && blockIndex == m_nElems[component].size() - 1 )
     {
@@ -174,7 +174,7 @@ protected:
   /// Ndim x nElem spatialized array of element bias
   array1d< real64 > m_nElemBias[3];
 
-  array1d<real64> m_setCoords[3];
+  array1d< real64 > m_setCoords[3];
 
 private:
 
@@ -271,47 +271,47 @@ private:
       else
       {
 
-      int startingIndex = 0;
-      int endingIndex = 0;
-      int block = 0;
-      for( block=0; block<m_nElems[i].size(); ++block )
-      {
-        startingIndex = endingIndex;
-        endingIndex = startingIndex + m_nElems[i][block];
-        if( a[i]>=startingIndex && a[i]<=endingIndex )
+        int startingIndex = 0;
+        int endingIndex = 0;
+        int block = 0;
+        for( block=0; block<m_nElems[i].size(); ++block )
         {
-          break;
+          startingIndex = endingIndex;
+          endingIndex = startingIndex + m_nElems[i][block];
+          if( a[i]>=startingIndex && a[i]<=endingIndex )
+          {
+            break;
+          }
         }
-      }
-      real64 min = m_vertices[i][block];
-      real64 max = m_vertices[i][block+1];
+        real64 min = m_vertices[i][block];
+        real64 max = m_vertices[i][block+1];
 
 
-      X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
+        X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
 
-      // First check if m_nElemBias contains values
-      // Otherwise the next test will cause a segfault when looking for "block"
-      if( m_nElemBias[i].size()>0 )
-      {
-        // Verify that the bias is non-zero and applied to more than one block:
-        if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
+        // First check if m_nElemBias contains values
+        // Otherwise the next test will cause a segfault when looking for "block"
+        if( m_nElemBias[i].size()>0 )
         {
-          GEOSX_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
+          // Verify that the bias is non-zero and applied to more than one block:
+          if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
+          {
+            GEOSX_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
 
-          real64 len = max -  min;
-          real64 xmean = len / m_nElems[i][block];
-          real64 x0 = xmean * double( a[i] - startingIndex );
-          real64 chi = m_nElemBias[i][block]/(xmean/len - 1.0);
-          real64 dx = -x0*chi + x0*x0*chi/len;
-          X[i] += dx;
+            real64 len = max -  min;
+            real64 xmean = len / m_nElems[i][block];
+            real64 x0 = xmean * double( a[i] - startingIndex );
+            real64 chi = m_nElemBias[i][block]/(xmean/len - 1.0);
+            real64 dx = -x0*chi + x0*x0*chi/len;
+            X[i] += dx;
+          }
         }
-      }
 
-      // This is for creating regular triangle pattern
-      if( i==0 ) xInterval = (max-min) / m_nElems[i][block];
-      if( trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex )
-        X[0] -= xInterval * 0.5;
-    }
+        // This is for creating regular triangle pattern
+        if( i==0 ) xInterval = (max-min) / m_nElems[i][block];
+        if( trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex )
+          X[0] -= xInterval * 0.5;
+      }
     }
   }
 

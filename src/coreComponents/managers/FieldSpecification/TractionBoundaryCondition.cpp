@@ -27,7 +27,7 @@ using namespace dataRepository;
 
 TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group * parent ):
   FieldSpecificationBase( name, parent ),
-  m_tractionType(0),
+  m_tractionType( 0 ),
   m_inputStress{}//,
 //  m_stressFunctionNames(),
 //  m_useStressFunctions(false),
@@ -51,11 +51,11 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 //                    "option 2. Overrides m_inputStress.\n" );
 
 
-  getWrapper<string>( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
+  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
-  setFieldName(catalogName());
+  setFieldName( catalogName());
 
-  getWrapper<int>( FieldSpecificationBase::viewKeyStruct::componentString() ).
+  getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
 
 
@@ -109,9 +109,9 @@ void TractionBoundaryCondition::launch( real64 const time,
   globalIndex_array nodeDOF;
   real64_array nodeRHS;
 
-  R1Tensor const direction = this->getDirection(0);
+  R1Tensor const direction = this->getDirection( 0 );
   int const tractionType = m_tractionType;
-  Tensor<real64, 6> inputStress = m_inputStress;
+  Tensor< real64, 6 > inputStress = m_inputStress;
 
   real64 tractionMagnitude0;
   array1d< real64 > tractionMagnitudeArray( targetSet.size() );
@@ -150,7 +150,7 @@ void TractionBoundaryCondition::launch( real64 const time,
 
       real64 traction[3];
       // TODO consider dispatch if appropriate
-      if( tractionType==0)
+      if( tractionType==0 )
       {
         traction[0] = tractionMagnitude * direction[0];
         traction[1] = tractionMagnitude * direction[1];
@@ -158,9 +158,9 @@ void TractionBoundaryCondition::launch( real64 const time,
       }
       else
       {
-        real64 const temp[3] = { tractionMagnitude * faceNormal(kf,0),
-                                 tractionMagnitude * faceNormal(kf,1),
-                                 tractionMagnitude * faceNormal(kf,2) };
+        real64 const temp[3] = { tractionMagnitude * faceNormal( kf, 0 ),
+                                 tractionMagnitude * faceNormal( kf, 1 ),
+                                 tractionMagnitude * faceNormal( kf, 2 ) };
 
         if( tractionType==1 )
         {
@@ -170,9 +170,9 @@ void TractionBoundaryCondition::launch( real64 const time,
         }
         else if( tractionType==2 )
         {
-          traction[0] = inputStress[0] * temp[0] + inputStress[5] * temp[1] + inputStress[4] * temp[2] ;
-          traction[1] = inputStress[5] * temp[0] + inputStress[1] * temp[1] + inputStress[3] * temp[2] ;
-          traction[2] = inputStress[4] * temp[0] + inputStress[3] * temp[1] + inputStress[2] * temp[2] ;
+          traction[0] = inputStress[0] * temp[0] + inputStress[5] * temp[1] + inputStress[4] * temp[2];
+          traction[1] = inputStress[5] * temp[0] + inputStress[1] * temp[1] + inputStress[3] * temp[2];
+          traction[2] = inputStress[4] * temp[0] + inputStress[3] * temp[1] + inputStress[2] * temp[2];
         }
 
       }
