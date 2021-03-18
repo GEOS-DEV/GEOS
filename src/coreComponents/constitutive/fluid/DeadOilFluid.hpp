@@ -704,7 +704,7 @@ void DeadOilFluidUpdate::compute( real64 pressure,
     dPhaseFraction_dPressure[ip] = 0.0;
     for( localIndex ic = 0; ic < nComps; ++ic )
     {
-      dPhaseFraction_dGlobalCompFraction[ip][ic] = (ip == ic) ? 1-composition[ip] : -composition[ip];
+      dPhaseFraction_dGlobalCompFraction[ip][ic] = (ip == ic) ? 1.0 : 0.0;
 
       phaseCompFraction[ip][ic] = (ip == ic) ? 1.0 : 0.0;
       dPhaseCompFraction_dPressure[ip][ic] = 0.0;

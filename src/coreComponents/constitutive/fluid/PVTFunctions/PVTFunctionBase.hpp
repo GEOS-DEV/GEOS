@@ -62,10 +62,13 @@ public:
   virtual void compute( real64 const & pressure,
                         real64 const & temperature,
                         arraySlice1d< real64 const > const & phaseComposition,
+                        arraySlice1d< real64 const > const & dPhaseComposition_dPressure,
+                        arraySlice1d< real64 const > const & dPhaseComposition_dTemperature,
+                        arraySlice2d< real64 const > const & dPhaseComposition_dGlobalCompFraction,
                         real64 & value,
-                        real64 & dValue_dPresure,
+                        real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
-                        arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                        arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
                         bool useMass = 0 ) const = 0;
 
 protected:

@@ -92,7 +92,7 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  arraySlice2d< real64 > const & phaseCompFrac,
                                                  real64 & totalDens ) const
 {
-#ifdef __CUDACC__
+#if defined(__CUDA_ARCH__)
   GEOSX_ERROR( "This function cannot be used on GPU" );
 #else
   localIndex const NC = m_componentMolarWeight.size();
@@ -231,7 +231,7 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 & dTotalDensity_dTemperature,
                                                  arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
 {
-#ifdef __CUDACC__
+#if defined(__CUDA_ARCH__)
   GEOSX_ERROR( "This function cannot be used on GPU" );
 #else
 // 0. make shortcut structs to avoid long names (TODO maybe remove)

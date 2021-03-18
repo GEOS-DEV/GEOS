@@ -189,15 +189,15 @@ void CO2SolubilityUpdate::compute( real64 const & pressure,
   if( compFraction[m_CO2Index] > 1.0 - minForDivision )
   {
     Y = compFraction[m_CO2Index] / minForDivision;
-    dY_dCompFrac[m_CO2Index] = (1.0 - compFraction[m_CO2Index]) / minForDivision;
-    dY_dCompFrac[m_waterIndex] = -compFraction[m_CO2Index] / minForDivision;
+    dY_dCompFrac[m_CO2Index] = 1.0 / minForDivision;
+    dY_dCompFrac[m_waterIndex] = 0.0;
   }
   else
   {
     real64 const oneMinusCompFracInv = 1.0 / (1.0 - compFraction[m_CO2Index]);
     Y = compFraction[m_CO2Index] * oneMinusCompFracInv;
-    dY_dCompFrac[m_CO2Index] = 1.0 * oneMinusCompFracInv;
-    dY_dCompFrac[m_waterIndex] = -compFraction[m_CO2Index] * oneMinusCompFracInv * oneMinusCompFracInv;
+    dY_dCompFrac[m_CO2Index] = oneMinusCompFracInv * oneMinusCompFracInv;
+    dY_dCompFrac[m_waterIndex] = 0.0;
   }
 
   if( Y < solubility )
@@ -231,8 +231,7 @@ void CO2SolubilityUpdate::compute( real64 const & pressure,
       phaseCompFraction[m_phaseGasIndex][m_waterIndex] = 0.0;
       for( localIndex jc = 0; jc < 2; ++jc )
       {
-        dPhaseCompFraction_dCompFraction[m_phaseLiquidIndex][ic][jc] =
-          (ic == jc ) ? ( 1 - compFraction[ic] ) : -compFraction[ic];
+        dPhaseCompFraction_dCompFraction[m_phaseLiquidIndex][ic][jc] = (ic == jc ) ? 1.0 : 0.0;
         dPhaseCompFraction_dCompFraction[m_phaseGasIndex][ic][jc] = 0.0;
       }
     }

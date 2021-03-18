@@ -126,6 +126,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                                real64 const T,
                                arraySlice1d< real64 > const & composition,
                                real64 const perturbParameter,
+                               bool usePVTPackage,
                                real64 const relTol,
                                real64 const absTol = std::numeric_limits< real64 >::max() )
 {
@@ -260,12 +261,24 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       }
       compNew[jc] += dC;
 
-      // renormalize
-      real64 sum = 0.0;
-      for( localIndex ic = 0; ic < NC; ++ic )
-        sum += compNew[ic];
-      for( localIndex ic = 0; ic < NC; ++ic )
-        compNew[ic] /= sum;
+      // Note: in PVTPackage, derivatives are obtained with finite-difference approx
+      //       The component fraction is perturbed (just as above), and then all the component fractions are normalized (as below)
+      //       But, in the native DO model and in CO2Brine, derivatives are computed analytically. Say, in the 2-phase DO, that you want
+      //       to compute the derivatives of phase fraction wrt component fraction. Analytically we have
+      //          dPhaseFraction_dGlobalFraction[ic][jc] = (ic == jc)
+      //       which is correct but will fail the test below. Instead, the finite-difference approx a la PVTPackage yields
+      //          dPhaseFraction_dGlobalFraction[ic][jc] = (ic == jc) ? 1-composition[ic] : -composition[ic]
+      //       because of the normalization. The second option is, in my opinion, not correct, unless I missed some
+      //       cancellations that happen after when we differentiate wrt component densities. Hence the flag below.
+      if( usePVTPackage )
+      {
+        // renormalize
+        real64 sum = 0.0;
+        for( localIndex ic = 0; ic < NC; ++ic )
+          sum += compNew[ic];
+        for( localIndex ic = 0; ic < NC; ++ic )
+          compNew[ic] /= sum;
+      }
 
       fluidWrapper.update( 0, 0, P, T, compNew );
 
@@ -452,7 +465,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol );
 }
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMass )
@@ -468,7 +481,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-2;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol );
 }
 
 MultiFluidBase & makeLiveOilFluid( string const & name, Group * parent )
@@ -687,7 +700,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol );
 }
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMass )
@@ -704,7 +717,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol, absTol );
 }
 
 class DeadOilFluidTest : public CompositionalFluidTestBase
@@ -746,7 +759,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
 
   for( localIndex i = 0; i < 3; ++i )
   {
-    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, relTol );
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
   }
 }
 
@@ -765,7 +778,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
 
   for( localIndex i = 0; i < 3; ++i )
   {
-    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, relTol, absTol );
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol, absTol );
   }
 }
 
@@ -797,7 +810,7 @@ TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
 
   for( localIndex i = 0; i < 3; ++i )
   {
-    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, relTol );
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
   }
 }
 
@@ -1002,7 +1015,7 @@ TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMolar )
   {
     for( localIndex j = 0; j < 3; ++j )
     {
-      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, relTol );
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
     }
   }
 }
@@ -1018,13 +1031,13 @@ TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMass )
   comp[0] = 0.3; comp[1] = 0.7;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTol = 1e-4;
+  real64 const relTol = 1e-8;
 
   for( localIndex i = 0; i < 3; ++i )
   {
     for( localIndex j = 0; j < 3; ++j )
     {
-      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, relTol );
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
     }
   }
 }

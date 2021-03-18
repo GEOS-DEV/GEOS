@@ -191,7 +191,7 @@
       name="sourceTerm"
       objectPath="ElementRegions/region/cb"
       fieldName="pressure"
-      scale="5e7"
+      scale="1.45e7"
       setNames="{ source }"/>
 
     <FieldSpecification

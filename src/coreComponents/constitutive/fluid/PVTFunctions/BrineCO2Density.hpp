@@ -66,10 +66,13 @@ public:
   virtual void compute( real64 const & pressure,
                         real64 const & temperature,
                         arraySlice1d< real64 const > const & phaseComposition,
+                        arraySlice1d< real64 const > const & dPhaseComposition_dPressure,
+                        arraySlice1d< real64 const > const & dPhaseComposition_dTemperature,
+                        arraySlice2d< real64 const > const & dPhaseComposition_dGlobalCompFraction,
                         real64 & value,
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
-                        arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                        arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
                         bool useMass = 0 ) const override;
 
 protected:
@@ -138,10 +141,13 @@ GEOSX_FORCE_INLINE
 void BrineCO2DensityUpdate::compute( real64 const & pressure,
                                      real64 const & temperature,
                                      arraySlice1d< real64 const > const & phaseComposition,
+                                     arraySlice1d< real64 const > const & dPhaseComposition_dPressure,
+                                     arraySlice1d< real64 const > const & dPhaseComposition_dTemperature,
+                                     arraySlice2d< real64 const > const & dPhaseComposition_dGlobalCompFraction,
                                      real64 & value,
                                      real64 & dValue_dPressure,
                                      real64 & dValue_dTemperature,
-                                     arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                                     arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
                                      bool useMass ) const
 {
   // this method implements the method proposed by E. Garcia (2001)
@@ -168,15 +174,19 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
                             + 3 * d * squaredTemp ) * 1e-6;
 
   // CO2 concentration
-  real64 const denom = ( m_componentMolarWeight[m_waterIndex] * ( 1.0 - phaseComposition[m_CO2Index] ) );
-  real64 const coef = phaseComposition[m_CO2Index] / denom;
+  real64 const wMwInv = 1.0 / m_componentMolarWeight[m_waterIndex];
+  real64 const oneMinusCO2PhaseCompInv = 1.0 / ( 1.0 - phaseComposition[m_CO2Index] );
+  real64 const oneMinusCO2PhaseCompInvSquared = oneMinusCO2PhaseCompInv * oneMinusCO2PhaseCompInv;
+  real64 const coef = wMwInv * phaseComposition[m_CO2Index] * oneMinusCO2PhaseCompInv;
+  real64 const dCoef_dPres = wMwInv * dPhaseComposition_dPressure[m_CO2Index] * oneMinusCO2PhaseCompInvSquared;
+  real64 const dCoef_dTemp = wMwInv * dPhaseComposition_dTemperature[m_CO2Index] * oneMinusCO2PhaseCompInvSquared;
   real64 dCoef_dComp[2]{};
-  dCoef_dComp[m_CO2Index] = 1.0 / denom;
-  dCoef_dComp[m_waterIndex] = -m_componentMolarWeight[m_waterIndex] * phaseComposition[m_CO2Index] / (denom * denom);
+  dCoef_dComp[m_CO2Index] = wMwInv * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_CO2Index] * oneMinusCO2PhaseCompInvSquared;
+  dCoef_dComp[m_waterIndex] = wMwInv * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_waterIndex] * oneMinusCO2PhaseCompInvSquared;
 
   real64 const conc = coef * density;
-  real64 const dConc_dPres = coef * densityDeriv[0];
-  real64 const dConc_dTemp = coef * densityDeriv[1];
+  real64 const dConc_dPres = dCoef_dPres * density + coef * densityDeriv[0];
+  real64 const dConc_dTemp = dCoef_dTemp * density + coef * densityDeriv[1];
   real64 dConc_dComp[2]{};
   dConc_dComp[m_CO2Index] = dCoef_dComp[m_CO2Index] * density;
   dConc_dComp[m_waterIndex] = dCoef_dComp[m_waterIndex] * density;
@@ -203,10 +213,10 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
     dValue_dTemperature = densityDeriv[1]
                           + m_componentMolarWeight[m_CO2Index] * dConc_dTemp
                           - dConcDensVol_dTemp;
-    dValue_dPhaseComposition[m_CO2Index] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_CO2Index]
-                                           - dConcDensVol_dComp[m_CO2Index];
-    dValue_dPhaseComposition[m_waterIndex] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_waterIndex]
-                                             - dConcDensVol_dComp[m_waterIndex];
+    dValue_dGlobalCompFraction[m_CO2Index] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_CO2Index]
+                                             - dConcDensVol_dComp[m_CO2Index];
+    dValue_dGlobalCompFraction[m_waterIndex] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_waterIndex]
+                                               - dConcDensVol_dComp[m_waterIndex];
   }
   else
   {
@@ -219,10 +229,10 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
     dValue_dTemperature = densityDeriv[1]  / m_componentMolarWeight[m_waterIndex]
                           + dConc_dTemp
                           - dConcDensVol_dTemp  / m_componentMolarWeight[m_waterIndex];
-    dValue_dPhaseComposition[m_CO2Index] = dConc_dComp[m_CO2Index]
-                                           - dConcDensVol_dComp[m_CO2Index] / m_componentMolarWeight[m_waterIndex];
-    dValue_dPhaseComposition[m_waterIndex] = dConc_dComp[m_waterIndex]
-                                             - dConcDensVol_dComp[m_waterIndex] / m_componentMolarWeight[m_waterIndex];
+    dValue_dGlobalCompFraction[m_CO2Index] = dConc_dComp[m_CO2Index]
+                                             - dConcDensVol_dComp[m_CO2Index] / m_componentMolarWeight[m_waterIndex];
+    dValue_dGlobalCompFraction[m_waterIndex] = dConc_dComp[m_waterIndex]
+                                               - dConcDensVol_dComp[m_waterIndex] / m_componentMolarWeight[m_waterIndex];
   }
 }
 

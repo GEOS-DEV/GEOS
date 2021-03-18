@@ -443,23 +443,23 @@ compute( real64 pressure,
 
   m_p1DensityWrapper[0].compute( pressure,
                                  temperatureInCelsius,
-                                 phaseCompFraction[ip1],
+                                 phaseCompFraction[ip1], dPhaseCompFrac_dPres[ip1], dPhaseCompFrac_dTemp[ip1], dPhaseCompFrac_dComp[ip1],
                                  phaseDensity[ip1], dPhaseDens_dPres, dPhaseDens_dTemp, dPhaseDens_dComp,
                                  m_useMass );
   m_p1ViscosityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFraction[ip1],
+                                   phaseCompFraction[ip1], dPhaseCompFrac_dPres[ip1], dPhaseCompFrac_dTemp[ip1], dPhaseCompFrac_dComp[ip1],
                                    phaseViscosity[ip1], dPhaseVisc_dPres, dPhaseVisc_dTemp, dPhaseVisc_dComp,
                                    m_useMass );
 
   m_p2DensityWrapper[0].compute( pressure,
                                  temperatureInCelsius,
-                                 phaseCompFraction[ip2],
+                                 phaseCompFraction[ip2], dPhaseCompFrac_dPres[ip2], dPhaseCompFrac_dTemp[ip2], dPhaseCompFrac_dComp[ip2],
                                  phaseDensity[ip2], dPhaseDens_dPres, dPhaseDens_dTemp, dPhaseDens_dComp,
                                  m_useMass );
   m_p2ViscosityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFraction[ip2],
+                                   phaseCompFraction[ip2], dPhaseCompFrac_dPres[ip2], dPhaseCompFrac_dTemp[ip2], dPhaseCompFrac_dComp[ip2],
                                    phaseViscosity[ip2], dPhaseVisc_dPres, dPhaseVisc_dTemp, dPhaseVisc_dComp,
                                    m_useMass );
 
@@ -482,14 +482,14 @@ compute( real64 pressure,
     stackArray1d< real64, numComps > dPhaseMolarDens_dComp( 2 );
     m_p1DensityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFraction[ip1],
+                                   phaseCompFraction[ip1], dPhaseCompFrac_dPres[ip1], dPhaseCompFrac_dTemp[ip1], dPhaseCompFrac_dComp[ip1],
                                    phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
                                    0 );
     phaseMW[ip1] =  phaseDensity[ip1] / phaseMolarDens;
 
     m_p2DensityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFraction[ip2],
+                                   phaseCompFraction[ip2], dPhaseCompFrac_dPres[ip2], dPhaseCompFrac_dTemp[ip2], dPhaseCompFrac_dComp[ip2],
                                    phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
                                    0 );
     phaseMW[ip2] =  phaseDensity[ip2] / phaseMolarDens;
@@ -528,13 +528,15 @@ compute( real64 pressure,
     // for now, we have to compute the phase mass density here
     m_p1DensityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFraction[ip1],
+                                   phaseCompFraction[ip1], dPhaseCompFrac_dPres[ip1],
+                                   dPhaseCompFrac_dTemp[ip1], dPhaseCompFrac_dComp[ip1],
                                    phaseMassDensity[ip1], dPhaseMassDens_dPres,
                                    dPhaseMassDens_dTemp, dPhaseMassDens_dComp,
                                    true );
     m_p2DensityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFraction[ip2],
+                                   phaseCompFraction[ip2], dPhaseCompFrac_dPres[ip2],
+                                   dPhaseCompFrac_dTemp[ip2], dPhaseCompFrac_dComp[ip2],
                                    phaseMassDensity[ip2], dPhaseMassDens_dPres,
                                    dPhaseMassDens_dTemp, dPhaseMassDens_dComp,
                                    true );
@@ -691,22 +693,22 @@ compute( real64 pressure,
 
   m_p1DensityWrapper[0].compute( pressure,
                                  temperatureInCelsius,
-                                 phaseCompFrac.value[ip1],
+                                 phaseCompFrac.value[ip1], phaseCompFrac.dPres[ip1], phaseCompFrac.dTemp[ip1], phaseCompFrac.dComp[ip1],
                                  phaseDens.value[ip1], phaseDens.dPres[ip1], phaseDens.dTemp[ip1], phaseDens.dComp[ip1],
                                  m_useMass );
   m_p1ViscosityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFrac.value[ip1],
+                                   phaseCompFrac.value[ip1], phaseCompFrac.dPres[ip1], phaseCompFrac.dTemp[ip1], phaseCompFrac.dComp[ip1],
                                    phaseVisc.value[ip1], phaseVisc.dPres[ip1], phaseVisc.dTemp[ip1], phaseVisc.dComp[ip1],
                                    m_useMass );
   m_p2DensityWrapper[0].compute( pressure,
                                  temperatureInCelsius,
-                                 phaseCompFrac.value[ip2],
+                                 phaseCompFrac.value[ip2], phaseCompFrac.dPres[ip2], phaseCompFrac.dTemp[ip2], phaseCompFrac.dComp[ip2],
                                  phaseDens.value[ip2], phaseDens.dPres[ip2], phaseDens.dTemp[ip2], phaseDens.dComp[ip2],
                                  m_useMass );
   m_p2ViscosityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFrac.value[ip2],
+                                   phaseCompFrac.value[ip2], phaseCompFrac.dPres[ip2], phaseCompFrac.dTemp[ip2], phaseCompFrac.dComp[ip2],
                                    phaseVisc.value[ip2], phaseVisc.dPres[ip2], phaseVisc.dTemp[ip2], phaseVisc.dComp[ip2],
                                    m_useMass );
 
@@ -735,7 +737,7 @@ compute( real64 pressure,
     stackArray1d< real64, numComps > dPhaseMolarDens_dComp( 2 );
     m_p2DensityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFrac.value[ip2],
+                                   phaseCompFrac.value[ip2], phaseCompFrac.dPres[ip2], phaseCompFrac.dTemp[ip2], phaseCompFrac.dComp[ip2],
                                    phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
                                    0 );
     phaseMW[ip2] =  phaseDens.value[ip2] / phaseMolarDens;
@@ -747,7 +749,7 @@ compute( real64 pressure,
     }
     m_p1DensityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFrac.value[ip1],
+                                   phaseCompFrac.value[ip1], phaseCompFrac.dPres[ip1], phaseCompFrac.dTemp[ip1], phaseCompFrac.dComp[ip1],
                                    phaseMolarDens, dPhaseMolarDens_dPres, dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp,
                                    0 );
     phaseMW[ip1] =  phaseDens.value[ip1] / phaseMolarDens;
@@ -847,13 +849,15 @@ compute( real64 pressure,
     // for now, we have to compute the phase mass density here
     m_p1DensityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFrac.value[ip1],
+                                   phaseCompFrac.value[ip1], phaseCompFrac.dPres[ip1],
+                                   phaseCompFrac.dTemp[ip1], phaseCompFrac.dComp[ip1],
                                    phaseMassDens.value[ip1], phaseMassDens.dPres[ip1],
                                    phaseMassDens.dTemp[ip1], phaseMassDens.dComp[ip1],
                                    true );
     m_p2DensityWrapper[0].compute( pressure,
                                    temperatureInCelsius,
-                                   phaseCompFrac.value[ip2],
+                                   phaseCompFrac.value[ip2], phaseCompFrac.dPres[ip2],
+                                   phaseCompFrac.dTemp[ip2], phaseCompFrac.dComp[ip2],
                                    phaseMassDens.value[ip2], phaseMassDens.dPres[ip2],
                                    phaseMassDens.dTemp[ip2], phaseMassDens.dComp[ip2],
                                    true );

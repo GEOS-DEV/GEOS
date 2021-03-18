@@ -64,10 +64,13 @@ public:
   virtual void compute( real64 const & pressure,
                         real64 const & temperature,
                         arraySlice1d< real64 const > const & phaseComposition,
+                        arraySlice1d< real64 const > const & dPhaseComposition_dPressure,
+                        arraySlice1d< real64 const > const & dPhaseComposition_dTemperature,
+                        arraySlice2d< real64 const > const & dPhaseComposition_dGlobalCompFraction,
                         real64 & value,
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
-                        arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                        arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
                         bool useMass = 0 ) const override;
 
 protected:
@@ -137,13 +140,19 @@ GEOSX_FORCE_INLINE
 void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const > const & phaseComposition,
+                                          arraySlice1d< real64 const > const & dPhaseComposition_dPressure,
+                                          arraySlice1d< real64 const > const & dPhaseComposition_dTemperature,
+                                          arraySlice2d< real64 const > const & dPhaseComposition_dGlobalCompFraction,
                                           real64 & value,
                                           real64 & dValue_dPressure,
                                           real64 & dValue_dTemperature,
-                                          arraySlice1d< real64 > const & dValue_dPhaseComposition,
+                                          arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
                                           bool useMass ) const
 {
   GEOSX_UNUSED_VAR( phaseComposition );
+  GEOSX_UNUSED_VAR( dPhaseComposition_dPressure );
+  GEOSX_UNUSED_VAR( dPhaseComposition_dTemperature );
+  GEOSX_UNUSED_VAR( dPhaseComposition_dGlobalCompFraction );
 
   real64 const input[2] = { pressure, temperature };
   real64 densityDeriv[2]{};
@@ -158,7 +167,7 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
     dValue_dTemperature /= m_componentMolarWeight[m_CO2Index];
   }
 
-  for( real64 & val : dValue_dPhaseComposition )
+  for( real64 & val : dValue_dGlobalCompFraction )
   {
     val = 0.0;
   }
