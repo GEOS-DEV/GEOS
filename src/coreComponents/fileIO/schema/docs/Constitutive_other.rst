@@ -7,6 +7,7 @@ BlackOilFluid                         node :ref:`DATASTRUCTURE_BlackOilFluid`
 BrooksCoreyBakerRelativePermeability  node :ref:`DATASTRUCTURE_BrooksCoreyBakerRelativePermeability`  
 BrooksCoreyCapillaryPressure          node :ref:`DATASTRUCTURE_BrooksCoreyCapillaryPressure`          
 BrooksCoreyRelativePermeability       node :ref:`DATASTRUCTURE_BrooksCoreyRelativePermeability`       
+CO2BrineFluid                         node :ref:`DATASTRUCTURE_CO2BrineFluid`                         
 CompositionalMultiphaseFluid          node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`          
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
@@ -19,7 +20,6 @@ DruckerPrager                         node :ref:`DATASTRUCTURE_DruckerPrager`
 ElasticIsotropic                      node :ref:`DATASTRUCTURE_ElasticIsotropic`                      
 ElasticTransverseIsotropic            node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`            
 ExtendedDruckerPrager                 node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                 
-MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiComponentFluid`         
 NullModel                             node :ref:`DATASTRUCTURE_NullModel`                             
 ParticleFluid                         node :ref:`DATASTRUCTURE_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           
