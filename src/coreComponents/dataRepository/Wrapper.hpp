@@ -670,7 +670,8 @@ public:
     {
       value_dim = 2;
     }
-    else if( wrapper_type.find( "array" ) != string::npos )
+    else if( ( wrapper_type.find( "array" ) != string::npos ) ||
+             ( wrapper_type.find( "Tensor" ) != string::npos ) )
     {
       value_dim = 1;
     }

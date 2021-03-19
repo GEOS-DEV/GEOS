@@ -190,6 +190,8 @@ using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZ
 
 /// Alias for a local (stack-based) rank-1 tensor type
 using R1Tensor = Tensor< real64, 3 >;
+
+/// Alias for a local (stack-based) rank-2 Voigt tensor type
 using VoigtTensor = Tensor< real64, 6 >;
 
 
@@ -558,7 +560,7 @@ public:
     real32_id,           //!< real32_id
     real64_id,           //!< real64_id
     r1Tensor_id,         //!< r1Tensor_id
-    voightTensor_id,     //!< voightTensor_id
+    voigtTensor_id,      //!< voihtTensor_id
     r2Tensor_id,         //!< r2Tensor_id
     r2SymTensor_id,      //!< r2SymTensor_id
     integer_array_id,    //!< integer_array_id
@@ -606,7 +608,7 @@ public:
       { std::type_index( typeid(real32)), TypeIDs::real32_id },
       { std::type_index( typeid(real64)), TypeIDs::real64_id },
       { std::type_index( typeid(R1Tensor)), TypeIDs::r1Tensor_id },
-      { std::type_index( typeid(VoigtTensor)), TypeIDs::voightTensor_id },
+      { std::type_index( typeid(VoigtTensor)), TypeIDs::voigtTensor_id },
       { std::type_index( typeid(integer_array)), TypeIDs::integer_array_id },
       { std::type_index( typeid(localIndex_array)), TypeIDs::localIndex_array_id },
       { std::type_index( typeid(globalIndex_array)), TypeIDs::globalIndex_array_id },
@@ -734,7 +736,10 @@ private:
     string rs = "[^,\\{\\}]*";
 
     // Regex to match a R1Tensor
-    string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
+    string r1 = "\\s*\\{\\s*(" + rr + ",\\s*){2}" + rr + "\\s*\\}";
+
+    // Regex to match a VoigtTensor
+    string vt = "\\s*\\{\\s*(" + rr + ",\\s*){5}" + rr + "\\s*\\}";
 
     // Build master list of regexes
     regexMapType regexMap =
@@ -745,7 +750,7 @@ private:
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
-      {"VoightTensor", constructArrayRegex( ri, 1 )},
+      {"VoigtTensor", vt},
       {"integer_array", constructArrayRegex( ri, 1 )},
       {"localIndex_array", constructArrayRegex( ri, 1 )},
       {"globalIndex_array", constructArrayRegex( ri, 1 )},

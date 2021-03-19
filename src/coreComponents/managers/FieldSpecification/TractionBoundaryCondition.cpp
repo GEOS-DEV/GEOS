@@ -13,7 +13,7 @@
  */
 
 /**
- * @file TractionBoundaryCondition.hpp
+ * @file TractionBoundaryCondition.cpp
  */
 
 #include "TractionBoundaryCondition.hpp"
@@ -34,7 +34,8 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 //  m_stressFunctions{nullptr}
 {
   registerWrapper( viewKeyStruct::tractionTypeString(), &m_tractionType ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Type of traction boundary condition. Options are:\n"
                     "0 - Traction is applied to the faces as specified from the scale and direction,\n"
@@ -101,7 +102,6 @@ void TractionBoundaryCondition::launch( real64 const time,
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   FunctionManager const & functionManager = getGlobalState().getFunctionManager();
 
   string const & functionName = this->getFunctionName();
