@@ -22,7 +22,6 @@
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/GeosxState.hpp"
 
-
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
@@ -31,84 +30,95 @@ using namespace geosx;
 using namespace geosx::testing;
 using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
+using namespace geosx::constitutive::PVTProps;
 
 /// Black-oil tables written into temporary files during testing
 
-static const char * pvtg_str = "#\tPg(Pa)\t\tRv(sm3/sm3)\tBg(m3/sm3)\tVisc(Pa.s)\n"
-                               "\n"
-                               "\t3000000\t\t0.000132\t0.04234\t    0.00001344\n"
-                               "\t\t\t\t0\t\t\t0.04231\t    0.00001389\n"
-                               "\t6000000\t\t0.000124\t0.02046\t    0.0000142\n"
-                               "\t\t\t\t0\t\t\t0.02043\t    0.0000145\n"
-                               "\t9000000\t\t0.000126\t0.01328\t    0.00001526\n"
-                               "\t\t\t\t0\t\t\t0.01325\t    0.00001532\n"
-                               "   12000000\t\t0.000135\t0.00977\t    0.0000166\n"
-                               "\t\t\t\t0\t\t\t0.00973\t    0.00001634\n"
-                               "   15000000\t\t0.000149\t0.00773\t    0.00001818\n"
-                               "\t\t\t\t0\t\t\t0.00769\t    0.00001752\n"
-                               "   18000000\t\t0.000163\t0.006426\t0.00001994\n"
-                               "\t\t\t\t0\t\t\t0.006405\t0.00001883\n"
-                               "   21000000\t\t0.000191\t0.005541\t0.00002181\n"
-                               "\t\t\t\t0\t\t\t0.005553\t0.00002021\n"
-                               "   24000000\t\t0.000225\t0.004919\t0.0000237\n"
-                               "\t\t\t\t0\t\t\t0.004952\t0.00002163\n"
-                               "   27000000\t\t0.000272\t0.004471\t0.00002559\n"
-                               "\t\t\t\t0\t\t\t0.004511\t0.00002305\n"
-                               "   29500000\t\t0.000354\t0.004194\t0.00002714\n"
-                               "\t\t\t\t0\t\t\t0.004225\t0.00002423\n"
-                               "   31000000\t\t0.000403\t0.004031\t0.00002806\n"
-                               "\t\t\t\t0.000354\t0.004059\t0.00002768\n"
-                               "   33000000\t\t0.000354\t0.00391\t    0.00002832\n"
-                               "\t\t\t\t0\t\t\t0.003913\t0.00002583\n"
-                               "   53000000\t\t0.000479\t0.003868\t0.00002935\n"
-                               "\t\t\t\t0.000354\t0.0039\t\t0.00002842\n"
-                               "\t\t\t\t0\t\t\t0.003903\t0.00002593";
+static const char * pvtgTableContent = "#\tPg(Pa)\t\tRv(sm3/sm3)\tBg(m3/sm3)\tVisc(Pa.s)\n"
+                                       "\n"
+                                       "\t3000000\t\t0.000132\t0.04234\t    0.00001344\n"
+                                       "\t\t\t\t0\t\t\t0.04231\t    0.00001389\n"
+                                       "\t6000000\t\t0.000124\t0.02046\t    0.0000142\n"
+                                       "\t\t\t\t0\t\t\t0.02043\t    0.0000145\n"
+                                       "\t9000000\t\t0.000126\t0.01328\t    0.00001526\n"
+                                       "\t\t\t\t0\t\t\t0.01325\t    0.00001532\n"
+                                       "   12000000\t\t0.000135\t0.00977\t    0.0000166\n"
+                                       "\t\t\t\t0\t\t\t0.00973\t    0.00001634\n"
+                                       "   15000000\t\t0.000149\t0.00773\t    0.00001818\n"
+                                       "\t\t\t\t0\t\t\t0.00769\t    0.00001752\n"
+                                       "   18000000\t\t0.000163\t0.006426\t0.00001994\n"
+                                       "\t\t\t\t0\t\t\t0.006405\t0.00001883\n"
+                                       "   21000000\t\t0.000191\t0.005541\t0.00002181\n"
+                                       "\t\t\t\t0\t\t\t0.005553\t0.00002021\n"
+                                       "   24000000\t\t0.000225\t0.004919\t0.0000237\n"
+                                       "\t\t\t\t0\t\t\t0.004952\t0.00002163\n"
+                                       "   27000000\t\t0.000272\t0.004471\t0.00002559\n"
+                                       "\t\t\t\t0\t\t\t0.004511\t0.00002305\n"
+                                       "   29500000\t\t0.000354\t0.004194\t0.00002714\n"
+                                       "\t\t\t\t0\t\t\t0.004225\t0.00002423\n"
+                                       "   31000000\t\t0.000403\t0.004031\t0.00002806\n"
+                                       "\t\t\t\t0.000354\t0.004059\t0.00002768\n"
+                                       "   33000000\t\t0.000354\t0.00391\t    0.00002832\n"
+                                       "\t\t\t\t0\t\t\t0.003913\t0.00002583\n"
+                                       "   53000000\t\t0.000479\t0.003868\t0.00002935\n"
+                                       "\t\t\t\t0.000354\t0.0039\t\t0.00002842\n"
+                                       "\t\t\t\t0\t\t\t0.003903\t0.00002593";
 
-static const char * pvto_str = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
-                               "\n"
-                               "  2\t            2000000\t    1.02\t    0.000975\n"
-                               "  5\t            5000000\t    1.03\t    0.00091\n"
-                               " 10\t            10000000\t1.04\t    0.00083\n"
-                               " 15\t            20000000\t1.05\t    0.000695\n"
-                               "                90000000\t1.03\t    0.000985  -- some line comment\n"
-                               " 30\t            30000000\t1.07\t    0.000594\n"
-                               " 40\t            40000000\t1.08\t    0.00051\n"
-                               "                50000000\t1.07\t    0.000549  -- another one\n"
-                               "                90000000\t1.06\t    0.00074\n"
-                               " 50\t            50000000.7\t1.09\t    0.000449\n"
-                               "                90000000.7\t1.08\t    0.000605";
+static const char * pvtoTableContent = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
+                                       "\n"
+                                       "  2\t            2000000\t    1.02\t    0.000975\n"
+                                       "  5\t            5000000\t    1.03\t    0.00091\n"
+                                       " 10\t            10000000\t1.04\t    0.00083\n"
+                                       " 15\t            20000000\t1.05\t    0.000695\n"
+                                       "                90000000\t1.03\t    0.000985  -- some line comment\n"
+                                       " 30\t            30000000\t1.07\t    0.000594\n"
+                                       " 40\t            40000000\t1.08\t    0.00051\n"
+                                       "                50000000\t1.07\t    0.000549  -- another one\n"
+                                       "                90000000\t1.06\t    0.00074\n"
+                                       " 50\t            50000000.7\t1.09\t    0.000449\n"
+                                       "                90000000.7\t1.08\t    0.000605";
 
-static const char * pvtw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
-                               "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
+static const char * pvtwTableContent = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
+                                       "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
 
 /// Dead-oil tables written into temporary files during testing
 
-static const char * pvdg_str = "# Pg(Pa) Bg(m3/sm3) Visc(Pa.s)\n"
-                               "3000000  0.04234  0.00001344\n"
-                               "6000000  0.02046  0.0000142\n"
-                               "9000000  0.01328  0.00001526\n"
-                               "12000000 0.00977  0.0000166\n"
-                               "15000000 0.00773  0.00001818\n"
-                               "18000000 0.006426 0.00001994\n"
-                               "21000000 0.005541 0.00002181\n"
-                               "24000000 0.004919 0.0000237\n"
-                               "27000000 0.004471 0.00002559\n"
-                               "29500000 0.004194 0.00002714\n"
-                               "31000000 0.004031 0.00002806\n"
-                               "33000000 0.00391  0.00002832\n"
-                               "53000000 0.003868 0.00002935";
+static const char * pvdgTableContent = "# Pg(Pa) Bg(m3/sm3) Visc(Pa.s)\n"
+                                       "3000000  0.04234  0.00001344\n"
+                                       "6000000  0.02046  0.0000142\n"
+                                       "9000000  0.01328  0.00001526\n"
+                                       "12000000 0.00977  0.0000166\n"
+                                       "15000000 0.00773  0.00001818\n"
+                                       "18000000 0.006426 0.00001994\n"
+                                       "21000000 0.005541 0.00002181\n"
+                                       "24000000 0.004919 0.0000237\n"
+                                       "27000000 0.004471 0.00002559\n"
+                                       "29500000 0.004194 0.00002714\n"
+                                       "31000000 0.004031 0.00002806\n"
+                                       "33000000 0.00391  0.00002832\n"
+                                       "53000000 0.003868 0.00002935";
 
-static const char * pvdo_str = "#P[Pa] Bo[m3/sm3] Visc(Pa.s)\n"
-                               "2000000  1.02 0.000975\n"
-                               "5000000  1.03 0.00091\n"
-                               "10000000 1.04 0.00083\n"
-                               "20000000 1.05 0.000695\n"
-                               "30000000 1.07 0.000594\n"
-                               "40000000 1.08 0.00051\n"
-                               "50000000.7 1.09 0.000449";
+static const char * pvdoTableContent = "#P[Pa] Bo[m3/sm3] Visc(Pa.s)\n"
+                                       "2000000  1.02 0.000975\n"
+                                       "5000000  1.03 0.00091\n"
+                                       "10000000 1.04 0.00083\n"
+                                       "20000000 1.05 0.000695\n"
+                                       "30000000 1.07 0.000594\n"
+                                       "40000000 1.08 0.00051\n"
+                                       "50000000.7 1.09 0.000449";
 
-static const char * pvdw_str = "# Pref[bar] Bw[m3/sm3] Cp[1/bar]     Visc[cP]\n"
-                               " 30600000.1 1.03  0.00000000041 0.0003";
+static const char * pvdwTableContent = "# Pref[bar] Bw[m3/sm3] Cp[1/bar]     Visc[cP]\n"
+                                       " 30600000.1 1.03  0.00000000041 0.0003";
+
+// CO2-brine model
+
+static const char * pvtLiquidTableContent = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0.2\n"
+                                            "ViscosityFun BrineViscosity 0.1";
+
+static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1\n"
+                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 1";
+
+static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
 
 void testNumericalDerivatives( MultiFluidBase & fluid,
                                Group & parent,
@@ -116,6 +126,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                                real64 const T,
                                arraySlice1d< real64 > const & composition,
                                real64 const perturbParameter,
+                               bool usePVTPackage,
                                real64 const relTol,
                                real64 const absTol = std::numeric_limits< real64 >::max() )
 {
@@ -210,7 +221,6 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                        "Pres",
                        phases,
                        components );
-      std::cout << phaseDens.value << std::endl;
     }
 
     // update temperature and check derivatives
@@ -251,12 +261,25 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       }
       compNew[jc] += dC;
 
-      // renormalize
-      real64 sum = 0.0;
-      for( localIndex ic = 0; ic < NC; ++ic )
-        sum += compNew[ic];
-      for( localIndex ic = 0; ic < NC; ++ic )
-        compNew[ic] /= sum;
+      // Note: in PVTPackage, derivatives are obtained with finite-difference approx **with normalization of the comp fraction**
+      //       The component fraction is perturbed (just as above), and then all the component fractions are normalized (as below)
+      //       But, in the native DO model and in CO2Brine, derivatives are computed analytically, which results in different
+      //       derivatives wrt component fractions--although the derivatives wrt component densities obtained with the chain rule
+      //       in the solver will be very similar (see discussion on PR #1325 on GitHub).
+      //
+      //       Since both approaches--FD approximation of derivatives with normalization, and analytical derivatives--are correct,
+      //       we have to support both when we check the intermediate derivatives wrt component fractions below. Therefore, if the
+      //       PVTPackage is used, then we normalize the perturbed component fractions before taking the FD approx. If the native
+      //       DO or CO2-brine models are used, we skip the normalization below.
+      if( usePVTPackage )
+      {
+        // renormalize
+        real64 sum = 0.0;
+        for( localIndex ic = 0; ic < NC; ++ic )
+          sum += compNew[ic];
+        for( localIndex ic = 0; ic < NC; ++ic )
+          compNew[ic] /= sum;
+      }
 
       fluidWrapper.update( 0, 0, P, T, compNew );
 
@@ -269,6 +292,100 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                        "phaseCompFrac", var, phases, components );
     }
   } );
+}
+
+void testValuesAgainstPreviousImplementation( CO2BrineFluid::KernelWrapper const & wrapper,
+                                              real64 const P,
+                                              real64 const T,
+                                              arraySlice1d< real64 > const & composition,
+                                              real64 const & savedTotalDensity,
+                                              real64 const & savedGasPhaseFrac,
+                                              real64 const & savedWaterDens,
+                                              real64 const & savedGasDens,
+                                              real64 const & savedWaterMassDens,
+                                              real64 const & savedGasMassDens,
+                                              real64 const & savedWaterVisc,
+                                              real64 const & savedGasVisc,
+                                              real64 const & savedWaterPhaseGasComp,
+                                              real64 const & savedWaterPhaseWaterComp,
+                                              real64 const relTol )
+{
+  stackArray1d< real64, 2 > phaseFraction( 2 );
+  stackArray1d< real64, 2 > dPhaseFraction_dPressure( 2 );
+  stackArray1d< real64, 2 > dPhaseFraction_dTemperature( 2 );
+  stackArray2d< real64, 4 > dPhaseFraction_dGlobalCompFraction( 2, 2 );
+  stackArray1d< real64, 2 > phaseDensity( 2 );
+  stackArray1d< real64, 2 > dPhaseDensity_dPressure( 2 );
+  stackArray1d< real64, 2 > dPhaseDensity_dTemperature( 2 );
+  stackArray2d< real64, 4 > dPhaseDensity_dGlobalCompFraction( 2, 2 );
+  stackArray1d< real64, 2 > phaseMassDensity( 2 );
+  stackArray1d< real64, 2 > dPhaseMassDensity_dPressure( 2 );
+  stackArray1d< real64, 2 > dPhaseMassDensity_dTemperature( 2 );
+  stackArray2d< real64, 4 > dPhaseMassDensity_dGlobalCompFraction( 2, 2 );
+  stackArray1d< real64, 2 > phaseViscosity( 2 );
+  stackArray1d< real64, 2 > dPhaseViscosity_dPressure( 2 );
+  stackArray1d< real64, 2 > dPhaseViscosity_dTemperature( 2 );
+  stackArray2d< real64, 4 > dPhaseViscosity_dGlobalCompFraction( 2, 2 );
+  stackArray2d< real64, 4 > phaseCompFraction( 2, 2 );
+  stackArray2d< real64, 4 > dPhaseCompFraction_dPressure( 2, 2 );
+  stackArray2d< real64, 4 > dPhaseCompFraction_dTemperature( 2, 2 );
+  stackArray3d< real64, 8 > dPhaseCompFraction_dGlobalCompFraction( 2, 2, 2 );
+  real64 totalDensity = 0.0;
+  real64 dTotalDensity_dPressure = 0.0;
+  real64 dTotalDensity_dTemperature = 0.0;
+  stackArray1d< real64, 2 >  dTotalDensity_dGlobalCompFraction( 2 );
+
+  wrapper.compute( P, T, composition,
+                   phaseFraction,
+                   dPhaseFraction_dPressure,
+                   dPhaseFraction_dTemperature,
+                   dPhaseFraction_dGlobalCompFraction,
+                   phaseDensity,
+                   dPhaseDensity_dPressure,
+                   dPhaseDensity_dTemperature,
+                   dPhaseDensity_dGlobalCompFraction,
+                   phaseMassDensity,
+                   dPhaseMassDensity_dPressure,
+                   dPhaseMassDensity_dTemperature,
+                   dPhaseMassDensity_dGlobalCompFraction,
+                   phaseViscosity,
+                   dPhaseViscosity_dPressure,
+                   dPhaseViscosity_dTemperature,
+                   dPhaseViscosity_dGlobalCompFraction,
+                   phaseCompFraction,
+                   dPhaseCompFraction_dPressure,
+                   dPhaseCompFraction_dTemperature,
+                   dPhaseCompFraction_dGlobalCompFraction,
+                   totalDensity,
+                   dTotalDensity_dPressure,
+                   dTotalDensity_dTemperature,
+                   dTotalDensity_dGlobalCompFraction );
+
+  checkRelativeError( totalDensity, savedTotalDensity, relTol );
+  for( localIndex ip = 0; ip < 2; ++ip )
+  {
+    real64 const savedPhaseFrac = ( ip == 0 ) ? savedGasPhaseFrac : 1 - savedGasPhaseFrac;
+    checkRelativeError( phaseFraction[ip], savedPhaseFrac, relTol );
+    real64 const savedPhaseDens = ( ip == 0 ) ? savedGasDens : savedWaterDens;
+    checkRelativeError( phaseDensity[ip], savedPhaseDens, relTol );
+    real64 const savedPhaseMassDens = ( ip == 0 ) ? savedGasMassDens : savedWaterMassDens;
+    checkRelativeError( phaseMassDensity[ip], savedPhaseMassDens, relTol );
+    real64 const savedPhaseVisc = ( ip == 0 ) ? savedGasVisc : savedWaterVisc;
+    checkRelativeError( phaseViscosity[ip], savedPhaseVisc, relTol );
+    for( localIndex ic = 0; ic < 2; ++ic )
+    {
+      real64 savedCompFrac = 0.0;
+      if( ip == 0 )
+      {
+        savedCompFrac = ( ic == 0 ) ? 1 : 0;
+      }
+      else
+      {
+        savedCompFrac = ( ic == 0 ) ? savedWaterPhaseGasComp : savedWaterPhaseWaterComp;
+      }
+      checkRelativeError( phaseCompFraction[ip][ic], savedCompFrac, relTol );
+    }
+  }
 }
 
 MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
@@ -349,7 +466,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol );
 }
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMass )
@@ -365,7 +482,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-2;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol );
 }
 
 MultiFluidBase & makeLiveOilFluid( string const & name, Group * parent )
@@ -552,9 +669,9 @@ class LiveOilFluidTest : public CompositionalFluidTestBase
 public:
   LiveOilFluidTest()
   {
-    writeTableToFile( "pvto.txt", pvto_str );
-    writeTableToFile( "pvtg.txt", pvtg_str );
-    writeTableToFile( "pvtw.txt", pvtw_str );
+    writeTableToFile( "pvto.txt", pvtoTableContent );
+    writeTableToFile( "pvtg.txt", pvtgTableContent );
+    writeTableToFile( "pvtw.txt", pvtwTableContent );
 
     parent.resize( 1 );
     fluid = &makeLiveOilFluid( "fluid", &parent );
@@ -584,7 +701,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol );
 }
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMass )
@@ -601,7 +718,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol, absTol );
 }
 
 class DeadOilFluidTest : public CompositionalFluidTestBase
@@ -610,9 +727,9 @@ public:
 
   DeadOilFluidTest()
   {
-    writeTableToFile( "pvdo.txt", pvdo_str );
-    writeTableToFile( "pvdg.txt", pvdg_str );
-    writeTableToFile( "pvdw.txt", pvdw_str );
+    writeTableToFile( "pvdo.txt", pvdoTableContent );
+    writeTableToFile( "pvdg.txt", pvdgTableContent );
+    writeTableToFile( "pvdw.txt", pvdwTableContent );
 
     parent.resize( 1 );
     fluid = &makeDeadOilFluid( "fluid", &parent );
@@ -643,7 +760,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
 
   for( localIndex i = 0; i < 3; ++i )
   {
-    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, relTol );
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
   }
 }
 
@@ -662,7 +779,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
 
   for( localIndex i = 0; i < 3; ++i )
   {
-    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, relTol, absTol );
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol, absTol );
   }
 }
 
@@ -694,7 +811,235 @@ TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
 
   for( localIndex i = 0; i < 3; ++i )
   {
-    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, relTol );
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
+  }
+}
+
+MultiFluidBase & makeMultiPhaseMultiComponentFluid( string const & name, Group * parent )
+{
+  CO2BrineFluid & fluid = parent->registerGroup< CO2BrineFluid >( name );
+
+  auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+  compNames.resize( 2 );
+  compNames[0] = "co2"; compNames[1] = "water";
+
+  auto & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
+  molarWgt.resize( 2 );
+  molarWgt[0] = 44e-3; molarWgt[1] = 18e-3;
+
+  auto & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 2 );
+  phaseNames[0] = "gas"; phaseNames[1] = "liquid";
+
+  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrineFluid::viewKeyStruct::phasePVTParaFilesString() );
+  phasePVTParaFileNames.resize( 2 );
+  phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
+
+  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrineFluid::viewKeyStruct::flashModelParaFileString() );
+  flashModelParaFileName = "co2flash.txt";
+
+  fluid.postProcessInputRecursive();
+  return fluid;
+}
+
+class MultiPhaseMultiComponentFluidTest : public CompositionalFluidTestBase
+{
+protected:
+
+  MultiPhaseMultiComponentFluidTest()
+  {
+    writeTableToFile( "pvtliquid.txt", pvtLiquidTableContent );
+    writeTableToFile( "pvtgas.txt", pvtGasTableContent );
+    writeTableToFile( "co2flash.txt", co2FlashTableContent );
+
+    parent.resize( 1 );
+    fluid = &makeMultiPhaseMultiComponentFluid( "fluid", &parent );
+
+    parent.initialize();
+    parent.initializePostInitialConditions();
+  }
+
+  ~MultiPhaseMultiComponentFluidTest()
+  {
+    removeFile( "pvtliquid.txt" );
+    removeFile( "pvtgas.txt" );
+    removeFile( "co2flash.txt" );
+  }
+
+};
+
+
+TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMolar )
+{
+  fluid->setMassFlag( false );
+
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const relTol = 1e-10;
+
+  fluid->allocateConstitutiveData( fluid->getParent(), 1 );
+
+  CO2BrineFluid::KernelWrapper wrapper =
+    dynamicCast< CO2BrineFluid * >( fluid )->createKernelWrapper();
+
+  real64 const savedTotalDens[] =
+  { 5881.8128183956969224, 5869.522096458530541, 5854.9469601674582009, 9180.9455320478591602, 9157.2045503913905122, 9129.1751063784995495, 15755.475565136142905, 15696.691553847707837,
+    15627.990771463533747 };
+  real64 const savedGasPhaseFrac[] =
+  { 0.29413690046142371148, 0.29415754810481165027, 0.29418169867697463449, 0.29194010802017489326, 0.29196434961986583723, 0.29199266189550621142, 0.2890641335638892695, 0.28908718137828937067,
+    0.28911404840933618843 };
+  real64 const savedWaterDens[] =
+  { 53286.457784368176362, 53264.389103437584708, 53237.751306267287873, 53229.257940878436784, 53207.597127679167897, 53181.436584967217641, 53197.49848403003125, 53176.033397316634364,
+    53150.105086882285832 };
+  real64 const savedGasDens[] =
+  { 1876.2436091302606656, 1872.184636376355229, 1867.3711104617746059, 3053.1548401973859654, 3044.5748249030266379, 3034.4507978134674886, 5769.0622621289458039, 5742.8476745352018042,
+    5712.2837704249559465 };
+  real64 const savedWaterMassDens[] =
+  { 970.85108546544745423, 970.4075834766143771, 969.87385780866463847, 974.23383396044232541, 973.78856424100911227, 973.25280170872576946, 979.48333010951580491, 979.04147229150635212,
+    978.50977403260912979 };
+  real64 const savedGasMassDens[] =
+  { 82.554718801731468147, 82.376124000559627802, 82.164328860318079251, 134.33881296868497657, 133.96129229573315911, 133.51583510379256836, 253.83873953367358922, 252.68529767954885301,
+    251.34048589869803436 };
+  real64 const savedWaterVisc[] =
+  { 0.00090094759910161340347, 0.00090096652240945261734, 0.00090098923037885969567, 0.00090094759910161340347, 0.00090096652240945261734, 0.00090098923037885969567, 0.00090094759910161340347,
+    0.00090096652240945261734, 0.00090098923037885969567 };
+  real64 const savedGasVisc[] =
+  { 1.9042384704865343673e-05, 1.9062615947696152414e-05, 1.9086923154230274463e-05, 2.0061713844617985449e-05, 2.0075955757102255573e-05, 2.0093249989250199265e-05, 2.3889596884008691474e-05,
+    2.3865756080512667728e-05, 2.3839170076324036522e-05  };
+  real64 const savedWaterPhaseGasComp[] =
+  { 0.0083062842389820552153, 0.008277274736736653718, 0.0082433415400525456018, 0.011383065290266058955, 0.011349217198060387521, 0.011309682362800700661, 0.015382352969377973903,
+    0.015350431636424789056, 0.015313218057419366105  };
+  real64 const savedWaterPhaseWaterComp[] =
+  { 0.99169371576101794652, 0.9917227252632633272, 0.99175665845994742664, 0.98861693470973388553, 0.98865078280193963156, 0.98869031763719927852, 0.98461764703062204518, 0.98464956836357520054,
+    0.98468678194258063563 };
+
+  localIndex counter = 0;
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testValuesAgainstPreviousImplementation( wrapper,
+                                               P[i], T[j], comp,
+                                               savedTotalDens[counter], savedGasPhaseFrac[counter],
+                                               savedWaterDens[counter], savedGasDens[counter],
+                                               savedWaterMassDens[counter], savedGasMassDens[counter],
+                                               savedWaterVisc[counter], savedGasVisc[counter],
+                                               savedWaterPhaseGasComp[counter], savedWaterPhaseWaterComp[counter],
+                                               relTol );
+      counter++;
+    }
+  }
+}
+
+TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMass )
+{
+  fluid->setMassFlag( true );
+
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const relTol = 1e-10;
+
+  fluid->allocateConstitutiveData( fluid->getParent(), 1 );
+
+  CO2BrineFluid::KernelWrapper wrapper =
+    dynamicCast< CO2BrineFluid * >( fluid )->createKernelWrapper();
+
+  real64 const savedTotalDens[] =
+  { 238.33977561940088208, 237.86350488026934613, 237.29874890241927687, 354.01144731214282046, 353.18618684355078585, 352.21120673560858449, 550.02182875764299297, 548.3889751707506548,
+    546.47580480217254717 };
+  real64 const savedGasPhaseFrac[] =
+  { 0.28562868803317220667, 0.28567941665326646028, 0.285738749802139258, 0.28022484140718162404, 0.2802844989853667812, 0.28035417162546172332, 0.2731355646393489045, 0.27319238868618361815,
+    0.2732586251114847431 };
+  real64 const savedWaterDens[] =
+  { 970.85108546544745423, 970.4075834766143771, 969.87385780866463847, 974.23383396044232541, 973.78856424100911227, 973.25280170872576946, 979.48333010951580491, 979.04147229150635212,
+    978.50977403260912979 };
+  real64 const savedGasDens[] =
+  { 82.554718801731468147, 82.376124000559627802, 82.164328860318079251, 134.33881296868497657, 133.96129229573315911, 133.51583510379256836, 253.83873953367358922, 252.68529767954885301,
+    251.34048589869803436 };
+  real64 const savedWaterMassDens[] =
+  { 970.85108546544745423, 970.4075834766143771, 969.87385780866463847, 974.23383396044232541, 973.78856424100911227, 973.25280170872576946, 979.48333010951580491, 979.04147229150635212,
+    978.50977403260912979 };
+  real64 const savedGasMassDens[] =
+  { 82.554718801731468147, 82.376124000559627802, 82.164328860318079251, 134.33881296868497657, 133.96129229573315911, 133.51583510379256836, 253.83873953367358922, 252.68529767954885301,
+    251.34048589869803436 };
+  real64 const savedWaterVisc[] =
+  { 0.00090094759910161340347, 0.00090096652240945261734, 0.00090098923037885969567, 0.00090094759910161340347, 0.00090096652240945261734, 0.00090098923037885969567, 0.00090094759910161340347,
+    0.00090096652240945261734, 0.00090098923037885969567 };
+  real64 const savedGasVisc[] =
+  { 1.9042384704865343673e-05, 1.9062615947696152414e-05, 1.9086923154230274463e-05, 2.0061713844617985449e-05, 2.0075955757102255573e-05, 2.0093249989250199265e-05, 2.3889596884008691474e-05,
+    2.3865756080512667728e-05, 2.3839170076324036522e-05  };
+  real64 const savedWaterPhaseGasComp[] =
+  { 0.02005966592318779787, 0.019990461277537684842, 0.019909503061226688919, 0.027365230280837819082, 0.027285226317914228894, 0.027191770514265831832, 0.036759501299346700187,
+    0.036684965747010883641, 0.036598063202886929601 };
+  real64 const savedWaterPhaseWaterComp[] =
+  { 0.9797478006656266114, 0.97981828292617156873, 0.97990072673671935188, 0.97227194517798976037, 0.97235397979974458327, 0.97244979317916002692, 0.9625743441996873484, 0.9626514061444874093,
+    0.962741233539301966 };
+
+  localIndex counter = 0;
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testValuesAgainstPreviousImplementation( wrapper,
+                                               P[i], T[j], comp,
+                                               savedTotalDens[counter], savedGasPhaseFrac[counter],
+                                               savedWaterDens[counter], savedGasDens[counter],
+                                               savedWaterMassDens[counter], savedGasMassDens[counter],
+                                               savedWaterVisc[counter], savedGasVisc[counter],
+                                               savedWaterPhaseGasComp[counter], savedWaterPhaseWaterComp[counter],
+                                               relTol );
+      counter++;
+    }
+  }
+}
+
+TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMolar )
+{
+  fluid->setMassFlag( false );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-4;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
+    }
+  }
+}
+
+TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMass )
+{
+  fluid->setMassFlag( true );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-8;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
+    }
   }
 }
 
