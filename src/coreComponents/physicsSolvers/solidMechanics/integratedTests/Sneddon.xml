@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
       targetRegions="{ Domain, Fracture }"
@@ -53,10 +53,10 @@
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="0, 1, 0"
-      origin="1.5, 1.5, 1.5"
-      lengthVector="1, 0, 0"
-      widthVector="0, 0, 1"
+      normal="{0, 1, 0}"
+      origin="{1.5, 1.5, 1.5}"
+      lengthVector="{1, 0, 0}"
+      widthVector="{0, 0, 1}"
       dimensions="{ 1.1, 4 }"/>
   </Geometry>
 

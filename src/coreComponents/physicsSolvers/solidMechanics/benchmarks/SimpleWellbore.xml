@@ -3,7 +3,7 @@
 <Problem>
   <!-- SPHINX_Gravity -->
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <!-- SPHINX_GravityEnd -->
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE
@@ -46,13 +46,13 @@
   <Geometry>
     <Box
       name="xConstraint"
-      xMin="-0.01, -1e9, -1e9"
-      xMax=" 0.01,  1e9,  1e9"/>
+      xMin="{-0.01, -1e9, -1e9}"
+      xMax="{ 0.01,  1e9,  1e9}"/>
 
     <Box
       name="yConstraint"
-      xMin="-1e9, -0.01, -1e9"
-      xMax=" 1e9,  0.01,  1e9"/>
+      xMin="{-1e9, -0.01, -1e9}"
+      xMax="{ 1e9,  0.01,  1e9}"/>
   </Geometry>
   
 

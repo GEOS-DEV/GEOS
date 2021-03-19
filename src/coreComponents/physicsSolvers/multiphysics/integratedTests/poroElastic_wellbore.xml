@@ -182,7 +182,7 @@ Example: it works well if xCoord="{ 1, 2 }"
 	</Outputs>
 
 	<!--Solvers-->
-	<Solvers gravityVector="0.0, 0.0, 0.0">
+	<Solvers gravityVector="{0.0, 0.0, 0.0}">
     <Poroelastic
       name="poroSolve"
       solidSolverName="lagsolve"

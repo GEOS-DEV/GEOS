@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <PoroelasticEmbeddedFractures
       name = "poroSolver"
       targetRegions="{Domain, Fracture}"
@@ -68,10 +68,10 @@
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="1, 0, 0"
-      origin="1.5, 1.5, 1.5"
-      lengthVector="0, 1, 0"
-      widthVector="0, 0, 1"
+      normal="{1, 0, 0}"
+      origin="{1.5, 1.5, 1.5}"
+      lengthVector="{0, 1, 0}"
+      widthVector="{0, 0, 1}"
       dimensions="{3,  4 }"/>
   </Geometry>
 
