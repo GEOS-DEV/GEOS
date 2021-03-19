@@ -310,7 +310,7 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
 
   arrayView1d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
 
-  for( localIndex ircv = 0; ircv < receiverConstants.size( 0 ); ++ircv )
+  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
   {
     if( receiverIsLocal[ircv] == 1 )
     {
@@ -319,15 +319,21 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
       {
         p_rcvs[ircv] += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
       }
+    }
+  } );
 
-      if( this->m_outputSismoTrace == 1 )
+  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+  {
+    if( this->m_outputSismoTrace == 1 )
+    {
+      if( receiverIsLocal[ircv] == 1 )
       {
         char filename[50];
         sprintf( filename, "sismoTraceReceiver%0ld.txt", ircv );
         this->saveSismo( isismo, p_rcvs[ircv], filename );
       }
     }
-  }
+  } );
 }
 
 /// Use for now until we get the same functionality in TimeHistory
