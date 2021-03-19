@@ -5,12 +5,12 @@
 	</xsd:annotation>
 	<xsd:simpleType name="R1Tensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="VoightTensor">
+	<xsd:simpleType name="VoigtTensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_dataRepository_PlotLevel">
@@ -100,12 +100,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="r1_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*((\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\},\s*)*\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\})?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r1_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*((\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\},\s*)*\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\})?\s*\},\s*)*\{\s*((\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\},\s*)*\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\})?\s*\}\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -305,7 +305,7 @@
 		<!--component => Component of field (if tensor) to apply boundary condition to-->
 		<xsd:attribute name="component" type="integer" default="0" />
 		<!--direction => Direction to apply boundary condition to-->
-		<xsd:attribute name="direction" type="R1Tensor" default="0,0,0" />
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => time at which bc will stop being applied-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
@@ -331,7 +331,7 @@
 		<!--component => Component of field (if tensor) to apply boundary condition to-->
 		<xsd:attribute name="component" type="integer" default="0" />
 		<!--direction => Direction to apply boundary condition to-->
-		<xsd:attribute name="direction" type="R1Tensor" default="0,0,0" />
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => time at which bc will stop being applied-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
@@ -357,7 +357,7 @@
 		<!--component => Component of field (if tensor) to apply boundary condition to-->
 		<xsd:attribute name="component" type="integer" default="0" />
 		<!--direction => Direction to apply boundary condition to-->
-		<xsd:attribute name="direction" type="R1Tensor" default="0,0,0" />
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => time at which bc will stop being applied-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
@@ -381,7 +381,7 @@
 		<!--beginTime => time at which BC will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--direction => Direction to apply boundary condition to-->
-		<xsd:attribute name="direction" type="R1Tensor" default="0,0,0" />
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => time at which bc will stop being applied-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--functionName => Name of function that specifies variation of the BC-->
@@ -390,7 +390,7 @@
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--inputStress => Input stress for tractionType option 2.
 -->
-		<xsd:attribute name="inputStress" type="VoigtTensor" default="0,0,0,0,0,0" />
+		<xsd:attribute name="inputStress" type="VoigtTensor" default="{0,0,0,0,0,0}" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of BC.-->
@@ -401,7 +401,7 @@
 0 - Traction is applied to the faces as specified from the scale and direction,
 1 - Traction is applied to the faces as a pressure specified from the product of scale and the outward face normal, 
 2 - Traction is applied to the faces as specified by the inner product of input stress and face normal.-->
-		<xsd:attribute name="tractionType" type="integer" use="required" />
+		<xsd:attribute name="tractionType" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -959,7 +959,7 @@ the relative residual norm satisfies:
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 		</xsd:choice>
 		<!--gravityVector => Gravity vector used in the physics solvers-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" default="0,0,-9.81" />
+		<xsd:attribute name="gravityVector" type="R1Tensor" default="{0,0,-9.81}" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
