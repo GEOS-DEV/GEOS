@@ -64,6 +64,13 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
+.. _XML_CO2BrineFluid:
+
+Element: CO2BrineFluid
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/CO2BrineFluid.rst
+
+
 .. _XML_CellElementRegion:
 
 Element: CellElementRegion
@@ -370,13 +377,6 @@ Element: LinearSolverParameters
 Element: Mesh
 =============
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
-
-
-.. _XML_MultiPhaseMultiComponentFluid:
-
-Element: MultiPhaseMultiComponentFluid
-======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
 
 
 .. _XML_MultiphasePoroelastic:
@@ -824,6 +824,13 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_CO2BrineFluid:
+
+Datastructure: CO2BrineFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/CO2BrineFluid_other.rst
+
+
 .. _DATASTRUCTURE_CellElementRegion:
 
 Datastructure: CellElementRegion
@@ -1158,13 +1165,6 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
-
-
-.. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
-
-Datastructure: MultiPhaseMultiComponentFluid
-============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
 
 
 .. _DATASTRUCTURE_MultiphasePoroelastic:
