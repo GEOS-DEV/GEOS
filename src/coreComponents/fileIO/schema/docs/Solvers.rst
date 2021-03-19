@@ -14,6 +14,7 @@ Hydrofracture                    node               :ref:`XML_Hydrofracture`
 LagrangianContact                node               :ref:`XML_LagrangianContact`                
 LagrangianContactWithFlow        node               :ref:`XML_LagrangianContactWithFlow`        
 LaplaceFEM                       node               :ref:`XML_LaplaceFEM`                       
+MultiphasePoroelastic            node               :ref:`XML_MultiphasePoroelastic`            
 PhaseFieldDamageFEM              node               :ref:`XML_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node               :ref:`XML_PhaseFieldFracture`               
 Poroelastic                      node               :ref:`XML_Poroelastic`                      

@@ -149,7 +149,21 @@ struct LinearSolverParameters
   /// Multigrid reduction parameters
   struct MGR
   {
-    string strategy;                    ///< Predefined MGR solution strategy (solver specific)
+    /**
+     * @brief MGR available strategies
+     */
+    enum class StrategyType : integer
+    {
+      compositionalMultiphaseFVM,       ///< finite volume compositional muliphase flow
+      compositionalMultiphaseHybridFVM, ///< hybrid finite volume compositional muliphase flow
+      compositionalMultiphaseReservoir, ///< reservoir with finite volume compositional multiphase flow
+      hydrofracture,                    ///< hydrofracture
+      lagrangianContactMechanics,       ///< Lagrangian contact mechanics
+      singlePhasePoroelastic,           ///< single phase poroelastic with finite volume single phase flow
+      hybridSinglePhasePoroelastic      ///< single phase poroelastic with hybrid finite volume single phase flow
+    };
+
+    StrategyType strategy;              ///< Predefined MGR solution strategy (solver specific)
     integer separateComponents = false; ///< Apply a separate displacement component (SDC) filter before AMG construction
     string displacementFieldName;       ///< Displacement field name need for SDC filter
   }
@@ -204,6 +218,15 @@ ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
 ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
               "none",
               "mc64" )
+
+ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
+              "compositionalMultiphaseFVM",
+              "compositionalMultiphaseHybridFVM",
+              "compositionalMultiphaseReservoir",
+              "hydrofracture",
+              "lagrangianContactMechanics",
+              "singlePhasePoroelastic",
+              "hybridSinglePhasePoroelastic" )
 
 } /* namespace geosx */
 
