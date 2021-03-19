@@ -200,7 +200,7 @@ The hardening law describes evolution of the preconsolidation pressure :math:`p_
 .. math::
   \dot{p_c} = - \frac{tr(\dot{\boldsymbol{\epsilon}}^p)}{c_c-c_r} p_c,
 
-where :math:`c_c` is the virgin compressibility index and we have :math:` 0 < c_r < c_c`.
+where :math:`c_c` is the virgin compressibility index and we have :math:`0 < c_r < c_c`.
 
 Parameters
 ~~~~~~~~~~~~~~~~
