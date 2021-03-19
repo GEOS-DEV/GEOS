@@ -8,7 +8,7 @@ Two-invariant plasticity solid models
 =========================================
 Overview
 -----------------
-According to the `theory of plasticity  <https://en.wikipedia.org/wiki/Flow_plasticity_theory>`__, total strain :math:`\boldsymbol{\epsilon}` can be additively split into elastic (:math:`\boldsymbol{\epsilon}^e`) and plastic :math:`\boldsymbol{\epsilon}^p`) strains:
+According to the `theory of plasticity  <https://en.wikipedia.org/wiki/Flow_plasticity_theory>`__, total strain :math:`\boldsymbol{\epsilon}` can be additively split into elastic (:math:`\boldsymbol{\epsilon}^e`) and plastic (:math:`\boldsymbol{\epsilon}^p`) strains:
 
 .. math::
    \boldsymbol{\epsilon} = \boldsymbol{\epsilon}^e + \boldsymbol{\epsilon}^p.
