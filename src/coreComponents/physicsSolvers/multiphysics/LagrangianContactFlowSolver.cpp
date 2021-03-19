@@ -78,10 +78,12 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 
+  /*
   m_linearSolverParameters.get().mgr.strategy = "LagrangianContactMechanicsFlow";
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
   m_linearSolverParameters.get().dofsPerNode = 3;
+  */
 }
 
 void LagrangianContactFlowSolver::registerDataOnMesh( Group & )
