@@ -9,7 +9,9 @@
       strainFunction="strainFunction"
       stressFunction="stressFunction"
       steps="50" 
-      output="output.txt" />
+      output="none"
+      baseline="testTriaxial_elasticIsotropic.txt"
+      logLevel="1" />
   </Tasks>
 
   <Events
@@ -34,13 +36,13 @@
     <TableFunction
       name="strainFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 3.0, 4.0 }"
-      values="{ 0, -0.003, -0.002 }"/>
+      coordinates="{ 0.0, 3.0, 4.0, 7.0, 8.0 }"
+      values="{ 0, -0.003, -0.002, -0.005, -0.004 }"/>
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 3.0, 4.0 }"
-      values="{ -1.0, -1.0, -1.0 }"/>
+      coordinates="{ 0.0, 8.0  }"
+      values="{ -1.0, -1.0 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->

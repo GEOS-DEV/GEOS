@@ -18,8 +18,6 @@
 
 #include "TriaxialDriver.hpp"
 
-#include "managers/ProblemManager.hpp"
-
 namespace geosx
 {
 using namespace dataRepository;
@@ -155,7 +153,7 @@ bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
   // depending on logLevel, print some useful info
 
-  if( this->getLogLevel() > 0 )
+  if( getLogLevel() > 0 )
   {
     GEOSX_LOG_RANK_0( "Launching Triaxial Driver" );
     GEOSX_LOG_RANK_0( "  Material .......... " << m_solidMaterialName );
@@ -240,7 +238,7 @@ void TriaxialDriver::outputResults()
   {
     for( localIndex col=0; col<m_numColumns; ++col )
     {
-      fprintf( fp, "%.3e ", m_table( n, col ) );
+      fprintf( fp, "%.4e ", m_table( n, col ) );
     }
     fprintf( fp, "\n" );
   }
@@ -249,7 +247,60 @@ void TriaxialDriver::outputResults()
 
 
 void TriaxialDriver::compareWithBaseline()
-{}
+{
+  // open baseline file
+
+  std::ifstream file( m_baselineFile.c_str() );
+  GEOSX_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+
+  // discard file header
+
+  string line;
+  for( localIndex row=0; row < m_numColumns; ++row )
+  {
+    getline( file, line );
+  }
+
+  // read data block.  we assume the file size is consistent with m_table,
+  // but check for a premature end-of-file. we then compare results value by value.
+  // we ignore the newton iteration and residual columns, as those may be platform
+  // specific.
+
+  real64 value;
+  real64 error;
+
+  for( localIndex row=0; row < m_table.size( 0 ); ++row )
+  {
+    for( localIndex col=0; col < m_table.size( 1 ); ++col )
+    {
+      GEOSX_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      file >> value;
+
+      if( col < ITER ) // only compare "real" data columns
+      {
+        error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
+        GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+                                                                                            << " (row " << row+10 << " with header)"
+                                                                                            << " and column " << col+1, std::runtime_error );
+      }
+    }
+  }
+
+  // check we actually reached the end of the baseline file
+
+  file >> value;
+  GEOSX_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+
+  // success
+
+  if( getLogLevel() > 0 )
+  {
+    GEOSX_LOG_RANK_0( "  Comparison ........ Internal results consistent with baseline." );
+  }
+
+  file.close();
+}
+
 
 REGISTER_CATALOG_ENTRY( TaskBase,
                         TriaxialDriver,

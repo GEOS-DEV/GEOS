@@ -9,9 +9,9 @@
       strainFunction="strainFunction"
       stressFunction="stressFunction"
       steps="40" 
-      output="output.txt" 
+      output="none" 
       baseline="testTriaxial_druckerPragerExtended.txt" 
-      logLevel="2" />
+      logLevel="1" />
   </Tasks>
 
   <Events

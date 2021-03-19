@@ -16,16 +16,16 @@
  * @file TriaxialDriver.hpp
  */
 
-#ifndef SRC_COMPONENTS_TASKS_TRIAXIALDRIVER_HPP_
-#define SRC_COMPONENTS_TASKS_TRIAXIALDRIVER_HPP_
+#ifndef SRC_CORECOMPONENTS_TASKS_TRIAXIALDRIVER_HPP_
+#define SRC_CORECOMPONENTS_TASKS_TRIAXIALDRIVER_HPP_
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/TableFunction.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/Tasks/TaskBase.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
@@ -113,6 +113,10 @@ private:
 
   static localIndex const m_numColumns = 9; ///< Number of columns in data table
   enum columnKeys { TIME, EPS0, EPS1, EPS2, SIG0, SIG1, SIG2, ITER, NORM }; ///< Enumeration of column keys
+
+  static constexpr localIndex m_maxIter = 25;
+  static constexpr real64 m_newtonTol = 1e-6;
+  static constexpr real64 m_baselineTol = 1e-3;
 };
 
 
@@ -163,17 +167,16 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
-      localIndex const maxIter = 25;   // max Newton iterations
-      real64 norm = 1e30;
+      real64 norm;
       localIndex k = 0;
 
-      for(; k<maxIter; ++k )
+      for(; k<m_maxIter; ++k )
       {
         updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
 
         norm = fabs( stress[1]-table( n, SIG1 ) )/(fabs( table( n, SIG1 ) )+1);
 
-        if( norm < 1e-5 )
+        if( norm < m_newtonTol )
         {
           break;
         }
@@ -197,7 +200,6 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
 }
 
 
-
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_TASKS_TRIAXIALDRIVER_HPP_ */
+#endif /* SRC_CORECOMPONENTS_TASKS_TRIAXIALDRIVER_HPP_ */
