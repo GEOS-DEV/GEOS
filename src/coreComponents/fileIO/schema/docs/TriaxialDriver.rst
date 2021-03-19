@@ -8,7 +8,7 @@ logLevel       integer 0        Log level
 material       string  required Solid material to test                                          
 mode           string  required Test mode [triaxial, volumetric, oedometer]                     
 name           string  required A name is required for any non-unique nodes                     
-output         path    none     Output file                                                     
+output         string  none     Output file                                                     
 steps          integer required Number of load steps to take                                    
 strainFunction string  required Function controlling strain loading (role depends on test mode) 
 stressFunction string  required Function controlling stress loading (role depends on test mode) 

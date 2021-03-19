@@ -1630,7 +1630,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--mode => Test mode [triaxial, volumetric, oedometer]-->
 		<xsd:attribute name="mode" type="string" use="required" />
 		<!--output => Output file-->
-		<xsd:attribute name="output" type="path" default="none" />
+		<xsd:attribute name="output" type="string" default="none" />
 		<!--steps => Number of load steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--strainFunction => Function controlling strain loading (role depends on test mode)-->

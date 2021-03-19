@@ -38,7 +38,7 @@ using namespace constitutive;
 /**
  * @class TriaxialDriver
  *
- * Class to allow for triaxial tests of the solid constitutive models without the
+ * Class to allow for triaxial (and similar) tests of the solid constitutive models without the
  * complexity of setting up a single element test.
  *
  */
@@ -51,136 +51,40 @@ public:
 
   static string catalogName() { return "TriaxialDriver"; }
 
+  void postProcessInput() override;
+
   virtual bool execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                         real64 const GEOSX_UNUSED_PARAM( dt ),
                         integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override
-  {
-    GEOSX_THROW_IF( MpiWrapper::commRank() > 0,
-                    "Triaxial Driver should only be run in serial",
-                    std::runtime_error );
+                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
 
-    DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-    ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
-    SolidBase & solid = constitutiveManager.getGroup< SolidBase >( m_solidMaterialName );
+  /**
+   * @brief Run a strain-controlled test using loading protocol in table
+   * @param solid Solid constitutive model
+   * @param table Table with stress / strain time history
+   */
+  template< typename SOLID_TYPE >
+  void runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table );
 
-    if(this->getLogLevel() > 0)
-    {
-      GEOSX_LOG_RANK_0( "Launching Triaxial Driver" );
-      GEOSX_LOG_RANK_0( "  Material .......... " << m_solidMaterialName );
-      GEOSX_LOG_RANK_0( "  Type .............. " << solid.getCatalogName() );
-      GEOSX_LOG_RANK_0( "  Mode .............. " << m_mode );
-      GEOSX_LOG_RANK_0( "  Strain Function ... " << m_strainFunctionName );
-      GEOSX_LOG_RANK_0( "  Stress Function ... " << m_stressFunctionName );
-      GEOSX_LOG_RANK_0( "  Steps ............. " << m_numSteps );
-      GEOSX_LOG_RANK_0( "  Output ............ " << m_outputFilePath );
-    }
+  /**
+   * @brief Run a mixed stress/strain-controlled test using loading protocol in table
+   * @param solid Solid constitutive model
+   * @param table Table with stress / strain time history
+   */
+  template< typename SOLID_TYPE >
+  void runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table );
 
-    conduit::Node node;
-    dataRepository::Group rootGroup( "root", node );
-    dataRepository::Group discretization( "discretization", &rootGroup );
-
-    discretization.resize( 1 ); // one element
-    solid.allocateConstitutiveData( discretization, 1 ); // one quadrature point
-
-    ConstitutivePassThru< SolidBase >::execute( solid, [&]( auto & castedSolid )
-    {
-      using CONSTITUTIVE_TYPE = TYPEOFREF( castedSolid );
-      typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = castedSolid.createKernelUpdates();
-
-      constitutiveUpdate.m_oldStress( 0, 0, 0 ) = m_axialStress[0];
-      constitutiveUpdate.m_oldStress( 0, 0, 1 ) = m_radialStress[0];
-      constitutiveUpdate.m_oldStress( 0, 0, 2 ) = m_radialStress[0];
-
-      real64 stress[6] = {};
-      real64 strainIncrement[6] = {};
-      real64 stiffness[6][6] = {{}};
-
-
-      if( m_mode == "triaxial" )
-      {
-        localIndex const maxIter = 25; // max Newton iterations
-        for( localIndex n=1; n<m_time.size(); ++n )
-        {
-          strainIncrement[0] = m_axialStrain[n]-m_axialStrain[n-1];
-          strainIncrement[1] = 0;
-          strainIncrement[2] = 0;
-
-          GEOSX_LOG_RANK_0_IF(this->getLogLevel() > 1,"Timestep | Newton | Residual");
-          for( localIndex k=0; k<maxIter; ++k )
-          {
-            constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
-
-            real64 norm = fabs( stress[1]-m_radialStress[n] )/(fabs( m_radialStress[n] )+1);
-
-            char msg[50];
-            sprintf(msg,"%8ld   %6ld   %.2e",n,k,norm);
-            GEOSX_LOG_RANK_0_IF(this->getLogLevel() > 1,msg);
-
-            if( norm < 1e-5 )
-            {
-              break;
-            }
-            else
-            {
-              strainIncrement[1] -= (stress[1]-m_radialStress[n]) / (stiffness[1][1]+stiffness[1][2]);
-              strainIncrement[2] = strainIncrement[1];
-            }
-
-            if( k+1 == maxIter )
-            {
-              GEOSX_THROW( "No convergence within " << maxIter << " Newton iterations. " 
-                           << "Common causes include bad model params, overly large loadsteps, or no feasible solution at current load conditions.",
-                           std::runtime_error );
-            }
-          }
-          castedSolid.saveConvergedState();
-
-          m_axialStress[n] = stress[0];
-          m_radialStrain[n] = m_radialStrain[n-1]+strainIncrement[1];
-        }
-      }
-      else if( m_mode == "volumetric" || m_mode == "oedometer" )
-      {
-        for( localIndex n=1; n<m_time.size(); ++n )
-        {
-          strainIncrement[0] = m_axialStrain[n]-m_axialStrain[n-1];
-          strainIncrement[1] = m_radialStrain[n]-m_radialStrain[n-1];
-          strainIncrement[2] = strainIncrement[1];
-
-          constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
-          castedSolid.saveConvergedState();
-
-          m_axialStress[n] = stress[0];
-          m_radialStress[n] = stress[1];
-        }
-      }
-      else
-      {
-        GEOSX_THROW( "Test mode \'" << m_mode << "\' not recognized.", InputError );
-      }
-
-    } );
-
-    if(m_outputFilePath != "none")
-    {
-      outputResults();
-    }
-
-    if(m_baselineFilePath != "none")
-    {
-      compareWithBaseline();
-    }
-
-    return false;
-  }
-
-  void postProcessInput() override;
+  /**
+   * @brief Ouput table to file for easy plotting
+   */
   void outputResults();
-  void compareWithBaseline()
-  {};
+
+  /**
+   * @brief Read in a baseline table from file and compare with computed one (for unit testing purposes)
+   */
+  void compareWithBaseline();
 
 private:
 
@@ -198,20 +102,104 @@ private:
     constexpr static char const * baselineString() { return "baseline"; }
   };
 
-  string m_solidMaterialName; ///< Material identifier
-  string m_mode; ///< Test mode: triaxial, volumetric, oedometer
+  int m_numSteps;              ///< Number of load steps
+  string m_solidMaterialName;  ///< Material identifier
+  string m_mode;               ///< Test mode: triaxial, volumetric, oedometer
   string m_strainFunctionName; ///< Time-dependent function controlling strain (role depends on test mode)
   string m_stressFunctionName; ///< Time-dependent function controlling stress (role depends on test mode)
-  int m_numSteps;    ///< Number of load steps
-  Path m_outputFilePath; ///< Output file path (optional, no output if not specified)
-  Path m_baselineFilePath; ///< Baseline file path (optional, for unit testing of solid models)
+  string m_outputFile;         ///< Output file (optional, no output if not specified)
+  Path m_baselineFile;         ///< Baseline file (optional, for unit testing of solid models)
+  array2d< real64 > m_table;   ///< Table storing time-history of axial/radial stresses and strains
 
-  array1d< real64 > m_time;
-  array1d< real64 > m_axialStrain;
-  array1d< real64 > m_axialStress;
-  array1d< real64 > m_radialStrain;
-  array1d< real64 > m_radialStress;
+  static localIndex const m_numColumns = 9; ///< Number of columns in data table
+  enum columnKeys { TIME, EPS0, EPS1, EPS2, SIG0, SIG1, SIG2, ITER, NORM }; ///< Enumeration of column keys
 };
+
+
+template< typename SOLID_TYPE >
+void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table )
+{
+  typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
+
+  for( localIndex n=1; n<=m_numSteps; ++n )
+  {
+    forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      real64 stress[6] = {};
+      real64 strainIncrement[6] = {};
+      real64 stiffness[6][6] = {{}};
+
+      strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
+      strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
+      strainIncrement[2] = table( n, EPS2 )-table( n-1, EPS2 );
+
+      updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
+
+      table( n, SIG0 ) = stress[0];
+      table( n, SIG1 ) = stress[1];
+      table( n, SIG2 ) = stress[2];
+
+      table( n, ITER ) = 1;
+    } );
+
+    solid.saveConvergedState();
+  }
+
+}
+
+
+template< typename SOLID_TYPE >
+void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table )
+{
+  typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
+
+  for( localIndex n=1; n<=m_numSteps; ++n )
+  {
+    forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      real64 stress[6] = {};
+      real64 strainIncrement[6] = {};
+      real64 stiffness[6][6] = {{}};
+
+      strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
+      strainIncrement[1] = 0;
+      strainIncrement[2] = 0;
+
+      localIndex const maxIter = 25;   // max Newton iterations
+      real64 norm = 1e30;
+      localIndex k = 0;
+
+      for(; k<maxIter; ++k )
+      {
+        updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
+
+        norm = fabs( stress[1]-table( n, SIG1 ) )/(fabs( table( n, SIG1 ) )+1);
+
+        if( norm < 1e-5 )
+        {
+          break;
+        }
+        else
+        {
+          strainIncrement[1] -= (stress[1]-table( n, SIG1 )) / (stiffness[1][1]+stiffness[1][2]);
+          strainIncrement[2] = strainIncrement[1];
+        }
+      }
+
+      table( n, SIG0 ) = stress[0];
+      table( n, EPS1 ) = table( n-1, EPS1 )+strainIncrement[1];
+      table( n, EPS2 ) = table( n, EPS1 );
+
+      table( n, ITER ) = k+1;
+      table( n, NORM ) = norm;
+    } );
+
+    solid.saveConvergedState();
+
+  }
+}
+
+
 
 } /* namespace geosx */
 

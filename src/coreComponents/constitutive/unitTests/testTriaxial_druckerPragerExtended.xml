@@ -8,7 +8,8 @@
       mode="triaxial" 
       strainFunction="strainFunction"
       stressFunction="stressFunction"
-      steps="20" 
+      steps="40" 
+      output="output.txt" 
       baseline="testTriaxial_druckerPragerExtended.txt" 
       logLevel="2" />
   </Tasks>
@@ -40,13 +41,13 @@
     <TableFunction
       name="strainFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 3.0, 4.0 }"
-      values="{ 0, -0.003, -0.002 }"/>
+      coordinates="{ 0.0, 3.0, 4.0, 7.0, 8.0 }"
+      values="{ 0, -0.003, -0.002, -0.005, -0.004 }"/>
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 3.0, 4.0 }"
-      values="{ -1.0, -1.0, -1.0 }"/>
+      coordinates="{ 0.0, 8.0  }"
+      values="{ -1.0, -1.0 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
