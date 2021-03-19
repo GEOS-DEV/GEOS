@@ -227,7 +227,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
   resetViews( mesh );
 
@@ -426,6 +426,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 
   if( m_poroElasticFlag )
   {
+    // Used in SIM_FixedStress poroelastic solver
     assembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
                                                                dofManager,
                                                                localMatrix,

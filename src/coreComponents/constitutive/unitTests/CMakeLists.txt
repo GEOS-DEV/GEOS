@@ -9,6 +9,8 @@ set( gtest_geosx_tests
      testElasticIsotropic.cpp
      testPropertyConversions.cpp
      testRelPerm.cpp
+     testCapillaryPressure.cpp
+     testCO2BrinePVTModels.cpp     
    )
 
 set( gtest_triaxial_xmls

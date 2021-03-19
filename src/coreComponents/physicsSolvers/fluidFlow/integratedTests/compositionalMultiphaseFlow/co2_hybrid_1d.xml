@@ -89,7 +89,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <MultiPhaseMultiComponentFluid
+    <CO2BrineFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
@@ -191,7 +191,7 @@
       name="sourceTerm"
       objectPath="ElementRegions/region/cb"
       fieldName="pressure"
-      scale="5e7"
+      scale="1.45e7"
       setNames="{ source }"/>
 
     <FieldSpecification
