@@ -32,6 +32,8 @@ class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
+  using exec_policy = serialPolicy;
+
   BlackOilFluid( string const & name, Group * const parent );
 
   virtual ~BlackOilFluid() override;

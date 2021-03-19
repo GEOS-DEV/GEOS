@@ -134,7 +134,7 @@ struct FluidUpdateKernel
           real64 const temp,
           arrayView2d< real64 const > const & compFrac )
   {
-    forAll< POLICY >( size, [=] ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
@@ -152,7 +152,7 @@ struct FluidUpdateKernel
           real64 const temp,
           arrayView2d< real64 const > const & compFrac )
   {
-    forAll< POLICY >( size, [=] ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
@@ -170,7 +170,7 @@ struct FluidUpdateKernel
           real64 const temp,
           arrayView2d< real64 const > const & compFrac )
   {
-    forAll< POLICY >( targetSet.size(), [=] ( localIndex const a )
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
@@ -188,7 +188,7 @@ struct FluidUpdateKernel
           real64 const temp,
           arrayView2d< real64 const > const & compFrac )
   {
-    forAll< POLICY >( targetSet.size(), [=] ( localIndex const a )
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
