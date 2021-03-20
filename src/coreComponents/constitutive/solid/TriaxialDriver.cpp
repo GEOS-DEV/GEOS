@@ -229,7 +229,7 @@ void TriaxialDriver::outputResults()
   fprintf( fp, "# column 3 = radial_strain_1\n" );
   fprintf( fp, "# column 4 = radial_strain_2\n" );
   fprintf( fp, "# column 5 = axial_stress\n" );
-  fprintf( fp, "# column 6 = radial_strain_1\n" );
+  fprintf( fp, "# column 6 = radial_stress_1\n" );
   fprintf( fp, "# column 7 = radial_stress_2\n" );
   fprintf( fp, "# column 8 = newton_iter\n" );
   fprintf( fp, "# column 9 = residual_norm\n" );
