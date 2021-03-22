@@ -69,14 +69,34 @@ public:
 
   void remapMesh ( dataRepository::Group & domain ) override;
 
+  /**
+   * @return Whether or not a Cartesian mesh is being generated.
+   */
   virtual inline bool isCartesian() const
   {
     return true;
   }
 
+  /**
+   * @brief Reduce the number of nodes in a block coordinate direction for
+   * @param numNodes The number of nodes in each coordinate direction.
+   */
+  virtual void reduceNumNodesForPeriodicBoundary( integer (& numNodes) [3] )
+  {
+    GEOSX_UNUSED_VAR( numNodes );
+  };
 
-  virtual void reduceNumNodesForPeriodicBoundary( integer (&)[3] ) {};
-
+  /**
+   * @brief Alter the directional indices for when the ending index should be
+   *   set to the beginning of the index as is the case with periodic
+   *   boundaries.
+   * @param index The indices to be evaluated for periodic indexing.
+   * @param minExtent The minimum extent of the problem domain
+   * @param maxExtent The maximum extent of the problem domain
+   * @param X The coordinates of the node.
+   * @param tol A tolerance for comparing coordinates of co-incident nodes for
+   *   merging.
+   */
   virtual void setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],
                                                        real64 (& minExtent)[3],
                                                        real64 (& maxExtent)[3],
@@ -86,6 +106,20 @@ public:
     GEOSX_UNUSED_VAR( index, minExtent, maxExtent, X, tol );
   }
 
+  /**
+   * @brief Alter connectivity to adhere to a specific periodic type boundary.
+   * @param i The rank local i-direction index in the block
+   * @param j The rank local j-direction index in the block
+   * @param k The rank local k-direction index in the block
+   * @param iBlock The i-direction block index
+   * @param jBlock The j-direction block index
+   * @param kBlock The k-direction block index
+   * @param globalIJK The global ijk indices.
+   * @param numElemsInDirForBlock The number of elements in each direction for the block.
+   * @param numNodesInDir The number of elements in each direction globally.
+   * @param firstElemIndexInPartition The first index in the partition in each direction.
+   * @param nodeOfBox The connectivity.
+   */
   virtual void setConnectivityForPeriodicBoundaries( integer const i,
                                                      integer const j,
                                                      integer const k,
@@ -102,31 +136,34 @@ public:
                       globalIJK, numElemsInDirForBlock, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
   }
 
-  inline void setConnectivityForPeriodicBoundary( int const component,
-                                                  integer const index,
-                                                  integer const blockIndex,
-                                                  int (& globalIJK)[3],
-                                                  int const (&numElemsInDirForBlock)[3],
-                                                  integer const (&numNodesInDir)[3],
-                                                  int const (&firstElemIndexInPartition)[3],
-                                                  localIndex (& nodeOfBox)[8] )
+  /**
+   * @brief Alter connectivity to adhere to a periodic type boundary.
+   * @param component The direction of the periodicity.
+   * @param index The index in the direction of periodicity.
+   * @param blockIndex The index for the block in the direction of periodicity.
+   * @param globalIJK The global ijk indices.
+   * @param numElemsInDirForBlock The number of elements in each direction for the block.
+   * @param numNodesInDir The number of elements in each direction globally.
+   * @param firstElemIndexInPartition The first index in the partition in each direction.
+   * @param nodeOfBox The connectivity.
+   */
+  void setConnectivityForPeriodicBoundary( int const component,
+                                           integer const index,
+                                           integer const blockIndex,
+                                           int (& globalIJK)[3],
+                                           int const (&numElemsInDirForBlock)[3],
+                                           integer const (&numNodesInDir)[3],
+                                           int const (&firstElemIndexInPartition)[3],
+                                           localIndex ( &nodeOfBox )[8] );
+
+  /**
+   * @brief Performs a coordinate transformation of all nodes.
+   * @param nodeManager The node manager that contains coordinate data.
+   */
+  virtual void coordinateTransformation( NodeManager & nodeManager )
   {
-    if( index == numElemsInDirForBlock[component] - 1 && blockIndex == m_nElems[component].size() - 1 )
-    {
-      // Last set of elements
-      globalIJK[component] = -1;
-      localIndex const firstNodeIndexR = numNodesInDir[1] * numNodesInDir[2] * ( globalIJK[0] - firstElemIndexInPartition[0] ) +
-                                         numNodesInDir[2] * ( globalIJK[1] - firstElemIndexInPartition[1] ) +
-                                         ( globalIJK[2] - firstElemIndexInPartition[2] );
-      nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR;
-      nodeOfBox[3] = numNodesInDir[2] + firstNodeIndexR;
-      nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR + 1;
-      nodeOfBox[7] = numNodesInDir[2] + firstNodeIndexR + 1;
-    }
+    GEOSX_UNUSED_VAR( nodeManager );
   }
-
-
-  virtual void coordinateTransformation( NodeManager & ) {}
 
 
 protected:
@@ -174,6 +211,9 @@ protected:
   /// Ndim x nElem spatialized array of element bias
   array1d< real64 > m_nElemBias[3];
 
+  /// Coordinates of the nodes in each direction which may be calculated based
+  /// on some geometry specifications and "set" for later use when generating
+  /// the mesh.
   array1d< real64 > m_setCoords[3];
 
 private:

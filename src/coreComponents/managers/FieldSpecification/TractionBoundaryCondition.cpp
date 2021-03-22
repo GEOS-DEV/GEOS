@@ -65,6 +65,26 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 
 void TractionBoundaryCondition::postProcessInput()
 {
+
+  if( m_tractionType == 0 )
+  {
+    GEOSX_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
+                    "m_direction is required for m_tractionType==0, but appears to be unspecified" );
+  }
+  else
+  {
+    GEOSX_LOG_RANK_0_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
+                         "m_direction is not required unless m_tractionType==0, but appears to be specified" );
+  }
+
+  bool const inputStressRead = getWrapper< R2SymTensor >( viewKeyStruct::inputStressString() ).getSuccessfulReadFromInput();
+  GEOSX_LOG_RANK_0_IF( inputStressRead && m_tractionType!=2,
+                       "m_inputStress is specified, but m_tractionType!=2 so value of m_inputStress is unused." );
+
+  GEOSX_ERROR_IF( !inputStressRead && m_tractionType==2,
+                  "m_tractionType==2, but m_inputStress is not specified." );
+
+
 //  localIndex const numStressFunctionsNames = m_stressFunctionNames.size();
 //  GEOSX_ERROR_IF( numStressFunctionsNames > 0 && numStressFunctionsNames<6,
 //                  "Either 0 or 6 stress functions must be specified using stressFunctions" );
@@ -109,9 +129,9 @@ void TractionBoundaryCondition::launch( real64 const time,
   globalIndex_array nodeDOF;
   real64_array nodeRHS;
 
-  R1Tensor const direction = this->getDirection( 0 );
+  R1Tensor const direction = this->getDirection();
   int const tractionType = m_tractionType;
-  Tensor< real64, 6 > inputStress = m_inputStress;
+  R2SymTensor inputStress = m_inputStress;
 
   real64 tractionMagnitude0;
   array1d< real64 > tractionMagnitudeArray( targetSet.size() );
@@ -140,7 +160,7 @@ void TractionBoundaryCondition::launch( real64 const time,
   arrayView1d< real64 const > const tractionMagnitudeArrayView = tractionMagnitudeArray;
 
   {
-    forAll< serialPolicy >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const kf = targetSet[ i ];
       localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );

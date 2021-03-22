@@ -95,16 +95,16 @@ public:
 
 
   /// Deleted copy constructor
-  FieldSpecificationBase( FieldSpecificationBase const & other ) = delete;
+  FieldSpecificationBase( FieldSpecificationBase const & ) = delete;
 
   /// Defaulted move constructor
-  FieldSpecificationBase( FieldSpecificationBase && other ) = default;
+  FieldSpecificationBase( FieldSpecificationBase && ) = default;
 
   /// deleted copy assignment
-  FieldSpecificationBase & operator=( FieldSpecificationBase const & other ) = delete;
+  FieldSpecificationBase & operator=( FieldSpecificationBase const & ) = delete;
 
   /// deleted move assignement
-  FieldSpecificationBase & operator=( FieldSpecificationBase && other ) = delete;
+  FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
 
 
@@ -476,7 +476,7 @@ public:
    * @param[in] time Time
    * @return const reference to m_direction
    */
-  virtual R1Tensor const & getDirection( real64 time ) const
+  virtual R1Tensor const & getDirection() const
   {
     GEOSX_UNUSED_VAR( time );
     return m_direction;

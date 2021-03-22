@@ -610,22 +610,13 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
                 // Fix local connectivity for single theta (y) partition (radial meshes only)
 
-                setConnectivityForPeriodicBoundaries( i, j, k, iblock, jblock, kblock, index, numElemsInDirForBlock, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
-//                if( isRadialWithOneThetaPartition )
-//                {
-//                  if( j == numElemsInDirForBlock[1] - 1 && jblock == m_nElems[1].size() - 1 )
-//                  {
-//                    // Last set of elements
-//                    index[1] = -1;
-//                    const localIndex firstNodeIndexR = numNodesInDir[1] * numNodesInDir[2] * ( index[0] - firstElemIndexInPartition[0] ) +
-//                                                       numNodesInDir[2] * ( index[1] - firstElemIndexInPartition[1] ) +
-//                                                       ( index[2] - firstElemIndexInPartition[2] );
-//                    nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR;
-//                    nodeOfBox[3] = numNodesInDir[2] + firstNodeIndexR;
-//                    nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR + 1;
-//                    nodeOfBox[7] = numNodesInDir[2] + firstNodeIndexR + 1;
-//                  }
-//                }
+                setConnectivityForPeriodicBoundaries( i, j, k,
+                                                      iblock, jblock, kblock,
+                                                      index,
+                                                      numElemsInDirForBlock,
+                                                      numNodesInDir,
+                                                      firstElemIndexInPartition,
+                                                      nodeOfBox );
 
                 for( int iEle = 0; iEle < m_numElePerBox[iR]; ++iEle )
                 {
@@ -979,6 +970,32 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
 
 void InternalMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARAM( domain ) )
 {}
+
+
+void
+InternalMeshGenerator::
+  setConnectivityForPeriodicBoundary( int const component,
+                                      integer const index,
+                                      integer const blockIndex,
+                                      int (& globalIJK)[3],
+                                      int const (&numElemsInDirForBlock)[3],
+                                      integer const (&numNodesInDir)[3],
+                                      int const (&firstElemIndexInPartition)[3],
+                                      localIndex (& nodeOfBox)[8] )
+{
+  if( index == numElemsInDirForBlock[component] - 1 && blockIndex == m_nElems[component].size() - 1 )
+  {
+    // Last set of elements
+    globalIJK[component] = -1;
+    localIndex const firstNodeIndexR = numNodesInDir[1] * numNodesInDir[2] * ( globalIJK[0] - firstElemIndexInPartition[0] ) +
+                                       numNodesInDir[2] * ( globalIJK[1] - firstElemIndexInPartition[1] ) +
+                                       ( globalIJK[2] - firstElemIndexInPartition[2] );
+    nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR;
+    nodeOfBox[3] = numNodesInDir[2] + firstNodeIndexR;
+    nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR + 1;
+    nodeOfBox[7] = numNodesInDir[2] + firstNodeIndexR + 1;
+  }
+}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, string const &, Group * const )
 } /* namespace geosx */

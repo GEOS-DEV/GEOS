@@ -701,11 +701,11 @@ public:
     {
       if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
       {
-        bool const readSuccess = xmlWrapper::readAttributeAsType( reference(),
-                                                                  getName(),
-                                                                  targetNode,
-                                                                  inputFlag == InputFlags::REQUIRED );
-        GEOSX_THROW_IF( !readSuccess,
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     inputFlag == InputFlags::REQUIRED );
+        GEOSX_THROW_IF( !m_successfulReadFromInput,
                         "Input variable " << getName() << " is required in " << targetNode.path() <<
                         ". Available options are: \n" << dumpInputOptions( true ) <<
                         "\nFor more details, please refer to documentation at: \n" <<
@@ -714,7 +714,10 @@ public:
       }
       else
       {
-        xmlWrapper::readAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     getDefaultValueStruct() );
       }
 
       return true;
