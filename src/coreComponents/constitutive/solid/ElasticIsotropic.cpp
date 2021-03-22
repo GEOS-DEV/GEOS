@@ -106,8 +106,17 @@ void ElasticIsotropic::postProcessInput()
 
   if( nu >= 0.0 && E >= 0.0 )
   {
-    K = conversions::YoungsModAndPoissonRatio::toBulkMod( E, nu );
-    G = conversions::YoungsModAndPoissonRatio::toShearMod( E, nu );
+    //K = conversions::YoungsModAndPoissonRatio::toBulkMod( E, nu );
+    //G = conversions::YoungsModAndPoissonRatio::toShearMod( E, nu );
+    K = BulkModulus().
+          setYoungModulus( E ).
+          setPoissonRatio( nu ).
+          getValue();
+
+    G = ShearModulus().
+          setYoungModulus( E ).
+          setPoissonRatio( nu ).
+          getValue();
   }
   else if( nu >= 0.0 && G >= 0.0 )
   {
@@ -117,7 +126,11 @@ void ElasticIsotropic::postProcessInput()
            setPoissonRatio( nu ).
            getValue();
 
-    K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu );
+    //K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu );
+    K = BulkModulus().
+          setShearModulus( G ).
+          setPoissonRatio( nu ).
+          getValue();
   }
   else if( nu >= 0 && K >= 0.0 )
   {
@@ -127,7 +140,11 @@ void ElasticIsotropic::postProcessInput()
           setPoissonRatio( nu ).
           getValue();
 
-    G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
+    //G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
+    G = ShearModulus().
+          setBulkModulus( K ).
+          setPoissonRatio( nu ).
+          getValue();
   }
   else if( E >= 0.0 && K >=0 )
   {
@@ -136,7 +153,11 @@ void ElasticIsotropic::postProcessInput()
            setBulkModulus( K ).
            setYoungModulus( E ).
            getValue();
-    G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
+    //G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
+    G = ShearModulus().
+          setYoungModulus( E ).
+          setBulkModulus( K ).
+          getValue();
   }
   else if( E >= 0.0 && G >= 0 )
   {
@@ -145,7 +166,11 @@ void ElasticIsotropic::postProcessInput()
          setShearModulus( G ).
          setYoungModulus( E ).
          getValue();
-    K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
+    //K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
+    K = BulkModulus().
+          setYoungModulus( E ).
+          setShearModulus( G ).
+          getValue();
   }
   else if( K >= 0.0 && G >= 0.0 )
   {

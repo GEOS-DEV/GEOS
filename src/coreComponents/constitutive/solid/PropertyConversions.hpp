@@ -34,9 +34,6 @@ public:
 
   /**
    * @brief Compute Poisson's ratio from other elastic parameters
-   * @param[in] K Bulk modulus
-   * @param[in] G Shear modulus
-   * @param[in] E Young's modulus
    * @return Poisson's ratio
    */
   real64 getValue() const
@@ -78,16 +75,6 @@ public:
     return *this;
   }
 
-  real64 min() const
-  {
-    return -0.499999;
-  }
-
-  real64 max() const
-  {
-    return 0.499999;
-  }
-
 private:
 
   /// Bulk modulus
@@ -109,9 +96,6 @@ public:
 
   /**
    * @brief Compute Young's modulus from other elastic parameters
-   * @param[in] K Bulk modulus
-   * @param[in] G Shear modulus
-   * @param[in] nu Poisson's ratio
    * @return Young's modulus
    */
   real64 getValue() const
@@ -153,16 +137,6 @@ public:
     return *this;
   }
 
-  real64 min() const
-  {
-    return 1e-6;
-  }
-
-  real64 max() const
-  {
-    return 1e13;
-  }
-
 private:
 
   /// Bulk modulus
@@ -170,6 +144,130 @@ private:
 
   /// Shear modulus
   real64 m_G = 0.0;
+
+  /// Poisson's ratio
+  real64 m_nu = -0.5;
+};
+
+/**
+ * @class BulkModulus 
+ */
+struct BulkModulus
+{
+public:
+
+  /**
+   * @brief Compute Bulk modulus from other elastic parameters
+   * @return Bulk modulus
+   */
+  real64 getValue() const
+  {
+    if( m_E > 0 && m_G > 0 )
+    {
+      return m_E * m_G / ( 9.0 * m_G - 3.0 * m_E );
+    }
+    else if( m_E > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return m_E / ( 3.0 - 6.0 * m_nu );
+    }
+    else if( m_G > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return m_G * ( 2.0 + 2.0 * m_nu ) / ( 3.0 - 6.0 * m_nu );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific pair of elastic constants is required: (E,G) or (E,nu) or (G,nu)" );
+    }
+  }
+
+  BulkModulus setYoungModulus( real64 const E )
+  {
+    m_E = E;
+    return *this;
+  }
+
+  BulkModulus setShearModulus( real64 const G )
+  {
+    m_G = G;
+    return *this;
+  }
+
+  BulkModulus setPoissonRatio( real64 const nu )
+  {
+    m_nu = nu;
+    return *this;
+  }
+
+private:
+
+  /// Young's modulus
+  real64 m_E = 0.0;
+
+  /// Shear modulus
+  real64 m_G = 0.0;
+
+  /// Poisson's ratio
+  real64 m_nu = -0.5;
+};
+
+/**
+ * @class ShearModulus 
+ */
+struct ShearModulus
+{
+public:
+
+  /**
+   * @brief Compute Shear modulus from other elastic parameters
+   * @return Shear modulus
+   */
+  real64 getValue() const
+  {
+    if( m_E > 0 && m_K > 0 )
+    {
+      return 3.0 * m_K * m_E / ( 9.0 * m_K - m_E );
+    }
+    else if( m_E > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return m_E / ( 2.0 + 2.0 * m_nu );
+    }
+    else if( m_K > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return m_K * ( 3.0 - 6.0 * m_nu) / ( 2.0 + 2.0 * m_nu );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific pair of elastic constants is required: (E,K) or (E,nu) or (K,nu)" );
+    }
+  }
+
+  ShearModulus setYoungModulus( real64 const E )
+  {
+    m_E = E;
+    return *this;
+  }
+
+  ShearModulus setBulkModulus( real64 const K )
+  {
+    m_K = K;
+    return *this;
+  }
+
+  ShearModulus setPoissonRatio( real64 const nu )
+  {
+    m_nu = nu;
+    return *this;
+  }
+
+private:
+
+  /// Young's modulus
+  real64 m_E = 0.0;
+
+  /// Bulk modulus
+  real64 m_K = 0.0;
 
   /// Poisson's ratio
   real64 m_nu = -0.5;
@@ -239,6 +337,7 @@ namespace YoungsModAndPoissonRatio
  * @param[in] nu Poisson's ratio
  * @return Bulk modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toBulkMod( real64 const & E, 
@@ -246,13 +345,14 @@ real64 toBulkMod( real64 const & E,
 {
   return E / ( 3.0 - 6.0 * nu );
 }
-
+*/
 /**
  * @brief Compute Shear modulus
  * @param[in] E Young's modulus
  * @param[in] nu Poisson's ratio
  * @return Shear modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toShearMod( real64 const & E, 
@@ -260,7 +360,7 @@ real64 toShearMod( real64 const & E,
 {
   return E / ( 2.0 + 2.0 * nu );
 }
-
+*/
 /**
  * @brief Compute First Lamé parameter
  * @param[in] E Young's modulus
@@ -287,6 +387,7 @@ namespace ShearModAndPoissonRatio
  * @param[in] nu Poisson's ratio
  * @return Bulk modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toBulkMod( real64 const & G, 
@@ -294,7 +395,7 @@ real64 toBulkMod( real64 const & G,
 {
   return G * ( 2.0 + 2.0 * nu ) / ( 3.0 - 6.0 * nu );
 }
-
+*/
 /**
  * @brief Compute Young's modulus
  * @param[in] G Shear modulus
@@ -351,6 +452,7 @@ real64 toYoungsMod( real64 const & K,
  * @param[in] nu Poisson's ratio
  * @return Shear modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toShearMod( real64 const & K, 
@@ -358,7 +460,7 @@ real64 toShearMod( real64 const & K,
 {
   return K * ( 3.0 - 6.0 * nu) / ( 2.0 + 2.0 * nu );
 }
-
+*/
 /**
  * @brief Compute First Lamé parameter
  * @param[in] K Bulk modulus
@@ -385,6 +487,7 @@ namespace BulkModAndYoungsMod
  * @param[in] E Young's ratio
  * @return Shear modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toShearMod( real64 const & K, 
@@ -392,7 +495,7 @@ real64 toShearMod( real64 const & K,
 {
   return 3.0 * K * E / ( 9.0 * K - E );
 }
-
+*/
 /**
  * @brief Compute Poisson's ratio
  * @param[in] K Bulk modulus
@@ -448,6 +551,7 @@ real64 toPoissonRatio( real64 const & G,
  * @param[in] E Young's modulus
  * @return Bulk modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toBulkMod( real64 const & G, 
@@ -455,7 +559,7 @@ real64 toBulkMod( real64 const & G,
 {
   return E * G / ( 9.0 * G - 3.0 * E );
 }
-
+*/
 /**
  * @brief Compute First Lamé parameter
  * @param[in] G Shear modulus
