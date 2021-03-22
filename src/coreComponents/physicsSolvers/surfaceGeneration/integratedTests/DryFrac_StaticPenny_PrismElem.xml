@@ -150,12 +150,12 @@
       scale="1e6"
       setNames="{ zpos }"/>
 
-    <Traction
+    <!-- Traction
       name="znegconstraint"
       direction="{0,0,1}"
       objectPath="faceManager"
       scale="-1e6"
-      setNames="{ zneg }"/>
+      setNames="{ zneg }"/-->
 
     <FieldSpecification
       name="znegconstraint"
