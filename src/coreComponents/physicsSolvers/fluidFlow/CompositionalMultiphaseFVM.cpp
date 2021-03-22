@@ -50,7 +50,7 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
   CompositionalMultiphaseBase( name, parent )
 {
 
-  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseFVM";
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
 }
 
@@ -431,6 +431,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
                                                 dPhaseMob_dComp );
 }
 
-
+//START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFVM, string const &, Group * const )
+//END_SPHINX_INCLUDE_01
 }// namespace geosx

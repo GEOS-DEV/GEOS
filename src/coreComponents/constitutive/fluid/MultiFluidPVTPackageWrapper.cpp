@@ -81,16 +81,20 @@ MultiFluidPVTPackageWrapper::deliverClone( string const & name,
   return clone;
 }
 
+GEOSX_HOST_DEVICE
 void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 temperature,
-                                                 arraySlice1d< real64 const, 0 > const & composition,
-                                                 arraySlice1d< real64, 0 > const & phaseFrac,
-                                                 arraySlice1d< real64, 0 > const & phaseDens,
-                                                 arraySlice1d< real64, 0 > const & phaseMassDens,
-                                                 arraySlice1d< real64, 0 > const & phaseVisc,
-                                                 arraySlice2d< real64, 1 > const & phaseCompFrac,
+                                                 arraySlice1d< real64 const > const & composition,
+                                                 arraySlice1d< real64 > const & phaseFrac,
+                                                 arraySlice1d< real64 > const & phaseDens,
+                                                 arraySlice1d< real64 > const & phaseMassDens,
+                                                 arraySlice1d< real64 > const & phaseVisc,
+                                                 arraySlice2d< real64 > const & phaseCompFrac,
                                                  real64 & totalDens ) const
 {
+#if defined(__CUDA_ARCH__)
+  GEOSX_ERROR( "This function cannot be used on GPU" );
+#else
   localIndex const NC = m_componentMolarWeight.size();
   localIndex const NP = m_phaseTypes.size();
 
@@ -195,11 +199,13 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
     // 5.2. Invert the previous quantity to get actual density
     totalDens = 1.0 / totalDens;
   }
+#endif
 }
 
+GEOSX_HOST_DEVICE
 void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 temperature,
-                                                 arraySlice1d< real64 const, 0 > const & composition,
+                                                 arraySlice1d< real64 const > const & composition,
                                                  arraySlice1d< real64 > const & phaseFraction,
                                                  arraySlice1d< real64 > const & dPhaseFraction_dPressure,
                                                  arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
@@ -223,8 +229,11 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
                                                  real64 & totalDensity,
                                                  real64 & dTotalDensity_dPressure,
                                                  real64 & dTotalDensity_dTemperature,
-                                                 arraySlice1d< real64, 0 > const & dTotalDensity_dGlobalCompFraction ) const
+                                                 arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
 {
+#if defined(__CUDA_ARCH__)
+  GEOSX_ERROR( "This function cannot be used on GPU" );
+#else
 // 0. make shortcut structs to avoid long names (TODO maybe remove)
   CompositionalVarContainer< 1 > phaseFrac{
     phaseFraction,
@@ -267,11 +276,6 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
     dTotalDensity_dTemperature,
     dTotalDensity_dGlobalCompFraction
   };
-
-#if defined(__CUDACC__)
-  // For some reason nvcc thinks these aren't used.
-  GEOSX_UNUSED_VAR( phaseFrac, phaseDens, phaseMassDens, phaseVisc, phaseCompFrac, totalDens );
-#endif
 
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex const NC = numComponents();
@@ -489,6 +493,7 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
       totalDens.dComp[jc] *= minusDens2;
     }
   }
+#endif
 }
 
 } //namespace constitutive

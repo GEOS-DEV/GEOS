@@ -64,6 +64,13 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
+.. _XML_CO2BrineFluid:
+
+Element: CO2BrineFluid
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/CO2BrineFluid.rst
+
+
 .. _XML_CellElementRegion:
 
 Element: CellElementRegion
@@ -174,6 +181,13 @@ Element: DamageSpectralElasticIsotropic
 Element: DamageVolDevElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic.rst
+
+
+.. _XML_DeadOilFluid:
+
+Element: DeadOilFluid
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid.rst
 
 
 .. _XML_Dirichlet:
@@ -365,11 +379,11 @@ Element: Mesh
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
 
 
-.. _XML_MultiPhaseMultiComponentFluid:
+.. _XML_MultiphasePoroelastic:
 
-Element: MultiPhaseMultiComponentFluid
-======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
+Element: MultiphasePoroelastic
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic.rst
 
 
 .. _XML_NonlinearSolverParameters:
@@ -810,6 +824,13 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_CO2BrineFluid:
+
+Datastructure: CO2BrineFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/CO2BrineFluid_other.rst
+
+
 .. _DATASTRUCTURE_CellElementRegion:
 
 Datastructure: CellElementRegion
@@ -927,6 +948,13 @@ Datastructure: DamageSpectralElasticIsotropic
 Datastructure: DamageVolDevElasticIsotropic
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DeadOilFluid:
+
+Datastructure: DeadOilFluid
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:
@@ -1139,11 +1167,11 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
 
 
-.. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
+.. _DATASTRUCTURE_MultiphasePoroelastic:
 
-Datastructure: MultiPhaseMultiComponentFluid
-============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
+Datastructure: MultiphasePoroelastic
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:

@@ -12,12 +12,16 @@
       initialDt="1e2"
       targetRegions="{ Reservoir, wellRegion }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-3"
-        lineSearchAction="None"
+        newtonTol="1.0e-4"
+        lineSearchAction="Attempt"
         maxTimeStepCuts="10"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-4"
+        krylovAdaptiveTol="1"
+        krylovWeakestTol="1e-2"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -44,7 +48,7 @@
         name="wellControls"
         type="injector"
         control="totalVolRate"
-	referenceElevation="7500"
+        referenceElevation="7500"
         targetBHP="1e8"
         targetTotalRate="5e-2"
         injectionStream="{ 0.995, 0.005 }"/>
@@ -95,7 +99,7 @@
  
   <!-- SPHINX_FIELD_CASE_Co2_EVENTS -->
   <Events
-    maxTime="5e5"> <!-- We will simulate more time (2.5e8 s) when the MGR solver is available by default -->
+    maxTime="5e7">
 
     <PeriodicEvent
       name="outputs"
@@ -123,7 +127,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1.5e6"        
+      maxEventDt="5e5"        
       target="/Solvers/coupledFlowAndWells"/>
 
   </Events>
@@ -143,7 +147,7 @@
 
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   <Constitutive>
-    <MultiPhaseMultiComponentFluid
+    <CO2BrineFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
@@ -211,7 +215,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir"
       fieldName="pressure"
-      scale="4e7"/>
+      scale="1.25e7"/>
 
     <FieldSpecification
       name="initialComposition_co2"
@@ -220,7 +224,7 @@
       objectPath="ElementRegions/Reservoir"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.0001"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialComposition_water"
@@ -229,7 +233,7 @@
       objectPath="ElementRegions/Reservoir"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.9999"/>
+      scale="1.0"/>
   </FieldSpecifications>
   <!-- SPHINX_FIELD_CASE_Co2_FIELD_END -->
 

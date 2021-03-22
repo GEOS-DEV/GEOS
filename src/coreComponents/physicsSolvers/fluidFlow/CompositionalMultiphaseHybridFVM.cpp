@@ -55,7 +55,7 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (relative) change in (face) pressure between two Newton iterations" );
 
-  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseHybridFVM";
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM;
 
 }
 

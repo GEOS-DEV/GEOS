@@ -35,13 +35,15 @@
 #include <krylov.h>
 #include "HypreSuiteSparse.hpp"
 
+#include "_hypre_utilities.h"
+#include "_hypre_utilities.hpp"
+
 namespace geosx
 {
 
 typedef HYPRE_Int (* HYPRE_PtrToSolverDestroyFcn)( HYPRE_Solver );
 
-HypreSolver::HypreSolver( LinearSolverParameters parameters )
-  :
+HypreSolver::HypreSolver( LinearSolverParameters parameters ):
   m_parameters( std::move( parameters ) )
 { }
 
@@ -58,6 +60,7 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_LAI_ASSERT( mat.ready() );
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
+
 
   if( rhs.norm2() > 0.0 )
   {
@@ -77,6 +80,8 @@ void HypreSolver::solve( HypreMatrix & mat,
     m_result.setupTime = 0.0;
     m_result.solveTime = 0.0;
   }
+
+
 }
 
 namespace
@@ -320,8 +325,8 @@ void HypreSolver::solveKrylov( HypreMatrix & mat,
                                HypreVector & rhs,
                                DofManager const * const dofManager )
 {
-  Stopwatch watch;
 
+  Stopwatch watch;
   // Create the preconditioner, but don't compute (this is done by solver setup)
   HyprePreconditioner precond( m_parameters, dofManager );
   precond.create();
@@ -358,6 +363,9 @@ void HypreSolver::solveKrylov( HypreMatrix & mat,
 
   }
   HypreMatrix & precondMat = m_parameters.amg.separateComponents ? separateComponentMatrix : mat;
+
+  real64 const componentFilterTime = watch.elapsedTime();
+  watch.zero();
 
   // Instantiate the solver
   HYPRE_Solver solver{};
@@ -405,6 +413,7 @@ void HypreSolver::solveKrylov( HypreMatrix & mat,
   {
     GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numIter <<
                       " | Final Relative Tol " << finalNorm <<
+                      " | ComponentFilterTime " << componentFilterTime <<
                       " | SetupTime " << m_result.setupTime <<
                       " | SolveTime " << m_result.solveTime );
   }

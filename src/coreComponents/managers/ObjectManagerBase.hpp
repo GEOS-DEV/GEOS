@@ -78,18 +78,21 @@ public:
   virtual localIndex packSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
-                               bool on_device = false ) const override;
+                               bool onDevice,
+                               parallelDeviceEvents & events ) const override;
 
   virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
-                           bool on_device = false )  const override;
+                           bool onDevice,
+                           parallelDeviceEvents & events ) const override;
 
   virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
-                             bool on_device = false ) override;
+                             bool onDevice,
+                             parallelDeviceEvents & events ) override;
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.
@@ -241,7 +244,7 @@ private:
    * @param wrapperNames
    * @param packList The element we want packed.
    * @param recursive recursive pack or not.
-   * @param on_device Whether to use device-based packing functions
+   * @param onDevice Whether to use device-based packing functions
    *                  (buffer must be either pinned or a device pointer)
    * @return The packed size.
    */
@@ -250,7 +253,8 @@ private:
                           string_array const & wrapperNames,
                           arrayView1d< localIndex const > const & packList,
                           integer const recursive,
-                          bool on_device ) const;
+                          bool onDevice,
+                          parallelDeviceEvents & events ) const;
 
   /**
    * @brief Packing global maps.
@@ -358,7 +362,7 @@ public:
 
   /**
    * @brief Extract map from object and assign global indices.
-   * @param obj The instance.
+   * @param nodeManager The node manager.
    * @param map The map.
    *
    * Dummy version, needs to be specialised by derived classes.
@@ -698,28 +702,28 @@ public:
    */
   struct viewKeyStruct
   {
-    /// String key to adjacency list
+    /// @return String key to adjacency list
     static constexpr char const * adjacencyListString() { return "adjacencyList"; }
 
-    /// String key to domain boundary indicator
+    /// @return String key to domain boundary indicator
     static constexpr char const * domainBoundaryIndicatorString() { return "domainBoundaryIndicator"; }
 
-    /// String key to external set
+    /// @return String key to external set
     static constexpr char const * externalSetString() { return "externalSet"; }
 
-    /// String key to ghost ranks
+    /// @return String key to ghost ranks
     static constexpr char const * ghostRankString() { return "ghostRank"; }
 
-    /// String key to ghosts to receive
+    /// @return String key to ghosts to receive
     static constexpr char const * ghostsToReceiveString() { return "ghostsToReceive"; }
 
-    /// String key to global->local mao
+    /// @return String key to global->local mao
     static constexpr char const * globalToLocalMapString() { return "globalToLocalMap"; }
 
-    /// String key to the 'is external' vector
+    /// @return String key to the 'is external' vector
     static constexpr char const * isExternalString() { return "isExternal"; }
 
-    /// String key to the local->global map
+    /// @return String key to the local->global map
     static constexpr char const * localToGlobalMapString() { return "localToGlobalMap"; }
 
     /// View key to external set
@@ -743,15 +747,16 @@ public:
    */
   struct groupKeyStruct
   {
-    /// String key to the Group holding the object sets
+    /// @return String key to the Group holding the object sets
     static constexpr char const * setsString() { return "sets"; }
 
-    /// String key to the Groupholding all the NeighborData objects
+    /// @return String key to the Groupholding all the NeighborData objects
     static constexpr char const * neighborDataString() { return "neighborData"; }
 
     /// View key to the Group holding the object sets
     dataRepository::GroupKey sets = { setsString() };
 
+    /// View key to the Group holding the neighbor data
     dataRepository::GroupKey neighborData{ neighborDataString() };
   }
   /// groupKey struct for the ObjectManagerBase class

@@ -132,7 +132,11 @@ struct LinearSolverParameters
     string cycleType = "V";                  ///< AMG cycle type
     string smootherType = "gaussSeidel";     ///< Smoother type
     string coarseType = "direct";            ///< Coarse-level solver/smoother
+    string coarseningType = "HMIS";          ///< Coarsening algorithm
+    integer interpolationType = 6;           ///< Coarsening algorithm
     integer numSweeps = 2;                   ///< Number of smoother sweeps
+    integer numFunctions = 1;                ///< Number of amg functions
+    integer aggresiveNumLevels = 0;          ///< Number of levels for aggressive coarsening.
     string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
     real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and
                                              ///< smoothed-aggregation AMG)
@@ -144,7 +148,21 @@ struct LinearSolverParameters
   /// Multigrid reduction parameters
   struct MGR
   {
-    string strategy;                    ///< Predefined MGR solution strategy (solver specific)
+    /**
+     * @brief MGR available strategies
+     */
+    enum class StrategyType : integer
+    {
+      compositionalMultiphaseFVM,       ///< finite volume compositional muliphase flow
+      compositionalMultiphaseHybridFVM, ///< hybrid finite volume compositional muliphase flow
+      compositionalMultiphaseReservoir, ///< reservoir with finite volume compositional multiphase flow
+      hydrofracture,                    ///< hydrofracture
+      lagrangianContactMechanics,       ///< Lagrangian contact mechanics
+      singlePhasePoroelastic,           ///< single phase poroelastic with finite volume single phase flow
+      hybridSinglePhasePoroelastic      ///< single phase poroelastic with hybrid finite volume single phase flow
+    };
+
+    StrategyType strategy;              ///< Predefined MGR solution strategy (solver specific)
     integer separateComponents = false; ///< Apply a separate displacement component (SDC) filter before AMG construction
     string displacementFieldName;       ///< Displacement field name need for SDC filter
   }
@@ -198,6 +216,15 @@ ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
 ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
               "none",
               "mc64" )
+
+ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
+              "compositionalMultiphaseFVM",
+              "compositionalMultiphaseHybridFVM",
+              "compositionalMultiphaseReservoir",
+              "hydrofracture",
+              "lagrangianContactMechanics",
+              "singlePhasePoroelastic",
+              "hybridSinglePhasePoroelastic" )
 
 } /* namespace geosx */
 
