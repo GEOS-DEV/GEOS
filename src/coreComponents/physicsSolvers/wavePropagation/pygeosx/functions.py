@@ -5,7 +5,6 @@ Created on 8/02/2021
 '''
 
 import math as m
-from functions import *
 import numpy as np
 from mesh import *
 from acquisition import *
@@ -39,6 +38,7 @@ def do_shots(problem, shot_list, dt):
     #Get Acoustic group
     acoustic_group  = problem.get_group("Solvers/acousticSolver")
     
+    
     #Get Wrappers
     src_pos_geosx   = acoustic_group.get_wrapper("sourceCoordinates").value()
     src_pos_geosx.set_access_level(pygeosx.pylvarray.MODIFIABLE)
@@ -57,6 +57,7 @@ def do_shots(problem, shot_list, dt):
     pressure_np1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/pressure_np1").value()
     pressure_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
     
+    outputSismoTrace = acoustic_group.get_wrapper("outputSismoTrace").value()
     
     dt_geosx        = problem.get_wrapper("Events/solverApplications/forceDt").value()
     maxT            = problem.get_wrapper("Events/maxTime").value()
@@ -100,7 +101,9 @@ def do_shots(problem, shot_list, dt):
             print_pressure(pressure_at_receivers, ishot)
            
             #Segy export and flag update
-            export_to_segy(pressure_at_receivers, shot_list[0].getReceiverSet().getSetCoord(), ishot, dt_cycle)
+            if outputSismoTrace == 1 :
+                export_to_segy(pressure_at_receivers, shot_list[0].getReceiverSet().getSetCoord(), ishot, dt_cycle)
+                
             shot_list[ishot].flagUpdate("Done")
             
             #Reset time/pressure to 0

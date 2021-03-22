@@ -58,6 +58,8 @@ def main():
     pressure_np1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/pressure_np1").value()
     pressure_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
     
+    outputSismoTrace = acoustic_group.get_wrapper("outputSismoTrace").value()
+    
     dt_geosx        = problem.get_wrapper("Events/solverApplications/forceDt").value()
     maxT            = problem.get_wrapper("Events/maxTime").value()
     cycle_freq      = problem.get_wrapper("Events/python/cycleFrequency").value()
@@ -94,7 +96,14 @@ def main():
     receiver_zone_x = 50
     receiver_zone_y = 90
     #Get seismic acquisition
-    shot_list = moving_acquisition(box, wavelet, nb_source_x, nb_source_y, nb_receiver_x, nb_receiver_y, receiver_zone_x, receiver_zone_y) 
+    shot_list = moving_acquisition(box, 
+                                   wavelet, 
+                                   nb_source_x, 
+                                   nb_source_y, 
+                                   nb_receiver_x, 
+                                   nb_receiver_y, 
+                                   receiver_zone_x, 
+                                   receiver_zone_y) 
     
     nb_shot = len(shot_list)
     
@@ -131,11 +140,16 @@ def main():
             print_pressure(pressure_at_receivers, ishot)
            
             #Segy export and flag update
-            export_to_segy(pressure_at_receivers, shot_list[0].getReceiverSet().getSetCoord(), ishot, dt_cycle)
+            if outputSismoTrace == 1 :
+                export_to_segy(pressure_at_receivers, 
+                               shot_list[0].getReceiverSet().getSetCoord(), 
+                               ishot, 
+                               dt_cycle)
+           
             shot_list[ishot].flagUpdate("Done")
             
             #Reset time/pressure to 0
-            curr_time[0]    = 0.0
+            curr_time[0] = 0.0
             pressure_nm1.to_numpy()[:] = 0.0
             pressure_n.to_numpy()[:]   = 0.0
             pressure_np1.to_numpy()[:] = 0.0

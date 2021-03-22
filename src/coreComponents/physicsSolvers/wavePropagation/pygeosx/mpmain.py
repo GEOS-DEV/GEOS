@@ -22,10 +22,6 @@ import multiprocessing as mp
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
-def callback(matrix, array):
-    pass
-
-
 
 def main():
 
@@ -51,9 +47,8 @@ def main():
     shot_list = moving_acquisition(box, wavelet, nb_source_x, nb_source_y, nb_receiver_x, nb_receiver_y, receiver_zone_x, receiver_zone_y) 
     
     
-    
     nb_proc = 2
-   # mp.set_start_method('spawn')
+    #mp.set_start_method('spawn')
     p=[]
     nb_shot_m1 = len(shot_list)
     ind = 0
