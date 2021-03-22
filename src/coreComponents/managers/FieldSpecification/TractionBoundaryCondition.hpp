@@ -45,16 +45,16 @@ public:
   virtual ~TractionBoundaryCondition() = default;
 
   /// deleted copy constructor
-  TractionBoundaryCondition( TractionBoundaryCondition const & other ) = delete;
+  TractionBoundaryCondition( TractionBoundaryCondition const & ) = delete;
 
   /// defaulted move constructor
-  TractionBoundaryCondition( TractionBoundaryCondition && other ) = default;
+  TractionBoundaryCondition( TractionBoundaryCondition && ) = default;
 
   /// deleted copy assignment operator
-  TractionBoundaryCondition & operator=( TractionBoundaryCondition const & other ) = delete;
+  TractionBoundaryCondition & operator=( TractionBoundaryCondition const & ) = delete;
 
   /// deleted move assignment operator
-  TractionBoundaryCondition & operator=( TractionBoundaryCondition && other ) = delete;
+  TractionBoundaryCondition & operator=( TractionBoundaryCondition && ) = delete;
 
 
   /**
@@ -105,7 +105,7 @@ protected:
   int m_tractionType;
 
   /// single specified value for stress used to generate the traction if m_tractionType==2.
-  VoigtTensor m_inputStress;
+  R2SymTensor m_inputStress;
 
 //  /// names of the functions used to specify stress for the generation of tractions.
 //  array1d<string> m_stressFunctionNames;

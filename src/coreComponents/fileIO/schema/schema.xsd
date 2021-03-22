@@ -8,7 +8,7 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="VoigtTensor">
+	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
@@ -390,7 +390,7 @@
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--inputStress => Input stress for tractionType option 2.
 -->
-		<xsd:attribute name="inputStress" type="VoigtTensor" default="{0,0,0,0,0,0}" />
+		<xsd:attribute name="inputStress" type="R2SymTensor" default="{0,0,0,0,0,0}" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of BC.-->
