@@ -16,8 +16,8 @@
  * @file PropertyConversions.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP
+#ifndef GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP_
 
 namespace geosx
 {
@@ -55,24 +55,24 @@ public:
     }
     else
     {
-      return 0.0;
+      return -0.5;
       GEOSX_ERROR( "A specific pair of elastic constants is required: (K,G) or (K,E) or (G,E)" );
     }
   }
 
-  PoissonRatio setBulkMod( real64 const K )
+  PoissonRatio setBulkModulus( real64 const K )
   {
     m_K = K;
     return *this;
   }
 
-  PoissonRatio setShearMod( real64 const G )
+  PoissonRatio setShearModulus( real64 const G )
   {
     m_G = G;
     return *this;
   }
 
-  PoissonRatio setYoungMod( real64 const E )
+  PoissonRatio setYoungModulus( real64 const E )
   {
     m_E = E;
     return *this;
@@ -100,8 +100,80 @@ private:
   real64 m_E = 0.0;
 };
 
+/**
+ * @class YoungModulus 
+ */
+struct YoungModulus
+{
+public:
 
+  /**
+   * @brief Compute Young's modulus from other elastic parameters
+   * @param[in] K Bulk modulus
+   * @param[in] G Shear modulus
+   * @param[in] nu Poisson's ratio
+   * @return Young's modulus
+   */
+  real64 getValue() const
+  {
+    if( m_K > 0 && m_G > 0 )
+    {
+      return 9.0 * m_K * m_G / ( 3.0 * m_K + m_G );
+    }
+    else if( m_K > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return m_K * ( 3.0 - 6.0 * m_nu );
+    }
+    else if( m_G > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return 2.0 * m_G * ( 1.0 + m_nu );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific pair of elastic constants is required: (K,G) or (K,nu) or (G,nu)" );
+    }
+  }
 
+  YoungModulus setBulkModulus( real64 const K )
+  {
+    m_K = K;
+    return *this;
+  }
+
+  YoungModulus setShearModulus( real64 const G )
+  {
+    m_G = G;
+    return *this;
+  }
+
+  YoungModulus setPoissonRatio( real64 const nu )
+  {
+    m_nu = nu;
+    return *this;
+  }
+
+  real64 min() const
+  {
+    return 1e-6;
+  }
+
+  real64 max() const
+  {
+    return 1e13;
+  }
+
+private:
+
+  /// Bulk modulus
+  real64 m_K = 0.0;
+
+  /// Shear modulus
+  real64 m_G = 0.0;
+
+  /// Poisson's ratio
+  real64 m_nu = -0.5;
+};
 
 /// @namespace Namespace to collect common property conversion functions (elastic, poroelastic, etc.)
 namespace conversions
@@ -117,6 +189,7 @@ namespace BulkModAndShearMod
  * @param[in] G Shear modulus
  * @return Young's modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toYoungsMod( real64 const & K, 
@@ -124,13 +197,14 @@ real64 toYoungsMod( real64 const & K,
 {
   return 9.0 * K * G / ( 3.0 * K + G );
 }
-
+*/
 /**
  * @brief Compute Poisson's ratio
  * @param[in] K Bulk modulus
  * @param[in] G Shear modulus
  * @return Poisson's ratio
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toPoissonRatio( real64 const & K, 
@@ -138,7 +212,7 @@ real64 toPoissonRatio( real64 const & K,
 {
   return ( 3.0 * K - 2.0 * G ) / ( 6.0 * K + 2.0 * G );
 }
-
+*/
 /**
  * @brief Compute First Lamé parameter
  * @param[in] K Bulk modulus
@@ -227,6 +301,7 @@ real64 toBulkMod( real64 const & G,
  * @param[in] nu Poisson's ratio
  * @return Young's modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toYoungsMod( real64 const & G, 
@@ -234,7 +309,7 @@ real64 toYoungsMod( real64 const & G,
 {
   return 2.0 * G * ( 1.0 + nu );
 }
-
+*/
 /**
  * @brief Compute First Lamé parameter
  * @param[in] G Shear modulus
@@ -261,6 +336,7 @@ namespace BulkModAndPoissonRatio
  * @param[in] nu Poisson's ratio
  * @return Young's modulus
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toYoungsMod( real64 const & K, 
@@ -268,7 +344,7 @@ real64 toYoungsMod( real64 const & K,
 {
   return K * ( 3.0 - 6.0 * nu );
 }
-
+*/
 /**
  * @brief Compute Shear modulus
  * @param[in] K Bulk modulus
@@ -323,6 +399,7 @@ real64 toShearMod( real64 const & K,
  * @param[in] E Young's modulus
  * @return Poisson's ratio
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toPoissonRatio( real64 const & K, 
@@ -330,7 +407,7 @@ real64 toPoissonRatio( real64 const & K,
 {
   return ( 3.0 * K - E ) / ( 6.0 * K); 
 }
-
+*/
 /**
  * @brief Compute First Lamé parameter
  * @param[in] K Bulk modulus
@@ -356,6 +433,7 @@ namespace ShearModAndYoungsMod
  * @param[in] E Young's modulus
  * @return Poisson's ratio
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toPoissonRatio( real64 const & G, 
@@ -363,7 +441,7 @@ real64 toPoissonRatio( real64 const & G,
 {
   return 0.5 * E / G - 1.0;
 }
-
+*/
 /**
  * @brief Compute Bulk modulus
  * @param[in] G Shear modulus
@@ -796,4 +874,4 @@ real64 useNuuNuGBiotCoeffKappa( real64 const & nuu,
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP_ */

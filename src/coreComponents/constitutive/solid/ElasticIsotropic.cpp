@@ -111,20 +111,30 @@ void ElasticIsotropic::postProcessInput()
   }
   else if( nu >= 0.0 && G >= 0.0 )
   {
-    E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu );
+    //E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu );
+    E = YoungModulus().
+           setShearModulus( G ).
+           setPoissonRatio( nu ).
+           getValue();
+
     K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu );
   }
   else if( nu >= 0 && K >= 0.0 )
   {
-    E = conversions::BulkModAndPoissonRatio::toYoungsMod( K, nu );
+    //E = conversions::BulkModAndPoissonRatio::toYoungsMod( K, nu );
+    E = YoungModulus().
+          setBulkModulus( K ).
+          setPoissonRatio( nu ).
+          getValue();
+
     G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
   }
   else if( E >= 0.0 && K >=0 )
   {
     //nu = conversions::BulkModAndYoungsMod::toPoissonRatio( K, E );
     nu = PoissonRatio().
-           setBulkMod( K ).
-           setShearMod( E ).
+           setBulkModulus( K ).
+           setYoungModulus( E ).
            getValue();
     G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
   }
@@ -132,18 +142,23 @@ void ElasticIsotropic::postProcessInput()
   {
     //nu = conversions::ShearModAndYoungsMod::toPoissonRatio( G, E );
     nu = PoissonRatio().
-         setBulkMod( G ).
-         setShearMod( E ).
+         setShearModulus( G ).
+         setYoungModulus( E ).
          getValue();
     K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
   }
   else if( K >= 0.0 && G >= 0.0 )
   {
-    E  = conversions::BulkModAndShearMod::toYoungsMod( K, G );
+    //E  = conversions::BulkModAndShearMod::toYoungsMod( K, G );
+    E = YoungModulus().
+           setBulkModulus( K ).
+           setShearModulus( G ).
+           getValue();
+
     //nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
     nu = PoissonRatio().
-           setBulkMod( K ).
-           setShearMod( G ).
+           setBulkModulus( K ).
+           setShearModulus( G ).
            getValue();
   }
   else
