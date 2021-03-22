@@ -17,7 +17,56 @@ import math as m
 #from matplotlib import pyplot as plt
 
 '''acquisition sismique marine, comme schema PDF'''
-def moving_acquisition(box, wavelet, nbsourcesx, nbsourcesy, nbreceiversx, nbreceiversy, lenRx, lenRy):
+def moving_acquisition(box, 
+                       wavelet, 
+                       nbsourcesx = 1, 
+                       nbsourcesy = 1, 
+                       nbreceiversx = 1, 
+                       nbreceiversy = 1, 
+                       lenRx = 0, 
+                       lenRy = 0):
+    
+    """Marine seismic acquisition reprensenting a boat pulling a source 
+       and a set of receivers in a squared domain
+    
+    Parameters
+    ----------
+    box : 
+        Numpy array containing min/max boundary coordinates of the domain
+    
+    wavelet :
+        Source function (Ricker)
+    
+    nbsourcesx :
+        Number of sources along x axis
+    
+    nbsourcesy :
+        Number of sources along y axis
+    
+    nbreceiversx :
+        Number of sources along x axis
+    
+    nbreceiversy :
+        Number of sources along y axis
+    
+    lenRx :
+        Lenght of the area for receivers along x axis
+    
+    lenRy :
+        Lenght of the area for receivers along y axis
+    
+    Return
+    ------
+    shots :
+        A list of Shot objects
+    
+    Notes
+    -----
+    - "eps" variable is defined here to avoid source and receivers
+      to be on a node coord or on an element edge
+    - This is a temporary acquisition for simulation tests
+    - Seismic acquisition will be read from segy files
+    """ 
     
     eps  = 49
     xmin = box[0][0]

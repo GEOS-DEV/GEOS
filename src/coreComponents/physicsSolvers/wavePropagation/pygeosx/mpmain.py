@@ -26,6 +26,7 @@ rank = comm.Get_rank()
 def main():
 
     #Dummy initialization to be able to get the shot list and split it between all proc
+    #(Conflict with MPI rank initialization on all proc later due to this first init)
     problem = pygeosx.initialize(0, sys.argv)
     
     mesh = initialize_pyMesh(problem) 
@@ -48,7 +49,6 @@ def main():
     
     
     nb_proc = 2
-    #mp.set_start_method('spawn')
     p=[]
     nb_shot_m1 = len(shot_list)
     ind = 0
@@ -56,11 +56,13 @@ def main():
     for i in range(nb_proc):
         nb_shot = int(nb_shot_m1/(nb_proc-i))
         
+        #Add process with its dedicated shot_list
         p.append(mp.Process(target=shot_simul, args=(shot_list[ind:ind + nb_shot], dt) ))
         ind = ind + nb_shot
         
         nb_shot_m1 = nb_shot_m1 - nb_shot
         
+        #Start process
         p[i].start()
     
     

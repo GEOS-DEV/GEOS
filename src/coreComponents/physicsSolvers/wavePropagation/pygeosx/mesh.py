@@ -12,7 +12,19 @@ from functions import *
     
 
 def initialize_pyMesh(problem):
-
+    """Get mesh informations from GEOSX mesh for the seismic acquisition
+    
+    Parameters
+    ----------
+    problem :
+        A pygeosx.initialize object
+    
+    Return
+    ------
+    mesh :
+        A Mesh object
+    """
+    
     node_manager = problem.get_group("domain/MeshBodies/mesh/Level0/nodeManager")
 
     number_of_node = len(node_manager.get_wrapper("ReferencePosition").value().to_numpy())
@@ -55,16 +67,37 @@ def initialize_pyMesh(problem):
     return mesh
     
     
-    
-    
+      
     
 class Node:
+    """A class representing a node of the mesh
+    
+    Attributes
+    ----------
+    coords :
+        Node coordinate
+    
+    n :
+        The global number of the node
+    """
+        
     def __init__(self, nodecoord, nodenumber):
-        self.x = nodecoord[0]                          #OK
-        self.y = nodecoord[1]                          #OK
-        self.z = nodecoord[2]                          #OK
-        self.coords = np.array([self.x, self.y, self.z])         #OK
-        self.n = nodenumber                            #OK
+        """Constructor of Node
+        
+        Parameters
+        ----------
+        nodecoord :
+            Coordinates of the node
+        
+        nodenumber :
+            Global number of the node in the mesh
+        """
+        
+        self.x = nodecoord[0]                          
+        self.y = nodecoord[1]                          
+        self.z = nodecoord[2]                          
+        self.coords = np.array([self.x, self.y, self.z])         
+        self.n = nodenumber                            
         
     def getCoords(self):
         return self.coords
@@ -83,12 +116,51 @@ class Node:
         
 
 class Element:
+    """A class representing an element of the mesh
+    
+    Attributes
+    ----------
+    node_list :
+        List of nodes in that element
+        
+    speed :
+        Wave speed in the element
+    
+    center :
+        Element center coordinates
+    
+    volume :
+        Volume of the element
+    
+    n :
+        The global number of the element
+    """
     def __init__(self, node_list, elemspeed, coordcenter, elemvolume, elemnumber):
-        self.node_list = node_list   #OK
-        self.speed  = elemspeed      #Acoustic solver
-        self.center = np.array(coordcenter)    #OK
-        self.volume = elemvolume     #OK
-        self.n = elemnumber          #OK
+        """Constructor of Element
+        
+        Parameters
+        ----------
+        node_list :
+            List of nodes in that element
+        
+        elemspeed :
+            Wave speed in the element
+    
+        coordcenter :
+            Element center coordinates
+    
+        elemvolume :
+            Volume of the element
+    
+        elemnumber :
+            The global number of the element
+        """
+        
+        self.node_list = node_list   
+        self.speed  = elemspeed      
+        self.center = np.array(coordcenter)   
+        self.volume = elemvolume     
+        self.n = elemnumber         
     
     def getNode_List(self):
         return self.node_list
@@ -108,17 +180,53 @@ class Element:
     
         
 class Mesh:
+    """A class representing the mesh
+    
+    Attributes
+    ----------
+    elem_list :
+        List of elements
+        
+    node_list :
+        List of nodes
+        
+    nbelem :
+        Number of elements
+    
+    nbnode :
+        Number of nodes
+    
+    b_node_list :
+        List of boundary nodes
+    """
     def __init__(self, elem_list, node_list, boundary_nodes, order):
-        self.elem_list = elem_list                      #OK
-        self.node_list = node_list                      #OK
-        self.nbelem = len(elem_list)                    #OK
-        self.nbnode = len(node_list)                    #OK
-        self.ord = order                                #OK
-        self.b_node_list = boundary_nodes               #OK
+        """Constructor of Mesh
+        
+        Parameters
+        ----------
+        elem_list :
+            List of Element objects
+        
+        node_list :
+            List of Node objects
+        
+        boundary_nodes :
+            Number of the Node objects on the boundary of the domain
+        
+        order :
+            Space discretization order
+        """
+        
+        self.elem_list = elem_list                      
+        self.node_list = node_list                      
+        self.nbelem = len(elem_list)                    
+        self.nbnode = len(node_list)                    
+        self.ord = order                                
+        self.b_node_list = boundary_nodes               
         
     
     def __repr__(self):
-    	return 'Number of elements : ' + str(self.nbelem) + '\n' + 'Number of nodes : ' + str(self.nbnode) + '\n'
+        return 'Number of elements : ' + str(self.nbelem) + '\n' + 'Number of nodes : ' + str(self.nbnode) + '\n'
         
     def getElem_List(self):
         return self.elem_list    
@@ -133,38 +241,37 @@ class Mesh:
         return self.nbnode
         
     def getOrd(self):
-    	return self.ord
+        return self.ord
     	
     def getBoundaryNode(self):
-    	return self.b_node_list
+        return self.b_node_list
     
     def getMinMaxBoundary(self):
-    	xmin = self.b_node_list[0].x
-    	xmax = xmin
-    	ymin = self.b_node_list[0].y
-    	ymax = ymin
-    	zmin = self.b_node_list[0].z
-    	zmax = zmin
+        
+        xmin = self.b_node_list[0].x
+        xmax = xmin
+        ymin = self.b_node_list[0].y
+        ymax = ymin
+        zmin = self.b_node_list[0].z
+        zmax = zmin
     	
-    	for b_node in self.b_node_list:
-    	    if b_node.x < xmin:
-    	    	xmin = b_node.x
-    	    elif b_node.x > xmin:
-    	    	xmax = b_node.x
-    	    
-    	    if b_node.y < ymin:
-    	    	ymin = b_node.y
-    	    elif b_node.y > ymin:
-    	    	ymax = b_node.y
-    	    	
-    	    if b_node.z < zmin:
-    	    	zmin = b_node.z
-    	    elif b_node.z > zmin:
-    	    	zmax = b_node.z
-    	    
-    	box = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
-    	
-    	return box
+        for b_node in self.b_node_list:
+            if b_node.x < xmin:
+                xmin = b_node.x
+            elif b_node.x > xmin:
+                xmax = b_node.x 
+            if b_node.y < ymin:
+                ymin = b_node.y
+            elif b_node.y > ymin:
+                ymax = b_node.y
+            if b_node.z < zmin:
+                zmin = b_node.z
+            elif b_node.z > zmin:
+                zmax = b_node.z
+        
+        box = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
+        
+        return box
     	    
     	
     def getMeshSection(self, sourceCoords):

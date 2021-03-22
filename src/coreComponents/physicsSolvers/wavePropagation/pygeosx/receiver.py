@@ -6,7 +6,23 @@ Created on 10/02/2021
 import numpy as np
 
 class Receiver:
+    """A class representing a receiver
+    
+    Attributes
+    ----------
+    coords :
+        Coordinates of the source
+    """
+    
     def __init__(self,pos):
+        """Constructor for the receiver
+        
+        Parameters
+        ----------
+        pos :
+            Coordinates for the receiver
+        """
+        
         self.x = pos[0]
         self.y = pos[1]
         self.z = pos[2]
@@ -37,9 +53,25 @@ class Receiver:
             
     
 class ReceiverSet:
-        
+    """A class representing a set receiver
+    
+    Attributes
+    ----------
+    receiver_list :
+        List of Receiver
+    
+    n :
+        Number of Receiver
+    """    
         
     def __init__(self,receiver_list=None):
+        """Constructor for the point source
+        
+        Parameters
+        ----------
+        receiver_list :
+            List of Receiver
+        """
         if receiver_list is None:
             self.receiver_list = []
             self.n = 0

@@ -17,14 +17,37 @@ from print import *
 
     
 
-    
 def shot_simul(shot_list, dt):
+    """
+    Parameters
+    ----------
+
+    shot_list :
+        A list containing sets of Source and ReceiverSet objects
+
+    dt :
+        Time step for the solver
+    """
+      
     problem = initialize()      
     do_shots(problem, shot_list, dt)
     
     
    
 def initialize():
+    """ Grouping of pygeox initializations
+    
+    Return
+    ------
+    problem :
+        A pygeosx object
+        
+    Notes
+    -----
+    Need to give MPI rank at this point for initialization. 
+    Conflict with first initialization to get the list of shots
+    """
+    
     problem = pygeosx.reinit(sys.argv)
 
     pygeosx.apply_initial_conditions()
@@ -34,6 +57,24 @@ def initialize():
 
 
 def do_shots(problem, shot_list, dt):
+    """ Given a GEOSX problem, a list of shots, and a time step, 
+        solve wave eqn with different configurations 
+        
+    Parameters
+    ----------   
+    problem :
+        A pygeosx.initialize() object
+        
+    shot_list : 
+        A list containing sets of Source and ReceiverSet objects
+
+    dt :
+        Time step for the solver
+        
+    Notes
+    -----    
+    Export pressure to segy depending on output flag defined in XML 
+    """
 
     #Get Acoustic group
     acoustic_group  = problem.get_group("Solvers/acousticSolver")
@@ -134,7 +175,25 @@ def do_shots(problem, shot_list, dt):
 
 
 def ricker(maxT, dt, f0):
+    """ Source function
     
+    Parameters
+    ----------
+    maxT : 
+        The max time for simulation
+    
+    dt :
+        The time step for simulation
+    
+    f0 :
+        Intensity
+    
+    Return
+    ------
+    fi :
+        np array containing source value at all timestep
+    """
+        
     T0 = 1.0/f0;
     fi = np.zeros(int(maxT/dt))
     
@@ -154,7 +213,19 @@ def ricker(maxT, dt, f0):
 
 #Calculate dt using order of space discretization method, Wave velocity, and the radius of the included sphere in element 
 def calculDt(mesh):
-   
+    """Calcul timestep for simulation based on mesh parameters
+    
+    Parameters
+    ----------
+    mesh :
+        A Mesh python object derived from GEOSX mesh 
+        
+    Return 
+    ------
+    dt :
+        Time step for simulation
+    """
+    
     if mesh.getOrd()==1:
         nx = 1
         ny = 2

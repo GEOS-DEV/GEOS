@@ -8,7 +8,33 @@ from receiver import ReceiverSet
 
 '''Create Shot object composed of one Source and a ReceiverSet'''
 class Shot:
-    def __init__(self,Source, ReceiverSet):
+    """Class representing a shot configuration
+    
+    Attributes
+    ----------
+    source :
+        Source object
+    
+    receivers :
+        ReceiverSet object
+        
+    flag :
+        A flag to say if the shot configuration has been simulated
+        "Undone", "In Progress", "Done"
+    """
+    
+    def __init__(self, Source, ReceiverSet):
+        """ Constructor of Shot
+        
+        Parameters
+        ----------
+        Source :
+            A Source object
+        
+        ReceiverSet :
+            A ReceiverSet object
+        """
+        
         self.source = Source
         self.receivers = ReceiverSet
         self.flag = "Undone"
