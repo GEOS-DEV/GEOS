@@ -121,18 +121,30 @@ void ElasticIsotropic::postProcessInput()
   }
   else if( E >= 0.0 && K >=0 )
   {
-    nu = conversions::BulkModAndYoungsMod::toPoissonRatio( K, E );
+    //nu = conversions::BulkModAndYoungsMod::toPoissonRatio( K, E );
+    nu = PoissonRatio().
+           setBulkMod( K ).
+           setShearMod( E ).
+           getValue();
     G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
   }
   else if( E >= 0.0 && G >= 0 )
   {
-    nu = conversions::ShearModAndYoungsMod::toPoissonRatio( G, E );
+    //nu = conversions::ShearModAndYoungsMod::toPoissonRatio( G, E );
+    nu = PoissonRatio().
+         setBulkMod( G ).
+         setShearMod( E ).
+         getValue();
     K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
   }
   else if( K >= 0.0 && G >= 0.0 )
   {
     E  = conversions::BulkModAndShearMod::toYoungsMod( K, G );
-    nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
+    //nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
+    nu = PoissonRatio().
+           setBulkMod( K ).
+           setShearMod( G ).
+           getValue();
   }
   else
   {

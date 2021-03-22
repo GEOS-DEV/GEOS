@@ -25,6 +25,84 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @class PoissonRatio 
+ */
+struct PoissonRatio
+{
+public:
+
+  /**
+   * @brief Compute Poisson's ratio from other elastic parameters
+   * @param[in] K Bulk modulus
+   * @param[in] G Shear modulus
+   * @param[in] E Young's modulus
+   * @return Poisson's ratio
+   */
+  real64 getValue() const
+  {
+    if( m_K > 0 && m_G > 0 )
+    {
+      return ( 3.0 * m_K - 2.0 * m_G ) / ( 6.0 * m_K + 2.0 * m_G );
+    }
+    else if( m_K > 0 && m_E > 0 )
+    {
+      return ( 3.0 * m_K - m_E ) / ( 6.0 * m_K);
+    }
+    else if( m_G > 0 && m_E > 0 )
+    {
+      return 0.5 * m_E / m_G - 1.0;
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific pair of elastic constants is required: (K,G) or (K,E) or (G,E)" );
+    }
+  }
+
+  PoissonRatio setBulkMod( real64 const K )
+  {
+    m_K = K;
+    return *this;
+  }
+
+  PoissonRatio setShearMod( real64 const G )
+  {
+    m_G = G;
+    return *this;
+  }
+
+  PoissonRatio setYoungMod( real64 const E )
+  {
+    m_E = E;
+    return *this;
+  }
+
+  real64 min() const
+  {
+    return -0.499999;
+  }
+
+  real64 max() const
+  {
+    return 0.499999;
+  }
+
+private:
+
+  /// Bulk modulus
+  real64 m_K = 0.0;
+
+  /// Shear modulus
+  real64 m_G = 0.0;
+
+  /// Young's modulus
+  real64 m_E = 0.0;
+};
+
+
+
+
 /// @namespace Namespace to collect common property conversion functions (elastic, poroelastic, etc.)
 namespace conversions
 {
