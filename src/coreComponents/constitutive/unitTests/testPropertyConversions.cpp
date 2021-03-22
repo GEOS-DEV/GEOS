@@ -23,7 +23,7 @@ using namespace ::geosx::constitutive;
 TEST( PropertyConversionTests, testElasticConversions )
 {
   real64 bulk, poisson, young, shear;
-  real64 bulk_out, poisson_out, youngs_out, shear_out;
+  real64 bulk_out, poisson_out, young_out, shear_out;
 
   // bulk and poisson
   bulk        = 5.4321;
@@ -50,14 +50,14 @@ TEST( PropertyConversionTests, testElasticConversions )
                   setShearModulus( shear ).
                   getValue();
 
-  //youngs_out = conversions::BulkModAndShearMod::toYoungsMod( bulk, shear );
-  youngs_out = YoungModulus().
+  //young_out = conversions::BulkModAndShearMod::toYoungsMod( bulk, shear );
+  young_out = YoungModulus().
                  setBulkModulus( bulk ).
                  setShearModulus( shear ).
                  getValue();
   
   EXPECT_DOUBLE_EQ( poisson, poisson_out );
-  EXPECT_DOUBLE_EQ( young, youngs_out );
+  EXPECT_DOUBLE_EQ( young, young_out );
 
   // bulk and youngs
   //shear_out = conversions::BulkModAndYoungsMod::toShearMod( bulk, young );
@@ -109,20 +109,20 @@ TEST( PropertyConversionTests, testElasticConversions )
 
   // shear and poisson
   //bulk_out = conversions::ShearModAndPoissonRatio::toBulkMod( shear, poisson );
-  //youngs_out =conversions::ShearModAndPoissonRatio::toYoungsMod( shear, poisson );
+  //young_out =conversions::ShearModAndPoissonRatio::toYoungsMod( shear, poisson );
 
   bulk_out = BulkModulus().
                setShearModulus( shear ).
                setPoissonRatio( poisson ).
                getValue();
 
-  youngs_out = YoungModulus().
+  young_out = YoungModulus().
                  setShearModulus( shear ).
                  setPoissonRatio( poisson ).
                  getValue();
 
   EXPECT_DOUBLE_EQ( bulk, bulk_out );
-  EXPECT_DOUBLE_EQ( young, youngs_out );
+  EXPECT_DOUBLE_EQ( young, young_out );
 
   // first lame (bulk and shear input only)
   real64 lame = conversions::BulkModAndShearMod::toFirstLame( bulk, shear );
