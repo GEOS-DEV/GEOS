@@ -64,9 +64,6 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const par
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
 {}
 
-void PAMELAMeshGenerator::generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
-
 void PAMELAMeshGenerator::postProcessInput()
 {
   m_pamelaMesh =

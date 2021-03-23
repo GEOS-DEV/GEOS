@@ -97,8 +97,6 @@ public:
 //
 //
 
-  virtual void generateElementRegions( DomainPartition & domain ) override;
-
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
    * @param childKey the catalog key of the new geometric object to create

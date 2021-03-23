@@ -130,24 +130,6 @@ InternalMeshGenerator::~InternalMeshGenerator()
   // TODO Auto-generated destructor stub
 }
 
-
-/**
- * @param domain
- */
-void InternalMeshGenerator::generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{
-  //  lvector numElements;
-  //
-  //  for( string_array::size_type r=0 ; r<m_regionNames.size() ; ++r )
-  //  {
-  //    numElements.emplace_back( 0 );
-  //  }
-  //
-  //  domain.m_feElementManager->resize( numElements, m_regionNames,
-  // m_elementType );
-
-}
-
 void InternalMeshGenerator::postProcessInput()
 {
 

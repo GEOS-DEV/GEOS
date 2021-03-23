@@ -61,12 +61,6 @@ public:
   static string catalogName() { return "MeshGeneratorBase"; }
 
 /**
- * @brief Generate the Element regions for an input Domain.
- * @param[inout] domain the Domain object on which to generate Element regions
- */
-  virtual void generateElementRegions( DomainPartition & domain ) = 0;
-
-/**
  * @brief Generate the mesh object the input mesh object.
  * @param[in] domain the domain partition from which to construct the mesh object
  */

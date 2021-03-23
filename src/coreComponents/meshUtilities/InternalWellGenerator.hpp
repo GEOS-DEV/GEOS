@@ -96,9 +96,6 @@ public:
    */
   ///@{
 
-  /// not implemented
-  virtual void generateElementRegions( DomainPartition & ) override {}
-
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
    * @param[in] childKey The name of the new object type's key in the
