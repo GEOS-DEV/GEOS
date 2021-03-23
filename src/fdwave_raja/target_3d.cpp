@@ -119,7 +119,7 @@ void compute_pml_3d(RAJA::Index_type const x3, const RAJA::Index_type x4, const 
                     RAJA::View< float, RAJA::Layout<3, RAJA::Index_type, 2> > &__restrict__ phiView )
 {
   const float coef0 = coefxViewConst(0) + coefyViewConst(0) + coefzViewConst(0);
-
+#if 0
   RAJA::RangeSegment XRange(x3, x4);
   RAJA::RangeSegment YRange(y3, y4);
   RAJA::RangeSegment ZRange(z3, z4);
@@ -131,7 +131,7 @@ void compute_pml_3d(RAJA::Index_type const x3, const RAJA::Index_type x4, const 
     RAJA::statement::Lambda<0> > > > >;
 
   RAJA::kernel<KJI_EXECPOL>( RAJA::make_tuple(XRange, YRange, ZRange),
-                             [&coef0,lx,ly,lz,&hdx_2,&hdy_2,&hdz_2,
+                             [coef0,lx,ly,lz,&hdx_2,&hdy_2,&hdz_2,
                               coefxViewConst,coefyViewConst,coefzViewConst,
                               uViewConst,etaViewConst,vpViewConst,vView,phiView] (RAJA::Index_type const i,
                                                                                   RAJA::Index_type const j,
@@ -167,6 +167,43 @@ void compute_pml_3d(RAJA::Index_type const x3, const RAJA::Index_type x4, const 
                                      *(uViewConst(i+lx,j+ly,k+1+lz)-uViewConst(i+lx,j+ly,k-1+lz))*hdz_2 ) )
                                  / (1.f+etaViewConst(i+1,j+1,k+1));
                              });
+#else
+  for (llint i = x3; i < x4; ++i) {
+       for (llint j = y3; j < y4; ++j) {
+           for (llint k = z3; k < z4; ++k) {
+             const float lap = (coef0*uViewConst(i+lx,j+ly,k+lz) 
+                                +coefxViewConst(1)*(uViewConst(i+1+lx,j+ly,k+lz)+uViewConst(i-1+lx,j+ly,k+lz))
+                                +coefyViewConst(1)*(uViewConst(i+lx,j+1+ly,k+lz)+uViewConst(i+lx,j-1+ly,k+lz))
+                                +coefzViewConst(1)*(uViewConst(i+lx,j+ly,k+1+lz)+uViewConst(i+lx,j+ly,k-1+lz))
+                                +coefxViewConst(2)*(uViewConst(i+2+lx,j+ly,k+lz)+uViewConst(i-2+lx,j+ly,k+lz))
+                                +coefyViewConst(2)*(uViewConst(i+lx,j+2+ly,k+lz)+uViewConst(i+lx,j-2+ly,k+lz))
+                                +coefzViewConst(2)*(uViewConst(i+lx,j+ly,k+2+lz)+uViewConst(i+lx,j+ly,k-2+lz))
+                                +coefxViewConst(3)*(uViewConst(i+3+lx,j+ly,k+lz)+uViewConst(i-3+lx,j+ly,k+lz))
+                                +coefyViewConst(3)*(uViewConst(i+lx,j+3+ly,k+lz)+uViewConst(i+lx,j-3+ly,k+lz))
+                                +coefzViewConst(3)*(uViewConst(i+lx,j+ly,k+3+lz)+uViewConst(i+lx,j+ly,k-3+lz))
+                                +coefxViewConst(4)*(uViewConst(i+4+lx,j+ly,k+lz)+uViewConst(i-4+lx,j+ly,k+lz))
+                                +coefyViewConst(4)*(uViewConst(i+lx,j+4+ly,k+lz)+uViewConst(i+lx,j-4+ly,k+lz))
+                                +coefzViewConst(4)*(uViewConst(i+lx,j+ly,k+4+lz)+uViewConst(i+lx,j+ly,k-4+lz)));
+             
+             vView(i+lx,j+ly,k+lz) =
+               ( (2.f-etaViewConst(i+1,j+1,k+1)*etaViewConst(i+1,j+1,k+1)
+                  +2.f*etaViewConst(i+1,j+1,k+1))*uViewConst(i+lx,j+ly,k+lz)
+                 -vView(i+lx,j+ly,k+lz)
+                 +vpViewConst(i,j,k)*(lap+phiView(i,j,k)) )
+               / (1.f+2.f*etaViewConst(i+1,j+1,k+1));
+             phiView(i,j,k) =
+               ( phiView(i,j,k)-
+                 ( (etaViewConst(i+2,j+1,k+1)-etaViewConst(i,j+1,k+1))
+                   *(uViewConst(i+1+lx,j+ly,k+lz)-uViewConst(i-1+lx,j+ly,k+lz))*hdx_2
+                   +(etaViewConst(i+1,j+2,k+1)-etaViewConst(i+1,j,k+1))
+                   *(uViewConst(i+lx,j+1+ly,k+lz)-uViewConst(i+lx,j-1+ly,k+lz))*hdy_2
+                   +(etaViewConst(i+1,j+1,k+2)-etaViewConst(i+1,j+1,k))
+                   *(uViewConst(i+lx,j+ly,k+1+lz)-uViewConst(i+lx,j+ly,k-1+lz))*hdz_2 ) )
+               / (1.f+etaViewConst(i+1,j+1,k+1));
+             }
+           }
+         }
+#endif
 }
 
 void target_pml_3d(llint nx, llint ny,llint nz,
@@ -183,6 +220,20 @@ void target_pml_3d(llint nx, llint ny,llint nz,
                    float *__restrict__ phi,
                    const float *__restrict__ eta)
 {
+  const float coef0 = coefx[0] + coefy[0] + coefz[0];
+  static bool haveRun = false;
+
+  RAJA_UNUSED_VAR( nx );
+  RAJA_UNUSED_VAR( coef0 );
+
+#define KERNEL_OPTION 1
+#if KERNEL_OPTION == 0
+  if( !haveRun )
+  {
+    haveRun = true;
+    std::cout << "Using compute_pml_3d" << std::endl;
+  }  
+
   RAJA::View< const float, RAJA::Layout<1, RAJA::Index_type, 0> > coefxViewConst( coefx, 5 );
   RAJA::View< const float, RAJA::Layout<1, RAJA::Index_type, 0> > coefyViewConst( coefy, 5 );
   RAJA::View< const float, RAJA::Layout<1, RAJA::Index_type, 0> > coefzViewConst( coefz, 5 );
@@ -191,7 +242,7 @@ void target_pml_3d(llint nx, llint ny,llint nz,
   RAJA::View< float, RAJA::Layout<3, RAJA::Index_type, 2> > vView( v, RAJA::Layout<3>(nx+2*lx, ny+2*ly, nz+2*lz) );
   RAJA::View< const float, RAJA::Layout<3, RAJA::Index_type, 2> > vpViewConst( vp, RAJA::Layout<3>(nx, ny, nz) );
   RAJA::View< float, RAJA::Layout<3, RAJA::Index_type, 2> > phiView( phi, RAJA::Layout<3>(nx, ny, nz) );
-  RAJA::View< const float, RAJA::Layout<3, RAJA::Index_type, 2> > etaViewConst( eta, RAJA::Layout<3>(nx+2, ny+2, nz+2) );    
+  RAJA::View< const float, RAJA::Layout<3, RAJA::Index_type, 2> > etaViewConst( eta, RAJA::Layout<3>(nx+2, ny+2, nz+2) );  
 
   compute_pml_3d( RAJA::Index_type(x3), RAJA::Index_type(x4),
                   RAJA::Index_type(y3), RAJA::Index_type(y4),
@@ -200,33 +251,82 @@ void target_pml_3d(llint nx, llint ny,llint nz,
                   hdx_2, hdy_2, hdz_2,
                   coefxViewConst, coefyViewConst, coefzViewConst,
                   uViewConst, vpViewConst, etaViewConst, vView, phiView );
-  
-  // const float coef0 = coefxViewConst(0) + coefyViewConst(0) + coefzViewConst(0);
-  // RAJA_UNUSED_VAR( nx );
-  
-  //   for (llint i = x3; i < x4; ++i) {
-  //      for (llint j = y3; j < y4; ++j) {
-  //          for (llint k = z3; k < z4; ++k) {
-  //              float const lap = LAP;
+#endif
+#if KERNEL_OPTION == 1
+  if( !haveRun )
+  {
+    haveRun = true;
+    std::cout << "Using RAJA kernel with pointers" << std::endl;
+  }
 
-  //              v[IDX3_l(i,j,k)] =
-  //                  ((2.f-eta[IDX3_eta1(i,j,k)]*eta[IDX3_eta1(i,j,k)]
-  //                  +2.f*eta[IDX3_eta1(i,j,k)])*u[IDX3_l(i,j,k)]
-  //                  -v[IDX3_l(i,j,k)]
-  //                  +vp[IDX3(i,j,k)]*
-  //                  (lap+phi[IDX3(i,j,k)]))/(1.f+2.f*eta[IDX3_eta1(i,j,k)]);
+  RAJA::RangeSegment const XRange(x3, x4);
+  RAJA::RangeSegment const YRange(y3, y4);
+  RAJA::RangeSegment const ZRange(z3, z4);
+  
+  using POLICY = RAJA::KernelPolicy<
+    RAJA::statement::For<0, RAJA::loop_exec, 
+      RAJA::statement::For<1, RAJA::loop_exec, 
+        RAJA::statement::For<2, RAJA::loop_exec, 
+          RAJA::statement::Lambda<0>
+        >
+      >
+    >
+  >;
 
-  //             phi[IDX3(i,j,k)]=(phi[IDX3(i,j,k)]-
-  //               ((eta[IDX3_eta1(i+1,j,k)]-eta[IDX3_eta1(i-1,j,k)])
-  //                    *(u[IDX3_l(i+1,j,k)]-u[IDX3_l(i-1,j,k)])*hdx_2
-  //                    +(eta[IDX3_eta1(i,j+1,k)]-eta[IDX3_eta1(i,j-1,k)])
-  //                    *(u[IDX3_l(i,j+1,k)]-u[IDX3_l(i,j-1,k)])*hdy_2
-  //                    +(eta[IDX3_eta1(i,j,k+1)]-eta[IDX3_eta1(i,j,k-1)])
-  //                  *(u[IDX3_l(i,j,k+1)]-u[IDX3_l(i,j,k-1)])*hdz_2))
-  //                    /(1.f+eta[IDX3_eta1(i,j,k)]);
-  //         }
-  //      }
-  //   }
+  RAJA::kernel<POLICY>( RAJA::make_tuple(XRange, YRange, ZRange),
+    [=] ( RAJA::Index_type const i, RAJA::Index_type const j, RAJA::Index_type const k)
+    {
+      float const lap = LAP;
+
+      v[IDX3_l(i,j,k)] =
+         ((2.f-eta[IDX3_eta1(i,j,k)]*eta[IDX3_eta1(i,j,k)]
+         +2.f*eta[IDX3_eta1(i,j,k)])*u[IDX3_l(i,j,k)]
+         -v[IDX3_l(i,j,k)]
+         +vp[IDX3(i,j,k)]*
+         (lap+phi[IDX3(i,j,k)]))/(1.f+2.f*eta[IDX3_eta1(i,j,k)]);
+
+      phi[IDX3(i,j,k)]=(phi[IDX3(i,j,k)]-
+        ((eta[IDX3_eta1(i+1,j,k)]-eta[IDX3_eta1(i-1,j,k)])
+             *(u[IDX3_l(i+1,j,k)]-u[IDX3_l(i-1,j,k)])*hdx_2
+             +(eta[IDX3_eta1(i,j+1,k)]-eta[IDX3_eta1(i,j-1,k)])
+             *(u[IDX3_l(i,j+1,k)]-u[IDX3_l(i,j-1,k)])*hdy_2
+             +(eta[IDX3_eta1(i,j,k+1)]-eta[IDX3_eta1(i,j,k-1)])
+           *(u[IDX3_l(i,j,k+1)]-u[IDX3_l(i,j,k-1)])*hdz_2))
+             /(1.f+eta[IDX3_eta1(i,j,k)]);
+    }
+ );
+#endif
+#if KERNEL_OPTION == 2
+  if( !haveRun )
+  {
+    haveRun = true;
+    std::cout << "Using original for-loops" << std::endl;
+  }
+
+    for (llint i = x3; i < x4; ++i) {
+       for (llint j = y3; j < y4; ++j) {
+           for (llint k = z3; k < z4; ++k) {
+               float const lap = LAP;
+
+               v[IDX3_l(i,j,k)] =
+                   ((2.f-eta[IDX3_eta1(i,j,k)]*eta[IDX3_eta1(i,j,k)]
+                   +2.f*eta[IDX3_eta1(i,j,k)])*u[IDX3_l(i,j,k)]
+                   -v[IDX3_l(i,j,k)]
+                   +vp[IDX3(i,j,k)]*
+                   (lap+phi[IDX3(i,j,k)]))/(1.f+2.f*eta[IDX3_eta1(i,j,k)]);
+
+              phi[IDX3(i,j,k)]=(phi[IDX3(i,j,k)]-
+                ((eta[IDX3_eta1(i+1,j,k)]-eta[IDX3_eta1(i-1,j,k)])
+                     *(u[IDX3_l(i+1,j,k)]-u[IDX3_l(i-1,j,k)])*hdx_2
+                     +(eta[IDX3_eta1(i,j+1,k)]-eta[IDX3_eta1(i,j-1,k)])
+                     *(u[IDX3_l(i,j+1,k)]-u[IDX3_l(i,j-1,k)])*hdy_2
+                     +(eta[IDX3_eta1(i,j,k+1)]-eta[IDX3_eta1(i,j,k-1)])
+                   *(u[IDX3_l(i,j,k+1)]-u[IDX3_l(i,j,k-1)])*hdz_2))
+                     /(1.f+eta[IDX3_eta1(i,j,k)]);
+          }
+       }
+    }
+#endif
 }
 
 void target_3d(llint nx, llint ny, llint nz,
