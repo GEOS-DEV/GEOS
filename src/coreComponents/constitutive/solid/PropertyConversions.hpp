@@ -273,6 +273,89 @@ private:
   real64 m_nu = -0.5;
 };
 
+/**
+ * @class LameModulus 
+ */
+struct LameModulus
+{
+public:
+
+  /**
+   * @brief Compute Lame modulus from other elastic parameters
+   * @return Lame modulus
+   */
+  real64 getValue() const
+  {
+    if( m_K > 0 && m_G > 0 )
+    {
+      return m_K - 2.0 * m_G / 3.0;
+    }
+    if( m_K > 0 && m_E > 0 )
+    {
+      return m_K * ( 9.0 * m_K - 3.0 * m_E ) / ( 9.0 * m_K - m_E );
+    }
+    if( m_G > 0 && m_E > 0 )
+    {
+      return ( m_E - 2.0 * m_G ) * m_G / ( 3.0 * m_G - m_E );
+    }
+    else if( m_K > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return 3.0 * m_K * m_nu / ( 1.0 + m_nu );
+    }
+    else if( m_G > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return 2.0 * m_G * m_nu / ( 1.0 - 2.0 * m_nu );
+    }
+    else if( m_E > 0 && m_nu > -0.5 && m_nu < 0.5 )
+    {
+      return m_E * m_nu / ( 1.0 + m_nu ) / ( 1.0 - 2.0 * m_nu );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific pair of elastic constants is required: (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu)" );
+    }
+  }
+
+  LameModulus setBulkModulus( real64 const K )
+  {
+    m_K = K;
+    return *this;
+  }
+
+  LameModulus setShearModulus( real64 const G )
+  {
+    m_G = G;
+    return *this;
+  }
+
+  LameModulus setYoungModulus( real64 const E )
+  {
+    m_E = E;
+    return *this;
+  }
+
+  LameModulus setPoissonRatio( real64 const nu )
+  {
+    m_nu = nu;
+    return *this;
+  }
+
+private:
+
+  /// Bulk modulus
+  real64 m_K = 0.0;
+
+  /// Shear modulus
+  real64 m_G = 0.0;
+
+  /// Young's modulus
+  real64 m_E = 0.0;
+
+  /// Poisson's ratio
+  real64 m_nu = -0.5;
+};
+
 /// @namespace Namespace to collect common property conversion functions (elastic, poroelastic, etc.)
 namespace conversions
 {
@@ -317,6 +400,7 @@ real64 toPoissonRatio( real64 const & K,
  * @param[in] G Shear modulus
  * @return First Lamé parameter
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toFirstLame( real64 const & K, 
@@ -324,7 +408,7 @@ real64 toFirstLame( real64 const & K,
 {
   return K - 2.0 * G / 3.0;
 }
-
+*/
 } /* namespace BulkModeAndShearMod */
 
 /// @namespace Young's modulus and Poisson's ratio as input
@@ -367,6 +451,7 @@ real64 toShearMod( real64 const & E,
  * @param[in] nu Poisson's ratio
  * @return First Lamé parameter
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toFirstLame( real64 const & E, 
@@ -374,7 +459,7 @@ real64 toFirstLame( real64 const & E,
 {
   return E * nu / ( 1.0 + nu ) / ( 1.0 - 2.0 * nu );
 }
-
+*/
 } /* namespace YoungsModAndPoissonRatio*/
 
 /// @namespace Shear modulus and Poisson's ratio as input
@@ -417,6 +502,7 @@ real64 toYoungsMod( real64 const & G,
  * @param[in] nu Poisson's ratio
  * @return First Lamé parameter
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toFirstLame( real64 const & G, 
@@ -424,7 +510,7 @@ real64 toFirstLame( real64 const & G,
 {
   return 2.0 * G * nu / ( 1.0 - 2.0 * nu );
 }
-
+*/
 } /* namespace ShearModAndPoissonRatio*/
 
 /// @namespace Bulk modulus and Poisson's ratio as input
@@ -467,6 +553,7 @@ real64 toShearMod( real64 const & K,
  * @param[in] nu Poisson's ratio
  * @return First Lamé parameter
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toFirstLame( real64 const & K, 
@@ -474,7 +561,7 @@ real64 toFirstLame( real64 const & K,
 {
   return 3.0 * K * nu / ( 1.0 + nu );
 }
-
+*/
 } /* namespace BulkModAndPoissonRatio */
 
 /// @namespace Bulk modulus and Young's modulus as input
@@ -517,6 +604,7 @@ real64 toPoissonRatio( real64 const & K,
  * @param[in] E Young's modulus
  * @return First Lamé parameter
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toFirstLame( real64 const & K, 
@@ -524,7 +612,7 @@ real64 toFirstLame( real64 const & K,
 {
   return K * ( 9.0 * K - 3.0 * E ) / ( 9.0 * K - E );
 }
-
+*/
 } /* namespace BulkModAndYoungsMod */
 
 /// @namespace Shear modulus and Young's modulus as input
@@ -566,6 +654,7 @@ real64 toBulkMod( real64 const & G,
  * @param[in] E Young's modulus
  * @return First Lamé parameter
  */
+/**
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 toFirstLame( real64 const & G, 
@@ -573,7 +662,7 @@ real64 toFirstLame( real64 const & G,
 {
   return ( E - 2.0 * G ) * G / ( 3.0 * G - E );
 }
-
+*/
 } /* namespace ShearModAndYoungsMod*/
 
 

@@ -156,7 +156,11 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
                                                    real64 ( & stiffness )[6][6] ) const
 {
   real64 const G = m_shearModulus[k];
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
+  //real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
+  real64 const lambda = LameModulus().
+                          setBulkModulus( m_bulkModulus[k] ).
+                          setShearModulus( G ).
+                          getValue();
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
@@ -216,7 +220,12 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex co
   GEOSX_UNUSED_VAR( q );
 
   real64 const twoG   = 2 * m_shearModulus[k];
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
+  //real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const lambda = LameModulus().
+                          setBulkModulus( m_bulkModulus[k] ).
+                          setShearModulus( m_shearModulus[k] ).
+                          getValue();
+
   real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
 
   stress[0] = vol + twoG * totalStrain[0];

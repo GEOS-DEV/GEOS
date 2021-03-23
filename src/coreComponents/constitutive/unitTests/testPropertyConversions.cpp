@@ -125,7 +125,11 @@ TEST( PropertyConversionTests, testElasticConversions )
   EXPECT_DOUBLE_EQ( young, young_out );
 
   // first lame (bulk and shear input only)
-  real64 lame = conversions::BulkModAndShearMod::toFirstLame( bulk, shear );
+  //real64 lame = conversions::BulkModAndShearMod::toFirstLame( bulk, shear );
+  real64 const lame = LameModulus().
+                          setBulkModulus( bulk ).
+                          setShearModulus( shear ).
+                          getValue();
 
   EXPECT_DOUBLE_EQ( lame, bulk-2*shear/3 );
 }
