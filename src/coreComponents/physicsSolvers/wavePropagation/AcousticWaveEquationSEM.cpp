@@ -289,7 +289,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
 
   real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
 
-  for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
+  forAll< serialPolicy >( sourceConstants.size( 0 ), [=] ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
     {
@@ -298,7 +298,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
         rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * fi;
       }
     }
-  }
+  } );
 }
 
 
