@@ -34,9 +34,9 @@ TEST( PropertyConversionTests, testElasticConversions )
             getValue();
 
   shear = ShearModulus().
-             setBulkModulus( bulk ).
-             setPoissonRatio( poisson ).
-             getValue();
+            setBulkModulus( bulk ).
+            setPoissonRatio( poisson ).
+            getValue();
 
   EXPECT_DOUBLE_EQ( young, 3*bulk*(1-2*poisson) );
   EXPECT_DOUBLE_EQ( shear, 3*bulk*(1-2*poisson)/(2+2*poisson) );
@@ -48,10 +48,10 @@ TEST( PropertyConversionTests, testElasticConversions )
                   getValue();
 
   young_out = YoungModulus().
-                 setBulkModulus( bulk ).
-                 setShearModulus( shear ).
-                 getValue();
-  
+                setBulkModulus( bulk ).
+                setShearModulus( shear ).
+                getValue();
+
   EXPECT_DOUBLE_EQ( poisson, poisson_out );
   EXPECT_DOUBLE_EQ( young, young_out );
 
@@ -90,9 +90,9 @@ TEST( PropertyConversionTests, testElasticConversions )
                getValue();
 
   shear_out = ShearModulus().
-               setYoungModulus( young ).
-               setPoissonRatio( poisson ).
-               getValue();
+                setYoungModulus( young ).
+                setPoissonRatio( poisson ).
+                getValue();
 
   EXPECT_DOUBLE_EQ( bulk, bulk_out );
   EXPECT_DOUBLE_EQ( shear, shear_out );
@@ -104,18 +104,18 @@ TEST( PropertyConversionTests, testElasticConversions )
                getValue();
 
   young_out = YoungModulus().
-                 setShearModulus( shear ).
-                 setPoissonRatio( poisson ).
-                 getValue();
+                setShearModulus( shear ).
+                setPoissonRatio( poisson ).
+                getValue();
 
   EXPECT_DOUBLE_EQ( bulk, bulk_out );
   EXPECT_DOUBLE_EQ( young, young_out );
 
   // first lame (bulk and shear input only)
   real64 const lame = LameModulus().
-                          setBulkModulus( bulk ).
-                          setShearModulus( shear ).
-                          getValue();
+                        setBulkModulus( bulk ).
+                        setShearModulus( shear ).
+                        getValue();
 
   EXPECT_DOUBLE_EQ( lame, bulk-2*shear/3 );
 }

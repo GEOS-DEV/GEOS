@@ -189,9 +189,9 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
                                                 real64 ( & elasticStrain)[6] ) const
 {
   real64 const E = YoungModulus().
-                      setBulkModulus( m_bulkModulus[k] ).
-                      setShearModulus( m_shearModulus[k] ).
-                      getValue();
+                     setBulkModulus( m_bulkModulus[k] ).
+                     setShearModulus( m_shearModulus[k] ).
+                     getValue();
 
   real64 const nu = PoissonRatio().
                       setBulkModulus( m_bulkModulus[k] ).

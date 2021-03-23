@@ -26,7 +26,7 @@ namespace constitutive
 {
 
 /**
- * @class PoissonRatio 
+ * @class PoissonRatio
  */
 struct PoissonRatio
 {
@@ -88,7 +88,7 @@ private:
 };
 
 /**
- * @class YoungModulus 
+ * @class YoungModulus
  */
 struct YoungModulus
 {
@@ -150,7 +150,7 @@ private:
 };
 
 /**
- * @class BulkModulus 
+ * @class BulkModulus
  */
 struct BulkModulus
 {
@@ -212,7 +212,7 @@ private:
 };
 
 /**
- * @class ShearModulus 
+ * @class ShearModulus
  */
 struct ShearModulus
 {
@@ -274,7 +274,7 @@ private:
 };
 
 /**
- * @class LameModulus 
+ * @class LameModulus
  */
 struct LameModulus
 {
@@ -356,407 +356,479 @@ private:
   real64 m_nu = -0.5;
 };
 
-/// @namespace Namespace to collect common property conversion functions (elastic, poroelastic, etc.)
-namespace conversions
+/**
+ * @class BiotCoefficient
+ */
+struct BiotCoefficient
 {
+public:
 
+  /**
+   * @brief Compute Biot's coefficient from other poroelastic parameters
+   * @return Biot's coefficient
+   */
+  real64 getValue() const
+  {
+    if( m_Kd > 0 && m_Ks > 0 )
+    {
+      return 1.0 - m_Kd / m_Ks;
+    }
+    else if( m_Ku > 0 && m_Kd > 0 && m_M > 0 && m_Ku > m_Kd )
+    {
+      return sqrt( ( m_Ku - m_Kd ) / m_M );
+    }
+    else if( m_Ku > 0 && m_Kd > 0 && m_B > 0 && m_Ku > m_Kd )
+    {
+      return ( m_Ku - m_Kd ) / m_Ku / m_B;
+    }
+    else if( m_Ku > 0 && m_M > 0 && m_B > 0 )
+    {
+      return m_Ku * m_B / m_M;
+    }
+    else if( m_nud > -0.5 && m_nud < 0.5 && m_nuu > -0.5 && m_nuu < 0.5 && m_B > 0 && m_nuu > m_nud )
+    {
+      return 3.0 * ( m_nuu - m_nud ) / m_B / ( 1.0 - 2.0 * m_nud ) / ( 1.0 + m_nuu );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of poroelastic constants is required" );
+    }
+  }
 
-/// @namespace Compute Biot coefficient from different input combinations
-namespace BiotCoefficient
-{
+  BiotCoefficient setDrainedBulkModulus( real64 const Kd )
+  {
+    m_Kd = Kd;
+    return *this;
+  }
+
+  BiotCoefficient setUndrainedBulkModulus( real64 const Ku )
+  {
+    m_Ku = Ku;
+    return *this;
+  }
+
+  BiotCoefficient setDrainedPoissonRatio( real64 const nud )
+  {
+    m_nud = nud;
+    return *this;
+  }
+
+  BiotCoefficient setUndrainedPoissonRatio( real64 const nuu )
+  {
+    m_nuu = nuu;
+    return *this;
+  }
+
+  BiotCoefficient setSolidBulkModulus( real64 const Ks )
+  {
+    m_Ks = Ks;
+    return *this;
+  }
+
+  BiotCoefficient setBiotModulus( real64 const M )
+  {
+    m_M = M;
+    return *this;
+  }
+
+  BiotCoefficient setSkemptonCoefficient( real64 const B )
+  {
+    m_B = B;
+    return *this;
+  }
+
+private:
+
+  /// Drained Bulk modulus
+  real64 m_Kd = 0.0;
+
+  /// Undrained Bulk modulus
+  real64 m_Ku = 0.0;
+
+  /// Drained Poisson's ratio
+  real64 m_nud = -0.5;
+
+  /// Undrained Poisson's ratio
+  real64 m_nuu = -0.5;
+
+  /// Bulk modulus of the solid phase
+  real64 m_Ks = 0.0;
+
+  /// Biot's modulus
+  real64 m_M = 0.0;
+
+  /// Skempton's coefficient
+  real64 m_B = 0.0;
+
+};
+
 
 /**
- * @brief Compute Biot's coefficient
- * @param[in] K drained Bulk modulus
- * @param[in] Ks Bulk modulus of the solid phase
- * @return Biot's coefficient
+ * @class BiotModulus
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKKs( real64 const & K, 
-               real64 const & Ks )
+struct BiotModulus
 {
-  return 1.0 - K / Ks;
-}
+public:
+
+  /**
+   * @brief Compute Biot's modulus from other poroelastic parameters
+   * @return Biot's modulus
+   */
+  real64 getValue() const
+  {
+    if( m_phi > 0 && m_Kf > 0  && m_Ks > 0 && m_alpha > 0 )
+    {
+      return 1.0 / ( m_phi / m_Kf + ( m_alpha - m_phi ) / m_Ks );
+    }
+    else if( m_Ku > 0 && m_Kd > 0 && m_alpha > 0 && m_Ku > m_Kd )
+    {
+      return ( m_Ku - m_Kd ) / m_alpha / m_alpha;
+    }
+    else if( m_Ku > 0 && m_B > 0 && m_alpha > 0 )
+    {
+      return m_Ku * m_B / m_alpha;
+    }
+    else if( m_Kd > 0 && m_B > 0 && m_alpha > 0 && m_alpha * m_B < 1 )
+    {
+      return m_Kd * m_B / m_alpha / ( 1.0 - m_alpha * m_B );
+    }
+    else if( m_G > 0 && m_nuu > -0.5 && m_nuu < 0.5 && m_nud > -0.5 && m_nud < 0.5 && m_alpha > 0 && m_nuu > m_nud )
+    {
+      return 2.0 * m_G * ( m_nuu - m_nud ) / m_alpha / m_alpha / ( 1.0 - 2.0 * m_nuu ) / ( 1.0 - 2.0 * m_nud );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of poroelastic constants is required" );
+    }
+  }
+
+
+  BiotModulus setSolidBulkModulus( real64 const Ks )
+  {
+    m_Ks = Ks;
+    return *this;
+  }
+
+  BiotModulus setFluidBulkModulus( real64 const Kf )
+  {
+    m_Kf = Kf;
+    return *this;
+  }
+
+  BiotModulus setPorosity( real64 const phi )
+  {
+    m_phi = phi;
+    return *this;
+  }
+
+  BiotModulus setBiotCoefficient( real64 const alpha )
+  {
+    m_alpha = alpha;
+    return *this;
+  }
+
+  BiotModulus setDrainedBulkModulus( real64 const Kd )
+  {
+    m_Kd = Kd;
+    return *this;
+  }
+
+  BiotModulus setUndrainedBulkModulus( real64 const Ku )
+  {
+    m_Ku = Ku;
+    return *this;
+  }
+
+  BiotModulus setShearModulus( real64 const G )
+  {
+    m_G = G;
+    return *this;
+  }
+
+  BiotModulus setDrainedPoissonRatio( real64 const nud )
+  {
+    m_nud = nud;
+    return *this;
+  }
+
+  BiotModulus setUndrainedPoissonRatio( real64 const nuu )
+  {
+    m_nuu = nuu;
+    return *this;
+  }
+
+  BiotModulus setSkemptonCoefficient( real64 const B )
+  {
+    m_B = B;
+    return *this;
+  }
+
+private:
+
+  /// Bulk modulus of the solid phase
+  real64 m_Ks = 0.0;
+
+  /// Bulk modulus of the fluid phase
+  real64 m_Kf = 0.0;
+
+  /// Porosity
+  real64 m_phi = 0.0;
+
+  /// Biot's coefficient
+  real64 m_alpha = 0.0;
+
+  /// Drained Bulk modulus
+  real64 m_Kd = 0.0;
+
+  /// Undrained Bulk modulus
+  real64 m_Ku = 0.0;
+
+  /// Shear modulus
+  real64 m_G = 0.0;
+
+  /// Drained Poisson's ratio
+  real64 m_nud = -0.5;
+
+  /// Undrained Poisson's ratio
+  real64 m_nuu = -0.5;
+
+  /// Skempton's coefficient
+  real64 m_B = 0.0;
+
+};
 
 /**
- * @brief Compute Biot's coefficient
- * @param[in] Ku undrained Bulk modulus
- * @param[in] K drained Bulk modulus
- * @param[in] M Biot's modulus
- * @return Biot's coefficient
+ * @class SkemptonCoefficient
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuKM( real64 const & Ku, 
-                real64 const & K, 
-                real64 const & M )
+struct SkemptonCoefficient
 {
-  return sqrt( ( Ku - K ) / M );
-}
+public:
+
+  /**
+   * @brief Compute Skempton's coefficient from other poroelastic parameters
+   * @return Skempton's coefficient
+   */
+  real64 getValue() const
+  {
+    if( m_M > 0 && m_alpha > 0 && m_Ku > 0 )
+    {
+      return m_M * m_alpha / m_Ku;
+    }
+    else if( m_Ku > 0 && m_Kd > 0 && m_alpha > 0 && m_Ku > m_Kd )
+    {
+      return ( m_Ku - m_Kd ) / m_Ku / m_alpha;
+    }
+    else if( m_nud > -0.5 && m_nud < 0.5 && m_nuu > -0.5 && m_nuu < 0.5 && m_alpha > 0 && m_nuu > m_nud )
+    {
+      return 3.0 * ( m_nuu - m_nud ) / m_alpha / ( 1.0 - 2.0 * m_nud ) / ( 1.0 + m_nuu );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of poroelastic constants is required" );
+    }
+  }
+
+  SkemptonCoefficient setDrainedBulkModulus( real64 const Kd )
+  {
+    m_Kd = Kd;
+    return *this;
+  }
+
+  SkemptonCoefficient setUndrainedBulkModulus( real64 const Ku )
+  {
+    m_Ku = Ku;
+    return *this;
+  }
+
+  SkemptonCoefficient setDrainedPoissonRatio( real64 const nud )
+  {
+    m_nud = nud;
+    return *this;
+  }
+
+  SkemptonCoefficient setUndrainedPoissonRatio( real64 const nuu )
+  {
+    m_nuu = nuu;
+    return *this;
+  }
+
+  SkemptonCoefficient setBiotCoefficient( real64 const alpha )
+  {
+    m_alpha = alpha;
+    return *this;
+  }
+
+  SkemptonCoefficient setBiotModulus( real64 const M )
+  {
+    m_M = M;
+    return *this;
+  }
+
+private:
+
+  /// Drained Bulk modulus
+  real64 m_Kd = 0.0;
+
+  /// Undrained Bulk modulus
+  real64 m_Ku = 0.0;
+
+  /// Drained Poisson's ratio
+  real64 m_nud = -0.5;
+
+  /// Undrained Poisson's ratio
+  real64 m_nuu = -0.5;
+
+  /// Biot's coefficient
+  real64 m_alpha = 0.0;
+
+  /// Biot's modulus
+  real64 m_M = 0.0;
+
+};
 
 
 /**
- * @brief Compute Biot's coefficient
- * @param[in] Lu undrained Lamé modulus
- * @param[in] L drained Lamé modulus
- * @param[in] M Biot's modulus
- * @return Biot's coefficient
+ * @class UndrainedBulkModulus
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useLuLM( real64 const & Lu, 
-                real64 const & L, 
-                real64 const & M )
+struct UndrainedBulkModulus
 {
-  return sqrt( ( Lu - L ) / M );
-}
+public:
+
+  /**
+   * @brief Compute undrained Bulk modulus from other poroelastic parameters
+   * @return undrained Bulk modulus
+   */
+  real64 getValue() const
+  {
+    if( m_Kd > 0 && m_M > 0 && m_alpha > 0 )
+    {
+      return m_Kd + m_M * m_alpha * m_alpha;
+    }
+    else if( m_M > 0 && m_alpha > 0 && m_B > 0 )
+    {
+      return m_M * m_alpha / m_B;
+    }
+    else if( m_Kd > 0 && m_B > 0 && m_alpha > 0 && m_alpha * m_B < 1 )
+    {
+      return m_Kd / ( 1.0 -  m_alpha * m_B );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of poroelastic constants is required" );
+    }
+  }
+
+  UndrainedBulkModulus setBiotCoefficient( real64 const alpha )
+  {
+    m_alpha = alpha;
+    return *this;
+  }
+
+  UndrainedBulkModulus setBiotModulus( real64 const M )
+  {
+    m_M = M;
+    return *this;
+  }
+
+  UndrainedBulkModulus setDrainedBulkModulus( real64 const Kd )
+  {
+    m_Kd = Kd;
+    return *this;
+  }
+
+  UndrainedBulkModulus setSkemptonCoefficient( real64 const B )
+  {
+    m_B = B;
+    return *this;
+  }
+
+private:
+
+  /// Biot's coefficient
+  real64 m_alpha = 0.0;
+
+  /// Biot's modulus
+  real64 m_M = 0.0;
+
+  /// Drained Bulk modulus
+  real64 m_Kd = 0.0;
+
+  /// Skempton's coefficient
+  real64 m_B = 0.0;
+
+};
 
 /**
- * @brief Compute Biot's coefficient
- * @param[in] Ku undrained Bulk modulus
- * @param[in] K drained Bulk modulus
- * @param[in] B Skempton's coefficient
- * @return Biot's coefficient
+ * @class DrainedBulkModulus
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuKB( real64 const & Ku, 
-                real64 const & K, 
-                real64 const & B )
+struct DrainedBulkModulus
 {
-  return ( Ku - K ) / Ku / B;
-}
+public:
 
-/**
- * @brief Compute Biot's coefficient
- * @param[in] Ku undrained Bulk modulus
- * @param[in] M Biot's modulus
- * @param[in] B Skempton's coefficient
- * @return Biot's coefficient
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuMB( real64 const & Ku, 
-                real64 const & M, 
-                real64 const & B )
-{
-  return Ku * B / M;
-}
+  /**
+   * @brief Compute drained Bulk modulus from other poroelastic parameters
+   * @return drained Bulk modulus
+   */
+  real64 getValue() const
+  {
+    if( m_Ku > 0 && m_M > 0 && m_alpha > 0 )
+    {
+      return m_Ku - m_M * m_alpha * m_alpha;
+    }
+    else if( m_Ku > 0 && m_B > 0 && m_alpha > 0 && m_alpha * m_B < 1 )
+    {
+      return m_Ku * ( 1.0 - m_alpha * m_B );
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of poroelastic constants is required" );
+    }
+  }
 
-/**
- * @brief Compute Biot's coefficient
- * @param[in] nuu undrained Poisson's ratio
- * @param[in] nu drained Poisson's ratio
- * @param[in] B Skempton's coefficient
- * @return Biot's coefficient
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useNuuNuB( real64 const & nuu, 
-                  real64 const & nu, 
-                  real64 const & B )
-{
-  return 3.0 * ( nuu - nu ) / B / ( 1.0 - 2.0 * nu ) / ( 1.0 + nuu );
-}
+  DrainedBulkModulus setBiotCoefficient( real64 const alpha )
+  {
+    m_alpha = alpha;
+    return *this;
+  }
 
-} /* BiotCoefficient */
+  DrainedBulkModulus setBiotModulus( real64 const M )
+  {
+    m_M = M;
+    return *this;
+  }
 
-/// @namespace Compute Biot modulus from different input combinations
-namespace BiotModulus
-{
-/**
- * @brief Compute Biot's modulus
- * @param[in] Ks Bulk modulus of the solid phase
- * @param[in] Kf Bulk modulus of the fluid phase
- * @param[in] alpha Biot's coefficient
- * @param[in] phi porosity
- * @return Biot's modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKsKfBiotCoeffPorosity( real64 const & Ks, 
-                                 real64 const & Kf, 
-                                 real64 const & alpha, 
-                                 real64 const & phi )
-{
-  return 1.0 / ( phi / Kf + ( alpha - phi ) / Ks );
-}
+  DrainedBulkModulus setUndrainedBulkModulus( real64 const Ku )
+  {
+    m_Ku = Ku;
+    return *this;
+  }
 
-/**
- * @brief Compute Biot's modulus
- * @param[in] Ku undrained Bulk modulus
- * @param[in] K drained Bulk modulus
- * @param[in] alpha Biot's coefficient
- * @return Biot's modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuKBiotCoeff( real64 const & Ku, 
-                        real64 const & K, 
-                        real64 const & alpha )
-{
-  return ( Ku - K ) / alpha / alpha;
-}
+  DrainedBulkModulus setSkemptonCoefficient( real64 const B )
+  {
+    m_B = B;
+    return *this;
+  }
 
-/**
- * @brief Compute Biot's modulus
- * @param[in] Lu undrained Lamé modulus
- * @param[in] L drained Lamé modulus
- * @param[in] alpha Biot's coefficient
- * @return Biot's modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useLuLBiotCoeff( real64 const & Lu, 
-                        real64 const & L, 
-                        real64 const & alpha )
-{
-  return ( Lu - L ) / alpha / alpha;
-}
+private:
 
-/**
- * @brief Compute Biot's modulus
- * @param[in] Ku undrained Bulk modulus
- * @param[in] B Skempton's coefficient
- * @param[in] alpha Biot's coefficient
- * @return Biot's modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuBBiotCoeff( real64 const & Ku, 
-                        real64 const & B, 
-                        real64 const & alpha )
-{
-  return Ku * B / alpha;
-}
+  /// Biot's coefficient
+  real64 m_alpha = 0.0;
 
-/**
- * @brief Compute Biot's modulus
- * @param[in] K drained Bulk modulus
- * @param[in] B Skempton's coefficient
- * @param[in] alpha Biot's coefficient
- * @return Biot's modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKBBiotCoeff( real64 const & K, 
-                       real64 const & B, 
-                       real64 const & alpha )
-{
-  return K * B / alpha / ( 1.0 - alpha * B );
-}
+  /// Biot's modulus
+  real64 m_M = 0.0;
 
-/**
- * @brief Compute Biot's modulus
- * @param[in] G Shear modulus
- * @param[in] nuu undrained Poisson's ratio
- * @param[in] nu drained Poisson's ratio
- * @param[in] alpha Biot's coefficient
- * @return Biot's modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useGNuuNuBiotCoeff( real64 const & G, 
-                           real64 const & nuu, 
-                           real64 const & nu, 
-                           real64 const & alpha )
-{
-  return 2.0 * G * ( nuu - nu ) / alpha / alpha / ( 1.0 - 2.0 * nuu ) / ( 1.0 - 2.0 * nu );
-}
+  /// Undrained Bulk modulus
+  real64 m_Ku = 0.0;
 
-} /* BiotModulus */
+  /// Skempton's coefficient
+  real64 m_B = 0.0;
 
-/// @namespace Compute Skempton coefficient from different input combinations
-namespace SkemptonCoefficient
-{
-/**
- * @brief Compute Skempton's coefficient
- * @param[in] Ku undrained Bulk modulus
- * @param[in] M Biot's modulus
- * @param[in] alpha Biot's coefficient
- * @return Skempton's coefficient
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuMBiotCoeff( real64 const & Ku, 
-                        real64 const & M, 
-                        real64 const & alpha )
-{
-  return  M * alpha / Ku;
-}
-
-/**
- * @brief Compute Skempton's coefficient
- * @param[in] Ku undrained Bulk modulus
- * @param[in] K drained Bulk modulus
- * @param[in] alpha Biot's coefficient
- * @return Skempton's coefficient
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuKBiotCoeff( real64 const & Ku, 
-                        real64 const & K, 
-                        real64 const & alpha )
-{
-  return ( Ku - K ) / Ku / alpha;
-}
-
-/**
- * @brief Compute Skempton's coefficient
- * @param[in] nuu undrained Poisson's ratio
- * @param[in] nu drained Poisson's ratio
- * @param[in] alpha Biot's coefficient
- * @return Skempton's coefficient
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useNuuNuBiotCoeff( real64 const & nuu, 
-                          real64 const & nu, 
-                          real64 const & alpha )
-{
-  return 3.0 * ( nuu - nu ) / alpha / ( 1.0 - 2.0 * nu ) / ( 1.0 + nuu );
-}
-
-} /* SkemptonCoefficient */
-
-/// @namespace Compute undrained Bulk modulus from different input combinations
-namespace UndrainedBulkMod
-{
-/**
- * @brief Compute undrained Bulk modulus
- * @param[in] K drained Bulk modulus
- * @param[in] M Biot's modulus
- * @param[in] alpha Biot's coefficient
- * @return Undrained Bulk modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKMBiotCoeff( real64 const & K, 
-                       real64 const & M, 
-                       real64 const & alpha )
-{
-  return K + M * alpha * alpha;
-}
-
-/**
- * @brief Compute undrained Bulk modulus
- * @param[in] B Skempton's coefficient
- * @param[in] M Biot's modulus
- * @param[in] alpha Biot's coefficient
- * @return Undrained Bulk modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useBMBiotCoeff( real64 const & B, 
-                       real64 const & M, 
-                       real64 const & alpha )
-{
-  return M * alpha / B;
-}
-
-/**
- * @brief Compute undrained Bulk modulus
- * @param[in] K drained Bulk modulus
- * @param[in] B Skempton's coefficient
- * @param[in] alpha Biot's coefficient
- * @return Undrained Bulk modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKBBiotCoeff( real64 const & K, 
-                       real64 const & B, 
-                       real64 const & alpha )
-{
-  return K / ( 1.0 -  alpha * B );
-}
-
-} /* UndrainedBulkMod */
-
-
-/// @namespace Compute drained Bulk modulus from different input combinations
-namespace DrainedBulkMod
-{
-/**
- * @brief Compute drained Bulk modulus
- * @param[in] Ku undrained Bulk modulus
- * @param[in] M Biot's modulus
- * @param[in] alpha Biot's coefficient
- * @return Drained Bulk modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuMBiotCoeff( real64 const & Ku, 
-                        real64 const & M, 
-                        real64 const & alpha )
-{
-  return Ku - M * alpha * alpha;
-}
-
-/**
- * @brief Compute drained Bulk modulus
- * @param[in] Ku undrained Bulk modulus
- * @param[in] B Skempton's coefficient
- * @param[in] alpha Biot's coefficient
- * @return Drained Bulk modulus
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuBBiotCoeff( real64 const & Ku, 
-                        real64 const & B, 
-                        real64 const & alpha )
-{
-  return Ku * ( 1.0 -  alpha * B );
-}
-
-} /* DrainedBulkMod */
-
-/// @namespace Compute diffusion coefficient from different input combinations
-namespace DiffusionCoeff
-{
-/**
- * @brief Compute diffusion coefficient
- * @param[in] Ku undrained Bulk modulus
- * @param[in] K drained Bulk modulus
- * @param[in] G Shear modulus
- * @param[in] M Biot's modulus
- * @param[in] kappa ratio permeability/fluid dynamic viscosity
- * @return Diffusion coefficient
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useKuKGMKappa( real64 const & Ku, 
-                      real64 const & K, 
-                      real64 const & G, 
-                      real64 const & M, 
-                      real64 const & kappa )
-{
-  return kappa * M * ( 3.0 * K + 4.0 * G ) / ( 3.0 * Ku + 4.0 * G );
-}
-
-/**
- * @brief Compute diffusion coefficient
- * @param[in] nuu undrained Poisson's ratio
- * @param[in] nu drained Poisson's ratio
- * @param[in] G Shear modulus
- * @param[in] alpha Biot's coefficient
- * @param[in] kappa ratio permeability/fluid dynamic viscosity
- * @return Diffusion coefficient
- */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 useNuuNuGBiotCoeffKappa( real64 const & nuu, 
-                                real64 const & nu, 
-                                real64 const & G, 
-                                real64 const & alpha, 
-                                real64 const & kappa )
-{
-  return 2.0 * kappa * G * ( 1.0 - nu ) * ( nuu - nu ) / alpha / alpha / ( 1.0 - 2.0 * nu ) / ( 1.0 - 2.0 * nu ) / ( 1.0 - nuu );
-}
-
-} /* DiffusionCoeff */
-
-} /* namespace conversions */
+};
 
 } /* namespace constitutive */
 

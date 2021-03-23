@@ -137,9 +137,9 @@ public:
     real64 mu = m_shearModulus[k];
 
     real64 const lambda = LameModulus().
-                          setBulkModulus( m_bulkModulus[k] ).
-                          setShearModulus( mu ).
-                          getValue();
+                            setBulkModulus( m_bulkModulus[k] ).
+                            setShearModulus( mu ).
+                            getValue();
 
     real64 damageFactor = getDegradationValue( k, q );
 
