@@ -163,6 +163,7 @@ protected:
 
 private:
 
+  GEOSX_HOST_DEVICE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
@@ -173,6 +174,7 @@ private:
                         arraySlice2d< real64 > const & phaseCompFraction,
                         real64 & totalDensity ) const = 0;
 
+  GEOSX_HOST_DEVICE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
@@ -201,12 +203,12 @@ private:
                         real64 & dTotalDensity_dTemperature,
                         arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const = 0;
 
+  GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
                        arraySlice1d< real64 const > const & composition ) const = 0;
-
 };
 
 class MultiFluidBase : public ConstitutiveBase

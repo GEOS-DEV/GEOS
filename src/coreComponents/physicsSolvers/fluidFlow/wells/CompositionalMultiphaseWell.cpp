@@ -690,14 +690,16 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    using FluidType = TYPEOFREF( castedFluid );
+    using ExecPolicy = typename FluidType::exec_policy;
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    CompositionalMultiphaseBaseKernels::FluidUpdateKernel::launch< serialPolicy >( subRegion.size(),
-                                                                                   fluidWrapper,
-                                                                                   pres,
-                                                                                   dPres,
-                                                                                   m_temperature,
-                                                                                   compFrac );
+    CompositionalMultiphaseBaseKernels::FluidUpdateKernel::launch< ExecPolicy >( subRegion.size(),
+                                                                                 fluidWrapper,
+                                                                                 pres,
+                                                                                 dPres,
+                                                                                 m_temperature,
+                                                                                 compFrac );
   } );
 }
 
