@@ -1,0 +1,67 @@
+packages:
+  all:
+    target: [default]
+    compiler: [gcc]
+    providers:
+      mpi: [spectrum-mpi]
+      blas: [openblas]
+      lapack: [openblas]
+
+  openblas:
+    buildable: False
+    externals:
+      - spec: openblas@0.3.9 threads=openmp
+        modules:
+        - openblas/0.3.9-omp
+
+  spectrum-mpi:
+    buildable: False
+    externals:
+      - spec: spectrum-mpi@10.3.1.2-20200121
+        modules:
+        - spectrum-mpi/10.3.1.2-20200121
+
+  cuda:
+    buildable: False
+    externals:
+    - spec: cuda@11.2.0
+      modules:
+      - cuda/11.2.0
+
+  cmake:
+    buildable: False
+    externals:
+    - spec: cmake@3.14.5
+      modules:
+      - cmake/3.14.2
+
+  readline:
+    buildable: False
+    externals:
+      - spec: readline@6.2
+        prefix: /usr/lib64/
+
+  zlib:
+    buildable: False
+    externals:
+      - spec: zlib@1.2.7
+        prefix: /usr/
+  
+  m4:
+    buildable: False
+    externals:
+      - spec: m4@1.4.16
+        prefix: /usr/bin/
+  
+  diffutils:
+    buildable: False
+    externals:
+      - spec: diffutils@3.3
+        prefix: /usr/bin/
+
+  python:
+    buildable: False
+    externals:
+    - spec: python@3.7.0
+      modules:
+      - python/3.7.0
