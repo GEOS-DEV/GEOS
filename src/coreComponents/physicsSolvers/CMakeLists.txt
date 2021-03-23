@@ -121,6 +121,13 @@ if( ENABLE_GEOSX_PTP )
   list( APPEND externalComponentDeps GEOSX_PTP )
 endif()
 
+# This probably should not be here.  
+# Including pvt/pvt.hpp in MultiFluidPVTPackageWrapper.hpp requires this additional dependency,
+# but I do not understand why.
+if( ENABLE_PVTPackage )
+    list( APPEND externalComponentDeps PVTPackage )
+endif()
+
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
 endif()
