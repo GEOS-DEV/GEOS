@@ -37,7 +37,7 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
                                CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrineFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -47,7 +47,7 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
                                CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrineFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

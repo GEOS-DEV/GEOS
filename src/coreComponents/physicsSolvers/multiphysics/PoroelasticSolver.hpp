@@ -28,7 +28,7 @@ namespace geosx
 
 
 class SolidMechanicsLagrangianFEM;
-class FlowSolverBase;
+class SinglePhaseBase;
 
 class PoroelasticSolver : public SolverBase
 {
@@ -155,7 +155,7 @@ protected:
   CouplingTypeOption m_couplingTypeOption;
 
   // pointer to the flow sub-solver
-  FlowSolverBase * m_flowSolver;
+  SinglePhaseBase * m_flowSolver;
 
   // pointer to the solid mechanics sub-solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
