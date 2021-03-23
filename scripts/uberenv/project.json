@@ -4,7 +4,7 @@
   "package_final_phase" : "hostconfig",
   "package_source_dir" : "../..",
   "spack_url": "git@github.com:corbett5/spack.git",
-  "spack_branch": "package/corbett/geosx",
+  "spack_branch": "package/corbett/lvarray-update",
   "spack_activate" : {},
   "spack_clean_packages": ["geosx"],
   "build_jobs": 100

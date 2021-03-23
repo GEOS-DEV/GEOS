@@ -15,7 +15,7 @@ from os.path import join as pjoin
 
 # ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^chai ^caliper+papi"
 
-# ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^raja build_type=Release ^umpire build_type=Release ^chai build_type=Release ^adiak build_type=Release ^caliper+papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
+# ./scripts/uberenv/uberenv.py --spec="%clang +mkl +pygeosx ^raja build_type=Release ^umpire build_type=Release ^chai build_type=Release ^adiak build_type=Release ^caliper+papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
 
 # ./scripts/uberenv/uberenv.py --spec="%clang +essl +cuda ~petsc cuda_arch=70 ^raja build_type=Release cuda_arch=70 ^umpire build_type=Release cuda_arch=70 ^chai build_type=Release cuda_arch=70 ^adiak build_type=Release ^caliper~papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
 
@@ -107,16 +107,16 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # IO
     #
-    depends_on('hdf5@1.10.5: +shared +pic +mpi', when='~vtk')
+    depends_on('hdf5@1.10.5 +shared +pic +mpi', when='~vtk')
 
     depends_on('conduit@0.5.0 +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
 
-    depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
+    depends_on('silo@4.10 ~fortran +shared ~silex +pic +mpi ~zlib')
 
-    depends_on('adiak@0.2: +mpi +shared', when='+caliper')
-    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~libpfm ~gotcha ~sampler', when='+caliper')
+    depends_on('adiak@0.2.1 +mpi +shared', when='+caliper')
+    depends_on('caliper@2.4 +shared +adiak +mpi ~libunwind ~libdw ~libpfm ~gotcha ~sampler ~fortran', when='+caliper')
 
-    depends_on('pugixml@1.8: +shared')
+    depends_on('pugixml@1.8 +shared')
 
     #
     # Math
@@ -125,12 +125,12 @@ class Geosx(CMakePackage, CudaPackage):
 
     # depends_on('essl ~ilp64 threads=openmp +lapack +cuda', when='+essl')
 
-    depends_on('parmetis@4.0.3: +shared +int64')
+    depends_on('parmetis@4.0.3 +shared +int64')
 
     depends_on('superlu-dist +int64 +openmp +shared', when='~petsc')
     depends_on('superlu-dist@6.3.0 +int64 +openmp +shared', when='+petsc')
 
-    depends_on('suite-sparse@5.8.1: +pic +openmp +amd +camd +colamd +ccolamd +cholmod +umfpack', when='+suite-sparse')
+    depends_on('suite-sparse@5.8.1 +pic +openmp +amd +camd +colamd +ccolamd +cholmod +umfpack', when='+suite-sparse')
     depends_on('suite-sparse +blas-no-underscore', when='%gcc +suite-sparse +essl')
 
     trilinos_build_options = '~fortran +openmp +shared'
@@ -140,31 +140,31 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
     # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
-    depends_on('hypre@2.21.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.21.0 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
  
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
-    depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
+    depends_on('petsc@3.13.0 ' + petsc_build_options + petsc_tpls, when='+petsc')
 
     #
     # Python
     #
     depends_on('python +shared +pic', when='+pygeosx')
-    depends_on('py-numpy@1.19: +blas +lapack +force-parallel-build', when='+pygeosx')
-    depends_on('py-scipy@1.5.2: +force-parallel-build', when='+pygeosx')
-    depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
+    depends_on('py-numpy@1.19.0 +blas +lapack +force-parallel-build', when='+pygeosx')
+    depends_on('py-scipy@1.5.2 +force-parallel-build', when='+pygeosx')
+    depends_on('py-mpi4py@3.0.3', when='+pygeosx')
     depends_on('py-pip', when='+pygeosx')
 
     #
     # Dev tools
     #
-    depends_on('uncrustify@0.71:')
+    depends_on('uncrustify@0.71.0')
 
     #
     # Documentation
     #
-    depends_on('doxygen@1.8.13:', when='+docs', type='build')
-    depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
+    depends_on('doxygen@1.8.13', when='+docs', type='build')
+    depends_on('py-sphinx@1.6.3', when='+docs', type='build')
 
     # SPHINX_END_DEPENDS
 

@@ -1,35 +1,20 @@
-# -------------------------------------------------------------------------
-# This is the default spack configuration file.
-#
-# Settings here are versioned with Spack and are intended to provide
-# sensible defaults out of the box. Spack maintainers should edit this
-# file to keep it current.
-#
-# Users can override these settings by editing the following files.
-#
-# Per-spack-instance settings (overrides defaults):
-#   $SPACK_ROOT/etc/spack/config.yaml
-# Per-user settings (overrides default and site settings):
-#   ~/.spack/config.yaml
-#
-# See https://spack.readthedocs.io/en/latest/config_yaml.html
-# -------------------------------------------------------------------------
 config:
   # This is the path to the root of the Spack install tree.
   # You can use $spack here to refer to the root of the spack instance.
-  install_tree: $spack/..
+  install_tree: 
 
+    projections:
+      all: ${ARCHITECTURE}-${COMPILERNAME}@${COMPILERVER}/${PACKAGE}@${VERSION}
+    root: $spack/..
   # Locations where templates should be found
   template_dirs:
-    - $spack/templates
+  - $spack/templates
 
   # install directory layout
-  install_path_scheme: "${ARCHITECTURE}-${COMPILERNAME}@${COMPILERVER}/${PACKAGE}@${VERSION}"
-
   # Locations where different types of modules should be installed.
   module_roots:
-    tcl:    $spack/share/spack/modules
-    lmod:   $spack/share/spack/lmod
+    tcl: $spack/share/spack/modules
+    lmod: $spack/share/spack/lmod
 
 
   # Temporary locations Spack can try to use for builds.
@@ -44,7 +29,7 @@ config:
   #
   # The build stage can be purged with `spack purge --stage`.
   build_stage:
-    - $spack/../builds
+  - $spack/../builds
 
 
   # Cache directory already downloaded source tarballs and archived
@@ -64,7 +49,7 @@ config:
 
   # If set to true, Spack will always check checksums after downloading
   # archives. If false, Spack skips the checksum step.
-  checksum: true
+  checksum: false
 
 
   # If set to true, `spack install` and friends will NOT clean
