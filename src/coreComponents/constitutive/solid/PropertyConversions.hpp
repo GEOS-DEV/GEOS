@@ -830,6 +830,342 @@ private:
 
 };
 
+/**
+ * @class DrainedVolumetricTEC
+ */
+struct DrainedVolumetricTEC
+{
+public:
+
+  /**
+   * @brief Compute drained volumetric Thermal Expansion Coefficient (TEC) 
+   * from other thermoporoelastic parameters
+   * @return drained volumetric TEC
+   */
+  real64 getValue() const
+  {
+    if( m_TECs > 0 && m_TECp > 0 && m_phi > 0 )
+    {
+      return m_TECs + m_TECp / ( 1.0 - m_phi );
+    }
+    else if( m_TECs > 0 )
+    {
+      return m_TECs; ///< Ideal porous medium
+    }    
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of thermoporoelastic constants is required" );
+    }
+  }
+
+  DrainedVolumetricTEC setPorosity( real64 const phi )
+  {
+    m_phi = phi;
+    return *this;
+  }
+
+  DrainedVolumetricTEC setSolidVolumetricTEC( real64 const TECs )
+  {
+    m_TECs = TECs;
+    return *this;
+  }
+
+  DrainedVolumetricTEC setPorosityTEC( real64 const TECp )
+  {
+    m_TECp = TECp;
+    return *this;
+  }
+private:
+
+  /// Porosity
+  real64 m_phi = 0.0;
+
+  /// Volumetric TEC of the solid phase
+  real64 m_TECs = 0.0;
+
+  /// TEC of the porosity (porosity change vs temperature change)
+  real64 m_TECp = 0.0; 
+
+};
+
+/**
+ * @class FreeStressFluidExchangeTEC, 
+ * This parameter quantifies fluid exchange (expelled from the porous medium) 
+ * due to temperature change in drained free stress condition
+ */
+struct FreeStressFluidExchangeTEC
+{
+public:
+
+  /**
+   * @brief Compute the fluid exchange Thermal Expansion Coefficient 
+   * from other thermoporoelastic parameters
+   * in drained free stress
+   * @return fluid exchange TEC
+   */
+  real64 getValue() const
+  {
+    if( m_TECs > 0 && m_TECf > 0 && m_TECp > 0 && m_phi > 0 )
+    {
+      return m_phi *( m_TECf - m_TECs ) - m_TECp / ( 1.0 - m_phi );
+    }
+    else if( m_TECs > 0 && m_TECf > 0 )
+    {
+      return m_phi * ( m_TECf - m_TECs ); ///< Ideal porous medium
+    }    
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of thermoporoelastic constants is required" );
+    }
+  }
+
+  FreeStressFluidExchangeTEC setPorosity( real64 const phi )
+  {
+    m_phi = phi;
+    return *this;
+  }
+
+  FreeStressFluidExchangeTEC setSolidVolumetricTEC( real64 const TECs )
+  {
+    m_TECs = TECs;
+    return *this;
+  }
+
+  FreeStressFluidExchangeTEC setFluidVolumetricTEC( real64 const TECf )
+  {
+    m_TECf = TECf;
+    return *this;
+  }
+
+  FreeStressFluidExchangeTEC setPorosityTEC( real64 const TECp )
+  {
+    m_TECp = TECp;
+    return *this;
+  }
+private:
+
+  /// Porosity
+  real64 m_phi = 0.0;
+
+  /// Volumetric TEC of the solid phase
+  real64 m_TECs = 0.0;
+
+  /// Volumetric TEC of the fluid phase
+  real64 m_TECf = 0.0;
+
+  /// TEC of the porosity (porosity change vs temperature change)
+  real64 m_TECp = 0.0; 
+
+};
+
+/**
+ * @class IsochoreFluidExchangeTEC, 
+ * This parameter quantifies fluid exchange (expelled from the porous medium) 
+ * due to temperature change in drained isochore condition
+ */
+struct IsochoreFluidExchangeTEC
+{
+public:
+
+  /**
+   * @brief Compute the fluid exchange Thermal Expansion Coefficient 
+   * from other thermoporoelastic parameters
+   * in drained isochore condition
+   * @return fluid exchange TEC
+   */
+  real64 getValue() const
+  {
+    if( m_TECd > 0 && m_TECv > 0 && m_alpha > 0 )
+    {
+      return m_alpha * m_TECd + m_TECv;
+    }   
+    else if( m_TECs > 0 && m_TECf > 0 && m_TECp > 0 && m_phi > 0 && m_alpha > 0 )
+    {
+      return ( m_alpha - m_phi ) * m_TECs + m_phi * m_TECf - ( 1.0 - m_alpha ) * m_TECp / ( 1.0 - m_phi );
+    }
+    else if( m_TECs > 0 && m_TECf > 0 && m_phi > 0 && m_alpha > 0 )
+    {
+      return ( m_alpha - m_phi ) * m_TECs + m_phi * m_TECf; ///< Ideal porous medium
+    }
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of thermoporoelastic constants is required" );
+    }
+  }
+  IsochoreFluidExchangeTEC setDrainedVolumetricTEC( real64 const TECd )
+  {
+    m_TECd = TECd;
+    return *this;
+  }
+
+  IsochoreFluidExchangeTEC setFluidExchangeTEC( real64 const TECv )
+  {
+    m_TECv = TECv;
+    return *this;
+  }
+
+  IsochoreFluidExchangeTEC setBiotCoefficient( real64 const alpha )
+  {
+    m_alpha = alpha;
+    return *this;
+  }
+
+  IsochoreFluidExchangeTEC setPorosity( real64 const phi )
+  {
+    m_phi = phi;
+    return *this;
+  }
+
+  IsochoreFluidExchangeTEC setSolidVolumetricTEC( real64 const TECs )
+  {
+    m_TECs = TECs;
+    return *this;
+  }
+
+  IsochoreFluidExchangeTEC setFluidVolumetricTEC( real64 const TECf )
+  {
+    m_TECf = TECf;
+    return *this;
+  }
+
+  IsochoreFluidExchangeTEC setPorosityTEC( real64 const TECp )
+  {
+    m_TECp = TECp;
+    return *this;
+  }
+
+private:
+
+  /// Volumetric drained TEC
+  real64 m_TECd = 0.0;
+
+  /// Fluid exchange (expelled) TEC in drained free stress condition
+  real64 m_TECv = 0.0; 
+
+  /// Biot's coefficient
+  real64 m_alpha = 0.0;
+
+  /// Porosity
+  real64 m_phi = 0.0;
+
+  /// Volumetric TEC of the solid phase
+  real64 m_TECs = 0.0;
+
+  /// Volumetric TEC of the fluid phase
+  real64 m_TECf = 0.0;
+
+  /// TEC of the porosity (porosity change vs temperature change)
+  real64 m_TECp = 0.0; 
+};
+
+/**
+ * @class UndrainedVolumetricTEC
+ */
+struct UndrainedVolumetricTEC
+{
+public:
+
+  /**
+   * @brief Compute undrained volumetric Thermal Expansion Coefficient (TEC) 
+   * from other thermoporoelastic parameters
+   * @return undrained volumetric TEC
+   */
+  real64 getValue() const
+  {
+    if( m_TECd > 0 && m_B > 0 && m_TECv > 0 )
+    {
+      return m_TECd + m_B * m_TECv;
+    }
+    else if( m_TECs > 0 && m_TECf > 0 && m_B > 0 && m_phi > 0 && m_TECp > 0 )
+    {
+      return ( 1.0 - m_phi * m_B ) * m_TECs + m_phi * m_B * m_TECf + ( 1.0 - m_B ) * m_TECp / ( 1.0 - m_phi );
+    } 
+    else if( m_TECs > 0 && m_TECf > 0 && m_B > 0 && m_phi > 0 )
+    {
+      return ( 1.0 - m_phi * m_B ) * m_TECs + m_phi * m_B * m_TECf; ///< Ideal porous medium
+    }   
+    else if( m_TECs > 0 && m_TECf > 0 && m_phi > 0 )
+    {
+      return ( 1.0 - m_phi ) * m_TECs + m_phi * m_TECf; ///< Incompressible solid and fluid
+    } 
+    else
+    {
+      return 0.0;
+      GEOSX_ERROR( "A specific combination of thermoporoelastic constants is required" );
+    }
+  }
+
+
+  UndrainedVolumetricTEC setDrainedVolumetricTEC( real64 const TECd )
+  {
+    m_TECd = TECd;
+    return *this;
+  }
+
+  UndrainedVolumetricTEC setFluidExchangeTEC( real64 const TECv )
+  {
+    m_TECv = TECv;
+    return *this;
+  }
+
+  UndrainedVolumetricTEC setSkemptonCoefficient( real64 const B )
+  {
+    m_B = B;
+    return *this;
+  }
+
+  UndrainedVolumetricTEC setPorosity( real64 const phi )
+  {
+    m_phi = phi;
+    return *this;
+  }
+
+  UndrainedVolumetricTEC setSolidVolumetricTEC( real64 const TECs )
+  {
+    m_TECs = TECs;
+    return *this;
+  }
+
+  UndrainedVolumetricTEC setFluidVolumetricTEC( real64 const TECf )
+  {
+    m_TECf = TECf;
+    return *this;
+  }
+
+  UndrainedVolumetricTEC setPorosityTEC( real64 const TECp )
+  {
+    m_TECp = TECp;
+    return *this;
+  }
+
+private:
+
+  /// Volumetric drained TEC
+  real64 m_TECd = 0.0;
+
+  /// Fluid exchange (expelled) TEC in drained free stress condition
+  real64 m_TECv = 0.0; 
+
+  /// Skempton's coefficient
+  real64 m_B = 0.0;
+
+  /// Porosity
+  real64 m_phi = 0.0;
+
+  /// Volumetric TEC of the solid phase
+  real64 m_TECs = 0.0;
+
+  /// Volumetric TEC of the fluid phase
+  real64 m_TECf = 0.0;
+
+  /// TEC of the porosity (porosity change vs temperature change)
+  real64 m_TECp = 0.0; 
+
+};
+
 } /* namespace constitutive */
 
 } /* namespace geosx */
