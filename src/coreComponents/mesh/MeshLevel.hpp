@@ -181,6 +181,8 @@ private:
   ElementRegionManager m_elementManager;
   /// Manager for embedded surfaces edge data
   EdgeManager m_embSurfEdgeManager;
+  ///Manager for embedded surfaces vertices
+  // EmbeddedSurfaceNodeManager m_embSurfNodeManager;
 
 };
 

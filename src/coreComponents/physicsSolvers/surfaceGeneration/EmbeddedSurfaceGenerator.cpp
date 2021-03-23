@@ -33,7 +33,7 @@
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
 
-#include "EmbeddedSurfacesParallelSynchronization.hpp"
+#include "physicsSolvers/GEOSX_PTP/EmbeddedSurfacesParallelSynchronization.hpp"
 
 
 namespace geosx
@@ -41,7 +41,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-void NewObjectLists::insert( ModifiedObjectLists const & newObjects )
+void NewObjectLists::insert( NewObjectLists const & newObjects )
 {
   newNodes.insert( newObjects.newNodes.begin(),
                    newObjects.newNodes.end() );
@@ -168,9 +168,11 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
             {
               GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
 
-
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
+
+              newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
+
               localNumberOfSurfaceElems++;
             }
           }
@@ -178,7 +180,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
       } // end loop over cells
     } );// end loop over subregions
   } );// end loop over thick planes
-
 
   // Set the ghostRank form the parent cell
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
@@ -200,8 +201,19 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 
-  // Synchronize fields
-  EmbeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel, domain.getNeighbors(), newObjects );
+  // Synchronize embedded Surfaces
+  EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel, domain.getNeighbors(), newObjects );
+
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+
+  std::cout << "rank: " << thisRank << " size of subRegion: " << embeddedSurfaceSubRegion.size() << std::endl;
+
+  std::cout << "rank: " << thisRank << " globalIndex: " << embeddedSurfaceSubRegion.localToGlobalMap() << std::endl;
+
+  std::cout << "rank: " << thisRank << " ghostRank: " << embeddedSurfaceSubRegion.ghostRank() << std::endl;
+
+  std::cout << "rank: " << thisRank << " toElements: " << embeddedSurfaceSubRegion.getToCellRelation().m_toElementIndex << std::endl;
+
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()

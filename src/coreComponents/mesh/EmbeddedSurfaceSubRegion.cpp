@@ -244,4 +244,62 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const &
   this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
 }
 
+localIndex EmbeddedSurfaceSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packUpDownMapsPrivate< false >( junk, packList );
+}
+
+localIndex EmbeddedSurfaceSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
+                                                 arrayView1d< localIndex const > const & packList ) const
+{
+  return packUpDownMapsPrivate< true >( buffer, packList );
+}
+
+template< bool DOPACK >
+localIndex EmbeddedSurfaceSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                                            arrayView1d< localIndex const > const & packList ) const
+{
+  localIndex packedSize = 0;
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer,
+                                           this->m_surfaceElementsToCells,
+                                           packList,
+                                           m_surfaceElementsToCells.getElementRegionManager() );
+
+  return packedSize;
+}
+
+
+localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
+                                                       localIndex_array & packList,
+                                                       bool const overwriteUpMaps,
+                                                       bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+{
+  localIndex unPackedSize = 0;
+
+  string elementListString;
+  unPackedSize += bufferOps::Unpack( buffer, elementListString );
+  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
+
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     m_surfaceElementsToCells,
+                                     packList.toViewConst(),
+                                     m_surfaceElementsToCells.getElementRegionManager(),
+                                     overwriteUpMaps );
+
+  return unPackedSize;
+}
+
+void EmbeddedSurfaceSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+{
+  ObjectManagerBase::viewPackingExclusionList( exclusionList );
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString() ));
+}
+
 } /* namespace geosx */

@@ -51,6 +51,8 @@ MeshLevel::MeshLevel( string const & name,
 
   registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager );
 
+  // embSurfNodeManager registerGroup<  >( groupStructKeys::embSurfEdgeManagerString, & m_ );
+
   registerWrapper< integer >( viewKeys.meshLevel );
 }
 

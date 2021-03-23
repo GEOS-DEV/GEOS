@@ -134,6 +134,17 @@ public:
                                    localIndex const k ) const;
 
 
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
+                                     arrayView1d< localIndex const > const & packList ) const override;
+
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
+                                       array1d< localIndex > & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
   ///@}
 
@@ -354,6 +365,17 @@ public:
   ///@}
 
 private:
+
+  /**
+   * @brief Pack element-to-node and element-to-face maps
+   * @tparam the flag for the bufferOps::Pack function
+   * @param buffer the buffer used in the bufferOps::Pack function
+   * @param packList the packList used in the bufferOps::Pack function
+   * @return the pack size
+   */
+  template< bool DOPACK >
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                    arrayView1d< localIndex const > const & packList ) const;
 
   /// normal vector to the embedded surface element
   array2d< real64 > m_normalVector;

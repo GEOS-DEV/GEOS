@@ -179,26 +179,26 @@ public:
   { return m_detJ; }
 
   /**
-   * @brief @return The sorted array of fractured elements.
+   * @brief @return The sorted array of local fractured elements.
    */
   SortedArray< localIndex > & fracturedElementsList()
-  { return m_fracturedCells; }
+  { return m_localFracturedCells; }
 
   /**
-   * @brief @return The sorted array view of fractured elements.
+   * @brief @return The sorted array view of local fractured elements.
    */
   SortedArrayView< localIndex const > const fracturedElementsList() const
-  { return m_fracturedCells.toViewConst(); }
+  { return m_localFracturedCells.toViewConst(); }
 
   /**
    * @brief @return The map to the embedded surfaces
    */
-  EmbSurfMapType & embeddedSurfacesList() { return m_toEmbeddedSurfaces; }
+  EmbSurfMapType & embeddedSurfacesList() { return m_toLocalEmbeddedSurfaces; }
 
   /**
    * @brief @return The map to the embedded surfaces
    */
-  EmbSurfMapType const & embeddedSurfacesList() const { return m_toEmbeddedSurfaces; }
+  EmbSurfMapType const & embeddedSurfacesList() const { return m_toLocalEmbeddedSurfaces; }
 
   /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;
@@ -223,11 +223,11 @@ private:
   /// Map of unmapped global indices in the element-to-face map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
 
-  /// List of fractured elements
-  SortedArray< localIndex > m_fracturedCells;
+  /// List of the local fractured elements (ghosts are not included)
+  SortedArray< localIndex > m_localFracturedCells;
 
-  /// Map from Cell Elements to Embedded Surfaces
-  EmbSurfMapType m_toEmbeddedSurfaces;
+  /// Map from local Cell Elements to local Embedded Surfaces (ghosts are not included)
+  EmbSurfMapType m_toLocalEmbeddedSurfaces;
 
   /**
    * @brief Pack element-to-node and element-to-face maps
