@@ -111,7 +111,7 @@ set( physicsSolvers_sources
 if( BUILD_OBJ_LIBS)
   set( dependencyList common constitutive dataRepository linearAlgebra )
 else()
-  set( dependencyList common linearAlgebra )
+  set( dependencyList common constitutive linearAlgebra )
 endif()
 
 
@@ -119,13 +119,6 @@ set( externalComponentDeps "" )
 if( ENABLE_GEOSX_PTP )
   message(STATUS "Adding GEOSX_PTP to physics solver dependencies")
   list( APPEND externalComponentDeps GEOSX_PTP )
-endif()
-
-# This probably should not be here.  
-# Including pvt/pvt.hpp in MultiFluidPVTPackageWrapper.hpp requires this additional dependency,
-# but I do not understand why.
-if( ENABLE_PVTPackage )
-    list( APPEND externalComponentDeps PVTPackage )
 endif()
 
 if ( ENABLE_OPENMP )

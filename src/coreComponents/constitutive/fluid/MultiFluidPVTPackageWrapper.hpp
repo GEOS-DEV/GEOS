@@ -23,8 +23,6 @@
 
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include <memory>
-// For a reason that I don't understand, adding this include
-// requires adding PVTPackage as a dependent of the physicsSolvers
 #include "pvt/pvt.hpp"
 
 namespace geosx
