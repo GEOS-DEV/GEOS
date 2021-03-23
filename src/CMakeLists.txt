@@ -140,3 +140,8 @@ install( DIRECTORY ../scripts/
 if( ENABLE_PYGEOSX )
   add_subdirectory( pygeosx )
 endif()
+
+option(ENABLE_FDWAVE  "Build fd wave eqn " On)
+if( ENABLE_FDWAVE)
+   add_subdirectory(fdwave_raja)
+endif()
