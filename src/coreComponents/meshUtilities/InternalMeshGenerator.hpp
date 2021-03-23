@@ -118,10 +118,6 @@ public:
                                              int nodeIDInBox[],
                                              const int size ) override;
 
-  virtual void remapMesh ( dataRepository::Group & domain ) override;
-
-//  int m_delayMeshDeformation;
-
 protected:
 
   void postProcessInput() override final;

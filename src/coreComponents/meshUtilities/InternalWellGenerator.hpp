@@ -127,10 +127,6 @@ public:
                                              int const &,
                                              int *,
                                              int const ) override {}
-
-  /// not implemented
-  virtual void remapMesh ( dataRepository::Group & ) override {}
-
   ///@}
 
   /**

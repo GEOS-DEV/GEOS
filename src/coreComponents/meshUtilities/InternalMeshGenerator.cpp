@@ -917,11 +917,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       }
     }
   }
-
-  if( m_delayMeshDeformation == 0 )
-  {
-    remapMesh( domain );
-  }
 }
 
 /**
@@ -1218,47 +1213,6 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
     }
 
   }
-}
-
-void InternalMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARAM( domain ) )
-{
-  //  // Node mapping
-  //  if (!m_meshDx.empty())
-  //  {
-  //    const Table3D* tableDx =
-  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDx);
-  //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
-  //    {
-  //      real64 dx=tableDx->Lookup(X[iN]);
-  //      X[iN][0] += dx;
-  //    }
-  //  }
-  //
-  //  if (!m_meshDy.empty())
-  //  {
-  //    const Table3D* tableDy =
-  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDy);
-  //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
-  //    {
-  //      real64 dy=tableDy->Lookup(X[iN]);
-  //      X[iN][1] += dy;
-  //    }
-  //  }
-  //
-  //  if (!m_meshDz.empty())
-  //  {
-  //    const Table3D* tableDz =
-  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDz);
-  //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
-  //    {
-  //      real64 dz=tableDz->Lookup(X[iN]);
-  //      X[iN][2] += dz;
-  //    }
-  //  }
-
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, string const &, Group * const )

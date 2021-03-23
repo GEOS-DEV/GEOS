@@ -54,7 +54,6 @@ public:
    */
   virtual ~MeshGeneratorBase();
 
-
   /**
    * @brief Return the name of the MeshGenerator in object catalog.
    * @return string that contains the catalog name of the MeshGenerator
@@ -73,9 +72,6 @@ public:
  */
   virtual void generateMesh( DomainPartition & domain ) = 0;
 
-  // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
-  //                                NodeManager * nodeManager ) = 0;
-
 /**
  * @brief Get the label mapping of element vertices indexes onto node indexes for a type of element.
  * @param[in] elementType the string identifier of the element type
@@ -90,15 +86,6 @@ public:
                                              const int & iEle,
                                              int nodeIDInBox[],
                                              const int size ) = 0;
-/**
- * @brief Re-computing mesh tables for the input domain.
- * @param[in] domain domain point whose mesh has to be remapped
- *
- */
-  virtual void remapMesh ( dataRepository::Group & domain ) = 0;
-
-  /// Integer to trigger or not mesh re-mapping at the end of GenerateMesh call
-  int m_delayMeshDeformation = 0;
 
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;

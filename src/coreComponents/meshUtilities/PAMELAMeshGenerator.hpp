@@ -85,8 +85,6 @@ public:
                                              int nodeIDInBox[],
                                              const int size ) override;
 
-  virtual void remapMesh ( dataRepository::Group & domain ) override;
-
 protected:
 
   /**
