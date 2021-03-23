@@ -1303,8 +1303,9 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
                                     false,
                                     [&]( auto array, auto GEOSX_UNUSED_PARAM( scalar ) )
     {
-      typedef decltype( array ) arrayType;
-      Wrapper< arrayType > & wrapperT = dynamicCast< Wrapper< arrayType > & >( *wrapper );
+      using arrayType =  decltype( array );
+      using WrapperType = Wrapper< arrayType >;
+      WrapperType & wrapperT = dynamicCast< Wrapper< arrayType > & >( *wrapper );
       arrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
@@ -1314,8 +1315,8 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
         // check if the field actually exists / plotted on the current subregion
         if( viewPointers[esr].count( fieldName ) > 0 )
         {
-          Wrapper< arrayType > const & sourceWrapper = dynamicCast< Wrapper< arrayType > const & >( *(viewPointers[esr][fieldName]));
-          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference().toViewConst();
+          WrapperType const & sourceWrapper = dynamic_cast< WrapperType const & >( *(viewPointers[esr].at( fieldName )) );
+          auto const sourceArray = sourceWrapper.reference().toViewConst();
 
           localIndex const offset = counter * targetArray.strides()[ 0 ];
           GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
