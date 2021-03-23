@@ -838,7 +838,7 @@ struct DrainedVolumetricTEC
 public:
 
   /**
-   * @brief Compute drained volumetric Thermal Expansion Coefficient (TEC) 
+   * @brief Compute drained volumetric Thermal Expansion Coefficient (TEC)
    * from other thermoporoelastic parameters
    * @return drained volumetric TEC
    */
@@ -851,7 +851,7 @@ public:
     else if( m_TECs > 0 )
     {
       return m_TECs; ///< Ideal porous medium
-    }    
+    }
     else
     {
       return 0.0;
@@ -885,13 +885,13 @@ private:
   real64 m_TECs = 0.0;
 
   /// TEC of the porosity (porosity change vs temperature change)
-  real64 m_TECp = 0.0; 
+  real64 m_TECp = 0.0;
 
 };
 
 /**
- * @class FreeStressFluidExchangeTEC, 
- * This parameter quantifies fluid exchange (expelled from the porous medium) 
+ * @class FreeStressFluidExchangeTEC,
+ * This parameter quantifies fluid exchange (expelled from the porous medium)
  * due to temperature change in drained free stress condition
  */
 struct FreeStressFluidExchangeTEC
@@ -899,7 +899,7 @@ struct FreeStressFluidExchangeTEC
 public:
 
   /**
-   * @brief Compute the fluid exchange Thermal Expansion Coefficient 
+   * @brief Compute the fluid exchange Thermal Expansion Coefficient
    * from other thermoporoelastic parameters
    * in drained free stress
    * @return fluid exchange TEC
@@ -913,7 +913,7 @@ public:
     else if( m_TECs > 0 && m_TECf > 0 )
     {
       return m_phi * ( m_TECf - m_TECs ); ///< Ideal porous medium
-    }    
+    }
     else
     {
       return 0.0;
@@ -956,13 +956,13 @@ private:
   real64 m_TECf = 0.0;
 
   /// TEC of the porosity (porosity change vs temperature change)
-  real64 m_TECp = 0.0; 
+  real64 m_TECp = 0.0;
 
 };
 
 /**
- * @class IsochoreFluidExchangeTEC, 
- * This parameter quantifies fluid exchange (expelled from the porous medium) 
+ * @class IsochoreFluidExchangeTEC,
+ * This parameter quantifies fluid exchange (expelled from the porous medium)
  * due to temperature change in drained isochore condition
  */
 struct IsochoreFluidExchangeTEC
@@ -970,7 +970,7 @@ struct IsochoreFluidExchangeTEC
 public:
 
   /**
-   * @brief Compute the fluid exchange Thermal Expansion Coefficient 
+   * @brief Compute the fluid exchange Thermal Expansion Coefficient
    * from other thermoporoelastic parameters
    * in drained isochore condition
    * @return fluid exchange TEC
@@ -980,7 +980,7 @@ public:
     if( m_TECd > 0 && m_TECv > 0 && m_alpha > 0 )
     {
       return m_alpha * m_TECd + m_TECv;
-    }   
+    }
     else if( m_TECs > 0 && m_TECf > 0 && m_TECp > 0 && m_phi > 0 && m_alpha > 0 )
     {
       return ( m_alpha - m_phi ) * m_TECs + m_phi * m_TECf - ( 1.0 - m_alpha ) * m_TECp / ( 1.0 - m_phi );
@@ -1043,7 +1043,7 @@ private:
   real64 m_TECd = 0.0;
 
   /// Fluid exchange (expelled) TEC in drained free stress condition
-  real64 m_TECv = 0.0; 
+  real64 m_TECv = 0.0;
 
   /// Biot's coefficient
   real64 m_alpha = 0.0;
@@ -1058,7 +1058,7 @@ private:
   real64 m_TECf = 0.0;
 
   /// TEC of the porosity (porosity change vs temperature change)
-  real64 m_TECp = 0.0; 
+  real64 m_TECp = 0.0;
 };
 
 /**
@@ -1069,7 +1069,7 @@ struct UndrainedVolumetricTEC
 public:
 
   /**
-   * @brief Compute undrained volumetric Thermal Expansion Coefficient (TEC) 
+   * @brief Compute undrained volumetric Thermal Expansion Coefficient (TEC)
    * from other thermoporoelastic parameters
    * @return undrained volumetric TEC
    */
@@ -1082,15 +1082,15 @@ public:
     else if( m_TECs > 0 && m_TECf > 0 && m_B > 0 && m_phi > 0 && m_TECp > 0 )
     {
       return ( 1.0 - m_phi * m_B ) * m_TECs + m_phi * m_B * m_TECf + ( 1.0 - m_B ) * m_TECp / ( 1.0 - m_phi );
-    } 
+    }
     else if( m_TECs > 0 && m_TECf > 0 && m_B > 0 && m_phi > 0 )
     {
       return ( 1.0 - m_phi * m_B ) * m_TECs + m_phi * m_B * m_TECf; ///< Ideal porous medium
-    }   
+    }
     else if( m_TECs > 0 && m_TECf > 0 && m_phi > 0 )
     {
       return ( 1.0 - m_phi ) * m_TECs + m_phi * m_TECf; ///< Incompressible solid and fluid
-    } 
+    }
     else
     {
       return 0.0;
@@ -1147,7 +1147,7 @@ private:
   real64 m_TECd = 0.0;
 
   /// Fluid exchange (expelled) TEC in drained free stress condition
-  real64 m_TECv = 0.0; 
+  real64 m_TECv = 0.0;
 
   /// Skempton's coefficient
   real64 m_B = 0.0;
@@ -1162,7 +1162,7 @@ private:
   real64 m_TECf = 0.0;
 
   /// TEC of the porosity (porosity change vs temperature change)
-  real64 m_TECp = 0.0; 
+  real64 m_TECp = 0.0;
 
 };
 
