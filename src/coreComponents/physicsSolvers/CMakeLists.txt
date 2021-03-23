@@ -113,7 +113,7 @@ set( physicsSolvers_sources
 if( BUILD_OBJ_LIBS)
   set( dependencyList common constitutive dataRepository linearAlgebra )
 else()
-  set( dependencyList common linearAlgebra )
+  set( dependencyList common constitutive linearAlgebra )
 endif()
 
 
