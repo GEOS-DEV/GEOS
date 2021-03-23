@@ -20,7 +20,7 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "mesh/FaceManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 

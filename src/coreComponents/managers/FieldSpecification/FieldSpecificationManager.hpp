@@ -23,8 +23,8 @@
 #include "managers/FieldSpecification/FieldSpecificationBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "managers/ObjectManagerBase.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+#include "interface/DomainPartition.hpp"
 
 namespace geosx
 {

@@ -36,9 +36,9 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "managers/NumericalMethodsManager.hpp"
+#include "interface/NumericalMethodsManager.hpp"
 
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 
 namespace geosx
 {

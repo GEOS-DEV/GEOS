@@ -18,7 +18,7 @@
 
 #include "InternalMeshGenerator.hpp"
 
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>

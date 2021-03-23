@@ -14,8 +14,8 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "managers/initialization.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/initialization.hpp"
+#include "interface/GeosxState.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/Wrapper.hpp"

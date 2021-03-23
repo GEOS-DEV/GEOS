@@ -17,7 +17,7 @@
  */
 
 #include "ContactRelationBase.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/TableFunction.hpp"
 

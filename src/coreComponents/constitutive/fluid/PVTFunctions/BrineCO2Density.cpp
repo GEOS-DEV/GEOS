@@ -19,7 +19,7 @@
 #include "constitutive/fluid/PVTFunctions/BrineCO2Density.hpp"
 
 #include "managers/Functions/FunctionManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 
 namespace geosx
 {

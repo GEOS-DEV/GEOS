@@ -15,7 +15,7 @@
 #include "DeadOilFluid.hpp"
 
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 
 

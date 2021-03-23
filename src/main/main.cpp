@@ -17,9 +17,9 @@
  */
 
 // Source includes
-#include "managers/initialization.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/initialization.hpp"
+#include "interface/ProblemManager.hpp"
+#include "interface/GeosxState.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"

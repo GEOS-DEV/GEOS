@@ -18,9 +18,9 @@
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

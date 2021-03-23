@@ -17,7 +17,7 @@
  */
 
 #include "finiteElement/elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"

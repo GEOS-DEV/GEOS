@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "LvArray/src/Array.hpp"
 

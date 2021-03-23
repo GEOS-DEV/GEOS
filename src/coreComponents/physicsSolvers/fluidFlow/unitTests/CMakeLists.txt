@@ -6,8 +6,6 @@ set( gtest_geosx_tests
      testSinglePhaseBaseKernels.cpp
      testSinglePhaseFVMKernels.cpp     
      testSinglePhaseHybridFVMKernels.cpp
-     testCompMultiphaseFlow.cpp
-     testCompMultiphaseFlowHybrid.cpp     
    )
 
 set( dependencyList gtest )
@@ -30,6 +28,14 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+
+if( ENABLE_PVTPackage )
+    list( APPEND gtest_geosx_tests
+          testCompMultiphaseFlow.cpp
+          testCompMultiphaseFlowHybrid.cpp )
+
+    set( dependencyList ${dependencyList} PVTPackage )
+endif()
 
 #
 # Add gtest C++ based tests

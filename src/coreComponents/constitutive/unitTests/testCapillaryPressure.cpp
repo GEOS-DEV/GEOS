@@ -14,7 +14,7 @@
 
 // Source inclues
 #include "constitutiveTestHelpers.hpp"
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 
 using namespace geosx;
 using namespace geosx::testing;

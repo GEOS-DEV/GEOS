@@ -19,8 +19,6 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDPVTPACKAGEWRAPPER_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDPVTPACKAGEWRAPPER_HPP_
 
-#include "constitutive/fluid/MultiFluidBase.hpp"
-
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include <memory>
 #include "pvt/pvt.hpp"

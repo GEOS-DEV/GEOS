@@ -21,8 +21,8 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
+#include "interface/GeosxState.hpp"
+#include "interface/initialization.hpp"
 
 // TPL includes
 #include <conduit_relay.hpp>

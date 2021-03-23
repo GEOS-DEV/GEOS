@@ -14,8 +14,8 @@
 
 // Source includes
 #include "GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/initialization.hpp"
+#include "interface/ProblemManager.hpp"
+#include "interface/initialization.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 
 // TPL includes

@@ -20,7 +20,7 @@
 #include "InternalWellGenerator.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"

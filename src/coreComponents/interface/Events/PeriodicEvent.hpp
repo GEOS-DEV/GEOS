@@ -19,7 +19,7 @@
 #ifndef GEOSX_MANAGERS_EVENTS_PERIODICEVENT_HPP_
 #define GEOSX_MANAGERS_EVENTS_PERIODICEVENT_HPP_
 
-#include "managers/Events/EventBase.hpp"
+#include "interface/Events/EventBase.hpp"
 
 namespace geosx
 {

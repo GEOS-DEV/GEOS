@@ -18,7 +18,7 @@
 
 #include "TableRelativePermeability.hpp"
 
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 
 namespace geosx

@@ -20,7 +20,7 @@
 
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 
 namespace geosx
 {

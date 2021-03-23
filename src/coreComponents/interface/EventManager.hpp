@@ -17,7 +17,7 @@
 #define GEOSX_MANAGERS_EVENTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "managers/Events/EventBase.hpp"
+#include "interface/Events/EventBase.hpp"
 
 namespace geosx
 {

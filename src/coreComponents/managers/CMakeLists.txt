@@ -2,19 +2,11 @@
 # Specify all headers
 #
 set(managers_headers
-    DomainPartition.hpp
-    EventManager.hpp
-    Events/EventBase.hpp
-    Events/PeriodicEvent.hpp
-    Events/HaltEvent.hpp
-    Events/SoloEvent.hpp
     Outputs/OutputManager.hpp
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
     Outputs/RestartOutput.hpp
     Outputs/TimeHistoryOutput.hpp
-    Tasks/TasksManager.hpp
-    Tasks/TaskBase.hpp
     TimeHistory/TimeHistoryCollection.hpp
     TimeHistory/PackCollection.hpp
     TimeHistory/HistoryIO.hpp
@@ -24,15 +16,10 @@ set(managers_headers
     Functions/FunctionBase.hpp
     Functions/TableFunction.hpp
     Functions/FunctionManager.hpp
-    ObjectManagerBase.hpp
-    ProblemManager.hpp
-    NumericalMethodsManager.hpp
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
     FieldSpecification/SourceFluxBoundaryCondition.hpp
-    initialization.hpp
-    GeosxState.hpp
    )
 
 
@@ -41,34 +28,21 @@ set(managers_headers
 #
 
 set(managers_sources
-    DomainPartition.cpp
-    EventManager.cpp
-    Events/EventBase.cpp
-    Events/PeriodicEvent.cpp
-    Events/HaltEvent.cpp
-    Events/SoloEvent.cpp
     Outputs/OutputManager.cpp
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
     Outputs/RestartOutput.cpp
     Outputs/TimeHistoryOutput.cpp
     Outputs/BlueprintOutput.cpp
-    Tasks/TaskBase.cpp
-    Tasks/TasksManager.cpp
     TimeHistory/PackCollection.cpp
     Outputs/PythonOutput.cpp
     Functions/FunctionBase.cpp
     Functions/TableFunction.cpp
     Functions/FunctionManager.cpp
-    ObjectManagerBase.cpp
-    ProblemManager.cpp
-    NumericalMethodsManager.cpp
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp
     FieldSpecification/SourceFluxBoundaryCondition.cpp
-    initialization.cpp
-    GeosxState.cpp
    )
 
 if( ENABLE_MATHPRESSO )

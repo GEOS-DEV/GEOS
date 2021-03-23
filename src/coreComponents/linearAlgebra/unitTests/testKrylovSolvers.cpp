@@ -21,7 +21,7 @@
 #include "testLinearAlgebraUtils.hpp"
 
 #include "common/DataTypes.hpp"
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/BlockOperatorWrapper.hpp"
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"

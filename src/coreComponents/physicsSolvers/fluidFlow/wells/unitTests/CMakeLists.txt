@@ -4,7 +4,6 @@
 
 set( gtest_geosx_tests
      testReservoirSinglePhaseMSWells.cpp
-     testReservoirCompositionalMultiphaseMSWells.cpp
    )
 
 set( dependencyList gtest )
@@ -25,6 +24,13 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_PVTPackage )
+    list( APPEND gtest_geosx_tests
+          testReservoirCompositionalMultiphaseMSWells.cpp )
+
+    set( dependencyList ${dependencyList} PVTPackage )
 endif()
 
 

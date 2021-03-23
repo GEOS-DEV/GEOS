@@ -23,7 +23,7 @@
 
 #include "common/DataTypes.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 
 #include <set>
 

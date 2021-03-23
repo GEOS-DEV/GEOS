@@ -20,7 +20,7 @@
 #include "mpiCommunications/NeighborCommunicator.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
 #include <sys/time.h>
 

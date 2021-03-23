@@ -21,7 +21,7 @@
 
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 
 
 namespace geosx

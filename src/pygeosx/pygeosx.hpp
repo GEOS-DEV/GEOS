@@ -15,4 +15,4 @@
 // Source includes
 #include "PyGroup.hpp"
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"

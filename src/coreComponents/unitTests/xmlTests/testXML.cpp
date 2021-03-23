@@ -13,9 +13,9 @@
  */
 
 // Source includes
-#include "managers/ProblemManager.hpp"
-#include "managers/initialization.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/ProblemManager.hpp"
+#include "interface/initialization.hpp"
+#include "interface/GeosxState.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

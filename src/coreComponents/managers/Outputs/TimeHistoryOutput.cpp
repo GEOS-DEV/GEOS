@@ -13,8 +13,8 @@
  */
 
 #include "TimeHistoryOutput.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
+#include "interface/GeosxState.hpp"
+#include "interface/initialization.hpp"
 
 namespace geosx
 {

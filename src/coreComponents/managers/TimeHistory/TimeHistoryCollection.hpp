@@ -19,10 +19,10 @@
 #ifndef GEOSX_TimeHistoryCollection_HPP_
 #define GEOSX_TimeHistoryCollection_HPP_
 
-#include "managers/Tasks/TaskBase.hpp"
+#include "interface/Tasks/TaskBase.hpp"
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/ProblemManager.hpp"
+#include "interface/DomainPartition.hpp"
+#include "interface/ProblemManager.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
 
 #include <functional>

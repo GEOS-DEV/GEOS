@@ -18,7 +18,7 @@
  */
 #include "ChomboIO.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"
 
 #include <fstream>

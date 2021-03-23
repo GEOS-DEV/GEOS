@@ -15,13 +15,6 @@ Element: Benchmarks
 .. include:: ../../coreComponents/fileIO/schema/docs/Benchmarks.rst
 
 
-.. _XML_BlackOilFluid:
-
-Element: BlackOilFluid
-======================
-.. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
-
-
 .. _XML_Blueprint:
 
 Element: Blueprint
@@ -90,41 +83,6 @@ Element: ChomboIO
 Element: CompositeFunction
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction.rst
-
-
-.. _XML_CompositionalMultiphaseFVM:
-
-Element: CompositionalMultiphaseFVM
-===================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM.rst
-
-
-.. _XML_CompositionalMultiphaseFluid:
-
-Element: CompositionalMultiphaseFluid
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
-
-
-.. _XML_CompositionalMultiphaseHybridFVM:
-
-Element: CompositionalMultiphaseHybridFVM
-=========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM.rst
-
-
-.. _XML_CompositionalMultiphaseReservoir:
-
-Element: CompositionalMultiphaseReservoir
-=========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseReservoir.rst
-
-
-.. _XML_CompositionalMultiphaseWell:
-
-Element: CompositionalMultiphaseWell
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseWell.rst
 
 
 .. _XML_CompressibleSinglePhaseFluid:
@@ -379,13 +337,6 @@ Element: Mesh
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
 
 
-.. _XML_MultiphasePoroelastic:
-
-Element: MultiphasePoroelastic
-==============================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic.rst
-
-
 .. _XML_NonlinearSolverParameters:
 
 Element: NonlinearSolverParameters
@@ -412,13 +363,6 @@ Element: NumericalMethods
 Element: Outputs
 ================
 .. include:: ../../coreComponents/fileIO/schema/docs/Outputs.rst
-
-
-.. _XML_PAMELAMeshGenerator:
-
-Element: PAMELAMeshGenerator
-============================
-.. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator.rst
 
 
 .. _XML_PackCollection:
@@ -775,13 +719,6 @@ Datastructure: Benchmarks
 .. include:: ../../coreComponents/fileIO/schema/docs/Benchmarks_other.rst
 
 
-.. _DATASTRUCTURE_BlackOilFluid:
-
-Datastructure: BlackOilFluid
-============================
-.. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
-
-
 .. _DATASTRUCTURE_Blueprint:
 
 Datastructure: Blueprint
@@ -850,41 +787,6 @@ Datastructure: ChomboIO
 Datastructure: CompositeFunction
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction_other.rst
-
-
-.. _DATASTRUCTURE_CompositionalMultiphaseFVM:
-
-Datastructure: CompositionalMultiphaseFVM
-=========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM_other.rst
-
-
-.. _DATASTRUCTURE_CompositionalMultiphaseFluid:
-
-Datastructure: CompositionalMultiphaseFluid
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
-
-
-.. _DATASTRUCTURE_CompositionalMultiphaseHybridFVM:
-
-Datastructure: CompositionalMultiphaseHybridFVM
-===============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM_other.rst
-
-
-.. _DATASTRUCTURE_CompositionalMultiphaseReservoir:
-
-Datastructure: CompositionalMultiphaseReservoir
-===============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseReservoir_other.rst
-
-
-.. _DATASTRUCTURE_CompositionalMultiphaseWell:
-
-Datastructure: CompositionalMultiphaseWell
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseWell_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSinglePhaseFluid:
@@ -1167,13 +1069,6 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
 
 
-.. _DATASTRUCTURE_MultiphasePoroelastic:
-
-Datastructure: MultiphasePoroelastic
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic_other.rst
-
-
 .. _DATASTRUCTURE_NonlinearSolverParameters:
 
 Datastructure: NonlinearSolverParameters
@@ -1200,13 +1095,6 @@ Datastructure: NumericalMethods
 Datastructure: Outputs
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Outputs_other.rst
-
-
-.. _DATASTRUCTURE_PAMELAMeshGenerator:
-
-Datastructure: PAMELAMeshGenerator
-==================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator_other.rst
 
 
 .. _DATASTRUCTURE_PackCollection:

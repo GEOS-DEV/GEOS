@@ -20,7 +20,7 @@
 #define GEOSX_MESHUTILITIES_PERFORATIONDATA_HPP
 
 #include "dataRepository/Group.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
 #include "meshUtilities/InternalWellGenerator.hpp"
 

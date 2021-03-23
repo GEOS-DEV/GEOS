@@ -13,12 +13,12 @@
  */
 
 // Source includes
-#include "managers/initialization.hpp"
-#include "managers/ProblemManager.hpp"
+#include "interface/initialization.hpp"
+#include "interface/ProblemManager.hpp"
 #include "virtualElement/VirtualElementBase.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/DomainPartition.hpp"
+#include "interface/GeosxState.hpp"
 #include "meshUtilities/MeshManager.hpp"
 
 // TPL includes

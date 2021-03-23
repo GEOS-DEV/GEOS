@@ -13,7 +13,7 @@
  */
 
 // Source includes
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
 

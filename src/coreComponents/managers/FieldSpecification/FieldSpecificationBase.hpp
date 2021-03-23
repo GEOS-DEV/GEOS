@@ -25,9 +25,9 @@
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx

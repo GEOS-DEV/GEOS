@@ -21,8 +21,8 @@ option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
 option( ENABLE_GEOSX_PTP "" ON)
-option( ENABLE_PAMELA "" ON )
-option( ENABLE_PVTPackage "" ON )
+option( ENABLE_PAMELA "" OFF )
+option( ENABLE_PVTPackage "" OFF )
 
 option( ENABLE_UNCRUSTIFY "" ON )
 
@@ -75,7 +75,7 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
+option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON)
 
 option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
 

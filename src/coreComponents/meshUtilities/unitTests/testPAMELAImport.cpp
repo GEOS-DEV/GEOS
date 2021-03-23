@@ -14,7 +14,7 @@
 
 
 // Source includes
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 #include "tests/meshFileNames.hpp"
 #include "meshUtilities/MeshManager.hpp"

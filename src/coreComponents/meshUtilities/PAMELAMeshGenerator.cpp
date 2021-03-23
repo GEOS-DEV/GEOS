@@ -20,7 +20,7 @@
 
 #include "Elements/Element.hpp"
 #include "MeshDataWriters/Variable.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 
 #include <math.h>
 

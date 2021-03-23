@@ -16,7 +16,7 @@
  * @file testH1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
  */
 
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"

@@ -19,7 +19,7 @@
 #include "PerforationData.hpp"
 
 #include "mpiCommunications/MpiWrapper.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 

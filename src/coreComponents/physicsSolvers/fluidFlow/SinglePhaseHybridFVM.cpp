@@ -23,8 +23,8 @@
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "interface/GeosxState.hpp"
+#include "interface/ProblemManager.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code

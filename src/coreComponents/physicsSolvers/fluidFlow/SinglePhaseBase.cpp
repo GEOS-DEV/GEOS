@@ -24,9 +24,9 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "interface/DomainPartition.hpp"
+#include "interface/GeosxState.hpp"
+#include "interface/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 

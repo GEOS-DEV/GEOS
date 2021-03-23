@@ -16,7 +16,7 @@
 
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 
 
 namespace geosx

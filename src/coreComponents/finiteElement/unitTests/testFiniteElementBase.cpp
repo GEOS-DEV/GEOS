@@ -14,7 +14,7 @@
 
 
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "gtest/gtest.h"
 #include "testFiniteElementHelpers.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"

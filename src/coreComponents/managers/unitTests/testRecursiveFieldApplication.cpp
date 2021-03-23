@@ -15,10 +15,10 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "managers/ProblemManager.hpp"
+#include "interface/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/initialization.hpp"
+#include "interface/DomainPartition.hpp"
+#include "interface/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 // TPL includes

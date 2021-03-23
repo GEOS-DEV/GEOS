@@ -135,6 +135,9 @@ if( ENABLE_PVTPackage )
          fluid/BlackOilFluid.cpp
        )
     set( dependencyList ${dependencyList} PVTPackage )
+    
+    blt_print_target_properties(TARGET PVTPackage )
+    
 endif()
 
 if ( ENABLE_OPENMP )

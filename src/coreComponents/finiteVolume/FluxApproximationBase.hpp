@@ -24,7 +24,7 @@
 #include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 
 namespace geosx
 {

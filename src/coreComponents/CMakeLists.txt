@@ -5,6 +5,7 @@ set( subdirs
      codingUtilities
      fileIO
      dataRepository
+     interface
      managers
      constitutive
      finiteElement

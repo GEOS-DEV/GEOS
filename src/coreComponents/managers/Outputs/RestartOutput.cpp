@@ -18,11 +18,11 @@
 
 #include "RestartOutput.hpp"
 #include "fileIO/silo/SiloFile.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
+#include "interface/ProblemManager.hpp"
+#include "interface/GeosxState.hpp"
+#include "interface/initialization.hpp"
 
 namespace geosx
 {

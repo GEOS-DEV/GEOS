@@ -20,9 +20,9 @@
 #include "managers/Outputs/BlueprintOutput.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
+#include "interface/DomainPartition.hpp"
+#include "interface/GeosxState.hpp"
+#include "interface/initialization.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 

@@ -1,7 +1,7 @@
 #include "managers/Outputs/TimeHistoryOutput.hpp"
 #include "fileIO/timeHistory/TimeHistHDF.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 
 #include <gtest/gtest.h>
 

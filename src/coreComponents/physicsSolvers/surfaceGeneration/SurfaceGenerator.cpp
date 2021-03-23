@@ -18,15 +18,15 @@
 
 #include "SurfaceGenerator.hpp"
 
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "interface/GeosxState.hpp"
+#include "interface/ProblemManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "mpiCommunications/SpatialPartition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "interface/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"

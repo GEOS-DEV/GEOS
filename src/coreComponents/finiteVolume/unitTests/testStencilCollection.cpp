@@ -13,7 +13,7 @@
  */
 
 // Source includes
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "finiteVolume/FluxStencil.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 

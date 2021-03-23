@@ -13,7 +13,7 @@
  */
 
 // Source includes
-#include "managers/initialization.hpp"
+#include "interface/initialization.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 // TPL includes

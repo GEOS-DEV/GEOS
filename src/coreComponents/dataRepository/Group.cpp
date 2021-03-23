@@ -17,7 +17,7 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/GeosxState.hpp"
 
 namespace geosx
 {

@@ -20,7 +20,7 @@
 #define GEOSX_MESH_EDGEMANAGER_HPP_
 
 #include "InterObjectRelation.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 

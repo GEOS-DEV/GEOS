@@ -10,19 +10,20 @@ set(mesh_headers
     ElementSubRegionBase.hpp
     ElementRegionBase.hpp
     ElementRegionManager.hpp
-    SurfaceElementSubRegion.hpp
-    FaceElementSubRegion.hpp
-    SurfaceElementRegion.hpp
     EmbeddedSurfaceSubRegion.hpp
-    WellElementSubRegion.hpp
-    WellElementRegion.hpp
     ExtrinsicMeshData.hpp
+    FaceElementSubRegion.hpp
     FaceManager.hpp
     InterObjectRelation.hpp
     MeshBody.hpp
     MeshLevel.hpp
+    ObjectManagerBase.hpp
     NodeManager.hpp
+    SurfaceElementRegion.hpp
+    SurfaceElementSubRegion.hpp
     ToElementRelation.hpp
+    WellElementSubRegion.hpp
+    WellElementRegion.hpp
   )
 
 # Specify all sources
@@ -37,17 +38,18 @@ set(mesh_sources
     ElementSubRegionBase.cpp
     ElementRegionBase.cpp
     ElementRegionManager.cpp
-    SurfaceElementRegion.cpp
-    SurfaceElementSubRegion.cpp
-    FaceElementSubRegion.cpp
     EmbeddedSurfaceSubRegion.cpp
-    WellElementRegion.cpp
-    WellElementSubRegion.cpp
+    FaceElementSubRegion.cpp
     FaceManager.cpp
     MeshBody.cpp
     MeshLevel.cpp
+    ObjectManagerBase.cpp
     NodeManager.cpp
+    SurfaceElementRegion.cpp
+    SurfaceElementSubRegion.cpp
     ToElementRelation.cpp
+    WellElementRegion.cpp
+    WellElementSubRegion.cpp
    )
 
 if( BUILD_OBJ_LIBS)

@@ -25,7 +25,7 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 
 namespace geosx
 {

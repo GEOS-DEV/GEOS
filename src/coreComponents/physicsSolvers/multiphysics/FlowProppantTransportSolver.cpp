@@ -20,8 +20,8 @@
 
 #include "FlowProppantTransportSolver.hpp"
 
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
+#include "interface/DomainPartition.hpp"
+#include "interface/GeosxState.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/ProppantTransport.hpp"

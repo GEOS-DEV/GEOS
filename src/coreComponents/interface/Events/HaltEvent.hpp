@@ -20,7 +20,7 @@
 #ifndef GEOSX_MANAGERS_EVENTS_HALTEVENT_HPP_
 #define GEOSX_MANAGERS_EVENTS_HALTEVENT_HPP_
 
-#include "managers/Events/EventBase.hpp"
+#include "interface/Events/EventBase.hpp"
 
 namespace geosx
 {

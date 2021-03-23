@@ -10,7 +10,6 @@ set( gtest_geosx_tests
      testPropertyConversions.cpp
      testRelPerm.cpp
      testCapillaryPressure.cpp
-     testCO2BrinePVTModels.cpp     
    )
 
 set( dependencyList gtest )
@@ -26,7 +25,10 @@ if( ENABLE_MPI )
 endif()
 
 if( ENABLE_PVTPackage )
-    set( gtest_geosx_tests ${gtest_geosx_tests} testMultiFluid.cpp )
+    list( APPEND gtest_geosx_tests
+          testMultiFluid.cpp
+          testCO2BrinePVTModels.cpp )
+
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
 
@@ -37,6 +39,7 @@ endif()
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
+
 
 #
 # Add gtest C++ based tests

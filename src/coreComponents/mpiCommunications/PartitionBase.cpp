@@ -18,7 +18,7 @@
 
 #include "mpiCommunications/PartitionBase.hpp"
 
-#include "managers/DomainPartition.hpp"
+#include "interface/DomainPartition.hpp"
 #include "mesh/NodeManager.hpp"
 
 #include <limits.h>

@@ -22,9 +22,9 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/DofManager.hpp"
-#include "managers/initialization.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/DomainPartition.hpp"
+#include "interface/initialization.hpp"
+#include "interface/ProblemManager.hpp"
+#include "interface/DomainPartition.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 

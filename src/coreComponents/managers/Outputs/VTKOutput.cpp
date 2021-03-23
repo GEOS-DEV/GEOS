@@ -17,9 +17,9 @@
  */
 
 #include "VTKOutput.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
+#include "interface/DomainPartition.hpp"
+#include "interface/GeosxState.hpp"
+#include "interface/initialization.hpp"
 
 namespace geosx
 {
