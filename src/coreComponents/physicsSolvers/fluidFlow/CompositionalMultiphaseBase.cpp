@@ -388,15 +388,16 @@ void CompositionalMultiphaseBase::updateFluidModel( Group & dataGroup, localInde
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    using FluidType = TYPEOFREF( castedFluid );
+    using ExecPolicy = typename FluidType::exec_policy;
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    // MultiFluid models are not thread-safe or device-capable yet
-    FluidUpdateKernel::launch< serialPolicy >( dataGroup.size(),
-                                               fluidWrapper,
-                                               pres,
-                                               dPres,
-                                               m_temperature,
-                                               compFrac );
+    FluidUpdateKernel::launch< ExecPolicy >( dataGroup.size(),
+                                             fluidWrapper,
+                                             pres,
+                                             dPres,
+                                             m_temperature,
+                                             compFrac );
   } );
 }
 
@@ -519,7 +520,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::globalCompDensityString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
   // set mass fraction flag on fluid models
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
@@ -973,14 +974,15 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
     constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
     {
-      typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      using FluidType = TYPEOFREF( castedFluid );
+      using ExecPolicy = typename FluidType::exec_policy;
+      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-      // MultiFluid models are not thread-safe or device-capable yet
-      FluidUpdateKernel::launch< serialPolicy >( targetSet,
-                                                 fluidWrapper,
-                                                 bcPres,
-                                                 m_temperature,
-                                                 compFrac );
+      FluidUpdateKernel::launch< ExecPolicy >( targetSet,
+                                               fluidWrapper,
+                                               bcPres,
+                                               m_temperature,
+                                               compFrac );
     } );
 
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )

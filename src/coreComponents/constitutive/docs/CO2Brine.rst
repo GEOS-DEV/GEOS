@@ -189,11 +189,11 @@ where :math:`m` is the user-defined salinity.
 Parameters
 =========================
 
-The model is represented by ``<MultiPhaseMultiComponentFluid>`` node in the input.
+The model is represented by ``<CO2BrineFluid>`` node in the input.
 
 The following attributes are supported:
 
-.. include:: ../../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
+.. include:: ../../../coreComponents/fileIO/schema/docs/CO2BrineFluid.rst
 
 Supported phase names are:
 
@@ -219,7 +219,7 @@ Example
 .. code-block:: xml
 
     <Constitutive>
-        <MultiPhaseMultiComponentFluid
+        <CO2BrineFluid
           name="fluid"
           phaseNames="{ gas, water }"
           componentNames="{ co2, water }"
