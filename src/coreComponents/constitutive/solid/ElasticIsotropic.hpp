@@ -156,7 +156,7 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
                                                    real64 ( & stiffness )[6][6] ) const
 {
   real64 const G = m_shearModulus[k];
-  //real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
+
   real64 const lambda = LameModulus().
                           setBulkModulus( m_bulkModulus[k] ).
                           setShearModulus( G ).
@@ -188,8 +188,6 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
                                                 localIndex const q,
                                                 real64 ( & elasticStrain)[6] ) const
 {
-  //real64 const E = conversions::BulkModAndShearMod::toYoungsMod( m_bulkModulus[k], m_shearModulus[k] );
-  //real64 const nu = conversions::BulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
   real64 const E = YoungModulus().
                       setBulkModulus( m_bulkModulus[k] ).
                       setShearModulus( m_shearModulus[k] ).
@@ -220,7 +218,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex co
   GEOSX_UNUSED_VAR( q );
 
   real64 const twoG   = 2 * m_shearModulus[k];
-  //real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
+
   real64 const lambda = LameModulus().
                           setBulkModulus( m_bulkModulus[k] ).
                           setShearModulus( m_shearModulus[k] ).
