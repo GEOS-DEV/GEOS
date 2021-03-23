@@ -107,14 +107,17 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # IO
     #
-    depends_on('hdf5@1.10.5 +shared +pic +mpi', when='~vtk')
+    depends_on('hdf5@1.10.5 +shared +pic +mpi')
 
     depends_on('conduit@0.5.0 +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
 
-    depends_on('silo@4.10 ~fortran +shared ~silex +pic +mpi ~zlib')
+    depends_on('silo@4.10.2 ~fortran +shared ~silex +pic +mpi ~zlib')
 
     depends_on('adiak@0.2.1 +mpi +shared', when='+caliper')
-    depends_on('caliper@2.4 +shared +adiak +mpi ~libunwind ~libdw ~libpfm ~gotcha ~sampler ~fortran', when='+caliper')
+    # New version
+    depends_on('caliper@2.4.0 +shared +adiak +mpi ~dyninst ~callpath ~libpfm ~gotcha ~sampler ~sosflow', when='+caliper')
+    # Old version
+    # depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~libpfm ~gotcha ~sampler', when='+caliper')
 
     depends_on('pugixml@1.8 +shared')
 
