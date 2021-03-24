@@ -100,7 +100,8 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d<
 bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellIndex,
                                                        localIndex const subRegionIndex,
                                                        localIndex const regionIndex,
-                                                       NodeManager & nodeManager,
+                                                       NodeManager const & nodeManager,
+                                                       EmbeddedSurfaceNodeManager & embSurfNodeManager,
                                                        EdgeManager const & edgeManager,
                                                        FixedOneToManyRelation const & cellToEdges,
                                                        BoundedPlane const * fracture )
@@ -128,12 +129,16 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
   bool addEmbeddedElem = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   arrayView2d< localIndex const > const edgeToNodes = edgeManager.nodeList();
+  arrayView1d< integer const > const edgeGhostRank = edgeManager.ghostRank();
+
   R1Tensor origin        = fracture->getCenter();
   R1Tensor normalVector  = fracture->getNormal();
   localIndex edgeIndex;
   real64 lineDir[3], dist[3], point[3], distance[3], prodScalarProd;
 
   array2d< real64 > intersectionPoints( 0, 3 );
+  array1d< integer > pointGhostRank;
+
   localIndex numPoints = 0;
   for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )
   {
@@ -164,6 +169,8 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
         addEmbeddedElem = false;
       }
       intersectionPoints.resizeDimension< 0 >( numPoints+1 );
+      pointGhostRank.resize( numPoints+1 );
+      pointGhostRank[numPoints] = edgeGhostRank[edgeIndex];
       LvArray::tensorOps::copy< 3 >( intersectionPoints[numPoints], point );
       numPoints++;
     }
@@ -172,14 +179,16 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
 
   if( addEmbeddedElem && intersectionPoints.size( 0 ) > 0 )
   {
-
     // resize
     localIndex surfaceIndex = this->size();
     this->resize( surfaceIndex + 1 );
 
     // Reorder the points CCW and then add the point to the list in the nodeManager if it is a new one.
-    computationalGeometry::orderPointsCCW( intersectionPoints, normalVector );
-    array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos = nodeManager.embSurfNodesPosition();
+    std::vector< int > originalIndices = computationalGeometry::orderPointsCCW( intersectionPoints, normalVector );
+
+    // Get location of embedded surfaces nodes.
+    array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos =
+        embSurfNodeManager.referencePosition();
 
     bool isNew;
     localIndex nodeIndex;
@@ -188,7 +197,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
     for( localIndex j=0; j < intersectionPoints.size( 0 ); j++ )
     {
       isNew = true;
-      for( localIndex h=0; h < embSurfNodesPos.size( 0 ); h++ )
+      for( localIndex h=0; h < embSurfNodeManager.size(); h++ )
       {
         LvArray::tensorOps::copy< 3 >( distance, intersectionPoints[ j ] );
         LvArray::tensorOps::subtract< 3 >( distance, embSurfNodesPos[ h ] );
@@ -201,10 +210,10 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
       }
       if( isNew )
       {
-        // Add the point to the
-        nodeIndex = embSurfNodesPos.size( 0 );
-        embSurfNodesPos.resize( nodeIndex + 1 );
-        LvArray::tensorOps::copy< 3 >( embSurfNodesPos[nodeIndex], intersectionPoints[j] );
+        // Add the point to the node Manager
+        nodeIndex = embSurfNodeManager.size();
+        embSurfNodeManager.appendNode( intersectionPoints[ j ],
+                                       pointGhostRank[ originalIndices[ j ] ] );
       }
       elemNodes[j] =  nodeIndex;
     }
@@ -212,7 +221,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
     m_toNodesRelation.resizeArray( surfaceIndex, intersectionPoints.size( 0 ));
     for( localIndex inode = 0; inode <  intersectionPoints.size( 0 ); inode++ )
     {
-      m_toNodesRelation( surfaceIndex, inode ) = elemNodes[inode];
+      m_toNodesRelation( surfaceIndex, inode ) = elemNodes[ inode ];
     }
 
     m_surfaceElementsToCells.m_toElementIndex[ surfaceIndex ][0]        = cellIndex;

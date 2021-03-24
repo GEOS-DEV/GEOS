@@ -408,7 +408,6 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
       stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( numDispDof );
       stackArray1d< globalIndex, 3 > dofColIndicesJump( 3 );
 
-      std::cout << "jumpDofNumber: " << jumpDofNumber << std::endl;
       for( localIndex idof = 0; idof < 3; ++idof )
       {
         eqnRowIndicesJump[idof] = jumpDofNumber[k] + idof - rankOffset;

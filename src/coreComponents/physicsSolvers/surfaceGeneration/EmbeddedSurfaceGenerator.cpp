@@ -98,6 +98,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   // Get managers
   ElementRegionManager & elemManager = meshLevel.getElemManager();
   NodeManager & nodeManager = meshLevel.getNodeManager();
+  EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
 
@@ -160,9 +161,11 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
                                                                          esr,
                                                                          er,
                                                                          nodeManager,
+                                                                         embSurfNodeManager,
                                                                          edgeManager,
                                                                          cellToEdges,
-                                                                         &fracture );
+                                                                         &fracture,
+                                                                         newObjects );
 
             if( added )
             {
@@ -181,28 +184,40 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
     } );// end loop over subregions
   } );// end loop over thick planes
 
+  // add all new nodes to newObject list
+  for (localIndex ni = 0; ni < embSurfNodeManager.size(); ni++)
+  {
+    newObjects.newNodes.insert(ni);
+  }
+
   // Set the ghostRank form the parent cell
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
 
-  setGlobalIndices( elemManager, embeddedSurfaceSubRegion );
+  setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
+
+  // Synchronize embedded Surfaces
+  EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel, domain.getNeighbors(), newObjects );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
   // Populate EdgeManager for embedded surfaces.
-  EdgeManager & embSurfEdgeManager = meshLevel.getEmbdSurfEdgeManager();
+  EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
 
   EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
-  localIndex numOfPoints = nodeManager.embSurfNodesPosition().size( 0 );
+  localIndex numOfPoints = embSurfNodeManager.size();
 
+  // Create the edges
   embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
-
-  // Synchronize embedded Surfaces
-  EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel, domain.getNeighbors(), newObjects );
+  // Node to cell map
+  embSurfNodeManager.setElementMaps( elemManager );
+  // Node to edge map
+  embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
+  embSurfNodeManager.compressRelationMaps();
 
   int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
@@ -214,6 +229,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   std::cout << "rank: " << thisRank << " toElements: " << embeddedSurfaceSubRegion.getToCellRelation().m_toElementIndex << std::endl;
 
+  std::cout << "rank: " << thisRank << " nodeGhostRank: " << embSurfNodeManager.ghostRank() << std::endl;
+  std::cout << "rank: " << thisRank << " position: " << embSurfNodeManager.referencePosition() << std::endl;
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
@@ -261,6 +278,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 }
 
 void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemManager,
+                                                 EmbeddedSurfaceNodeManager & embSurfNodeManager,
                                                  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
 {
   // Add new globalIndices
@@ -292,6 +310,27 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   embeddedSurfaceSubRegion.setMaxGlobalIndex();
 
   elemManager.setMaxGlobalIndex();
+
+  // Nodes global indices
+  localIndex_array numberOfNodesPerRank( commSize );
+  MpiWrapper::allGather( embSurfNodeManager.size(), numberOfNodesPerRank );
+
+  globalIndexOffset[0] = 0; // offSet for the globalIndex
+  localIndex totalNumberOfNodes = numberOfNodesPerRank[ 0 ];  // Sum across all ranks
+  for( int rank = 1; rank < commSize; ++rank )
+  {
+    globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNodesPerRank[rank - 1];
+    totalNumberOfNodes += numberOfNodesPerRank[rank];
+  }
+
+  arrayView1d< globalIndex > const & localToGlobal = embSurfNodeManager.localToGlobalMap();
+
+  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+  {
+    localToGlobal( ni ) = ni + globalIndexOffset[ thisRank ] + 1;
+    embSurfNodeManager.updateGlobalToLocalMap( ni );
+  }
+
 }
 
 void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager const & elemManager,

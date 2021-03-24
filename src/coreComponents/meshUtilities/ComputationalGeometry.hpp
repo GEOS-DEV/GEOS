@@ -79,8 +79,8 @@ void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
  * @param[in] normal vector normal to the plane
  */
 template< typename NORMAL_TYPE >
-void orderPointsCCW( arrayView2d< real64 > const & points,
-                     NORMAL_TYPE const & normal )
+std::vector< int >  orderPointsCCW( arrayView2d< real64 > const & points,
+                                    NORMAL_TYPE const & normal )
 {
   localIndex const numPoints = points.size( 0 );
 
@@ -133,6 +133,8 @@ void orderPointsCCW( arrayView2d< real64 > const & points,
   {
     LvArray::tensorOps::copy< 3 >( points[a], orderedPoints[a] );
   }
+
+  return indices;
 }
 
 /**

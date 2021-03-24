@@ -23,6 +23,7 @@
 #include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
+#include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
 #include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
 
@@ -113,7 +114,8 @@ public:
   bool addNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
-                              NodeManager & nodeManager,
+                              NodeManager const & nodeManager,
+                              EmbeddedSurfaceNodeManager & embSurfNodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
                               BoundedPlane const * fracture );

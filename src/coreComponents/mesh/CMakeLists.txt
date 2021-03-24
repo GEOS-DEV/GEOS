@@ -22,6 +22,7 @@ set(mesh_headers
     MeshBody.hpp
     MeshLevel.hpp
     NodeManager.hpp
+    EmbeddedSurfaceNodeManager.hpp
     ToElementRelation.hpp
   )
 
@@ -47,6 +48,7 @@ set(mesh_sources
     MeshBody.cpp
     MeshLevel.cpp
     NodeManager.cpp
+    EmbeddedSurfaceNodeManager.cpp
     ToElementRelation.cpp
    )
 

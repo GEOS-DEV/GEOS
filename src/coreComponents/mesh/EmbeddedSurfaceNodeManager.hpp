@@ -52,6 +52,21 @@ public:
   /// nodeToElement map type
   using ElemMapType = OrderedVariableToManyElementRelation;
 
+  /**
+   * @brief return default size of the value array in the node-to-edge mapping
+   * @return default size of value array in the node-to-edge mapping
+   */
+  inline localIndex getEdgeMapOverallocation()
+  { return 8; }
+
+  /**
+   * @brief return default size of the value array in the node-to-element mapping
+   * @return default size of value array in the node-to-element mapping
+   */
+  inline localIndex getElemMapOverAllocation()
+  { return 8; }
+
+
 /**
  * @name Constructors/destructor
  */
@@ -136,6 +151,9 @@ public:
    */
   void compressRelationMaps();
 
+  void appendNode( arraySlice1d< real64 const > const & pointCoord,
+                   integer const & pointGhostRank);
+
   /**
    * @name Packing methods
    */
@@ -147,60 +165,7 @@ public:
    */
   virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
-  /**
-   * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] packList the list of node indices that we wish to get the size of after packing
-   * @return a localIndex value representing the size of packList if it were packed
-   * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
-   */
-  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
-
-  /**
-   * @brief Packs an array of node indices into a buffer.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in,out] buffer buffer to pack the node index data into
-   * @param [in] packList the indices of nodes that should be packed
-   * @return a localIndex value representing the size of the packed data
-   */
-  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d< localIndex const > const & packList ) const override;
-
-  /**
-   * @brief Unpack a buffer to an array of node indices.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] buffer buffer with the packed data
-   * @param [inout] packList an array of localIndex values that we wish to unpack to
-   * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
-   * @param [in] overwriteDownMaps boolean: true to overwrite the previous Down maps
-   * @return a localIndex value representing the size of the unpacked list
-   */
-  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
-                                       bool const overwriteUpMaps,
-                                       bool const overwriteDownMaps ) override;
-
-  /**
-   * @brief Call fixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
-   */
-  void fixUpDownMaps( bool const clearIfUnmapped );
-
   ///@}
-
-  /**
-   * @brief Clean up the mappings between nodes and edges, faces, elements based on a new (updated) list of nodes, in order to keep only
-   * relevant mappings.
-   * @param [in] receivedNodes the new list of target node indices
-   * @param [in] edgesToNodes map to go from edges to nodes
-   * @param [in] facesToNodes map to go from faces to nodes
-   * @param [in] elemRegionManager Element Region Manager
-   */
-  void depopulateUpMaps( std::set< localIndex > const & receivedNodes,
-                         array2d< localIndex > const & edgesToNodes,
-                         ArrayOfArraysView< localIndex const > const & facesToNodes,
-                         ElementRegionManager const & elemRegionManager );
 
   /**
    * @name viewKeyStruct/groupKeyStruct
@@ -335,19 +300,6 @@ public:
   ///@}
 
 private:
-
-  /**
-   * @brief Pack the upward and downward pointing maps into a buffer.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
-   * @param buffer the buffer to pack data into
-   * @param packList the indices of nodes that should be packed.
-   * @return size of data packed in terms of number of chars
-   */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
-
 
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;

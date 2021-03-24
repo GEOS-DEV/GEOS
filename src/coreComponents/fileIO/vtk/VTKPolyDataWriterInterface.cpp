@@ -201,12 +201,13 @@ VTKPolyDataWriterInterface::getSurface( FaceElementSubRegion const & esr,
 }
 std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
 VTKPolyDataWriterInterface::getEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
-                                                NodeManager const & nodeManager ) const
+                                                EmbeddedSurfaceNodeManager const & nodeManager ) const
 {
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & intersectionPoints = nodeManager.embSurfNodesPosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & intersectionPoints
+  = nodeManager.referencePosition();
 
   points->SetNumberOfPoints( intersectionPoints.size( 0 ) );
   for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size( 0 ); pointIndex++ )
@@ -380,7 +381,8 @@ void VTKPolyDataWriterInterface::writeWellElementRegions( real64 time, ElementRe
 
 void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 time,
                                                              ElementRegionManager const & elemManager,
-                                                             NodeManager const & nodeManager ) const
+                                                             NodeManager const & nodeManager,
+                                                             EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )
   {
@@ -389,7 +391,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 time,
     {
       EmbeddedSurfaceSubRegion const & esr = dynamicCast< EmbeddedSurfaceSubRegion const & >( er.getSubRegion( 0 ) );
 
-      auto VTKSurface = getEmbeddedSurface( esr, nodeManager );
+      auto VTKSurface = getEmbeddedSurface( esr, embSurfNodeManager );
       ug->SetPoints( VTKSurface.first );
       ug->SetCells( VTK_POLYGON, VTKSurface.second );
 
@@ -500,9 +502,10 @@ void VTKPolyDataWriterInterface::write( real64 const time,
 
   ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
   NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+  EmbeddedSurfaceNodeManager const & embSurfNodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getEmbSurfNodeManager();
   writeCellElementRegions( time, elemManager, nodeManager );
   writeWellElementRegions( time, elemManager, nodeManager );
-  writeSurfaceElementRegions( time, elemManager, nodeManager );
+  writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager );
 
   string const vtmName = stepSubFolder + ".vtm";
   VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
