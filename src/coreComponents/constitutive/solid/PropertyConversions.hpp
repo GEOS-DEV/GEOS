@@ -36,6 +36,8 @@ public:
    * @brief Compute Poisson's ratio from other elastic parameters
    * @return Poisson's ratio
    */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_K > 0 && m_G > 0 )
@@ -57,18 +59,24 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   PoissonRatio setBulkModulus( real64 const K )
   {
     m_K = K;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   PoissonRatio setShearModulus( real64 const G )
   {
     m_G = G;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   PoissonRatio setYoungModulus( real64 const E )
   {
     m_E = E;
@@ -98,6 +106,9 @@ public:
    * @brief Compute Young's modulus from other elastic parameters
    * @return Young's modulus
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_K > 0 && m_G > 0 )
@@ -119,18 +130,24 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   YoungModulus setBulkModulus( real64 const K )
   {
     m_K = K;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   YoungModulus setShearModulus( real64 const G )
   {
     m_G = G;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   YoungModulus setPoissonRatio( real64 const nu )
   {
     m_nu = nu;
@@ -160,6 +177,9 @@ public:
    * @brief Compute Bulk modulus from other elastic parameters
    * @return Bulk modulus
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_E > 0 && m_G > 0 )
@@ -181,18 +201,24 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BulkModulus setYoungModulus( real64 const E )
   {
     m_E = E;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BulkModulus setShearModulus( real64 const G )
   {
     m_G = G;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BulkModulus setPoissonRatio( real64 const nu )
   {
     m_nu = nu;
@@ -222,6 +248,9 @@ public:
    * @brief Compute Shear modulus from other elastic parameters
    * @return Shear modulus
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_E > 0 && m_K > 0 )
@@ -243,18 +272,24 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   ShearModulus setYoungModulus( real64 const E )
   {
     m_E = E;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   ShearModulus setBulkModulus( real64 const K )
   {
     m_K = K;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   ShearModulus setPoissonRatio( real64 const nu )
   {
     m_nu = nu;
@@ -284,6 +319,9 @@ public:
    * @brief Compute Lame modulus from other elastic parameters
    * @return Lame modulus
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_K > 0 && m_G > 0 )
@@ -317,24 +355,32 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   LameModulus setBulkModulus( real64 const K )
   {
     m_K = K;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   LameModulus setShearModulus( real64 const G )
   {
     m_G = G;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   LameModulus setYoungModulus( real64 const E )
   {
     m_E = E;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   LameModulus setPoissonRatio( real64 const nu )
   {
     m_nu = nu;
@@ -367,6 +413,9 @@ public:
    * @brief Compute Biot's coefficient from other poroelastic parameters
    * @return Biot's coefficient
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_Kd > 0 && m_Ks > 0 )
@@ -396,42 +445,56 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotCoefficient setDrainedBulkModulus( real64 const Kd )
   {
     m_Kd = Kd;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotCoefficient setUndrainedBulkModulus( real64 const Ku )
   {
     m_Ku = Ku;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotCoefficient setDrainedPoissonRatio( real64 const nud )
   {
     m_nud = nud;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotCoefficient setUndrainedPoissonRatio( real64 const nuu )
   {
     m_nuu = nuu;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotCoefficient setSolidBulkModulus( real64 const Ks )
   {
     m_Ks = Ks;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotCoefficient setBiotModulus( real64 const M )
   {
     m_M = M;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotCoefficient setSkemptonCoefficient( real64 const B )
   {
     m_B = B;
@@ -475,6 +538,9 @@ public:
    * @brief Compute Biot's modulus from other poroelastic parameters
    * @return Biot's modulus
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_phi > 0 && m_Kf > 0  && m_Ks > 0 && m_alpha > 0 )
@@ -504,61 +570,80 @@ public:
     }
   }
 
-
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setSolidBulkModulus( real64 const Ks )
   {
     m_Ks = Ks;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setFluidBulkModulus( real64 const Kf )
   {
     m_Kf = Kf;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setPorosity( real64 const phi )
   {
     m_phi = phi;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setBiotCoefficient( real64 const alpha )
   {
     m_alpha = alpha;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setDrainedBulkModulus( real64 const Kd )
   {
     m_Kd = Kd;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setUndrainedBulkModulus( real64 const Ku )
   {
     m_Ku = Ku;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setShearModulus( real64 const G )
   {
     m_G = G;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setDrainedPoissonRatio( real64 const nud )
   {
     m_nud = nud;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setUndrainedPoissonRatio( real64 const nuu )
   {
     m_nuu = nuu;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   BiotModulus setSkemptonCoefficient( real64 const B )
   {
     m_B = B;
@@ -610,6 +695,9 @@ public:
    * @brief Compute Skempton's coefficient from other poroelastic parameters
    * @return Skempton's coefficient
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_M > 0 && m_alpha > 0 && m_Ku > 0 )
@@ -631,36 +719,48 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   SkemptonCoefficient setDrainedBulkModulus( real64 const Kd )
   {
     m_Kd = Kd;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   SkemptonCoefficient setUndrainedBulkModulus( real64 const Ku )
   {
     m_Ku = Ku;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   SkemptonCoefficient setDrainedPoissonRatio( real64 const nud )
   {
     m_nud = nud;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   SkemptonCoefficient setUndrainedPoissonRatio( real64 const nuu )
   {
     m_nuu = nuu;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   SkemptonCoefficient setBiotCoefficient( real64 const alpha )
   {
     m_alpha = alpha;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   SkemptonCoefficient setBiotModulus( real64 const M )
   {
     m_M = M;
@@ -701,6 +801,9 @@ public:
    * @brief Compute undrained Bulk modulus from other poroelastic parameters
    * @return undrained Bulk modulus
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_Kd > 0 && m_M > 0 && m_alpha > 0 )
@@ -722,24 +825,32 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedBulkModulus setBiotCoefficient( real64 const alpha )
   {
     m_alpha = alpha;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedBulkModulus setBiotModulus( real64 const M )
   {
     m_M = M;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedBulkModulus setDrainedBulkModulus( real64 const Kd )
   {
     m_Kd = Kd;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedBulkModulus setSkemptonCoefficient( real64 const B )
   {
     m_B = B;
@@ -773,6 +884,9 @@ public:
    * @brief Compute drained Bulk modulus from other poroelastic parameters
    * @return drained Bulk modulus
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_Ku > 0 && m_M > 0 && m_alpha > 0 )
@@ -790,24 +904,32 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   DrainedBulkModulus setBiotCoefficient( real64 const alpha )
   {
     m_alpha = alpha;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   DrainedBulkModulus setBiotModulus( real64 const M )
   {
     m_M = M;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   DrainedBulkModulus setUndrainedBulkModulus( real64 const Ku )
   {
     m_Ku = Ku;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   DrainedBulkModulus setSkemptonCoefficient( real64 const B )
   {
     m_B = B;
@@ -842,6 +964,9 @@ public:
    * from other thermoporoelastic parameters
    * @return drained volumetric TEC
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_TECs > 0 && m_TECp > 0 && m_phi > 0 )
@@ -859,18 +984,24 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   DrainedVolumetricTEC setPorosity( real64 const phi )
   {
     m_phi = phi;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   DrainedVolumetricTEC setSolidVolumetricTEC( real64 const TECs )
   {
     m_TECs = TECs;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   DrainedVolumetricTEC setPorosityTEC( real64 const TECp )
   {
     m_TECp = TECp;
@@ -904,6 +1035,9 @@ public:
    * in drained free stress
    * @return fluid exchange TEC
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_TECs > 0 && m_TECf > 0 && m_TECp > 0 && m_phi > 0 )
@@ -921,24 +1055,32 @@ public:
     }
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   FreeStressFluidExchangeTEC setPorosity( real64 const phi )
   {
     m_phi = phi;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   FreeStressFluidExchangeTEC setSolidVolumetricTEC( real64 const TECs )
   {
     m_TECs = TECs;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   FreeStressFluidExchangeTEC setFluidVolumetricTEC( real64 const TECf )
   {
     m_TECf = TECf;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   FreeStressFluidExchangeTEC setPorosityTEC( real64 const TECp )
   {
     m_TECp = TECp;
@@ -975,6 +1117,9 @@ public:
    * in drained isochore condition
    * @return fluid exchange TEC
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_TECd > 0 && m_TECv > 0 && m_alpha > 0 )
@@ -995,42 +1140,57 @@ public:
       GEOSX_ERROR( "A specific combination of thermoporoelastic constants is required" );
     }
   }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   IsochoreFluidExchangeTEC setDrainedVolumetricTEC( real64 const TECd )
   {
     m_TECd = TECd;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   IsochoreFluidExchangeTEC setFluidExchangeTEC( real64 const TECv )
   {
     m_TECv = TECv;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   IsochoreFluidExchangeTEC setBiotCoefficient( real64 const alpha )
   {
     m_alpha = alpha;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   IsochoreFluidExchangeTEC setPorosity( real64 const phi )
   {
     m_phi = phi;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   IsochoreFluidExchangeTEC setSolidVolumetricTEC( real64 const TECs )
   {
     m_TECs = TECs;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   IsochoreFluidExchangeTEC setFluidVolumetricTEC( real64 const TECf )
   {
     m_TECf = TECf;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   IsochoreFluidExchangeTEC setPorosityTEC( real64 const TECp )
   {
     m_TECp = TECp;
@@ -1073,6 +1233,9 @@ public:
    * from other thermoporoelastic parameters
    * @return undrained volumetric TEC
    */
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   real64 getValue() const
   {
     if( m_TECd > 0 && m_B > 0 && m_TECv > 0 )
@@ -1098,43 +1261,56 @@ public:
     }
   }
 
-
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedVolumetricTEC setDrainedVolumetricTEC( real64 const TECd )
   {
     m_TECd = TECd;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedVolumetricTEC setFluidExchangeTEC( real64 const TECv )
   {
     m_TECv = TECv;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedVolumetricTEC setSkemptonCoefficient( real64 const B )
   {
     m_B = B;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedVolumetricTEC setPorosity( real64 const phi )
   {
     m_phi = phi;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedVolumetricTEC setSolidVolumetricTEC( real64 const TECs )
   {
     m_TECs = TECs;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedVolumetricTEC setFluidVolumetricTEC( real64 const TECf )
   {
     m_TECf = TECf;
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   UndrainedVolumetricTEC setPorosityTEC( real64 const TECp )
   {
     m_TECp = TECp;
