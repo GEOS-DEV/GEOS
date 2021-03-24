@@ -84,7 +84,6 @@ public:
   void CalculatePartiallyOpenElmtQuantities( DomainPartition & domain,
                                              FaceElementSubRegion & subRegion,
                                              std::unordered_set<localIndex> const & partiallyOpenFaceElmts,
-                                             real64 const Eprime,
                                              real64 const Kprime,
                                              real64 const mup,
                                              real64 const dt);

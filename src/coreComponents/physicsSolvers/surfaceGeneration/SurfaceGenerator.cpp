@@ -610,7 +610,8 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
                                    modifiedObjects,
                                    prefrac,
                                    time_n,
-                                   dt);
+                                   dt,
+                                   domain);
           if( didSplit > 0 )
           {
             rval += didSplit;
@@ -891,7 +892,8 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                     ModifiedObjectLists & modifiedObjects,
                                     const bool GEOSX_UNUSED_PARAM( prefrac ),
                                     real64 const time_n,
-                                    real64 const dt)
+                                    real64 const dt,
+                                    DomainPartition & domain)
 {
   bool didSplit = false;
   bool fracturePlaneFlag = true;
@@ -937,8 +939,71 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
 
       // we should initialize the displacement and its increment at the newly split node @nodeID
       // according to the its signed distance for signed distance based propagation condition
+      // the current node is not a ghost node (the condition of isNodeGhost[nodeID] < 0 was checked
+      // in the calling function)
       if (m_nodeBasedSIF >= 1)
       {
+        ConstitutiveManager const * const cm = domain.getConstitutiveManager();
+        ConstitutiveBase const * const solidMat  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
+        GEOSX_ERROR_IF( solidMat == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
+        m_solidMaterialFullIndex = solidMat->getIndexInParent();
+
+        ConstitutiveManager * const constitutiveManager =
+            domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+
+        ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulusAccessor =
+            elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >
+            ( LinearElasticIsotropic::viewKeyStruct::shearModulusString, constitutiveManager );
+
+        ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulusAccessor =
+            elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >
+            ( LinearElasticIsotropic::viewKeyStruct::bulkModulusString, constitutiveManager );
+
+        ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
+        ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
+        ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList().toViewConst();
+/*
+        arrayView2d< localIndex const > const & faceToRegionMap = faceManager.elementRegionList();
+        arrayView2d< localIndex const > const & faceToSubRegionMap = faceManager.elementSubRegionList();
+        arrayView2d< localIndex const > const & faceToElementMap = faceManager.elementList();
+        std::cout << faceToRegionMap.size() << faceToSubRegionMap.size() << faceToElementMap.size() << std::endl;
+*/
+/*
+        for (localIndex nodeIndex = 0; nodeIndex < nodeManager.size(); nodeIndex++ )
+        {
+          std::cout << "Node " << nodeIndex << " nodeToRegionMap.sizeOfArray( node ) "
+                               << nodeToRegionMap.sizeOfArray( nodeIndex ) << ", "
+                               << nodeToSubRegionMap.sizeOfArray( nodeIndex ) << ", "
+                               << nodeToElementMap.sizeOfArray( nodeIndex ) << std::endl;
+          for (int i = 0; i< nodeToRegionMap.sizeOfArray( nodeIndex ); i++)
+          {
+            std::cout << nodeToRegionMap[nodeIndex][i] << ", "
+                      << nodeToSubRegionMap[nodeIndex][i] << ", "
+                      << nodeToElementMap[nodeIndex][i] << std::endl;
+          }
+        }
+
+        for (localIndex nodeIndex = 0; nodeIndex < nodeManager.size(); nodeIndex++)
+        {
+
+            real64 val = std::numeric_limits< real64 >::max();
+
+            for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeIndex ); ++k )
+            {
+              localIndex const er  = nodeToRegionMap[nodeIndex][k];
+              localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
+              localIndex const ei  = nodeToElementMap[nodeIndex][k];
+
+              real64 K = bulkModulusAccessor[er][esr][m_solidMaterialFullIndex][ei];
+              real64 G = shearModulusAccessor[er][esr][m_solidMaterialFullIndex][ei];
+              real64 const youngsModulus = 9 * K * G / ( 3 * K + G );
+              real64 const poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+              val = std::min( val, youngsModulus/(1.0 - poissonRatio*poissonRatio) );
+            }
+            std::cout << "node " << nodeIndex << " E = " << val << std::endl;
+        }
+*/
+
         localIndex hydroSolverIndex;
         this->getParent()->forSubGroups<HydrofractureSolver>( [&hydroSolverIndex] (SolverBase const & solver)
         {
@@ -946,8 +1011,8 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
         });
         HydrofractureSolver const * hydroSolver = this->getParent()->GetGroup<HydrofractureSolver>(hydroSolverIndex);
 
-        real64 shearModulus;
-        real64 bulkModulus;
+        //real64 shearModulus;
+        //real64 bulkModulus;
         real64 viscosity;
         elementManager.forElementSubRegions<FaceElementSubRegion>( [&]
                                                                    (FaceElementSubRegion & subRegion)
@@ -956,10 +1021,10 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
           ConstitutiveBase const * const solid  = constitutiveModels->GetGroup<SolidBase>(m_solidMaterialNames[0]);
           if (solid != nullptr)
           {
-            shearModulus = solid->getReference<real64>
-                                      (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
-            bulkModulus = solid->getReference<real64>
-                                      (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
+            //shearModulus = solid->getReference<real64>
+            //                          (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
+            //bulkModulus = solid->getReference<real64>
+            //                          (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
           }
           constitutiveModels->forSubGroups<SingleFluidBase>( [&viscosity]
                                                              (SingleFluidBase const & fluidModel)
@@ -970,9 +1035,9 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
 
         real64 const toughness = m_rockToughness;
 
-        real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
-        real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
-        real64 const Eprime = E/(1.0-nu*nu);
+        //real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+        //real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+        //real64 Eprime = E/(1.0-nu*nu);
         real64 const PI = 2 * acos(0.0);
         real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
         real64 const mup = 12.0 * viscosity;
@@ -1032,6 +1097,43 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
         // is split due to fracture propagation
         else
         {
+          // loop over all the cell elements attached to the current node to get the
+          // proper material parameters
+          // we need to find the smallest Eprime or average Eprime
+          real64 val = 0.0;
+          for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
+          {
+            localIndex const er  = nodeToRegionMap[nodeID][k];
+            localIndex const esr = nodeToSubRegionMap[nodeID][k];
+            localIndex const ei  = nodeToElementMap[nodeID][k];
+
+            real64 const K = bulkModulusAccessor[er][esr][m_solidMaterialFullIndex][ei];
+            real64 const G = shearModulusAccessor[er][esr][m_solidMaterialFullIndex][ei];
+            real64 const youngsModulus = 9 * K * G / ( 3 * K + G );
+            real64 const poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+            val += youngsModulus/(1.0 - poissonRatio*poissonRatio);
+          }
+          real64 const Eprime = val/nodeToRegionMap.sizeOfArray( nodeID );
+          //std::cout << "node " << nodeID << ": val = " << Eprime << std::endl;
+/*
+          for (localIndex iFace : nodesToRupturedFaces[nodeID])
+          {
+            std::cout << "Node " << nodeID << " to ruptured face " << iFace << std::endl;
+            if (m_trailingFaces.contains(iFace))
+            {
+              localIndex const er  = faceToRegionMap[iFace][0];
+              localIndex const esr = faceToSubRegionMap[iFace][0];
+              localIndex const ei  = faceToElementMap[iFace][0];
+              std::cout << "Elmt of iFace" << iFace << " is " << "Elmt " << ei << std::endl;
+              real64 const K = bulkModulusAccessor[er][esr][m_solidMaterialFullIndex][ei];
+              real64 const G = shearModulusAccessor[er][esr][m_solidMaterialFullIndex][ei];
+              real64 const youngsModulus = 9 * K * G / ( 3 * K + G );
+              real64 const poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+              std::cout << "bulkModulus = " << K << std::endl;
+            }
+          }
+*/
+
           real64 fullOpening;
           real64 halfOpening;
           std::cout << "Provide an initial guess for node " << nodeID << " after split." << std::endl;
@@ -1073,6 +1175,11 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
           else
           {
             GEOSX_ERROR("Unknown propagation regime.");
+          }
+
+          if (halfOpening < 1.0e-4)
+          {
+            halfOpening = 1.0e-4;
           }
 
           for (localIndex iFace : nodesToRupturedFaces[nodeID])

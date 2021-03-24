@@ -361,21 +361,40 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
   //array2d<real64, nodes::INCR_DISPLACEMENT_PERM>  const & incrementalDisplacement = nodeManager->incrementalDisplacement();
   array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
 
+  ConstitutiveManager * const constitutiveManager =
+      domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+
+  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulusAccessor =
+      elementRegionManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >
+      ( LinearElasticIsotropic::viewKeyStruct::shearModulusString, constitutiveManager );
+
+  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulusAccessor =
+      elementRegionManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >
+      ( LinearElasticIsotropic::viewKeyStruct::bulkModulusString, constitutiveManager );
+
+  ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager->elementRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager->elementSubRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager->elementList().toViewConst();
+
   elementRegionManager->forElementSubRegions<FaceElementSubRegion>( [&] (FaceElementSubRegion & subRegion)
   {
     // Get the shear modulus and bulk modulus from the constitutive model of
     // the solid material. These two material properties are needed for the
     // tip asymptotic relation
     Group const * const constitutiveModels = subRegion.GetConstitutiveModels();
-    real64 shearModulus;
-    real64 bulkModulus;
-    constitutiveModels->forSubGroups<LinearElasticIsotropic>( [&shearModulus, &bulkModulus]
+    //real64 shearModulus;
+    //real64 bulkModulus;
+    int matID;
+    constitutiveModels->forSubGroups<LinearElasticIsotropic>( //[&shearModulus, &bulkModulus, &matID]
+                                                              [&matID]
                                                               (LinearElasticIsotropic const & solidModel)
     {
-      shearModulus = solidModel.getReference<real64>
-                                (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
-      bulkModulus = solidModel.getReference<real64>
-                                (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
+      matID = solidModel.getIndexInParent();
+
+      //shearModulus = solidModel.getReference<real64>
+      //                         (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
+      //bulkModulus = solidModel.getReference<real64>
+      //                          (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
     } );
 
     real64 viscosity;
@@ -386,9 +405,9 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
     } );
 
     real64 const toughness = m_surfaceGeneratorSolver->getReference<real64>("rockToughness");
-    real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
-    real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
-    real64 const Eprime = E/(1.0-nu*nu);
+    //real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+    //real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+    //real64 Eprime = E/(1.0-nu*nu);
     real64 const PI = 2 * acos(0.0);
     real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
     real64 const mup = 12.0 * viscosity;
@@ -483,6 +502,22 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
             localIndex const childNode = childNodeIndices[parentNode];
             if (childNode >= 0)
             {
+              real64 val = 0.0;
+              for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( parentNode ); ++k )
+              {
+                localIndex const er  = nodeToRegionMap[parentNode][k];
+                localIndex const esr = nodeToSubRegionMap[parentNode][k];
+                localIndex const ei  = nodeToElementMap[parentNode][k];
+
+                real64 const K = bulkModulusAccessor[er][esr][matID][ei];
+                real64 const G = shearModulusAccessor[er][esr][matID][ei];
+                real64 const youngsModulus = 9 * K * G / ( 3 * K + G );
+                real64 const poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+                val += youngsModulus/(1.0 - poissonRatio*poissonRatio);
+              }
+              real64 const Eprime = val/nodeToRegionMap.sizeOfArray( parentNode );
+              //std::cout << "node " << parentNode << ": val = " << Eprime << std::endl;
+
               real64 opening[3] = {0.0, 0.0, 0.0};
               LvArray::tensorOps::add< 3 >( opening, totalDisplacement[parentNode] );
               LvArray::tensorOps::subtract< 3 >( opening, totalDisplacement[childNode] );
@@ -555,6 +590,12 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
 
                 GEOSX_ERROR_IF_GE(nodeF, 0.0);
                 GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-4);
+                if (std::abs(nodeF) < 1.0e-3)
+                {
+                  std::cout << "Warning: node " << parentNode << "signed distance is tiny: " << nodeF << std::endl;
+                  nodeF = -1.0e-3;
+                }
+
                 signedNodeDistance[parentNode] = nodeF;
               }
               else
@@ -697,7 +738,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
     // include fluid volume, partially opened area and its center
     if (isCalculateGeometry)
     {
-      CalculatePartiallyOpenElmtQuantities(domain, subRegion, partiallyOpenFaceElmts, Eprime, Kprime, mup, dt);
+      CalculatePartiallyOpenElmtQuantities(domain, subRegion, partiallyOpenFaceElmts, Kprime, mup, dt);
     }
 
   } );
@@ -726,21 +767,40 @@ void HydrofractureSolver::FinalizedSignedDistance( DomainPartition & domain)
 
   SortedArray<localIndex> const & tipNodes = m_surfaceGeneratorSolver->getTipNodes();
 
+  ConstitutiveManager * const constitutiveManager =
+        domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+
+  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulusAccessor =
+      elementRegionManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >
+      ( LinearElasticIsotropic::viewKeyStruct::shearModulusString, constitutiveManager );
+
+  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulusAccessor =
+      elementRegionManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >
+      ( LinearElasticIsotropic::viewKeyStruct::bulkModulusString, constitutiveManager );
+
+  ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager->elementRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager->elementSubRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager->elementList().toViewConst();
+
   elementRegionManager->forElementSubRegions<FaceElementSubRegion>( [&] (FaceElementSubRegion & subRegion)
   {
     // Get the shear modulus and bulk modulus from the constitutive model of
     // the solid material. These two material properties are needed for the
     // tip asymptotic relation
     Group const * const constitutiveModels = subRegion.GetConstitutiveModels();
-    real64 shearModulus;
-    real64 bulkModulus;
-    constitutiveModels->forSubGroups<LinearElasticIsotropic>( [&shearModulus, &bulkModulus]
+    //real64 shearModulus;
+    //real64 bulkModulus;
+    int matID;
+    constitutiveModels->forSubGroups<LinearElasticIsotropic>( //[&shearModulus, &bulkModulus, &matID]
+                                                              [&matID]
                                                               (LinearElasticIsotropic const & solidModel)
     {
-      shearModulus = solidModel.getReference<real64>
-                                (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
-      bulkModulus = solidModel.getReference<real64>
-                                (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
+      matID = solidModel.getIndexInParent();
+
+      //shearModulus = solidModel.getReference<real64>
+      //                         (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
+      //bulkModulus = solidModel.getReference<real64>
+      //                          (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
     } );
 
     real64 viscosity;
@@ -751,9 +811,9 @@ void HydrofractureSolver::FinalizedSignedDistance( DomainPartition & domain)
     } );
 
     real64 const toughness = m_surfaceGeneratorSolver->getReference<real64>("rockToughness");
-    real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
-    real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
-    real64 const Eprime = E/(1.0-nu*nu);
+    //real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+    //real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+    //real64 const Eprime = E/(1.0-nu*nu);
     real64 const PI = 2 * acos(0.0);
     real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
     real64 const mup = 12.0 * viscosity;
@@ -808,6 +868,22 @@ void HydrofractureSolver::FinalizedSignedDistance( DomainPartition & domain)
           localIndex const childNode = childNodeIndices[parentNode];
           if (childNode >= 0)
           {
+            real64 val = 0.0;
+            for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( parentNode ); ++k )
+            {
+              localIndex const er  = nodeToRegionMap[parentNode][k];
+              localIndex const esr = nodeToSubRegionMap[parentNode][k];
+              localIndex const ei  = nodeToElementMap[parentNode][k];
+
+              real64 const K = bulkModulusAccessor[er][esr][matID][ei];
+              real64 const G = shearModulusAccessor[er][esr][matID][ei];
+              real64 const youngsModulus = 9 * K * G / ( 3 * K + G );
+              real64 const poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+              val += youngsModulus/(1.0 - poissonRatio*poissonRatio);
+            }
+            real64 const Eprime = val/nodeToRegionMap.sizeOfArray( parentNode );
+            //std::cout << "node " << parentNode << ": val = " << Eprime << std::endl;
+
             real64 opening[3] = {0.0, 0.0, 0.0};
             LvArray::tensorOps::add< 3 >( opening, totalDisplacement[parentNode] );
             LvArray::tensorOps::subtract< 3 >( opening, totalDisplacement[childNode] );
@@ -1395,7 +1471,6 @@ real64 CalculatePartiallyOpenElmtFuildVolViscosityDominated(real64 const cornerN
 void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition & domain,
                                                                FaceElementSubRegion & subRegion,
                                                                std::unordered_set<localIndex> const & partiallyOpenFaceElmts,
-                                                               real64 const Eprime,
                                                                real64 const Kprime,
                                                                real64 const mup,
                                                                real64 const dt)
@@ -1418,6 +1493,32 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
 
   real64 const PI = 2 * acos(0.0);
   real64 const tol = 1.0e-9;
+
+  ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
+
+  ConstitutiveManager * const constitutiveManager =
+      domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+
+  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulusAccessor =
+      elementRegionManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >
+      ( LinearElasticIsotropic::viewKeyStruct::shearModulusString, constitutiveManager );
+
+  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulusAccessor =
+      elementRegionManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >
+      ( LinearElasticIsotropic::viewKeyStruct::bulkModulusString, constitutiveManager );
+
+  arrayView2d< localIndex const > const & faceToRegionMap = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const & faceToSubRegionMap = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const & faceToElementMap = faceManager->elementList();
+
+  Group const * const constitutiveModels = subRegion.GetConstitutiveModels();
+  int matID;
+  constitutiveModels->forSubGroups<LinearElasticIsotropic>( [&matID]
+                                                            (LinearElasticIsotropic const & solidModel)
+  {
+    matID = solidModel.getIndexInParent();
+  } );
+
 
   // initialize the fluid volume in all the face element
   for (int i=0; i<subRegion.size(); i++)
@@ -1569,6 +1670,16 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
                                                                          alpha,
                                                                          delta0,
                                                                          delta1);
+
+    localIndex const er  = faceToRegionMap[parentFace][0];
+    localIndex const esr = faceToSubRegionMap[parentFace][0];
+    localIndex const ei  = faceToElementMap[parentFace][0];
+    real64 const K = bulkModulusAccessor[er][esr][matID][ei];
+    real64 const G = shearModulusAccessor[er][esr][matID][ei];
+    real64 const youngsModulus = 9 * K * G / ( 3 * K + G );
+    real64 const poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+    real64 const Eprime = youngsModulus/(1.0 - poissonRatio*poissonRatio);
+    //std::cout << "faceElmt " << faceElmt << ", parentFace" << parentFace << ", Eprime =" << Eprime << std::endl;
 
     if (m_regimeTypeOption == RegimeTypeOption::ToughnessDominated)
     {

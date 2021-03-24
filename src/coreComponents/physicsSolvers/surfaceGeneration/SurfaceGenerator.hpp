@@ -337,7 +337,8 @@ private:
                     ModifiedObjectLists & modifiedObjects,
                     const bool prefrac,
                     const real64 time_n,
-                    const real64 dt);
+                    const real64 dt,
+                    DomainPartition & domain);
 
   /**
    * @brief Find a fracture path for surface generation
