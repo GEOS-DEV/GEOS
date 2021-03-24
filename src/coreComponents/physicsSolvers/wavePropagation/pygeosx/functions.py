@@ -12,6 +12,7 @@ import sys
 #from mpi4py import MPI
 from segy import *
 from print import *
+import math as m
 
     
 

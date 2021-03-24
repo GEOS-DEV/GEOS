@@ -110,7 +110,7 @@ class ReceiverSet:
     def getSetCoord(self):
         listRcv = []
         for i in range(self.n):
-            listRcv.append(np.array([self.receiver_list[i].coords[0], self.receiver_list[i].coords[1], self.receiver_list[i].coords[2]))
+            listRcv.append(np.array([self.receiver_list[i].coords[0], self.receiver_list[i].coords[1], self.receiver_list[i].coords[2]]))
         return listRcv
         
         

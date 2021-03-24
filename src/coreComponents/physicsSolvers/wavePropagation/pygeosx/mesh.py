@@ -90,7 +90,7 @@ class Node:
             Global number of the node in the mesh
         """
                                 
-        self.coords = np.array([nodecoord[0], nodecoord[1], nodecoord[2])         
+        self.coords = np.array([nodecoord[0], nodecoord[1], nodecoord[2]])         
         self.n = nodenumber                            
         
     def getCoords(self):
@@ -250,17 +250,17 @@ class Mesh:
         zmax = zmin
     	
         for b_node in self.b_node_list:
-            if b_node.x < xmin:
+            if b_node.coords[0] < xmin:
                 xmin = b_node.coords[0]
-            elif b_node.x > xmin:
+            elif b_node.coords[0] > xmin:
                 xmax = b_node.coords[0]
-            if b_node.y < ymin:
+            if b_node.coords[1] < ymin:
                 ymin = b_node.coords[1]
-            elif b_node.y > ymin:
+            elif b_node.coords[1] > ymin:
                 ymax = b_node.coords[1]
-            if b_node.z < zmin:
+            if b_node.coords[2] < zmin:
                 zmin = b_node.coords[2]
-            elif b_node.z > zmin:
+            elif b_node.coords[2] > zmin:
                 zmax = b_node.coords[2]
         
         box = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
