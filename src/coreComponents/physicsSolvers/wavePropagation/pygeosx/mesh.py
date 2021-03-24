@@ -5,10 +5,6 @@ Created on 18/02/2021
 '''
 import numpy as np
 import pygeosx
-import sys
-from mpi4py import MPI
-import numpy as np
-from functions import *
     
 
 def initialize_pyMesh(problem):
@@ -49,8 +45,9 @@ def initialize_pyMesh(problem):
     elif nb_node_per_elem==216:
     	disc_ord=5
     
+    node_position = node_manager.get_wrapper("ReferencePosition").value().to_numpy()
     
-    Node_list = [Node(node_manager.get_wrapper("ReferencePosition").value().to_numpy()[i], i) for i in range(number_of_node)]
+    Node_list = [Node(node_position[i], i) for i in range(number_of_node)]
     node_array=np.array(Node_list)
     Elem_list = [Element(node_array[elem_manager.get_wrapper("nodeList").value().to_numpy()[i]].tolist(), 
                          elem_speed, 
@@ -92,24 +89,21 @@ class Node:
         nodenumber :
             Global number of the node in the mesh
         """
-        
-        self.x = nodecoord[0]                          
-        self.y = nodecoord[1]                          
-        self.z = nodecoord[2]                          
-        self.coords = np.array([self.x, self.y, self.z])         
+                                
+        self.coords = np.array([nodecoord[0], nodecoord[1], nodecoord[2])         
         self.n = nodenumber                            
         
     def getCoords(self):
         return self.coords
     
     def x(self):
-    	return self.x
+    	return self.coords[0]
     
     def y(self):
-    	return self.y
+    	return self.coords[1]
     
     def z(self):
-    	return self.z
+    	return self.coords[2]
     
     def getNodeNumber(self):
     	return self.nodenumber
@@ -248,26 +242,26 @@ class Mesh:
     
     def getMinMaxBoundary(self):
         
-        xmin = self.b_node_list[0].x
+        xmin = self.b_node_list[0].coords[0]
         xmax = xmin
-        ymin = self.b_node_list[0].y
+        ymin = self.b_node_list[0].coords[1]
         ymax = ymin
-        zmin = self.b_node_list[0].z
+        zmin = self.b_node_list[0].coords[2]
         zmax = zmin
     	
         for b_node in self.b_node_list:
             if b_node.x < xmin:
-                xmin = b_node.x
+                xmin = b_node.coords[0]
             elif b_node.x > xmin:
-                xmax = b_node.x 
+                xmax = b_node.coords[0]
             if b_node.y < ymin:
-                ymin = b_node.y
+                ymin = b_node.coords[1]
             elif b_node.y > ymin:
-                ymax = b_node.y
+                ymax = b_node.coords[1]
             if b_node.z < zmin:
-                zmin = b_node.z
+                zmin = b_node.coords[2]
             elif b_node.z > zmin:
-                zmax = b_node.z
+                zmax = b_node.coords[2]
         
         box = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
         
@@ -275,6 +269,7 @@ class Mesh:
     	    
     	
     def getMeshSection(self, sourceCoords):
+        #Hard coded value, isn't used for now
         maxDistance = 0.05
         
         new_elem_list = []

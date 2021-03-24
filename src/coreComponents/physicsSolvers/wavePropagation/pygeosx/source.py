@@ -34,16 +34,13 @@ class Source:
             Source function (Ricker)
         """
         
-        self.x = pos[0]
-        self.y = pos[1]
-        self.z = pos[2]
-        self.coords = np.array([self.x, self.y, self.z])
+        self.coords = np.array([pos[0], pos[1], pos[2]])
         self.f = wavelet #Ricker
             
         self.setDomainFlag(meshBox) #Flag wether or not the source is in the domain
     
     def __repr__(self):
-        return '('+str(self.x)+','+str(self.y)+','+str(self.z)+')'
+        return '('+str(self.coords[0])+','+str(self.coords[1])+','+str(self.coords[2])+')'
     
     def getCoord(self):
         return self.coords
@@ -55,12 +52,21 @@ class Source:
         return self.f
     
     def setDomainFlag(self, meshBox):
-        if meshBox[0][0]>self.x or self.x>meshBox[0][1] \
-            or meshBox[1][0]>self.y or self.y>meshBox[1][1] \
-            or meshBox[2][0]>self.z or self.z>meshBox[2][1]:
+        if meshBox[0][0] > self.coords[0] or self.coords[0] > meshBox[0][1] \
+            or meshBox[1][0] > self.coords[1] or self.coords[1] > meshBox[1][1] \
+            or meshBox[2][0] > self.coords[2] or self.coords[2] > meshBox[2][1]:
                 self.domainFlag=0
         else:
             self.domainFlag = 1
+            
+    def x(self):
+        return self.coords[0]
+        
+    def y(self):
+        return self.coords[1]
+    
+    def z(self):
+        return self.coords[2]
             
     
 class SourceSet:

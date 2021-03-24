@@ -23,33 +23,40 @@ class Receiver:
             Coordinates for the receiver
         """
         
-        self.x = pos[0]
-        self.y = pos[1]
-        self.z = pos[2]
-        self.coords = np.array([self.x, self.y, self.z])
+        self.coords = np.array([pos[0], pos[1], pos[2]])
         
     def __repr__(self):
-        return '('+str(self.x)+','+str(self.y)+','+str(self.z)+') \n'
+        return '('+str(self.coords[0])+','+str(self.coords[1])+','+str(self.coords[2])+') \n'
     
     def getCoord(self):
         return self.coords 
     
     def setReceiverPos(self, coord, value):
         if coord==0:
-            self.x = value
+            self.coords[0] = value
         elif coord==1:
-            self.y = value
+            self.coords[1] = value
         elif coord==2:
-            self.z = value
+            self.coords[2] = value
     
     #Transpose the receiver position    
     def linearMove(self, coord, value):
         if coord==0:
-            self.x += value
+            self.coords[0] += value
         elif coord==1:
-            self.y += value
+            self.coords[1] += value
         elif coord==2:
-            self.z += value
+            self.coords[2] += value
+     
+    def x(self):
+        return self.coords[0]
+        
+    def y(self):
+        return self.coords[1]
+    
+    def z(self):
+        return self.coords[2]
+        
             
     
 class ReceiverSet:
@@ -86,9 +93,9 @@ class ReceiverSet:
         list=[]
         
         for r in self.receiver_list:     
-            if meshBoundaries[0][0]<=r.x and r.x<=meshBoundaries[0][1] \
-            and meshBoundaries[1][0]<=r.y and r.y<=meshBoundaries[1][1] \
-            and meshBoundaries[2][0]<=r.z and r.z<=meshBoundaries[2][1]:
+            if meshBoundaries[0][0] <= r.coords[0] and r.coords[0] <= meshBoundaries[0][1] \
+            and meshBoundaries[1][0] <= r.coords[1] and r.coords[1] <= meshBoundaries[1][1] \
+            and meshBoundaries[2][0] <= r.coords[2] and r.coords[2] <= meshBoundaries[2][1]:
                 list.append(r)
         
         final_receiver_set = ReceiverSet(list)
@@ -103,19 +110,14 @@ class ReceiverSet:
     def getSetCoord(self):
         listRcv = []
         for i in range(self.n):
-            listRcv.append(np.array([self.receiver_list[i].x, self.receiver_list[i].y, self.receiver_list[i].z]))
+            listRcv.append(np.array([self.receiver_list[i].coords[0], self.receiver_list[i].coords[1], self.receiver_list[i].coords[2]))
         return listRcv
         
         
     #Transpose all receivers position    
-    def linearSetMove(self,coord,value):
+    def linearSetMove(self, coord, value):
         for i in range(self.n):
-            if coord==0:
-                self.receiver_list[i].x += value
-            elif coord==1:
-                self.receiver_list[i].y += value
-            elif coord==2:
-                self.receiver_list[i].z += value
+            self.receiver_list[i].linearMove(coord, value)
                 
         
         
