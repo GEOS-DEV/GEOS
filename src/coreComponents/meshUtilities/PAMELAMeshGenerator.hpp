@@ -77,12 +77,6 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void getElemToNodesRelationInBox ( const string & elementType,
-                                             const int index[],
-                                             const int & iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) override;
-
 protected:
 
   /**

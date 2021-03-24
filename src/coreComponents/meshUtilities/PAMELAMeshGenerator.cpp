@@ -376,12 +376,5 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
 
 }
 
-void PAMELAMeshGenerator::getElemToNodesRelationInBox( const string & GEOSX_UNUSED_PARAM( elementType ),
-                                                       const int GEOSX_UNUSED_PARAM( index )[],
-                                                       const int & GEOSX_UNUSED_PARAM( iEle ),
-                                                       int GEOSX_UNUSED_PARAM( nodeIDInBox )[],
-                                                       const int GEOSX_UNUSED_PARAM( node_size ) )
-{}
-
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, string const &, Group * const )
 }

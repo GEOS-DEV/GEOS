@@ -117,13 +117,6 @@ public:
    * @param[in] domain the domain object
    */
   virtual void generateMesh( DomainPartition & domain ) override;
-
-  /// not implemented
-  virtual void getElemToNodesRelationInBox ( string const &,
-                                             int const *,
-                                             int const &,
-                                             int *,
-                                             int const ) override {}
   ///@}
 
   /**
