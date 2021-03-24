@@ -4,14 +4,12 @@ Created on 8/02/2021
 @author: macpro
 '''
 
-import math as m
 import numpy as np
 from mesh import *
 from acquisition import *
 import pygeosx
 import sys
-from mpi4py import MPI
-from matplotlib import pyplot as plt
+#from mpi4py import MPI
 from segy import *
 from print import *
 
@@ -22,10 +20,10 @@ def shot_simul(shot_list, dt):
     Parameters
     ----------
 
-    shot_list :
+    shot_list : list
         A list containing sets of Source and ReceiverSet objects
 
-    dt :
+    dt : float
         Time step for the solver
     """
       
@@ -40,7 +38,7 @@ def initialize():
     Return
     ------
     problem :
-        A pygeosx object
+        The pygeosx ProblemManager
         
     Notes
     -----
@@ -49,7 +47,10 @@ def initialize():
     """
     
     problem = pygeosx.reinit(sys.argv)
-
+    #Should be : 
+    #    problem = pygeosx.initialize()(rank, sys.argv), 
+    #Once the seismic acquisition from segy file is implemented
+    
     pygeosx.apply_initial_conditions()
     
     return problem
@@ -63,12 +64,12 @@ def do_shots(problem, shot_list, dt):
     Parameters
     ----------   
     problem :
-        A pygeosx.initialize() object
+        The pygeosx ProblemManager
         
-    shot_list : 
+    shot_list : list
         A list containing sets of Source and ReceiverSet objects
 
-    dt :
+    dt : float
         Time step for the solver
         
     Notes
@@ -179,13 +180,13 @@ def ricker(maxT, dt, f0):
     
     Parameters
     ----------
-    maxT : 
+    maxT : float
         The max time for simulation
     
-    dt :
+    dt : float
         The time step for simulation
     
-    f0 :
+    f0 : float
         Intensity
     
     Return
@@ -217,12 +218,12 @@ def calculDt(mesh):
     
     Parameters
     ----------
-    mesh :
+    mesh : object
         A Mesh python object derived from GEOSX mesh 
         
     Return 
     ------
-    dt :
+    dt : float
         Time step for simulation
     """
     

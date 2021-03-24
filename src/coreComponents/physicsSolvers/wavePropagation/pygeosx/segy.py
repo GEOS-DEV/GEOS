@@ -1,7 +1,4 @@
 import segyio 
-import sys
-import numpy as np
-
 
 
 def export_to_segy(pressure, rcvCoord, ishot, dt_cycle):
@@ -34,6 +31,6 @@ def export_to_segy(pressure, rcvCoord, ishot, dt_cycle):
     with segyio.create("/home/m3d/Desktop/pygeosx/sismoTrace/sismoTraceShot"+str(ishot)+".sgy", spec) as f:
         for i in range(len(rcvCoord)):
             f.header[i] = {segyio.su.offset : 1, segyio.su.iline  :int(rcvCoord[i][0]*1000), segyio.su.xline  : int(rcvCoord[i][1]*1000)}
-            f.trace[i]  = pressure[::dt_cycle,i]      #valeur de pression
+            f.trace[i]  = pressure[::dt_cycle, i]      
         f.bin.update(tsort=segyio.TraceSortingFormat.INLINE_SORTING)
        

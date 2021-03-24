@@ -5,13 +5,11 @@ Created on 9/02/2021
 '''
 
 from functions import *
-import numpy as np
 from mesh import *
 from acquisition import *
 import pygeosx
 import sys
 from mpi4py import MPI
-from matplotlib import pyplot as plt
 from segy import *
 from print import *
 
@@ -25,10 +23,14 @@ rank = comm.Get_rank()
 
 def main():
 
-    #Dummy initialization to be able to get the shot list and split it between all proc
-    #(Conflict with MPI rank initialization on all proc later due to this first init)
-    problem = pygeosx.initialize(0, sys.argv)
     
+    problem = pygeosx.initialize(0, sys.argv)
+    # - This is a dummy initialization to be able to get the seismic acquisition/shot_list and split it between all proc
+    # - Note that the current way to get a seismic acquisition will be replaced by the lecture of 
+    #   a segy file ==> no longer need to do this dummy pygeosx.initialize()
+    
+    
+    # Pseudo copy of GEOSX mesh
     mesh = initialize_pyMesh(problem) 
     
     maxT      = problem.get_wrapper("Events/maxTime").value()   
@@ -48,18 +50,23 @@ def main():
     shot_list = moving_acquisition(box, wavelet, nb_source_x, nb_source_y, nb_receiver_x, nb_receiver_y, receiver_zone_x, receiver_zone_y) 
     
     
+    """At this point we have defined our seismic acquisition/shot_list"""
+    
+    
     nb_proc = 2
-    p=[]
+    p = []
     nb_shot_m1 = len(shot_list)
     ind = 0
  
+    #Loop over the process launch
     for i in range(nb_proc):
         nb_shot = int(nb_shot_m1/(nb_proc-i))
         
         #Add process with its dedicated shot_list
-        p.append(mp.Process(target=shot_simul, args=(shot_list[ind:ind + nb_shot], dt) ))
-        ind = ind + nb_shot
-        
+        p.append( mp.Process(target = shot_simul, 
+                             args   = (shot_list[ind:ind + nb_shot], dt)) )
+                             
+        ind = ind + nb_shot      
         nb_shot_m1 = nb_shot_m1 - nb_shot
         
         #Start process

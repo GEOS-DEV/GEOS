@@ -4,19 +4,36 @@ Created on 9/02/2021
 @author: macpro
 '''
 import numpy as np
-
 import copy
-
+import segyio 
 from shot import *
-
 from receiver import *
 from source import *
 import random
-import math as m
 
-#from matplotlib import pyplot as plt
 
-'''acquisition sismique marine, comme schema PDF'''
+def segy_acquisition(segyfile):
+    """Read seismic acquisition from a segy file
+    
+    Parameters
+    ----------
+    segfile :
+        Path to segy file to open
+    
+    Return
+    ------
+    shots :
+        A list of Shot objects
+    
+    Notes
+    -----
+    """
+    
+    with segyio.open(segyfile, "r") as f:
+        print(f.iline, f.xline)
+    
+
+
 def moving_acquisition(box, 
                        wavelet, 
                        nbsourcesx = 1, 
@@ -125,18 +142,40 @@ def moving_acquisition(box,
                 shot = Shot(source, copy.deepcopy(receivers))
                 shots.append(shot)
 
-                
-           #Uncomment this part to plot source and receivers  
-            #plt.xlim(xmin,xmax)
-            #plt.ylim(ymin,ymax)
-            #plt.plot(source.getSourcePos()[0], source.getSourcePos()[1], 'bo')
-            #for k in range(receivers.getNumberofReceivers()):
-            #    plt.plot(receivers.getReceiverSetPos()[k][0], receivers.getReceiverSetPos()[k][1], 'ro')
-            #plt.show()
     return shots
 
-'''Create random acquisition'''
-def random_acquisition(box, wavelet, nbsources, nbreceiversx, nbreceiversy):
+
+
+def random_acquisition(box, 
+                       wavelet, 
+                       nbsources, 
+                       nbreceiversx, 
+                       nbreceiversy):
+    """Random seismic acquisition, the positions of sources are set randomly,
+       the receivers are set as a grid over the domain
+    
+    Parameters
+    ----------
+    box : 
+        Numpy array containing min/max boundary coordinates of the domain
+    
+    wavelet :
+        Source function (Ricker)
+    
+    nbsources :
+        Number of sources
+    
+    nbreceiversx :
+        Number of sources along x axis
+    
+    nbreceiversy :
+        Number of sources along y axis
+    
+    Return
+    ------
+    shots :
+        A list of Shot objects
+    """ 
     
     xmin = box[0][0]
     xmax = box[0][1]
@@ -169,6 +208,7 @@ def random_acquisition(box, wavelet, nbsources, nbreceiversx, nbreceiversy):
             shots.append(shot)
 
     return shots
+
 
 
 '''Create equiscaped acquisition (copy from Pysit)'''
