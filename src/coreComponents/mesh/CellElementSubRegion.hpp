@@ -64,14 +64,6 @@ public:
    */
   void copyFromCellBlock( CellBlock & source );
 
-  /**
-   * @brief Fill the CellElementSubRegion by querying a target set into the faceManager
-   * @param[in] faceManager a pointer to the faceManager
-   * @param[in] setName a reference to string containing the name of the set
-   */
-  void constructSubRegionFromFaceSet( FaceManager const * const faceManager,
-                                      string const & setName );
-
   ///@}
 
   /**
