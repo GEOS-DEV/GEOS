@@ -101,7 +101,7 @@ public:
   ///@{
 
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & facemanager ) override;
+                                                    FaceManager const & faceManager ) override;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
