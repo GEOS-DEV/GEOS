@@ -164,8 +164,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
                                                                          embSurfNodeManager,
                                                                          edgeManager,
                                                                          cellToEdges,
-                                                                         &fracture,
-                                                                         newObjects );
+                                                                         &fracture );
 
             if( added )
             {
@@ -299,11 +298,11 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
 
   GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
 
-  arrayView1d< globalIndex > const & localToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
+  arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
 
   for( localIndex ei = 0; ei < embeddedSurfaceSubRegion.size(); ei++ )
   {
-    localToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex() + 1;
+    elemLocalToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex() + 1;
     embeddedSurfaceSubRegion.updateGlobalToLocalMap( ei );
   }
 
@@ -323,11 +322,11 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
     totalNumberOfNodes += numberOfNodesPerRank[rank];
   }
 
-  arrayView1d< globalIndex > const & localToGlobal = embSurfNodeManager.localToGlobalMap();
+  arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
 
   for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
-    localToGlobal( ni ) = ni + globalIndexOffset[ thisRank ] + 1;
+    nodesLocalToGlobal( ni ) = ni + globalIndexOffset[ thisRank ] + 1;
     embSurfNodeManager.updateGlobalToLocalMap( ni );
   }
 
