@@ -506,13 +506,13 @@ void ProblemManager::generateMesh()
       nodeManager.constructGlobalToLocalMap();
 
       elemManager.generateMesh( cellBlockManager );
-      nodeManager.setElementMaps( meshLevel.getElemManager() );
+      nodeManager.setElementMaps( elemManager );
 
       faceManager.buildFaces( nodeManager, elemManager );
-      nodeManager.setFaceMaps( meshLevel.getFaceManager() );
+      nodeManager.setFaceMaps( faceManager );
 
       edgeManager.buildEdges( nodeManager, faceManager );
-      nodeManager.setEdgeMaps( meshLevel.getEdgeManager() );
+      nodeManager.setEdgeMaps( edgeManager );
 
       domain.generateSets();
 
