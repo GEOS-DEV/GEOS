@@ -511,7 +511,7 @@ void ProblemManager::generateMesh()
       faceManager.buildFaces( nodeManager, elemManager );
       nodeManager.setFaceMaps( meshLevel.getFaceManager() );
 
-      edgeManager.buildEdges( faceManager, nodeManager );
+      edgeManager.buildEdges( nodeManager, faceManager );
       nodeManager.setEdgeMaps( meshLevel.getEdgeManager() );
 
       domain.generateSets();
