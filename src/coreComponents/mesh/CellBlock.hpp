@@ -24,9 +24,6 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-
-class StableTimeStep;
-
 namespace geosx
 {
 
@@ -108,6 +105,7 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
+public:
   /**
    * @brief Compute the center of each element in the subregion.
    * @param[in] X an arrayView of (const) node positions
@@ -129,6 +127,7 @@ public:
     } );
   }
 
+private:
   /**
    * @brief Compute the volume of the k-th element in the subregion.
    * @param[in] k the index of the element in the subregion
@@ -171,7 +170,7 @@ public:
   }
 
   ///@}
-
+public:
   /**
    * @name Getters / Setters
    */
