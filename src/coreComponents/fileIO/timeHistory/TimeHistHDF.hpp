@@ -170,6 +170,9 @@ public:
   /// @copydoc geosx::BufferedHistoryIO::updateCollectingCount
   virtual void updateCollectingCount( localIndex count ) override;
 
+  /// @copydoc geosx::BufferedHistoryIO::getRowBytes
+  virtual size_t getRowBytes( ) override;
+
 protected:
 
   void setupPartition( globalIndex localIdxCount );

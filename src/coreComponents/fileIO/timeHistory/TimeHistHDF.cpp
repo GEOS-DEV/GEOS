@@ -155,6 +155,8 @@ HDFHistIO::HDFHistIO( string const & filename,
   m_overallocMultiple( overallocMultiple ),
   m_globalIdxOffset( 0 ),
   m_globalIdxCount( 0 ),
+  m_globalIdxHighwater( 0 ),
+  m_chunkSize( 0 ),
   m_writeLimit( initAlloc ),
   m_writeHead( writeHead ),
   m_hdfType( GetHDFDataType( typeId )),
@@ -162,6 +164,7 @@ HDFHistIO::HDFHistIO( string const & filename,
   m_typeCount( 1 ),
   m_rank( LvArray::integerConversion< hsize_t >( rank )),
   m_dims( rank ),
+  m_localIdxCounts_buffered( ),
   m_name( name ),
   m_comm( comm ),
   m_subcomm( MPI_COMM_NULL ),
@@ -173,6 +176,7 @@ HDFHistIO::HDFHistIO( string const & filename,
     m_typeCount *= m_dims[dd];
   }
   m_dataBuffer.resize( initAlloc * m_typeSize * m_typeCount );
+  m_bufferHead = &m_dataBuffer[0];
 }
 
 void HDFHistIO::setupPartition( globalIndex localIdxCount )
@@ -275,12 +279,12 @@ void HDFHistIO::write( )
   MpiWrapper::allReduce( &m_sizeChanged, &anyChanged, 1, MPI_LOR, m_comm );
   m_sizeChanged = anyChanged;
 
-  localIndex maxBuffered = 0;
-  MpiWrapper::allReduce( &m_bufferedCount, &maxBuffered, 1, MPI_MAX, m_subcomm );
-  GEOSX_ERROR_IF( maxBuffered != m_bufferedCount, "Parallel time history collection has become out of sync!");
+  // localIndex maxBuffered = 0;
+  // MpiWrapper::allReduce( &m_bufferedCount, &maxBuffered, 1, MPI_MAX, m_comm );
+  // GEOSX_ERROR_IF( maxBuffered != m_bufferedCount, "Parallel time history collection has become out of sync!");
   // this will set the first dim large enough to hold all the rows we're about to write
   resizeFileIfNeeded( m_bufferedCount );
-  if( maxBuffered > 0 )
+  if( m_bufferedCount > 0 )
   {
     buffer_unit_type * dataBuffer = nullptr;
     if( m_dataBuffer.size() > 0 )
@@ -323,11 +327,13 @@ void HDFHistIO::write( )
         hid_t fileHyperslab = filespace;
         H5Sselect_hyperslab( fileHyperslab, H5S_SELECT_SET, &fileOffset[0], nullptr, &bufferedCounts[0], nullptr );
 
-        if ( dataBuffer )
+        H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, H5P_DEFAULT, dataBuffer );
+
+        // forward the data buffer pointer to the start of the next row
+        if ( dataBuffer ) 
         {
           dataBuffer += m_localIdxCounts_buffered[ row ] * m_typeSize;
         }
-        H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, H5P_DEFAULT, dataBuffer );
 
         // unfortunately have to close/open the file for each row since the accessing mpi ranks and extents can change over time
         H5Sclose( memspace );
@@ -380,18 +386,27 @@ void HDFHistIO::updateDatasetExtent( hsize_t rowLimit )
   }
 }
 
+size_t HDFHistIO::getRowBytes( )
+{
+  return m_typeCount * m_typeSize;
+}
+
 void HDFHistIO::resizeBuffer( )
 {
+  // need to store the count every time we collect (which calls this) 
+  //  regardless of whether the size changes
+  m_localIdxCounts_buffered.emplace_back( m_dims[0] );
+
   size_t capacity = m_dataBuffer.size();
   size_t inUse = m_bufferHead - &m_dataBuffer[0]; 
-  size_t nextRow = m_typeCount * m_typeSize;
+  size_t nextRow = getRowBytes( );
   // if needed, resize the buffer
   if( inUse + nextRow > capacity )
   {
     // resize based on the ammount currently in use rather than on the capacity ( less aggressive w/ changing sizes )
     m_dataBuffer.resize( inUse + ( nextRow * m_overallocMultiple ) );
   }
-  // reset the buffer head in case the underlying data buffer moves during a resize
+  // reset the buffer head and advance based on count in case the underlying data buffer moves during a resize
   m_bufferHead = &m_dataBuffer[0] + inUse;
 }
 
@@ -407,9 +422,6 @@ void HDFHistIO::updateCollectingCount( localIndex count )
       m_typeCount *= m_dims[dd];
     }
   }
-  // need to store the count every time we collect (which calls this) 
-  //  regardless of whether the size changes
-  m_localIdxCounts_buffered.emplace_back( m_dims[0] );
 }
 
 

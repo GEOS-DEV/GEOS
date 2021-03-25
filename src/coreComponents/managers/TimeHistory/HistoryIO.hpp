@@ -53,14 +53,15 @@ public:
   {
     resizeBuffer();
     m_bufferedCount++;
-    return m_bufferHead;
+    buffer_unit_type * currentBufferHead = m_bufferHead;
+    m_bufferHead += getRowBytes( );
+    return currentBufferHead;
   }
 
   /**
    * @brief Perform and intialization needed for time-history output.
    * @param existsOkay Whether it is acceptable for the intended output target to already exist ( false on start from scratch, true on
-   * restart ).
-   * data).
+   *                    restart ).
    */
   virtual void init( bool existsOkay ) = 0;
 
@@ -80,6 +81,12 @@ public:
    * @param count [in] The new number of items being collected
    */
   virtual void updateCollectingCount( localIndex count ) = 0;
+
+  /**
+   * @brief Get the size in bytes the buffer is currently set to hold per collection operation.
+   * @return The size in bytes.
+   */
+  virtual size_t getRowBytes( ) = 0;
 
   /**
    * @brief Query the number of history states currently stored in the internal buffer.
