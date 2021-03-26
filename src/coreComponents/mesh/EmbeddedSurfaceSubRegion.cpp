@@ -24,6 +24,7 @@
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 
 namespace geosx
 {
@@ -138,6 +139,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
 
   array2d< real64 > intersectionPoints( 0, 3 );
   array1d< integer > pointGhostRank;
+  array1d< localIndex > pointParentIndex;
 
   localIndex numPoints = 0;
   for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )
@@ -170,7 +172,9 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
       }
       intersectionPoints.resizeDimension< 0 >( numPoints+1 );
       pointGhostRank.resize( numPoints+1 );
+      pointParentIndex.resize( numPoints+1 );
       pointGhostRank[numPoints] = edgeGhostRank[edgeIndex];
+      pointParentIndex[numPoints] = edgeIndex;
       LvArray::tensorOps::copy< 3 >( intersectionPoints[numPoints], point );
       numPoints++;
     }
@@ -214,6 +218,9 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
         nodeIndex = embSurfNodeManager.size();
         embSurfNodeManager.appendNode( intersectionPoints[ j ],
                                        pointGhostRank[ originalIndices[ j ] ] );
+        arrayView1d< localIndex > const & parentIndex =
+            embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
+        parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
       }
       elemNodes[j] =  nodeIndex;
     }

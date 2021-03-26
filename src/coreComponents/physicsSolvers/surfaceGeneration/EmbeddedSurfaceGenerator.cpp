@@ -79,6 +79,19 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 {}
 
+void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
+{
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  {
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+
+    EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
+
+    nodeManager.registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+  } );
+}
+
+
 void EmbeddedSurfaceGenerator::initializePostSubGroups()
 {
   /*
@@ -197,6 +210,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+
+  std::cout << "rank: " << thisRank << " globalIndex: " << embSurfNodeManager.localToGlobalMap() << std::endl;
+
   // Synchronize embedded Surfaces
   EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel, domain.getNeighbors(), newObjects );
 
@@ -217,8 +234,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   // Node to edge map
   embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
   embSurfNodeManager.compressRelationMaps();
-
-  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   std::cout << "rank: " << thisRank << " size of subRegion: " << embeddedSurfaceSubRegion.size() << std::endl;
 

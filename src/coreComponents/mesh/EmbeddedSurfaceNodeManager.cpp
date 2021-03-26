@@ -226,6 +226,55 @@ void EmbeddedSurfaceNodeManager::viewPackingExclusionList( SortedArray< localInd
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
 }
 
+localIndex EmbeddedSurfaceNodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packUpDownMapsPrivate< false >( junk, packList );
+}
+
+
+localIndex EmbeddedSurfaceNodeManager::packUpDownMaps( buffer_unit_type * & buffer,
+                                                       arrayView1d< localIndex const > const & packList ) const
+{
+  return packUpDownMapsPrivate< true >( buffer, packList );
+}
+
+
+template< bool DOPACK >
+localIndex EmbeddedSurfaceNodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                                              arrayView1d< localIndex const > const & packList ) const
+{
+  localIndex packedSize = 0;
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString() ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer,
+                                           this->m_toElements,
+                                           packList,
+                                           m_toElements.getElementRegionManager() );
+  return packedSize;
+}
+
+
+localIndex EmbeddedSurfaceNodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
+                                                         localIndex_array & packList,
+                                                         bool const overwriteUpMaps,
+                                                         bool const )
+{
+  localIndex unPackedSize = 0;
+
+  string temp;
+
+  unPackedSize += bufferOps::Unpack( buffer, temp );
+  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     this->m_toElements,
+                                     packList,
+                                     m_toElements.getElementRegionManager(),
+                                     overwriteUpMaps );
+
+  return unPackedSize;
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceNodeManager, string const &, Group * const )
 

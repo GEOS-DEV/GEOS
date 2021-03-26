@@ -62,6 +62,8 @@ public:
 
   static string catalogName() { return "EmbeddedSurfaceGenerator"; }
 
+  virtual void registerDataOnMesh( Group & MeshBody ) override final;
+
   virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
