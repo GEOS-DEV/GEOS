@@ -29,6 +29,8 @@
 #include "managers/ProblemManager.hpp"
 #include "managers/Tasks/TaskBase.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "LvArray/src/tensorOps.hpp"
+#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
 namespace geosx
 {
@@ -97,28 +99,45 @@ public:
 
       if( m_mode == "triaxial" )
       {
-        //printf("Timestep | Newton | Residual\n");
+        printf( "Timestep | Newton | Residual\n" );
         for( localIndex n=1; n<m_time.size(); ++n )
         {
           strainIncrement[0] = m_axialStrain[n]-m_axialStrain[n-1];
           strainIncrement[1] = 0;
           strainIncrement[2] = 0;
 
-          //printf("\n");
+          printf( "\n" );
           for( localIndex k=0; k<25; ++k )
           {
             constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
-
             real64 norm = fabs( stress[1]-m_radialStress[n] )/(fabs( m_radialStress[n] )+1);
-            //printf("%8ld   %6ld   %.2e\n",n,k,norm);
 
-            if( norm < 1e-5 )
+            printf( "%8ld   %6ld   %.2e\n", n, k, norm );
+            if( norm < 1e-12 )
             {
               break;
             }
             else
             {
-              strainIncrement[1] -= (stress[1]-m_radialStress[n]) / (stiffness[1][1]+stiffness[1][2]);
+              real64 jacobian = stiffness[1][1]+stiffness[1][2];
+
+
+              if( m_useNumericalTangent )
+              {
+                real64 eps = 1e-3*LvArray::tensorOps::l2Norm< 6 >( strainIncrement );
+                real64 stress2[6] = {};
+
+                strainIncrement[1] += eps;
+                strainIncrement[2] += eps;
+
+                constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrement, stress2, stiffness );
+                jacobian = (stress2[1]-stress[1]) / eps;
+
+                strainIncrement[1] -= eps;
+                strainIncrement[2] -= eps;
+              }
+
+              strainIncrement[1] -= (stress[1]-m_radialStress[n]) / jacobian;
               strainIncrement[2] = strainIncrement[1];
             }
           }
@@ -170,6 +189,7 @@ private:
     constexpr static char const * stressFunctionString() { return "stressFunction"; }
     constexpr static char const * numStepsString() { return "steps"; }
     constexpr static char const * outputString() { return "output"; }
+    constexpr static char const * tangentString() { return "useNumericalTangent"; }
   };
 
   string m_solidMaterialName; ///< Material identifier
@@ -178,6 +198,7 @@ private:
   string m_stressFunctionName; ///< Time-dependent function controlling stress (role depends on test mode)
   int m_numSteps;    ///< Number of load steps
   string m_outputFileName; ///< Output file name
+  int m_useNumericalTangent; ///< Flag to avoid using analytical tangent in driver
 
   array1d< real64 > m_time;
   array1d< real64 > m_axialStrain;

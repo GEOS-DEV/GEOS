@@ -52,6 +52,11 @@ TriaxialDriver::TriaxialDriver( const string & name,
   registerWrapper( viewKeyStruct::outputString(), &m_outputFileName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Output file" );
+
+  registerWrapper( viewKeyStruct::tangentString(), &m_useNumericalTangent ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to use numerical tangent" );
 }
 
 TriaxialDriver::~TriaxialDriver()

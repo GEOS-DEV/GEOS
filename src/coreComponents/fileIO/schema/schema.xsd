@@ -1633,6 +1633,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="strainFunction" type="string" use="required" />
 		<!--stressFunction => Function controlling stress loading (role depends on test mode)-->
 		<xsd:attribute name="stressFunction" type="string" use="required" />
+		<!--useNumericalTangent => Flag to use numerical tangent-->
+		<xsd:attribute name="useNumericalTangent" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
