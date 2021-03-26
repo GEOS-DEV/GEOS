@@ -29,7 +29,6 @@ namespace geosx
 namespace dataRepository
 {}
 
-class NodeManager;
 class DomainPartition;
 
 /**

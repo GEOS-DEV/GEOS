@@ -320,7 +320,6 @@ void CellBlock::calculateElementGeometricQuantities( NodeManager const & nodeMan
   } );
 }
 
-
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, string const &, Group * const )
 
 }
