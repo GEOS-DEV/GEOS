@@ -120,8 +120,8 @@ public:
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
-   * @param[in] faceManager manager of all faces in the DomainPartition
    * @param[in] nodeManager manager of all nodes in the DomainPartition
+   * @param[in] faceManager manager of all faces in the DomainPartition
    */
   void buildEdges( NodeManager & nodeManager, FaceManager & faceManager );
 
