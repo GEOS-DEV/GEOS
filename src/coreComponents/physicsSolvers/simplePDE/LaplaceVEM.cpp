@@ -193,42 +193,6 @@ void LaplaceVEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain )
                           DofManager::Connector::Elem );
 }
 
-/* SETUP SYSTEM
-   Setting up the system using the base class method
- */
-
-// void LaplaceVEM::setupSystem( DomainPartition & domain,
-//                               DofManager & dofManager,
-//                               CRSMatrix< real64, globalIndex > & localMatrix,
-//                               array1d< real64 > & localRhs,
-//                               array1d< real64 > & localSolution,
-//                               bool const setSparsity )
-// {
-//   GEOSX_MARK_FUNCTION;
-//   SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
-
-//   MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-//   NodeManager const * const nodeManager = mesh->getNodeManager();
-//   arrayView1d< globalIndex const > const &
-//   dofIndex = nodeManager->getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
-
-//   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
-//                                                   dofManager.numGlobalDofs(),
-//                                                   8*8*3 );
-
-//   finiteElement::fillSparsity< CellElementSubRegion,
-//                                LaplaceFEMKernel >( *mesh,
-//                                                    targetRegionNames(),
-//                                                    this->getDiscretizationName(),
-//                                                    dofIndex,
-//                                                    dofManager.rankOffset(),
-//                                                    sparsityPattern );
-
-//   sparsityPattern.compress();
-//   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
-
-// }
-
 /*
    ASSEMBLE SYSTEM
    This is the most important method to assemble the matrices needed before sending them to our solver.
@@ -335,22 +299,6 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       }
     } );
   } );
-
-  // finiteElement::
-  //   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-  //                                 constitutive::NullModel,
-  //                                 CellElementSubRegion,
-  //                                 LaplaceFEMKernel >( *mesh,
-  //                                                     targetRegionNames(),
-  //                                                     this->getDiscretizationName(),
-  //                                                     arrayView1d< string const >(),
-  //                                                     dofIndex,
-  //                                                     dofManager.rankOffset(),
-  //                                                     localMatrix,
-  //                                                     localRhs,
-  //                                                     m_fieldName );
-
-
 
   //END_SPHINX_INCLUDE_04
 }

@@ -72,14 +72,6 @@ public:
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
-  // virtual void
-  // setupSystem( DomainPartition & domain,
-  //              DofManager & dofManager,
-  //              CRSMatrix< real64, globalIndex > & localMatrix,
-  //              array1d< real64 > & localRhs,
-  //              array1d< real64 > & localSolution,
-  //              bool const setSparsity = false ) override;
-
   virtual void
   assembleSystem( real64 const time,
                   real64 const dt,
