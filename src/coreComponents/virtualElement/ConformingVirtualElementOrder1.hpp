@@ -96,8 +96,12 @@ public:
                            real64 ( & gradN )[maxSupportPoints][3] )
   {
     for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
       for( localIndex j = 0; j < 3; ++j )
+      {
         gradN[i][j] = m_basisDerivativesIntegralMean[i][j];
+      }
+    }
     return transformedQuadratureWeight( q );
   }
 
@@ -107,7 +111,9 @@ public:
   {
     GEOSX_UNUSED_VAR( q );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
       N[i] = m_basisFunctionsIntegralMean[i];
+    }
   }
 
   // GEOSX_HOST_DEVICE
@@ -126,7 +132,9 @@ public:
   {
     array1d< localIndex > selectAllPoints( numPoints );
     for( localIndex i = 0; i < numPoints; ++i )
+    {
       selectAllPoints[i] = i;
+    }
     return computeDiameter< DIMENSION, POINT_COORDS_TYPE,
                             array1d< localIndex > const & >( points,
                                                              selectAllPoints,

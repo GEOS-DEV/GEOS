@@ -51,16 +51,12 @@ static void
 checkIntegralMeanDerivativesConsistency()
 {
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
-  for( localIndex q = 0; q <
-       VEM::getNumQuadraturePoints(); ++q )
+  for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
   {
-    // arrayView2d< real64 const > basisDerivativesIntegralMean;
-    // ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >::getGradN( 0, basisDerivativesIntegralMean );
     real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
     VEM::calcGradN( q, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
-    for( localIndex iBasisFun = 0; iBasisFun <
-         VEM::getNumSupportPoints(); ++iBasisFun )
+    for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints(); ++iBasisFun )
     {
       sumX += basisDerivativesIntegralMean[iBasisFun][0];
       sumY += basisDerivativesIntegralMean[iBasisFun][1];
@@ -80,11 +76,11 @@ checkIntegralMeanDerivativesConsistency()
 
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void
-checkStabilizationMatrixConsistency
-  ( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-  localIndex const & cellIndex,
-  CellElementSubRegion::NodeMapType const & cellToNodes,
-  arrayView2d< real64 const > const & cellCenters )
+checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
+                                                   nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                                      localIndex const & cellIndex,
+                                      CellElementSubRegion::NodeMapType const & cellToNodes,
+                                      arrayView2d< real64 const > const & cellCenters )
 {
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
@@ -123,8 +119,7 @@ checkStabilizationMatrixConsistency
     stabTimeMonomialDofsNorm = 0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs( i ) +=
-        VEM::calcStabilizationValue( i, j );
+      stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j );
     }
     stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
   }
@@ -139,9 +134,7 @@ checkStabilizationMatrixConsistency
       stabTimeMonomialDofs( i ) = 0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs( i ) +=
-          VEM::calcStabilizationValue( i, j ) *
-          monomialVemDofs( monomInd, j );
+        stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j ) * monomialVemDofs( monomInd, j );
       }
       stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
     }
@@ -156,8 +149,7 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume )
 {
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   real64 sum = 0.0;
-  for( localIndex q = 0; q <
-       VEM::getNumQuadraturePoints(); ++q )
+  for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
   {
     real64 weight =
       VEM::transformedQuadratureWeight( q );
