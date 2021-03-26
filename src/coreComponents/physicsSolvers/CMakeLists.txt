@@ -38,10 +38,13 @@ set( physicsSolvers_headers
      multiphysics/LagrangianContactSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/PoroelasticSolver.hpp
+     multiphysics/MultiphasePoroelasticSolver.hpp
      multiphysics/PoroelasticSolverEmbeddedFractures.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
      multiphysics/CompositionalMultiphaseReservoir.hpp
+     multiphysics/SinglePhasePoroelasticKernel.hpp
+     multiphysics/MultiphasePoroelasticKernel.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/LaplaceVEM.hpp
@@ -92,6 +95,7 @@ set( physicsSolvers_sources
      multiphysics/LagrangianContactSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
      multiphysics/PoroelasticSolver.cpp
+     multiphysics/MultiphasePoroelasticSolver.cpp
      multiphysics/PoroelasticSolverEmbeddedFractures.cpp
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
@@ -109,7 +113,7 @@ set( physicsSolvers_sources
 if( BUILD_OBJ_LIBS)
   set( dependencyList common constitutive dataRepository linearAlgebra )
 else()
-  set( dependencyList common linearAlgebra )
+  set( dependencyList common constitutive linearAlgebra )
 endif()
 
 
