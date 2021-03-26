@@ -38,18 +38,8 @@ typedef _PMPIO_baton_t PMPIO_baton_t;
 namespace geosx
 {
 
-class DomainPartition;
-class MeshLevel;
-
-namespace constitutive
-{
-class ConstitutiveManager;
-}
-
-// *********************************************************************************************************************
-// *********************************************************************************************************************
 /**
- * This class serves as a wrapper to isolate the code from the specifics of SILO
+ * This class serves as a wrapper to isolate the code from the specifics of SILO 
  * output/input. Its members contain all the necessary information for reading/writing a group of SILO files.
  */
 class SiloFile
@@ -61,7 +51,7 @@ public:
   SiloFile();
 
   /// Destructor
-  virtual ~SiloFile();
+  virtual ~SiloFile() = default;
 
   /**
    * @brief function to setup directories where silo files will be written
@@ -72,7 +62,7 @@ public:
    * @brief Initializes silo for input/output
    * @param numGroups number of individual Silo files to generate
    */
-  void initialize( int const numGroups=1 );
+  void initialize( int const numGroups = 1 );
 
   /**
    * @brief finishes/closes up the silo interface
@@ -123,14 +113,11 @@ public:
   {
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
-    // char dirname[100];
     if( rank == 0 )
     {
-//      DBGetDir(m_dbBaseFilePtr, dirname );
       DBMkDir( m_dbBaseFilePtr, rootdir.c_str());
     }
 
-//    DBGetDir (m_dbFilePtr, dirname );
     DBMkDir( m_dbFilePtr, subdir.c_str());
   }
 
@@ -313,7 +300,6 @@ public:
                                      int const cycleNumber,
                                      real64 const problemTime );
   /**
-   *
    * @param group the group that holds the data to be written to the silo file
    * @param siloDirName the name of the silo directory to put this data into (i.e. nodalFields, elemFields)
    * @param meshname the name of the mesh attach this write to
@@ -369,7 +355,6 @@ public:
                             const localIndex_array & mask );
 
   /**
-   *
    * @param meshName the name of the mesh attach this write to
    * @param fieldName name of the field to write
    * @param field field data
@@ -388,7 +373,6 @@ public:
                        string const & multiRoot );
 
   /**
-   *
    * @param meshName the name of the mesh attach this write to
    * @param fieldName name of the field to write
    * @param field field data
@@ -583,7 +567,6 @@ public:
   /**
    * function to clear any empty multi-objects
    * @param cycleNum
-   *
    * When we write our multimesh and multivar objects, we do it assuming that there is a non-empty multimesh
    * or multivar object on each domain. This is incorrect, so we must modify the rootfile to remove empty references
    * to the multivar or multimesh objects and replace their path with "EMPTY"
@@ -693,12 +676,15 @@ private:
   string m_baseFileName;
 
   std::vector< string > m_emptyMeshes;
-//  string_array m_emptyMaterials;
+
   std::vector< string > m_emptyVariables;
 
   integer m_writeEdgeMesh;
+
   integer m_writeFaceMesh;
+
   integer m_writeCellElementMesh;
+
   integer m_writeFaceElementMesh;
 
   dataRepository::PlotLevel m_plotLevel;
@@ -709,7 +695,7 @@ private:
 /**
  * Namespace to hold some utilities needed by the functions in SiloFile.
  */
-namespace SiloFileUtilities
+namespace siloFileUtilities
 {
 /**
  * @tparam OUTTYPE the type of data to write out (int,float,real64)
@@ -864,10 +850,8 @@ template<> inline float CastField< float, real64 >( const real64 & field, int co
 template< typename TYPE >
 void SetVariableNames( string const & fieldName, string_array & varnamestring, char const * varnames[] );
 
+} /* namespace siloFileUtilities */
 
-}
+} /* namespace geosx */
 
-
-
-}
 #endif /* GEOSX_FILEIO_SILO_SILOFILE_HPP_ */
