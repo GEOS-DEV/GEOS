@@ -1274,6 +1274,9 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
         std::type_info const & typeID = wrapper->getTypeId();
 
+        if( typeID == typeid( array1d< real64 > ) ||
+            typeID == typeid( array2d< real64 > ) )
+        {
         rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                         false,
                                         [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )
@@ -1287,6 +1290,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
           arrayType & newarray = newWrapper.reference();
           newarray.resize( arrayType::NDIM, sourceArray.dims() );
         } );
+        }
       }
     }
   } );
