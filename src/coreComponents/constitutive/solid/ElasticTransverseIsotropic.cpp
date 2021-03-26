@@ -66,22 +66,27 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
 
   registerWrapper( viewKeyStruct::c11String(), &m_c11 ).
     setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
   registerWrapper( viewKeyStruct::c13String(), &m_c13 ).
     setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
   registerWrapper( viewKeyStruct::c33String(), &m_c33 ).
     setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
   registerWrapper( viewKeyStruct::c44String(), &m_c44 ).
     setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
   registerWrapper( viewKeyStruct::c66String(), &m_c66 ).
     setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "Elastic Bulk Modulus Field" );
 }
 
