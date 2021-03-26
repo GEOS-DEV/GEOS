@@ -24,8 +24,6 @@
 namespace geosx
 {
 
-class StableTimeStep;
-
 class FaceManager;
 
 /**

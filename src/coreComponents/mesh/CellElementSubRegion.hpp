@@ -64,14 +64,6 @@ public:
    */
   void copyFromCellBlock( CellBlock & source );
 
-  /**
-   * @brief Fill the CellElementSubRegion by querying a target set into the faceManager
-   * @param[in] faceManager a pointer to the faceManager
-   * @param[in] setName a reference to string containing the name of the set
-   */
-  void constructSubRegionFromFaceSet( FaceManager const * const faceManager,
-                                      string const & setName );
-
   ///@}
 
   /**
@@ -199,6 +191,27 @@ public:
    * @brief @return The map to the embedded surfaces
    */
   EmbSurfMapType const & embeddedSurfacesList() const { return m_toEmbeddedSurfaces; }
+
+  /**
+   * @brief Compute the center of each element in the subregion.
+   * @param[in] X an arrayView of (const) node positions
+   */
+  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+  {
+    arrayView2d< real64 > const & elementCenters = m_elementCenter;
+    localIndex nNodes = numNodesPerElement();
+
+    forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
+    {
+      LvArray::tensorOps::copy< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, 0 ) ] );
+      for( localIndex a = 1; a < nNodes; ++a )
+      {
+        LvArray::tensorOps::add< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, a ) ] );
+      }
+
+      LvArray::tensorOps::scale< 3 >( elementCenters[ k ], 1.0 / nNodes );
+    } );
+  }
 
   /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;
