@@ -397,7 +397,7 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   } );
 }
 
-void EdgeManager::buildEdges( FaceManager & faceManager, NodeManager & nodeManager )
+void EdgeManager::buildEdges( NodeManager & nodeManager, FaceManager & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 

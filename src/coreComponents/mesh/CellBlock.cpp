@@ -310,7 +310,7 @@ void CellBlock::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 }
 
 void CellBlock::calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
+                                                     FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
@@ -319,7 +319,6 @@ void CellBlock::calculateElementGeometricQuantities( NodeManager const & nodeMan
     calculateCellVolumesKernel( k, X );
   } );
 }
-
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, string const &, Group * const )
 
