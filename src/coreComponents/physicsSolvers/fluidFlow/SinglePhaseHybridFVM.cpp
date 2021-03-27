@@ -22,9 +22,9 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code

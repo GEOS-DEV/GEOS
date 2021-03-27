@@ -22,8 +22,8 @@
 #include "constitutive/fluid/PVTFunctions/BrineCO2Density.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/initialization.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

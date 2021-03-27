@@ -13,8 +13,8 @@
  */
 
 #include "TimeHistoryOutput.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/initialization.hpp"
+//#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/initialization.hpp"
 
 namespace geosx
 {
@@ -49,17 +49,17 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
 }
 
-void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryCollection & collector )
+void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, HistoryCollection & collector )
 {
   bool const freshInit = ( m_recordCount == 0 );
 
-  string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
+  string const outputDirectory = getOutputDirectory();//getGlobalState().getCommandLineOptions().outputDirectory;
   string const outputFile = joinPath( outputDirectory, m_filename );
 
   // rank == 0 do time output for the collector
   for( localIndex ii = 0; ii < collector.getCollectionCount( ); ++ii )
   {
-    HistoryMetadata metadata = collector.getMetadata( pm, ii );
+    HistoryMetadata metadata = collector.getMetadata( domain, ii );
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
     collector.registerBufferCall( ii, [this, ii]() { return m_io[ii]->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
@@ -77,21 +77,20 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
     GEOSX_MARK_SCOPE( "Fresh Time-hist initialization." );
     // do any 1-time metadata output
     localIndex metaCollectorCount = collector.getNumMetaCollectors( );
-    DomainPartition & domainGroup = pm.getDomainPartition();
     for( localIndex metaIdx = 0; metaIdx < metaCollectorCount; ++metaIdx )
     {
-      std::unique_ptr< HistoryCollection > metaCollector = collector.getMetaCollector( pm, metaIdx );
+      std::unique_ptr< HistoryCollection > metaCollector = collector.getMetaCollector( domain, metaIdx );
       std::vector< std::unique_ptr< HDFHistIO > > metaIOs( metaCollector->getCollectionCount( ) );
       for( localIndex ii = 0; ii < metaCollector->getCollectionCount( ); ++ii )
       {
-        HistoryMetadata metaMetadata = metaCollector->getMetadata( pm, ii );
+        HistoryMetadata metaMetadata = metaCollector->getMetadata( domain, ii );
         metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName( ) );
         metaIOs[ii] = std::make_unique< HDFHistIO >( outputFile, metaMetadata, 0, 1 );
         metaCollector->registerBufferCall( ii, [&metaIOs, ii] () { return metaIOs[ii]->getBufferHead( ); } );
         metaIOs[ii]->init( false );
       }
 
-      metaCollector->execute( 0.0, 0.0, 0, 0, 0, domainGroup );
+      metaCollector->execute( 0.0, 0.0, 0, 0, 0, domain );
       for( localIndex ii = 0; ii < metaCollector->getCollectionCount( ); ++ii )
       {
         metaIOs[ii]->write( );
@@ -105,7 +104,7 @@ void TimeHistoryOutput::initializePostSubGroups()
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
+    string const outputDirectory = getOutputDirectory();//getGlobalState().getCommandLineOptions().outputDirectory;
     if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
     {
       makeDirsForPath( outputDirectory );
@@ -115,12 +114,13 @@ void TimeHistoryOutput::initializePostSubGroups()
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
 
-  ProblemManager & pm = getGlobalState().getProblemManager();
+//  ProblemManager & pm = getGlobalState().getProblemManager();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
   for( auto collector_path : m_collectorPaths )
   {
     HistoryCollection & collector = this->getGroupByPath< HistoryCollection >( collector_path );
     collector.initializePostSubGroups();
-    initCollectorParallel( pm, collector );
+    initCollectorParallel( domain, collector );
   }
 }
 

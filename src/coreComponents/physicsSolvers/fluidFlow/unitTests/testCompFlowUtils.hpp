@@ -17,8 +17,8 @@
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "meshUtilities/MeshManager.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mesh/MeshManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geosx

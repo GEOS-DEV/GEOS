@@ -45,6 +45,14 @@ public:
    **/
   static string catalogName() { return "OutputBase"; }
 
+  static void setOutputDirectory( string const & outputDir );
+
+  static string getOutputDirectory() {return m_outputDirectory;}
+
+  static void setFileNameRoot( string const & root );
+
+  static string getFileNameRoot() { return m_fileNameRoot; }
+
   /// Method for setting up output directories.
   virtual void setupDirectoryStructure();
 
@@ -84,6 +92,9 @@ protected:
 private:
   string m_childDirectory;
   integer m_parallelThreads;
+
+  static string m_outputDirectory;
+  static string m_fileNameRoot;
 
 };
 

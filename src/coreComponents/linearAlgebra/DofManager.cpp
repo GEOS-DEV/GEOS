@@ -20,8 +20,8 @@
 
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "mesh/MeshLevel.hpp"
 

@@ -24,7 +24,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {

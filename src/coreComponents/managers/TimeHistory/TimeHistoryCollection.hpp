@@ -19,16 +19,18 @@
 #ifndef GEOSX_TimeHistoryCollection_HPP_
 #define GEOSX_TimeHistoryCollection_HPP_
 
-#include "interface/Tasks/TaskBase.hpp"
+#include "events/tasks/TaskBase.hpp"
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
 
 #include <functional>
 
 namespace geosx
 {
+
+class DomainPartition;
+
 using namespace dataRepository;
 
 /**
@@ -68,9 +70,9 @@ public:
    * @param collectionIdx Which collected item to get metadata for.
    * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
-  virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex collectionIdx )
+  virtual HistoryMetadata getMetadata( DomainPartition const & domain, localIndex collectionIdx )
   {
-    GEOSX_UNUSED_VAR( problemManager );
+    GEOSX_UNUSED_VAR( domain );
     GEOSX_UNUSED_VAR( collectionIdx );
     return HistoryMetadata( );
   }
@@ -167,9 +169,9 @@ public:
    * immediately
    *         after being used to perform output during simulation initialization.
    */
-  virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx )
+  virtual std::unique_ptr< HistoryCollection > getMetaCollector( DomainPartition const & domain, localIndex metaIdx )
   {
-    GEOSX_UNUSED_VAR( problemManager );
+    GEOSX_UNUSED_VAR( domain );
     GEOSX_UNUSED_VAR( metaIdx );
     return std::unique_ptr< HistoryCollection >( nullptr );
   }

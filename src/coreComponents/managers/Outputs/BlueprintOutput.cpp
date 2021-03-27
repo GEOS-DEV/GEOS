@@ -20,9 +20,7 @@
 #include "managers/Outputs/BlueprintOutput.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/initialization.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 
@@ -148,7 +146,9 @@ bool BlueprintOutput::execute( real64 const time,
   /// Write out the root index file, then write out the mesh.
   char buffer[ 128 ];
   GEOSX_ERROR_IF_GE( snprintf( buffer, 128, "blueprintFiles/cycle_%07d", cycle ), 128 );
-  string const filePathForRank = dataRepository::writeRootFile( fileRoot, buffer );
+
+  string const completePath = joinPath( OutputBase::getOutputDirectory(), buffer );
+  string const filePathForRank = dataRepository::writeRootFile( fileRoot, completePath );
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
 
   return false;

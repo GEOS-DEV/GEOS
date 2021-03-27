@@ -3,16 +3,15 @@ set( subdirs
      common
      linearAlgebra
      codingUtilities
+     events
      fileIO
      dataRepository
-     interface
+     mainInterface
      managers
      constitutive
      finiteElement
      finiteVolume
      mesh
-     meshUtilities
-     mpiCommunications
      physicsSolvers
      python
      virtualElement
@@ -80,7 +79,8 @@ if( BUILD_OBJ_LIBS )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  ${coreLibs}
-                    SHARED ${GEOSX_BUILD_SHARED_BOOL}
+                    OBJECT ${buildAsObj}
+#                    SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
 else()
   blt_combine_static_libraries( NAME          geosx_core

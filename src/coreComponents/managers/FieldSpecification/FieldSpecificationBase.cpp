@@ -14,9 +14,9 @@
 
 #include "FieldSpecificationBase.hpp"
 
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 
 namespace geosx

@@ -27,7 +27,7 @@
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "interface/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx

@@ -17,8 +17,8 @@
 #include "LvArray/src/Array.hpp"
 #include "dataRepository/BufferOps.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
-#include "interface/initialization.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 #include "dataRepository/wrapperHelpers.hpp"
 

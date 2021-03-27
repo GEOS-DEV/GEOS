@@ -23,7 +23,7 @@
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {

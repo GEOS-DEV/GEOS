@@ -170,12 +170,13 @@ blt_add_library( NAME                  linearAlgebra
                  SOURCES               ${linearAlgebra_sources}
                  HEADERS               ${linearAlgebra_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
 geosx_add_code_checks( PREFIX linearAlgebra )
 
-add_subdirectory( unitTests )
+#add_subdirectory( unitTests )
 
 message( "Leaving /src/coreComponents/linearAlgebra/CMakeLists.txt")

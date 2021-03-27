@@ -14,11 +14,11 @@
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "gtest/gtest.h"
-#include "interface/initialization.hpp"
+#include "mainInterface/initialization.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/FunctionBase.hpp"
 #include "managers/Functions/TableFunction.hpp"
-#include "interface/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOSX_USE_MATHPRESSO
   #include "managers/Functions/SymbolicFunction.hpp"

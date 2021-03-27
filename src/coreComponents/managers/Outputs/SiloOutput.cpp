@@ -20,10 +20,10 @@
 
 #include "common/TimingMacros.hpp"
 #include "fileIO/silo/SiloFile.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/initialization.hpp"
+//#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/initialization.hpp"
 
 namespace geosx
 {
@@ -94,7 +94,9 @@ bool SiloOutput::execute( real64 const time_n,
 
   integer const numFiles = parallelThreads() == 0 ? size : parallelThreads();
 
-  silo.setOutputDirectory( getGlobalState().getCommandLineOptions().outputDirectory ),
+  // TODO set this during initialization
+  //  silo.setOutputDirectory( getGlobalState().getCommandLineOptions().outputDirectory ),
+  silo.setOutputDirectory( getOutputDirectory() ),
   silo.setPlotLevel( m_plotLevel );
   silo.setWriteEdgeMesh( m_writeEdgeMesh );
   silo.setWriteFaceMesh( m_writeFaceMesh );

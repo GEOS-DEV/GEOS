@@ -18,20 +18,20 @@
 
 #include "EmbeddedSurfaceGenerator.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "interface/NumericalMethodsManager.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mainInterface/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
-#include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
-#include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
+#include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
+#include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
 
 #ifdef USE_GEOSX_PTP
 #include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"

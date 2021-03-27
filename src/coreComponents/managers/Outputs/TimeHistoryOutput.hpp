@@ -96,7 +96,7 @@ private:
    * @param group The ProblemManager cast to a Group
    * @param collector The HistoryCollector to intialize
    */
-  void initCollectorParallel( ProblemManager & problemManager, HistoryCollection & collector );
+  void initCollectorParallel( DomainPartition & domain, HistoryCollection & collector );
 
   /// The paths of the collectors to collect history from.
   string_array m_collectorPaths;

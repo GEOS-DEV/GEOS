@@ -17,9 +17,7 @@
  */
 
 #include "VTKOutput.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/initialization.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -33,7 +31,7 @@ VTKOutput::VTKOutput( string const & name,
   m_writeFaceMesh(),
   m_plotLevel(),
   m_writeBinaryData( 1 ),
-  m_writer( getGlobalState().getCommandLineOptions().outputDirectory + '/' + m_plotFileRoot )
+  m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
     setDefaultValue( m_plotFileRoot ).
@@ -61,7 +59,7 @@ VTKOutput::~VTKOutput()
 
 void VTKOutput::postProcessInput()
 {
-  m_writer.setOutputLocation( getGlobalState().getCommandLineOptions().outputDirectory, m_plotFileRoot );
+  m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
 }
 
 bool VTKOutput::execute( real64 const time_n,

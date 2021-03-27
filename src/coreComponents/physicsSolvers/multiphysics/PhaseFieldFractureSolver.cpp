@@ -20,11 +20,11 @@
 #include "PhaseFieldFractureSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "interface/NumericalMethodsManager.hpp"
+#include "mainInterface/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 

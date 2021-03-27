@@ -18,18 +18,16 @@
 
 #include "SurfaceGenerator.hpp"
 
-#include "interface/GeosxState.hpp"
-#include "interface/ProblemManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "interface/NumericalMethodsManager.hpp"
+//#include "mainInterface/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
@@ -296,7 +294,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
 void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");//getGlobalState().getProblemManager().getDomainPartition();
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
     MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
@@ -400,7 +398,8 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 
 void SurfaceGenerator::postRestartInitialization()
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");//getGlobalState().getProblemManager().getDomainPartition();
+
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();

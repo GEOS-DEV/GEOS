@@ -1,7 +1,7 @@
-#include "managers/Outputs/TimeHistoryOutput.hpp"
+//#include "managers/Outputs/TimeHistoryOutput.hpp"
 #include "fileIO/timeHistory/TimeHistHDF.hpp"
-#include "dataRepository/BufferOpsDevice.hpp"
-#include "interface/initialization.hpp"
+//#include "dataRepository/BufferOpsDevice.hpp"
+#include "mainInterface/initialization.hpp"
 
 #include <gtest/gtest.h>
 
@@ -31,8 +31,6 @@ TEST( testHDFIO_parallel, SingleValueHistory )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
-  geosx::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
   return result;
 }

@@ -14,12 +14,12 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "interface/initialization.hpp"
-#include "interface/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/GeosxState.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "dataRepository/ConduitRestart.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "utils.hpp"
 
 // TPL includes

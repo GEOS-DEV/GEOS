@@ -14,12 +14,12 @@
 
 #include "gtest/gtest.h"
 
-#include "interface/initialization.hpp"
+#include "mainInterface/initialization.hpp"
 
-#include "interface/ProblemManager.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/GeosxState.hpp"
-#include "meshUtilities/MeshManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mesh/MeshManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/FaceManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"

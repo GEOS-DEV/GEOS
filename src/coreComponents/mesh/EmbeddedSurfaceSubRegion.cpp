@@ -19,7 +19,7 @@
 #include "EmbeddedSurfaceSubRegion.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"

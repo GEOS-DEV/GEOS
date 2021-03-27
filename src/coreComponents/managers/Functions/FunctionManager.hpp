@@ -42,6 +42,8 @@ public:
    */
   virtual ~FunctionManager() override;
 
+  static FunctionManager const & getInstance();
+
   /**
    * @brief Static Factory Catalog Functions
    * @return the catalog name
@@ -61,6 +63,8 @@ public:
    */
   virtual void expandObjectCatalogs() override;
 
+private:
+  static FunctionManager * m_instance;
 };
 
 } /* namespace geosx */

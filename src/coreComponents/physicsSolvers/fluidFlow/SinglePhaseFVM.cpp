@@ -18,12 +18,12 @@
 
 #include "SinglePhaseFVM.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
-#include "interface/NumericalMethodsManager.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mainInterface/NumericalMethodsManager.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"

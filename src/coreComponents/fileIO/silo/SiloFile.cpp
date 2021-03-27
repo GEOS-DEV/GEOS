@@ -29,9 +29,9 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <iostream>
 

@@ -14,11 +14,7 @@ set( gtest_geosx_tests
 
 set( dependencyList gtest )
 
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core conduit)
-else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)
-endif()
+set (dependencyList ${dependencyList} geosx_core conduit)
 
 if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )

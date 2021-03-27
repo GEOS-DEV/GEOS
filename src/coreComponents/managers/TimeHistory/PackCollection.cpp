@@ -1,5 +1,5 @@
 #include "PackCollection.hpp"
-#include "interface/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {
@@ -33,14 +33,14 @@ void PackCollection::initializePostSubGroups()
 {
   localIndex numSets = m_setNames.size( );
   m_collectionCount = numSets == 0 ? 1 : numSets;
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+//  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
   updateSetsIndices( domain );
   HistoryCollection::initializePostSubGroups();
 }
 
-HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex collectionIdx )
+HistoryMetadata PackCollection::getMetadata( DomainPartition const & domain, localIndex collectionIdx )
 {
-  DomainPartition & domain = pm.getDomainPartition();
   Group const * target_object = this->getTargetObject( domain );
   WrapperBase const & target = target_object->getWrapperBase( m_fieldName );
   if( m_setNames.size() != 0 )
@@ -119,20 +119,20 @@ void PackCollection::filterGhostIndices( localIndex const setIndex,
 }
 
 // TODO : once we add additional history collectors, this should likely be pulled into a super-class
-ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & domain )
+ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition const & domain )
 {
-  dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  dataRepository::Group const * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
   string_array const targetTokens = stringutilities::tokenize( m_objectPath, "/" );
   localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
   for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
   {
-    dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
+    dataRepository::Group const * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
     if( elemRegionSubGroup != nullptr )
     {
       targetGroup = elemRegionSubGroup;
     }
-    dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
+    dataRepository::Group const * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
     if( elemSubRegionSubGroup != nullptr )
     {
       targetGroup = elemSubRegionSubGroup;

@@ -5,14 +5,15 @@
 set(common_headers
     ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     BufferAllocator.hpp
-    DataTypes.hpp
-    Path.hpp
-    GeosxMacros.hpp
-    Stopwatch.hpp
-    TimingMacros.hpp
-    Logger.hpp
     DataLayouts.hpp
+    DataTypes.hpp
+    GeosxMacros.hpp
+    Logger.hpp
+    MpiWrapper.hpp
+    Path.hpp
+    Stopwatch.hpp
     Tensor.hpp
+    TimingMacros.hpp
    )
 
 #
@@ -22,6 +23,7 @@ set(common_sources
     BufferAllocator.cpp
     DataTypes.cpp
     Logger.cpp
+    MpiWrapper.cpp
     Path.cpp
    )
 
@@ -51,6 +53,7 @@ blt_add_library( NAME                  common
 #                 SHARED TRUE
                )
 
+target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX common )

@@ -20,8 +20,8 @@
 #include "ReservoirSolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 

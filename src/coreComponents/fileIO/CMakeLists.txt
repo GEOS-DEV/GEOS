@@ -17,7 +17,7 @@ set( fileIO_sources
      schema/schemaUtilities.cpp )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList common silo hdf5 pugixml RAJA  )
+  set( dependencyList common mesh constitutive silo hdf5  )
 else()
   set( dependencyList 
        lvarray
@@ -57,24 +57,27 @@ if( ENABLE_VTK )
 endif()
 
 if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
+  list( APPEND dependencyList openmp )
 endif()
 
 if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+  list( APPEND dependencyList  cuda )
 endif()
 
 if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
+  list( APPEND dependencyList  caliper adiak )
 endif()
+
+
 
 blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
-                 DEPENDS_ON            ${dependencyList}
+                 DEPENDS_ON            ${dependencyList} adiak caliper
                  OBJECT                ${buildAsObj}
                )
-               
+
+
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX fileIO )

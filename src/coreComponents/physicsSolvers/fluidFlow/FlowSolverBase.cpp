@@ -20,10 +20,10 @@
 
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/NumericalMethodsManager.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/NumericalMethodsManager.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 namespace geosx
 {

@@ -17,7 +17,7 @@
 // Source includes
 #include "dataRepository/ObjectCatalog.hpp"
 #include "common/Logger.hpp"
-#include "interface/initialization.hpp"
+#include "mainInterface/initialization.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

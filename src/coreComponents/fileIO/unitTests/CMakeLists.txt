@@ -6,19 +6,19 @@ set(geosx_fileio_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest geosx_core )
+set( dependencyList gtest fileIO dataRepository )
 
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if ( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
-endif()
+#if ( ENABLE_OPENMP )
+#  set( dependencyList ${dependencyList} openmp )
+#endif()
+#
+#if ( ENABLE_CUDA )
+#  set( dependencyList ${dependencyList} cuda )
+#endif()
+#
+#if ( ENABLE_CALIPER )
+#  set( dependencyList ${dependencyList} caliper adiak )
+#endif()
 
 #
 # Add gtest C++ based tests
@@ -47,7 +47,7 @@ if ( ENABLE_MPI )
      blt_add_executable( NAME ${test_name}
                           SOURCES ${test}
                           OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                          DEPENDS_ON ${dependencyList} 
+                          DEPENDS_ON ${dependencyList}
                           )
 
       blt_add_test( NAME ${test_name}

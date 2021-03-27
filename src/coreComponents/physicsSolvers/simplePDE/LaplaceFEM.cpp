@@ -20,13 +20,13 @@
 #include "LaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/DataTypes.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/NumericalMethodsManager.hpp"
-#include "interface/GeosxState.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/NumericalMethodsManager.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {

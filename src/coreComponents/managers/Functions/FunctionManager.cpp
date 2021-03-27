@@ -25,6 +25,8 @@
 namespace geosx
 {
 
+FunctionManager * FunctionManager::m_instance = nullptr;
+
 using namespace dataRepository;
 
 
@@ -33,13 +35,23 @@ FunctionManager::FunctionManager( const string & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
+
+  GEOSX_ERROR_IF( m_instance != nullptr, "Only one FunctionManager can exist at a time." );
+  m_instance = this;
 }
 
 FunctionManager::~FunctionManager()
 {
-  // TODO Auto-generated destructor stub
+  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  m_instance = nullptr;
 }
 
+FunctionManager const & FunctionManager::getInstance()
+{
+  GEOSX_ERROR_IF( m_instance == nullptr,
+                  "FunctionManager has not been constructed, or is already been destructed." );
+  return *m_instance;
+}
 
 Group * FunctionManager::createChild( string const & functionCatalogKey,
                                       string const & functionName )

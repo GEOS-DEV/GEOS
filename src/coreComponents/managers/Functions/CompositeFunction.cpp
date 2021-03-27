@@ -15,7 +15,7 @@
 #include "FunctionManager.hpp"
 #include "CompositeFunction.hpp"
 #include "common/DataTypes.hpp"
-#include "interface/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {

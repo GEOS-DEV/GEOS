@@ -23,6 +23,9 @@
 
 namespace geosx
 {
+
+class DomainPartition;
+
 /**
  * @class PackCollection
  *
@@ -46,7 +49,7 @@ public:
   virtual void initializePostSubGroups() override;
 
   /// @copydoc geosx::HistoryCollection::getMetadata
-  virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex collectionIdx ) override;
+  virtual HistoryMetadata getMetadata( DomainPartition const & domain, localIndex collectionIdx ) override;
 
   /// @copydoc geosx::HistoryCollection::getTargetName
   virtual const string & getTargetName( ) const override
@@ -92,7 +95,7 @@ protected:
    * @param domain The problem domain.
    * @return The target object as an ObjectManager.
    */
-  ObjectManagerBase const * getTargetObject( DomainPartition & domain );
+  ObjectManagerBase const * getTargetObject( DomainPartition const & domain );
 
   /// @copydoc geosx::HistoryCollection::collect
   virtual void collect( DomainPartition & domain,

@@ -15,8 +15,8 @@ set( nranks 2 )
 #
 set( dependencyList gtest )
 
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core conduit)
+if ( TRUE ) #GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core )
 else()
   set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)
 endif()

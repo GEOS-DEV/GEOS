@@ -18,15 +18,15 @@
 
 #include "SinglePhaseBase.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 

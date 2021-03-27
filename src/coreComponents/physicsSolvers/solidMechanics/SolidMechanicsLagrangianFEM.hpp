@@ -22,7 +22,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"

@@ -17,11 +17,13 @@
  */
 
 #include "OutputBase.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 
 namespace geosx
 {
+string OutputBase::m_outputDirectory;
+string OutputBase::m_fileNameRoot;
 
 using namespace dataRepository;
 
@@ -54,10 +56,22 @@ OutputBase::CatalogInterface::CatalogType & OutputBase::getCatalog()
 }
 
 
+
+
 void OutputBase::initializePreSubGroups()
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();
+}
+
+void OutputBase::setOutputDirectory( string const & outputDir )
+{
+  m_outputDirectory = outputDir;
+}
+
+void OutputBase::setFileNameRoot( string const & root )
+{
+  m_fileNameRoot = root;
 }
 
 

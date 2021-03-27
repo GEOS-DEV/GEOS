@@ -20,7 +20,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {

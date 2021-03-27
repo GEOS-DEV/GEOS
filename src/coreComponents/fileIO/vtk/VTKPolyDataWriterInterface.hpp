@@ -17,7 +17,7 @@
 
 #include "common/DataTypes.hpp"
 
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 #include "mesh/CellElementSubRegion.hpp"
 

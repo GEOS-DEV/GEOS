@@ -14,7 +14,7 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "interface/initialization.hpp"
+#include "mainInterface/initialization.hpp"
 #include "dataRepository/wrapperHelpers.hpp"
 #include "utils.hpp"
 

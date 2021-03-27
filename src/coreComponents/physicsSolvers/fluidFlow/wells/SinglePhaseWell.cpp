@@ -18,18 +18,18 @@
 
 #include "SinglePhaseWell.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "meshUtilities/PerforationData.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/PerforationData.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 

@@ -21,11 +21,11 @@
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/DofManager.hpp"
-#include "interface/initialization.hpp"
-#include "interface/ProblemManager.hpp"
-#include "interface/DomainPartition.hpp"
-#include "meshUtilities/MeshManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 // TPL includes

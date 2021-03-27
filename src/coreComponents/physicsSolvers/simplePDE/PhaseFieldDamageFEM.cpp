@@ -23,8 +23,8 @@
 
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -36,9 +36,9 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "interface/NumericalMethodsManager.hpp"
+#include "mainInterface/NumericalMethodsManager.hpp"
 
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {

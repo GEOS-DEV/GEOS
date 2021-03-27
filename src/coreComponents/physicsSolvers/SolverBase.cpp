@@ -18,7 +18,7 @@
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {

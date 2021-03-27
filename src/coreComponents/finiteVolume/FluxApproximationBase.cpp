@@ -19,10 +19,10 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "interface/GeosxState.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {

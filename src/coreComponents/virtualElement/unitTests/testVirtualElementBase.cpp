@@ -13,13 +13,13 @@
  */
 
 // Source includes
-#include "interface/initialization.hpp"
-#include "interface/ProblemManager.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "virtualElement/VirtualElementBase.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
-#include "interface/DomainPartition.hpp"
-#include "interface/GeosxState.hpp"
-#include "meshUtilities/MeshManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mesh/MeshManager.hpp"
 
 // TPL includes
 #include "gtest/gtest.h"

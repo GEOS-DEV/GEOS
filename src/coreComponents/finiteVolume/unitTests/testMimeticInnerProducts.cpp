@@ -20,9 +20,9 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
-#include "interface/initialization.hpp"
+#include "mainInterface/initialization.hpp"
 #include "mesh/FaceManager.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

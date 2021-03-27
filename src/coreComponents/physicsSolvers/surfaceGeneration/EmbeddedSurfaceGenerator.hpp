@@ -19,9 +19,9 @@
 #ifndef SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
 #define SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
 
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 
 namespace geosx

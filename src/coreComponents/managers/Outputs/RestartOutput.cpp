@@ -18,11 +18,11 @@
 
 #include "RestartOutput.hpp"
 #include "fileIO/silo/SiloFile.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "interface/ProblemManager.hpp"
-#include "interface/GeosxState.hpp"
-#include "interface/initialization.hpp"
+#include "mainInterface/ProblemManager.hpp"
+//#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/initialization.hpp"
 
 namespace geosx
 {
@@ -46,16 +46,22 @@ bool RestartOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 {
   GEOSX_MARK_FUNCTION;
 
-  ProblemManager & problemManager = getGlobalState().getProblemManager();
+//  ProblemManager & problemManager = getGlobalState().getProblemManager();
+  Group & rootGroup = this->getGroupByPath("/Problem");
 
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
   char fileName[200] = {0};
-  sprintf( fileName, "%s_%s_%09d", problemManager.getProblemName().c_str(), "restart", cycleNumber );
+  sprintf( fileName, "%s_%s_%09d", getFileNameRoot().c_str(), "restart", cycleNumber );
 
-  problemManager.prepareToWrite();
-  writeTree( fileName, getGlobalState().getRootConduitNode() );
-  problemManager.finishWriting();
+
+
+  //problemManager.prepareToWrite();
+  //writeTree( fileName, getGlobalState().getRootConduitNode() );
+  //problemManager.finishWriting();
+  rootGroup.prepareToWrite();
+  writeTree( joinPath( OutputBase::getOutputDirectory(), fileName ), *(rootGroup.getConduitNode().parent()) );
+  rootGroup.finishWriting();
 
   return false;
 }

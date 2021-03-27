@@ -14,7 +14,7 @@ if( NOT PYTHON_POST_EXECUTABLE )
 endif()
 
 
-blt_register_library( NAME python_interp
+blt_import_library( NAME python_interp
                       INCLUDES    ${PYTHON_INTERP_INCLUDE_DIRS}
                       HEADERS     ${PYTHON_INTERP_INCLUDE_DIRS}
                       HEADERS_OUTPUT_SUBDIR python_interp

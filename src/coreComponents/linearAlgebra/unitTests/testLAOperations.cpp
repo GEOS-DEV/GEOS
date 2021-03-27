@@ -21,7 +21,7 @@
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "interface/initialization.hpp"
+#include "mainInterface/initialization.hpp"
 #include "testLinearAlgebraUtils.hpp"
 
 using namespace geosx;

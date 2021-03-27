@@ -18,9 +18,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 #define GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "interface/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {

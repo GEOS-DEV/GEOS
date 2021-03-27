@@ -21,7 +21,7 @@
 #include <numeric>
 
 #include "common/DataTypes.hpp"
-#include "interface/initialization.hpp"
+#include "mainInterface/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
