@@ -12,10 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file PartitionBase.cpp
- */
-
 #include "mpiCommunications/PartitionBase.hpp"
 
 #include "managers/DomainPartition.hpp"
@@ -32,9 +28,7 @@ PartitionBase::PartitionBase( ):
   m_domain( nullptr ),
   m_hasLocalGhosts( false )
 {
-  //maxComm
 }
-
 
 PartitionBase::PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton ):
   m_size( numPartitions ),
@@ -48,9 +42,7 @@ PartitionBase::PartitionBase( const unsigned int numPartitions, const unsigned i
   m_t4( 0.0 ),
   m_hasLocalGhosts( false )
 {
-  //maxComm
 }
-
 
 PartitionBase::~PartitionBase()
 {}

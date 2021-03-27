@@ -12,19 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file PartitionBase.hpp
- */
-
 #ifndef GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 #define GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 
 #include "common/DataTypes.hpp"
 
 #include "mpiCommunications/NeighborCommunicator.hpp"
-
-// class oBinStream;
-// class iBinStream;
 
 namespace geosx
 {
@@ -105,47 +98,11 @@ public:
    */
   virtual bool isCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] ) = 0;
 
-//  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
-
-  //virtual void AssignGlobalIndices( DomainPartition * domain );
-
-//  virtual void FindMatchedBoundaryIndices( string const & key,
-//                                           const ObjectManagerBase& object );
-
-
-//  virtual void SetUpNeighborLists( DomainPartition * domain,
-//                                   const bool contactActive );
-
-//  void SetRankOfNeighborNeighbors();
-
-//  virtual void ResetNeighborLists( PhysicalDomainT& domain,
-//                                   const int elementGhostingDepth );
-
-//  virtual void ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects );
-
-//  template< typename T >
-//  void SendReceive( const array1d< array1d< T > > & sendArray, array1d< array1d< T > > & recvArray );
-
-//  void SynchronizeFields( const std::map<string, string_array >& fieldNames,
-//                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
-
-//  void SetOwnedByRank( const std::map< string, globalIndex_array > & localBoundaryGlobalIndices,
-//                       std::map< string, std::map< globalIndex, int > > & boundaryOwnership );
-
-//  void SetGhostArrays( DomainPartition * domain );
-
-//  localIndex_array GetFaceSendIndices();
-
   /**
    * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.
    * @param bufferSize The distance.
    */
   virtual void setContactGhostRange( const real64 bufferSize ) = 0;
-//
-//  void SetBufferSizes( const std::map<string, string_array >& fieldNames,
-//                       const CommRegistry::commID commID  );
-//
-//  int NumberOfNeighbors( ) {return LvArray::integerConversion<int>(m_neighbors.size());}
 
   /// Size of the group associated with the MPI communicator
   int m_size;
@@ -174,9 +131,6 @@ public:
    * @return The number of associated colors.
    */
   int numColor() const {return m_numColors;}
-
-//  void DeleteExcessNeighbors();
-//  void GraphBasedColoring();
 
 protected:
   /**
@@ -250,14 +204,6 @@ public:
   std::map< string, localIndex_array > m_elementRegionsLocalGhostSources;
   /// Unused parameter
   int m_ghostDepth;
-
-private:
-//  virtual void AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT&
-// compositionObject );
-
-//  void CommunicateRequiredObjectIndices();
-
-
 };
 
 }
