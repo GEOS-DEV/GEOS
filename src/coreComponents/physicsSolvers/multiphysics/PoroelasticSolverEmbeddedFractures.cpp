@@ -26,7 +26,7 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
 #include "finiteElement/Kinematics.h"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
+#include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "mesh/DomainPartition.hpp"

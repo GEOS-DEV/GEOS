@@ -178,6 +178,17 @@ public:
     return size;
   }
 
+  inline static bool commCompare( MPI_Comm const & comm1, MPI_Comm const & comm2 )
+  {
+#ifdef GEOSX_USE_MPI
+    int result;
+    MPI_Comm_compare( comm1, comm2, &result );
+    return result == MPI_IDENT || result == MPI_CONGRUENT;
+#else
+    return comm1 == comm2;
+#endif
+  }
+
   static bool initialized();
 
   static int init( int * argc, char * * * argv );
@@ -524,7 +535,7 @@ public:
    * @return a pair where first is the prefix sum, second is the full sum
    */
   template< typename U, typename T >
-  static U prefixSum( T const value );
+  static U prefixSum( T const value, MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Convenience function for the MPI_Reduce function.
@@ -892,13 +903,13 @@ int MpiWrapper::iSend( T const * const buf,
 }
 
 template< typename U, typename T >
-U MpiWrapper::prefixSum( T const value )
+U MpiWrapper::prefixSum( T const value, MPI_Comm comm )
 {
   U localResult;
 
 #ifdef GEOSX_USE_MPI
   U const convertedValue = value;
-  int const error = MPI_Exscan( &convertedValue, &localResult, 1, getMpiType< U >(), MPI_SUM, MPI_COMM_GEOSX );
+  int const error = MPI_Exscan( &convertedValue, &localResult, 1, getMpiType< U >(), MPI_SUM, comm );
   MPI_CHECK_ERROR( error );
 #endif
   if( commRank() == 0 )
