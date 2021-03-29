@@ -1131,7 +1131,7 @@ void SiloFile::writeGroupSilo( Group const & group,
                                bool const isRestart,
                                const localIndex_array & mask )
 {
-  string subDirectory = siloDirName;
+  //string subDirectory = siloDirName;
   string rootDirectory = "/" + siloDirName;
 
   {
@@ -1897,6 +1897,7 @@ int getTensorRankOfArray( ArrayView< TYPE const, NDIM, USD > const & field )
   return rval;
 }
 
+
 template< typename OUTPUTTYPE >
 void SiloFile::writeWrappersToSilo( string const & meshname,
                                     const dataRepository::Group::wrapperMap & wrappers,
@@ -1925,7 +1926,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array1d< real64 > > const & >( *wrapper );
 
-        this->writeDataField< real64 >( meshname.c_str(), 
+        this->writeDataField< OUTPUTTYPE >( meshname.c_str(), 
                                         fieldName,
                                         wrapperT.reference(), 
                                         centering, 
@@ -2789,6 +2790,7 @@ void SiloFile::writeMaterialDataField3d( string const & meshName,
         component = "12";
       }
     }
+
     string componentFieldName = fieldName + "_" + component;
     writeMaterialDataField< real64 >( meshName,
                                       componentFieldName,
@@ -2888,6 +2890,7 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_TENSOR };
+
     string const definition = "{{<"+ MatDir + "/stress_11>,<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_13>},"
                                                                                                   "{<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_22>,<"+ MatDir + "/stress_23>},"
                                                                                                                                                                      "{<"+ MatDir + "/stress_13>,<"+
@@ -2994,8 +2997,11 @@ void SiloFile::writeVectorVarDefinition( string const & fieldName,
       const char * expObjName = expressionName.c_str();
       const char * const names[1] = { expObjName };
       int const types[1] = { DB_VARTYPE_VECTOR };
-      string const definition = "{<"+ subDirectory + "/" + fieldName + "_0>,<"+ subDirectory + "/" + fieldName + "_1>,<"+ subDirectory + "/" + fieldName +
-                                "_2>}";
+
+      string const definition = "{<"+ subDirectory + "/" + fieldName + "_0>,"
+                                 "<"+ subDirectory + "/" + fieldName + "_1>,"
+                                 "<"+ subDirectory + "/" + fieldName + "_2>}";
+
       const char * const defns[1] = { definition.c_str() };
       DBPutDefvars( m_dbBaseFilePtr,
                     expObjName,
