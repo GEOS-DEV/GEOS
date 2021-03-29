@@ -49,7 +49,7 @@ void getStress( CMW const cmw,
 
 template< typename CMW >
 void setStress( CMW cmw,
-                real64 const (& stress)[6] )
+                real64 const (&stress)[6] )
 {
   forAll< serialPolicy >( 1, [&stress, cmw] ( localIndex const k )
   {
@@ -78,7 +78,7 @@ void testCamClayDriver()
     "      defaultDensity=\"2700\" "
     "      defaultRefPressure=\"-1.0\" "
     "      defaultRefStrainVol=\"0.0\" "
-    "      defaultShearModulus=\"200.0\" "       
+    "      defaultShearModulus=\"200.0\" "
     "      defaultBulkModulus=\"0.0\" " // TODO: remove as free parameter
     "      defaultPreConsolidationPressure =\"-1.5\" "
     "      defaultShapeParameter=\"1.0\" "
@@ -140,9 +140,9 @@ void testCamClayDriver()
   {
     forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      real64 stress[6] = {0};
-      real64 stiffness[6][6] = {{0}};
-      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stress, stiffness );
+      real64 stressLocal[6] = {0};
+      real64 stiffnessLocal[6][6] = {{0}};
+      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stressLocal, stiffnessLocal );
     } );
     cm.saveConvergedState();
   }
