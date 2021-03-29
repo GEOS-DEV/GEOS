@@ -15,45 +15,21 @@
 #include "mpiCommunications/PartitionBase.hpp"
 
 #include "managers/DomainPartition.hpp"
-#include "mesh/NodeManager.hpp"
-
-#include <limits.h>
 
 namespace geosx
 {
 
 using namespace dataRepository;
 
-PartitionBase::PartitionBase( ):
-  m_domain( nullptr ),
-  m_hasLocalGhosts( false )
-{
-}
-
 PartitionBase::PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton ):
   m_size( numPartitions ),
   m_rank( thisPartiton ),
   m_color( 0 ),
-  m_numColors( 1 ),
-  m_domain( nullptr ),
-  m_t1( 0.0 ),
-  m_t2( 0.0 ),
-  m_t3( 0.0 ),
-  m_t4( 0.0 ),
-  m_hasLocalGhosts( false )
+  m_numColors( 1 )
 {
 }
 
 PartitionBase::~PartitionBase()
 {}
-
-void PartitionBase::setDomain( DomainPartition * domain )
-{
-  // set the const pointer "m_domain" by casting away the the const
-  // on the address of the pointer, and modifying what the address of
-  // the pointer.
-  DomainPartition * * temp = const_cast< DomainPartition * * >(&m_domain);
-  *temp = domain;
-}
 
 }
