@@ -417,14 +417,15 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = 4;
 
         /// Loop over elements
         forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
           real64 const invC2 = 1.0 / ( c[k] * c[k] );
           real64 xLocal[numNodesPerElem][3];
           for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -570,7 +571,7 @@ real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
 
 real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
 {
-  real64 o_tpeak = 1.0/f0;
+  real64 const o_tpeak = 1.0/f0;
   real64 pulse = 0.0;
   if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
     return pulse;
@@ -649,11 +650,11 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
         forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
           real64 xLocal[numNodesPerElem][3];
 
           for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -688,12 +689,16 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   addSourceToRightHandSide( time_n, rhs );
 
   /// Calculate your time integrators
-  real64 dt2 = dt*dt;
+  real64 const dt2 = dt*dt;
   forAll< serialPolicy >( nodeManager.size(), [=] ( localIndex const a )
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
-      p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
+      p_np1[a] = p_n[a];
+      p_np1[a] *= 2.0*mass[a];
+      p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
+      p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+      p_np1[a] /= mass[a]+0.5*dt*damping[a];
     }
   } );
 
@@ -705,7 +710,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   syncFields.synchronizeFields( fieldNames,
                                 domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                 domain.getNeighbors(),
-                                true );
+                                false );
 
   for( localIndex a=0; a<nodeManager.size(); ++a )
   {
