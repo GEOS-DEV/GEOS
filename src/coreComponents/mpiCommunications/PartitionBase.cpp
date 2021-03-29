@@ -14,20 +14,16 @@
 
 #include "mpiCommunications/PartitionBase.hpp"
 
-#include "managers/DomainPartition.hpp"
-
 namespace geosx
 {
 
-using namespace dataRepository;
-
-PartitionBase::PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton ):
+PartitionBase::PartitionBase( const unsigned int numPartitions,
+                              const unsigned int thisPartition )
+  :
   m_size( numPartitions ),
-  m_rank( thisPartiton ),
-  m_color( 0 ),
+  m_rank( thisPartition ),
   m_numColors( 1 )
-{
-}
+{}
 
 PartitionBase::~PartitionBase()
 {}

@@ -30,7 +30,8 @@ class SpatialPartition : public PartitionBase
 {
 public:
   SpatialPartition();
-  virtual ~SpatialPartition();
+
+  ~SpatialPartition() override;
 
   bool isCoordInPartition( const real64 & coord, const int dir ) override;
 
@@ -39,19 +40,7 @@ public:
 
   void setPartitions( unsigned int xPartitions,
                       unsigned int yPartitions,
-                      unsigned int zPartitions ) override
-  {
-    m_Partitions.resize( 3 );
-    m_Partitions( 0 ) = xPartitions;
-    m_Partitions( 1 ) = yPartitions;
-    m_Partitions( 2 ) = zPartitions;
-    m_size = 1;
-    for( int i = 0; i < nsdof; i++ )
-      m_size *= m_Partitions( i );
-    setContactGhostRange( 0.0 );
-  }
-
-  void setContactGhostRange( const real64 bufferSize ) override; // FIXME REFACTOR private
+                      unsigned int zPartitions ) override;
 
   int getColor() override;
 
@@ -65,6 +54,25 @@ public:
   array1d< int > m_Periodic;
   /// ijk partition indexes
   array1d< int > m_coords;
+
+private:
+
+  /**
+   * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
+   * @param idim Dimension index in the cartesian.
+   * @param cartcomm Communicator with cartesian structure.
+   * @param ncoords Cartesian coordinates of a process (assumed to be of length 3).
+   *
+   * @note Rough copy/paste of DomainPartition::AddNeighbors
+   */
+  void addNeighbors( const unsigned int idim, MPI_Comm & cartcomm,
+                     int * ncoords );
+
+  /**
+   * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.
+   * @param bufferSize The distance.
+   */
+  void setContactGhostRange( const real64 bufferSize );
 
   /// Minimum extent of partition dimensions (excluding ghost objects)
   real64 m_min[3];
@@ -85,16 +93,16 @@ public:
   real64 m_gridMax[3];
 
   /**
-   * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
-   * @param idim Dimension index in the cartesian.
-   * @param cartcomm Communicator with cartesian structure.
-   * @param ncoords Cartesian coordinates of a process (assumed to be of length 3).
-   *
-   * @note Rough copy/paste of DomainPartition::AddNeighbors
+   * @brief Ghost position (min).
    */
-  void addNeighbors( const unsigned int idim, MPI_Comm & cartcomm,
-                     int * ncoords );
+  real64 m_contactGhostMin[3];
 
+  /**
+   * @brief Ghost position (max).
+   */
+  real64 m_contactGhostMax[3];
 };
+
 }
+
 #endif /* GEOSX_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_ */

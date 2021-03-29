@@ -15,19 +15,11 @@
 #ifndef GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 #define GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 
-#include "common/DataTypes.hpp"
-
 #include "mpiCommunications/NeighborCommunicator.hpp"
+#include "common/DataTypes.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-class Group;
-}
-
-class DomainPartition;
 
 /**
  * @brief Base class for partitioning.
@@ -47,7 +39,7 @@ public:
    * @param dir The considered direction.
    * @return The predicate result.
    */
-  virtual bool isCoordInPartition( const real64 & coord, const int dir ) = 0; // FIXME REFACTOR -> SpatialPartition
+  virtual bool isCoordInPartition( const real64 & coord, const int dir ) = 0;
 
   /**
    * @brief Defines the dimensions of the grid.
@@ -55,7 +47,7 @@ public:
    * @param max Global maximum spatial dimensions.
    */
   virtual void setSizes( real64 const ( &min )[ 3 ],
-                         real64 const ( &max )[ 3 ] ) = 0; // FIXME REFACTOR -> SpatialPartition
+                         real64 const ( &max )[ 3 ] ) = 0;
 
   /**
    * @brief Defines the number of partitions along the three (x, y, z) axis.
@@ -65,18 +57,7 @@ public:
    */
   virtual void setPartitions( unsigned int xPartitions,
                               unsigned int yPartitions,
-                              unsigned int zPartitions ) = 0; // FIXME REFACTOR -> SpatialPartition
-
-  /**
-   * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.
-   * @param bufferSize The distance.
-   */
-  virtual void setContactGhostRange( const real64 bufferSize ) = 0; // FIXME REFACTOR -> SpatialPartition
-
-  /// Size of the group associated with the MPI communicator
-  int m_size;
-  /// MPI rank of the current partition
-  int m_rank;
+                              unsigned int zPartitions ) = 0;
 
   /**
    * @brief Computes an associated color.
@@ -84,44 +65,39 @@ public:
    *
    * @note The other Color member function.
    */
-  virtual int getColor() = 0; // FIXME REFACTOR -> SpatialPartition
+  virtual int getColor() = 0;
 
   /**
    * @brief Returns the number of colors.
    * @return The number of associated colors.
    */
-  int numColor() const {return m_numColors;} // FIXME REFACTOR -> SpatialPartition
+  int numColor() const
+  { return m_numColors; }
 
 protected:
   /**
    * @brief Preventing dummy default constructor.
    */
   PartitionBase() = default;
+
   /**
    * @brief Builds from the size of partitions and the current rank of the partition
    * @param numPartitions Size of the partitions.
-   * @param thisPartiton The rank of the build partition.
+   * @param thisPartition The rank of the build partition.
    */
-  PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton );
+  PartitionBase( const unsigned int numPartitions,
+                 const unsigned int thisPartition );
 
   /**
    * @brief Array of neighbor communicators.
    */
   std::vector< NeighborCommunicator > m_neighbors;
 
-  /**
-   * @brief Ghost position (min).
-   */
-  real64 m_contactGhostMin[3];
-  /**
-   * @brief Ghost position (max).
-   */
-  real64 m_contactGhostMax[3];
+  /// Size of the group associated with the MPI communicator
+  int m_size;
+  /// MPI rank of the current partition
+  int m_rank;
 
-  /**
-   * @brief Associated color
-   */
-  int m_color;
   /**
    * @brief Number of colors
    */
