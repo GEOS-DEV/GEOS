@@ -12,10 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file SiloFile.cpp
- */
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
@@ -60,11 +56,6 @@ int MPI_Recv( void * buf, int, MPI_Datatype, int, int,
 
 namespace geosx
 {
-
-/**
- *
- * @return
- */
 
 namespace siloFileUtilities
 {
@@ -196,6 +187,7 @@ void SetVariableNames< R1Tensor >( string const & fieldName,
   varnamestring[0] = fieldName + "_1";
   varnamestring[1] = fieldName + "_2";
   varnamestring[2] = fieldName + "_3";
+
   varnames[0] = const_cast< char * >( varnamestring[0].c_str() );
   varnames[1] = const_cast< char * >( varnamestring[1].c_str() );
   varnames[2] = const_cast< char * >( varnamestring[2].c_str() );
@@ -253,6 +245,8 @@ template<> int GetTensorRank< string >()
 }
 
 } /* siloFileUtilities */
+
+
 
 using namespace dataRepository;
 
@@ -326,12 +320,6 @@ int SiloFile::groupRank( int const i ) const
   return PMPIO_GroupRank( m_baton, i );
 }
 
-/**
- * @param domainNumber
- * @param cycleNum
- * @param fileName
- * @param nsName
- */
 void SiloFile::waitForBatonWrite( int const domainNumber,
                                   int const cycleNum,
                                   integer const eventCounter,
@@ -430,21 +418,6 @@ void SiloFile::handOffBaton()
   }
 }
 
-/**
- * @param meshName
- * @param nnodes
- * @param coords
- * @param globalNodeNum
- * @param numRegions
- * @param shapecnt
- * @param meshConnectivity
- * @param globalElementNum
- * @param ghostFlag
- * @param shapetype
- * @param shapesize
- * @param cycleNumber
- * @param problemTime
- */
 void SiloFile::writeMeshObject( string const & meshName,
                                 const localIndex nnodes,
                                 real64 * coords[3],
@@ -494,7 +467,6 @@ void SiloFile::writeMeshObject( string const & meshName,
     else
       lnodelist += -shapesize[i];
   }
-
 
   if( numTotZones == 0 )
   {
@@ -681,7 +653,6 @@ void SiloFile::writePointMesh( string const & meshName,
   DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
   DBPutPointmesh ( m_dbFilePtr, meshName.c_str(), 3, coords, numPoints, datatype, optlist );
 
-
   // Write multimesh object
   {
     int rank = 0;
@@ -693,8 +664,8 @@ void SiloFile::writePointMesh( string const & meshName,
       writeMultiXXXX( DB_POINTMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist );
     }
   }
-
 }
+
 
 void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegion,
                                              string const & meshName,
@@ -810,7 +781,6 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
   #endif
     if( rank == 0 )
     {
-
       int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
 
       array1d< string > vBlockNames( size );
@@ -850,7 +820,6 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
         DBPutMultimat( m_dbBaseFilePtr, name.c_str(), size, BlockNames.data(),
                        const_cast< DBoptlist * >(optlist));
         DBFreeOptlist( optlist );
-
       }
 
       DBSetDir( m_dbBaseFilePtr, currentDirectory );
@@ -868,10 +837,8 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
         shortsubdir.erase( 0, pos+1 );
       }
 
-
       makeSubDirectory( shortsubdir, rootDirectory );
       DBSetDir( m_dbFilePtr, shortsubdir.c_str());
-
     }
 
     std::set< std::pair< string, WrapperBase const * > > fieldNames;
@@ -977,6 +944,7 @@ void SiloFile::writeMaterialVarDefinition( string const & subDir,
                 defns,
                 nullptr );
 }
+
 
 void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
 {
@@ -1224,8 +1192,9 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
         std::type_info const & typeID = wrapper->getTypeId();
 
-        if( typeID == typeid( array1d< real64 > ) ||
-            typeID == typeid( array2d< real64 > ) )
+        if( fieldName != "density" &&
+            fieldName != "viscosity" && 
+            fieldName != "stress" )
         {
           rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                           false,
@@ -1955,8 +1924,14 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       if( typeID==typeid(array1d< real64 >) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array1d< real64 > > const & >( *wrapper );
-        this->writeDataField< real64 >( meshname.c_str(), fieldName,
-                                        wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+
+        this->writeDataField< real64 >( meshname.c_str(), 
+                                        fieldName,
+                                        wrapperT.reference(), 
+                                        centering, 
+                                        cycleNum, 
+                                        problemTime, 
+                                        multiRoot );
       }
       if( typeID==typeid(array2d< real64 >) )
       {
@@ -2993,7 +2968,6 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
                   nullptr );
   }
 }
-
 
 void SiloFile::writeVectorVarDefinition( string const & fieldName,
                                          string const & subDirectory )

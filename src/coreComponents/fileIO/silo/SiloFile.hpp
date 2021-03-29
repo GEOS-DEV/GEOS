@@ -288,6 +288,7 @@ public:
                       real64 const problemTime );
 
   /**
+   * @brief write material fields
    * @param elementRegion the element region that holds the data to be written to the silo file
    * @param meshName name of the mesh to write
    * @param regionMaterialList  region material list
@@ -319,6 +320,7 @@ public:
                        const localIndex_array & mask );
 
   /**
+   * @brief write element fields
    * @param elemRegion the element region that holds the data to be written to the silo file
    * @param siloDirName the name of the silo directory to put this data into (i.e. nodalFields, elemFields)
    * @param meshName the name of the mesh attach this write to
