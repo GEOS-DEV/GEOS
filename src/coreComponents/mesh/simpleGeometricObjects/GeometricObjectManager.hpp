@@ -53,12 +53,15 @@ public:
 
   ///@}
 
+  static GeometricObjectManager & getInstance();
+
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   virtual void expandObjectCatalogs() override;
 
 private:
   GeometricObjectManager() = delete;
+  static GeometricObjectManager * m_instance;
 
 };
 

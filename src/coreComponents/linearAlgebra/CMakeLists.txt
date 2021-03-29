@@ -60,7 +60,6 @@ else()
        mesh
        lvarray
        managers
-       mpiCommunications
        finiteVolume
        codingUtilities
        finiteElement

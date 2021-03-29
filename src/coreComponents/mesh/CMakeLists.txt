@@ -98,8 +98,6 @@ else()
       common
       metis
       codingUtilities
-      meshUtilities
-      mpiCommunications
       constitutive
       finiteElement
       dataRepository

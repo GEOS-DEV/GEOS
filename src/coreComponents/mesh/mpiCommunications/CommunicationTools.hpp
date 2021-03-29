@@ -20,10 +20,9 @@
 #define GEOSX_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_
 
 #include "common/MpiWrapper.hpp"
-
 #include "common/DataTypes.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 
 #include <set>
 
@@ -87,6 +86,8 @@ class CommunicationTools
 public:
   CommunicationTools();
   ~CommunicationTools();
+
+  static CommunicationTools & getInstance();
 
   void assignGlobalIndices( ObjectManagerBase & object,
                             NodeManager const & compositionObject,
@@ -156,6 +157,9 @@ public:
 
 private:
   std::set< int > m_freeCommIDs;
+  static CommunicationTools * m_instance;
+
+
 };
 
 
@@ -165,8 +169,8 @@ public:
 
   MPI_iCommData():
     size( 0 ),
-    commID( getGlobalState().getCommunicationTools().getCommID() ),
-    sizeCommID( getGlobalState().getCommunicationTools().getCommID() ),
+    commID( CommunicationTools::getInstance().getCommID() ),
+    sizeCommID( CommunicationTools::getInstance().getCommID() ),
     fieldNames(),
     mpiSendBufferRequest(),
     mpiRecvBufferRequest(),
@@ -176,6 +180,8 @@ public:
 
   ~MPI_iCommData()
   {}
+
+
 
   void resize( localIndex numMessages )
   {

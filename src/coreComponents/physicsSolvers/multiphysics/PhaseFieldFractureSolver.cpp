@@ -20,7 +20,7 @@
 #include "PhaseFieldFractureSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "mainInterface/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"

@@ -19,7 +19,7 @@
 #include "WellSolverBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "mesh/WellElementRegion.hpp"
@@ -165,7 +165,7 @@ void WellSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
 
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
@@ -181,7 +181,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );

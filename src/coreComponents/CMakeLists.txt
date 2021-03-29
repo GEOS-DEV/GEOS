@@ -6,6 +6,7 @@ set( subdirs
      events
      fileIO
      dataRepository
+     discretizationMethods
      mainInterface
      managers
      constitutive

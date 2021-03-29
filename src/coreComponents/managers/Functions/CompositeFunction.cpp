@@ -15,7 +15,7 @@
 #include "FunctionManager.hpp"
 #include "CompositeFunction.hpp"
 #include "common/DataTypes.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {
@@ -72,7 +72,7 @@ void CompositeFunction::initializeFunction()
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 
   // Grab pointers to sub functions
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {

@@ -17,12 +17,11 @@ set( fileIO_sources
      schema/schemaUtilities.cpp )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList common mesh constitutive silo hdf5  )
+  set( dependencyList common mesh constitutive silo hdf5 discretizationMethods physicsSolvers)
 else()
   set( dependencyList 
        lvarray
        common
-       mpiCommunications
        managers
        codingUtilities
        dataRepository

@@ -89,20 +89,18 @@ set( physicsSolvers_sources
      )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList common constitutive dataRepository linearAlgebra )
+  set( dependencyList common constitutive dataRepository linearAlgebra discretizationMethods )
 else()
   set( dependencyList 
        common
        linearAlgebra
        lvarray
        mesh
-       mpiCommunications
        managers
        codingUtilities
        dataRepository
        finiteVolume
        finiteElement
-       meshUtilities
        constitutive
      )
 endif()

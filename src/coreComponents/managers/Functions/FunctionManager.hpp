@@ -42,7 +42,7 @@ public:
    */
   virtual ~FunctionManager() override;
 
-  static FunctionManager const & getInstance();
+  static FunctionManager & getInstance();
 
   /**
    * @brief Static Factory Catalog Functions

@@ -20,7 +20,7 @@
 
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {
@@ -202,7 +202,7 @@ void CO2Solubility::makeTable( string_array const & inputPara )
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Solubility( tolerance, tableCoords, salinity, values );
 
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
   m_CO2SolubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
   m_CO2SolubilityTable->setTableCoordinates( tableCoords.getCoords() );
   m_CO2SolubilityTable->setTableValues( values );

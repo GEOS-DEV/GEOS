@@ -29,7 +29,7 @@
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "mainInterface/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/NodeManager.hpp"
@@ -111,7 +111,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  updateState( getGlobalState().getProblemManager().getDomainPartition() );
+  updateState( this->getGroupByPath<DomainPartition>("/Problem/domain") );
 }
 
 
@@ -473,7 +473,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                        real64 const dt,
                                                        DomainPartition & domain )
 {
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply( time_n+ dt,
                    domain,
@@ -599,7 +599,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );

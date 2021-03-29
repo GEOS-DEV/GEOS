@@ -74,16 +74,13 @@ else()
        mesh
        physicsSolvers
        fileIO
-       mpiCommunications
        codingUtilities
        dataRepository
        finiteVolume
-       meshUtilities
        finiteElement
        constitutive
        optionparser
        RAJA
-       mpiCommunications
        conduit )
 endif()
 

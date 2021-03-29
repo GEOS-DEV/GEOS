@@ -19,17 +19,33 @@
 
 namespace geosx
 {
+
+FieldSpecificationManager * FieldSpecificationManager::m_instance = nullptr;
+
 using namespace dataRepository;
 using namespace constitutive;
 FieldSpecificationManager::FieldSpecificationManager( string const & name, Group * const parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
+
+  GEOSX_ERROR_IF( m_instance != nullptr, "Only one FieldSpecificationManager can exist at a time." );
+  m_instance = this;
+
 }
 
 FieldSpecificationManager::~FieldSpecificationManager()
 {
-  // TODO Auto-generated destructor stub
+  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  m_instance = nullptr;
+}
+
+
+FieldSpecificationManager & FieldSpecificationManager::getInstance()
+{
+  GEOSX_ERROR_IF( m_instance == nullptr,
+                  "FieldSpecificationManager has not been constructed, or is already been destructed." );
+  return *m_instance;
 }
 
 Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )

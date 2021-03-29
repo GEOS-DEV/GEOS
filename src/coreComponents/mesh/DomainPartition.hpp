@@ -22,7 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "mainInterface/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "common/MpiWrapper.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 

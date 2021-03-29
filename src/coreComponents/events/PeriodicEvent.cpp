@@ -18,7 +18,7 @@
 
 #include "PeriodicEvent.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {
@@ -123,7 +123,7 @@ void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
                                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ))
 {
   // Grab the function
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
   FunctionBase & function = functionManager.getGroup< FunctionBase >( m_functionName );
 
   real64 result = 0.0;

@@ -27,7 +27,7 @@
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -615,7 +615,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
                                                     Group & dataGroup ) const
 {
   integer const component = getComponent();
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   if( m_functionName.empty() )
   {
@@ -722,7 +722,7 @@ FieldSpecificationBase::
   GEOSX_UNUSED_VAR( dofDim );
 
   integer const component = getComponent();
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   globalIndex_array dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -820,7 +820,7 @@ FieldSpecificationBase::
   GEOSX_UNUSED_VAR( dofDim );
 
   integer const component = getComponent();
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   globalIndex_array dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -997,7 +997,7 @@ FieldSpecificationBase::
 {
   integer const component = getComponent();
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   array1d< globalIndex > dofArray( targetSet.size() );
   arrayView1d< globalIndex > const & dof = dofArray.toView();

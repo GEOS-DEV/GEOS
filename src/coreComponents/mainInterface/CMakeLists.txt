@@ -3,7 +3,6 @@
 #
 set(mainInterface_headers
     ProblemManager.hpp
-    NumericalMethodsManager.hpp
     initialization.hpp
     GeosxState.hpp
    )
@@ -15,7 +14,6 @@ set(mainInterface_headers
 
 set(mainInterface_sources
     ProblemManager.cpp
-    NumericalMethodsManager.cpp
     initialization.cpp
     GeosxState.cpp
    )
@@ -30,16 +28,13 @@ else()
        mesh
        physicsSolvers
        fileIO
-       mpiCommunications
        codingUtilities
        dataRepository
        finiteVolume
-       meshUtilities
        finiteElement
        constitutive
        optionparser
        RAJA
-       mpiCommunications
        conduit )
 endif()
 

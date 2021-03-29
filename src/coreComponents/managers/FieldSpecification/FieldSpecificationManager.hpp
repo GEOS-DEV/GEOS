@@ -58,6 +58,8 @@ public:
 
   virtual ~FieldSpecificationManager() override;
 
+  static FieldSpecificationManager & getInstance();
+
   /**
    * @brief Create a new FieldSpecificationBase object as a child of this group.
    * @param childKey the catalog key of the new FieldSpecificationBase derived type to create
@@ -304,6 +306,10 @@ private:
       } );
     }
   }
+
+
+  static FieldSpecificationManager * m_instance;
+
 };
 
 template< typename POLICY, typename LAMBDA >

@@ -22,6 +22,7 @@
 
 namespace geosx
 {
+GeometricObjectManager * GeometricObjectManager::m_instance = nullptr;
 
 using namespace dataRepository;
 
@@ -30,10 +31,24 @@ GeometricObjectManager::GeometricObjectManager( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
+
+  GEOSX_ERROR_IF( m_instance != nullptr, "Only one GeometricObjectManager can exist at a time." );
+  m_instance = this;
+
 }
 
 GeometricObjectManager::~GeometricObjectManager()
-{}
+{
+  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  m_instance = nullptr;
+}
+
+GeometricObjectManager & GeometricObjectManager::getInstance()
+{
+  GEOSX_ERROR_IF( m_instance == nullptr,
+                  "GeometricObjectManager has not been constructed, or is already been destructed." );
+  return *m_instance;
+}
 
 Group * GeometricObjectManager::createChild( string const & childKey, string const & childName )
 {

@@ -18,7 +18,7 @@
 
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/FaceManager.hpp"
@@ -62,11 +62,11 @@ protected:
 
   void SetUp() override
   {
-    m_nodeManager = &getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
-    m_faceManager = &getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
-    m_edgeManager = &getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getEdgeManager();
+    m_nodeManager = &this->getGroupByPath<DomainPartition>("/Problem/domain").getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+    m_faceManager = &this->getGroupByPath<DomainPartition>("/Problem/domain").getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
+    m_edgeManager = &this->getGroupByPath<DomainPartition>("/Problem/domain").getMeshBody( 0 ).getMeshLevel( 0 ).getEdgeManager();
 
-    ElementRegionManager & elemManager = getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+    ElementRegionManager & elemManager = this->getGroupByPath<DomainPartition>("/Problem/domain").getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
     GEOSX_ERROR_IF_NE_MSG( elemManager.getRegions().size(), 1, "Only one region should exist." );
 
     ElementRegionBase & elemRegion = elemManager.getRegion( 0 );
@@ -117,7 +117,7 @@ protected:
     getGlobalState().getProblemManager().processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
-    DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+    DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
     MeshManager & meshManager = getGlobalState().getProblemManager().getGroup< MeshManager >( getGlobalState().getProblemManager().groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 

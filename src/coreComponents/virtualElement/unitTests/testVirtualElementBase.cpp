@@ -18,7 +18,7 @@
 #include "virtualElement/VirtualElementBase.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 #include "mesh/MeshManager.hpp"
 
 // TPL includes

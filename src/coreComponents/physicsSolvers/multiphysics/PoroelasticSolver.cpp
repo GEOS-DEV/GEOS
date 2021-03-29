@@ -25,12 +25,12 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "mainInterface/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -181,7 +181,7 @@ void PoroelasticSolver::initializePostInitialConditionsPreSubGroups()
   {
     m_flowSolver->setPoroElasticCoupling();
     // Calculate initial total mean stress
-    updateDeformationForCoupling( getGlobalState().getProblemManager().getDomainPartition() );
+    updateDeformationForCoupling( this->getGroupByPath<DomainPartition>("/Problem/domain") );
   }
 }
 

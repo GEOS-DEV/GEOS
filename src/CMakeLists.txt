@@ -129,11 +129,11 @@ endif()
 #                  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 
-add_custom_target(graphviz ALL
-    COMMAND ${CMAKE_COMMAND} "--graphviz=dependency.dot" .
-    COMMAND dot -Tpng dependency.dot -o dependency.png
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-)
+#add_custom_target(graphviz ALL
+#    COMMAND ${CMAKE_COMMAND} "--graphviz=dependency.dot" .
+#    COMMAND dot -Tpng dependency.dot -o dependency.png
+#    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+#)
 
 
 if( SPHINX_FOUND )

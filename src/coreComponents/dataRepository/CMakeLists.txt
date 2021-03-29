@@ -44,7 +44,6 @@ if( BUILD_OBJ_LIBS )
 else()
   set( dependencyList 
        common 
-       mpiCommunications
        managers
        codingUtilities)
 endif()

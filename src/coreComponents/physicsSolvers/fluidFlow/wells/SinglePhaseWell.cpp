@@ -91,7 +91,7 @@ void SinglePhaseWell::initializePreSubGroups()
 
   WellSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   validateModelMapping< SingleFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
@@ -658,7 +658,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaConnRateString() ) );
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );

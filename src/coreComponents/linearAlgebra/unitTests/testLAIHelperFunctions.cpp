@@ -99,7 +99,7 @@ protected:
 
 TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager & nodeManager = meshLevel.getNodeManager();
 
@@ -166,7 +166,7 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
 
 TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = meshLevel.getElemManager();;
 

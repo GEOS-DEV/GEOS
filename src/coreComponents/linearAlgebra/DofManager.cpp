@@ -280,7 +280,7 @@ void DofManager::createIndexArray( FieldDescription & field )
     std::map< string, string_array > fieldNames;
     fieldNames[ MeshHelper< LOC >::syncObjName ].emplace_back( field.key );
 
-    getGlobalState().getCommunicationTools().
+    CommunicationTools::getInstance().
       synchronizeFields( fieldNames, *m_mesh, m_domain->getNeighbors(), false );
   } );
   GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast< int >(field.location) );
@@ -1743,7 +1743,7 @@ void DofManager::reorderByRank()
   }
 
   // synchronize index arrays for all fields across ranks
-  getGlobalState().getCommunicationTools().
+  CommunicationTools::getInstance().
     synchronizeFields( fieldToSync, *m_mesh, m_domain->getNeighbors(), false );
 
   m_reordered = true;

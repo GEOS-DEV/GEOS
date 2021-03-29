@@ -6,19 +6,7 @@ set(geosx_fileio_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest fileIO dataRepository )
-
-#if ( ENABLE_OPENMP )
-#  set( dependencyList ${dependencyList} openmp )
-#endif()
-#
-#if ( ENABLE_CUDA )
-#  set( dependencyList ${dependencyList} cuda )
-#endif()
-#
-#if ( ENABLE_CALIPER )
-#  set( dependencyList ${dependencyList} caliper adiak )
-#endif()
+set( dependencyList gtest fileIO dataRepository events mainInterface)
 
 #
 # Add gtest C++ based tests

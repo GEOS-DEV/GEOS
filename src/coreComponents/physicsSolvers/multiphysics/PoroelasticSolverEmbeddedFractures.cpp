@@ -30,7 +30,7 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -91,7 +91,7 @@ void PoroelasticSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Gro
 
 void PoroelasticSolverEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  updateState( getGlobalState().getProblemManager().getDomainPartition() );
+  updateState( this->getGroupByPath<DomainPartition>("/Problem/domain") );
 }
 
 void PoroelasticSolverEmbeddedFractures::setupDofs( DomainPartition const & domain,

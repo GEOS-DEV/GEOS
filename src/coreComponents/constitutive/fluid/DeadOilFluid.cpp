@@ -15,7 +15,7 @@
 #include "DeadOilFluid.hpp"
 
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 
 
@@ -195,7 +195,7 @@ void DeadOilFluid::fillHydrocarbonData( localIndex const ip,
   m_formationVolFactorTableNames.emplace_back( formationVolFactorTableName );
   m_viscosityTableNames.emplace_back( viscosityTableName );
 
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
   TableFunction & tablePVDX_B =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", formationVolFactorTableName ) );
   tablePVDX_B.setTableCoordinates( pressureCoords );
@@ -299,7 +299,7 @@ void DeadOilFluid::useProvidedTableFunctions()
     }
   }
 
-  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
   for( localIndex iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
   {
     GEOSX_THROW_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
@@ -363,7 +363,7 @@ void DeadOilFluid::initializePostSubGroups()
 
 void DeadOilFluid::createAllKernelWrappers()
 {
-  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   GEOSX_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
                   "DeadOilFluid: the number of hydrocarbon phases should be equal to 1 (oil) or 2 (oil+gas)",

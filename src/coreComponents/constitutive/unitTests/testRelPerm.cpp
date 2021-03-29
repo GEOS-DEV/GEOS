@@ -15,7 +15,7 @@
 // Source includes
 #include "constitutiveTestHelpers.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 
 using namespace geosx;
@@ -167,7 +167,7 @@ RelativePermeabilityBase & makeVanGenuchtenBakerRelPermThreePhase( string const 
 
 RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group & parent )
 {
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   // 1) First, define the tables
 
@@ -223,7 +223,7 @@ RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group 
 
 RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Group & parent )
 {
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   // 1) First, define the tables
 

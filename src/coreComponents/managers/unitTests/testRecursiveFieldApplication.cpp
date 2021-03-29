@@ -34,7 +34,7 @@ void RegisterAndApplyField( DomainPartition & domain,
                             string const & objectPath,
                             real64 value )
 {
-  FieldSpecificationManager & fieldSpecificationManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::getInstance();
 
   FieldSpecificationBase & fieldSpec = fieldSpecificationManager.registerGroup< FieldSpecificationBase >( fieldName );
   fieldSpec.setFieldName( fieldName );
@@ -63,7 +63,7 @@ TEST( FieldSpecification, Recursive )
   localIndex nbTetReg1 = 40;
   localIndex nbHexReg1 = 50;
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( "body" );
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));

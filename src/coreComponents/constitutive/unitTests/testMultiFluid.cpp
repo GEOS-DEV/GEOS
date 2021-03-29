@@ -20,7 +20,7 @@
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 #include "mainInterface/initialization.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -545,7 +545,7 @@ MultiFluidBase & makeDeadOilFluid( string const & name, Group * parent )
 
 MultiFluidBase & makeDeadOilFluidFromTable( string const & name, Group * parent )
 {
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   // 1) First, define the tables (PVDO, PVDG)
 

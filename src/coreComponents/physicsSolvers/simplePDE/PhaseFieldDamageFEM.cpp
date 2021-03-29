@@ -36,7 +36,7 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "mainInterface/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 
 #include "mesh/DomainPartition.hpp"
 
@@ -427,7 +427,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( m_fieldName );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                               mesh,
                                                               domain.getNeighbors(),
                                                               false );
@@ -564,7 +564,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     arrayView1d< real64 > const & localRhs )
 
 {
-  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
   fsManager.apply( time,
                    domain,
                    "nodeManager",

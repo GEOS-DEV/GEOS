@@ -30,6 +30,9 @@
 namespace geosx
 {
 
+
+CommunicationTools * CommunicationTools::m_instance = nullptr;
+
 using namespace dataRepository;
 
 CommunicationTools::CommunicationTools()
@@ -38,12 +41,24 @@ CommunicationTools::CommunicationTools()
   {
     m_freeCommIDs.insert( i );
   }
+
+  GEOSX_ERROR_IF( m_instance != nullptr, "Only one CommunicationTools can exist at a time." );
+  m_instance = this;
 }
 
 CommunicationTools::~CommunicationTools()
 {
-  // TODO Auto-generated destructor stub
+  GEOSX_ERROR_IF( m_instance != this, "m_instance != this should not be possible." );
+  m_instance = nullptr;
 }
+
+CommunicationTools & CommunicationTools::getInstance()
+{
+  GEOSX_ERROR_IF( m_instance == nullptr,
+                  "CommunicationTools has not been constructed, or is already been destructed." );
+  return *m_instance;
+}
+
 
 void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
                                               NodeManager const & compositionObject,

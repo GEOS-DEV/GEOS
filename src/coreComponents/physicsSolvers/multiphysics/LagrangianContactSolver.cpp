@@ -26,7 +26,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -181,7 +181,7 @@ void LagrangianContactSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   ConstitutiveBase const & contactRelation = cm.getConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
@@ -259,7 +259,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   // Need a synchronization of deltaTraction as will be used in AssembleStabilization
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTractionString() ) );
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
@@ -2108,7 +2108,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   // fractureStateString is synchronized in UpdateFractureState
   // previousFractureStateString and previousLocalJumpString used locally only
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
@@ -2268,7 +2268,7 @@ void LagrangianContactSolver::synchronizeFractureState( DomainPartition & domain
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );

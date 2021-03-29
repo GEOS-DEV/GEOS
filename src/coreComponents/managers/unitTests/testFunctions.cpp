@@ -18,7 +18,7 @@
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/FunctionBase.hpp"
 #include "managers/Functions/TableFunction.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOSX_USE_MATHPRESSO
   #include "managers/Functions/SymbolicFunction.hpp"
@@ -64,7 +64,7 @@ void checkDirectionalDerivative( real64 const (&input)[4],
 
 TEST( FunctionTests, 1DTable )
 {
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
+  FunctionManager * functionManager = &FunctionManager::getInstance();
 
   // 1D table, various interpolation methods
   localIndex const Naxis = 4;
@@ -150,7 +150,7 @@ TEST( FunctionTests, 1DTable )
 
 TEST( FunctionTests, 2DTable )
 {
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
+  FunctionManager * functionManager = &FunctionManager::getInstance();
 
   // 2D table with linear interpolation
   // f(x, y) = 2*x - 3*y + 5
@@ -250,7 +250,7 @@ TEST( FunctionTests, 2DTable )
 
 TEST( FunctionTests, 4DTable_multipleInputs )
 {
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
+  FunctionManager * functionManager = &FunctionManager::getInstance();
 
   // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y + 7*z + 11*t
@@ -376,7 +376,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 
 TEST( FunctionTests, 4DTable_derivatives )
 {
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
+  FunctionManager * functionManager = &FunctionManager::getInstance();
 
   // 4D table with linear interpolation
   // f(x, y, z, t) = 2.0 + 3*x - 5*y*y + 7*z*z*z + 11*t*t*t*t
@@ -495,7 +495,7 @@ TEST( FunctionTests, 4DTable_derivatives )
 
 TEST( FunctionTests, 4DTable_symbolic )
 {
-  FunctionManager * functionManager = &getGlobalState().getFunctionManager();
+  FunctionManager * functionManager = &FunctionManager::getInstance();
 
   // Symbolic function with four inputs
   string const expression = "1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d)";

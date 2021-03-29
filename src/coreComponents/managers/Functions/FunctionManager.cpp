@@ -46,7 +46,7 @@ FunctionManager::~FunctionManager()
   m_instance = nullptr;
 }
 
-FunctionManager const & FunctionManager::getInstance()
+FunctionManager & FunctionManager::getInstance()
 {
   GEOSX_ERROR_IF( m_instance == nullptr,
                   "FunctionManager has not been constructed, or is already been destructed." );

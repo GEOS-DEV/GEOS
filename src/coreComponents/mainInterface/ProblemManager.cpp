@@ -14,6 +14,8 @@
 
 // Source includes
 #include "ProblemManager.hpp"
+#include "GeosxState.hpp"
+#include "initialization.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/Path.hpp"
@@ -28,8 +30,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/Outputs/OutputBase.hpp"
-#include "mainInterface/initialization.hpp"
-#include "mainInterface/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "mesh/MeshBody.hpp"

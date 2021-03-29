@@ -40,11 +40,9 @@ else()
   set( dependencyList 
        common
        mesh
-       mpiCommunications
        managers
        codingUtilities
        dataRepository
-       meshUtilities
       )
 endif()
 

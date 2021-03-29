@@ -15,7 +15,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "mainInterface/initialization.hpp"
-#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/GeosxState.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "dataRepository/ConduitRestart.hpp"
