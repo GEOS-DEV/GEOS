@@ -2,8 +2,14 @@
 # Specify list of tests
 #
 
+set( gtest_geosx_tests
+     testCornerPointMeshImport.cpp
+   )
+
+
 if(ENABLE_PAMELA)
 set( gtest_geosx_tests
+     ${gtest_geosx_tests}
     testPAMELAImport.cpp
    )
 

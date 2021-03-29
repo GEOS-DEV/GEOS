@@ -148,6 +148,13 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
+.. _XML_CornerPointMeshGenerator:
+
+Element: CornerPointMeshGenerator
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CornerPointMeshGenerator.rst
+
+
 .. _XML_Coulomb:
 
 Element: Coulomb
@@ -913,6 +920,13 @@ Datastructure: ConstitutiveModels
 Datastructure: Contact
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
+
+
+.. _DATASTRUCTURE_CornerPointMeshGenerator:
+
+Datastructure: CornerPointMeshGenerator
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CornerPointMeshGenerator_other.rst
 
 
 .. _DATASTRUCTURE_Coulomb:
