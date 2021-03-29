@@ -12,10 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file SpatialPartition.cpp
- */
-
 #include "mpiCommunications/SpatialPartition.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
@@ -24,7 +20,6 @@
 
 namespace geosx
 {
-using namespace dataRepository;
 
 namespace
 {
@@ -40,7 +35,6 @@ real64 Mod( real64 num, real64 denom )
 
   return num - denom * std::floor( num/denom );
 }
-
 
 // MapValueToRange
 // returns a periodic value in the range [min, max)
@@ -71,6 +65,22 @@ SpatialPartition::SpatialPartition():
 
 SpatialPartition::~SpatialPartition()
 {}
+
+void SpatialPartition::setPartitions( unsigned int xPartitions,
+                                      unsigned int yPartitions,
+                                      unsigned int zPartitions )
+{
+  m_Partitions.resize( 3 );
+  m_Partitions( 0 ) = xPartitions;
+  m_Partitions( 1 ) = yPartitions;
+  m_Partitions( 2 ) = zPartitions;
+  m_size = 1;
+  for( int i = 0; i < nsdof; i++ )
+  {
+    m_size *= m_Partitions( i );
+  }
+  setContactGhostRange( 0.0 );
+}
 
 int SpatialPartition::getColor()
 {
@@ -171,9 +181,6 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     }
     m_rank = MpiWrapper::commRank( cartcomm );
     MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
-
-
-    m_color = getColor();
 
     //add neighbors
     {
