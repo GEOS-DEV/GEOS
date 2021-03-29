@@ -22,6 +22,7 @@
 #include "ToElementRelation.hpp"
 #include "BufferOps.hpp"
 #include "common/TimingMacros.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "ElementRegionManager.hpp"
 
 namespace geosx
@@ -29,22 +30,17 @@ namespace geosx
 
 using namespace dataRepository;
 
-// *********************************************************************************************************************
-/**
- * @return
- */
-//START_SPHINX_REFPOS_REG
 EmbeddedSurfaceNodeManager::EmbeddedSurfaceNodeManager( string const & name,
                                                         Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition( 0, 3 )
 {
   registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
-  //END_SPHINX_REFPOS_REG
   this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
   this->registerWrapper( viewKeyStruct::elementRegionListString(), &elementRegionList() );
   this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
   this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
+  this->registerWrapper( viewKeyStruct::parentEdgeGlobalIndexString(), &m_parentEdgeGlobalIndex );
 }
 
 
@@ -224,6 +220,145 @@ void EmbeddedSurfaceNodeManager::viewPackingExclusionList( SortedArray< localInd
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
+}
+
+
+localIndex EmbeddedSurfaceNodeManager::packGlobalMapsSize( arrayView1d< localIndex const > const & packList,
+                                                           integer const recursive ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packGlobalMapsPrivate< false >( junk, packList, recursive );
+}
+
+localIndex EmbeddedSurfaceNodeManager::packGlobalMaps( buffer_unit_type * & buffer,
+                                                       arrayView1d< localIndex const > const & packList,
+                                                       integer const recursive ) const
+{
+  return packGlobalMapsPrivate< true >( buffer, packList, recursive );
+}
+
+template< bool DOPACK >
+localIndex EmbeddedSurfaceNodeManager::packGlobalMapsPrivate( buffer_unit_type * & buffer,
+                                                              arrayView1d< localIndex const > const & packList,
+                                                              integer const GEOSX_UNUSED_PARAM( recursive ) ) const
+{
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, this->getName() );
+
+  // this doesn't link without the string()...no idea why.
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString() ) );
+
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
+
+  localIndex const numPackedIndices = packList.size();
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numPackedIndices );
+
+  if( numPackedIndices > 0 )
+  {
+    globalIndex_array globalIndices;
+    globalIndices.resize( numPackedIndices );
+    for( localIndex a=0; a<numPackedIndices; ++a )
+    {
+      globalIndices[a] = this->m_localToGlobalMap[packList[a]];
+    }
+    packedSize += bufferOps::Pack< DOPACK >( buffer, globalIndices );
+  }
+
+  packedSize += packSets< DOPACK >( buffer, packList );
+
+  return packedSize;
+}
+
+localIndex EmbeddedSurfaceNodeManager::unpackGlobalMaps( buffer_unit_type const * & buffer,
+                                                         localIndex_array & packList,
+                                                         integer const GEOSX_UNUSED_PARAM (recursive ) )
+{
+  GEOSX_MARK_FUNCTION;
+
+  localIndex unpackedSize = 0;
+  string groupName;
+  unpackedSize += bufferOps::Unpack( buffer, groupName );
+  GEOSX_ERROR_IF( groupName != this->getName(), "EmbeddedSurfaceNodeManager::Unpack(): group names do not match" );
+
+  string localToGlobalString;
+  unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
+  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "EmbeddedSurfaceNodeManager::Unpack(): label incorrect" );
+
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int sendingRank;
+  unpackedSize += bufferOps::Unpack( buffer, sendingRank );
+
+  localIndex numUnpackedIndices;
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices );
+
+  if( numUnpackedIndices > 0 )
+  {
+    localIndex_array unpackedLocalIndices;
+    unpackedLocalIndices.resize( numUnpackedIndices );
+
+    globalIndex_array globalIndices;
+    unpackedSize += bufferOps::Unpack( buffer, globalIndices );
+    localIndex numNewIndices = 0;
+    globalIndex_array newGlobalIndices;
+    newGlobalIndices.reserve( numUnpackedIndices );
+    localIndex const oldSize = this->size();
+    for( localIndex a = 0; a < numUnpackedIndices; ++a )
+    {
+
+      // check to see if the object already exists by checking for the global
+      // index in m_globalToLocalMap. If it doesn't, then add the object
+      unordered_map< globalIndex, localIndex >::iterator iterG2L =
+        m_globalToLocalMap.find( globalIndices[a] );
+      if( iterG2L == m_globalToLocalMap.end() )
+      {
+        // object does not exist on this domain
+        const localIndex newLocalIndex = oldSize + numNewIndices;
+
+        // add the global index of the new object to the globalToLocal map
+        m_globalToLocalMap[globalIndices[a]] = newLocalIndex;
+
+        unpackedLocalIndices( a ) = newLocalIndex;
+
+        newGlobalIndices.emplace_back( globalIndices[a] );
+
+        ++numNewIndices;
+
+        GEOSX_ERROR_IF( packList.size() != 0,
+                        "ObjectManagerBase::Unpack(): packList specified, "
+                        "but a new globalIndex is unpacked" );
+      }
+      else
+      {
+        // object already exists on this domain
+        // get the local index of the node
+        localIndex b = iterG2L->second;
+        unpackedLocalIndices( a ) = b;
+        if( ( sendingRank < rank && m_ghostRank[b] <= -1) || ( sendingRank < m_ghostRank[b] ) )
+        {
+          m_ghostRank[b] = sendingRank;
+        }
+      }
+    }
+
+    // figure out new size of object container, and resize it
+    const localIndex newSize = oldSize + numNewIndices;
+    this->resize( newSize );
+
+    // add the new indices to the maps.
+    for( int a=0; a<numNewIndices; ++a )
+    {
+      localIndex const b = oldSize + a;
+      m_localToGlobalMap[b] = newGlobalIndices( a );
+      m_ghostRank[b] = sendingRank;
+    }
+
+
+    packList = unpackedLocalIndices;
+  }
+
+  unpackedSize += unpackSets( buffer );
+
+  return unpackedSize;
 }
 
 localIndex EmbeddedSurfaceNodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const

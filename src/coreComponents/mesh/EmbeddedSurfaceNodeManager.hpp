@@ -159,40 +159,26 @@ public:
    */
   ///@{
 
-  /**
-   * @brief Creates an array listing all excluded local indices values.
-   * @param [in,out] exclusionList Sorted array with excluded local indices
-   */
   virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
-  /**
-   * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] packList the list of node indices that we wish to get the size of after packing
-   * @return a localIndex value representing the size of packList if it were packed
-   * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
-   */
+  virtual localIndex packGlobalMapsSize( arrayView1d< localIndex const > const & packList,
+                                         integer const recursive ) const override;
+
+  virtual localIndex packGlobalMaps( buffer_unit_type * & buffer,
+                                     arrayView1d< localIndex const > const & packList,
+                                     integer const recursive ) const override;
+
+  virtual localIndex unpackGlobalMaps( buffer_unit_type const * & buffer,
+                                       localIndex_array & packList,
+                                       integer const recursive ) override;
+
+
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
-  /**
-   * @brief Packs an array of node indices into a buffer.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in,out] buffer buffer to pack the node index data into
-   * @param [in] packList the indices of nodes that should be packed
-   * @return a localIndex value representing the size of the packed data
-   */
+
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
-  /**
-   * @brief Unpack a buffer to an array of node indices.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] buffer buffer with the packed data
-   * @param [inout] packList an array of localIndex values that we wish to unpack to
-   * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
-   * @param [in] overwriteDownMaps boolean: true to overwrite the previous Down maps
-   * @return a localIndex value representing the size of the unpacked list
-   */
   virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
@@ -226,6 +212,9 @@ public:
     /// @return String to access the element map
     static constexpr char const * elementListString() { return "elemList"; }
 
+    /// @return String to access the parent edge globalIndex
+    static constexpr char const * parentEdgeGlobalIndexString() { return "parentEdgeGlobalIndex"; }
+
     /// Accessor to reference position
     dataRepository::ViewKey referencePosition       = { referencePositionString() };
 
@@ -240,6 +229,9 @@ public:
 
     /// Accessor to element map
     dataRepository::ViewKey elementList             = { elementListString() };
+
+    /// Accessor to element map
+    dataRepository::ViewKey parentEdgeGlobalIndex   = { parentEdgeGlobalIndexString() };
   }
   /// viewKeys
   viewKeys;
@@ -326,13 +318,35 @@ public:
    * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates.
    * @return an immutable arrayView of the reference position.
    */
-
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > referencePosition() const
   { return m_referencePosition; }
+
+  /**
+   * @brief Provide an immutable arrayView of the parent Edge global index position.
+   * @return an immutable arrayView of the parent edge global index.
+   */
+   array1d< globalIndex > & getParentEdgeGlobalIndex()
+   {
+     return m_parentEdgeGlobalIndex;
+   }
+
+  /**
+   * @brief Provide an immutable arrayView of the parent Edge global index position.
+   * @return an immutable arrayView of the parent edge global index.
+   */
+  arrayView1d< globalIndex const > getParentEdgeGlobalIndex() const
+  {
+    return m_parentEdgeGlobalIndex;
+  }
 
   ///@}
 
 private:
+
+  template< bool DOPACK >
+  localIndex packGlobalMapsPrivate( buffer_unit_type * & buffer,
+                                    arrayView1d< localIndex const > const & packList,
+                                    integer const recursive ) const;
 
   /**
    * @brief Pack the upward and downward pointing maps into a buffer.
@@ -354,6 +368,9 @@ private:
 
   /// nodes-to-element relation
   ElemMapType m_toElements;
+
+  /// parent edge global index
+  array1d< globalIndex > m_parentEdgeGlobalIndex;
 
 };
 }

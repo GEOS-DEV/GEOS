@@ -33,7 +33,6 @@ using namespace dataRepository;
 FaceElementSubRegion::FaceElementSubRegion( string const & name,
                                             dataRepository::Group * const parent ):
   SurfaceElementSubRegion( name, parent ),
-  m_unmappedGlobalIndicesInToNodes(),
   m_unmappedGlobalIndicesInToEdges(),
   m_unmappedGlobalIndicesInToFaces(),
   m_newFaceElements(),

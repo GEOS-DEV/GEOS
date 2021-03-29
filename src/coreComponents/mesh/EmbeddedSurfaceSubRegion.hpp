@@ -30,6 +30,19 @@
 namespace geosx
 {
 
+struct surfaceWithGhostNodes
+ {
+   localIndex surfaceIndex;
+   std::vector< globalIndex > parentEdgeIndex;
+   localIndex numOfNodes;
+
+   surfaceWithGhostNodes():
+   surfaceIndex(),
+   parentEdgeIndex(),
+   numOfNodes(0){}
+   void insert (localIndex const & surfIndex, globalIndex const & edgeIndex );
+ };
+
 /**
  * @class EmbeddedSurfaceSubRegion
  *
@@ -179,6 +192,8 @@ public:
 
     /// @return Fracture traction derivative w.r.t. jump string
     static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
+
+    static constexpr char const * surfaceWithGhostNodesString() { return "surfaceWithGhostNodes"; }
 
     /// Displacement jump key
     dataRepository::ViewKey dispJump        = { dispJumpString() };
@@ -366,6 +381,8 @@ public:
 
   ///@}
 
+  arrayView1d< surfaceWithGhostNodes const> surfaceWithGhostNodes() const { return m_surfaceWithGhostNodes; }
+
 private:
 
   /**
@@ -393,6 +410,9 @@ private:
 
   /// The CI of the cells
   array1d< real64 > m_connectivityIndex;
+
+  /// Surfaces with ghost nodes
+  array1d< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;
 };
 
 

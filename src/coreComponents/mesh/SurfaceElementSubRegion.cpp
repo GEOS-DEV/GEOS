@@ -30,6 +30,7 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
                                                   dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_surfaceElementsToCells(),
+  m_unmappedGlobalIndicesInToNodes(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_elementAperture(),
