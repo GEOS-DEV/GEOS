@@ -108,6 +108,24 @@ public:
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
+  /**
+   * @brief Calculates the isoparametric "Jacobian" transformation
+   *   matrix/mapping from the parent space to the physical space.
+   * @param q The quadrature point index in 3d space.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian transformation.
+   * @return The determinant of the Jacobian transformation matrix.
+   */
+  GEOSX_HOST_DEVICE
+  static real64 invJacobianTransformation( int const q,
+                                           real64 const (&X)[numNodes][3],
+                                           real64 ( & J )[3][3] )
+  {
+    jacobianTransformation( q, X, J );
+    return LvArray::tensorOps::invert< 3 >( J );
+  }
+
+
 private:
   /// The volume of the element in the parent configuration.
   constexpr static real64 parentVolume = 1.0;
