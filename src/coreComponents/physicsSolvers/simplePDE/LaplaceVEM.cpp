@@ -173,8 +173,29 @@ void LaplaceVEM::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
                                     DomainPartition & domain )
 {
-  // Computation of the sparsity pattern
-  setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+  GEOSX_MARK_FUNCTION;
+
+  // Note: here we cannot use SolverBase::setupSystem, because it does:
+  //       m_localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  //       and that creates problems (integratedTests failures) on Lassen for CPU-only implicit simulations
+
+  m_dofManager.setMesh( domain, 0, 0 );
+
+  setupDofs( domain, m_dofManager );
+  m_dofManager.reorderByRank();
+
+  localIndex const numLocalRows = m_dofManager.numLocalDofs();
+
+  SparsityPattern< globalIndex > pattern;
+  m_dofManager.setSparsityPattern( pattern );
+  m_localMatrix.assimilate< serialPolicy >( std::move( pattern ) );
+
+  m_localRhs.resize( numLocalRows );
+  m_localSolution.resize( numLocalRows );
+
+  m_localMatrix.setName( this->getName() + "/localMatrix" );
+  m_localRhs.setName( this->getName() + "/localRhs" );
+  m_localSolution.setName( this->getName() + "/localSolution" );
 }
 
 void LaplaceVEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -237,6 +258,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
     nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
   real64 const diffusion = 1.0;
+  globalIndex const rankOffset = dofManager.rankOffset();
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -250,12 +272,13 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       arrayView2d< real64 const > elemCenters = elemSubRegion.getElementCenter();
       arrayView1d< real64 const > elemVolumes = elemSubRegion.getElementVolume();
       arrayView1d< integer const > const & elemGhostRank = elemSubRegion.ghostRank();
-      real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
-      globalIndex elemDofIndex[VEM::maxSupportPoints];
-      real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints];
       localIndex const numCells = elemSubRegion.size();
-      for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
+      forAll< serialPolicy >( numCells, [=] ( localIndex const cellIndex )
       {
+        real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
+        globalIndex elemDofIndex[VEM::maxSupportPoints];
+        real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints];
+
         if( elemGhostRank[cellIndex] < 0 )
         {
           VEM::computeProjectors( cellIndex, nodesCoords, elemToNodeMap, elementToFaceMap,
@@ -289,14 +312,14 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
           for( localIndex a = 0; a < numSupportPoints; ++a )
           {
             localIndex const dof = LvArray::integerConversion< localIndex >
-                                     ( elemDofIndex[a] - dofManager.rankOffset() );
+                                     ( elemDofIndex[a] - rankOffset );
             if( dof < 0 || dof >= localMatrix.numRows() )
               continue;
-            localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+            localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >
               ( dof, elemDofIndex, element_matrix[ a ], numSupportPoints );
           }
         }
-      }
+      } );
     } );
   } );
 
@@ -376,14 +399,14 @@ void LaplaceVEM::applyDirichletBCImplicit( real64 const time,
                         Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
-                                                                                              time,
-                                                                                              targetGroup,
-                                                                                              m_fieldName,
-                                                                                              dofManager.getKey( m_fieldName ),
-                                                                                              dofManager.rankOffset(),
-                                                                                              localMatrix,
-                                                                                              localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, serialPolicy >( targetSet,
+                                                                                time,
+                                                                                targetGroup,
+                                                                                m_fieldName,
+                                                                                dofManager.getKey( m_fieldName ),
+                                                                                dofManager.rankOffset(),
+                                                                                localMatrix,
+                                                                                localRhs );
   } );
 }
 
