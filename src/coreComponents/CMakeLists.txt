@@ -3,15 +3,15 @@ set( subdirs
      common
      linearAlgebra
      codingUtilities
-     fileIO
      dataRepository
      managers
      constitutive
+     mesh
      finiteElement
      finiteVolume
      virtualElement
      discretizationMethods
-     mesh
+     fileIO
      physicsSolvers
      events
      mainInterface
