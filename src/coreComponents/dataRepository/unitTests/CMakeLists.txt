@@ -14,7 +14,7 @@ set( dataRepository_tests
      testWrapperHelpers.cpp
    )
 
-set( dependencyList gtest conduit )
+set( dependencyList gtest dataRepository conduit RAJA )
 
 set (dependencyList ${dependencyList} geosx_core)
 
