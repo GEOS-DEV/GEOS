@@ -17,7 +17,7 @@ set( fileIO_sources
      schema/schemaUtilities.cpp )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList common mesh constitutive silo hdf5 discretizationMethods physicsSolvers)
+  set( dependencyList mesh dataRepository constitutive discretizationMethods codingUtilities managers common silo hdf5 geosx_core )
 else()
   set( dependencyList 
        lvarray

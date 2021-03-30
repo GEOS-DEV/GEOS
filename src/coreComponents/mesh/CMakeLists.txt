@@ -95,7 +95,6 @@ if( BUILD_OBJ_LIBS)
   set(dependencyList managers metis)
 else()
   set(dependencyList
-      common
       metis
       codingUtilities
       constitutive

@@ -6,7 +6,7 @@ set(geosx_fileio_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest fileIO dataRepository events mainInterface)
+set( dependencyList gtest fileIO )
 
 #
 # Add gtest C++ based tests

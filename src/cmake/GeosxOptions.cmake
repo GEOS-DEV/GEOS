@@ -75,9 +75,9 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
+option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
 
-option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
+option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
@@ -95,6 +95,10 @@ endif(NOT BLT_CXX_STD STREQUAL c++14)
 message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
+message("OpenMP_CXX_FLAGS = ${OpenMP_CXX_FLAGS}")
+
+
+
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
                                  CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
