@@ -19,11 +19,11 @@
 #ifndef GEOSX_MANAGERS_DOMAINPARTITION_HPP_
 #define GEOSX_MANAGERS_DOMAINPARTITION_HPP_
 
-#include "dataRepository/Group.hpp"
-#include "mesh/MeshBody.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "common/MpiWrapper.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "dataRepository/Group.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 namespace geosx

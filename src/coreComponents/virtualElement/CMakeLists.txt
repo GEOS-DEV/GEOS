@@ -13,7 +13,7 @@ set( virtualElement_sources
   )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository codingUtilities)
+  set( dependencyList mesh common)
 else()
   set( dependencyList mesh)
 endif()

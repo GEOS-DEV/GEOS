@@ -2,17 +2,6 @@
 # Specify all headers
 #
 set(managers_headers
-    Outputs/OutputManager.hpp
-    Outputs/OutputBase.hpp
-    Outputs/SiloOutput.hpp
-    Outputs/RestartOutput.hpp
-    Outputs/TimeHistoryOutput.hpp
-    TimeHistory/TimeHistoryCollection.hpp
-    TimeHistory/PackCollection.hpp
-    TimeHistory/HistoryIO.hpp
-    TimeHistory/HistoryDataSpec.hpp
-    Outputs/BlueprintOutput.hpp
-    Outputs/PythonOutput.hpp
     Functions/FunctionBase.hpp
     Functions/TableFunction.hpp
     Functions/FunctionManager.hpp
@@ -28,14 +17,6 @@ set(managers_headers
 #
 
 set(managers_sources
-    Outputs/OutputManager.cpp
-    Outputs/OutputBase.cpp
-    Outputs/SiloOutput.cpp
-    Outputs/RestartOutput.cpp
-    Outputs/TimeHistoryOutput.cpp
-    Outputs/BlueprintOutput.cpp
-    TimeHistory/PackCollection.cpp
-    Outputs/PythonOutput.cpp
     Functions/FunctionBase.cpp
     Functions/TableFunction.cpp
     Functions/FunctionManager.cpp
@@ -54,18 +35,9 @@ if( ENABLE_MATHPRESSO )
         Functions/CompositeFunction.cpp )
 endif()
 
-if( ENABLE_MPI )
-    list( APPEND managers_headers Outputs/ChomboIO.hpp )
-    list( APPEND managers_sources Outputs/ChomboIO.cpp )
-endif()
-
-if( ENABLE_VTK )
-    list( APPEND managers_headers Outputs/VTKOutput.hpp )
-    list( APPEND managers_sources Outputs/VTKOutput.cpp )
-endif()
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit )
+  set( dependencyList dataRepository optionparser RAJA linearAlgebra conduit )
 else()
   set( dependencyList 
        common 

@@ -18,11 +18,11 @@
 
 #include "DofManager.hpp"
 
+#include "common/FieldSpecificationOps.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "mesh/MeshLevel.hpp"
 
 #include "DofManagerHelpers.hpp"

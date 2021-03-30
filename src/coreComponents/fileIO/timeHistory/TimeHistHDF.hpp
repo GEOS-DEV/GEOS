@@ -24,8 +24,8 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 
-#include "managers/TimeHistory/HistoryDataSpec.hpp"
-#include "managers/TimeHistory/HistoryIO.hpp"
+#include "dataRepository/HistoryDataSpec.hpp"
+#include "HistoryIO.hpp"
 #include <hdf5.h>
 
 

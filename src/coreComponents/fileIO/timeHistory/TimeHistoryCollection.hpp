@@ -19,10 +19,10 @@
 #ifndef GEOSX_TimeHistoryCollection_HPP_
 #define GEOSX_TimeHistoryCollection_HPP_
 
-#include "events/tasks/TaskBase.hpp"
-#include "managers/TimeHistory/HistoryDataSpec.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
+#include "dataRepository/HistoryDataSpec.hpp"
+#include "events/tasks/TaskBase.hpp"
+#include "mesh/DomainPartition.hpp"
 
 #include <functional>
 

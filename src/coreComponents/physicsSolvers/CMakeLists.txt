@@ -89,7 +89,7 @@ set( physicsSolvers_sources
      )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList constitutive dataRepository linearAlgebra discretizationMethods )
+  set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 else()
   set( dependencyList 
        common

@@ -4,20 +4,40 @@
 # Specify all headers
 #
 set( fileIO_headers
-     timeHistory/TimeHistHDF.hpp
+    Outputs/OutputManager.hpp
+    Outputs/OutputBase.hpp
+    Outputs/SiloOutput.hpp
+    Outputs/RestartOutput.hpp
+    Outputs/TimeHistoryOutput.hpp
+    Outputs/BlueprintOutput.hpp
+    Outputs/PythonOutput.hpp
+     schema/schemaUtilities.hpp 
      silo/SiloFile.hpp
-     schema/schemaUtilities.hpp )
+     timeHistory/TimeHistHDF.hpp
+     timeHistory/TimeHistoryCollection.hpp
+     timeHistory/PackCollection.hpp
+     timeHistory/HistoryIO.hpp
+     )
 
 #
 # Specify all sources
 #
 set( fileIO_sources
-     timeHistory/TimeHistHDF.cpp
+    Outputs/OutputManager.cpp
+    Outputs/OutputBase.cpp
+    Outputs/SiloOutput.cpp
+    Outputs/RestartOutput.cpp
+    Outputs/TimeHistoryOutput.cpp
+    Outputs/BlueprintOutput.cpp
+    Outputs/PythonOutput.cpp
+     schema/schemaUtilities.cpp
      silo/SiloFile.cpp
-     schema/schemaUtilities.cpp )
+     timeHistory/PackCollection.cpp
+     timeHistory/TimeHistHDF.cpp
+      )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList mesh dataRepository constitutive discretizationMethods codingUtilities managers common silo hdf5 geosx_core )
+  set( dependencyList mesh constitutive silo hdf5 )
 else()
   set( dependencyList 
        lvarray
@@ -34,22 +54,29 @@ endif()
 if( ENABLE_MPI )
   add_subdirectory(coupling/hdf5_interface)
   set( dependencyList ${dependencyList} mpi hdf5_interface)
-  list( APPEND fileIO_headers coupling/ChomboCoupler.hpp )
-  list( APPEND fileIO_sources coupling/ChomboCoupler.cpp )
+  list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp)
+  list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp)
 endif() 
+
+
+if( ENABLE_VTK )
+endif()
+
 
 if( ENABLE_VTK )
   list( APPEND fileIO_headers
                vtk/VTKPVDWriter.hpp
                vtk/VTKVTMWriter.hpp
                vtk/VTKGEOSXData.hpp
-               vtk/VTKPolyDataWriterInterface.hpp )
+               vtk/VTKPolyDataWriterInterface.hpp
+               Outputs/VTKOutput.hpp )
 
   list( APPEND fileIO_sources
                vtk/VTKGEOSXData.cpp
                vtk/VTKPVDWriter.cpp
                vtk/VTKVTMWriter.cpp
-               vtk/VTKPolyDataWriterInterface.cpp )
+               vtk/VTKPolyDataWriterInterface.cpp
+               Outputs/VTKOutput.cpp )
 
 
   list( APPEND dependencyList VTK::CommonCore VTK::CommonSystem VTK::CommonMisc VTK::IOCore VTK::IOXML VTK::expat VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::loguru )

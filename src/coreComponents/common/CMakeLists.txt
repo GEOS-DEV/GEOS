@@ -7,6 +7,7 @@ set(common_headers
     BufferAllocator.hpp
     DataLayouts.hpp
     DataTypes.hpp
+    FieldSpecificationOps.hpp
     GeosxMacros.hpp
     Logger.hpp
     MpiWrapper.hpp

@@ -17,7 +17,7 @@
  */
 
 /// Source includes
-#include "managers/Outputs/BlueprintOutput.hpp"
+#include "BlueprintOutput.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "mesh/DomainPartition.hpp"

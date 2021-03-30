@@ -35,7 +35,7 @@ set( finiteVolume_sources
    )
 
 if ( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository codingUtilities managers)
+  set( dependencyList mesh codingUtilities managers )
 else()
   set( dependencyList 
        common

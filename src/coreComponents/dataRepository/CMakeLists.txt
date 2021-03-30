@@ -18,6 +18,7 @@ set(dataRepository_headers
     Wrapper.hpp
     WrapperBase.hpp
     xmlWrapper.hpp
+    HistoryDataSpec.hpp
     )
 
 #
@@ -40,7 +41,7 @@ if( ENABLE_MPI )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set (dependencyList common lvarray codingUtilities pugixml fileIO)
+  set (dependencyList codingUtilities pugixml )
 else()
   set( dependencyList 
        common 

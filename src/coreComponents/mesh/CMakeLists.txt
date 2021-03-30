@@ -92,7 +92,7 @@ set(mesh_sources
    )
 
 if( BUILD_OBJ_LIBS)
-  set(dependencyList managers metis)
+  set(dependencyList dataRepository metis)
 else()
   set(dependencyList
       metis

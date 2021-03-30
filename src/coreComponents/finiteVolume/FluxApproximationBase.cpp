@@ -19,8 +19,6 @@
 
 #include "FluxApproximationBase.hpp"
 
-//#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 

@@ -79,7 +79,8 @@ endif()
 if( BUILD_OBJ_LIBS )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
-                    DEPENDS_ON  ${coreLibs}
+                    DEPENDS_ON  mainInterface physicsSolvers
+#                    DEPENDS_ON  ${coreLibs}
                     OBJECT ${buildAsObj}
                     SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )

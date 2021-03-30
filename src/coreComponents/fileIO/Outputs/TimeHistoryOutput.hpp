@@ -20,8 +20,8 @@
 #define GEOSX_TIME_HISTORY_OUTPUT_HPP_
 
 #include "OutputBase.hpp"
-#include "managers/TimeHistory/TimeHistoryCollection.hpp"
-#include "managers/TimeHistory/HistoryIO.hpp"
+#include "fileIO/timeHistory/TimeHistoryCollection.hpp"
+#include "fileIO/timeHistory/HistoryIO.hpp"
 #include "fileIO/timeHistory/TimeHistHDF.hpp"
 
 #include "LvArray/src/Array.hpp" // just for collector

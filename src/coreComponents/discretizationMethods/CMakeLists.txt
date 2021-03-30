@@ -17,7 +17,7 @@ set(mainInterface_sources
 blt_add_library( NAME                  discretizationMethods
                  SOURCES               ${mainInterface_sources}
                  HEADERS               ${mainInterface_headers}
-                 DEPENDS_ON            finiteElement finiteVolume common
+                 DEPENDS_ON            finiteElement finiteVolume virtualElement
                  OBJECT                ${buildAsObj}
                )
 

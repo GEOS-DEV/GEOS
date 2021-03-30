@@ -19,7 +19,7 @@
 #ifndef GEOSX_MANAGERS_OUTPUTS_PYTHONOUTPUT_HPP_
 #define GEOSX_MANAGERS_OUTPUTS_PYTHONOUTPUT_HPP_
 
-#include "managers/Outputs/OutputBase.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geosx
 {

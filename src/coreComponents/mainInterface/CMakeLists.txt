@@ -19,7 +19,7 @@ set(mainInterface_sources
    )
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList events dataRepository fileIO optionparser RAJA linearAlgebra conduit adiak)
+  set( dependencyList events fileIO optionparser RAJA conduit adiak)
 else()
   set( dependencyList 
        common 
