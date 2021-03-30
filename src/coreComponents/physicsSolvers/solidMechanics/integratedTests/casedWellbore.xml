@@ -3,7 +3,7 @@
 <Problem>
   <!-- SPHINX_Gravity -->
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_GravityEnd -->
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE
@@ -11,8 +11,8 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="0"
-      targetRegions="{ casing }"
-      solidMaterialNames="{ steel }">
+      targetRegions="{ casing, cement, rock }"
+      solidMaterialNames="{ casing, cement, rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -28,33 +28,18 @@
   <Mesh>
     <InternalWellbore
       name="mesh1"
-      elementTypes="{ C3D8 }"
-      radius="{0.1, 0.5}"
-      theta="{0, 360}"
-      zCoords="{0,1}"
-      trajectory="{ { -0.0, 0.0, 0.0 },
-                    {  0.0, 0.0, 0.0 } }"
-      nr="{4}"
-      nt="{16}"
-      nz="{1}"
-      autoSpaceRadialElems="{1}"
+      elementTypes="{ C3D8, C3D8, C3D8 }"
+      radius="{ 0.1, 0.11, 0.15, 2.0 }"
+      theta="{ 0, 90 }"
+      zCoords="{ 0, 1 }"
+      nr="{ 2, 2, 5 }"
+      nt="{ 4 }"
+      nz="{ 1 }"
+      autoSpaceRadialElems="{ 0, 0, 1 }"
       useCartesianOuterBoundary="2"
-      cellBlockNames="{ casing }"
+      cellBlockNames="{ casing, cement, rock }"
       />
   </Mesh>
-  
-  <Geometry>
-    <Box
-      name="xConstraint"
-      xMin="{-0.01, -1e9, -1e9}"
-      xMax="{ 0.01,  1e9,  1e9}"/>
-
-    <Box
-      name="yConstraint"
-      xMin="{-1e9, -0.01, -1e9}"
-      xMax="{ 1e9,  0.01,  1e9}"/>
-  </Geometry>
-  
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
@@ -98,26 +83,36 @@
     <CellElementRegion
       name="casing"
       cellBlocks="{ casing }"
-      materialList="{ steel }"/>
+      materialList="{ casing }"/>
+      
+    <CellElementRegion
+      name="cement"
+      cellBlocks="{ cement }"
+      materialList="{ cement }"/>
+
+    <CellElementRegion
+      name="rock"
+      cellBlocks="{ rock }"
+      materialList="{ rock }"/>
       
   </ElementRegions>
 
   <Constitutive>
     <!-- SPHINX_Material -->
     <ElasticIsotropic
-      name="steel"
+      name="casing"
       defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
+      defaultBulkModulus="175e9"
+      defaultShearModulus="80.8e9"/>
 
     <ElasticIsotropic
       name="cement"
       defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
+      defaultBulkModulus="10.3e9"
+      defaultShearModulus="6.45e9"/>
 
     <ElasticIsotropic
-      name="shale"
+      name="rock"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
@@ -129,20 +124,20 @@
   <FieldSpecifications>
 
     <FieldSpecification
-      name="xnegConstraint"
+      name="xConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xConstraint }"/>
+      setNames="{ tpos, xpos }"/>
 
     <FieldSpecification
-      name="ynegConstraint"
+      name="yConstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ yConstraint }"/>
+      setNames="{ tneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -153,22 +148,12 @@
       setNames="{ zneg, zpos }"/>
 
     <Traction
-      name="insituStress"
-      objectPath="faceManager"
-      tractionType="2"
-      scale="1.0e6"
-      inputStress="{ -1,-1.5,-2, 0, 0, 0 }"
-      setNames="{ rpos }"/>
-
-    <Traction
       name="innerPressure"
       objectPath="faceManager"
       tractionType="1"
       scale="-1.0e6"
       functionName="timeFunction"
       setNames="{ rneg }"/>
-      
-      
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
@@ -178,7 +163,7 @@
       name="timeFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0, 10.0 }"
-      values="{ 0.0, 0.0, 10.0 }"/>
+      values=     "{ 0.0, 0.0, 10.0 }"/>
   </Functions>
 
   <!-- SPHINX_TableFunctionEnd -->

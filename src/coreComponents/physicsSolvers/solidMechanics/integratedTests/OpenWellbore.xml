@@ -32,17 +32,17 @@
       radius="{ 0.1, 2 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 1 }"
-      nr="{ 30 }"
-      nt="{ 40 }"
+      nr="{ 5 }"
+      nt="{ 4 }"
       nz="{ 1 }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
-  </Mesh>
+  </Mesh> 
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
-    maxTime="10.0">
+    maxTime="5.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <!-- SPHINX_Execution -->

@@ -168,7 +168,7 @@ void TractionBoundaryCondition::launch( real64 const time,
       // TODO consider dispatch if appropriate
       real64 const tractionMagnitude = spatialFunction ? tractionMagnitudeArrayView[i] : tractionMagnitude0;
 
-      real64 traction[3];
+      real64 traction[3] = { 0 };
       // TODO consider dispatch if appropriate
       if( tractionType==0 )
       {
