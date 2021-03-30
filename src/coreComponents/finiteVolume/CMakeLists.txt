@@ -35,7 +35,7 @@ set( finiteVolume_sources
    )
 
 if ( BUILD_OBJ_LIBS )
-  set( dependencyList mesh codingUtilities managers )
+  set( dependencyList mesh codingUtilities functions fieldSpecification )
 else()
   set( dependencyList 
        common

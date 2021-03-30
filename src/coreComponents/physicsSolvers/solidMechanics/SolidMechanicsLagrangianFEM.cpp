@@ -34,7 +34,7 @@
 //#include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"

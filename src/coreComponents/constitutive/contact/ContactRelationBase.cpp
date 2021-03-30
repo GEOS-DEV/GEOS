@@ -17,8 +17,8 @@
  */
 
 #include "ContactRelationBase.hpp"
-#include "managers/Functions/FunctionManager.hpp"
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
 
 
 

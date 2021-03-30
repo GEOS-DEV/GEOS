@@ -20,7 +20,7 @@
 #define GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geosx
 {

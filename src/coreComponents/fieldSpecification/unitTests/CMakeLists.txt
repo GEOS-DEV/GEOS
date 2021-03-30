@@ -4,12 +4,10 @@
 
 set( gtest_geosx_tests
      testRecursiveFieldApplication.cpp
-     testMeshGeneration.cpp
-     testFunctions.cpp
    )
 
 
-set( dependencyList gtest )
+set( dependencyList gtest fieldSpecification )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core conduit)

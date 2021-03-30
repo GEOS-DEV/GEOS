@@ -19,8 +19,9 @@
 #ifndef GEOSX_MANAGERS_FUNCTIONS_FUNCTIONMANAGER_HPP_
 #define GEOSX_MANAGERS_FUNCTIONS_FUNCTIONMANAGER_HPP_
 
-#include "dataRepository/Group.hpp"
 #include "FunctionBase.hpp"
+
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {

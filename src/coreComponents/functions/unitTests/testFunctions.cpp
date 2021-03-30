@@ -15,9 +15,9 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "gtest/gtest.h"
 #include "mainInterface/initialization.hpp"
-#include "managers/Functions/FunctionManager.hpp"
-#include "managers/Functions/FunctionBase.hpp"
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/FunctionBase.hpp"
+#include "functions/TableFunction.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOSX_USE_MATHPRESSO

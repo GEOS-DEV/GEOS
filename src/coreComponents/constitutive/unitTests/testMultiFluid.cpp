@@ -19,7 +19,7 @@
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 #include "mainInterface/initialization.hpp"
-#include "managers/Functions/FunctionManager.hpp"
+#include "functions/FunctionManager.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
 // TPL includes

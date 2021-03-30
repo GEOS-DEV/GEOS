@@ -18,10 +18,6 @@
 
 #include "FunctionManager.hpp"
 
-#include "dataRepository/Group.hpp"
-#include "FunctionBase.hpp"
-#include "common/DataTypes.hpp"
-
 namespace geosx
 {
 

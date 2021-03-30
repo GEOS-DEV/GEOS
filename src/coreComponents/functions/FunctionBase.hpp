@@ -19,6 +19,7 @@
 #ifndef GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_
 #define GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_
 
+#include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 

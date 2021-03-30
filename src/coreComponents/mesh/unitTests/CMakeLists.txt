@@ -4,7 +4,8 @@
 
 
 set( gtest_geosx_tests
-     testNeighborCommunicator.cpp )
+     testNeighborCommunicator.cpp
+     testMeshGeneration.cpp  )
 
 if(ENABLE_PAMELA)
     list( APPEND gtest_geosx_tests

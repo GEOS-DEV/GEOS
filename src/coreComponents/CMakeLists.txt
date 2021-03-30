@@ -4,7 +4,8 @@ set( subdirs
      linearAlgebra
      codingUtilities
      dataRepository
-     managers
+     functions
+     fieldSpecification
      constitutive
      mesh
      finiteElement

@@ -27,7 +27,7 @@
 #include "mesh/DomainPartition.hpp"
 //#include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 namespace geosx

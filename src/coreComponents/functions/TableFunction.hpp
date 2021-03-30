@@ -19,8 +19,9 @@
 #ifndef GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
 #define GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
 
+#include "FunctionBase.hpp"
+
 #include "codingUtilities/EnumStrings.hpp"
-#include "managers/Functions/FunctionBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx

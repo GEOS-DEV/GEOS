@@ -19,7 +19,7 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx

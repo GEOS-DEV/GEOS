@@ -19,8 +19,11 @@
 #ifndef GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 #define GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 
+#include "FieldSpecificationManager.hpp"
+
+#include "FieldSpecificationBase.hpp"
+
 #include "codingUtilities/StringUtilities.hpp"
-#include "managers/FieldSpecification/FieldSpecificationBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/ObjectManagerBase.hpp"

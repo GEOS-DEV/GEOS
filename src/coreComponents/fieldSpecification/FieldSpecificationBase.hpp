@@ -23,10 +23,11 @@
 #include "codingUtilities/traits.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/Group.hpp"
+#include "functions/FunctionBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "managers/Functions/FunctionManager.hpp"
+#include "functions/FunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx

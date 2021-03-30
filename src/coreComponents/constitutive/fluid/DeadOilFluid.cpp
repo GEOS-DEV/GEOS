@@ -16,7 +16,7 @@
 
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 //#include "mainInterface/GeosxState.hpp"
-#include "managers/Functions/FunctionManager.hpp"
+#include "functions/FunctionManager.hpp"
 
 
 namespace geosx

@@ -28,7 +28,7 @@
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"

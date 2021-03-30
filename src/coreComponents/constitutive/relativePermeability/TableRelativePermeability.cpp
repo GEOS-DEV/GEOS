@@ -18,7 +18,7 @@
 
 #include "TableRelativePermeability.hpp"
 
-#include "managers/Functions/FunctionManager.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geosx
 {

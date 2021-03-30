@@ -15,7 +15,7 @@
 #include "FieldSpecificationBase.hpp"
 
 #include "common/MpiWrapper.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 
 

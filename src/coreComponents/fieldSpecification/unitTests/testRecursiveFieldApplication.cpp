@@ -15,8 +15,8 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
