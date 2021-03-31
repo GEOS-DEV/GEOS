@@ -12,13 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file MeshGeneratorBase.cpp
- *
- */
-
 #include "MeshGeneratorBase.hpp"
-
 
 namespace geosx
 {
