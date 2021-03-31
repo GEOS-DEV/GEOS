@@ -58,8 +58,6 @@ public:
   };
 /// @endcond
 
-  virtual void generateElementRegions( DomainPartition & domain ) override;
-
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
    * @param childKey the catalog key of the new geometric object to create
@@ -70,14 +68,6 @@ public:
                                string const & childName ) override;
 
   virtual void generateMesh( DomainPartition & domain ) override;
-
-  virtual void getElemToNodesRelationInBox ( const string & elementType,
-                                             const int index[],
-                                             const int & iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) override;
-
-  virtual void remapMesh ( dataRepository::Group & domain ) override;
 
 protected:
 

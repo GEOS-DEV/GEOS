@@ -41,17 +41,9 @@ CornerPointMeshGenerator::CornerPointMeshGenerator( string const & name, Group *
 CornerPointMeshGenerator::~CornerPointMeshGenerator()
 {}
 
-void CornerPointMeshGenerator::generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
-
 void CornerPointMeshGenerator::postProcessInput()
 {
   m_cPMeshBuilder->buildMesh( m_filePath );
-}
-
-void CornerPointMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARAM( domain ) )
-{
-  return;
 }
 
 Group * CornerPointMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
@@ -75,9 +67,6 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
   domain.getMetisNeighborList() = m_cPMeshBuilder->neighborsList();
 
   // we can start constructing the mesh
-
-  // grab the topological data of the corner point mesh
-  //CPMeshData const & cPMeshData = m_cPMeshBuilder->topologicalMeshData();
 
   // Step 1: fill vertex information
 
@@ -141,7 +130,6 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
   auto & cellToVertex = cellBlock->nodeList(); // TODO: remove auto
   cellToVertex.resize( nActiveCellsInsidePartition, 8 );
 
-  //localIndex counter = 0;
   for( localIndex iActiveCellInside = 0; iActiveCellInside < nActiveCellsInsidePartition; ++iActiveCellInside )
   {
     // this filtering is needed because the CPMeshBuilder uses a layer of cells around each MPI partition
@@ -198,13 +186,6 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 }
-
-void CornerPointMeshGenerator::getElemToNodesRelationInBox( const string & GEOSX_UNUSED_PARAM( elementType ),
-                                                            const int GEOSX_UNUSED_PARAM( index )[],
-                                                            const int & GEOSX_UNUSED_PARAM( iEle ),
-                                                            int GEOSX_UNUSED_PARAM( nodeIDInBox )[],
-                                                            const int GEOSX_UNUSED_PARAM( node_size ) )
-{}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, CornerPointMeshGenerator, string const &, Group * const )
 }
