@@ -210,8 +210,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-
   // Synchronize embedded Surfaces
   EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
                                                                     domain.getNeighbors(),
