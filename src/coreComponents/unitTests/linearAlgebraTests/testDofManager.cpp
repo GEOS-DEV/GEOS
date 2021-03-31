@@ -27,6 +27,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 #include "testDofManagerUtils.hpp"
 

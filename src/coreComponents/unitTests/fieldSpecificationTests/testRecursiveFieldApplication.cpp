@@ -20,6 +20,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -63,7 +64,7 @@ TEST( FieldSpecification, Recursive )
   localIndex nbTetReg1 = 40;
   localIndex nbHexReg1 = 50;
 
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( "body" );
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));

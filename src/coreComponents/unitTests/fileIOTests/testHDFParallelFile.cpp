@@ -29,6 +29,8 @@ TEST( testHDFIO_parallel, SingleValueHistory )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
+  geosx::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
+  geosx::basicCleanup();
   return result;
 }

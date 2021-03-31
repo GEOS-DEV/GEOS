@@ -27,6 +27,7 @@
 #include "mesh/MeshManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -99,7 +100,7 @@ protected:
 
 TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
 {
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager & nodeManager = meshLevel.getNodeManager();
 
@@ -166,7 +167,7 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
 
 TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
 {
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = meshLevel.getElemManager();;
 
