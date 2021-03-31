@@ -381,7 +381,7 @@ public:
 
   ///@}
 
-  arrayView1d< surfaceWithGhostNodes const > surfaceWithGhostNodes() const { return m_surfaceWithGhostNodes; }
+  arrayView1d< struct surfaceWithGhostNodes const > surfaceWithGhostNodes() const { return m_surfaceWithGhostNodes; }
 
 private:
 
