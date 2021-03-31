@@ -38,30 +38,7 @@
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
-  </Mesh>
-  
-  <Geometry>
-    <Box
-      name="xneg"
-      xMin="{ -0.0001, -1e9, -1e9 }"
-      xMax="{  0.0001,  1e9,  1e9 }"/>
-
-    <Box
-      name="xpos"
-      xMin="{ 1.9999, -1e9, -1e9 }"
-      xMax="{ 2.0001,  1e9,  1e9 }"/>
-
-    <Box
-      name="yneg"
-      xMin="{ -1e9, -0.0001, -1e9 }"
-      xMax="{  1e9,  0.0001,  1e9 }"/>
-
-    <Box
-      name="ypos"
-      xMin="{ -1e9, 1.9999, -1e9 }"
-      xMax="{  1e9, 2.0001,  1e9 }"/>
-  </Geometry>
-  
+  </Mesh> 
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
@@ -129,7 +106,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ tpos, xpos }"/>
 
     <FieldSpecification
       name="yConstraint"
@@ -137,7 +114,11 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
+<<<<<<< HEAD:src/coreComponents/physicsSolvers/solidMechanics/integratedTests/OpenWellbore.xml
       setNames="{ yneg, ypos }"/>
+=======
+      setNames="{ tneg, ypos }"/>
+>>>>>>> refs/rewritten/feature-sytuan-InternalWellbore-3:src/coreComponents/physicsSolvers/solidMechanics/integratedTests/wellbore.xml
 
     <FieldSpecification
       name="zconstraint"

@@ -35,7 +35,7 @@
       nr="{ 30 }"
       nt="{ 40 }"
       nz="{ 1 }"
-      autoSpaceRadialElems="{ 0 }"
+      autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -129,7 +129,11 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
+<<<<<<< HEAD
       setNames="{ xneg, xpos }"/>
+=======
+      setNames="{ tpos, xpos }"/>
+>>>>>>> refs/rewritten/feature-sytuan-InternalWellbore-3
 
     <FieldSpecification
       name="yConstraint"
@@ -137,7 +141,11 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
+<<<<<<< HEAD
       setNames="{ yneg, ypos }"/>
+=======
+      setNames="{ tneg, ypos }"/>
+>>>>>>> refs/rewritten/feature-sytuan-InternalWellbore-3
 
     <FieldSpecification
       name="zconstraint"

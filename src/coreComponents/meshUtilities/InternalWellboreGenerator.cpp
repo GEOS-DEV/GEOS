@@ -67,6 +67,7 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of elements in the tangent direction" );
 
+  // TODO to enable the use of radial bias
   registerWrapper( viewKeyStruct::rBiasString(), &(m_nElemBias[0]) ).
     setApplyDefaultValue( -0.8 ).
     setSizedFromParent( 0 ).
@@ -234,7 +235,6 @@ void InternalWellboreGenerator::postProcessInput()
         {
           m_radialCoords[i] = ( m_radialCoords[i] - rInner ) * scalingFactor + rInner;
         }
-
       }
       else
       {
@@ -252,10 +252,9 @@ void InternalWellboreGenerator::postProcessInput()
 //    std::cout<<m_radialCoords<<std::endl;
   }
 
-
   InternalMeshGenerator::postProcessInput();
-
 }
+
 
 void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (& numNodesInDir)[3] )
 {
@@ -325,12 +324,9 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
   SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
   SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
 
-
   real64 const cartesianMappingInnerRadius = m_cartesianOuterBoundary<m_vertices[0].size() ?
                                              m_vertices[0][m_cartesianOuterBoundary] :
                                              1e99;
-
-
 
   // ***** Map to radial mesh *****
   for( localIndex a = 0; a<nodeManager.size(); ++a )
@@ -352,7 +348,6 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
       meshRact = X[a][0];
     }
 
-
     // Wellbore nodesets
     if( isEqual( X[a][0], m_min[0], m_coordinatePrecision ) )
     {
@@ -372,7 +367,6 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
     {
       tposNodes.insert( a );
     }
-
 
     X[a][0] = meshRact * cos( meshTheta );
     X[a][1] = meshRact * sin( meshTheta );
@@ -495,7 +489,6 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
     }
   }
 }
-
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )
 } /* namespace geosx */
