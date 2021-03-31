@@ -6,7 +6,8 @@ set( LAI_tests
      testArrayLAOperations.cpp
      testKrylovSolvers.cpp
      testDofManager.cpp
-     testLAIHelperFunctions.cpp)
+     testLAIHelperFunctions.cpp
+    )
 
 set( nranks 2 )
 
@@ -15,7 +16,7 @@ set( nranks 2 )
 #
 set( dependencyList gtest )
 
-if ( TRUE ) #GEOSX_BUILD_SHARED_LIBS )
+if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
 else()
   set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)

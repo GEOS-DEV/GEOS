@@ -15,7 +15,7 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
+#include "testFlowKernelHelpers.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

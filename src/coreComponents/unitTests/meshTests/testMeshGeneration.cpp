@@ -18,7 +18,7 @@
 
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
-//#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/FaceManager.hpp"

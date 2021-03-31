@@ -38,7 +38,7 @@
 /**
  * @brief Enables verbose logging of object catalog
  */
-#define OBJECTCATALOGVERBOSE 2
+#define OBJECTCATALOGVERBOSE 0
 #endif
 
 

@@ -19,7 +19,7 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
-#include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

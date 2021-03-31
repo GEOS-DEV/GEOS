@@ -5,7 +5,8 @@
 
 set( gtest_geosx_tests
      testNeighborCommunicator.cpp
-     testMeshGeneration.cpp  )
+     testMeshGeneration.cpp
+    )
 
 if(ENABLE_PAMELA)
     list( APPEND gtest_geosx_tests
@@ -17,9 +18,7 @@ if(ENABLE_PAMELA)
     configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshFileNames.hpp )
 endif(ENABLE_PAMELA)
 
-set( dependencyList gtest )
-
-set (dependencyList ${dependencyList} geosx_core)
+set( dependencyList geosx_core gtest )
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )

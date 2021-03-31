@@ -176,6 +176,4 @@ target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
 geosx_add_code_checks( PREFIX linearAlgebra )
 
-#add_subdirectory( unitTests )
-
 message( "Leaving /src/coreComponents/linearAlgebra/CMakeLists.txt")

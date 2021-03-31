@@ -36,5 +36,3 @@ blt_add_library( NAME                  virtualElement
 target_include_directories( virtualElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks( PREFIX virtualElement )
-
-add_subdirectory( unitTests )

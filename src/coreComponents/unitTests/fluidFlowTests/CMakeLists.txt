@@ -3,16 +3,12 @@
 #
 
 set( gtest_geosx_tests
-     testReservoirSinglePhaseMSWells.cpp
+     testSinglePhaseBaseKernels.cpp
+     testSinglePhaseFVMKernels.cpp     
+     testSinglePhaseHybridFVMKernels.cpp
    )
 
-set( dependencyList gtest )
-
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core conduit)
-else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)
-endif()
+set( dependencyList geosx_core gtest )
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )
@@ -26,13 +22,14 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
-          testReservoirCompositionalMultiphaseMSWells.cpp )
+          testCompMultiphaseFlow.cpp
+          testCompMultiphaseFlowHybrid.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
-
 
 #
 # Add gtest C++ based tests

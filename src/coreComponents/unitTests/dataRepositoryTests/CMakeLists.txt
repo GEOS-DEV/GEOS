@@ -3,13 +3,14 @@
 #
 
 set( dataRepository_tests
-     testDefaultValue.cpp
-     testWrapper.cpp
-     testXmlWrapper.cpp
-     testBufferOps.cpp
+     testObjectCatalog.cpp
+     testRestartBasic.cpp
+     testRestartExtended.cpp
+     testPacking.cpp
+     testWrapperHelpers.cpp
    )
 
-set( dependencyList gtest dataRepository conduit RAJA )
+set( dependencyList gtest geosx_core RAJA )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

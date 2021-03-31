@@ -6,7 +6,7 @@ set(geosx_fileio_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest fileIO )
+set( dependencyList gtest geosx_core )
 
 #
 # Add gtest C++ based tests

@@ -109,7 +109,7 @@ set( constitutive_sources
    )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository)
+  set( dependencyList dataRepository functions)
 else()
   set( dependencyList 
        common
@@ -135,8 +135,6 @@ if( ENABLE_PVTPackage )
          fluid/BlackOilFluid.cpp
        )
     set( dependencyList ${dependencyList} PVTPackage )
-    
-    blt_print_target_properties(TARGET PVTPackage )
     
 endif()
 

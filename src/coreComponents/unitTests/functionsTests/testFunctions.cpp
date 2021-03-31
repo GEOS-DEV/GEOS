@@ -18,10 +18,10 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/FunctionBase.hpp"
 #include "functions/TableFunction.hpp"
-//#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOSX_USE_MATHPRESSO
-  #include "managers/Functions/SymbolicFunction.hpp"
+  #include "functions/SymbolicFunction.hpp"
 #endif
 
 #include <random>

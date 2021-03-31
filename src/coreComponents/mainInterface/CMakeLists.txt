@@ -58,9 +58,6 @@ if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )
 endif()
 
-blt_print_target_properties( TARGET adiak )
-
-
 blt_add_library( NAME                  mainInterface
                  SOURCES               ${mainInterface_sources}
                  HEADERS               ${mainInterface_headers}
@@ -68,10 +65,6 @@ blt_add_library( NAME                  mainInterface
                  OBJECT                ${buildAsObj}
                )
 
-blt_print_target_properties( TARGET mainInterface )
-
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
-
-#add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX mainInterface )

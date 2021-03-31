@@ -161,6 +161,3 @@ endif()
 
 
 geosx_add_code_checks( PREFIX physicsSolvers )
-
-add_subdirectory( fluidFlow/unitTests )
-add_subdirectory( fluidFlow/wells/unitTests )

@@ -23,6 +23,4 @@ blt_add_library( NAME                  discretizationMethods
 
 target_include_directories( discretizationMethods PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-#add_subdirectory( unitTests )
-
 geosx_add_code_checks( PREFIX discretizationMethods )

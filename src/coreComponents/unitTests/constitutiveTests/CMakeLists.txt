@@ -3,14 +3,11 @@
 #
 
 set( gtest_geosx_tests
-     testDamage.cpp
-     testDamageUtilities.cpp
-     testDruckerPrager.cpp
-     testElasticIsotropic.cpp
-     testPropertyConversions.cpp
+     testRelPerm.cpp
+     testCapillaryPressure.cpp
    )
 
-set( dependencyList gtest constitutive conduit )
+set( dependencyList gtest geosx_core conduit )
 
 if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )
