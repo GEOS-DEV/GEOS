@@ -53,6 +53,9 @@ public:
 
   ///@}
 
+  /**
+   * @brief @return a pointer to this GeometricObjectManager
+   */
   static GeometricObjectManager & getInstance();
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
