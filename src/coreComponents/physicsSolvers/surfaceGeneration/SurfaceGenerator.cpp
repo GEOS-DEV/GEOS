@@ -1179,7 +1179,21 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
 
           if (halfOpening < 1.0e-4)
           {
+            GEOSX_LOG_RANK("");
+            std::cout << "Original calculation of initial opening = "
+                      <<  halfOpening << " for node " << nodeID
+                      << " is too small. " << std::endl;
             halfOpening = 1.0e-4;
+            std::cout << "Increase it to " << halfOpening << std::endl;
+          }
+          if (halfOpening > 1.0e-2)
+          {
+            GEOSX_LOG_RANK("");
+            std::cout << "Original calculation of initial opening = "
+                      <<  halfOpening << " for node " << nodeID
+                      << " is too large. " << std::endl;
+            halfOpening = 1.0e-2;
+            std::cout << "Decrease it to " << halfOpening << std::endl;
           }
 
           for (localIndex iFace : nodesToRupturedFaces[nodeID])
@@ -2148,8 +2162,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
               if( faceToElementMap.size( 1 ) == 2  &&
                   faceIsExternal[iface] < 1 &&
                   CheckOrphanElement( elementManager, faceManager, iface ) == 0 &&
-                  isFaceSeparable[iface] == 1
-//                  && fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[faceIndex], faceNormals[iface])) > cos( m_maxTurnAngle )
+                  isFaceSeparable[iface] == 1 &&
+                  // fracture plane is not allowed to turn and maintains a flat plane
+                  fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[faceIndex], faceNormals[iface])) > 0.99
                   )
               {
                 m_tipFaces.insert( iface );
@@ -3380,6 +3395,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
           real64 trailingNodeDisp[3];
           localIndex theOtherTrailingNodeID;
 
+          GEOSX_ERROR_IF_EQ(tralingNodeID, std::numeric_limits< localIndex >::max());
           if( childNodeIndices[tralingNodeID] == -1 )
           {
             theOtherTrailingNodeID = parentNodeIndices[tralingNodeID];

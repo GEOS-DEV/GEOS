@@ -425,27 +425,24 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
     // Loop over all the faceElements
     for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
     {
-      // Find the parent face of the two faces in a faceElement
       localIndex const kf0 = faceElmtToFacesRelation[iFaceElmt][0];
       localIndex const kf1 = faceElmtToFacesRelation[iFaceElmt][1];
-      localIndex const childFaceOfFace0 = childFaceIndices[kf0];
-      localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+      localIndex const numNodesPerFace = faceToNodes.sizeOfArray( kf0 );
 
-      // Count how many nodes on the parent face have child nodes
-      int nodeCount = 0;
-      for (localIndex const node : faceToNodes[parentFace])
+      bool isFullyOpen = true;
+      for( localIndex a=0; a<numNodesPerFace; ++a )
       {
-        if (childNodeIndices[node] >= 0 )
-          nodeCount++;
+        for (localIndex b=0; b<numNodesPerFace; ++b )
+        {
+          if (faceToNodes( kf0, a ) == faceToNodes( kf1, b ))
+          {
+            isFullyOpen = false;
+            break;
+          }
+        }
       }
-      // If all the nodes on the parent face have children,
-      // the faceElement is fully open. Otherwise, the faceElement
-      // is partially open
-      GEOSX_ERROR_IF(faceToNodes[parentFace].size() != 4,
-                     "Face element " << parentFace << " needs to have FOUR nodes, "
-                     << "it only has " << faceToNodes[parentFace].size() << " nodes.");
 
-      if (nodeCount == faceToNodes[parentFace].size())
+      if (isFullyOpen)
       {
         isFaceElmtPartiallyOpen[iFaceElmt] = 0;
         fullyOpenFaceElmts.insert(iFaceElmt);
@@ -496,11 +493,24 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
           localIndex const kf1 = faceElmtToFacesRelation[iFaceElmt][1];
           localIndex const childFaceOfFace0 = childFaceIndices[kf0];
           localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+          localIndex const childFace = parentFace == kf0 ? kf1 : kf0;
 
           for (localIndex const parentNode : faceToNodes[parentFace])
           {
             localIndex const childNode = childNodeIndices[parentNode];
-            if (childNode >= 0)
+
+            bool isNodeSplit = true;
+            for (localIndex const node : faceToNodes[childFace])
+            {
+              if ( node == parentNode)
+              {
+                isNodeSplit = false;
+                break;
+              }
+            }
+
+            if ( (childNode >= 0) &&
+                 isNodeSplit        )
             {
               real64 val = 0.0;
               for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( parentNode ); ++k )
@@ -589,7 +599,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                 }
 
                 GEOSX_ERROR_IF_GE(nodeF, 0.0);
-                GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-4);
+                GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b )/b, 1.0e-4);
                 if (std::abs(nodeF) < 1.0e-3)
                 {
                   std::cout << "Warning: node " << parentNode << "signed distance is tiny: " << nodeF << std::endl;
@@ -862,11 +872,24 @@ void HydrofractureSolver::FinalizedSignedDistance( DomainPartition & domain)
         localIndex const kf1 = faceElmtToFacesRelation[iFaceElmt][1];
         localIndex const childFaceOfFace0 = childFaceIndices[kf0];
         localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+        localIndex const childFace = parentFace == kf0 ? kf1 : kf0;
 
         for (localIndex const parentNode : faceToNodes[parentFace])
         {
           localIndex const childNode = childNodeIndices[parentNode];
-          if (childNode >= 0)
+
+          bool isNodeSplit = true;
+          for (localIndex const node : faceToNodes[childFace])
+          {
+            if ( node == parentNode)
+            {
+              isNodeSplit = false;
+              break;
+            }
+          }
+
+          if ((childNode >= 0) &&
+              isNodeSplit         )
           {
             real64 val = 0.0;
             for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( parentNode ); ++k )
@@ -955,7 +978,7 @@ void HydrofractureSolver::FinalizedSignedDistance( DomainPartition & domain)
               }
 
               GEOSX_ERROR_IF_GE(nodeF, 0.0);
-              GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-4);
+              GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b )/b, 1.0e-4);
               signedNodeDistance[parentNode] = nodeF;
             }
             else
@@ -1721,7 +1744,7 @@ void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
   array1d<real64> & signedNodeDistance = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
-  array1d<localIndex> const & childNodeIndices = nodeManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  //array1d<localIndex> const & childNodeIndices = nodeManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
   FaceManager * const faceManager = meshLevel->getFaceManager();
   FaceManager::NodeMapType const & faceToNodes = faceManager->nodeList();
   FaceManager::EdgeMapType const & faceToEdges = faceManager->edgeList();
@@ -1768,6 +1791,40 @@ void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
   // value: -1->node is frozen; 0->node is in narrow band; 1->node is far.
   std::unordered_map<localIndex, int> nodeStatus;
 
+  for (localIndex const faceElmt : partiallyOpenFaceElmts)
+  {
+    localIndex const parentFace = parentFaceOfFaceElmt[faceElmt];
+    localIndex const kf0 = faceElmtToFacesRelation[faceElmt][0];
+    localIndex const kf1 = faceElmtToFacesRelation[faceElmt][1];
+    localIndex const childFace = parentFace == kf0 ? kf1 : kf0;
+
+    for (localIndex const parentNode : faceToNodes[parentFace] )
+    {
+      bool isNodeSplit = true;
+      for (localIndex const node : faceToNodes[childFace])
+      {
+        if (node == parentNode)
+        {
+          isNodeSplit = false;
+          break;
+        }
+      }
+
+      if (isNodeSplit)
+      {
+        // if node has child, it is frozen (-1).
+        nodeStatus[parentNode] = -1;
+        boundaryNodeSet.insert(parentNode);
+      }
+      else
+      {
+        // if node has no child, it is far (1).
+        nodeStatus[parentNode] = 1;
+      }
+    }
+  } // for faceElmt : partiallyOpenFaceElmts
+
+/*
   for (localIndex const & node : allNodeSet)
   {
     if (childNodeIndices(node) >=0)
@@ -1782,7 +1839,7 @@ void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
       nodeStatus[node] = 1;
     }
   }
-
+*/
   // an unordered map to store the neighbors of each node
   // key: node number;
   // value: an array with two elements, each of which is an unordered set
