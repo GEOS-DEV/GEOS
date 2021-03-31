@@ -240,10 +240,10 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   CommunicationTools::getInstance().assignGlobalIndices( edgeManager, nodeManager, m_neighbors );
 
   CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
-                                                                                m_neighbors );
+                                                                         m_neighbors );
 
   CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
-                                                                                m_neighbors );
+                                                                         m_neighbors );
 
   CommunicationTools::getInstance().findGhosts( meshLevel, m_neighbors, use_nonblocking );
 

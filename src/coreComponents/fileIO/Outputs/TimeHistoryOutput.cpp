@@ -115,7 +115,7 @@ void TimeHistoryOutput::initializePostSubGroups()
   }
 
 //  ProblemManager & pm = getGlobalState().getProblemManager();
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   for( auto collector_path : m_collectorPaths )
   {
     HistoryCollection & collector = this->getGroupByPath< HistoryCollection >( collector_path );

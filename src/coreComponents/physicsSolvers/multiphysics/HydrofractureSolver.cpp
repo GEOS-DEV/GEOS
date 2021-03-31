@@ -227,9 +227,9 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         fieldNames["elems"].emplace_back( "elementAperture" );
 
         CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                                    domain.getNeighbors(),
-                                                                    false );
+                                                             domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                             domain.getNeighbors(),
+                                                             false );
 
         this->updateDeformationForCoupling( domain );
 

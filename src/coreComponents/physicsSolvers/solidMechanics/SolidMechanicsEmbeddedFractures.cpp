@@ -111,7 +111,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  updateState( this->getGroupByPath<DomainPartition>("/Problem/domain") );
+  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
 
@@ -600,9 +600,9 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString() ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 
   updateState( domain );
 }

@@ -241,7 +241,7 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // Validate solid models in target regions
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
@@ -379,7 +379,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager & nodes = mesh.getNodeManager();
@@ -1231,9 +1231,9 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( keys::TotalDisplacement );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 }
 
 void SolidMechanicsLagrangianFEM::solveSystem( DofManager const & dofManager,

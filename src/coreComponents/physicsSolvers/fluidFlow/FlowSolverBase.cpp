@@ -140,7 +140,7 @@ void FlowSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // Validate solid models in regions (fluid models are validated by derived classes)
   domain.getMeshBodies().forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
@@ -176,7 +176,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");;
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );;
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   resetViews( mesh );

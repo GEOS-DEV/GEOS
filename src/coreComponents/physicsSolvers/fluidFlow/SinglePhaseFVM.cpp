@@ -55,7 +55,7 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
 {
   BASE::initializePreSubGroups();
 
-  DomainPartition & domain = this->template getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 

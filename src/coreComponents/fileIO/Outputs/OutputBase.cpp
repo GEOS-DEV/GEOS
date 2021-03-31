@@ -57,7 +57,6 @@ OutputBase::CatalogInterface::CatalogType & OutputBase::getCatalog()
 
 
 
-
 void OutputBase::initializePreSubGroups()
 {
   // This command doesn't seem to work anymore

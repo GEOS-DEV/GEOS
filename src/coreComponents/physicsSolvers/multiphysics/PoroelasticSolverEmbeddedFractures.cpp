@@ -91,7 +91,7 @@ void PoroelasticSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Gro
 
 void PoroelasticSolverEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  updateState( this->getGroupByPath<DomainPartition>("/Problem/domain") );
+  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
 void PoroelasticSolverEmbeddedFractures::setupDofs( DomainPartition const & domain,

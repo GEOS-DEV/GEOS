@@ -150,7 +150,7 @@ void SinglePhaseBase::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  validateFluidModels( this->getGroupByPath<DomainPartition>("/Problem/domain") );
+  validateFluidModels( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
 void SinglePhaseBase::updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const
@@ -221,7 +221,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
