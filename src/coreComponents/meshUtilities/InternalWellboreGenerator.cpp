@@ -78,7 +78,6 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Coordinates defining the wellbore trajectory" );
 
-
   registerWrapper( viewKeyStruct::cartesianOuterBoundaryString(), &m_cartesianOuterBoundary ).
     setApplyDefaultValue( 1000000 ).
     setSizedFromParent( 0 ).
@@ -96,9 +95,6 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
 
 void InternalWellboreGenerator::postProcessInput()
 {
-// This should be done in the coordinateTransformation function
-//  m_vertices[2][0]  = m_trajectory[0][2];
-//  m_vertices[2][1]  = m_trajectory[1][2];
 
   GEOSX_ERROR_IF( m_nElems[1].size()>1,
                   "Only one block in the theta direction is currently supported. "
@@ -107,6 +103,31 @@ void InternalWellboreGenerator::postProcessInput()
   GEOSX_ERROR_IF( m_nElems[2].size()>1,
                   "Only one block in the z direction is currently supported. "
                   "This is specified by the nz keyword in InternalWellbore" );
+
+
+
+
+  GEOSX_ERROR_IF( m_trajectory.size(0) != 2 || m_trajectory.size(1) !=3,
+                  "Input for trajectory should be specified in the form of "
+                  "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }.");
+
+  // Project trajectory to bottom and top of the wellbore
+  real64 trajectoryVector[3] = {0};
+  for( int i=0; i<3; ++i )
+  {
+    trajectoryVector[i] = m_trajectory[1][i] - m_trajectory[0][i];
+  }
+  LvArray::tensorOps::normalize<3>(trajectoryVector);
+  real64 const scaleb = ( m_vertices[2][0] - m_trajectory[0][2] ) / trajectoryVector[2];
+  real64 const scalet = ( m_vertices[2][1] - m_trajectory[1][2] ) / trajectoryVector[2];
+  for( int i=0; i<3; ++i )
+  {
+    m_trajectory[0][i] = m_trajectory[0][i] + scaleb * trajectoryVector[i];
+    m_trajectory[1][i] = m_trajectory[1][i] + scalet * trajectoryVector[i];
+  }
+
+
+
 
   arrayView1d< real64 const > const theta = m_vertices[1];
   real64 const dTheta = theta.back() - theta[0];
@@ -152,7 +173,7 @@ void InternalWellboreGenerator::postProcessInput()
         // and outer radial coordinates are preserved.
         real64 scalingFactor = 0;
 
-        printf( "  i   r_i      t_i     rip1_0    tip1_0    r_ip1\n" );
+//        printf( "  i   r_i      t_i     rip1_0    tip1_0    r_ip1\n" );
 
         // Loop over an excessive number of elements in the radial direction.
         // This bound needs to be more than we will end up with.
@@ -170,7 +191,7 @@ void InternalWellboreGenerator::postProcessInput()
           constexpr real64 c = 0.5;
           real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * t_i + c * tElemSize_ip1_0;
 
-          printf( "%5ld %8.4f %8.4f %8.4f %8.4f %8.4f \n", i, m_radialCoords.back(), t_i, r_ip1_0, tElemSize_ip1_0, r_ip1 );
+//          printf( "%5ld %8.4f %8.4f %8.4f %8.4f %8.4f \n", i, m_radialCoords.back(), t_i, r_ip1_0, tElemSize_ip1_0, r_ip1 );
 
 
           // if the radius of the next layer is bigger than rOuter, we figure
@@ -200,8 +221,8 @@ void InternalWellboreGenerator::postProcessInput()
             m_radialCoords.emplace_back( r_ip1 );
           }
         }
-        std::cout<<actualNumberOfRadialElements<<", "<<scalingFactor<<std::endl;
-        std::cout<<m_radialCoords.size()<<std::endl;
+//        std::cout<<actualNumberOfRadialElements<<", "<<scalingFactor<<std::endl;
+//        std::cout<<m_radialCoords.size()<<std::endl;
 
         // set the number of actual radial elements specified by the auto
         // spacing
@@ -228,141 +249,12 @@ void InternalWellboreGenerator::postProcessInput()
         }
       }
     }
-    std::cout<<m_radialCoords<<std::endl;
+//    std::cout<<m_radialCoords<<std::endl;
   }
 
 
   InternalMeshGenerator::postProcessInput();
 
-}
-
-void InternalWellboreGenerator::generateMesh( DomainPartition & domain )
-{
-  InternalMeshGenerator::generateMesh( domain );
-
-  // This should be done in the coordinateTransformation function, and then this override should be removed.
-
-//  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
-//  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-//  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-//  NodeManager & nodeManager = meshLevel0.getNodeManager();
-//  Group & nodeSets = nodeManager.sets();
-//
-//  // Wellbore nodesets
-//  // rneg, rpos, tneg and tpos are the named used by the end-used in the input files. Consider modifying them with care.
-//  SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
-//  SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
-//  SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
-//  SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
-//
-//  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-//  for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
-//  {
-//    // Get Cartesian coordinates of a reference centered vertical wellbore
-//    real64 & xCoord = X( localNodeIndex, 0 );
-//    real64 & yCoord = X( localNodeIndex, 1 );
-//    real64 const & zCoord = X( localNodeIndex, 2 );
-//
-//    // Compute cylindrical coordinates of a reference centered vertical wellbore
-//    real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
-//    real64 tCoord;
-//
-//    if( rCoord < m_coordinatePrecision )
-//    {
-//      tCoord = 0.0;
-//    }
-//    else if( yCoord >= 0.0 )
-//    {
-//      tCoord = acos( xCoord/rCoord );
-//    }
-//    else
-//    {
-//      tCoord = 2.0 * M_PI - acos( xCoord/rCoord );
-//    }
-//
-//    tCoord *= 180.0 / M_PI;
-//
-//    // Wellbore nodesets
-//    if( isEqual( rCoord, m_min[0], m_coordinatePrecision ) )
-//    {
-//      rnegNodes.insert( localNodeIndex );
-//    }
-//
-//    if( isEqual( rCoord, m_max[0], m_coordinatePrecision ) )
-//    {
-//      rposNodes.insert( localNodeIndex );
-//    }
-//
-//    if( isEqual( tCoord, m_min[1], m_coordinatePrecision ) )
-//    {
-//      tnegNodes.insert( localNodeIndex );
-//    }
-//    if( isEqual( tCoord, m_max[1], m_coordinatePrecision ) )
-//    {
-//      tposNodes.insert( localNodeIndex );
-//    }
-//
-//    // Radial distance of the outer square boundary of a reference centered vertical wellbore
-//    real64 meshTheta = tCoord * M_PI / 180.0;
-//    int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
-//    real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
-//    real64 meshRout = m_max[0] / cos( meshPhi );
-//
-//    // Wellbore trajectory
-//    real64 xTopCenter = m_trajectory[0][0];
-//    real64 yTopCenter = m_trajectory[0][1];
-//    real64 zTop = m_min[2];
-//
-//    real64 xBottomCenter = m_trajectory[1][0];
-//    real64 yBottomCenter = m_trajectory[1][1];
-//    real64 zBottom = m_max[2];
-//
-//    real64 dx = xBottomCenter - xTopCenter;
-//    real64 dy = yBottomCenter - yTopCenter;
-//    real64 dz = zBottom - zTop;
-//    real64 dr = sqrt( dx*dx + dy*dy );
-//    real64 dl = sqrt( dr*dr + dz*dz );
-//
-//    // Azimuth of the wellbore from x-axis
-//    real64 theta0;
-//
-//    if( dr < m_coordinatePrecision )
-//    {
-//      theta0 = 0.0;
-//    }
-//    else if( dy>=0.0 )
-//    {
-//      theta0 = acos( dx/dr );
-//    }
-//    else
-//    {
-//      theta0 = 2.0 * M_PI - acos( dx/dr );
-//    }
-//
-//    // The horizontal section of an inclined wellbore is an ellipse
-//    // The principle directions of this ellipse are defined by dTheta = 0, and PI/2
-//    real64 dTheta = meshTheta - theta0;
-//    real64 tanDTheta = tan( dTheta );
-//
-//    // Transform radial coordinate regarding the elliptical shape of the wellbore section in the horizontal plane
-//    // This transformation ensures that the outer square boundary is unchanged
-//    // TODO create a function in ComputationalGeometry class for this pure geometrical transformation
-//    real64 transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
-//    real64 rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
-//
-//    // Compute transformed cartesian coordinates
-//    xCoord = rCoordTransform * cos( meshTheta );
-//    yCoord = rCoordTransform * sin( meshTheta );
-//
-//    // Moving the coordinate in the horizontal plane with respect to the center of the wellbore section
-//    // This transformation ensures that the ourter square boundary is unchanged
-//    real64 zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
-//    real64 xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
-//    real64 yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
-//
-//    xCoord += xCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
-//    yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
-//  }
 }
 
 void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (& numNodesInDir)[3] )
@@ -440,7 +332,7 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
 
 
 
-  // Map to radial mesh
+  // ***** Map to radial mesh *****
   for( localIndex a = 0; a<nodeManager.size(); ++a )
   {
     real64 meshTheta = X[a][1] * M_PI / 180.0;
@@ -505,7 +397,102 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
         yposNodes.insert( a );
       }
     }
+  }
 
+
+  // ***** Map to inclined wellbore *****
+  {
+    for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
+    {
+      // Get Cartesian coordinates of a reference centered vertical wellbore
+      real64 & xCoord = X( localNodeIndex, 0 );
+      real64 & yCoord = X( localNodeIndex, 1 );
+      real64 const & zCoord = X( localNodeIndex, 2 );
+
+      // Compute cylindrical coordinates of a reference centered vertical wellbore
+      real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
+
+
+      {
+        real64 tCoord;
+
+        if( rCoord < m_coordinatePrecision )
+        {
+          tCoord = 0.0;
+        }
+        else if( yCoord >= 0.0 )
+        {
+          tCoord = acos( xCoord/rCoord );
+        }
+        else
+        {
+          tCoord = 2.0 * M_PI - acos( xCoord/rCoord );
+        }
+
+        tCoord *= 180.0 / M_PI;
+
+        // Radial distance of the outer square boundary of a reference centered vertical wellbore
+        real64 meshTheta = tCoord * M_PI / 180.0;
+        int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
+        real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
+        real64 meshRout = m_cartesianOuterBoundary < m_vertices[0].size() ? m_max[0] / cos( meshPhi ) : m_max[0];
+
+        // Wellbore trajectory
+        real64 xTopCenter = m_trajectory[0][0];
+        real64 yTopCenter = m_trajectory[0][1];
+        real64 zTop = m_min[2];
+
+        real64 xBottomCenter = m_trajectory[1][0];
+        real64 yBottomCenter = m_trajectory[1][1];
+        real64 zBottom = m_max[2];
+
+        real64 dx = xBottomCenter - xTopCenter;
+        real64 dy = yBottomCenter - yTopCenter;
+        real64 dz = zBottom - zTop;
+        real64 dr = sqrt( dx*dx + dy*dy );
+        real64 dl = sqrt( dr*dr + dz*dz );
+
+        // Azimuth of the wellbore from x-axis
+        real64 theta0;
+
+        if( dr < m_coordinatePrecision )
+        {
+          theta0 = 0.0;
+        }
+        else if( dy>=0.0 )
+        {
+          theta0 = acos( dx/dr );
+        }
+        else
+        {
+          theta0 = 2.0 * M_PI - acos( dx/dr );
+        }
+
+        // The horizontal section of an inclined wellbore is an ellipse
+        // The principle directions of this ellipse are defined by dTheta = 0, and PI/2
+        real64 dTheta = meshTheta - theta0;
+        real64 tanDTheta = tan( dTheta );
+
+        // Transform radial coordinate regarding the elliptical shape of the wellbore section in the horizontal plane
+        // This transformation ensures that the outer square boundary is unchanged
+        // TODO create a function in ComputationalGeometry class for this pure geometrical transformation
+        real64 transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
+        real64 rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
+
+        // Compute transformed cartesian coordinates
+        xCoord = rCoordTransform * cos( meshTheta );
+        yCoord = rCoordTransform * sin( meshTheta );
+
+        // Moving the coordinate in the horizontal plane with respect to the center of the wellbore section
+        // This transformation ensures that the ourter square boundary is unchanged
+        real64 zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
+        real64 xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
+        real64 yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
+
+        xCoord += xCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
+        yCoord += yCenter * ( meshRout - rCoord ) / ( meshRout - m_min[0] * transformCoeff );
+      }
+    }
   }
 }
 
