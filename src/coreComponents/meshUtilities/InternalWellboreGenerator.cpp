@@ -107,10 +107,9 @@ void InternalWellboreGenerator::postProcessInput()
 
 
 
-
-  GEOSX_ERROR_IF( m_trajectory.size(0) != 2 || m_trajectory.size(1) !=3,
+  GEOSX_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) !=3,
                   "Input for trajectory should be specified in the form of "
-                  "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }.");
+                  "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
 
   // Project trajectory to bottom and top of the wellbore
   real64 trajectoryVector[3] = {0};
@@ -118,7 +117,7 @@ void InternalWellboreGenerator::postProcessInput()
   {
     trajectoryVector[i] = m_trajectory[1][i] - m_trajectory[0][i];
   }
-  LvArray::tensorOps::normalize<3>(trajectoryVector);
+  LvArray::tensorOps::normalize< 3 >( trajectoryVector );
   real64 const scaleb = ( m_vertices[2][0] - m_trajectory[0][2] ) / trajectoryVector[2];
   real64 const scalet = ( m_vertices[2][1] - m_trajectory[1][2] ) / trajectoryVector[2];
   for( int i=0; i<3; ++i )
@@ -126,7 +125,6 @@ void InternalWellboreGenerator::postProcessInput()
     m_trajectory[0][i] = m_trajectory[0][i] + scaleb * trajectoryVector[i];
     m_trajectory[1][i] = m_trajectory[1][i] + scalet * trajectoryVector[i];
   }
-
 
 
 
