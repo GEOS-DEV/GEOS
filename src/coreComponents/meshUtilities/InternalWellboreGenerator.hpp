@@ -49,9 +49,6 @@ public:
    */
   static string catalogName() { return "InternalWellbore"; }
 
-  void generateMesh( DomainPartition & domain ) override final;
-
-
   virtual void reduceNumNodesForPeriodicBoundary( integer ( &numNodes )[3] ) override final;
 
   virtual void setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],

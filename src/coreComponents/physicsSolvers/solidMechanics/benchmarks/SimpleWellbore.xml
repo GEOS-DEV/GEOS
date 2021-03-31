@@ -32,11 +32,11 @@
       radius="{0.1, 0.5}"
       theta="{0, 360}"
       zCoords="{0,1}"
-      trajectory="{ { -0.0, 0.0, 0.0 },
-                    {  0.0, 0.0, 0.0 } }"
       nr="{4}"
       nt="{16}"
       nz="{1}"
+      trajectory="{ { -0.1, 0.0, 0.0 },
+                    {  0.1, 0.0, 0.5 } }"
       autoSpaceRadialElems="{1}"
       useCartesianOuterBoundary="2"
       cellBlockNames="{ casing }"
