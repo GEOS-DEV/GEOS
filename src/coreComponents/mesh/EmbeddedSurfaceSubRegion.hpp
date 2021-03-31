@@ -40,6 +40,7 @@ struct surfaceWithGhostNodes
     surfaceIndex(),
     parentEdgeIndex(),
     numOfNodes( 0 ){}
+
   void insert ( localIndex const & surfIndex, globalIndex const & edgeIndex );
 };
 
@@ -381,7 +382,7 @@ public:
 
   ///@}
 
-  arrayView1d< struct surfaceWithGhostNodes const > surfaceWithGhostNodes() const { return m_surfaceWithGhostNodes; }
+  std::vector< struct surfaceWithGhostNodes > surfaceWithGhostNodes() { return m_surfaceWithGhostNodes; }
 
 private:
 
@@ -412,7 +413,7 @@ private:
   array1d< real64 > m_connectivityIndex;
 
   /// Surfaces with ghost nodes
-  array1d< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;
+  std::vector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;
 };
 
 
