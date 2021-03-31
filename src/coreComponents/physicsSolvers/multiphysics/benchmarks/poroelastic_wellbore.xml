@@ -67,8 +67,8 @@
       radius="{ 0.1, 2 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 1 }"
-      nr="{ 4 }"
-      nt="{ 4 }"
+      nr="{ 30 }"
+      nt="{ 40 }"
       nz="{ 1 }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
@@ -83,7 +83,7 @@
     <!-- SPHINX_Execution -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="78.0"
+      forceDt="0.78"
       target="/Solvers/poroSolve"/>
 
     <!-- SPHINX_ExecutionEnd -->
@@ -92,7 +92,7 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      timeFrequency="78.0"
+      timeFrequency="7.8"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
