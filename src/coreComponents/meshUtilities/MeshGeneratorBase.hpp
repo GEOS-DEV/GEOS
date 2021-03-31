@@ -29,7 +29,6 @@ namespace geosx
 namespace dataRepository
 {}
 
-class NodeManager;
 class DomainPartition;
 
 /**
@@ -54,62 +53,26 @@ public:
    */
   virtual ~MeshGeneratorBase();
 
-
   /**
    * @brief Return the name of the MeshGenerator in object catalog.
    * @return string that contains the catalog name of the MeshGenerator
    */
   static string catalogName() { return "MeshGeneratorBase"; }
 
-/**
- * @brief Generate the Element regions for an input Domain.
- * @param[inout] domain the Domain object on which to generate Element regions
- */
-  virtual void generateElementRegions( DomainPartition & domain ) = 0;
-
-/**
- * @brief Generate the mesh object the input mesh object.
- * @param[in] domain the domain partition from which to construct the mesh object
- */
-  virtual void generateMesh( DomainPartition & domain ) = 0;
-
-  // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
-  //                                NodeManager * nodeManager ) = 0;
-
-/**
- * @brief Get the label mapping of element vertices indexes onto node indexes for a type of element.
- * @param[in] elementType the string identifier of the element type
- * @param[in] index ndim-sptialized Element index.
- * @param[in] iEle the index of Element begin processed
- * @param[out] nodeIDInBox array to map element vertices index to node indexes
- * @param[in] size the number of node on the element
- *
- */
-  virtual void getElemToNodesRelationInBox ( const string & elementType,
-                                             const int index[],
-                                             const int & iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) = 0;
-/**
- * @brief Re-computing mesh tables for the input domain.
- * @param[in] domain domain point whose mesh has to be remapped
- *
- */
-  virtual void remapMesh ( dataRepository::Group & domain ) = 0;
-
-  /// Integer to trigger or not mesh re-mapping at the end of GenerateMesh call
-  int m_delayMeshDeformation = 0;
-
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
 
-/**
- * @brief Accessor for the singleton Catalog object
- * @return a static reference to the Catalog object
- *
- */
+  /**
+   * @brief Accessor for the singleton Catalog object
+   * @return a static reference to the Catalog object
+   */
   static CatalogInterface::CatalogType & getCatalog();
 
+  /**
+   * @brief Generate the mesh object the input mesh object.
+   * @param[in] domain the domain partition from which to construct the mesh object
+   */
+  virtual void generateMesh( DomainPartition & domain ) = 0;
 };
 }
 
