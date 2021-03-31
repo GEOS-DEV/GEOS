@@ -35,34 +35,11 @@
       nr="{ 2, 2, 5 }"
       nt="{ 4 }"
       nz="{ 1 }"
-      autoSpaceRadialElems="{0,0,1}"
+      autoSpaceRadialElems="{ 0, 0, 1 }"
       useCartesianOuterBoundary="2"
       cellBlockNames="{ casing, cement, rock }"
       />
   </Mesh>
-  
-  <Geometry>
-    <Box
-      name="xneg"
-      xMin="{ -0.0001, -1e9, -1e9 }"
-      xMax="{  0.0001,  1e9,  1e9 }"/>
-
-    <Box
-      name="xpos"
-      xMin="{ 1.9999, -1e9, -1e9 }"
-      xMax="{ 2.0001,  1e9,  1e9 }"/>
-
-    <Box
-      name="yneg"
-      xMin="{ -1e9, -0.0001, -1e9 }"
-      xMax="{  1e9,  0.0001,  1e9 }"/>
-
-    <Box
-      name="ypos"
-      xMin="{ -1e9, 1.9999, -1e9 }"
-      xMax="{  1e9, 2.0001,  1e9 }"/>
-  </Geometry>
-  
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
@@ -152,7 +129,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ tpos, xpos }"/>
 
     <FieldSpecification
       name="yConstraint"
@@ -160,7 +137,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ yneg, ypos }"/>
+      setNames="{ tneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -177,8 +154,6 @@
       scale="-1.0e6"
       functionName="timeFunction"
       setNames="{ rneg }"/>
-      
-      
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->

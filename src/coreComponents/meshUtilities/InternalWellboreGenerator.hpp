@@ -98,7 +98,6 @@ protected:
 
 private:
 
-
   /// Trajectory defined by coordinates of the wellbore centers
   array2d< real64 > m_trajectory;
 
@@ -109,7 +108,6 @@ private:
   array1d< int > m_autoSpaceRadialElems;
 
   array1d< real64 > & m_radialCoords;
-
 
 };
 
