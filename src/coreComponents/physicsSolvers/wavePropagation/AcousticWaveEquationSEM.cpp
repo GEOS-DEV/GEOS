@@ -615,6 +615,14 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
+  ///Use to reinit params if pygeox set time_n to zero
+  if( time_n <= dt*1e-9 )
+  {
+    applyFreeSurfaceBC( time_n, domain );
+    postProcessInput();
+    precomputeSourceAndReceiverTerm( mesh );
+  }
+
   NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
