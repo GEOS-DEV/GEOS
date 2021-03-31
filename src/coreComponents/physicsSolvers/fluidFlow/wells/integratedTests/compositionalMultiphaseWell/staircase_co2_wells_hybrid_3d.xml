@@ -55,8 +55,8 @@
         type="injector"
         control="totalVolRate"
         referenceElevation="12" 
-        targetBHP="5e7"
-        targetTotalRate="7.5e-6"
+        targetBHP="1.45e7"
+        targetTotalRate="7.5e-7"
         injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -143,7 +143,7 @@
   </NumericalMethods>
 
   <Constitutive>
-    <MultiPhaseMultiComponentFluid
+    <CO2BrineFluid
       name="fluid1"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"

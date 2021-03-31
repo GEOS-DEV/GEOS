@@ -75,15 +75,6 @@ void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
   } );
 }
 
-void CellElementSubRegion::constructSubRegionFromFaceSet( FaceManager const * const faceManager,
-                                                          string const & setName )
-{
-  SortedArrayView< localIndex const > const & targetSet = faceManager->sets().getReference< SortedArray< localIndex > >( setName );
-  m_toFacesRelation.resize( 0, 2 );
-  this->resize( targetSet.size() );
-}
-
-
 void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
                                                 localIndex const embSurfIndex )
 {
