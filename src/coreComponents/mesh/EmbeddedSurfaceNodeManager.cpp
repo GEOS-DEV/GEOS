@@ -127,7 +127,7 @@ void EmbeddedSurfaceNodeManager::setElementMaps( ElementRegionManager const & el
     EmbeddedSurfaceSubRegion::NodeMapType const & elemToNodeMap = subRegion.nodeList();
     forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap ] ( localIndex const k )
     {
-      localIndex const numElementNodes = elemToNodeMap.sizeOfArray(k);
+      localIndex const numElementNodes = elemToNodeMap.sizeOfArray( k );
       totalNodeElems += numElementNodes;
       for( localIndex a = 0; a < numElementNodes; ++a )
       {
@@ -172,13 +172,13 @@ void EmbeddedSurfaceNodeManager::setElementMaps( ElementRegionManager const & el
   // If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
   elementRegionManager.
     forElementSubRegionsComplete< EmbeddedSurfaceSubRegion >( [&toElementRegionList, &toElementSubRegionList, &toElementList]
-                                                            ( localIndex const er, localIndex const esr, ElementRegionBase const &,
-                                                              EmbeddedSurfaceSubRegion const & subRegion )
+                                                                ( localIndex const er, localIndex const esr, ElementRegionBase const &,
+                                                                EmbeddedSurfaceSubRegion const & subRegion )
   {
     EmbeddedSurfaceSubRegion::NodeMapType const & elemToNodeMap = subRegion.nodeList();
     for( localIndex k = 0; k < subRegion.size(); ++k )
     {
-      for( localIndex a=0; a<elemToNodeMap.sizeOfArray(k); ++a )
+      for( localIndex a=0; a<elemToNodeMap.sizeOfArray( k ); ++a )
       {
         localIndex const nodeIndex = elemToNodeMap( k, a );
         toElementRegionList.emplaceBack( nodeIndex, er );
@@ -202,9 +202,9 @@ void EmbeddedSurfaceNodeManager::compressRelationMaps()
 
 
 void EmbeddedSurfaceNodeManager::appendNode( arraySlice1d< real64 const > const & pointCoord,
-                                             integer const & pointGhostRank)
+                                             integer const & pointGhostRank )
 {
-  if ( pointGhostRank < 0 )
+  if( pointGhostRank < 0 )
   {
     localIndex nodeIndex =  this->size();
     this->resize( nodeIndex + 1 );
@@ -271,7 +271,7 @@ localIndex EmbeddedSurfaceNodeManager::packGlobalMapsPrivate( buffer_unit_type *
 
 localIndex EmbeddedSurfaceNodeManager::unpackGlobalMaps( buffer_unit_type const * & buffer,
                                                          localIndex_array & packList,
-                                                         integer const GEOSX_UNUSED_PARAM (recursive ) )
+                                                         integer const GEOSX_UNUSED_PARAM ( recursive ) )
 {
   GEOSX_MARK_FUNCTION;
 

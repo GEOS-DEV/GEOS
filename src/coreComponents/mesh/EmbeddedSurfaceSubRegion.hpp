@@ -31,17 +31,17 @@ namespace geosx
 {
 
 struct surfaceWithGhostNodes
- {
-   localIndex surfaceIndex;
-   std::vector< globalIndex > parentEdgeIndex;
-   localIndex numOfNodes;
+{
+  localIndex surfaceIndex;
+  std::vector< globalIndex > parentEdgeIndex;
+  localIndex numOfNodes;
 
-   surfaceWithGhostNodes():
-   surfaceIndex(),
-   parentEdgeIndex(),
-   numOfNodes(0){}
-   void insert (localIndex const & surfIndex, globalIndex const & edgeIndex );
- };
+  surfaceWithGhostNodes():
+    surfaceIndex(),
+    parentEdgeIndex(),
+    numOfNodes( 0 ){}
+  void insert ( localIndex const & surfIndex, globalIndex const & edgeIndex );
+};
 
 /**
  * @class EmbeddedSurfaceSubRegion
@@ -381,7 +381,7 @@ public:
 
   ///@}
 
-  arrayView1d< surfaceWithGhostNodes const> surfaceWithGhostNodes() const { return m_surfaceWithGhostNodes; }
+  arrayView1d< surfaceWithGhostNodes const > surfaceWithGhostNodes() const { return m_surfaceWithGhostNodes; }
 
 private:
 

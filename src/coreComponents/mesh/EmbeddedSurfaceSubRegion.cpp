@@ -35,7 +35,7 @@ void surfaceWithGhostNodes::insert( localIndex const & surfIndex, globalIndex co
 {
   surfaceIndex = surfIndex;
   parentEdgeIndex.push_back( edgeIndex );
-  numOfNodes += 1 ;
+  numOfNodes += 1;
 }
 
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
@@ -203,7 +203,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
 
     // Get location of embedded surfaces nodes.
     array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos =
-        embSurfNodeManager.referencePosition();
+      embSurfNodeManager.referencePosition();
 
     bool isNew;
     bool hasGhostNode = false;
@@ -230,13 +230,13 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
         globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ j ] ] ];
         nodeIndex = embSurfNodeManager.size();
 
-        if ( pointGhostRank[ originalIndices[ j ] ] < 0 )
+        if( pointGhostRank[ originalIndices[ j ] ] < 0 )
         {
           embSurfNodeManager.appendNode( intersectionPoints[ j ],
                                          pointGhostRank[ originalIndices[ j ] ] );
 
           arrayView1d< localIndex > const & parentIndex =
-              embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
+            embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
           parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
 
@@ -251,16 +251,16 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
       elemNodes[ j ] =  nodeIndex;
     }
 
-    if ( hasGhostNode )
+    if( hasGhostNode )
     {
       localIndex surfWithGhostsIndex = m_surfaceWithGhostNodes.size();
-      m_surfaceWithGhostNodes.resize( surfWithGhostsIndex + 1);
+      m_surfaceWithGhostNodes.resize( surfWithGhostsIndex + 1 );
 
-      for (int ii = 0; ii < elemNodes.size(); ii++ )
+      for( int ii = 0; ii < elemNodes.size(); ii++ )
       {
         globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ ii ] ] ];
         m_surfaceWithGhostNodes[ surfWithGhostsIndex ].insert( surfaceIndex,
-                                                               parentEdgeID  );
+                                                               parentEdgeID );
       }
     }
 
@@ -306,7 +306,7 @@ localIndex EmbeddedSurfaceSubRegion::packUpDownMapsSize( arrayView1d< localIndex
 }
 
 localIndex EmbeddedSurfaceSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
-                                                 arrayView1d< localIndex const > const & packList ) const
+                                                     arrayView1d< localIndex const > const & packList ) const
 {
   return packUpDownMapsPrivate< true >( buffer, packList );
 }
@@ -350,11 +350,11 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
   GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
   unPackedSize += bufferOps::Unpack( buffer,
-                                      m_toNodesRelation,
-                                      packList,
-                                      m_unmappedGlobalIndicesInToNodes,
-                                      this->globalToLocalMap(),
-                                      m_toNodesRelation.relatedObjectGlobalToLocal() );
+                                     m_toNodesRelation,
+                                     packList,
+                                     m_unmappedGlobalIndicesInToNodes,
+                                     this->globalToLocalMap(),
+                                     m_toNodesRelation.relatedObjectGlobalToLocal() );
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );

@@ -209,7 +209,7 @@ private:
    */
   std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
   getEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
-                      EmbeddedSurfaceNodeManager const & nodeManager  ) const;
+                      EmbeddedSurfaceNodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements

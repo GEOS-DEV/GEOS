@@ -99,6 +99,17 @@ public:
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
+  localIndex packFracturedElementsSize( arrayView1d< localIndex const > const & packList,
+                                        arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const;
+
+  localIndex packFracturedElements( buffer_unit_type * & buffer,
+                                    arrayView1d< localIndex const > const & packList,
+                                    arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const;
+
+  localIndex unpackFracturedElements( buffer_unit_type const * & buffer,
+                                      localIndex_array & packList,
+                                      unordered_map< globalIndex, localIndex > embeddedSurfacesGlobalToLocal );
+
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   ///@}
@@ -143,6 +154,9 @@ public:
     static constexpr char const * constitutiveMapString() { return "ConstitutiveMap"; }
     /// @return String key to embSurfMap
     static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
+    /// @return String key to fracturedCells
+    static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
+
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
     /// ViewKey for the constitutive map
@@ -182,23 +196,23 @@ public:
    * @brief @return The sorted array of local fractured elements.
    */
   SortedArray< localIndex > & fracturedElementsList()
-  { return m_localFracturedCells; }
+  { return m_fracturedCells; }
 
   /**
    * @brief @return The sorted array view of local fractured elements.
    */
   SortedArrayView< localIndex const > const fracturedElementsList() const
-  { return m_localFracturedCells.toViewConst(); }
+  { return m_fracturedCells.toViewConst(); }
 
   /**
    * @brief @return The map to the embedded surfaces
    */
-  EmbSurfMapType & embeddedSurfacesList() { return m_toLocalEmbeddedSurfaces; }
+  EmbSurfMapType & embeddedSurfacesList() { return m_toEmbeddedSurfaces; }
 
   /**
    * @brief @return The map to the embedded surfaces
    */
-  EmbSurfMapType const & embeddedSurfacesList() const { return m_toLocalEmbeddedSurfaces; }
+  EmbSurfMapType const & embeddedSurfacesList() const { return m_toEmbeddedSurfaces; }
 
   /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;
@@ -223,11 +237,11 @@ private:
   /// Map of unmapped global indices in the element-to-face map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
 
-  /// List of the local fractured elements (ghosts are not included)
-  SortedArray< localIndex > m_localFracturedCells;
+  /// List of the fractured elements on this rank
+  SortedArray< localIndex > m_fracturedCells;
 
-  /// Map from local Cell Elements to local Embedded Surfaces (ghosts are not included)
-  EmbSurfMapType m_toLocalEmbeddedSurfaces;
+  /// Map from local Cell Elements to Embedded Surfaces
+  EmbSurfMapType m_toEmbeddedSurfaces;
 
   /**
    * @brief Pack element-to-node and element-to-face maps
@@ -239,6 +253,11 @@ private:
   template< bool DOPACK >
   localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
+
+  template< bool DOPACK >
+  localIndex packFracturedElementsPrivate( buffer_unit_type * & buffer,
+                                           arrayView1d< localIndex const > const & packList,
+                                           arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const;
 
 };
 

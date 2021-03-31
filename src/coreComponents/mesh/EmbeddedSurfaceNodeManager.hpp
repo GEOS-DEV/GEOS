@@ -78,7 +78,7 @@ public:
    * @param [in] parent the parent group of this instantiation of EmbeddedSurfaceNodeManager
    */
   EmbeddedSurfaceNodeManager( string const & name,
-               dataRepository::Group * const parent );
+                              dataRepository::Group * const parent );
 
   /**
    * @brief The default EmbeddedSurfaceNodeManager destructor.
@@ -140,19 +140,21 @@ public:
 
 
   /**
-   * @brief Assign the ElementRegionManager \p elementRegionManager to the EmbeddedSurfaceNodeManager, and performs the node-to-element mapping
+   * @brief Assign the ElementRegionManager \p elementRegionManager to the EmbeddedSurfaceNodeManager, and performs the node-to-element
+   * mapping
    * @param [in] elementRegionManager the ElementRegionManager to assign this EmbeddedSurfaceNodeManager
    */
   void setElementMaps( ElementRegionManager const & elementRegionManager );
 
   /**
-   * @brief Compress all EmbeddedSurfaceNodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
+   * @brief Compress all EmbeddedSurfaceNodeManager member arrays so that the values of each array are contiguous with no extra capacity
+   * inbetween.
    * @note The method used here on each arrays (compress) does not free any memory.
    */
   void compressRelationMaps();
 
   void appendNode( arraySlice1d< real64 const > const & pointCoord,
-                   integer const & pointGhostRank);
+                   integer const & pointGhostRank );
 
   /**
    * @name Packing methods
@@ -325,10 +327,10 @@ public:
    * @brief Provide an immutable arrayView of the parent Edge global index position.
    * @return an immutable arrayView of the parent edge global index.
    */
-   array1d< globalIndex > & getParentEdgeGlobalIndex()
-   {
-     return m_parentEdgeGlobalIndex;
-   }
+  array1d< globalIndex > & getParentEdgeGlobalIndex()
+  {
+    return m_parentEdgeGlobalIndex;
+  }
 
   /**
    * @brief Provide an immutable arrayView of the parent Edge global index position.

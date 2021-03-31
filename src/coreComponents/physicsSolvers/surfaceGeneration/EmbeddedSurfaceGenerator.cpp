@@ -197,9 +197,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   } );// end loop over thick planes
 
   // add all new nodes to newObject list
-  for (localIndex ni = 0; ni < embSurfNodeManager.size(); ni++)
+  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
   {
-    newObjects.newNodes.insert(ni);
+    newObjects.newNodes.insert( ni );
   }
 
   // Set the ghostRank form the parent cell
@@ -221,18 +221,18 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   auto const & surfaceWithGhostNodes = embeddedSurfaceSubRegion.surfaceWithGhostNodes();
   arrayView1d< globalIndex > const & parentEdgeGlobalIndex =
-        embSurfNodeManager.getParentEdgeGlobalIndex();
+    embSurfNodeManager.getParentEdgeGlobalIndex();
 
-  for ( int i =0; i < surfaceWithGhostNodes.size(); i++ )
+  for( int i =0; i < surfaceWithGhostNodes.size(); i++ )
   {
     localIndex elemIndex = surfaceWithGhostNodes[i].surfaceIndex;
     std::vector< globalIndex > parentEdges = surfaceWithGhostNodes[i].parentEdgeIndex;
 
-    for ( localIndex surfNi = 0; surfNi < surfaceWithGhostNodes[i].numOfNodes; surfNi++ )
+    for( localIndex surfNi = 0; surfNi < surfaceWithGhostNodes[i].numOfNodes; surfNi++ )
     {
       globalIndex surfaceNodeParentEdge = parentEdges[ surfNi ];
 
-      for (localIndex ni = 0; ni < embSurfNodeManager.size(); ni++)
+      for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
       {
         if( surfaceNodeParentEdge == parentEdgeGlobalIndex[ ni ] )
         {
@@ -242,13 +242,17 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
     }
   }
 
-  MpiWrapper::barrier(MPI_COMM_GEOSX);
+  MpiWrapper::barrier( MPI_COMM_GEOSX );
 
   // TODO this is kind of brute force to resync everything.
   EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
                                                                     domain.getNeighbors(),
                                                                     newObjects );
-  //EmebeddedSurfacesParallelSynchronization::reSyncElemToNodesMap( meshLevel, domain.getNeighbors(), newObjects );
+
+  EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( meshLevel,
+                                                                          domain.getNeighbors(),
+                                                                          this->m_fractureRegionName );
+
 
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
@@ -267,14 +271,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   // Node to edge map
   embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
   embSurfNodeManager.compressRelationMaps();
-
-  std::cout << "rank: " << thisRank << " surfaces localToGlobal " << embeddedSurfaceSubRegion.localToGlobalMap() << std::endl;
-
-  std::cout << "rank: " << thisRank << " nodeList: " << embeddedSurfaceSubRegion.nodeList() << std::endl;
-
-  std::cout << "rank: " << thisRank << " nodes localToGlobal: "  << embSurfNodeManager.localToGlobalMap() << std::endl;
-
-  std::cout << "rank: " << thisRank << " nodes position: "  << embSurfNodeManager.referencePosition() << std::endl;
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()

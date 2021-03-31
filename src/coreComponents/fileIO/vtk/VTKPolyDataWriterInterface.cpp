@@ -207,7 +207,7 @@ VTKPolyDataWriterInterface::getEmbeddedSurface( EmbeddedSurfaceSubRegion const &
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & intersectionPoints
-  = nodeManager.referencePosition();
+    = nodeManager.referencePosition();
 
   points->SetNumberOfPoints( intersectionPoints.size( 0 ) );
   for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size( 0 ); pointIndex++ )

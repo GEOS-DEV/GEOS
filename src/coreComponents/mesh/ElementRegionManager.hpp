@@ -1011,6 +1011,19 @@ public:
                         ElementReferenceAccessor< localIndex_array > & packList,
                         bool const overwriteMap );
 
+
+  int packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                 string const fractureRegionName ) const;
+
+  int packFracturedElements( buffer_unit_type * & buffer,
+                             ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                             string const fractureRegionName ) const;
+
+  int unpackFracturedElements( buffer_unit_type const * & buffer,
+                               ElementReferenceAccessor< localIndex_array > & packList,
+                               string const fractureRegionName );
+
+
 private:
 
   /**
@@ -1054,6 +1067,13 @@ private:
   template< typename T >
   int unpackPrivate( buffer_unit_type const * & buffer,
                      T & packList );
+
+
+  template< bool DOPACK >
+  int
+  packFracturedElementsPrivate( buffer_unit_type * & buffer,
+                                ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                string const fractureRegionName ) const;
 
   /**
    * @brief Copy constructor.
