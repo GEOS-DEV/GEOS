@@ -43,6 +43,9 @@ public:
    */
   virtual ~FunctionManager() override;
 
+  /**
+   * @brief @return A pointer to the FunctionManager.
+   */
   static FunctionManager & getInstance();
 
   /**

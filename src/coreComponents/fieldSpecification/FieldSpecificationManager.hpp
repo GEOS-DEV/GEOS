@@ -61,6 +61,9 @@ public:
 
   virtual ~FieldSpecificationManager() override;
 
+  /**
+   * @brief @return A pointer to the FieldSpecificationManager
+   */
   static FieldSpecificationManager & getInstance();
 
   /**

@@ -66,7 +66,7 @@ public:
 
   /**
    * @brief Get the metadata for what this collector collects.
-   * @param problemManager The problem manager.
+   * @param domain The DomainPartition.
    * @param collectionIdx Which collected item to get metadata for.
    * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
@@ -163,7 +163,7 @@ public:
 
   /**
    * @brief Get a pointer to a collector of meta-information for this collector.
-   * @param problemManager The ProblemManager.
+   * @param domain The DomainPartition.
    * @param metaIdx Which of the meta-info collectors to return. (see HistoryCollection::GetNumMetaCollectors( ) ).
    * @return A unique pointer to the HistoryCollection object used for meta-info collection. Intented to fall out of scope and desctruct
    * immediately

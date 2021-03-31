@@ -45,12 +45,28 @@ public:
    **/
   static string catalogName() { return "OutputBase"; }
 
+  /**
+   * @brief Setter for the output directory
+   * @param  outputDir The output directory
+   **/
   static void setOutputDirectory( string const & outputDir );
 
+  /**
+   * @brief Getter for the output directory
+   * @return The output directory
+   **/
   static string getOutputDirectory() {return m_outputDirectory;}
 
+  /**
+   * @brief Setter for the file name root
+   * @param root The file name root
+   **/
   static void setFileNameRoot( string const & root );
 
+  /**
+   * @brief Getter for the file name root
+   * @return The file name root
+   **/
   static string getFileNameRoot() { return m_fileNameRoot; }
 
   /// Method for setting up output directories.
