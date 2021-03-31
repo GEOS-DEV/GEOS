@@ -48,7 +48,6 @@ set(meshUtilities_sources
     SimpleGeometricObjects/BoundedPlane.cpp
     CPMesh/CPMeshBuilder.cpp
     CPMesh/CPMeshParser.cpp
-    CPMesh/CPMeshData.cpp
     CPMesh/CPMeshComm.cpp
     CPMesh/utilities/StringUtilities.cpp    
    )

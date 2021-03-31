@@ -90,8 +90,8 @@ protected:
 
 private:
 
-  ///
-  std::unique_ptr< CPMesh::CPMeshBuilder > m_cPBuilder;
+  /// Driver class for the construction of the conformal corner-point mesh
+  std::unique_ptr< CPMesh::CPMeshBuilder > m_cPMeshBuilder;
 
   /// Path to the mesh file
   Path m_filePath;

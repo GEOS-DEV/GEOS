@@ -30,8 +30,18 @@ namespace CPMesh
 namespace OutputUtilities
 {
 
-void outputDebugVTKFile( CPMeshData const & cPMeshData )
+/**
+ * @brief Debug function that outputs a vtk file representing the new mesh
+ * @param[in] meshVertices the struct holding vertex information
+ * @param[in] meshFaces the struct holding face information
+ * @param[in] meshCells the struct holding cell information
+ */
+void outputDebugVTKFile( CPMeshVertices const & meshVertices,
+                         CPMeshFaces const & meshFaces,
+                         CPMeshCells const & meshCells )
 {
+  GEOSX_UNUSED_VAR( meshFaces ); // not needed for now
+
   std::ofstream myfile;
   myfile.open ( "debug.vtk" );
   myfile << "# vtk DataFile Version 3.0\n";
@@ -39,33 +49,33 @@ void outputDebugVTKFile( CPMeshData const & cPMeshData )
   myfile << "ASCII\n";
   myfile << "DATASET UNSTRUCTURED_GRID\n";
 
-  array2d< real64 > const & vertices = cPMeshData.vertices();
+  array2d< real64 > const & vertices = meshVertices.m_vertices;
   myfile << "POINTS " << vertices.size() << " float\n";
   for( localIndex iVertex = 0; iVertex < vertices.size( 0 ); ++iVertex )
   {
     myfile << vertices( iVertex, 0 ) << " " << vertices( iVertex, 1 ) << " " << vertices( iVertex, 2 ) << "\n";
   }
 
-  localIndex const nLocalActiveCells = cPMeshData.nLocalActiveCells();
-  array1d< localIndex > const & localActiveCellToLocalCell = cPMeshData.localActiveCellToLocalCell();
-  array1d< localIndex > const & localCellToLocalCPVertices = cPMeshData.localCellToLocalCPVertices();
-  array1d< localIndex > const & localCPVertexToLocalVertex = cPMeshData.localCPVertexToLocalVertex();
+  array1d< localIndex > const & activeCellToCell = meshCells.m_activeCellToCell;
+  array1d< localIndex > const & cellToCPVertices = meshCells.m_cellToCPVertices;
+  array1d< localIndex > const & cPVertexToVertex = meshVertices.m_cPVertexToVertex;
+  localIndex const nActiveCells = activeCellToCell.size();
 
-  myfile << "CELLS " << nLocalActiveCells << " " << 9*nLocalActiveCells << "\n";
-  for( localIndex iLocalActiveCell = 0; iLocalActiveCell < nLocalActiveCells; ++iLocalActiveCell )
+  myfile << "CELLS " << nActiveCells << " " << 9*nActiveCells << "\n";
+  for( localIndex iActiveCell = 0; iActiveCell < nActiveCells; ++iActiveCell )
   {
-    localIndex const iLocalCell = localActiveCellToLocalCell( iLocalActiveCell );
-    localIndex const iFirstCPVertex = localCellToLocalCPVertices( iLocalCell );
+    localIndex const iLocalCell = activeCellToCell( iActiveCell );
+    localIndex const iFirstCPVertex = cellToCPVertices( iLocalCell );
     myfile << "8 ";
     for( localIndex pos = 0; pos < 8; ++pos )
     {
-      myfile << localCPVertexToLocalVertex( iFirstCPVertex + pos ) << " ";
+      myfile << cPVertexToVertex( iFirstCPVertex + pos ) << " ";
     }
     myfile << "\n";
   }
 
-  myfile << "CELL_TYPES " << nLocalActiveCells << std::endl;
-  for( localIndex iLocalActiveCell = 0; iLocalActiveCell < nLocalActiveCells; ++iLocalActiveCell )
+  myfile << "CELL_TYPES " << nActiveCells << std::endl;
+  for( localIndex iActiveCell = 0; iActiveCell < nActiveCells; ++iActiveCell )
   {
     myfile << "12\n";
   }

@@ -28,19 +28,53 @@ namespace CPMesh
 namespace GeometryUtilities
 {
 
+/**
+ * @struct Vertex
+ * @brief a helper struct used to filter out duplicate nodes
+ */
 struct Vertex
 {
 public:
+
+  /**
+   * @brief Constructor
+   * @param[in] x X coordinate of the vertex
+   * @param[in] y Y coordinate of the vertex
+   * @param[in] z Z coordinate of the vertex
+   */
   Vertex( real64 const & x, real64 const & y, real64 const & z )
-    : m_localVertex( -1 ), m_x( x ), m_y( y ), m_z( z ) {}
-  localIndex m_localVertex;
+    : m_localIndex( -1 ), m_globalIndex( -1 ), m_x( x ), m_y( y ), m_z( z ) {}
+
+  /// Local index of the vertex
+  localIndex m_localIndex;
+
+  /// Global index of the vertex
+  globalIndex m_globalIndex;
+
+  /// X coordinate of the vertex
   real64 m_x;
+
+  /// Y coordinate of the vertex
   real64 m_y;
+
+  /// Z coordinate of the vertex
   real64 m_z;
 };
 
+
+/**
+ * @struct CompareVertices
+ * @brief another helper struct used to filter out duplicate nodes
+ */
 struct CompareVertices
 {
+
+  /**
+   * @brief Comparaison operator
+   * @param[in] v1 first vertex
+   * @param[in] v2 second vertex
+   * @return true if v1 > v2, and false otherwise
+   */
   bool operator()( const Vertex & v1, const Vertex & v2 ) const
   {
     if( !isZero( v1.m_x - v2.m_x ) )

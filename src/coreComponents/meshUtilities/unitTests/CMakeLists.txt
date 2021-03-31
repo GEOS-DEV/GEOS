@@ -2,15 +2,10 @@
 # Specify list of tests
 #
 
-set( gtest_geosx_tests
-     testCornerPointMeshImport.cpp
-   )
-
-
 if(ENABLE_PAMELA)
 set( gtest_geosx_tests
      ${gtest_geosx_tests}
-    testPAMELAImport.cpp
+    testMeshImport.cpp
    )
 
 set( GMSH_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.msh )
