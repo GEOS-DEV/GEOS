@@ -221,7 +221,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   arrayView1d< globalIndex > const & parentEdgeGlobalIndex =
     embSurfNodeManager.getParentEdgeGlobalIndex();
 
-  for( int i =0; i < surfaceWithGhostNodes.size(); i++ )
+  for( std::size_t i =0; i < surfaceWithGhostNodes.size(); i++ )
   {
     localIndex elemIndex = surfaceWithGhostNodes[i].surfaceIndex;
     std::vector< globalIndex > parentEdges = surfaceWithGhostNodes[i].parentEdgeIndex;
