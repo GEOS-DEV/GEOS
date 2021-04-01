@@ -325,6 +325,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 
   elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
+
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
     ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
@@ -337,7 +338,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 
       localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
       localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
-      if( localRow > 0 && localRow < rowLengths.size() )
+      if( localRow >= 0 && localRow < rowLengths.size() )
       {
         for( localIndex i=0; i<3; ++i )
         {
@@ -350,7 +351,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
         const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
         localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
 
-        if( localDispRow > 0 && localDispRow < rowLengths.size() )
+        if( localDispRow >= 0 && localDispRow < rowLengths.size() )
         {
           for( int d=0; d<3; ++d )
           {
