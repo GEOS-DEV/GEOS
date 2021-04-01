@@ -40,9 +40,7 @@ namespace geosx
 class SpatialPartition;
 
 class NodeManager;
-class EdgeManager;
 class FaceManager;
-class ExternalFaceManager;
 class ElementRegionManager;
 class ElementRegionBase;
 

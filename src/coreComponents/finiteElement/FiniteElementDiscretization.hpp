@@ -29,10 +29,6 @@
 namespace geosx
 {
 
-class NodeManager;
-class CellBlockManager;
-class ElementSubRegionBase;
-
 // TODO remove when these quantities are placed inside the FiniteElementBase
 // class.
 namespace dataRepository

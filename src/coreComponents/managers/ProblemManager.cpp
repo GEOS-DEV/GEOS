@@ -528,8 +528,6 @@ void ProblemManager::generateMesh()
 
       elemManager.generateCellToEdgeMaps( faceManager );
 
-      elemManager.generateAggregates( faceManager, nodeManager );
-
       elemManager.generateWells( meshManager, meshLevel );
     }
   }

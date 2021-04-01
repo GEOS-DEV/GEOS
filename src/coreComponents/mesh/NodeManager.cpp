@@ -188,9 +188,9 @@ void NodeManager::setElementMaps( ElementRegionManager const & elementRegionMana
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
     forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap, &subRegion] ( localIndex const k )
     {
-      localIndex const numIndependedNodes = subRegion.numIndependentNodesPerElement();
-      totalNodeElems += numIndependedNodes;
-      for( localIndex a = 0; a < numIndependedNodes; ++a )
+      localIndex const numNodesPerElement = subRegion.numNodesPerElement();
+      totalNodeElems += numNodesPerElement;
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
       {
         localIndex const nodeIndex = elemToNodeMap( k, a );
         RAJA::atomicInc< parallelHostAtomic >( &elemsPerNode[ nodeIndex ] );
@@ -239,7 +239,7 @@ void NodeManager::setElementMaps( ElementRegionManager const & elementRegionMana
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
     for( localIndex k = 0; k < subRegion.size(); ++k )
     {
-      for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
+      for( localIndex a=0; a<subRegion.numNodesPerElement(); ++a )
       {
         localIndex const nodeIndex = elemToNodeMap( k, a );
         toElementRegionList.emplaceBack( nodeIndex, er );

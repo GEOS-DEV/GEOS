@@ -24,7 +24,6 @@
 
 namespace geosx
 {
-class EdgeManager;
 class EmbeddedSurfaceGenerator;
 
 /**
@@ -97,13 +96,6 @@ public:
   }
 
   virtual void generateMesh( Group & cellBlocks ) override;
-
-  /**
-   * @brief Generate the aggregates.
-   * @param faceManager a pointer to the FaceManager
-   * @param nodeManager a pointer to the NodeManager
-   */
-  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
 
   ///@}
 

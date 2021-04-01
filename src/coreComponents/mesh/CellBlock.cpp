@@ -263,7 +263,6 @@ void CellBlock::setElementType( string const & elementType )
   {
     // Hexahedron
     this->setNumNodesPerElement( 8 );
-    this->setNumIndependentNodesPerElement( 8 );
     this->setNumEdgesPerElement( 12 );
     this->setNumFacesPerElement( 6 );
   }
@@ -271,7 +270,6 @@ void CellBlock::setElementType( string const & elementType )
   {
     // Tetrahedron
     this->setNumNodesPerElement( 4 );
-    this->setNumIndependentNodesPerElement( 4 );
     this->setNumEdgesPerElement( 6 );
     this->setNumFacesPerElement( 4 );
   }
@@ -279,7 +277,6 @@ void CellBlock::setElementType( string const & elementType )
   {
     // Triangular prism
     this->setNumNodesPerElement( 6 );
-    this->setNumIndependentNodesPerElement( 6 );
     this->setNumEdgesPerElement( 9 );
     this->setNumFacesPerElement( 5 );
   }
@@ -287,7 +284,6 @@ void CellBlock::setElementType( string const & elementType )
   {
     // Pyramid
     this->setNumNodesPerElement( 5 );
-    this->setNumIndependentNodesPerElement( 5 );
     this->setNumEdgesPerElement( 8 );
     this->setNumFacesPerElement( 5 );
   }

@@ -215,10 +215,10 @@ public:
     constexpr static char const * creationMassString() { return "creationMass"; }
   };
 
+protected:
+
   /// Map between the face elements and the cells
   FixedToManyElementRelation m_surfaceElementsToCells;
-
-protected:
 
   /// list of nodes
   NodeMapType m_toNodesRelation;

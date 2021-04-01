@@ -20,7 +20,7 @@
 
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "managers/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/CellBlock.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 namespace geosx

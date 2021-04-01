@@ -20,16 +20,16 @@
 #define GEOSX_MESH_NODEMANAGER_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
-#include <string.h>
 #include "CellBlockManager.hpp"
 #include "ToElementRelation.hpp"
+
+#include <string.h>
 
 class SiloFile;
 
 namespace geosx
 {
 
-class CellBlock;
 class FaceManager;
 class EdgeManager;
 class ElementRegionManager;

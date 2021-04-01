@@ -41,16 +41,6 @@ ElementRegionManager::~ElementRegionManager()
   // TODO Auto-generated destructor stub
 }
 
-localIndex ElementRegionManager::numCellBlocks() const
-{
-  localIndex numCellBlocks = 0;
-  this->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & )
-  {
-    numCellBlocks += 1;
-  } );
-  return numCellBlocks;
-}
-
 void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
                                    string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
@@ -186,14 +176,6 @@ void ElementRegionManager::generateCellToEdgeMaps( FaceManager const & faceManag
         } // end edge loop
       } // end face loop
     } // end cell loop
-  } );
-}
-
-void ElementRegionManager::generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager )
-{
-  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
-  {
-    elemRegion.generateAggregates( faceManager, nodeManager );
   } );
 }
 
