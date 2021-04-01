@@ -21,8 +21,6 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 
-#include "constitutive/ExponentialRelation.hpp"
-
 namespace geosx
 {
 namespace constitutive
