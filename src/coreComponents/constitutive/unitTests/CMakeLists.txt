@@ -16,14 +16,6 @@ if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )
 endif()
 
-if( ENABLE_PVTPackage )
-    list( APPEND gtest_geosx_tests
-          testMultiFluid.cpp
-          testCO2BrinePVTModels.cpp )
-
-    set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
 if( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
 endif()
