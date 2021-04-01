@@ -90,11 +90,9 @@
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
+    <CornerPointMeshGenerator
       name="mesh"
-      file="../../../../../../../GEOSXDATA/DataSets/SPE10/EclipseBottomLayers/SPE10_LAYERS_83_84_85.GRDECL"
-      fieldsToImport="{ PERM, PORO }"
-      fieldNamesInGEOSX="{ permeability, referencePorosity }"/>
+      file="../../../../../../../GEOSXDATA/DataSets/SPE10/EclipseBottomLayers/SPE10_LAYERS_83_84_85.GRDECL"/>
 
     <InternalWell
       name="wellProducer1"

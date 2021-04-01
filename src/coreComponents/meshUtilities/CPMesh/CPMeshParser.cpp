@@ -285,7 +285,7 @@ void CPMeshParser::readLocalACTNUM( std::istringstream & meshFile,
       for( localIndex i = 0; i < nXLocal; ++i )
       {
         localIndex const eiLocal = k*nXLocal*nYLocal + j*nXLocal + i;
-        localIndex const ei = (k+kMinLocal)*nXLocal*nYLocal + (j+jMinLocal)*nXLocal + i+iMinLocal;
+        localIndex const ei = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + i+iMinLocal;
         m_actnum( eiLocal ) = work[ ei ];
       }
     }
@@ -319,6 +319,7 @@ void CPMeshParser::readLocalPROP( std::istringstream & meshFile,
 
   // Note: Below I mimic what I will ultimately do: not storing the full file in a string,
   //       but instead going through the file and saving only what the MPI rank needs
+
   for( localIndex k = 0; k < nZLocal; ++k )
   {
     for( localIndex j = 0; j < nYLocal; ++j )
@@ -326,7 +327,7 @@ void CPMeshParser::readLocalPROP( std::istringstream & meshFile,
       for( localIndex i = 0; i < nXLocal; ++i )
       {
         localIndex const eiLocal = k*nXLocal*nYLocal + j*nXLocal + i;
-        localIndex const ei = (k+kMinLocal)*nXLocal*nYLocal + (j+jMinLocal)*nXLocal + i+iMinLocal;
+        localIndex const ei = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + i+iMinLocal;
         prop( eiLocal ) = work[ ei ];
       }
     }

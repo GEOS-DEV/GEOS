@@ -180,7 +180,8 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
         localIndex const iActiveCell = activeCellInsidePartitionToActiveCell( iActiveCellInside );
         for( localIndex dim = 0; dim < 3; dim++ )
         {
-          permeability( iActiveCellInside, dim ) = permeabilityField( activeCellToCell( iActiveCell ), dim );
+          // TODO: find a good place for the conversion factor!!
+          permeability( iActiveCellInside, dim ) = 9.869233e-16 * permeabilityField( activeCellToCell( iActiveCell ), dim );
         }
       }
     }

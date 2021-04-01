@@ -93,7 +93,7 @@ void CPMeshComm::scatterPartitionBoundaries( CPMeshDimensions & meshDims )
     {
       boundaries( iRank*sizePerRank )   = iRank * spacing;
       boundaries( iRank*sizePerRank+1 ) = 0;
-      boundaries( iRank*sizePerRank+2 ) = ( iRank < m_size-1 ) ? ( iRank+1 ) * spacing - 1 : meshDims.nZ()-1;
+      boundaries( iRank*sizePerRank+2 ) = ( iRank < m_size-1 ) ? ( iRank+1 ) * spacing - 1 : meshDims.nX()-1;
       boundaries( iRank*sizePerRank+3 ) = meshDims.nY()-1;
 
       overlaps( iRank*sizePerRank ) = ( boundaries( iRank*sizePerRank ) == 0 ) ? 0 : 1;
