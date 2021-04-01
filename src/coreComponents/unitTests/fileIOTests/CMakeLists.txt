@@ -8,6 +8,18 @@ set(geosx_fileio_tests
 
 set( dependencyList gtest geosx_core )
 
+if ( ENABLE_MPI )
+  set ( dependencyList ${dependencyList} mpi )
+endif()
+
+if( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 #
 # Add gtest C++ based tests
 #

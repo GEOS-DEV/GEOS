@@ -5,6 +5,23 @@ set(mainInterface_headers
     NumericalMethodsManager.hpp
    )
 
+set( dependencyList finiteElement finiteVolume virtualElement )
+
+if( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif( )
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif( )
+
+if( ENABLE_MPI )
+  set( dependencyList ${dependencyList} mpi )
+endif()
+
+if( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper )
+endif()
 
 #
 # Specify all sources
@@ -17,7 +34,7 @@ set(mainInterface_sources
 blt_add_library( NAME                  discretizationMethods
                  SOURCES               ${mainInterface_sources}
                  HEADERS               ${mainInterface_headers}
-                 DEPENDS_ON            finiteElement finiteVolume virtualElement
+                 DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
 
