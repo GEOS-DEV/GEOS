@@ -10,26 +10,26 @@ set( physicsSolvers_headers
      SolverBase.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
-     fluidFlow/CompositionalMultiphaseHybridFVM.hpp          
+     fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
-     fluidFlow/HybridFVMHelperKernels.hpp          
+     fluidFlow/HybridFVMHelperKernels.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseFVM.hpp
-     fluidFlow/SinglePhaseHybridFVM.hpp     
+     fluidFlow/SinglePhaseHybridFVM.hpp
      fluidFlow/SinglePhaseBaseKernels.hpp
-     fluidFlow/SinglePhaseFVMKernels.hpp          
-     fluidFlow/SinglePhaseHybridFVMKernels.hpp     
+     fluidFlow/SinglePhaseFVMKernels.hpp
+     fluidFlow/SinglePhaseHybridFVMKernels.hpp
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/SinglePhaseWell.hpp
-     fluidFlow/wells/SinglePhaseWellKernels.hpp     
+     fluidFlow/wells/SinglePhaseWellKernels.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/WellControls.hpp
@@ -61,6 +61,7 @@ set( physicsSolvers_headers
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
+     wavePropagation/ElasticWaveEquationSEM.hpp
      )
 
 #
@@ -73,9 +74,9 @@ set( physicsSolvers_sources
      SolverBase.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
-     fluidFlow/CompositionalMultiphaseHybridFVM.cpp          
+     fluidFlow/CompositionalMultiphaseHybridFVM.cpp
      fluidFlow/CompositionalMultiphaseBaseKernels.cpp
-     fluidFlow/CompositionalMultiphaseFVMKernels.cpp     
+     fluidFlow/CompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/ProppantTransport.cpp
@@ -84,12 +85,12 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseBaseKernels.cpp
      fluidFlow/SinglePhaseFVM.cpp
      fluidFlow/SinglePhaseFVMKernels.cpp
-     fluidFlow/SinglePhaseHybridFVM.cpp     
-     fluidFlow/SinglePhaseProppantBase.cpp     
+     fluidFlow/SinglePhaseHybridFVM.cpp
+     fluidFlow/SinglePhaseProppantBase.cpp
      fluidFlow/wells/WellSolverBase.cpp
-     fluidFlow/wells/SinglePhaseWell.cpp          
-     fluidFlow/wells/CompositionalMultiphaseWell.cpp     
-     fluidFlow/wells/WellControls.cpp     
+     fluidFlow/wells/SinglePhaseWell.cpp
+     fluidFlow/wells/CompositionalMultiphaseWell.cpp
+     fluidFlow/wells/WellControls.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactSolver.cpp
@@ -108,6 +109,7 @@ set( physicsSolvers_sources
      surfaceGeneration/SurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
+     wavePropagation/ElasticWaveEquationSEM.cpp
      )
 
 if( BUILD_OBJ_LIBS)
