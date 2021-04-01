@@ -97,6 +97,7 @@ set( constitutive_sources
      solid/ElasticTransverseIsotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
+     solid/PropertyConversions.cpp
      solid/SolidBase.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp

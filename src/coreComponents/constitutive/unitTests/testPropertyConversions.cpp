@@ -42,10 +42,8 @@ TEST( PropertyConversionTests, testElasticConversions )
   EXPECT_DOUBLE_EQ( shear, 3*bulk*(1-2*poisson)/(2+2*poisson) );
 
   // bulk and shear
-  poisson_out = PoissonRatio().
-                  setBulkModulus( bulk ).
-                  setShearModulus( shear ).
-                  getValue();
+
+  poisson_out = PoissonRatio( BulkModulus( bulk ), ShearModulus( shear ) ).value;
 
   young_out = YoungModulus().
                 setBulkModulus( bulk ).
@@ -61,10 +59,7 @@ TEST( PropertyConversionTests, testElasticConversions )
                 setYoungModulus( young ).
                 getValue();
 
-  poisson_out = PoissonRatio().
-                  setBulkModulus( bulk ).
-                  setYoungModulus( young ).
-                  getValue();
+  poisson_out = PoissonRatio( BulkModulus( bulk ), YoungModulus( young ) ).value;
 
   EXPECT_DOUBLE_EQ( poisson, poisson_out );
   EXPECT_DOUBLE_EQ( shear, shear_out );
@@ -75,10 +70,7 @@ TEST( PropertyConversionTests, testElasticConversions )
                setShearModulus( shear ).
                getValue();
 
-  poisson_out = PoissonRatio().
-                  setShearModulus( shear ).
-                  setYoungModulus( young ).
-                  getValue();
+  poisson_out = PoissonRatio( ShearModulus( shear ), YoungModulus( young ) ).value;
 
   EXPECT_DOUBLE_EQ( bulk, bulk_out );
   EXPECT_DOUBLE_EQ( poisson, poisson_out );

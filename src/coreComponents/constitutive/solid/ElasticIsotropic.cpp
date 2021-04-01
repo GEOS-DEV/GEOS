@@ -142,10 +142,7 @@ void ElasticIsotropic::postProcessInput()
   }
   else if( E >= 0.0 && K >=0 )
   {
-    nu = PoissonRatio().
-           setBulkModulus( K ).
-           setYoungModulus( E ).
-           getValue();
+    nu = PoissonRatio( BulkModulus( K ), YoungModulus( E ) ).value;
 
     G = ShearModulus().
           setYoungModulus( E ).
@@ -154,10 +151,7 @@ void ElasticIsotropic::postProcessInput()
   }
   else if( E >= 0.0 && G >= 0 )
   {
-    nu = PoissonRatio().
-           setShearModulus( G ).
-           setYoungModulus( E ).
-           getValue();
+    nu = PoissonRatio( ShearModulus( G ), YoungModulus( E ) ).value;
 
     K = BulkModulus().
           setYoungModulus( E ).
@@ -171,11 +165,7 @@ void ElasticIsotropic::postProcessInput()
           setBulkModulus( K ).
           setShearModulus( G ).
           getValue();
-
-    nu = PoissonRatio().
-           setBulkModulus( K ).
-           setShearModulus( G ).
-           getValue();
+    nu = PoissonRatio( BulkModulus( K ), ShearModulus( G ) ).value;
   }
   else
   {

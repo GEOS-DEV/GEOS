@@ -19,11 +19,18 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_PROPERTYCONVERSIONS_HPP_
 
+#include "common/DataTypes.hpp"
+
 namespace geosx
 {
 
 namespace constitutive
 {
+
+struct YoungModulus;
+struct PoissonRatio;
+struct BulkModulus;
+struct ShearModulus;
 
 /**
  * @class PoissonRatio
@@ -31,68 +38,27 @@ namespace constitutive
 struct PoissonRatio
 {
 public:
+  /**
+   * @brief To get the real64 value of Poisson's ratio
+   */
+  real64 value;
+
+  /**
+   * @brief To set/convert a real64 value to Poisson's ratio
+   */
+  PoissonRatio( real64 nu ){ value = nu; }  
 
   /**
    * @brief Compute Poisson's ratio from other elastic parameters
-   * @return Poisson's ratio
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 getValue() const
-  {
-    if( m_K > 0 && m_G > 0 )
-    {
-      return ( 3.0 * m_K - 2.0 * m_G ) / ( 6.0 * m_K + 2.0 * m_G );
-    }
-    else if( m_K > 0 && m_E > 0 )
-    {
-      return ( 3.0 * m_K - m_E ) / ( 6.0 * m_K);
-    }
-    else if( m_G > 0 && m_E > 0 )
-    {
-      return 0.5 * m_E / m_G - 1.0;
-    }
-    else
-    {
-      return -0.5;
-      GEOSX_ERROR( "A specific pair of elastic constants is required: (K,G) or (K,E) or (G,E)" );
-    }
-  }
+  PoissonRatio( BulkModulus K, ShearModulus G );
+  PoissonRatio( ShearModulus G, BulkModulus K );
+ 
+  PoissonRatio( BulkModulus K, YoungModulus E );
+  PoissonRatio( YoungModulus E, BulkModulus K );
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  PoissonRatio setBulkModulus( real64 const K )
-  {
-    m_K = K;
-    return *this;
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  PoissonRatio setShearModulus( real64 const G )
-  {
-    m_G = G;
-    return *this;
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  PoissonRatio setYoungModulus( real64 const E )
-  {
-    m_E = E;
-    return *this;
-  }
-
-private:
-
-  /// Bulk modulus
-  real64 m_K = 0.0;
-
-  /// Shear modulus
-  real64 m_G = 0.0;
-
-  /// Young's modulus
-  real64 m_E = 0.0;
+  PoissonRatio( ShearModulus G, YoungModulus E );
+  PoissonRatio( YoungModulus E, ShearModulus G );
 };
 
 /**
@@ -101,6 +67,10 @@ private:
 struct YoungModulus
 {
 public:
+  real64 value;
+  YoungModulus(){} //TODO to delete
+  YoungModulus( real64 E ){ value = E; }
+  
 
   /**
    * @brief Compute Young's modulus from other elastic parameters
@@ -173,6 +143,11 @@ struct BulkModulus
 {
 public:
 
+  real64 value;
+  BulkModulus(){} //TODO to delete
+  BulkModulus( real64 K ){ value = K; }
+
+
   /**
    * @brief Compute Bulk modulus from other elastic parameters
    * @return Bulk modulus
@@ -243,6 +218,11 @@ private:
 struct ShearModulus
 {
 public:
+
+  real64 value;
+  ShearModulus(){} //TODO to delete
+  ShearModulus( real64 G ){ value = G; }
+
 
   /**
    * @brief Compute Shear modulus from other elastic parameters
