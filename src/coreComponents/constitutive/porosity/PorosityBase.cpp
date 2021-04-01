@@ -35,7 +35,6 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::porosityOldString(), &m_porosityOld ).
     setPlotLevel( PlotLevel::LEVEL_3 );
   registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure );
-  registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity );
 }
 
 PorosityBase::~PorosityBase() = default;

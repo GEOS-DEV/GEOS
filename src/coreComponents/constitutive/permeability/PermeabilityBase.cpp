@@ -30,7 +30,11 @@ namespace constitutive
 PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::permeabilityString(), &m_permeability ).setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::permeabilityString(), &m_permeability ).setPlotLevel( PlotLevel::LEVEL_0 ).
+      setDescription(" permeability of the rock.");
+  registerWrapper( viewKeyStruct::dPerm_dPressureString(), &m_dPerm_dPressure ).
+      setDefaultValue( 0.0 ).
+      setDescription(" Derivative of the permeability w.r.t. to pressure.");
 }
 
 PermeabilityBase::~PermeabilityBase() = default;
@@ -48,6 +52,7 @@ void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_permeability.resize( 0, numConstitutivePointsPerParentIndex, 3 );
+  m_dPerm_dPressure.resize( 0, numConstitutivePointsPerParentIndex, 3 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

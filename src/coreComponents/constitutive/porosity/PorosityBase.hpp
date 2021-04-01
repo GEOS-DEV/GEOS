@@ -70,9 +70,6 @@ protected:
 
   array2d< real64 > m_dPorosity_dPressure;
 
-  real64 m_referencePorosity;
-
-
 };
 
 }/* namespace constitutive */

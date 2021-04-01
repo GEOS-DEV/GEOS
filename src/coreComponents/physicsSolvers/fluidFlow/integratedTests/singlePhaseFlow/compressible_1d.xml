@@ -8,9 +8,8 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
-      permeabilityModelNames="{ rock }"
       porosityNames="{porosity}"
-      permeabilityNames="{permeability}"
+      permeabilityNames="{ permeability }"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -54,17 +53,23 @@
       timeFrequency="100.0"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
+      
+    <PeriodicEvent
+      name="outputs2"
+      timeFrequency="100.0"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
       forceDt="1e2"
       target="/Solvers/SinglePhaseFlow"/>
 
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="restarts"
       timeFrequency="1e3"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/-->
   </Events>
 
   <NumericalMethods>
@@ -97,11 +102,12 @@
     <PressureDependentPorosity
       name="porosity"
       referencePressure="0.0"
+      defaultReferencePorosity ="0.2"
       compressibility="1e-9"/>
       
     <ConstantPermeability
       name="permeability"
-      permeabilityComponents="{1e-12, 1e-12, 1e-12}"/>
+      permeabilityComponents="1e-12, 1e-12, 1e-12"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -131,8 +137,11 @@
   <Outputs>
     <Silo
       name="siloOutput"/>
+      
+    <VTK
+      name="vtkOutput"/>
 
-    <Restart
-      name="restartOutput"/>
+    <!--Restart
+      name="restartOutput"/-->
   </Outputs>
 </Problem>

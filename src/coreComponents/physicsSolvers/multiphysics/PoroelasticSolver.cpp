@@ -40,8 +40,6 @@
 
 #include "SinglePhasePoroelasticKernel.hpp"
 
-
-
 namespace geosx
 {
 
@@ -361,12 +359,11 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
                                                                        gravityVectorData,
                                                                        m_flowSolver->fluidModelNames() );
 
-  // Face-based contributions
-  m_flowSolver->assembleFluxTerms( time_n, dt,
-                                   domain,
-                                   dofManager,
-                                   localMatrix,
-                                   localRhs );
+  m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
+                                              domain,
+                                              dofManager,
+                                              localMatrix,
+                                              localRhs );
 
 }
 

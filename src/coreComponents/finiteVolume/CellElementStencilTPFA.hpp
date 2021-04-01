@@ -107,7 +107,7 @@ public:
    * @return The number of stencil entries
    */
   virtual localIndex size() const override final
-  { return m_elementRegionIndices.size(); }
+  { return m_elementRegionIndices.size( 0 ); }
 
 private:
 

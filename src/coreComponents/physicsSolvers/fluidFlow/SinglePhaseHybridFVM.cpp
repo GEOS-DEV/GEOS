@@ -302,6 +302,23 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   } );
 }
 
+void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                         real64 const dt,
+                                                         DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_UNUSED_VAR( dt );
+  GEOSX_UNUSED_VAR( domain );
+  GEOSX_UNUSED_VAR( dofManager );
+  GEOSX_UNUSED_VAR( localMatrix );
+  GEOSX_UNUSED_VAR( localRhs );
+
+  GEOSX_ERROR("Not yet implemented");
+
+}
+
 void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
                                                     real64 const dt,
                                                     DomainPartition & domain,

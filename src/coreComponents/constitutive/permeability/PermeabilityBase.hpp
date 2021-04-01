@@ -98,7 +98,7 @@ protected:
 
   array3d< real64 > m_permeability;
 
-  array3d< real64 > dPerm_dPressure;
+  array3d< real64 > m_dPerm_dPressure;
 
 };
 
