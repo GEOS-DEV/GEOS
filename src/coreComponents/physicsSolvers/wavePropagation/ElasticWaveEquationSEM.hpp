@@ -97,8 +97,11 @@ public:
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
+    static constexpr char const * rickerOrderString() { return "rickerOrder"; }
+    
     static constexpr char const * displacementNp1AtReceiversString() { return "displacementNp1AtReceivers"; }
 
+    static constexpr char const * outputSismoTraceString() { return "outputSismoTrace";}
 
   } waveEquationViewKeys;
 
@@ -157,7 +160,11 @@ private:
   /// Displacement_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_displacementNp1AtReceivers;
 
+    /// Flag that indicates the order of the Ricker to be used, order 2 by default
+  localIndex m_rickerOrder;
 
+  /// Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise
+  localIndex m_outputSismoTrace;
 
 };
 

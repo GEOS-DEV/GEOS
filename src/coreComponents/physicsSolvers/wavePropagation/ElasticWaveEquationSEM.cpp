@@ -82,6 +82,16 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
+    registerWrapper( viewKeyStruct::rickerOrderString(), &m_rickerOrder ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 2 ).
+    setDescription( "Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default" );
+
+     registerWrapper( viewKeyStruct::outputSismoTraceString(), &m_outputSismoTrace ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise" );
+
   registerWrapper( viewKeyStruct::displacementNp1AtReceiversString(), &m_displacementNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
