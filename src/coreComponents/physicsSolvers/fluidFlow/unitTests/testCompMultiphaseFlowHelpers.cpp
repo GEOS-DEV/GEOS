@@ -33,6 +33,7 @@
 
 using namespace geosx;
 using namespace geosx::CompositionalMultiphaseFlowUpwindHelperKernels;
+using UHelpers = geosx::CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelpers;
 
 CommandLineOptions g_commandLineOptions;
 
@@ -41,10 +42,10 @@ template< localIndex NP, localIndex NC, localIndex MAX_STENCIL >
 void mdensMultiplyTest( localIndex const ip,
                         localIndex const k_up,
                         localIndex const stencilSize,
-                        real64 const (* dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
-                        real64 const (* phaseDens)[MAX_STENCIL][1][NP],
-                        real64 const (* dPhaseDens_dP)[MAX_STENCIL][1][NP],
-                        real64 const (* dPhaseDens_dC)[MAX_STENCIL][1][NP][NC],
+                        real64 const (*dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
+                        real64 const (*phaseDens)[MAX_STENCIL][1][NP],
+                        real64 const (*dPhaseDens_dP)[MAX_STENCIL][1][NP],
+                        real64 const (*dPhaseDens_dC)[MAX_STENCIL][1][NP][NC],
                         real64 & field,
                         real64 (& dField_dP)[MAX_STENCIL],
                         real64 (& dField_dC)[MAX_STENCIL][NC] )
@@ -76,13 +77,13 @@ template< localIndex NP, localIndex NC, localIndex MAX_STENCIL >
 void formPhaseCompTest( localIndex const ip,
                         localIndex const k_up,
                         localIndex const stencilSize,
-                        real64 const (* phaseCompFrac)[MAX_STENCIL][1][NP][NC],
-                        real64 const (* dPhaseCompFrac_dPres)[MAX_STENCIL][1][NP][NC],
-                        real64 const (* dPhaseCompFrac_dComp)[MAX_STENCIL][1][NP][NC][NC],
-                        real64 const (* dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
+                        real64 const (*phaseCompFrac)[MAX_STENCIL][1][NP][NC],
+                        real64 const (*dPhaseCompFrac_dPres)[MAX_STENCIL][1][NP][NC],
+                        real64 const (*dPhaseCompFrac_dComp)[MAX_STENCIL][1][NP][NC][NC],
+                        real64 const (*dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
                         real64 const & phaseFlux,
-                        real64 const (& dPhaseFlux_dPres)[MAX_STENCIL],
-                        real64 const (& dPhaseFlux_dComp)[MAX_STENCIL][NC],
+                        real64 const (&dPhaseFlux_dPres)[MAX_STENCIL],
+                        real64 const (&dPhaseFlux_dComp)[MAX_STENCIL][NC],
                         real64 (& compFlux)[NC],
                         real64 (& dCompFlux_dPres)[MAX_STENCIL][NC],
                         real64 (& dCompFlux_dComp)[MAX_STENCIL][NC][NC] )
@@ -124,12 +125,12 @@ void formPhaseCompTest( localIndex const ip,
 template< localIndex NP, localIndex NC, localIndex MAX_STENCIL, localIndex NUM_ELEMS >
 void formGravHeadTest( localIndex const ip,
                        localIndex const stencilSize,
-                       real64 const (* weights),
-                       real64 const (* gravCoef)[MAX_STENCIL],
-                       real64 const (* dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
-                       real64 const (* phaseMassDens)[MAX_STENCIL][1][NP],
-                       real64 const (* dPhaseMassDens_dP)[MAX_STENCIL][1][NP],
-                       real64 const (* dPhaseMassDens_dC)[MAX_STENCIL][1][NP][NC],
+                       real64 const (*weights),
+                       real64 const (*gravCoef)[MAX_STENCIL],
+                       real64 const (*dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
+                       real64 const (*phaseMassDens)[MAX_STENCIL][1][NP],
+                       real64 const (*dPhaseMassDens_dP)[MAX_STENCIL][1][NP],
+                       real64 const (*dPhaseMassDens_dC)[MAX_STENCIL][1][NP][NC],
                        real64 & gravHead,
                        real64 (& dGravHead_dP)[NUM_ELEMS],
                        real64 (& dGravHead_dC)[NUM_ELEMS][NC],
@@ -193,9 +194,9 @@ void formGravHeadTest( localIndex const ip,
 }
 
 template< localIndex NC, localIndex MAX_STENCIL, localIndex NUM_ELEMS, localIndex NDOF >
-void fillLocalJacobiTest( real64 const (& compFlux)[NC],
-                          real64 const (& dCompFlux_dP)[MAX_STENCIL][NC],
-                          real64 const (& dCompFlux_dC)[MAX_STENCIL][NC][NC],
+void fillLocalJacobiTest( real64 const (&compFlux)[NC],
+                          real64 const (&dCompFlux_dP)[MAX_STENCIL][NC],
+                          real64 const (&dCompFlux_dC)[MAX_STENCIL][NC][NC],
                           localIndex const stencilSize,
                           real64 const dt,
                           real64 (& localFlux)[NUM_ELEMS * NC],
@@ -227,10 +228,10 @@ void fillLocalJacobiTest( real64 const (& compFlux)[NC],
 
 template< localIndex NP, localIndex NC, localIndex MAX_STENCIL, bool FULL >
 void testCompositionalUpwindDensMult( CellElementStencilTPFA const & stencil,
-                                      real64 const (* dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
-                                      real64 const (* phaseDens)[MAX_STENCIL][1][NP],
-                                      real64 const (* dPhaseDens_dP)[MAX_STENCIL][1][NP],
-                                      real64 const (* dPhaseDens_dC)[MAX_STENCIL][1][NP][NC] )
+                                      real64 const (*dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
+                                      real64 const (*phaseDens)[MAX_STENCIL][1][NP],
+                                      real64 const (*dPhaseDens_dP)[MAX_STENCIL][1][NP],
+                                      real64 const (*dPhaseDens_dC)[MAX_STENCIL][1][NP][NC] )
 {
   localIndex constexpr NUM_ELEMS = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
 
@@ -270,9 +271,9 @@ void testCompositionalUpwindDensMult( CellElementStencilTPFA const & stencil,
       real64 field = 5.650e+03;
       real64 dField_dP[NUM_ELEMS] = { 6.952e-03, 4.991e+00 };
       real64 dField_dC[NUM_ELEMS][NC] = { { 5.523e-01, 6.299e-03, 0.320e+00, 6.147e-02 },
-                                          { 1.231e-03, 2.055e+01, 1.465e-02, 1.891e+00 } };
+        { 1.231e-03, 2.055e+01, 1.465e-02, 1.891e+00 } };
 
-      mdensMultiply( ip,
+      UHelpers::mdensMultiply( ip,
                      ke,
                      MAX_STENCIL,
                      seri[0],
@@ -289,7 +290,7 @@ void testCompositionalUpwindDensMult( CellElementStencilTPFA const & stencil,
       real64 fieldRef = 5.650e+03;
       real64 dFieldRef_dP[NUM_ELEMS] = { 6.952e-03, 4.991e+00 };
       real64 dFieldRef_dC[NUM_ELEMS][NC] = { { 5.523e-01, 6.299e-03, 0.320e+00, 6.147e-02 },
-                                          { 1.231e-03, 2.055e+01, 1.465e-02, 1.891e+00 } };
+        { 1.231e-03, 2.055e+01, 1.465e-02, 1.891e+00 } };
 
 
       mdensMultiplyTest( ip,
@@ -320,10 +321,10 @@ void testCompositionalUpwindDensMult( CellElementStencilTPFA const & stencil,
 
 template< localIndex NP, localIndex NC, localIndex MAX_STENCIL, bool FULL >
 void testCompositionalUpwindFormPhaseComp( CellElementStencilTPFA const & stencil,
-                                           real64 const (* dCompFrac_dCompDens )[MAX_STENCIL][NC][NC],
-                                           real64 const (* phaseCompFrac )[MAX_STENCIL][1][NP][NC],
-                                           real64 const (* dPhaseCompFrac_dPres )[MAX_STENCIL][1][NP][NC],
-                                           real64 const (* dPhaseCompFrac_dComp )[MAX_STENCIL][1][NP][NC][NC] )
+                                           real64 const (*dCompFrac_dCompDens )[MAX_STENCIL][NC][NC],
+                                           real64 const (*phaseCompFrac )[MAX_STENCIL][1][NP][NC],
+                                           real64 const (*dPhaseCompFrac_dPres )[MAX_STENCIL][1][NP][NC],
+                                           real64 const (*dPhaseCompFrac_dComp )[MAX_STENCIL][1][NP][NC][NC] )
 {
   localIndex constexpr NUM_ELEMS = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
 
@@ -366,13 +367,13 @@ void testCompositionalUpwindFormPhaseComp( CellElementStencilTPFA const & stenci
       real64 const phaseFlux = 9.283e+03;
       real64 const dPhaseFlux_dP[NUM_ELEMS] = { 0.835e+03, 6.260e+03 };
       real64 const dPhaseFlux_dC[NUM_ELEMS][NC] = { { 0.005e+00, 8.654e+00, 6.126e+02, 9.900e-02 },
-                                                    { 4.981e+02, 9.009e+01, 5.747e-02, 8.452e+01 } };
+        { 4.981e+02, 9.009e+01, 5.747e-02, 8.452e+01 } };
 
       real64 compFlux[NC]{};
       real64 dCompFlux_dP[MAX_STENCIL][NC]{};
       real64 dCompFlux_dC[MAX_STENCIL][NC][NC]{};
 
-      formPhaseComp( ip,
+      UHelpers::formPhaseComp( ip,
                      ke,
                      MAX_STENCIL,
                      seri[0],
@@ -431,11 +432,11 @@ void testCompositionalUpwindFormPhaseComp( CellElementStencilTPFA const & stenci
 
 template< localIndex NP, localIndex NC, localIndex MAX_STENCIL, bool FULL >
 void testCompositionalUpwindFormGravHead( CellElementStencilTPFA const & stencil,
-                                          real64 const (* gravCoef)[MAX_STENCIL],
-                                          real64 const (* dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
-                                          real64 const (* phaseMassDens)[MAX_STENCIL][1][NP],
-                                          real64 const (* dPhaseMassDens_dP)[MAX_STENCIL][1][NP],
-                                          real64 const (* dPhaseMassDens_dC)[MAX_STENCIL][1][NP][NC] )
+                                          real64 const (*gravCoef)[MAX_STENCIL],
+                                          real64 const (*dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
+                                          real64 const (*phaseMassDens)[MAX_STENCIL][1][NP],
+                                          real64 const (*dPhaseMassDens_dP)[MAX_STENCIL][1][NP],
+                                          real64 const (*dPhaseMassDens_dC)[MAX_STENCIL][1][NP][NC] )
 {
   localIndex constexpr NUM_ELEMS = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
 
@@ -484,7 +485,7 @@ void testCompositionalUpwindFormGravHead( CellElementStencilTPFA const & stencil
     real64 dGravHead_dC[NUM_ELEMS][NC];
     real64 dProp_dC[NC];
 
-    formGravHead( ip,
+    UHelpers::formGravHead( ip,
                   MAX_STENCIL,
                   seri[0],
                   sesri[0],
@@ -499,7 +500,7 @@ void testCompositionalUpwindFormGravHead( CellElementStencilTPFA const & stencil
                   dGravHead_dP,
                   dGravHead_dC,
                   dProp_dC
-    );
+                  );
 
 
     real64 gravHeadRef;
@@ -537,9 +538,9 @@ void testCompositionalUpwindFormGravHead( CellElementStencilTPFA const & stencil
 
 
 template< localIndex NC, localIndex MAX_STENCIL, localIndex NUM_ELEMS, localIndex NDOF >
-void testCompositionalUpwindFillLocalJacobi( real64 const (* compFlux)[NC],
-                                             real64 const (* dCompFlux_dP)[MAX_STENCIL][NC],
-                                             real64 const (* dCompFlux_dC)[MAX_STENCIL][NC][NC],
+void testCompositionalUpwindFillLocalJacobi( real64 const (*compFlux)[NC],
+                                             real64 const (*dCompFlux_dP)[MAX_STENCIL][NC],
+                                             real64 const (*dCompFlux_dC)[MAX_STENCIL][NC][NC],
                                              localIndex const stencilSize,
                                              real64 const * dt )
 {
@@ -548,7 +549,7 @@ void testCompositionalUpwindFillLocalJacobi( real64 const (* compFlux)[NC],
   stackArray1d< real64, NUM_ELEMS * NC > localFlux( NUM_ELEMS * NC );
   stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, MAX_STENCIL * NDOF );
 
-  fillLocalJacobi< NC, MAX_STENCIL, NDOF >( ( *compFlux ),
+  UHelpers::fillLocalJacobi< NC, MAX_STENCIL, NDOF >( ( *compFlux ),
                                             ( *dCompFlux_dP ),
                                             ( *dCompFlux_dC ),
                                             MAX_STENCIL,
@@ -631,11 +632,11 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_mDens )
   real64 const dDensData_dC[NTEST][MAX_STENCIL][1][NP][NC] = {
     {
       { { { 8.244e+01, 9.827e-03, 7.302e+03, 3.439e+03 },
-          { 8.178e-01, 2.607e-01, 5.944e-02, 0.225e-02 }
-        } },
+        { 8.178e-01, 2.607e-01, 5.944e-02, 0.225e-02 }
+      } },
       { { { 5.313e+02, 3.251e-01, 1.056e-03, 6.110e-02 },
-          { 1.537e+00, 2.810e+03, 4.401e+00, 5.271e+03 },
-        } }
+        { 1.537e+00, 2.810e+03, 4.401e+00, 5.271e+03 },
+      } }
     }
   };
 
@@ -664,7 +665,7 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_mDens )
                                                                   &densData[i],
                                                                   &dDensData_dP[i],
                                                                   &dDensData_dC[i]
-    );
+                                                                  );
 
   }
 
@@ -695,21 +696,21 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_formPhaseComp )
   real64 const phaseCompFrac[NTEST][MAX_STENCIL][1][NP][NC] = {
     {
       { {
-          { 6.663e-02, 5.391e-03, 6.981e+03, 6.665e-02 },
-          { 0.326e-02, 5.612e-01, 8.819e+00, 6.692e+03 }
-        } },
+        { 6.663e-02, 5.391e-03, 6.981e+03, 6.665e-02 },
+        { 0.326e-02, 5.612e-01, 8.819e+00, 6.692e+03 }
+      } },
       { {
-          { 1.564e-02, 8.555e-01, 6.448e+00, 3.763e-03 },
-          { 5.895e-02, 2.262e-01, 3.846e+01, 5.830e-02 }
-        } }
+        { 1.564e-02, 8.555e-01, 6.448e+00, 3.763e-03 },
+        { 5.895e-02, 2.262e-01, 3.846e+01, 5.830e-02 }
+      } }
     }
   };
   real64 const dPhaseCompFrac_dPres[NTEST][MAX_STENCIL][1][NP][NC] = {
     {
       { { { 6.022e+00, 3.868e-01, 9.160e+00, 0.012e+02 },
-          { 3.225e-02, 7.847e+02, 4.714e+00, 0.358e-02 } } },
+        { 3.225e-02, 7.847e+02, 4.714e+00, 0.358e-02 } } },
       { { { 3.411e-02, 6.074e+03, 1.917e-02, 7.384e+02 },
-          { 1.887e+01, 2.875e+00, 0.911e-01, 5.762e+01 } } }
+        { 1.887e+01, 2.875e+00, 0.911e-01, 5.762e+01 } } }
     }
   };
 
@@ -722,13 +723,13 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_formPhaseComp )
             { 6.073e+02, 4.501e-01, 4.587e+01, 6.619e-01 },
             { 8.419e+01, 8.329e+00, 2.564e+03, 6.135e-02 },
             { 3.181e+00, 1.192e+01, 9.398e+00, 6.456e+01 }
-            },
+          },
           {
             { 5.439e-02, 7.210e-03, 5.225e-03, 9.937e-03 },
             { 4.046e+01, 4.484e+02, 3.658e+03, 7.635e+03 },
             { 1.920e+00, 1.389e+00, 6.963e+03, 0.938e+00 },
             { 3.935e-01, 6.714e-02, 7.413e+01, 5.201e-02 }
-            },
+          },
         }
       },
       {
@@ -738,13 +739,13 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_formPhaseComp )
             { 6.834e-01, 7.040e-01, 4.423e-02, 0.196e-02 },
             { 8.217e+02, 4.299e-01, 8.878e+02, 3.912e+02 },
             { 3.774e-01, 2.160e+01, 7.904e+00, 9.493e+02 }
-            },
+          },
           {
             { 7.689e+00, 1.673e+03, 8.620e+01, 9.899e-02 },
             { 1.999e+02, 4.070e-01, 7.487e+00, 8.256e-03 },
             { 1.117e-02, 1.363e+00, 6.787e-02, 4.952e-03 },
             { 8.507e+01, 5.606e+02, 9.296e+03, 6.967e+03 }
-            },
+          },
         }
       }
     }
@@ -822,17 +823,17 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_formGravHead )
   real64 const dCompFracData_dCompDens[NTEST][MAX_STENCIL][NC][NC] = {
     {
       {
-          { 8.055e+03, 5.767e-03, 1.829e+00, 2.399e-02 },
-          { 9.787e-03, 7.127e+01, 5.005e-03, 4.711e-03 },
-          { 5.216e+02, 0.967e-02, 8.181e+01, 8.175e+00 },
-          { 9.730e+00, 6.490e+02, 8.003e-03, 4.538e-03 }
-        },
+        { 8.055e+03, 5.767e-03, 1.829e+00, 2.399e-02 },
+        { 9.787e-03, 7.127e+01, 5.005e-03, 4.711e-03 },
+        { 5.216e+02, 0.967e-02, 8.181e+01, 8.175e+00 },
+        { 9.730e+00, 6.490e+02, 8.003e-03, 4.538e-03 }
+      },
       {
-          { 1.734e-03, 3.909e-01, 8.314e+00, 8.034e-01 },
-          { 6.569e-03, 6.280e+03, 2.920e-02, 4.317e-03 },
-          { 3.724e+03, 1.981e+03, 4.897e-03, 3.395e+02 },
-          { 2.691e-01, 4.228e+03, 5.479e-01, 9.427e+01 }
-        },
+        { 1.734e-03, 3.909e-01, 8.314e+00, 8.034e-01 },
+        { 6.569e-03, 6.280e+03, 2.920e-02, 4.317e-03 },
+        { 3.724e+03, 1.981e+03, 4.897e-03, 3.395e+02 },
+        { 2.691e-01, 4.228e+03, 5.479e-01, 9.427e+01 }
+      },
     }
   };
 
@@ -902,7 +903,7 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_fillLocalJacobi )
 
 
 int main( int argc,
-          char ** argv )
+          char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geosx::basicSetup( argc, argv );
