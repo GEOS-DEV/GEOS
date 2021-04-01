@@ -29,49 +29,60 @@ using namespace virtualElement;
 
 CommandLineOptions g_commandLineOptions;
 
-static void checkIntegralMeanConsistency( localIndex numBasisFunctions,
-                                          array1d< real64 > const & basisFunctionsIntegralMean )
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
+static void checkIntegralMeanConsistency()
 {
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
+  real64 basisFunctionsIntegralMean[VEM::maxSupportPoints];
+  VEM::calcN( 0, basisFunctionsIntegralMean );
   real64 sum = 0;
-  for( localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun )
+  for( localIndex iBasisFun = 0; iBasisFun <
+       VEM::getNumSupportPoints(); ++iBasisFun )
   {
-    sum += basisFunctionsIntegralMean( iBasisFun );
+    sum += basisFunctionsIntegralMean[iBasisFun];
   }
   EXPECT_TRUE( abs( sum-1 ) < 1e-15 )
     << "Sum of basis functions integral mean is not 1, but " << sum << ". "
     << "The computed integral means are " << basisFunctionsIntegralMean;
 }
 
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void
-checkIntegralMeanDerivativesConsistency( localIndex numBasisFunctions,
-                                         array2d< real64 > const & basisDerivativesIntegralMean )
+checkIntegralMeanDerivativesConsistency()
 {
-  real64 sumX = 0, sumY = 0, sumZ = 0;
-  for( localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun )
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
+  for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
   {
-    sumX += basisDerivativesIntegralMean( 0, iBasisFun );
-    sumY += basisDerivativesIntegralMean( 1, iBasisFun );
-    sumZ += basisDerivativesIntegralMean( 2, iBasisFun );
+    real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
+    VEM::calcGradN( q, basisDerivativesIntegralMean );
+    real64 sumX = 0, sumY = 0, sumZ = 0;
+    for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints(); ++iBasisFun )
+    {
+      sumX += basisDerivativesIntegralMean[iBasisFun][0];
+      sumY += basisDerivativesIntegralMean[iBasisFun][1];
+      sumZ += basisDerivativesIntegralMean[iBasisFun][2];
+    }
+    EXPECT_TRUE( abs( sumX ) < 1e-15 )
+      << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". "
+      << "The computed integral means are " << basisDerivativesIntegralMean;
+    EXPECT_TRUE( abs( sumY ) < 1e-15 )
+      << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumY << ". "
+      << "The computed integral means are " << basisDerivativesIntegralMean;
+    EXPECT_TRUE( abs( sumZ ) < 1e-15 )
+      << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". "
+      << "The computed integral means are " << basisDerivativesIntegralMean;
   }
-  EXPECT_TRUE( abs( sumX ) < 1e-15 )
-    << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". "
-    << "The computed integral means are " << basisDerivativesIntegralMean[0];
-  EXPECT_TRUE( abs( sumY ) < 1e-15 )
-    << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumY << ". "
-    << "The computed integral means are " << basisDerivativesIntegralMean[1];
-  EXPECT_TRUE( abs( sumZ ) < 1e-15 )
-    << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". "
-    << "The computed integral means are " << basisDerivativesIntegralMean[2];
 }
 
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 static void
-checkStabilizationMatrixConsistency
-  ( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-  localIndex const & cellIndex,
-  CellElementSubRegion::NodeMapType const & cellToNodes,
-  arrayView2d< real64 const > const & cellCenters,
-  array2d< real64 > const & stabilizationMatrix )
+checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
+                                                   nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                                      localIndex const & cellIndex,
+                                      CellElementSubRegion::NodeMapType const & cellToNodes,
+                                      arrayView2d< real64 const > const & cellCenters )
 {
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
@@ -81,7 +92,8 @@ checkStabilizationMatrixConsistency
     {
       array1d< real64 > vertDiff( 3 );
       LvArray::tensorOps::copy< 3 >( vertDiff, nodesCoords[cellToNodes( cellIndex, numVertex )] );
-      LvArray::tensorOps::subtract< 3 >( vertDiff, nodesCoords[cellToNodes( cellIndex, numOthVertex )] );
+      LvArray::tensorOps::subtract< 3 >( vertDiff,
+                                         nodesCoords[cellToNodes( cellIndex, numOthVertex )] );
       real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared< 3 >( vertDiff );
       if( cellDiameter < candidateDiameter )
         cellDiameter = candidateDiameter;
@@ -95,7 +107,8 @@ checkStabilizationMatrixConsistency
   {
     for( localIndex pos = 0; pos < 3; ++pos )
       monomialVemDofs( pos, numVertex ) = invCellDiameter*
-                                          (nodesCoords( cellToNodes( cellIndex, numVertex ), pos ) - cellCenters( cellIndex, pos ));
+                                          (nodesCoords( cellToNodes( cellIndex, numVertex ), pos )
+                                           - cellCenters( cellIndex, pos ));
   }
 
   array1d< real64 > stabTimeMonomialDofs( numCellPoints );
@@ -106,7 +119,7 @@ checkStabilizationMatrixConsistency
     stabTimeMonomialDofsNorm = 0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs( i ) += stabilizationMatrix( i, j );
+      stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j );
     }
     stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
   }
@@ -121,13 +134,82 @@ checkStabilizationMatrixConsistency
       stabTimeMonomialDofs( i ) = 0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs( i ) += stabilizationMatrix( i, j )*monomialVemDofs( monomInd, j );
+        stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j ) * monomialVemDofs( monomInd, j );
       }
       stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
     }
     EXPECT_TRUE( abs( stabTimeMonomialDofsNorm ) < 1e-15 )
       << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
       << "monomial number " << monomInd+1 << ". The computed product is " << stabTimeMonomialDofs;
+  }
+}
+
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
+static void checkSumOfQuadratureWeights( real64 const & cellVolume )
+{
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
+  real64 sum = 0.0;
+  for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
+  {
+    real64 weight =
+      VEM::transformedQuadratureWeight( q );
+    sum += weight;
+  }
+  EXPECT_TRUE( abs( sum - cellVolume ) < 1e-15 )
+    << "Sum of quadrature weights does not equal the cell volume. Sum is " << sum
+    << ". Cell volume is " << cellVolume;
+}
+
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
+static void testCellsInMeshLevel( MeshLevel const & mesh )
+{
+  // Get managers.
+  ElementRegionManager const & elementManager = mesh.getElemManager();
+  CellElementRegion const & cellRegion =
+    elementManager.getRegion< CellElementRegion >( 0 );
+  CellElementSubRegion const & cellSubRegion =
+    cellRegion.getSubRegion< CellElementSubRegion >( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
+
+  // Get geometric properties to be passed as inputs.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
+    nodeManager.referencePosition();
+  CellBlock::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
+  CellBlock::FaceMapType const & elementToFaceMap = cellSubRegion.faceList();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager.nodeList();
+  FaceManager::EdgeMapType const & faceToEdgeMap = faceManager.edgeList();
+  EdgeManager::NodeMapType const & edgeToNodeMap = edgeManager.nodeList();
+  arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
+  arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
+  arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
+  arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
+
+  // Loop over cells.
+  localIndex const numCells = cellSubRegion.getElementVolume().size();
+  for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
+  {
+    ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >::computeProjectors( cellIndex,
+                                                                                     nodesCoords,
+                                                                                     cellToNodeMap,
+                                                                                     elementToFaceMap,
+                                                                                     faceToNodeMap,
+                                                                                     faceToEdgeMap,
+                                                                                     edgeToNodeMap,
+                                                                                     faceCenters,
+                                                                                     faceNormals,
+                                                                                     faceAreas,
+                                                                                     cellCenters[cellIndex],
+                                                                                     cellVolumes[cellIndex]
+                                                                                     );
+
+    checkIntegralMeanConsistency< MAXCELLNODES, MAXFACENODES >();
+    checkIntegralMeanDerivativesConsistency< MAXCELLNODES, MAXFACENODES >();
+    checkStabilizationMatrixConsistency< MAXCELLNODES, MAXFACENODES >( nodesCoords, cellIndex,
+                                                                       cellToNodeMap, cellCenters );
+    checkSumOfQuadratureWeights< MAXCELLNODES, MAXFACENODES >( cellVolumes[cellIndex] );
   }
 }
 
@@ -170,7 +252,7 @@ TEST( VirtualElementBase, unitCube )
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition & domain = problemManager.getDomainPartition();
+  DomainPartition & domain  = problemManager.getDomainPartition();
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -180,24 +262,8 @@ TEST( VirtualElementBase, unitCube )
   elementManager.postProcessInputRecursive();
   problemManager.problemSetup();
 
-  ConformingVirtualElementOrder1 vemElement;
-  vemElement.computeProjectors( mesh, 0, 0, 0 );
-
-  checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
-                                vemElement.m_basisFunctionsIntegralMean );
-  checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
-                                           vemElement.m_basisDerivativesIntegralMean );
-
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  CellElementRegion const & cellRegion = elementManager.getRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( 0 );
-  CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
-    nodeManager.referencePosition();
-  arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
-  localIndex const cellIndex = 0;
-  checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
-                                       vemElement.m_stabilizationMatrix );
+  // Test computed projectors for all cells in MeshLevel
+  testCellsInMeshLevel< 10, 6 >( mesh );
 }
 
 TEST( VirtualElementBase, wedges )
@@ -238,8 +304,9 @@ TEST( VirtualElementBase, wedges )
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
-  DomainPartition & domain = problemManager.getDomainPartition();
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  DomainPartition & domain  = problemManager.getDomainPartition();
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >
+                                ( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elementManager = mesh.getElemManager();
@@ -248,27 +315,8 @@ TEST( VirtualElementBase, wedges )
   elementManager.postProcessInputRecursive();
   problemManager.problemSetup();
 
-  ConformingVirtualElementOrder1 vemElement;
-  CellElementRegion const & cellRegion = elementManager.getRegion< CellElementRegion >( 0 );
-  CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( 0 );
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
-    nodeManager.referencePosition();
-  CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
-  arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
-  localIndex const numCells = cellSubRegion.getElementVolume().size();
-  for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
-  {
-    vemElement.computeProjectors( mesh, 0, 0, cellIndex );
-    checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
-                                  vemElement.m_basisFunctionsIntegralMean );
-    checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
-                                             vemElement.m_basisDerivativesIntegralMean );
-
-
-    checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
-                                         vemElement.m_stabilizationMatrix );
-  }
+  // Test computed projectors for all cells in MeshLevel
+  testCellsInMeshLevel< 8, 9 >( mesh );
 }
 
 int main( int argc, char * * argv )
