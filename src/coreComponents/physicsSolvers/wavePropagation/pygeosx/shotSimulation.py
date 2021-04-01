@@ -11,7 +11,7 @@ from segyManager import *
 from print import *
 
 
-def shot_simul(rank, xml, shot_list):
+def shot_simul(rank, xml, shot_list, tracePath):
     """
     Parameters
     ----------
@@ -24,7 +24,7 @@ def shot_simul(rank, xml, shot_list):
     """
 
     problem = initialize(rank, xml)
-    do_shots(problem, shot_list)
+    do_shots(problem, shot_list, tracePath)
 
 
 
@@ -53,7 +53,7 @@ def initialize(rank, xml):
 
 
 
-def do_shots(problem, shot_list):
+def do_shots(problem, shot_list, tracePath):
     """ Given a GEOSX problem, a list of shots, and a time step,
         solve wave eqn with different configurations
 
@@ -139,12 +139,13 @@ def do_shots(problem, shot_list):
             print_pressure(pressure_at_receivers, ishot)
 
             #Segy export and flag update
-            if outputSismoTrace == 1 :
+            if outputSismoTrace == 0 :
                 export_to_segy(pressure_at_receivers,
                                shot_list[ishot].getSource().getCoord(),
                                shot_list[ishot].getReceiverSet().getSetCoord(),
                                ishot,
-                               dt_cycle)
+                               dt_cycle,
+                               tracePath)
 
             shot_list[ishot].flagUpdate("Done")
 

@@ -14,8 +14,8 @@ from acquisition import *
 from shotFileManager import *
 
 
-def multiProcessing(shot_file):
-    cmd = "python /home/m3d/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/pygeosx/main.py -i /home/m3d/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/benchmarks/pygeosx_test.xml " + str(shot_file)
+def multiProcessing(shot_file, tracePath):
+    cmd = "python /home/m3d/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/pygeosx/main.py -i /home/m3d/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/benchmarks/pygeosx_test.xml " + str(shot_file) + " " + tracePath
 
     os.system(cmd)
 
@@ -36,8 +36,9 @@ def main():
     frequency = 10.0
     wavelet   = ricker(maxT, dt, frequency)
 
-    folder_path = '/home/m3d/Desktop/pygeosx/sismoTrace/'
-    shot_list = segy_acquisition(folder_path, wavelet, dt)
+    tracePath = "/home/m3d/Desktop/sismoTrace/"
+    segyPath = "/home/m3d/Desktop/pygeosx/sismoTrace/"
+    shot_list = segy_acquisition(segyPath, wavelet, dt)
 
     """
     #Set acquisition parameters
@@ -65,7 +66,7 @@ def main():
         shot_file = exportShotList(i, shot_list[ind:ind + nb_shot])
 
         p.append( mp.Process(target = multiProcessing,
-                             args   = (shot_file,) ) )
+                             args   = (shot_file, tracePath) ) )
 
         ind = ind + nb_shot
         nb_shot_m1 = nb_shot_m1 - nb_shot

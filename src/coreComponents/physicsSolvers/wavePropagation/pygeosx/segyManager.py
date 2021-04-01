@@ -1,7 +1,8 @@
 import segyio
+import os
 
 
-def export_to_segy(pressure, srcCoord, rcvCoord, ishot, dt_cycle):
+def export_to_segy(pressure, srcCoord, rcvCoord, ishot, dt_cycle, tracePath):
     """Export the pressure value calculated by GEOSX to a segy file
 
     Parameters
@@ -19,6 +20,11 @@ def export_to_segy(pressure, srcCoord, rcvCoord, ishot, dt_cycle):
         Frequency of value export
     """
 
+    if os.path.exists(tracePath):
+        pass
+    else:
+        os.mkdir(tracePath)
+
     spec = segyio.spec()
     ilines  = [x[0] for x in rcvCoord]
     xlines  = [x[1] for x in rcvCoord]
@@ -28,8 +34,10 @@ def export_to_segy(pressure, srcCoord, rcvCoord, ishot, dt_cycle):
     spec.sorting = 2
     spec.format  = 1
 
-    with segyio.create("/home/m3d/Desktop/pygeosx/sismoTrace/sismoTraceShot"+str(ishot)+".sgy", spec) as f:
-        for i in range(len(rcvCoord)-1):
+    with segyio.create(tracePath + "/sismoTraceShot"+str(ishot)+".sgy", spec) as f:
+        for i in range(pressure[0,:].size):
+            print("size pressure = " + str(pressure[0,:].size) + "\n")
+            print("i = " + str(i) + "\n\n")
             f.header[i] = {segyio.su.scalco : -100,
                            segyio.su.scalel : -100,
                            segyio.su.sx : int(srcCoord[0]*100),

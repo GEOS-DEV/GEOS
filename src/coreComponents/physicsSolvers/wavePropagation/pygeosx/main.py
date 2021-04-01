@@ -13,9 +13,11 @@ def main():
 
     shot_file = sys.argv[3]
 
+    tracePath = sys.argv[4]
+
     shot_list = readShotList(shot_file)
 
-    shot_simul(rank, sys.argv[0:3], shot_list)
+    shot_simul(rank, sys.argv[0:3], shot_list, tracePath)
 
 
 if __name__ == "__main__":

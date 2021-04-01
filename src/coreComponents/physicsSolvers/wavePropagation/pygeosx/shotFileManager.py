@@ -4,9 +4,15 @@ from shot import *
 from source import *
 from receiver import *
 
+import os
 
 def exportShotList(proc, shot_list):
-    shot_file = "/home/m3d/Desktop/pygeosx/shot_list/shot_list_" + str(proc) + ".txt"
+    path = "/home/m3d/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/pygeosx/shot_list/"
+    if os.path.exists(path):
+        pass
+    else:
+        os.mkdir(path)
+    shot_file = path + "shot_list" + str(proc) + ".txt"
     f = open(shot_file, 'w+')
     wavelet = shot_list[0].getSource().getFunction()
     dt = shot_list[0].getSource().getTimeStep()
@@ -25,7 +31,7 @@ def exportShotList(proc, shot_list):
     return shot_file
 
 def readShotList(shot_file):
-    print(shot_file)
+    path = "/home/m3d/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/pygeosx/shot_list/"
     f = open(shot_file, 'r')
     dt = float(f.readline())
     wavelet = ast.literal_eval(f.readline())
@@ -36,4 +42,6 @@ def readShotList(shot_file):
         shot_list.append(Shot(Source(src, wavelet, dt), ReceiverSet([Receiver(rcv) for rcv in(rcvs)])))
 
     f.close()
+    os.remove(shot_file)
+    os.rmdir(path)
     return shot_list
