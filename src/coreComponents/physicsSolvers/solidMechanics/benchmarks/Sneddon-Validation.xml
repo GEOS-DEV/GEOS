@@ -125,7 +125,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ rock }"
+      materialList="{}"
       defaultAperture="1e-3"/>
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->

@@ -317,11 +317,13 @@ void VTKPolyDataWriterInterface::writeElementFields( vtkSmartPointer< vtkCellDat
                                                      ElementRegionBase const & er ) const
 {
   std::unordered_set< string > allFields;
+
   er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
   {
     for( auto const & wrapperIter : esr.wrappers() )
     {
       auto const * const wrapper = wrapperIter.second;
+
       if( wrapper->getPlotLevel() <= m_plotLevel )
       {
         allFields.insert( wrapperIter.first );
