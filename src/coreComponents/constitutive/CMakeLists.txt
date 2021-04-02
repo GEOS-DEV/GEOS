@@ -134,8 +134,10 @@ if( ENABLE_PVTPackage )
          fluid/CompositionalMultiphaseFluid.cpp
          fluid/BlackOilFluid.cpp
        )
+       
+    add_subdirectory( PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
-    
+
 endif()
 
 if ( ENABLE_OPENMP )

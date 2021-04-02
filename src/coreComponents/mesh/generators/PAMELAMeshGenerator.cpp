@@ -24,7 +24,7 @@
 
 #include <math.h>
 
-#include "mpiCommunications/PartitionBase.hpp"
+#include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "Mesh/MeshFactory.hpp"
 

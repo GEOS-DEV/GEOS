@@ -19,7 +19,6 @@
 
 
 #include <physicsSolvers/multiphysics/MultiphasePoroelasticSolver.hpp>
-#include "../solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
@@ -29,13 +28,13 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "mesh/DomainPartition.hpp"
-//#include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include "MultiphasePoroelasticKernel.hpp"

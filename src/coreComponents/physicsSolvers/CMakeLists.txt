@@ -124,7 +124,7 @@ if( ENABLE_PVTPackage )
     list( APPEND physicsSolvers_headers
          fluidFlow/CompositionalMultiphaseBase.hpp
          fluidFlow/CompositionalMultiphaseFVM.hpp
-         fluidFlow/CompositionalMultiphaseHybridFVM.hpp          
+         fluidFlow/CompositionalMultiphaseHybridFVM.hpp
          fluidFlow/CompositionalMultiphaseBaseKernels.hpp
          fluidFlow/CompositionalMultiphaseFVMKernels.hpp
          fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
@@ -138,12 +138,13 @@ if( ENABLE_PVTPackage )
     list( APPEND physicsSolvers_sources
          fluidFlow/CompositionalMultiphaseBase.cpp
          fluidFlow/CompositionalMultiphaseFVM.cpp
-         fluidFlow/CompositionalMultiphaseHybridFVM.cpp          
+         fluidFlow/CompositionalMultiphaseHybridFVM.cpp
          fluidFlow/CompositionalMultiphaseBaseKernels.cpp
-         fluidFlow/CompositionalMultiphaseFVMKernels.cpp     
+         fluidFlow/CompositionalMultiphaseFVMKernels.cpp
          fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
          multiphysics/CompositionalMultiphaseReservoir.cpp
-         fluidFlow/wells/CompositionalMultiphaseWell.cpp     
+         multiphysics/MultiphasePoroelasticSolver.cpp
+         fluidFlow/wells/CompositionalMultiphaseWell.cpp
          )
 endif()
 

@@ -115,6 +115,14 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if( ENABLE_PAMELA )
+    message(STATUS "Adding PAMELAMeshGenerator sources and headers")
+    list( APPEND mesh_headers generators/PAMELAMeshGenerator.hpp )
+    list( APPEND mesh_sources generators/PAMELAMeshGenerator.cpp)
+    add_subdirectory(PAMELA)
+    list( APPEND dependencyList PAMELA )
+endif()
+
 blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
