@@ -694,11 +694,10 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   arrayView1d< real64 const > const connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coeffTensor =
-    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
-
   // start from last connectorIndex from cell-To-cell connections
   connectorIndex = cellStencil.size();
+
+  std::cout << "stencil size: " << connectorIndex << std::endl;
 
   // loop over the embedded surfaces and add connections to cellStencil
   for( localIndex kes=0; kes  < fractureSubRegion.size(); kes++ )
@@ -719,8 +718,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
       localIndex const ei  = surfaceElementsToCells.m_toElementIndex[kes][0];
 
       // Here goes EDFM transmissibility computation.
-      real64 const avPerm = LvArray::tensorOps::l2Norm< 3 >( coeffTensor[er][esr][ei] );
-      real64 const ht = connectivityIndex[kes] * avPerm;   // Using matrix perm coz assuming fracture is highly permeable for now.
+      real64 const ht = connectivityIndex[kes];
 
       //
       stencilCellsRegionIndex[0] = er;
@@ -743,6 +741,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
       connectorIndex++;
     }
   }
+
+  std::cout << "stencil size now: " << cellStencil.size() << std::endl;
+
 }
 
 void TwoPointFluxApproximation::registerBoundaryStencil( Group & stencilGroup, string const & setName ) const
