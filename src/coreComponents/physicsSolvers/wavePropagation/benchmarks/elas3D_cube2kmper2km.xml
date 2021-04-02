@@ -42,7 +42,7 @@
 
 
   <Events
-    maxTime="1.5">
+    maxTime="0.2">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
@@ -59,15 +59,37 @@
     <!-- two events to output displacement in an hdf5 file -->
 
     <PeriodicEvent
-      name="timeHistoryCollection"
+      name="timeHistoryCollectionx"
       timeFrequency="0.005"
       targetExactTimestep="1"
-      target="/Tasks/displacementCollection"/>
+      target="/Tasks/displacementxCollection"/>
     <PeriodicEvent
-      name="timeHistoryOutput"
+      name="timeHistoryCollectiony"
+      timeFrequency="0.005"
+      targetExactTimestep="1"
+      target="/Tasks/displacementyCollection"/>
+    <PeriodicEvent
+      name="timeHistoryCollectionz"
+      timeFrequency="0.005"
+      targetExactTimestep="1"
+      target="/Tasks/displacementzCollection"/>
+    <PeriodicEvent
+      name="timeHistoryOutputx"
       timeFrequency="0.05"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>
+      target="/Outputs/timeHistoryOutputx"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutputy"
+      timeFrequency="0.05"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutputy"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutputz"
+      timeFrequency="0.05"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutputz"/>
 
   </Events>
 
@@ -95,20 +117,53 @@
 
     <!-- 1) The initial displacement field -->
     <FieldSpecification
-      name="initialdisplacement"
+      name="initialdisplacementx"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="displacement_n"
+      fieldName="displacementx_n"
       scale="0.0"/>
 
     <FieldSpecification
-      name="initialdisplacement"
+      name="initialdisplacementy"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="displacement_nm1"
+      fieldName="displacementy_n"
       scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementz"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementz_n"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementxnm1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementx_nm1"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementynm1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementy_nm1"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialdisplacementznm1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="displacementz_nm1"
+      scale="0.0"/>
+
 
     <!-- 2) The velocity in the domain -->
 
@@ -121,19 +176,37 @@
       setNames="{ all }"/>
 
     <FieldSpecification
-      name="cellVelocity"
+      name="cellVelocityVs"
       initialCondition="1"
       objectPath="ElementRegions/Region/elementSubRegions/cb"
       fieldName="mediumVelocityVs"
       scale="0"
       setNames="{ all }"/>
+
     <FieldSpecification
-      name="cellVelocity"
+      name="cellDensity"
       initialCondition="1"
       objectPath="ElementRegions/Region/elementSubRegions/cb"
       fieldName="mediumDensity"
       scale="1"
       setNames="{ all }"/>
+
+    <FieldSpecification
+      name="cellLambda"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      fieldName="lambda"
+      scale="0"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="cellMu"
+      initialCondition="1"
+      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      fieldName="mu"
+      scale="0"
+      setNames="{ all }"/>
+
     <!-- 3) The free surface condition the domain -->
     <FieldSpecification
       name="zposFreeSurface"
@@ -148,9 +221,17 @@
   <!-- collect the displacement values at the nodes -->
   <Tasks>
     <PackCollection
-      name="displacementCollection"
+      name="displacementxCollection"
       objectPath="nodeManager"
-      fieldName="displacement_np1"/>
+      fieldName="displacementx_np1"/>
+    <PackCollection
+      name="displacementyCollection"
+      objectPath="nodeManager"
+      fieldName="displacementy_np1"/>
+    <PackCollection
+      name="displacementzCollection"
+      objectPath="nodeManager"
+      fieldName="displacementz_np1"/>
   </Tasks>
 
   <Outputs>
@@ -161,6 +242,20 @@
       name="vtkOutput"
       plotLevel="3"/>
 
+    <TimeHistory
+      name="timeHistoryOutputx"
+      sources="{ /Tasks/displacementxCollection }"
+      filename="displacementx_history"/>
+
+    <TimeHistory
+      name="timeHistoryOutputy"
+      sources="{ /Tasks/displacementyCollection }"
+      filename="displacementy_history"/>
+
+    <TimeHistory
+      name="timeHistoryOutputz"
+      sources="{ /Tasks/displacementzCollection }"
+      filename="displacementz_history"/>
   </Outputs>
 
 </Problem>

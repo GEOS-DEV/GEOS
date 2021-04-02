@@ -119,16 +119,16 @@ private:
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
   /// Multiply the precomputed term by the ricker and add to the right-hand side
-  void addSourceToRightHandSide( real64 const & time, arrayView2d< real64 > const rhs );
+  void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs );
 
   /// Apply free surface condition to the face define in the geometry box from the xml
   void applyFreeSurfaceBC( real64 const time, DomainPartition & domain );
 
   /// Compute the pressure at each receiver coordinate in one time step
-  void computeSismoTrace( localIndex const num_timestep, arrayView2d< real64 > const pressure_np1 );
+  void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const displacementx_np1, arrayView1d< real64 > const displacementy_np1, arrayView1d< real64 > const displacementz_np1 );
 
   /// save the sismo trace in file
-  void saveSismo( localIndex isismo, real64 val_pressure, char *filename );
+  void saveSismo( localIndex isismo, real64 val_displacement, char *filename );
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
@@ -171,33 +171,82 @@ private:
 namespace extrinsicMeshData
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacement_nm1,
-                           "displacement_nm1",
-                           array2d< real64 >,
+EXTRINSIC_MESH_DATA_TRAIT( Displacementx_nm1,
+                           "displacementx_nm1",
+                           array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Vectorial displacement at time n-1." );
+                           "x-component of displacement at time n-1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacement_n,
-                           "displacement_n",
-                           array2d< real64 >,
+EXTRINSIC_MESH_DATA_TRAIT( Displacementy_nm1,
+                           "displacementy_nm1",
+                           array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Vectorial displacement at time n." );
+                           "y-component of displacement at time n-1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( Displacement_np1,
-                           "displacement_np1",
-                           array2d< real64 >,
+EXTRINSIC_MESH_DATA_TRAIT( Displacementz_nm1,
+                           "displacementz_nm1",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "z-component of displacement at time n-1." );
+
+
+EXTRINSIC_MESH_DATA_TRAIT( Displacementx_n,
+                           "displacementx_n",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "x-component of displacement at time n." );
+
+EXTRINSIC_MESH_DATA_TRAIT( Displacementy_n,
+                           "displacementy_n",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "y-component of displacement at time n." );
+
+EXTRINSIC_MESH_DATA_TRAIT( Displacementz_n,
+                           "displacementz_n",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "z-component of displacement at time n." );
+
+EXTRINSIC_MESH_DATA_TRAIT( Displacementx_np1,
+                           "displacementx_np1",
+                           array1d< real64 >,
                            0,
                            LEVEL_0,
                            WRITE_AND_READ,
-                           "Vectorial displacement at time n+1." );
+                           "x-component of displacement at time n+1." );
+
+EXTRINSIC_MESH_DATA_TRAIT( Displacementy_np1,
+                           "displacementy_np1",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "y-component of displacement at time n+1." );
+
+EXTRINSIC_MESH_DATA_TRAIT( Displacementz_np1,
+                           "displacementz_np1",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "z-component of displacement at time n+1." );
 
 EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
                            "rhs",
-                           array2d< real64 >,
+                           array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
@@ -243,13 +292,45 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumDensity,
                            WRITE_AND_READ,
                            "Medium density of the cell" );
 
-EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector,
-                           "stiffnessVector",
-                           array2d< real64 >,
+EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_x,
+                           "stiffnessVector_x",
+                           array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Stiffness vector contains R_h*Pressure_n." );
+                           "x-component of stiffness vector." );
+                          
+EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_y,
+                           "stiffnessVector_y",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "y-component of stiffness vector." );
+          
+EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_z,
+                           "stiffnessVector_z",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "z-component of stiffness vector." );
+
+EXTRINSIC_MESH_DATA_TRAIT( LameCoefficientLambda,
+                           "lambda",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "First coefficient of Lame." );
+
+EXTRINSIC_MESH_DATA_TRAIT( LameCoefficientMu,
+                           "mu",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Second coefficient of Lame." );                        
 
 EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
                            "freeSurfaceFaceIndicator",
