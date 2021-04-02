@@ -92,6 +92,23 @@ public:
   using ElasticIsotropicUpdates::smallStrainUpdate;
   //using ElasticIsotropicUpdates::saveStress;
 
+    GEOSX_HOST_DEVICE
+    void evaluateYield( real64 const p,
+                       real64 const q,
+                       real64 const pc,
+                       real64 const M,
+                       real64 const alpha,
+                       real64 const Cc,
+                       real64 const Cr,
+                       real64 const bulkModulus,
+                       real64 const mu,
+                       real64 & f,
+                       real64 & df_dp,
+                       real64 & df_dq,
+                       real64 & df_dpc,
+                       real64 & df_dp_dve,
+                       real64 & df_dq_dse ) const;
+    
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -134,6 +151,43 @@ private:
 
 };
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CamClayUpdates::evaluateYield( real64 const p,
+                                    real64 const q,
+                                    real64 const pc,
+                                    real64 const M,
+                                    real64 const alpha,
+                                    real64 const Cc,
+                                    real64 const Cr,
+                                    real64 const bulkModulus,
+                                    real64 const mu,
+                                    real64 & f,
+                                    real64 & df_dp,
+                                    real64 & df_dq,
+                                    real64 & df_dpc,
+                                    real64 & df_dp_dve,
+                                    real64 & df_dq_dse ) const
+{
+    real64 const c = alpha/(alpha+1)*std::abs(pc);
+    real64 a = alpha;
+    
+  if( std::abs(p) <= c )
+  {
+      a = 1.0;
+  }
+
+    f = q*q/(M*M)- a*a*p *(2*a/(a+1)*pc-p)+a*a*(a-1)/(a+1)* pc*pc;
+    real64 alphaTerm = 2. * a*a*a / (a+1.);
+    df_dp = -alphaTerm * pc + 2. * a * a * p;
+    df_dq = 2. * q /(M*M);
+    df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p;
+    real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
+    df_dp_dve = 2. * a * alpha * bulkModulus - alphaTerm * dpc_dve;
+    df_dq_dse = 2. /(M*M) * 3. * mu;
+    
+    
+}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -249,7 +303,10 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   stiffness[5][5] = mu;
 
   // check yield function F <= 0
-  real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+  real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
+  evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
+    
+  //real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 
   if( yield < 1e-9 ) // elasticity
   {
@@ -279,17 +336,19 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     bulkModulus = -trialP/Cr;
     pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
 
-    yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
+    evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
+      
+    //yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 
     // derivatives of yield surface
-    real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
-    real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
-    real64 df_dq = 2. * trialQ /(M*M);
-    real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
+    //real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
+    //real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
+    //real64 df_dq = 2. * trialQ /(M*M);
+    //real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
     real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
 
-    real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
-    real64 df_dq_dse = 2. /(M*M) * 3. * mu;
+    //real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
+    //real64 df_dq_dse = 2. /(M*M) * 3. * mu;
     //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
 
 
@@ -302,13 +361,13 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-
+      //std::cout<<"iter= "<<iter<<"resid = "<<norm<<std::endl;
     if( iter==0 )
     {
       normZero = norm;
     }
 
-    if( norm < 1e-8*(normZero+1))
+    if( norm < 1e-12*(normZero+1.0))
     {
       break;
     }
