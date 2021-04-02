@@ -439,11 +439,11 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                                  rankOffset,
                                                  dofNumber,
                                                  ghostRank,
-                                                 densityOld,
-                                                 porosity,
-                                                 porosityOld,
-                                                 dPoro_dPres,
                                                  volume,
+                                                 porosityOld,
+                                                 porosity,
+                                                 dPoro_dPres,
+                                                 densityOld,
                                                  density,
                                                  dDens_dPres,
                                                  localMatrix,
@@ -470,6 +470,14 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const & density = fluidProps.dens;
   arrayView2d< real64 const > const & dDens_dPres = fluidProps.dDens_dPres;
 
+  PorosityBase const & porosityModel = getConstitutiveModel< PorosityBase >( subRegion,
+                                                                             m_porosityModelNames[targetIndex] );
+
+  arrayView2d< real64 const > const & porosity    = porosityModel.getPorosity();
+  arrayView2d< real64 const > const & porosityOld = porosityModel.getPorosityOld();
+  arrayView2d< real64 const > const & dPoro_dPres = porosityModel.dPorosity_dPressure();
+
+
 #if !defined(ALLOW_CREATION_MASS)
   static_assert( true, "must have ALLOW_CREATION_MASS defined" );
 #endif
@@ -483,8 +491,11 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                                  rankOffset,
                                                  dofNumber,
                                                  ghostRank,
-                                                 densityOld,
                                                  volume,
+                                                 porosityOld,
+                                                 porosity,
+                                                 dPoro_dPres,
+                                                 densityOld,
                                                  density,
                                                  dDens_dPres,
 #if ALLOW_CREATION_MASS

@@ -8,8 +8,8 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
-      porosityNames="{porosity}"
-      permeabilityNames="{ permeability }"
+      porosityNames="{porosityModel}"
+      permeabilityNames="{ permeabilityModel }"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -65,11 +65,11 @@
       forceDt="1e2"
       target="/Solvers/SinglePhaseFlow"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
       timeFrequency="1e3"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -85,7 +85,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, porosity, permeability }"/>
+      materialList="{ water, porosityModel, permeabilityModel }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -100,13 +100,13 @@
       viscosibility="0.0"/>
 
     <PressureDependentPorosity
-      name="porosity"
+      name="porosityModel"
       referencePressure="0.0"
       defaultReferencePorosity ="0.2"
       compressibility="1e-9"/>
       
     <ConstantPermeability
-      name="permeability"
+      name="permeabilityModel"
       permeabilityComponents="1e-12, 1e-12, 1e-12"/>
   </Constitutive>
 
@@ -141,7 +141,7 @@
     <VTK
       name="vtkOutput"/>
 
-    <!--Restart
-      name="restartOutput"/-->
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>

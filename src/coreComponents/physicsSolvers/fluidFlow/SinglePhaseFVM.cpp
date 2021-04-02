@@ -21,6 +21,7 @@
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
+#include "constitutive/porosity/PorosityBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/GeosxState.hpp"
 #include "managers/ProblemManager.hpp"
@@ -112,13 +113,17 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
-  forTargetSubRegions( mesh, [&]( localIndex const,
-                                  ElementSubRegionBase const & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                   auto const & subRegion )
   {
-    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & densOld        = subRegion.getReference< array1d< real64 > >( BASE::viewKeyStruct::densityOldString() );
+    arrayView1d< real64 const > const & densOld        = subRegion.template getReference< array1d< real64 > >( BASE::viewKeyStruct::densityOldString() );
+
+    PorosityBase const & porosityModel = this->template getConstitutiveModel< PorosityBase >( subRegion,
+                                                                                              m_porosityModelNames[targetIndex] );
+    arrayView2d< real64 const > const & poroOld = porosityModel.getPorosityOld();
 
     ResidualNormKernel::launch< parallelDevicePolicy<>, parallelDeviceReduce >( localRhs,
                                                                                 rankOffset,
@@ -126,6 +131,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                                                                                 elemGhostRank,
                                                                                 volume,
                                                                                 densOld,
+                                                                                poroOld,
                                                                                 localResidualNorm );
   } );
 

@@ -328,30 +328,6 @@ struct AccumulationKernel
           arrayView5d< real64 const > const & dPhaseCompFrac_dComp,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
-
-  template< localIndex NC >
-  static void
-  launch( localIndex const numPhases,
-          localIndex const size,
-          globalIndex const rankOffset,
-          arrayView1d< globalIndex const > const & dofNumber,
-          arrayView1d< integer const > const & elemGhostRank,
-          arrayView1d< real64 const > const & volume,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView2d< real64 const > const & phaseVolFracOld,
-          arrayView2d< real64 const > const & phaseVolFrac,
-          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
-          arrayView2d< real64 const > const & phaseDensOld,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseCompFracOld,
-          arrayView4d< real64 const > const & phaseCompFrac,
-          arrayView4d< real64 const > const & dPhaseCompFrac_dPres,
-          arrayView5d< real64 const > const & dPhaseCompFrac_dComp,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs );
 };
 
 /******************************** VolumeBalanceKernel ********************************/

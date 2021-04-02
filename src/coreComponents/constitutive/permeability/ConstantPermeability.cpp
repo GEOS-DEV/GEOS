@@ -32,6 +32,7 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
 {
   registerWrapper( viewKeyStruct::permeabilityComponentsString(), &m_permeabilityComponents ).
     setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "xx, yy and zz components of a diagonal permeability tensor." );
 }
 
@@ -51,7 +52,6 @@ void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & par
 {
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  std::cout << "I want to make sure the size is already ..." << parent.size() << std::endl;
   for( localIndex ei=0; ei < parent.size(); ei++ )
   {
     for( localIndex q=0; q < numConstitutivePointsPerParentIndex; q++ )

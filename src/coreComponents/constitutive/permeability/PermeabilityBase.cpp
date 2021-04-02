@@ -28,12 +28,17 @@ namespace constitutive
 
 
 PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent )
+  ConstitutiveBase( name, parent ),
+  m_permeability(),
+  m_dPerm_dPressure()
 {
-  registerWrapper( viewKeyStruct::permeabilityString(), &m_permeability ).setPlotLevel( PlotLevel::LEVEL_0 ).
-      setDescription(" permeability of the rock.");
+  registerWrapper( viewKeyStruct::permeabilityString(), &m_permeability ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setDescription(" permeability of the rock.").
+      setApplyDefaultValue( -1.0 ); // will be overwritten
+
   registerWrapper( viewKeyStruct::dPerm_dPressureString(), &m_dPerm_dPressure ).
-      setDefaultValue( 0.0 ).
+      setApplyDefaultValue( 0.0 ). // will be overwritten if it exists and kept to zero from the constant model
       setDescription(" Derivative of the permeability w.r.t. to pressure.");
 }
 

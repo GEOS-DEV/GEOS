@@ -20,6 +20,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/porosity/PorosityBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -361,13 +362,18 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
   localIndex subRegionCounter = 0;
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase const & subRegion )
+                                  auto const & subRegion )
   {
 
-    arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+    arrayView1d< globalIndex const > const & elemDofNumber = subRegion.template getReference< array1d< globalIndex > >( elemDofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
+    arrayView1d< real64 const > const & densOld = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
+
+    PorosityBase const & porosityModel = this->template getConstitutiveModel< PorosityBase >( subRegion,
+                                                                                              m_porosityModelNames[targetIndex] );
+
+    arrayView2d< real64 const > const & poroOld = porosityModel.getPorosityOld();
 
     SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                         parallelDeviceReduce >( localRhs,
@@ -376,6 +382,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                                                                                 elemGhostRank,
                                                                                 volume,
                                                                                 densOld,
+                                                                                poroOld,
                                                                                 localResidualNorm );
 
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );

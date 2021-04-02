@@ -27,7 +27,8 @@ namespace constitutive
 {
 
 PressureDependentPorosity::PressureDependentPorosity( string const & name, Group * const parent ):
-  PorosityBase( name, parent )
+  PorosityBase( name, parent ),
+  m_referencePorosity()
 {
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -42,7 +43,7 @@ PressureDependentPorosity::PressureDependentPorosity( string const & name, Group
     setDescription( "Default value of the reference porosity" );
 
   registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
-    setDefaultValue( m_defaultReferencePorosity );
+      setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
 PressureDependentPorosity::~PressureDependentPorosity() = default;
@@ -63,7 +64,10 @@ void PressureDependentPorosity::allocateConstitutiveData( dataRepository::Group 
 }
 
 void PressureDependentPorosity::postProcessInput()
-{}
+{
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
+     setApplyDefaultValue( m_defaultReferencePorosity );
+}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressureDependentPorosity, string const &, Group * const )
 }

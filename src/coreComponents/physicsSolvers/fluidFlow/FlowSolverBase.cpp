@@ -251,6 +251,20 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
 {
   GEOSX_MARK_FUNCTION;
 
+  arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+  arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+
+  // update porosity
+  PressureDependentPorosity & porosityModel =
+      getConstitutiveModel< PressureDependentPorosity >( subRegion, m_porosityModelNames[targetIndex] );
+
+  PressureDependentPorosity::KernelWrapper porosityWrapper = porosityModel.createKernelWrapper();
+
+  PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                    porosityWrapper,
+                                                    pressure,
+                                                    deltaPressure );
+
   arrayView1d< real64 const > const effectiveAperture  =
     subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
 
