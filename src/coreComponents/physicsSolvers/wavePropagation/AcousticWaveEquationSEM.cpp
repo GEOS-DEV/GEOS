@@ -352,7 +352,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -369,7 +369,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   real64 const time = 0.0;
@@ -709,7 +709,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( "pressure_np1" );
 
-  CommunicationTools syncFields;
+  CommunicationTools & syncFields = CommunicationTools::getInstance();
   syncFields.synchronizeFields( fieldNames,
                                 domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                 domain.getNeighbors(),

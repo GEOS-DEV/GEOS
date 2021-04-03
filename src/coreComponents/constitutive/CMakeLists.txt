@@ -159,4 +159,5 @@ target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponen
 
 add_subdirectory( unitTests )
 
-geosx_add_code_checks( PREFIX constitutive )
+geosx_add_code_checks( PREFIX constitutive 
+                       EXCLUDES PVTPackage )

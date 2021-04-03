@@ -104,7 +104,9 @@ target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents
 
 
 geosx_add_code_checks( PREFIX coreComponents 
-                       EXCLUDES cmake )
+                       EXCLUDES cmake 
+                                src/coreComponents/constitutive/PVTPackage
+                                src/coreComponents/mesh/PAMELA )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck

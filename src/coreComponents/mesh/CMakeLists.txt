@@ -132,4 +132,5 @@ blt_add_library( NAME                  mesh
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX mesh )
+geosx_add_code_checks( PREFIX mesh 
+                       EXCLUDES PAMELA )

@@ -821,7 +821,9 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = @PROJECT_SOURCE_DIR@/coreComponents/dataRepository/BufferOps_inline.hpp \
-                         @PROJECT_SOURCE_DIR@/coreComponents/common/MpiWrapper.hpp
+                         @PROJECT_SOURCE_DIR@/coreComponents/common/MpiWrapper.hpp \
+                         @PROJECT_SOURCE_DIR@/coreComponents/mesh/PAMELA \
+                         @PROJECT_SOURCE_DIR@/coreComponents/constitutive/PVTPackage 
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
