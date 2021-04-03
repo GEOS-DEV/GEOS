@@ -22,15 +22,14 @@
 #include "common/TimingMacros.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
-#include <sys/time.h>
 
 namespace geosx
 {
 
 using namespace dataRepository;
 
-NeighborCommunicator::NeighborCommunicator():
-  m_neighborRank( -1 ),
+NeighborCommunicator::NeighborCommunicator( int rank ):
+  m_neighborRank( rank ),
   m_sendBufferSize(),
   m_receiveBufferSize(),
   m_sendBuffer{ maxComm },

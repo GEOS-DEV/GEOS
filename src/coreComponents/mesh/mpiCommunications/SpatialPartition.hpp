@@ -15,10 +15,10 @@
 #ifndef GEOSX_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
 #define GEOSX_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
 
-#include <map>
 
 #include "PartitionBase.hpp"
 
+#include <map>
 
 constexpr int nsdof = 3;
 namespace geosx
@@ -33,24 +33,11 @@ public:
   SpatialPartition();
   virtual ~SpatialPartition();
 
-//  void ReadXML( xmlWrapper::xmlNode const & targetNode );
-
-/**
- * @brief Initialise Metis partitioning.
- *
- * @note Unused
- */
-  virtual void initializeMetis();
-
-  /**
-   * @brief Adds some neighbors to the neighbor communicators.
-   * @param neighborList The neighbors to add.
-   */
-  void addNeighborsMetis( SortedArray< globalIndex > & neighborList );
   virtual bool isCoordInPartition( const real64 & coord, const int dir );
   virtual bool isCoordInPartition( real64 const ( &coordinates )[ 3 ] );
   virtual bool isCoordInPartition( real64 const ( &coordinates )[ 3 ],
                                    const int numDistPartition );
+
   /**
    * @brief Variant of IsCoordInPartition with intervals closed at both ends
    * @param coordinates The point coordinates.
@@ -73,9 +60,6 @@ public:
 
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] );
-
-//  void setGlobalDomainSizes( real64 const ( & min )[ 3 ],
-//                             real64 const ( & max )[ 3 ] );
 
   /**
    * @brief Defines the boundaries of the partition
@@ -115,16 +99,6 @@ public:
   }
 
   virtual void setContactGhostRange( const real64 bufferSize );
-
-//  virtual void ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain);
-
-//  virtual void SetPeriodicDomainBoundaryObjects(PhysicalDomainT& domain);
-//  virtual void CorrectReferencePositionsForPeriodicBoundaries(
-//      PhysicalDomainT& domain);
-
-//  void CreateSinglePartitionGhostObjects(PhysicalDomainT& domain,
-//      const bool contactActive, const int elementGhostingDepth);
-//  void SetSinglePartitionGhostArrays(PhysicalDomainT& domain);
 
   int getColor();
 

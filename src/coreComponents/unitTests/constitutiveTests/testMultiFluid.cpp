@@ -17,10 +17,10 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 #include "mainInterface/initialization.hpp"
 #include "functions/FunctionManager.hpp"
-//#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

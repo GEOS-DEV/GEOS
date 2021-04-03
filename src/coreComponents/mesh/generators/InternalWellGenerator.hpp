@@ -95,9 +95,6 @@ public:
    */
   ///@{
 
-  /// not implemented
-  virtual void generateElementRegions( DomainPartition & ) override {}
-
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
    * @param[in] childKey The name of the new object type's key in the
@@ -119,17 +116,6 @@ public:
    * @param[in] domain the domain object
    */
   virtual void generateMesh( DomainPartition & domain ) override;
-
-  /// not implemented
-  virtual void getElemToNodesRelationInBox ( string const &,
-                                             int const *,
-                                             int const &,
-                                             int *,
-                                             int const ) override {}
-
-  /// not implemented
-  virtual void remapMesh ( dataRepository::Group & ) override {}
-
   ///@}
 
   /**

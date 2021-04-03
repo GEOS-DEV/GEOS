@@ -17,10 +17,10 @@
 #include "mainInterface/initialization.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
-//#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
-#include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
