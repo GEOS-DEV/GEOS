@@ -13,25 +13,25 @@
  */
 
 /**
- * @file FaceElementStencil.cpp
+ * @file SurfaceElementStencil.cpp
  */
 
-#include "FaceElementStencil.hpp"
+#include "SurfaceElementStencil.hpp"
 
 namespace geosx
 {
 
-FaceElementStencil::FaceElementStencil():
-  StencilBase< FaceElementStencil_Traits, FaceElementStencil >()
+SurfaceElementStencil::SurfaceElementStencil():
+  StencilBase< SurfaceElementStencil_Traits, SurfaceElementStencil >()
 {}
 
-void FaceElementStencil::move( LvArray::MemorySpace const space )
+void SurfaceElementStencil::move( LvArray::MemorySpace const space )
 {
-  StencilBase< FaceElementStencil_Traits, FaceElementStencil >::move( space );
+  StencilBase< SurfaceElementStencil_Traits, SurfaceElementStencil >::move( space );
   m_cellCenterToEdgeCenters.move( space, true );
 }
 
-void FaceElementStencil::add( localIndex const numPts,
+void SurfaceElementStencil::add( localIndex const numPts,
                               localIndex const * const elementRegionIndices,
                               localIndex const * const elementSubRegionIndices,
                               localIndex const * const elementIndices,
@@ -65,7 +65,7 @@ void FaceElementStencil::add( localIndex const numPts,
   }
 }
 
-void FaceElementStencil::add( localIndex const numPts,
+void SurfaceElementStencil::add( localIndex const numPts,
                               R1Tensor const * const cellCenterToEdgeCenter,
                               localIndex const connectorIndex )
 {

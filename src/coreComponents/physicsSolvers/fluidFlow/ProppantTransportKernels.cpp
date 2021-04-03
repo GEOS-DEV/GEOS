@@ -203,7 +203,7 @@ FluxKernel::
   real64 const TINY = 1e-10;
 
   // working array
-  constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxNumFluxElems = SurfaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxNumComponents = ProppantTransport::MAX_NUM_COMPONENTS;
 
   localIndex const NC = numDofPerCell - 1;
@@ -824,7 +824,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  launch< FaceElementStencil >( FaceElementStencil const & stencil,
+  launch< SurfaceElementStencil >( SurfaceElementStencil const & stencil,
                                 localIndex const numDofPerCell,
                                 real64 const dt,
                                 globalIndex const rankOffset,
@@ -864,13 +864,13 @@ void FluxKernel::
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
 {
-  constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
-  constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
+  constexpr localIndex maxNumFluxElems = SurfaceElementStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = SurfaceElementStencil::MAX_STENCIL_SIZE;
 
-  typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename SurfaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
@@ -986,7 +986,7 @@ FluxKernel::
 
   real64 constexpr TINY = 1e-10;
 
-  localIndex constexpr maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxNumFluxElems = SurfaceElementStencil::NUM_POINT_IN_FLUX;
 
   stackArray1d< real64, maxNumFluxElems > weight( numElems );
   stackArray1d< real64, maxNumFluxElems > transT( numElems );
@@ -1090,7 +1090,7 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
-  launchCellBasedFluxCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchCellBasedFluxCalculation< SurfaceElementStencil >( SurfaceElementStencil const & stencil,
                                                         FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
                                                         R1Tensor const & unitGravityVector,
                                                         FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
@@ -1102,10 +1102,10 @@ void FluxKernel::
                                                         FluxKernel::ElementView< arrayView2d< real64 > > const & cellBasedFlux )
 {
 
-  typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename SurfaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
@@ -1300,7 +1300,7 @@ ProppantPackVolumeKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  launchProppantPackVolumeCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchProppantPackVolumeCalculation< SurfaceElementStencil >( SurfaceElementStencil const & stencil,
                                                              real64 const dt,
                                                              real64 const proppantDensity,
                                                              real64 const proppantDiameter,
@@ -1324,10 +1324,10 @@ void ProppantPackVolumeKernel::
                                                              ElementView< arrayView1d< real64 > > const & proppantLiftFlux )
 {
 
-  typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename SurfaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
@@ -1452,7 +1452,7 @@ void ProppantPackVolumeKernel::
 
 template<>
 void ProppantPackVolumeKernel::
-  launchProppantPackVolumeUpdate< FaceElementStencil >( FaceElementStencil const & stencil,
+  launchProppantPackVolumeUpdate< SurfaceElementStencil >( SurfaceElementStencil const & stencil,
                                                         R1Tensor const & unitGravityVector,
                                                         real64 const maxProppantConcentration,
                                                         ElementView< arrayView1d< integer const > > const & isProppantMobile,
@@ -1461,10 +1461,10 @@ void ProppantPackVolumeKernel::
                                                         ElementView< arrayView1d< real64 > > const & proppantPackVf )
 {
 
-  typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename SurfaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 

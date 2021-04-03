@@ -243,14 +243,14 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
-  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
     for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
-      typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-      typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
         elemManager.getRegion( seri[iconn][0] ).getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
@@ -339,14 +339,14 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
-  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
     for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
-      typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-      typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
         elemManager.getRegion( seri[iconn][0] ).getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );

@@ -19,7 +19,7 @@
 #include "CompositionalMultiphaseFVMKernels.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
-#include "finiteVolume/FaceElementStencil.hpp"
+#include "finiteVolume/SurfaceElementStencil.hpp"
 
 namespace geosx
 {
@@ -656,11 +656,11 @@ INST_FluxKernel( 3, CellElementStencilTPFA );
 INST_FluxKernel( 4, CellElementStencilTPFA );
 INST_FluxKernel( 5, CellElementStencilTPFA );
 
-INST_FluxKernel( 1, FaceElementStencil );
-INST_FluxKernel( 2, FaceElementStencil );
-INST_FluxKernel( 3, FaceElementStencil );
-INST_FluxKernel( 4, FaceElementStencil );
-INST_FluxKernel( 5, FaceElementStencil );
+INST_FluxKernel( 1, SurfaceElementStencil );
+INST_FluxKernel( 2, SurfaceElementStencil );
+INST_FluxKernel( 3, SurfaceElementStencil );
+INST_FluxKernel( 4, SurfaceElementStencil );
+INST_FluxKernel( 5, SurfaceElementStencil );
 
 #undef INST_FluxKernel
 

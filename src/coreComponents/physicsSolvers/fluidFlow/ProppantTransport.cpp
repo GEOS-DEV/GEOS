@@ -707,7 +707,7 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
 
   FluxKernel::ElementViewConst< arrayView1d< integer const > > const elemGhostRank = m_elemGhostRank.toNestedViewConst();
 
-  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( auto const & stencil )
+  fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
   {
 
     FluxKernel::launch( stencil,

@@ -13,11 +13,11 @@
  */
 
 /**
- * @file FaceElementStencil.hpp
+ * @file SurfaceElementStencil.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_FACEELEMENTSTENCIL_HPP_
-#define GEOSX_FINITEVOLUME_FACEELEMENTSTENCIL_HPP_
+#ifndef GEOSX_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_
+#define GEOSX_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_
 
 #include "StencilBase.hpp"
 
@@ -44,11 +44,11 @@ namespace geosx
 /// @endcond
 
 /**
- * @struct FaceElementStencil_Traits
- * Struct to predeclare the types and constexpr values of FaceElementStencil so that they may be used in
+ * @struct SurfaceElementStencil_Traits
+ * Struct to predeclare the types and constexpr values of SurfaceElementStencil so that they may be used in
  * StencilBase.
  */
-struct FaceElementStencil_Traits
+struct SurfaceElementStencil_Traits
 {
   /// The array type that will be used to store the indices of the stencil contributors
   using IndexContainerType = ArrayOfArrays< localIndex >;
@@ -76,8 +76,8 @@ struct FaceElementStencil_Traits
 };
 
 
-class FaceElementStencilWrapper : public StencilWrapperBase< FaceElementStencil_Traits >,
-  public FaceElementStencil_Traits
+class SurfaceElementStencilWrapper : public StencilWrapperBase< SurfaceElementStencil_Traits >,
+  public SurfaceElementStencil_Traits
 {
 public:
   template< typename VIEWTYPE >
@@ -85,7 +85,7 @@ public:
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
 
-  FaceElementStencilWrapper( IndexContainerType & elementRegionIndices,
+  SurfaceElementStencilWrapper( IndexContainerType & elementRegionIndices,
                              IndexContainerType & elementSubRegionIndices,
                              IndexContainerType & elementIndices,
                              WeightContainerType & weights )
@@ -94,16 +94,16 @@ public:
   {}
 
   /// Default copy constructor
-  FaceElementStencilWrapper( FaceElementStencilWrapper const & ) = default;
+  SurfaceElementStencilWrapper( SurfaceElementStencilWrapper const & ) = default;
 
   /// Default move constructor
-  FaceElementStencilWrapper( FaceElementStencilWrapper && ) = default;
+  SurfaceElementStencilWrapper( SurfaceElementStencilWrapper && ) = default;
 
   /// Deleted copy assignment operator
-  FaceElementStencilWrapper & operator=( FaceElementStencilWrapper const & ) = delete;
+  SurfaceElementStencilWrapper & operator=( SurfaceElementStencilWrapper const & ) = delete;
 
   /// Deleted move assignment operator
-  FaceElementStencilWrapper & operator=( FaceElementStencilWrapper && ) = delete;
+  SurfaceElementStencilWrapper & operator=( SurfaceElementStencilWrapper && ) = delete;
 
   /**
    * @brief Give the number of stencil entries.
@@ -127,19 +127,19 @@ private:
 };
 
 /**
- * @class FaceElementStencil
+ * @class SurfaceElementStencil
  *
  * Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class FaceElementStencil : public StencilBase< FaceElementStencil_Traits, FaceElementStencil >,
-  public FaceElementStencil_Traits
+class SurfaceElementStencil : public StencilBase< SurfaceElementStencil_Traits, SurfaceElementStencil >,
+  public SurfaceElementStencil_Traits
 {
 public:
 
   /**
    * @brief Default constructor.
    */
-  FaceElementStencil();
+  SurfaceElementStencil();
 
   virtual void move( LvArray::MemorySpace const space ) override final;
 
@@ -162,7 +162,7 @@ public:
 
 
   /// Type of kernel wrapper for in-kernel update
-  using StencilWrapper = FaceElementStencilWrapper;
+  using StencilWrapper = SurfaceElementStencilWrapper;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -206,7 +206,7 @@ private:
 };
 
 template< typename PERMTYPE >
-void FaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
+void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
                                                          PERMTYPE permeability,
                                                          real64 (& transmissibility)[2] ) const
 {
@@ -231,7 +231,7 @@ void FaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
 }
 
 template< typename PERMTYPE >
-void FaceElementStencilWrapper::dTrans_dPressure( localIndex iconn,
+void SurfaceElementStencilWrapper::dTrans_dPressure( localIndex iconn,
                                                   PERMTYPE dPerm_dPressure,
                                                   real64 (& dTrans_dPressure )[2] ) const
 {
@@ -253,4 +253,4 @@ void FaceElementStencilWrapper::dTrans_dPressure( localIndex iconn,
 
 } /* namespace geosx */
 
-#endif /* GEOSX_FINITEVOLUME_FACEELEMENTSTENCIL_HPP_ */
+#endif /* GEOSX_FINITEVOLUME_SURFACEELEMENTSTENCIL_HPP_ */

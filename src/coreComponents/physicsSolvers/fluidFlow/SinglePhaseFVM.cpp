@@ -435,12 +435,12 @@ void SinglePhaseFVM< BASE >::setUpDflux_dApertureMatrix( DomainPartition & domai
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
 
-  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
     for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
-      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
       {
