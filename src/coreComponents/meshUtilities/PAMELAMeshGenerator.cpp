@@ -22,15 +22,14 @@
 #include "MeshDataWriters/Variable.hpp"
 #include "managers/DomainPartition.hpp"
 
-#include <math.h>
-
 #include "mpiCommunications/PartitionBase.hpp"
-#include "mpiCommunications/SpatialPartition.hpp"
 #include "Mesh/MeshFactory.hpp"
 
 #include "MeshDataWriters/MeshParts.hpp"
 
 #include "mesh/MeshBody.hpp"
+
+#include "mesh/CellBlockManager.hpp"
 
 namespace geosx
 {

@@ -19,18 +19,14 @@
 #include "InternalMeshGenerator.hpp"
 
 #include "managers/DomainPartition.hpp"
-
-#include "codingUtilities/StringUtilities.hpp"
-#include <math.h>
-#include <algorithm>
+#include "mesh/MeshBody.hpp"
+#include "mesh/CellBlockManager.hpp"
 
 #include "mpiCommunications/PartitionBase.hpp"
-#include "mpiCommunications/SpatialPartition.hpp"
 #include "common/DataTypes.hpp"
-
-#include "mesh/MeshBody.hpp"
-
 #include "common/TimingMacros.hpp"
+
+#include <math.h>
 
 namespace geosx
 {

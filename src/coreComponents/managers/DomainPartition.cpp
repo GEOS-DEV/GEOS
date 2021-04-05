@@ -22,6 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
+#include "mesh/CellBlockManager.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/SpatialPartition.hpp"

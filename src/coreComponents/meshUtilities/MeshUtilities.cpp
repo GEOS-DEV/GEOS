@@ -18,11 +18,9 @@
  */
 
 #include "MeshUtilities.hpp"
-#include "managers/ObjectManagerBase.hpp"
-#include "dataRepository/xmlWrapper.hpp"
 #include "SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-#include "common/TimingMacros.hpp"
 #include "mesh/NodeManager.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {

@@ -19,6 +19,7 @@
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/initialization.hpp"
+#include "mesh/CellBlockManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 // TPL includes

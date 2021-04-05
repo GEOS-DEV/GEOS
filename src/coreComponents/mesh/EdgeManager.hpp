@@ -29,8 +29,6 @@ namespace geosx
 {
 class FaceManager;
 class NodeManager;
-class CellBlockManager;
-
 
 /**
  * @class EdgeManager
