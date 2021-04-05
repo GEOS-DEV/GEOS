@@ -882,20 +882,20 @@ public:
     real64 dProp_dC[NC]{};
 
     UpwindHelpers::formGravHead( ip,
-                  stencilSize,
-                  seri,
-                  sesri,
-                  sei,
-                  stencilWeights,
-                  gravCoef,
-                  dCompFrac_dCompDens,
-                  phaseMassDens,
-                  dPhaseMassDens_dPres,
-                  dPhaseMassDens_dComp,
-                  gravHead,
-                  dGravHead_dP,
-                  dGravHead_dC,
-                  dProp_dC );
+                                 stencilSize,
+                                 seri,
+                                 sesri,
+                                 sei,
+                                 stencilWeights,
+                                 gravCoef,
+                                 dCompFrac_dCompDens,
+                                 phaseMassDens,
+                                 dPhaseMassDens_dPres,
+                                 dPhaseMassDens_dComp,
+                                 gravHead,
+                                 dGravHead_dP,
+                                 dGravHead_dC,
+                                 dProp_dC );
 
     pot = presGrad - gravHead;
   }

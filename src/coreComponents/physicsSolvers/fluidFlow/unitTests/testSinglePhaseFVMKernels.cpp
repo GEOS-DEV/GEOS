@@ -242,7 +242,7 @@ TEST( SinglePhaseFVMKernels, fluxRegion )
                elemIndex,
                weight,
                0 );
-
+  data.move( LvArray::MemorySpace::CPU, false );
   int constexpr NTEST = 3;
 
   // we keep these around for easy aggregate initialization

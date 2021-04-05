@@ -259,10 +259,9 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
       localIndex constexpr NUM_ELEMS = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
       localIndex constexpr MAX_STENCIL = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
-      forAll< parallelDevicePolicy<> >( stencil.size(),
-                                        [=, &subRegion, &fluid] GEOSX_HOST_DEVICE( localIndex const iconn )
-      {
 
+      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+      {
         auto presView = getElementAccessor< true, 1, real64 >( &subRegion,
                                                                CompositionalMultiphaseFVM::viewKeyStruct::pressureString(),
                                                                MAX_STENCIL,
@@ -352,7 +351,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 //                                                                                          MAX_STENCIL, seri[0],
 //                                                                                          sesri[0], sei[0], 0, NP, NP );
 //      }
-        // -- fluid feteched fields
+        // -- fluid fetched fields
         auto phaseMassDensView = getElementAccessor< true, 3, real64 >( &fluid,
                                                                         MultiFluidBase::viewKeyStruct::phaseMassDensityString(),
                                                                         MAX_STENCIL,
@@ -396,55 +395,54 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
 
           UHelpers::formPPUVelocity< NC, NUM_ELEMS, MAX_STENCIL >( NP,
-                                                         ip,
-                                                         MAX_STENCIL,
-                                                         seri[iconn],
-                                                         sesri[iconn],
-                                                         sei[iconn],
-                                                         weights[iconn],
-                                                         presView.toNestedViewConst(),
-                                                         dPresView.toNestedViewConst(),
-                                                         gravCoefView.toNestedViewConst(),
-                                                         phaseMobView.toNestedViewConst(),
-                                                         dPhaseMob_dPView.toNestedViewConst(),
-                                                         dPhaseMob_dCView.toNestedViewConst(),
-                                                         dPhaseVolFrac_dPView.toNestedViewConst(),
-                                                         dPhaseVolFrac_dCView.toNestedViewConst(),
-                                                         dCompFrac_dCompDensView.toNestedViewConst(),
-                                                         phaseMassDensView.toNestedViewConst(),
-                                                         dPhaseMassDens_dPView.toNestedViewConst(),
-                                                         dPhaseMassDens_dCView.toNestedViewConst(),
-                                                         phaseCapPressureView.toNestedViewConst(),
-                                                         dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
-                                                         capPressureFlag,
-                                                         k_up[ip],
-                                                         phaseFlux[ip],
-                                                         dPhaseFlux_dP[ip],
-                                                         dPhaseFlux_dC[ip] );
+                                                                   ip,
+                                                                   MAX_STENCIL,
+                                                                   seri[iconn],
+                                                                   sesri[iconn],
+                                                                   sei[iconn],
+                                                                   weights[iconn],
+                                                                   presView.toNestedViewConst(),
+                                                                   dPresView.toNestedViewConst(),
+                                                                   gravCoefView.toNestedViewConst(),
+                                                                   phaseMobView.toNestedViewConst(),
+                                                                   dPhaseMob_dPView.toNestedViewConst(),
+                                                                   dPhaseMob_dCView.toNestedViewConst(),
+                                                                   dPhaseVolFrac_dPView.toNestedViewConst(),
+                                                                   dPhaseVolFrac_dCView.toNestedViewConst(),
+                                                                   dCompFrac_dCompDensView.toNestedViewConst(),
+                                                                   phaseMassDensView.toNestedViewConst(),
+                                                                   dPhaseMassDens_dPView.toNestedViewConst(),
+                                                                   dPhaseMassDens_dCView.toNestedViewConst(),
+                                                                   phaseCapPressureView.toNestedViewConst(),
+                                                                   dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                                                   capPressureFlag,
+                                                                   k_up[ip],
+                                                                   phaseFlux[ip],
+                                                                   dPhaseFlux_dP[ip],
+                                                                   dPhaseFlux_dC[ip] );
 
           totFlux += phaseFlux[ip];
 
           UHelpers::formGravHead( ip,
-                        MAX_STENCIL,
-                        seri[iconn],
-                        sesri[iconn],
-                        sei[iconn],
-                        weights[iconn],
-                        gravCoefView.toNestedViewConst(),
-                        dCompFrac_dCompDensView.toNestedViewConst(),
-                        phaseMassDensView.toNestedViewConst(),
-                        dPhaseMassDens_dPView.toNestedViewConst(),
-                        dPhaseMassDens_dCView.toNestedViewConst(),
-                        gravHead[ip],
-                        dGravHead_dP[ip],
-                        dGravHead_dC[ip],
-                        dProp_dC[ip] );
-
+                                  MAX_STENCIL,
+                                  seri[iconn],
+                                  sesri[iconn],
+                                  sei[iconn],
+                                  weights[iconn],
+                                  gravCoefView.toNestedViewConst(),
+                                  dCompFrac_dCompDensView.toNestedViewConst(),
+                                  phaseMassDensView.toNestedViewConst(),
+                                  dPhaseMassDens_dPView.toNestedViewConst(),
+                                  dPhaseMassDens_dCView.toNestedViewConst(),
+                                  gravHead[ip],
+                                  dGravHead_dP[ip],
+                                  dGravHead_dC[ip],
+                                  dProp_dC[ip] );
 
 
         }                                  //standar loop
 
-        localIndex k_up_scheme[NP] {};
+        localIndex k_up_scheme[NP]{};
         real64 fflow[NP]{};
         real64 dFflow_dP[NP][MAX_STENCIL]{};
         real64 dFflow_dC[NP][MAX_STENCIL][NC]{};
@@ -453,29 +451,29 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
 
           UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
-                        CompositionalMultiphaseFlowUpwindHelperKernels::term::Viscous,
-                        CompositionalMultiphaseFlowUpwindHelperKernels::PhasePotentialUpwind >( NP,
-                                                                               ip,
-                                                                               MAX_STENCIL,
-                                                                               seri[iconn],
-                                                                               sesri[iconn],
-                                                                               sei[iconn],
-                                                                               weights[iconn],
-                                                                               totFlux,
-                                                                               presView.toNestedViewConst(),
-                                                                               dPresView.toNestedViewConst(),
-                                                                               gravCoefView.toNestedViewConst(),
-                                                                               dCompFrac_dCompDensView.toNestedViewConst(),
-                                                                               phaseMassDensView.toNestedViewConst(),
-                                                                               dPhaseMassDens_dPView.toNestedViewConst(),
-                                                                               dPhaseMassDens_dCView.toNestedViewConst(),
-                                                                               phaseMobView.toNestedViewConst(),
-                                                                               dPhaseMob_dPView.toNestedViewConst(),
-                                                                               dPhaseMob_dCView.toNestedViewConst(),
-                                                                               k_up_scheme[ip],
-                                                                               fflow[ip],
-                                                                               dFflow_dP[ip],
-                                                                               dFflow_dC[ip] );
+                                  CompositionalMultiphaseFlowUpwindHelperKernels::term::Viscous,
+                                  CompositionalMultiphaseFlowUpwindHelperKernels::PhasePotentialUpwind >( NP,
+                                                                                                          ip,
+                                                                                                          MAX_STENCIL,
+                                                                                                          seri[iconn],
+                                                                                                          sesri[iconn],
+                                                                                                          sei[iconn],
+                                                                                                          weights[iconn],
+                                                                                                          totFlux,
+                                                                                                          presView.toNestedViewConst(),
+                                                                                                          dPresView.toNestedViewConst(),
+                                                                                                          gravCoefView.toNestedViewConst(),
+                                                                                                          dCompFrac_dCompDensView.toNestedViewConst(),
+                                                                                                          phaseMassDensView.toNestedViewConst(),
+                                                                                                          dPhaseMassDens_dPView.toNestedViewConst(),
+                                                                                                          dPhaseMassDens_dCView.toNestedViewConst(),
+                                                                                                          phaseMobView.toNestedViewConst(),
+                                                                                                          dPhaseMob_dPView.toNestedViewConst(),
+                                                                                                          dPhaseMob_dCView.toNestedViewConst(),
+                                                                                                          k_up_scheme[ip],
+                                                                                                          fflow[ip],
+                                                                                                          dFflow_dP[ip],
+                                                                                                          dFflow_dC[ip] );
 
           EXPECT_EQ( k_up_scheme[ip], k_up[ip] );
         }                                  //loop on scheme to test
@@ -484,14 +482,15 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
         //test fluxes values
         for( localIndex ip = 0; ip < NP; ++ip )
         {
-          real64 phaseFluxScheme {};
-          phaseFluxScheme += fflow[ip]*totFlux;
+          real64 phaseFluxScheme{};
+          phaseFluxScheme += fflow[ip] * totFlux;
           for( localIndex jp = 0; jp < NP; ++jp )
           {
             if( ip != jp )
             {
-              phaseFluxScheme -= fflow[ip]*phaseMobView[seri[iconn][0]][sesri[iconn][0]][sei[iconn][k_up_scheme[jp]]][jp]
-                                 *(gravHead[ip]-gravHead[jp]);
+              phaseFluxScheme -=
+                fflow[ip] * phaseMobView[seri[iconn][0]][sesri[iconn][0]][sei[iconn][k_up_scheme[jp]]][jp]
+                * ( gravHead[ip] - gravHead[jp] );
 
             }
           }
@@ -501,8 +500,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
         }                                  //compare flux construction
 
 
-
-      } );                                   //inner most  lambda on connexion
+      }//inner most loop on connexion
     } );//second level lambda on stencil list
   } );//outer lambda on subregions
 
@@ -540,8 +538,7 @@ void testCompositionalUpwindHUPUViscous( CompositionalMultiphaseFVM & solver,
       localIndex constexpr NUM_ELEMS = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
       localIndex constexpr MAX_STENCIL = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
-      forAll< parallelDevicePolicy<> >( stencil.size(),
-                                        [=, &subRegion, &fluid] GEOSX_HOST_DEVICE( localIndex const iconn )
+      for( auto iconn = 0; iconn < stencil.size(); ++iconn )
       {
 
         auto presView = getElementAccessor< true, 1, real64 >( &subRegion,
@@ -671,31 +668,31 @@ void testCompositionalUpwindHUPUViscous( CompositionalMultiphaseFVM & solver,
         for( localIndex ip = 0; ip < NP; ++ip )
         {
           UHelpers::formPPUVelocity< NC, NUM_ELEMS, MAX_STENCIL >( NP,
-                                                         ip,
-                                                         MAX_STENCIL,
-                                                         seri[iconn],
-                                                         sesri[iconn],
-                                                         sei[iconn],
-                                                         weights[iconn],
-                                                         presView.toNestedViewConst(),
-                                                         dPresView.toNestedViewConst(),
-                                                         gravCoefView.toNestedViewConst(),
-                                                         phaseMobView.toNestedViewConst(),
-                                                         dPhaseMob_dPView.toNestedViewConst(),
-                                                         dPhaseMob_dCView.toNestedViewConst(),
-                                                         dPhaseVolFrac_dPView.toNestedViewConst(),
-                                                         dPhaseVolFrac_dCView.toNestedViewConst(),
-                                                         dCompFrac_dCompDensView.toNestedViewConst(),
-                                                         phaseMassDensView.toNestedViewConst(),
-                                                         dPhaseMassDens_dPView.toNestedViewConst(),
-                                                         dPhaseMassDens_dCView.toNestedViewConst(),
-                                                         phaseCapPressureView.toNestedViewConst(),
-                                                         dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
-                                                         capPressureFlag,
-                                                         k_up,
-                                                         phaseFlux[ip],
-                                                         dPhaseFlux_dP[ip],
-                                                         dPhaseFlux_dC[ip] );
+                                                                   ip,
+                                                                   MAX_STENCIL,
+                                                                   seri[iconn],
+                                                                   sesri[iconn],
+                                                                   sei[iconn],
+                                                                   weights[iconn],
+                                                                   presView.toNestedViewConst(),
+                                                                   dPresView.toNestedViewConst(),
+                                                                   gravCoefView.toNestedViewConst(),
+                                                                   phaseMobView.toNestedViewConst(),
+                                                                   dPhaseMob_dPView.toNestedViewConst(),
+                                                                   dPhaseMob_dCView.toNestedViewConst(),
+                                                                   dPhaseVolFrac_dPView.toNestedViewConst(),
+                                                                   dPhaseVolFrac_dCView.toNestedViewConst(),
+                                                                   dCompFrac_dCompDensView.toNestedViewConst(),
+                                                                   phaseMassDensView.toNestedViewConst(),
+                                                                   dPhaseMassDens_dPView.toNestedViewConst(),
+                                                                   dPhaseMassDens_dCView.toNestedViewConst(),
+                                                                   phaseCapPressureView.toNestedViewConst(),
+                                                                   dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                                                   capPressureFlag,
+                                                                   k_up,
+                                                                   phaseFlux[ip],
+                                                                   dPhaseFlux_dP[ip],
+                                                                   dPhaseFlux_dC[ip] );
 
           totFlux += phaseFlux[ip];
 
@@ -710,60 +707,60 @@ void testCompositionalUpwindHUPUViscous( CompositionalMultiphaseFVM & solver,
         for( localIndex ip = 0; ip < NP; ++ip )
         {
           UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
-                        term::Viscous,
-                        HybridUpwind >( NP,
-                                        ip,
-                                        MAX_STENCIL,
-                                        seri[iconn],
-                                        sesri[iconn],
-                                        sei[iconn],
-                                        weights[iconn],
-                                        totFlux,
-                                        presView.toNestedViewConst(),
-                                        dPresView.toNestedViewConst(),
-                                        gravCoefView.toNestedViewConst(),
-                                        dCompFrac_dCompDensView.toNestedViewConst(),
-                                        phaseMassDensView.toNestedViewConst(),
-                                        dPhaseMassDens_dPView.toNestedViewConst(),
-                                        dPhaseMassDens_dCView.toNestedViewConst(),
-                                        phaseMobView.toNestedViewConst(),
-                                        dPhaseMob_dPView.toNestedViewConst(),
-                                        dPhaseMob_dCView.toNestedViewConst(),
-                                        k_up_hu,
-                                        fflow[0],
-                                        dFflow_dP[0],
-                                        dFflow_dC[0] );
+                                  term::Viscous,
+                                  HybridUpwind >( NP,
+                                                  ip,
+                                                  MAX_STENCIL,
+                                                  seri[iconn],
+                                                  sesri[iconn],
+                                                  sei[iconn],
+                                                  weights[iconn],
+                                                  totFlux,
+                                                  presView.toNestedViewConst(),
+                                                  dPresView.toNestedViewConst(),
+                                                  gravCoefView.toNestedViewConst(),
+                                                  dCompFrac_dCompDensView.toNestedViewConst(),
+                                                  phaseMassDensView.toNestedViewConst(),
+                                                  dPhaseMassDens_dPView.toNestedViewConst(),
+                                                  dPhaseMassDens_dCView.toNestedViewConst(),
+                                                  phaseMobView.toNestedViewConst(),
+                                                  dPhaseMob_dPView.toNestedViewConst(),
+                                                  dPhaseMob_dCView.toNestedViewConst(),
+                                                  k_up_hu,
+                                                  fflow[0],
+                                                  dFflow_dP[0],
+                                                  dFflow_dC[0] );
 
           UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
-                        term::Viscous,
-                        PhaseUpwind >( NP,
-                                       ip,
-                                       MAX_STENCIL,
-                                       seri[iconn],
-                                       sesri[iconn],
-                                       sei[iconn],
-                                       weights[iconn],
-                                       totFlux,
-                                       presView.toNestedViewConst(),
-                                       dPresView.toNestedViewConst(),
-                                       gravCoefView.toNestedViewConst(),
-                                       dCompFrac_dCompDensView.toNestedViewConst(),
-                                       phaseMassDensView.toNestedViewConst(),
-                                       dPhaseMassDens_dPView.toNestedViewConst(),
-                                       dPhaseMassDens_dCView.toNestedViewConst(),
-                                       phaseMobView.toNestedViewConst(),
-                                       dPhaseMob_dPView.toNestedViewConst(),
-                                       dPhaseMob_dCView.toNestedViewConst(),
-                                       k_up_pu,
-                                       fflow[1],
-                                       dFflow_dP[1],
-                                       dFflow_dC[1] );
+                                  term::Viscous,
+                                  PhaseUpwind >( NP,
+                                                 ip,
+                                                 MAX_STENCIL,
+                                                 seri[iconn],
+                                                 sesri[iconn],
+                                                 sei[iconn],
+                                                 weights[iconn],
+                                                 totFlux,
+                                                 presView.toNestedViewConst(),
+                                                 dPresView.toNestedViewConst(),
+                                                 gravCoefView.toNestedViewConst(),
+                                                 dCompFrac_dCompDensView.toNestedViewConst(),
+                                                 phaseMassDensView.toNestedViewConst(),
+                                                 dPhaseMassDens_dPView.toNestedViewConst(),
+                                                 dPhaseMassDens_dCView.toNestedViewConst(),
+                                                 phaseMobView.toNestedViewConst(),
+                                                 dPhaseMob_dPView.toNestedViewConst(),
+                                                 dPhaseMob_dCView.toNestedViewConst(),
+                                                 k_up_pu,
+                                                 fflow[1],
+                                                 dFflow_dP[1],
+                                                 dFflow_dC[1] );
 
           EXPECT_EQ( k_up_hu, k_up_pu );
           EXPECT_EQ( fflow[0], fflow[1] );
         }
 
-      } );
+      }
     } );
   } );
 }
@@ -801,10 +798,8 @@ void testCompositionalUpwindHUPUGravity( CompositionalMultiphaseFVM & solver,
       localIndex constexpr NUM_ELEMS = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
       localIndex constexpr MAX_STENCIL = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
-      forAll< parallelDevicePolicy<> >( stencil.size(),
-                                        [=, &subRegion, &fluid] GEOSX_HOST_DEVICE( localIndex const iconn )
+      for( auto iconn = 0; iconn < stencil.size(); ++iconn )
       {
-
         auto presView = getElementAccessor< true, 1, real64 >( &subRegion,
                                                                CompositionalMultiphaseFVM::viewKeyStruct::pressureString(),
                                                                MAX_STENCIL,
@@ -914,60 +909,60 @@ void testCompositionalUpwindHUPUGravity( CompositionalMultiphaseFVM & solver,
         for( localIndex ip = 0; ip < NP; ++ip )
         {
           UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
-                        term::Gravity,
-                        HybridUpwind >( NP,
-                                        ip,
-                                        MAX_STENCIL,
-                                        seri[iconn],
-                                        sesri[iconn],
-                                        sei[iconn],
-                                        weights[iconn],
-                                        totFlux,
-                                        presView.toNestedViewConst(),
-                                        dPresView.toNestedViewConst(),
-                                        gravCoefView.toNestedViewConst(),
-                                        dCompFrac_dCompDensView.toNestedViewConst(),
-                                        phaseMassDensView.toNestedViewConst(),
-                                        dPhaseMassDens_dPView.toNestedViewConst(),
-                                        dPhaseMassDens_dCView.toNestedViewConst(),
-                                        phaseMobView.toNestedViewConst(),
-                                        dPhaseMob_dPView.toNestedViewConst(),
-                                        dPhaseMob_dCView.toNestedViewConst(),
-                                        k_up_hu,
-                                        fflow[0],
-                                        dFflow_dP[0],
-                                        dFflow_dC[0] );
+                                  term::Gravity,
+                                  HybridUpwind >( NP,
+                                                  ip,
+                                                  MAX_STENCIL,
+                                                  seri[iconn],
+                                                  sesri[iconn],
+                                                  sei[iconn],
+                                                  weights[iconn],
+                                                  totFlux,
+                                                  presView.toNestedViewConst(),
+                                                  dPresView.toNestedViewConst(),
+                                                  gravCoefView.toNestedViewConst(),
+                                                  dCompFrac_dCompDensView.toNestedViewConst(),
+                                                  phaseMassDensView.toNestedViewConst(),
+                                                  dPhaseMassDens_dPView.toNestedViewConst(),
+                                                  dPhaseMassDens_dCView.toNestedViewConst(),
+                                                  phaseMobView.toNestedViewConst(),
+                                                  dPhaseMob_dPView.toNestedViewConst(),
+                                                  dPhaseMob_dCView.toNestedViewConst(),
+                                                  k_up_hu,
+                                                  fflow[0],
+                                                  dFflow_dP[0],
+                                                  dFflow_dC[0] );
 
           UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
-                        term::Gravity,
-                        PhaseUpwind >( NP,
-                                       ip,
-                                       MAX_STENCIL,
-                                       seri[iconn],
-                                       sesri[iconn],
-                                       sei[iconn],
-                                       weights[iconn],
-                                       totFlux,
-                                       presView.toNestedViewConst(),
-                                       dPresView.toNestedViewConst(),
-                                       gravCoefView.toNestedViewConst(),
-                                       dCompFrac_dCompDensView.toNestedViewConst(),
-                                       phaseMassDensView.toNestedViewConst(),
-                                       dPhaseMassDens_dPView.toNestedViewConst(),
-                                       dPhaseMassDens_dCView.toNestedViewConst(),
-                                       phaseMobView.toNestedViewConst(),
-                                       dPhaseMob_dPView.toNestedViewConst(),
-                                       dPhaseMob_dCView.toNestedViewConst(),
-                                       k_up_pu,
-                                       fflow[1],
-                                       dFflow_dP[1],
-                                       dFflow_dC[1] );
+                                  term::Gravity,
+                                  PhaseUpwind >( NP,
+                                                 ip,
+                                                 MAX_STENCIL,
+                                                 seri[iconn],
+                                                 sesri[iconn],
+                                                 sei[iconn],
+                                                 weights[iconn],
+                                                 totFlux,
+                                                 presView.toNestedViewConst(),
+                                                 dPresView.toNestedViewConst(),
+                                                 gravCoefView.toNestedViewConst(),
+                                                 dCompFrac_dCompDensView.toNestedViewConst(),
+                                                 phaseMassDensView.toNestedViewConst(),
+                                                 dPhaseMassDens_dPView.toNestedViewConst(),
+                                                 dPhaseMassDens_dCView.toNestedViewConst(),
+                                                 phaseMobView.toNestedViewConst(),
+                                                 dPhaseMob_dPView.toNestedViewConst(),
+                                                 dPhaseMob_dCView.toNestedViewConst(),
+                                                 k_up_pu,
+                                                 fflow[1],
+                                                 dFflow_dP[1],
+                                                 dFflow_dC[1] );
 
           EXPECT_EQ( k_up_hu, k_up_pu );
           EXPECT_EQ( fflow[0], fflow[1] );
         }
 
-      } );
+      }
     } );
   } );
 }
