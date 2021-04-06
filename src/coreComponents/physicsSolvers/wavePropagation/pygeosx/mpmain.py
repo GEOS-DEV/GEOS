@@ -40,9 +40,9 @@ def main():
 
     frequency = 10.0
     wavelet   = ricker(maxT, dt, frequency)
-"""========================================"""
+
     basePath = "/home/m3d/codes/"
-"""======================================="""
+
     wavePropagationPath = basePath + "/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/"
     pygeosxPath = wavePropagationPath + "/pygeosx/"
     segyPath = pygeosxPath + "/sismoTrace/"
