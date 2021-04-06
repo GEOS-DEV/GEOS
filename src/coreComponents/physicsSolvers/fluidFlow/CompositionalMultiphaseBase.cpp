@@ -652,20 +652,20 @@ void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition con
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
     arrayView2d< real64 const > const & phaseVolFrac =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString() );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString() );
     arrayView2d< real64 const > const & dPhaseVolFrac_dPres =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
     arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens =
-        subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
+      subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
     arrayView3d< real64 const > const & dCompFrac_dCompDens =
-        subRegion.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
+      subRegion.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
     arrayView2d< real64 const > const & phaseVolFracOld =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString() );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString() );
     arrayView2d< real64 const > const & phaseDensOld =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseDensityOldString() );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseDensityOldString() );
     arrayView3d< real64 const > const & phaseCompFracOld =
-        subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString() );
+      subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString() );
 
     PorosityBase const & porosityModel = getConstitutiveModel< PorosityBase >( subRegion, m_porosityModelNames[targetIndex] );
 

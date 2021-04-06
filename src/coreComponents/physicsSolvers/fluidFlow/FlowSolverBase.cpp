@@ -256,7 +256,7 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
 
   // update porosity
   PressureDependentPorosity & porosityModel =
-      getConstitutiveModel< PressureDependentPorosity >( subRegion, m_porosityModelNames[targetIndex] );
+    getConstitutiveModel< PressureDependentPorosity >( subRegion, m_porosityModelNames[targetIndex] );
 
   PressureDependentPorosity::KernelWrapper porosityWrapper = porosityModel.createKernelWrapper();
 

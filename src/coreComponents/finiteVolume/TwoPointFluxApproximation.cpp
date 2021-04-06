@@ -47,7 +47,7 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper< EmbeddedSurfaceToCellStencil >( viewKeyStruct::edfmStencilString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+    setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
@@ -174,7 +174,7 @@ void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) 
     setRestartFlags( RestartFlags::NO_WRITE );
 
   stencilGroup.registerWrapper< EmbeddedSurfaceToCellStencil >( viewKeyStruct::edfmStencilString() ).
-     setRestartFlags( RestartFlags::NO_WRITE );
+    setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,

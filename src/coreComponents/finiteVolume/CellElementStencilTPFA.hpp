@@ -109,6 +109,29 @@ public:
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size( 0 ); }
 
+  /**
+   * @brief Give the number of points in a stencil entry.
+   * @param[in] index of the stencil entry for which to query the size
+   * @return the size of a stencil entry
+   */
+  constexpr localIndex stencilSize( localIndex index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return MAX_STENCIL_SIZE;
+  }
+
+  /**
+   * @brief Give the number of points between which the flux is.
+   * @param[in] index of the stencil entry for which to query the size
+   * @return the number of points.
+   */
+  constexpr localIndex numPointsInFlux( localIndex index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return NUM_POINT_IN_FLUX;
+  }
+
+
 private:
 
   arrayView2d< real64 > m_faceNormal;

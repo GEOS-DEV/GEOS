@@ -316,7 +316,7 @@ void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUS
   GEOSX_UNUSED_VAR( localMatrix );
   GEOSX_UNUSED_VAR( localRhs );
 
-  GEOSX_ERROR("Not yet implemented");
+  GEOSX_ERROR( "Not yet implemented" );
 
 }
 

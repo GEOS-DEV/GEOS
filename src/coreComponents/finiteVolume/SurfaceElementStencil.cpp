@@ -32,11 +32,11 @@ void SurfaceElementStencil::move( LvArray::MemorySpace const space )
 }
 
 void SurfaceElementStencil::add( localIndex const numPts,
-                              localIndex const * const elementRegionIndices,
-                              localIndex const * const elementSubRegionIndices,
-                              localIndex const * const elementIndices,
-                              real64 const * const weights,
-                              localIndex const connectorIndex )
+                                 localIndex const * const elementRegionIndices,
+                                 localIndex const * const elementSubRegionIndices,
+                                 localIndex const * const elementIndices,
+                                 real64 const * const weights,
+                                 localIndex const connectorIndex )
 {
   GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
@@ -66,8 +66,8 @@ void SurfaceElementStencil::add( localIndex const numPts,
 }
 
 void SurfaceElementStencil::add( localIndex const numPts,
-                              R1Tensor const * const cellCenterToEdgeCenter,
-                              localIndex const connectorIndex )
+                                 R1Tensor const * const cellCenterToEdgeCenter,
+                                 localIndex const connectorIndex )
 {
   GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 

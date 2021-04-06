@@ -86,9 +86,9 @@ public:
   using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
 
   SurfaceElementStencilWrapper( IndexContainerType & elementRegionIndices,
-                             IndexContainerType & elementSubRegionIndices,
-                             IndexContainerType & elementIndices,
-                             WeightContainerType & weights )
+                                IndexContainerType & elementSubRegionIndices,
+                                IndexContainerType & elementIndices,
+                                WeightContainerType & weights )
 
     : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights )
   {}
@@ -111,6 +111,26 @@ public:
    */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size(); }
+
+  /**
+   * @brief Give the number of stencil entries for the provided index.
+   * @param[in] index the index of which the stencil size is request
+   * @return The number of stencil entries for the provided index
+   */
+  localIndex stencilSize( localIndex index ) const
+  { return m_elementRegionIndices.sizeOfArray( index ); }
+
+
+  /**
+   * @brief Give the number of points between which the flux is.
+   * @param[in] index of the stencil entry for which to query the size
+   * @return the number of points.
+   */
+  constexpr localIndex numPointsInFlux( localIndex index ) const
+  {
+    return stencilSize( index );
+  }
+
 
   template< typename PERMTYPE >
   void computeTransmissibility( localIndex iconn,
@@ -207,8 +227,8 @@ private:
 
 template< typename PERMTYPE >
 void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
-                                                         PERMTYPE permeability,
-                                                         real64 (& transmissibility)[2] ) const
+                                                            PERMTYPE permeability,
+                                                            real64 (& transmissibility)[2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
@@ -232,8 +252,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
 
 template< typename PERMTYPE >
 void SurfaceElementStencilWrapper::dTrans_dPressure( localIndex iconn,
-                                                  PERMTYPE dPerm_dPressure,
-                                                  real64 (& dTrans_dPressure )[2] ) const
+                                                     PERMTYPE dPerm_dPressure,
+                                                     real64 (& dTrans_dPressure )[2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];

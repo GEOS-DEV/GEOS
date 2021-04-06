@@ -114,7 +114,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                   auto const & subRegion )
+                                  auto const & subRegion )
   {
     arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
@@ -230,6 +230,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
                         this->gravityVector(),
                         localMatrix,
                         localRhs );
+
   } );
 }
 

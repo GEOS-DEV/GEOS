@@ -84,16 +84,18 @@ struct FluxKernel
           arrayView1d< real64 > const & localRhs )
   {
     constexpr localIndex maxNumFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-    constexpr localIndex numFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
     constexpr localIndex maxStencilSize = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
-    constexpr localIndex stencilSize  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
+
     forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
+      localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
+      localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
+
       // working arrays
       stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
       stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
@@ -121,6 +123,7 @@ struct FluxKernel
                localFlux,
                localFluxJacobian );
 
+
       // extract DOF numbers
       for( localIndex i = 0; i < stencilSize; ++i )
       {
@@ -129,6 +132,7 @@ struct FluxKernel
 
       for( localIndex i = 0; i < numFluxElems; ++i )
       {
+
         if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
         {
           globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
@@ -141,8 +145,10 @@ struct FluxKernel
                                                                             dofColIndices.data(),
                                                                             localFluxJacobian[i].dataIfContiguous(),
                                                                             stencilSize );
+
         }
       }
+
     } );
   }
 

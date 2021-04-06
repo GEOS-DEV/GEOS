@@ -90,7 +90,29 @@ public:
    * @return The number of stencil entries
    */
   virtual localIndex size() const override final
-  { return m_elementRegionIndices.size(); }
+  { return m_elementRegionIndices.size( 0 ); }
+
+  /**
+   * @brief Give the number of stencil entries for the provided index.
+   * @param[in] index the index of which the stencil size is request
+   * @return The number of stencil entries for the provided index
+   */
+  localIndex stencilSize( localIndex index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return MAX_STENCIL_SIZE;
+  }
+
+  /**
+   * @brief Give the number of points between which the flux is.
+   * @param[in] index of the stencil entry for which to query the size
+   * @return the number of points.
+   */
+  constexpr localIndex numPointsInFlux( localIndex index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return NUM_POINT_IN_FLUX;
+  }
 
   template< typename PERMTYPE >
   void computeTransmissibility( localIndex iconn,
@@ -162,7 +184,7 @@ public:
    * @return the stencil size
    */
   virtual localIndex size() const override final
-      { return m_elementRegionIndices.size( 0 ); }
+  { return m_elementRegionIndices.size( 0 ); }
 
   /**
    * @brief Give the number of points in a stencil entry.
