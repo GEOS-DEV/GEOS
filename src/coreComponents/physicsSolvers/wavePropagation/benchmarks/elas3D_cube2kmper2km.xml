@@ -52,7 +52,7 @@
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.05"
+      timeFrequency="0.005"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 

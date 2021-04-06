@@ -240,6 +240,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 
               if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
               {
+
                 sourceIsLocal[isrc] = 1;
 
                 real64 xLocal[numNodesPerElem][3];
@@ -761,17 +762,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
         real64 N[numNodesPerElem];
         real64 gradN[ numNodesPerElem ][ 3 ];
 
-        //Declaration of the first derivatives in space of the displacement V2: no arrayView (acollade)
-        real64 dux_dx[numNodesPerElem] = {{0.0}};
-        real64 duy_dx[numNodesPerElem] = {{0.0}};
-        real64 duz_dx[numNodesPerElem] = {{0.0}};
-        real64 dux_dy[numNodesPerElem] = {{0.0}};
-        real64 duy_dy[numNodesPerElem] = {{0.0}};
-        real64 duz_dy[numNodesPerElem] = {{0.0}};
-        real64 dux_dz[numNodesPerElem] = {{0.0}};
-        real64 duy_dz[numNodesPerElem] = {{0.0}};
-        real64 duz_dz[numNodesPerElem] = {{0.0}};
-
         //Declaration of the nine components of matrix sigma V2: no arrayview
         real64 sigmaxx[numNodesPerElem] = {{0.0}};
         real64 sigmaxy[numNodesPerElem] = {{0.0}};
@@ -781,8 +771,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
         real64 sigmayz[numNodesPerElem] = {{0.0}};
         real64 sigmazx[numNodesPerElem] = {{0.0}};
         real64 sigmazy[numNodesPerElem] = {{0.0}};
-        real64 sigmazz[numNodesPerElem] = {{0.0}};
-
+        real64 sigmazz[numNodesPerElem] = {{0.0}};      
        // real64 lambda[numElem] = {{0.0}};
 
         // Declaration of the stiffness matrix 'line'
@@ -790,6 +779,17 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
         for( localIndex k=0; k<elemsToNodes.size( 0 ); ++k )
         {
+
+          //Declaration of the first derivatives in space of the displacement V2: no arrayView (acollade)
+          real64 dux_dx[numNodesPerElem] = {{0.0}};
+          real64 duy_dx[numNodesPerElem] = {{0.0}};
+          real64 duz_dx[numNodesPerElem] = {{0.0}};
+          real64 dux_dy[numNodesPerElem] = {{0.0}};
+          real64 duy_dy[numNodesPerElem] = {{0.0}};
+          real64 duz_dy[numNodesPerElem] = {{0.0}};
+          real64 dux_dz[numNodesPerElem] = {{0.0}};
+          real64 duy_dz[numNodesPerElem] = {{0.0}};
+          real64 duz_dz[numNodesPerElem] = {{0.0}};          
 
           // Computation of the Lamé coefficients lambda and mu
           mu[k] = rho[k] * vs[k] * vs[k];
@@ -818,15 +818,15 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
               {
 
                 // Computation of all derivatives of u on the reference element
-                dux_dx[i] += ux_n[j] * gradN[j][0];
-                duy_dx[i] += uy_n[j] * gradN[j][0];
-                duz_dx[i] += uz_n[j] * gradN[j][0];
-                dux_dy[i] += ux_n[j] * gradN[j][1];
-                duy_dy[i] += uy_n[j] * gradN[j][1];
-                duz_dy[i] += uz_n[j] * gradN[j][1];
-                dux_dz[i] += ux_n[j] * gradN[j][2];
-                duy_dz[i] += uy_n[j] * gradN[j][2];
-                duz_dz[i] += uz_n[j] * gradN[j][2];
+                dux_dx[i] += ux_n[elemsToNodes[k][j]] * gradN[j][0];
+                duy_dx[i] += uy_n[elemsToNodes[k][j]] * gradN[j][0];
+                duz_dx[i] += uz_n[elemsToNodes[k][j]] * gradN[j][0];
+                dux_dy[i] += ux_n[elemsToNodes[k][j]] * gradN[j][1];
+                duy_dy[i] += uy_n[elemsToNodes[k][j]] * gradN[j][1];
+                duz_dy[i] += uz_n[elemsToNodes[k][j]] * gradN[j][1];
+                dux_dz[i] += ux_n[elemsToNodes[k][j]] * gradN[j][2];
+                duy_dz[i] += uy_n[elemsToNodes[k][j]] * gradN[j][2];
+                duz_dz[i] += uz_n[elemsToNodes[k][j]] * gradN[j][2];
                
               }
 
@@ -853,13 +853,12 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                 for ( localIndex a=0; a<3; a++)
                 {
                   Rh_ij[a] = detJ * gradN[j][a] * N[i];
-                  std::cout <<  Rh_ij[a] << std::endl;
                 }
                
                 // Computation of the stiffness vector coefficients
-                stiffnessVector_x[elemsToNodes[k][i]] += Rh_ij[0] * sigmaxx[j] + Rh_ij[1] * sigmaxy[j] + Rh_ij[2] * sigmaxz[i]; 
-                stiffnessVector_y[elemsToNodes[k][i]] += Rh_ij[0] * sigmayx[j] + Rh_ij[1] * sigmayy[j] + Rh_ij[2] * sigmayz[i]; 
-                stiffnessVector_z[elemsToNodes[k][i]] += Rh_ij[0] * sigmazx[j] + Rh_ij[1] * sigmazy[j] + Rh_ij[2] * sigmazz[i]; 
+                stiffnessVector_x[elemsToNodes[k][j]] += Rh_ij[0] * sigmaxx[i] + Rh_ij[1] * sigmaxy[i] + Rh_ij[2] * sigmaxz[i]; 
+                stiffnessVector_y[elemsToNodes[k][j]] += Rh_ij[0] * sigmayx[i] + Rh_ij[1] * sigmayy[i] + Rh_ij[2] * sigmayz[i]; 
+                stiffnessVector_z[elemsToNodes[k][j]] += Rh_ij[0] * sigmazx[i] + Rh_ij[1] * sigmazy[i] + Rh_ij[2] * sigmazz[i]; 
 
              }
              
