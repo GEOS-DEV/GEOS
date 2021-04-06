@@ -219,7 +219,7 @@ TEST( testPacking, testPackByIndexDevice )
   for( localIndex ii = 0; ii < pack_count; ++ii )
     indices[ii] = std::rand() % size;
 
-  std::sort(indices.begin(),indices.end());
+  std::sort( indices.begin(), indices.end());
 
   buffer_unit_type * null_buf = NULL;
   // [ num_dim, stride_i.. , tensor_0, tensor_1, ..., tensor_n ]

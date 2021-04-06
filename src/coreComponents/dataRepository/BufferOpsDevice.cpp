@@ -138,7 +138,7 @@ UnpackDevice( buffer_unit_type const * & buffer,
 }
 
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< ( can_memcpy< T > ), localIndex >::type
+typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDataByIndexDevice ( buffer_unit_type * & buffer,
                         ArrayView< T const, NDIM, USD > const & var,
                         const T_INDICES & indices,
@@ -146,21 +146,10 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
 {
   localIndex const numIndices = indices.size();
   localIndex const sliceSize = var.size() / var.size( 0 );
-  size_t typeSize = sizeof( T );
-  
-  localIndex packedSize = numIndices * sliceSize * typeSize;
-  packedSize += typeSize - 1; // provide enough padding when calculating size to be able to do any offset to get correct alignment when packing
-  
+  localIndex packedSize = numIndices * sliceSize * sizeof( T );
   if( DO_PACKING )
   {
-    T * devBuffer = reinterpret_cast< T * >( &buffer[0] );
-    uintptr_t address = reinterpret_cast< uintptr_t >( devBuffer );
-    uintptr_t misalignment = address % typeSize;
-    if ( misalignment != 0 )
-    {
-      devBuffer = reinterpret_cast< T * >( &buffer[0] + typeSize - misalignment );
-    }
-
+    T * devBuffer = reinterpret_cast< T * >( buffer );
     parallelDeviceStream stream;
     events.emplace_back( forAll< parallelDevicePolicy< > >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
     {
@@ -186,6 +175,18 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
                     parallelDeviceEvents & events )
 {
   localIndex packedSize = PackPointerDevice< DO_PACKING >( buffer, var.strides(), NDIM );
+  size_t typeSize = sizeof( T );
+  uintptr_t misalignment = 0;
+  if( DO_PACKING )
+  {
+    uintptr_t address = reinterpret_cast< uintptr_t >( buffer );
+    misalignment = address % typeSize;
+    if( misalignment != 0 )
+    {
+      buffer += typeSize - misalignment;
+    }
+  }
+  packedSize += typeSize - 1;
   packedSize += PackDataByIndexDevice< DO_PACKING >( buffer, var, indices, events );
   return packedSize;
 }
@@ -199,18 +200,8 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
 {
   localIndex numIndices = indices.size();
   localIndex sliceSize = var.size() / var.size( 0 );
-  size_t typeSize = sizeof( T );
-
-  localIndex unpackSize = numIndices * sliceSize * typeSize;
-  unpackSize += typeSize - 1; // return the correct (padded) size to the calling function
-
-  T const * devBuffer = reinterpret_cast< T const * >( &buffer[0] );
-  uintptr_t address = reinterpret_cast< uintptr_t >( devBuffer );
-  uintptr_t misalignment = address % typeSize;
-  if ( misalignment != 0 )
-  {
-    devBuffer = reinterpret_cast< T const * >( &buffer[0] + typeSize - misalignment );
-  }
+  localIndex unpackSize = numIndices * sliceSize * sizeof( T );
+  T const * devBuffer = reinterpret_cast< T const * >( buffer );
   parallelDeviceStream stream;
   events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
   {
@@ -221,7 +212,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
       threadBuffer++;
     } );
   } ) );
-  
+
   buffer += unpackSize;
   return unpackSize;
 }
@@ -233,10 +224,18 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       T_INDICES const & indices,
                       parallelDeviceEvents & events )
 {
+  size_t typeSize = sizeof( T );
   localIndex strides[NDIM];
-  localIndex sizeOfPackedChars = UnpackPointerDevice( buffer, strides, NDIM );
-  sizeOfPackedChars += UnpackDataByIndexDevice( buffer, var, indices, events );
-  return sizeOfPackedChars;
+  localIndex unpackSize = UnpackPointerDevice( buffer, strides, NDIM );
+  uintptr_t address = reinterpret_cast< uintptr_t >( buffer );
+  uintptr_t misalignment = address % typeSize;
+  if( misalignment != 0 )
+  {
+    buffer += typeSize - misalignment;
+  }
+  unpackSize += typeSize - 1;
+  unpackSize += UnpackDataByIndexDevice( buffer, var, indices, events );
+  return unpackSize;
 }
 
 #define DECLARE_PACK_UNPACK( TYPE, NDIM, USD ) \
