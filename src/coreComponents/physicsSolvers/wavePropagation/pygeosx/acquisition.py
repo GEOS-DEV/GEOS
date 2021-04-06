@@ -19,7 +19,6 @@ def segy_acquisition(folder_path, wavelet, dt):
     shot_list = []
 
     for filename in glob.glob(os.path.join(folder_path, '*.sgy')):
-
         receiver_list = []
 
         with segyio.open(filename, 'r', ignore_geometry=True) as f:
@@ -40,7 +39,6 @@ def segy_acquisition(folder_path, wavelet, dt):
                 receiver_list.append(Receiver([receiverX, receiverY, receiverZ]))
 
                 receivers = ReceiverSet(receiver_list)
-                energy = f.header[0][17]
 
             shot_list.append(Shot(source, receivers))
 
@@ -117,13 +115,13 @@ def moving_acquisition(box,
 
     xposleft = np.linspace(xmin + 0.3*movex, xmin + 0.3*movex + lenRx, nbreceiversx)
     xposright = np.linspace(xmax - 0.3*movex, xmax - 0.3*movex - lenRx, nbreceiversx)
-    ypos = np.linspace(ymin - lenRy/2,ymin + lenRy/2, nbreceiversy)
+    print(ymin -lenRy/2)
+    ypos = np.linspace(ymin - lenRy/2, ymin + lenRy/2, nbreceiversy)
 
     receiversbaseleft = ReceiverSet([Receiver([x, y, zmax]) for x in xposleft for y in ypos])
     receiversbaseright = ReceiverSet([Receiver([x, y, zmax]) for x in xposright for y in ypos])
 
     shots=[]
-
 
     for i in range(nbsourcesy):
         if i%2==0:
@@ -148,9 +146,6 @@ def moving_acquisition(box,
 
             # Define source location and type
             source = Source(srcpos, wavelet, dt)
-
-            receivers = receivers.getInsideDomain(box)
-
 
             shot = Shot(source, copy.deepcopy(receivers))
             shots.append(shot)

@@ -19,7 +19,6 @@ def export_to_segy(pressure, srcCoord, rcvCoord, ishot, dt_cycle, tracePath):
     dt_cycle :
         Frequency of value export
     """
-
     if os.path.exists(tracePath):
         pass
     else:
@@ -36,8 +35,6 @@ def export_to_segy(pressure, srcCoord, rcvCoord, ishot, dt_cycle, tracePath):
 
     with segyio.create(tracePath + "/sismoTraceShot"+str(ishot)+".sgy", spec) as f:
         for i in range(pressure[0,:].size):
-            print("size pressure = " + str(pressure[0,:].size) + "\n")
-            print("i = " + str(i) + "\n\n")
             f.header[i] = {segyio.su.scalco : -100,
                            segyio.su.scalel : -100,
                            segyio.su.sx : int(srcCoord[0]*100),

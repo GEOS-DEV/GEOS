@@ -14,8 +14,13 @@ from acquisition import *
 from shotFileManager import *
 
 
-def multiProcessing(shot_file, tracePath):
-    cmd = "python /home/m3d/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/pygeosx/main.py -i /home/m3d/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/benchmarks/pygeosx_test.xml " + str(shot_file) + " " + tracePath
+def multiProcessing(shot_file, basePath, xmlPath):
+
+    wavePropagationPath = basePath + "GEOSX/src/coreComponents/physicsSolvers/wavePropagation/"
+    pygeosxPath = wavePropagationPath + "/pygeosx/"
+    tracePath = pygeosxPath + "/sismoTrace/"
+
+    cmd = "python " + pygeosxPath + "/main.py -i " + xmlPath + " " + shot_file + " " + tracePath
 
     os.system(cmd)
 
@@ -35,25 +40,29 @@ def main():
 
     frequency = 10.0
     wavelet   = ricker(maxT, dt, frequency)
+"""========================================"""
+    basePath = "/home/m3d/codes/"
+"""======================================="""
+    wavePropagationPath = basePath + "/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/"
+    pygeosxPath = wavePropagationPath + "/pygeosx/"
+    segyPath = pygeosxPath + "/sismoTrace/"
+    xmlPath = sys.argv[2]
 
-    tracePath = "/home/m3d/Desktop/sismoTrace/"
-    segyPath = "/home/m3d/Desktop/pygeosx/sismoTrace/"
     shot_list = segy_acquisition(segyPath, wavelet, dt)
 
-    """
-    #Set acquisition parameters
-    nb_source_x     = 5
-    nb_source_y     = 2
-    nb_receiver_x   = 3
-    nb_receiver_y   = 4
-    receiver_zone_x = 50
-    receiver_zone_y = 90
     #Get seismic acquisition
-    shot_list = moving_acquisition(boundary_box, wavelet, nb_source_x, nb_source_y, nb_receiver_x, nb_receiver_y, receiver_zone_x, receiver_zone_y)
     """
-
+    shot_list = moving_acquisition(boundary_box,
+                                   wavelet,
+                                   dt,
+                                   nbsourcesx = 5,
+                                   nbsourcesy = 2,
+                                   nbreceiversx = 3,
+                                   nbreceiversy = 4,
+                                   lenRx = 50,
+                                   lenRy = 90)
+    """
     """At this point we have defined our seismic acquisition/shot_list"""
-
     nb_proc = 1
     p = []
     nb_shot_m1 = len(shot_list)
@@ -66,7 +75,7 @@ def main():
         shot_file = exportShotList(i, shot_list[ind:ind + nb_shot])
 
         p.append( mp.Process(target = multiProcessing,
-                             args   = (shot_file, tracePath) ) )
+                             args   = (shot_file, basePath, xmlPath) ) )
 
         ind = ind + nb_shot
         nb_shot_m1 = nb_shot_m1 - nb_shot
