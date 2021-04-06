@@ -20,6 +20,7 @@
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/SurfaceElementStencil.hpp"
+#include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
 
 namespace geosx
 {
@@ -661,6 +662,13 @@ INST_FluxKernel( 2, SurfaceElementStencil );
 INST_FluxKernel( 3, SurfaceElementStencil );
 INST_FluxKernel( 4, SurfaceElementStencil );
 INST_FluxKernel( 5, SurfaceElementStencil );
+
+INST_FluxKernel( 1, EmbeddedSurfaceToCellStencil );
+INST_FluxKernel( 2, EmbeddedSurfaceToCellStencil );
+INST_FluxKernel( 3, EmbeddedSurfaceToCellStencil );
+INST_FluxKernel( 4, EmbeddedSurfaceToCellStencil );
+INST_FluxKernel( 5, EmbeddedSurfaceToCellStencil );
+
 
 #undef INST_FluxKernel
 

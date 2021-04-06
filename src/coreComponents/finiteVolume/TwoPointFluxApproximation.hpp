@@ -48,6 +48,15 @@ public:
    */
   TwoPointFluxApproximation( string const & name, dataRepository::Group * const parent );
 
+  /**
+   * @brief View keys.
+   */
+  struct viewKeyStruct : FluxApproximationBase::viewKeyStruct
+  {
+    /// @return The key for fractureStencil
+    static constexpr char const * edfmStencilString() { return "edfmStencil"; }
+  };
+
 protected:
 
   virtual void registerCellStencil( Group & stencilGroup ) const override;
