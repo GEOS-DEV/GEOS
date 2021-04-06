@@ -21,7 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
-#include "fileIO/schema/schemaUtilities.hpp"
+//#include "fileIO/schema/schemaUtilities.hpp"
 
 
 namespace geosx

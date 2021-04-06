@@ -26,7 +26,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "SurfaceElementRegion.hpp"
-#include "fileIO/schema/schemaUtilities.hpp"
+//#include "fileIO/schema/schemaUtilities.hpp"
 #include "WellElementRegion.hpp"
 
 namespace geosx

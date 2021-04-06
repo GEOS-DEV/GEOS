@@ -91,20 +91,7 @@ set(mesh_sources
     utilities/MeshUtilities.cpp
    )
 
-if( BUILD_OBJ_LIBS)
-  set(dependencyList dataRepository metis)
-else()
-  set(dependencyList
-      metis
-      codingUtilities
-      constitutive
-      finiteElement
-      dataRepository
-      lvarray
-      managers
-      fileIO
-      )
-endif()
+set(dependencyList schema dataRepository constitutive metis)
 
 
 if( ENABLE_OPENMP )

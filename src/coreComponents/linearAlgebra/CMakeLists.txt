@@ -50,7 +50,7 @@ set( linearAlgebra_sources
      DofManager.cpp )
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList common blas lapack RAJA)
+  set( dependencyList mesh blas lapack RAJA)
 else()
   set( dependencyList 
        common 
@@ -173,6 +173,8 @@ blt_add_library( NAME                  linearAlgebra
                )
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
+
+add_subdirectory(unitTests)
 
 geosx_add_code_checks( PREFIX linearAlgebra )
 

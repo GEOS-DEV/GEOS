@@ -24,6 +24,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
 #include "mesh/MeshManager.hpp"
+#include "schema/schemaUtilities.hpp"
 
 namespace geosx
 {

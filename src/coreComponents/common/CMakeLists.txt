@@ -9,6 +9,7 @@ set(common_headers
     DataTypes.hpp
     FieldSpecificationOps.hpp
     GeosxMacros.hpp
+    initializeEnvironment.hpp
     Logger.hpp
     MpiWrapper.hpp
     Path.hpp
@@ -23,12 +24,17 @@ set(common_headers
 set(common_sources
     BufferAllocator.cpp
     DataTypes.cpp
+    initializeEnvironment.cpp
     Logger.cpp
     MpiWrapper.cpp
     Path.cpp
    )
 
 set( dependencyList lvarray pugixml RAJA chai conduit::conduit )
+
+if ( ENABLE_MKL )
+  set( dependencyList ${dependencyList} mkl )
+endif()
 
 if( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -43,7 +49,7 @@ if( ENABLE_MPI )
 endif()
 
 if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper )
+  set( dependencyList ${dependencyList} caliper adiak )
 endif()
 
 blt_add_library( NAME                  common

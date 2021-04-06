@@ -11,7 +11,6 @@ set( fileIO_headers
     Outputs/TimeHistoryOutput.hpp
     Outputs/BlueprintOutput.hpp
     Outputs/PythonOutput.hpp
-     schema/schemaUtilities.hpp 
      silo/SiloFile.hpp
      timeHistory/TimeHistHDF.hpp
      timeHistory/TimeHistoryCollection.hpp
@@ -30,7 +29,6 @@ set( fileIO_sources
     Outputs/TimeHistoryOutput.cpp
     Outputs/BlueprintOutput.cpp
     Outputs/PythonOutput.cpp
-     schema/schemaUtilities.cpp
      silo/SiloFile.cpp
      timeHistory/PackCollection.cpp
      timeHistory/TimeHistHDF.cpp

@@ -1,13 +1,14 @@
 set( subdirs
      math
      common
-     linearAlgebra
      codingUtilities
      dataRepository
+     schema
      functions
-     fieldSpecification
      constitutive
      mesh
+     linearAlgebra
+     fieldSpecification
      finiteElement
      finiteVolume
      virtualElement

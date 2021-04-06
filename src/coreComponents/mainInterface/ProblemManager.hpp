@@ -21,7 +21,6 @@
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
 #include "events/EventManager.hpp"
-#include "fileIO/schema/schemaUtilities.hpp"
 
 namespace geosx
 {

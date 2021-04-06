@@ -23,16 +23,17 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "fileIO/Outputs/OutputManager.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "functions/FunctionManager.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/utilities/MeshUtilities.hpp"
@@ -42,6 +43,7 @@
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "schema/schemaUtilities.hpp"
 
 // System includes
 #include <vector>
