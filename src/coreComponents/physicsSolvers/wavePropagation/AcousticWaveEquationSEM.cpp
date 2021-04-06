@@ -328,8 +328,11 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
     {
       if( receiverIsLocal[ircv] == 1 )
       {
+        // Note: this "manual" output to file is temporary
+        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+        // TODO: remove the (sprintf+saveSismo) and replace with TimeHistory
         char filename[50];
-        sprintf( filename, "sismoTraceReceiver%0ld.txt", ircv );
+        sprintf( filename, "sismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
         this->saveSismo( isismo, p_rcvs[ircv], filename );
       }
     }
