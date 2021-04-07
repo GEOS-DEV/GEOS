@@ -246,8 +246,10 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
 
   real64 const meanPermCoeff = 1.0; //TODO make it a member
 
-  transmissibility[0] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
-  transmissibility[1] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+  real64 const value = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+
+  transmissibility[0] = value;
+  transmissibility[1] = -value;
 }
 
 template< typename PERMTYPE >

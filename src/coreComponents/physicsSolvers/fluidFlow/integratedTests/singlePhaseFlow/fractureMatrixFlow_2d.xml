@@ -188,7 +188,7 @@
   <Functions/>
 
   <Outputs>
-    <Silo
+    <VTK
       name="siloOutput"
       plotFileRoot="fractureMatrixFlow"
       plotLevel="1"/>

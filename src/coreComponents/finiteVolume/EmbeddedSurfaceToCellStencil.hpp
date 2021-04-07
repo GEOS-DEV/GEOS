@@ -218,12 +218,11 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
   real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
 
   real64 const harmonicWeight   = t0*t1 / (t0+t1);
-  real64 const arithmeticWeight = (t0+t1)/2;
 
-  real64 const meanPermCoeff = 1.0; //TODO make it a member
+  real64 const value =  harmonicWeight;
 
-  transmissibility[0] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
-  transmissibility[1] = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+  transmissibility[0] = value;
+  transmissibility[1] = -value;
 }
 
 template< typename PERMTYPE >
