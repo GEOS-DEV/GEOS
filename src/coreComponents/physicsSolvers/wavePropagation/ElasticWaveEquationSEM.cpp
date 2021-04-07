@@ -495,7 +495,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         real64 N[numNodesPerElem];
         real64 gradN[ numNodesPerElem ][ 3 ];
- 
+
         /// Loop over elements
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
@@ -519,7 +519,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
             }
           }
 
-          
+
           real64 const alpha = 1.0/ vp[k];
 
           for( localIndex kfe=0; kfe< numFacesPerElem; ++kfe )
@@ -771,25 +771,25 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
         real64 sigmayz[numNodesPerElem] = {{0.0}};
         real64 sigmazx[numNodesPerElem] = {{0.0}};
         real64 sigmazy[numNodesPerElem] = {{0.0}};
-        real64 sigmazz[numNodesPerElem] = {{0.0}};      
+        real64 sigmazz[numNodesPerElem] = {{0.0}};
        // real64 lambda[numElem] = {{0.0}};
 
         // Declaration of the stiffness matrix 'line'
-        real64 Rh_ij[3] = {{0.0}};
+        //real64 Rh_ij = 0.0;
 
         for( localIndex k=0; k<elemsToNodes.size( 0 ); ++k )
         {
 
           //Declaration of the first derivatives in space of the displacement V2: no arrayView (acollade)
           real64 dux_dx[numNodesPerElem] = {{0.0}};
-          real64 duy_dx[numNodesPerElem] = {{0.0}};
-          real64 duz_dx[numNodesPerElem] = {{0.0}};
-          real64 dux_dy[numNodesPerElem] = {{0.0}};
-          real64 duy_dy[numNodesPerElem] = {{0.0}};
-          real64 duz_dy[numNodesPerElem] = {{0.0}};
-          real64 dux_dz[numNodesPerElem] = {{0.0}};
-          real64 duy_dz[numNodesPerElem] = {{0.0}};
-          real64 duz_dz[numNodesPerElem] = {{0.0}};          
+	  real64 duy_dx[numNodesPerElem] = {{0.0}};
+	  real64 duz_dx[numNodesPerElem] = {{0.0}};
+	  real64 dux_dy[numNodesPerElem] = {{0.0}};
+	  real64 duy_dy[numNodesPerElem] = {{0.0}};
+	  real64 duz_dy[numNodesPerElem] = {{0.0}};
+	  real64 dux_dz[numNodesPerElem] = {{0.0}};
+	  real64 duy_dz[numNodesPerElem] = {{0.0}};
+	  real64 duz_dz[numNodesPerElem] = {{0.0}};
 
           // Computation of the Lamé coefficients lambda and mu
           mu[k] = rho[k] * vs[k] * vs[k];
@@ -797,11 +797,11 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
           real64 xLocal[numNodesPerElem][3] = {{0.0}};
 
-          for( localIndex a=0; a<numNodesPerElem; ++a )
+          for( localIndex i=0; i<numNodesPerElem; ++i )
           {
-            for( localIndex i=0; i<3; ++i )
+            for( localIndex a=0; a<3; ++a )
             {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
+              xLocal[i][a] = X[elemsToNodes[k][i]][a];
             }
           }
 
@@ -810,65 +810,43 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
             FE_TYPE::calcN( q, N );
 
             real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-    
+
 
             for( localIndex i=0; i<numNodesPerElem; ++i )
             {
-              for(localIndex j=0; j<numNodesPerElem; ++j)
-              {
+	      dux_dx[i] += ux_n[elemsToNodes[k][i]] * gradN[i][0];
+	      duy_dx[i] += uy_n[elemsToNodes[k][i]] * gradN[i][0];
+	      duz_dx[i] += uz_n[elemsToNodes[k][i]] * gradN[i][0];
+	      dux_dy[i] += ux_n[elemsToNodes[k][i]] * gradN[i][1];
+	      duy_dy[i] += uy_n[elemsToNodes[k][i]] * gradN[i][1];
+	      duz_dy[i] += uz_n[elemsToNodes[k][i]] * gradN[i][1];
+	      dux_dz[i] += ux_n[elemsToNodes[k][i]] * gradN[i][2];
+	      duy_dz[i] += uy_n[elemsToNodes[k][i]] * gradN[i][2];
+	      duz_dz[i] += uz_n[elemsToNodes[k][i]] * gradN[i][2];
 
-                // Computation of all derivatives of u on the reference element
-                dux_dx[i] += ux_n[elemsToNodes[k][j]] * gradN[j][0];
-                duy_dx[i] += uy_n[elemsToNodes[k][j]] * gradN[j][0];
-                duz_dx[i] += uz_n[elemsToNodes[k][j]] * gradN[j][0];
-                dux_dy[i] += ux_n[elemsToNodes[k][j]] * gradN[j][1];
-                duy_dy[i] += uy_n[elemsToNodes[k][j]] * gradN[j][1];
-                duz_dy[i] += uz_n[elemsToNodes[k][j]] * gradN[j][1];
-                dux_dz[i] += ux_n[elemsToNodes[k][j]] * gradN[j][2];
-                duy_dz[i] += uy_n[elemsToNodes[k][j]] * gradN[j][2];
-                duz_dz[i] += uz_n[elemsToNodes[k][j]] * gradN[j][2];
-               
-              }
-
-              // Computation of the stress tensor sigma
-              sigmaxx[i] = ((lambda[k] + 2*mu[k]) * dux_dx[i] + lambda[k] * (duy_dy[i] + duz_dz[i]));
-              sigmayy[i] = ((lambda[k] + 2*mu[k]) * duy_dy[i] + lambda[k] * (dux_dx[i] + duz_dz[i]));
-              sigmazz[i] = ((lambda[k] + 2*mu[k]) * duz_dz[i] + lambda[k] * (duy_dy[i] + dux_dx[i]));
-              sigmaxy[i] = (mu[k] * (dux_dy[i] + duy_dx[i]));
-              sigmaxz[i] = (mu[k] * (dux_dz[i] + duz_dx[i]));
-              sigmayz[i] = (mu[k] * (duz_dy[i] + duy_dz[i]));
+	      sigmaxx[i] = (lambda[k] + 2*mu[k]) * dux_dx[i] + lambda[k] * (duy_dy[i] + duz_dz[i]);
+              sigmayy[i] = (lambda[k] + 2*mu[k]) * duy_dy[i] + lambda[k] * (dux_dx[i] + duz_dz[i]);
+              sigmazz[i] = (lambda[k] + 2*mu[k]) * duz_dz[i] + lambda[k] * (duy_dy[i] + dux_dx[i]);
+              sigmaxy[i] = mu[k] * (dux_dy[i] + duy_dx[i]);
+              sigmaxz[i] = mu[k] * (dux_dz[i] + duz_dx[i]);
+              sigmayz[i] = mu[k] * (duz_dy[i] + duy_dz[i]);
               sigmayx[i] = sigmaxy[i];
               sigmazy[i] = sigmayz[i];
               sigmazx[i] = sigmaxz[i];
-
-              
-                 
             }
-           
-            // Computation of the stiffness matrix coefficients
-            for ( localIndex i=0; i<numNodesPerElem; i++)
-            {
-              for ( localIndex j=0; j<numNodesPerElem; j++)
-              {
-                for ( localIndex a=0; a<3; a++)
-                {
-                  Rh_ij[a] = detJ * gradN[j][a] * N[i];
-                }
-               
-                // Computation of the stiffness vector coefficients
-                stiffnessVector_x[elemsToNodes[k][j]] += Rh_ij[0] * sigmaxx[i] + Rh_ij[1] * sigmaxy[i] + Rh_ij[2] * sigmaxz[i]; 
-                stiffnessVector_y[elemsToNodes[k][j]] += Rh_ij[0] * sigmayx[i] + Rh_ij[1] * sigmayy[i] + Rh_ij[2] * sigmayz[i]; 
-                stiffnessVector_z[elemsToNodes[k][j]] += Rh_ij[0] * sigmazx[i] + Rh_ij[1] * sigmazy[i] + Rh_ij[2] * sigmazz[i]; 
-
-             }
-             
-            }
-            
-
+	    for( localIndex i=0; i<numNodesPerElem; ++i )
+	      {
+		for(localIndex j=0; j<numNodesPerElem; ++j)
+		  {
+		    stiffnessVector_x[elemsToNodes[k][i]] += detJ * (sigmaxx[j] * gradN[j][0] + sigmaxy[j] * gradN[j][1] + sigmaxz[j] * gradN[j][2]);
+		    stiffnessVector_y[elemsToNodes[k][i]] += detJ * (sigmayx[j] * gradN[j][0] + sigmayy[j] * gradN[j][1] + sigmayz[j] * gradN[j][2]);
+		    stiffnessVector_z[elemsToNodes[k][i]] += detJ * (sigmazx[j] * gradN[j][0] + sigmazy[j] * gradN[j][1] + sigmazz[j] * gradN[j][2]);
+		  }
+	      }
           }
 
         }
-      
+
       } );
     } );
   } );
@@ -881,9 +859,9 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
-      ux_np1[a] = (1.0/(mass[a]))*(2*mass[a] * ux_n[a] - dt2*stiffnessVector_x[a] - (mass[a]) * ux_nm1[a] + dt2*rhs[a] );
-      uy_np1[a] = (1.0/(mass[a]))*(2*mass[a] * uy_n[a] - dt2*stiffnessVector_y[a] - (mass[a]) * uy_nm1[a] + dt2*rhs[a] );
-      uz_np1[a] = (1.0/(mass[a]))*(2*mass[a] * uz_n[a] - dt2*stiffnessVector_z[a] - (mass[a]) * uz_nm1[a] + dt2*rhs[a] );  
+      ux_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2*mass[a] * ux_n[a] - dt2*stiffnessVector_x[a] - (mass[a] - (dt/2)*damping[a]) * ux_nm1[a] + dt2*rhs[a] );
+      uy_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2*mass[a] * uy_n[a] - dt2*stiffnessVector_y[a] - (mass[a] - (dt/2)*damping[a]) * uy_nm1[a] + dt2*rhs[a] );
+      uz_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2*mass[a] * uz_n[a] - dt2*stiffnessVector_z[a] - (mass[a] - (dt/2)*damping[a]) * uz_nm1[a] + dt2*rhs[a] );
     }
   }
 
@@ -901,7 +879,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   for( localIndex a=0; a<nodeManager.size(); ++a )
   {
-     
+
     ux_nm1[a] = ux_n[a];
     uy_nm1[a] = uy_n[a];
     uz_nm1[a] = uz_n[a];
@@ -913,15 +891,15 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     stiffnessVector_y[a] = 0.0;
     stiffnessVector_z[a] = 0.0;
     rhs[a] = 0.0;
-  
-    
+
+
   }
 
   computeSismoTrace( cycleNumber, ux_np1, uy_np1, uz_np1 );
 
 
   return dt;
-  
+
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )
