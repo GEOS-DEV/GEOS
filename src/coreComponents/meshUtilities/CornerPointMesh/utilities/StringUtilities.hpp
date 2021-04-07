@@ -12,9 +12,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESHUTILITIES_CPMESH_STRINGUTILITIES_HPP_
-#define GEOSX_MESHUTILITIES_CPMESH_STRINGUTILITIES_HPP_
+#ifndef GEOSX_MESHUTILITIES_CORNERPOINTMESH_STRINGUTILITIES_HPP_
+#define GEOSX_MESHUTILITIES_CORNERPOINTMESH_STRINGUTILITIES_HPP_
 
+#include "common/DataTypes.hpp"
 #include <sstream>
 #include <vector>
 
@@ -23,20 +24,20 @@
 namespace geosx
 {
 
-namespace CPMeshStringUtilities
+namespace cornerPointMeshStringUtilities
 {
 
-void eclipseDataBufferToVector( std::string & inputBuffer, std::vector< double > & outputVector );
-void eclipseDataBufferToVector( std::string & inputBuffer, std::vector< int > & outputVector );
-std::string fileToString( const std::string filePath );
-void trim( std::string & str );
-bool removeStringAndFollowingContentFromLine( std::string toBeRemoved, std::string & line );
-void removeTab( std::string & v );
-void removeEndOfLine( std::string & v );
-void removeExtraSpaces( std::string & v );
+void eclipseDataBufferToVector( string & inputBuffer, std::vector< double > & outputVector );
+void eclipseDataBufferToVector( string & inputBuffer, std::vector< int > & outputVector );
+string fileToString( const string filePath );
+void trim( string & str );
+bool removeStringAndFollowingContentFromLine( string toBeRemoved, string & line );
+void removeTab( string & v );
+void removeEndOfLine( string & v );
+void removeExtraSpaces( string & v );
 
 template< typename T >
-void fromStringTo( std::string & data, std::vector< T > & v )
+void fromStringTo( string & data, std::vector< T > & v )
 {
   v.reserve( data.size());
   std::istringstream iss( data );
@@ -48,14 +49,14 @@ void fromStringTo( std::string & data, std::vector< T > & v )
 }
 
 template< typename T >
-void fromStringTo( std::string & data, T & v )
+void fromStringTo( string & data, T & v )
 {
   std::istringstream iss( data );
   iss >> v;
 }
 
-} // end namespace CPMeshStringUtilities
+} // namespace cornerPointMeshStringUtilities
 
-} // end namespace geosx
+} // namespace geosx
 
 #endif

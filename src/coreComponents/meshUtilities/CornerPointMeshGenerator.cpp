@@ -24,18 +24,36 @@
 namespace geosx
 {
 using namespace dataRepository;
-using namespace CPMesh;
+using namespace cornerPointMesh;
 
 CornerPointMeshGenerator::CornerPointMeshGenerator( string const & name, Group * const parent ):
-  MeshGeneratorBase( name, parent )
+  MeshGeneratorBase( name, parent ),
+  m_permeabilityUnitInInputFile( PermeabilityUnit::Millidarcy ),
+  m_coordinatesUnitInInputFile( CoordinatesUnit::Meter ),
+  m_toSquareMeter( 1.0 ),
+  m_toMeter( 1.0 )
 {
   registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Path to the mesh file" );
 
+  registerWrapper( viewKeyStruct::permeabilityUnitInInputFileString(), &m_permeabilityUnitInInputFile ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( PermeabilityUnit::Millidarcy ).
+    setDescription( "Flag to specify the unit of permeability in the input file. \n"
+                    "Two options are available: Millidarcy (default) or SquareMeter. \n"
+                    "If Millidarcy is chosen, a conversion factor is applied as GEOSX internally works with square meters." );
+
+  registerWrapper( viewKeyStruct::coordinatesUnitInInputFileString(), &m_coordinatesUnitInInputFile ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( CoordinatesUnit::Meter ).
+    setDescription( "Flag to specify the unit of the coordinates in the input file. \n"
+                    "Two options are available: Meter (default) or Foot. \n"
+                    "If Foot is chosen, a conversion factor is applied as GEOSX internally works with meters." );
+
   string const builderName = "cpMeshBuilder";
-  m_cPMeshBuilder = std::make_unique< CPMesh::CPMeshBuilder >( builderName );
+  m_cpMeshBuilder = std::make_unique< cornerPointMesh::CornerPointMeshBuilder >( builderName );
 }
 
 CornerPointMeshGenerator::~CornerPointMeshGenerator()
@@ -43,7 +61,34 @@ CornerPointMeshGenerator::~CornerPointMeshGenerator()
 
 void CornerPointMeshGenerator::postProcessInput()
 {
-  m_cPMeshBuilder->buildMesh( m_filePath );
+  if( m_permeabilityUnitInInputFile == PermeabilityUnit::SquareMeter )
+  {
+    m_toSquareMeter = 1.0;
+  }
+  else if( m_permeabilityUnitInInputFile == PermeabilityUnit::Millidarcy )
+  {
+    m_toSquareMeter = 9.869232667160128e-16;
+  }
+  else
+  {
+    GEOSX_THROW( "This unit for permeability is not supported", InputError );
+  }
+
+  if( m_coordinatesUnitInInputFile == CoordinatesUnit::Meter )
+  {
+    m_toMeter = 1.0;
+  }
+  else if( m_coordinatesUnitInInputFile == CoordinatesUnit::Foot )
+  {
+    m_toMeter = 0.3048;
+  }
+  else
+  {
+    GEOSX_THROW( "This unit for coordinates is not supported", InputError );
+  }
+
+
+  m_cpMeshBuilder->buildMesh( m_filePath );
 }
 
 Group * CornerPointMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
@@ -64,15 +109,15 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
   // Step 0: transfer the neighbor list
 
   // TODO: change the name, we don't use metis
-  domain.getMetisNeighborList() = m_cPMeshBuilder->neighborsList();
+  domain.getMetisNeighborList() = m_cpMeshBuilder->neighborsList();
 
   // we can start constructing the mesh
 
   // Step 1: fill vertex information
 
-  arrayView2d< real64 const > vertices = m_cPMeshBuilder->vertices();
-  arrayView1d< globalIndex const > vertexToGlobalVertex = m_cPMeshBuilder->vertexToGlobalVertex();
-  localIndex const nVertices = vertices.size( 0 );
+  arrayView2d< real64 const > vertexPositions = m_cpMeshBuilder->vertexPositions();
+  arrayView1d< globalIndex const > vertexToGlobalVertex = m_cpMeshBuilder->vertexToGlobalVertex();
+  localIndex const nVertices = vertexPositions.size( 0 );
   nodeManager.resize( nVertices );
   arrayView1d< globalIndex > const & vertexLocalToGlobal = nodeManager.localToGlobalMap();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
@@ -86,9 +131,9 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
 
   for( localIndex iVertex = 0; iVertex < nVertices; ++iVertex )
   {
-    X( iVertex, 0 ) = vertices( iVertex, 0 );
-    X( iVertex, 1 ) = vertices( iVertex, 1 );
-    X( iVertex, 2 ) = vertices( iVertex, 2 );
+    X( iVertex, 0 ) = m_toMeter * vertexPositions( iVertex, 0 );
+    X( iVertex, 1 ) = m_toMeter * vertexPositions( iVertex, 1 );
+    X( iVertex, 2 ) = m_toMeter * vertexPositions( iVertex, 2 );
     allVertices.insert( iVertex );
     vertexLocalToGlobal( iVertex ) = vertexToGlobalVertex( iVertex );
 
@@ -116,11 +161,11 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
   //  -> map from elem to faces
   //  -> map from face to nodes
   // what is below is a temporary mess (that maybe, should be hidden in CPMeshData)
-  arrayView1d< localIndex const > activeCellInsidePartitionToActiveCell = m_cPMeshBuilder->activeCellInsidePartitionToActiveCell();
-  arrayView1d< globalIndex const > activeCellToGlobalCell = m_cPMeshBuilder->activeCellToGlobalCell();
-  arrayView1d< localIndex const > activeCellToCell = m_cPMeshBuilder->activeCellToCell();
-  arrayView1d< localIndex const > cellToCPVertices = m_cPMeshBuilder->cellToCPVertices();
-  arrayView1d< localIndex const > cPVertexToVertex = m_cPMeshBuilder->cPVertexToVertex();
+  arrayView1d< localIndex const > activeCellInsidePartitionToActiveCell = m_cpMeshBuilder->activeCellInsidePartitionToActiveCell();
+  arrayView1d< globalIndex const > activeCellToGlobalCell = m_cpMeshBuilder->activeCellToGlobalCell();
+  arrayView1d< localIndex const > activeCellToCell = m_cpMeshBuilder->activeCellToCell();
+  arrayView1d< localIndex const > cellToCPVertices = m_cpMeshBuilder->cellToCPVertices();
+  arrayView1d< localIndex const > cpVertexToVertex = m_cpMeshBuilder->cpVertexToVertex();
 
   localIndex const nActiveCellsInsidePartition = activeCellInsidePartitionToActiveCell.size();
   cellBlock->setElementType( "C3D8" );
@@ -139,14 +184,14 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
     localIndex const iFirstCPVertex = cellToCPVertices( activeCellToCell( iActiveCell ) );
 
     // temporary code while we don't support the non-conforming case
-    cellToVertex( iActiveCellInside, 0 ) = cPVertexToVertex( iFirstCPVertex );
-    cellToVertex( iActiveCellInside, 1 ) = cPVertexToVertex( iFirstCPVertex + 1 );
-    cellToVertex( iActiveCellInside, 2 ) = cPVertexToVertex( iFirstCPVertex + 3 );
-    cellToVertex( iActiveCellInside, 3 ) = cPVertexToVertex( iFirstCPVertex + 2 );
-    cellToVertex( iActiveCellInside, 4 ) = cPVertexToVertex( iFirstCPVertex + 4 );
-    cellToVertex( iActiveCellInside, 5 ) = cPVertexToVertex( iFirstCPVertex + 5 );
-    cellToVertex( iActiveCellInside, 6 ) = cPVertexToVertex( iFirstCPVertex + 7 );
-    cellToVertex( iActiveCellInside, 7 ) = cPVertexToVertex( iFirstCPVertex + 6 );
+    cellToVertex( iActiveCellInside, 0 ) = cpVertexToVertex( iFirstCPVertex );
+    cellToVertex( iActiveCellInside, 1 ) = cpVertexToVertex( iFirstCPVertex + 1 );
+    cellToVertex( iActiveCellInside, 2 ) = cpVertexToVertex( iFirstCPVertex + 2 );
+    cellToVertex( iActiveCellInside, 3 ) = cpVertexToVertex( iFirstCPVertex + 3 );
+    cellToVertex( iActiveCellInside, 4 ) = cpVertexToVertex( iFirstCPVertex + 4 );
+    cellToVertex( iActiveCellInside, 5 ) = cpVertexToVertex( iFirstCPVertex + 5 );
+    cellToVertex( iActiveCellInside, 6 ) = cpVertexToVertex( iFirstCPVertex + 6 );
+    cellToVertex( iActiveCellInside, 7 ) = cpVertexToVertex( iFirstCPVertex + 7 );
 
     cellLocalToGlobal( iActiveCellInside ) = activeCellToGlobalCell( iActiveCell );
   }
@@ -157,7 +202,7 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
   {
 
     // Step 3.a: fill porosity in active cells
-    arrayView1d< real64 const > porosityField = m_cPMeshBuilder->porosityField();
+    arrayView1d< real64 const > porosityField = m_cpMeshBuilder->porosityField();
     if( !porosityField.empty() )
     {
       arrayView1d< real64 > referencePorosity = cellBlock->addProperty< array1d< real64 > >( "referencePorosity" ).toView();
@@ -169,7 +214,7 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
     }
 
     // Step 3.b: fill permeability in active cells
-    arrayView2d< real64 const > permeabilityField = m_cPMeshBuilder->permeabilityField();
+    arrayView2d< real64 const > permeabilityField = m_cpMeshBuilder->permeabilityField();
     if( !permeabilityField.empty() )
     {
       array2d< real64 > & permeability = cellBlock->addProperty< array2d< real64 > >( "permeability" );
@@ -180,8 +225,8 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
         localIndex const iActiveCell = activeCellInsidePartitionToActiveCell( iActiveCellInside );
         for( localIndex dim = 0; dim < 3; dim++ )
         {
-          // TODO: find a good place for the conversion factor!!
-          permeability( iActiveCellInside, dim ) = 9.869233e-16 * permeabilityField( activeCellToCell( iActiveCell ), dim );
+          permeability( iActiveCellInside, dim ) =
+            m_toSquareMeter * permeabilityField( activeCellToCell( iActiveCell ), dim );
         }
       }
     }

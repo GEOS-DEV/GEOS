@@ -400,7 +400,7 @@ public:
    */
   template< typename T >
   static int scatter( arrayView1d< T const > sendValues,
-                      arrayView1d< T > myValues,
+                      arrayView1d< T > recvValues,
                       int MPI_PARAM( srcRank ),
                       MPI_Comm MPI_PARAM( comm ) );
 
@@ -624,24 +624,28 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
 
 template< typename T >
 int MpiWrapper::scatter( arrayView1d< T const > sendValues,
-                         arrayView1d< T > myValues,
+                         arrayView1d< T > recvValues,
                          int MPI_PARAM( srcRank ),
                          MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   int const mpiSize = commSize( comm );
-  int const sizePerRank = myValues.size();
-  GEOSX_ERROR_IF( myValues.size() * mpiSize != sendValues.size(),
+  int const sizePerRank = recvValues.size();
+  GEOSX_ERROR_IF( recvValues.size() * mpiSize != sendValues.size(),
                   "Inconsistent sizes in MpiWrapper::scatter" );
   return MPI_Scatter( sendValues.data(),
                       sizePerRank,
                       getMpiType< T >(),
-                      myValues.data(),
+                      recvValues.data(),
                       sizePerRank,
                       getMpiType< T >(),
                       srcRank,
                       comm );
 #else
+  for( localIndex i = 0; i < recvValues(); ++i )
+  {
+    recvValues( i ) = sendValues( i );
+  }
   return 0;
 #endif
 }

@@ -24,19 +24,19 @@
 namespace geosx
 {
 
-namespace CPMeshStringUtilities
+namespace cornerPointMeshStringUtilities
 {
 
-void eclipseDataBufferToVector( std::string & inputBuffer, std::vector< double > & v )
+void eclipseDataBufferToVector( string & inputBuffer, std::vector< double > & v )
 {
-  std::string const star( "*" );
+  string const star( "*" );
   int positionOfStar( 0 );
   int nRepetitions( 0 );
   double repeatedValue( 0. );
 
   // split the inputBuffer in chunks of information (spaces are used to split)
   std::istringstream splitBuffer( inputBuffer );
-  std::string chunk;
+  string chunk;
 
   // Traverse through all chunks
   do
@@ -46,11 +46,11 @@ void eclipseDataBufferToVector( std::string & inputBuffer, std::vector< double >
     if( chunk.size() > 0 )
     {
       // does this word contain a star "*"
-      positionOfStar = int(chunk.find( star ));
-      if( positionOfStar>0 )
+      positionOfStar = static_cast< int >( chunk.find( star ) );
+      if( positionOfStar > 0 )
       {
-        std::string const nTimesValueIsRepeated( chunk.substr( 0, positionOfStar ));
-        std::string const valueAsString( chunk.substr( positionOfStar+1, chunk.size()));
+        string const nTimesValueIsRepeated( chunk.substr( 0, positionOfStar ) );
+        string const valueAsString( chunk.substr( positionOfStar+1, chunk.size() ) );
         nRepetitions = std::stoi( nTimesValueIsRepeated );
         repeatedValue = std::stod( valueAsString );
         std::fill_n( back_inserter( v ), nRepetitions, repeatedValue ); // append nRepetitions of the repeatedValue as double
@@ -67,9 +67,9 @@ void eclipseDataBufferToVector( std::string & inputBuffer, std::vector< double >
   while (splitBuffer);
 }
 
-void eclipseDataBufferToVector( std::string & inputBuffer, std::vector< int > & v )
+void eclipseDataBufferToVector( string & inputBuffer, std::vector< int > & v )
 {
-  std::string const star( "*" );
+  string const star( "*" );
   int positionOfStar( 0 );
   int nRepetitions( 0 );
   int repeatedValue( 0 );
@@ -81,16 +81,16 @@ void eclipseDataBufferToVector( std::string & inputBuffer, std::vector< int > & 
   do
   {
     // Read a word
-    std::string word;
+    string word;
     splitBuffer >> word;
     if( word.size()>0 )
     {
       // does this word contain a "*"
-      positionOfStar = int(word.find( star ));
-      if( positionOfStar>0 )
+      positionOfStar = static_cast< int >( word.find( star ) );
+      if( positionOfStar > 0 )
       {
-        std::string const multiplierAsString( word.substr( 0, positionOfStar ));
-        std::string const valueAsString( word.substr( positionOfStar+1, word.size()));
+        string const multiplierAsString( word.substr( 0, positionOfStar ) );
+        string const valueAsString( word.substr( positionOfStar+1, word.size() ) );
         nRepetitions = std::stoi( multiplierAsString );
         repeatedValue = std::stoi( valueAsString );
         std::fill_n( back_inserter( v ), nRepetitions, repeatedValue ); // append nRepetitions of the repeatedValue as int
@@ -107,10 +107,10 @@ void eclipseDataBufferToVector( std::string & inputBuffer, std::vector< int > & 
   while (splitBuffer);
 }
 
-std::string fileToString( const std::string filePath )
+string fileToString( const string filePath )
 {
   std::ifstream meshFile;
-  std::string fileContent( "A" );
+  string fileContent( "A" );
 
   //Open file
   meshFile.open( filePath );
@@ -128,7 +128,7 @@ std::string fileToString( const std::string filePath )
   return fileContent;
 }
 
-void trim( std::string & str )
+void trim( string & str )
 {
   if( str.size() > 0 )
   {
@@ -146,18 +146,18 @@ void trim( std::string & str )
   }
 }
 
-bool removeStringAndFollowingContentFromLine( std::string toBeRemoved, std::string & line )
+bool removeStringAndFollowingContentFromLine( string toBeRemoved, string & line )
 {
   // does the line have a "toBeRemoved" character(s)
   std::size_t pos = line.find( toBeRemoved );
   std::size_t initial_line_length = line.size();
   bool res = false;
-  if( pos != std::string::npos )
+  if( pos != string::npos )
   {
     res = true;
 
     std::size_t end_line_position = line.find( '\n' );
-    if( end_line_position != std::string::npos )
+    if( end_line_position != string::npos )
     {
       // remove the character and everything afterwards
       line = line.substr( 0, pos )+line.substr( end_line_position+1, initial_line_length );
@@ -170,18 +170,18 @@ bool removeStringAndFollowingContentFromLine( std::string toBeRemoved, std::stri
   return res;
 }
 
-void removeTab( std::string & v )
+void removeTab( string & v )
 {
   std::replace( v.begin(), v.end(), '\t', ' ' );
 }
 
-void removeEndOfLine( std::string & v )
+void removeEndOfLine( string & v )
 {
   std::replace( v.begin(), v.end(), '\r', ' ' );
   std::replace( v.begin(), v.end(), '\n', ' ' );
 }
 
-void removeExtraSpaces( std::string & v )
+void removeExtraSpaces( string & v )
 {
   v.erase( std::unique( v.begin(), v.end(),
                         []( char a, char b ) { return a == ' ' && b == ' '; } ), v.end());

@@ -13,12 +13,12 @@
  */
 
 /**
- * @file CPMeshData.hpp
+ * @file CornerPointMeshData.hpp
  */
 
 
-#ifndef GEOSX_MESHUTILITIES_CPMESH_CPMESHDATA_HPP_
-#define GEOSX_MESHUTILITIES_CPMESH_CPMESHDATA_HPP_
+#ifndef GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHDATA_HPP_
+#define GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHDATA_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
@@ -26,16 +26,16 @@
 namespace geosx
 {
 
-namespace CPMesh
+namespace cornerPointMesh
 {
 
 /**
- * @struct CPMeshDimensions
+ * @struct CornerPointMeshDimensions
  * @brief Struct storing global and local mesh dimensions
  */
-struct CPMeshDimensions
+struct CornerPointMeshDimensions
 {
-  CPMeshDimensions()
+  CornerPointMeshDimensions()
     :
     m_nX( 0 ),
     m_nY( 0 ),
@@ -226,51 +226,51 @@ private:
 };
 
 /**
- * @struct CPMeshVertices
+ * @struct CornerPointMeshVertices
  * @brief Struct storing vertex information
  */
-struct CPMeshVertices
+struct CornerPointMeshVertices
 {
 
   // vertices
 
-  /// vertices obtained by filtering out duplicates in m_cPVertices
-  array2d< real64 > m_vertices;
+  /// vertex positions obtained by filtering out duplicates in m_cpVertexPositions
+  array2d< real64 > m_vertexPositions;
 
   /// map from vertex local index to vertex global index
   array1d< globalIndex > m_vertexToGlobalVertex;
 
   // corner-point vertices
 
-  /// original (duplicated) CPG vertices
-  array2d< real64 > m_cPVertices;
+  /// original (duplicated) CPG vertex position
+  array2d< real64 > m_cpVertexPositions;
 
   /// true if the corner-point vertex belongs to a pillar inside this partition, false otherwise
-  array1d< bool > m_cPVertexIsInsidePartition;
+  array1d< bool > m_cpVertexIsInsidePartition;
 
-  /// map from cPVertex local index to unique (filtered) vertex
-  array1d< localIndex > m_cPVertexToVertex;
+  /// map from cpVertex local index to unique (filtered) vertex
+  array1d< localIndex > m_cpVertexToVertex;
 
-  /// map from cPVertex local index to cPVertex global index
-  array1d< globalIndex > m_cPVertexToGlobalCPVertex;
+  /// map from cpVertex local index to cpVertex global index
+  array1d< globalIndex > m_cpVertexToGlobalCPVertex;
 
 
 };
 
 /**
- * @struct CPMeshFaces
+ * @struct CornerPointMeshFaces
  * @brief Struct storing faces information
  */
-struct CPMeshFaces
+struct CornerPointMeshFaces
 {
   // TODO
 };
 
 /**
- * @struct CPMeshCells
+ * @struct CornerPointMeshCells
  * @brief Struct storing cell information
  */
-struct CPMeshCells
+struct CornerPointMeshCells
 {
 
   /// map from active cell (inside partition) local index to active cell local index
@@ -288,8 +288,8 @@ struct CPMeshCells
 };
 
 
-} // end namespace CPMesh
+} // namespace cornerPointMesh
 
-} // end namespace geosx
+} // namespace geosx
 
-#endif //GEOSX_MESHUTILITIES_CPMESH_CPMESHDATA_HPP_
+#endif //GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHDATA_HPP_

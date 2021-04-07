@@ -16,16 +16,16 @@
  * @file GeometryUtilities.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_CPMESH_UTILITIES_GEOMETRYUTILITIES_HPP_
-#define GEOSX_MESHUTILITIES_CPMESH_UTILITIES_GEOMETRYUTILITIES_HPP_
+#ifndef GEOSX_MESHUTILITIES_CORNERPOINTMESH_UTILITIES_GEOMETRYUTILITIES_HPP_
+#define GEOSX_MESHUTILITIES_CORNERPOINTMESH_UTILITIES_GEOMETRYUTILITIES_HPP_
 
 namespace geosx
 {
 
-namespace CPMesh
+namespace cornerPointMesh
 {
 
-namespace GeometryUtilities
+namespace geometryUtilities
 {
 
 /**
@@ -92,10 +92,10 @@ struct CompareVertices
   }
 };
 
-} // end namespace GeometryUtilities
+} // end namespace geometryUtilities
 
-} // end namespace CPMesh
+} // end namespace cornerPointMesh
 
 } // end namespace geosx
 
-#endif //GEOSX_MESHUTILITIES_CPMESH_GEOMETRYUTILITIES_HPP_
+#endif //GEOSX_MESHUTILITIES_CORNERPOINTMESH_GEOMETRYUTILITIES_HPP_

@@ -13,27 +13,27 @@
  */
 
 /**
- * @file CPMeshComm.hpp
+ * @file CornerPointMeshPartition.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_CPMESH_CPMESHCOMM_HPP_
-#define GEOSX_MESHUTILITIES_CPMESH_CPMESHCOMM_HPP_
+#ifndef GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHPARTITION_HPP_
+#define GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHPARTITION_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
-#include "meshUtilities/CPMesh/CPMeshData.hpp"
+#include "meshUtilities/CornerPointMesh/CornerPointMeshData.hpp"
 
 namespace geosx
 {
 
-namespace CPMesh
+namespace cornerPointMesh
 {
 
 /**
- * @class CPMeshComm
+ * @class CornerPointMeshPartition
  * @brief This class is in charge of MPI communications during the construction of the mesh
  */
-class CPMeshComm
+class CornerPointMeshPartition
 {
 
 public:
@@ -42,25 +42,25 @@ public:
    * @brief Constructor.
    * @param name the name of the class
    */
-  CPMeshComm( string const & name );
+  CornerPointMeshPartition( string const & name );
 
   /// Default virtual destructor
-  virtual ~CPMeshComm() = default;
+  virtual ~CornerPointMeshPartition() = default;
 
   /// Default copy constructor
-  CPMeshComm( CPMeshComm const & ) = default;
+  CornerPointMeshPartition( CornerPointMeshPartition const & ) = default;
 
   /// Default move constructor
-  CPMeshComm( CPMeshComm && ) = default;
+  CornerPointMeshPartition( CornerPointMeshPartition && ) = default;
 
   /// Deleted copy assignment operator
-  CPMeshComm & operator=( CPMeshComm const & ) = delete;
+  CornerPointMeshPartition & operator=( CornerPointMeshPartition const & ) = delete;
 
   /// Deleted move assignment operator
-  CPMeshComm & operator=( CPMeshComm && ) = delete;
+  CornerPointMeshPartition & operator=( CornerPointMeshPartition && ) = delete;
 
-  /// using alias for templated Catalog CPMeshBuilder type
-  using CatalogInterface = dataRepository::CatalogInterface< CPMeshComm,
+  /// using alias for templated Catalog CornerPointMeshBuilder type
+  using CatalogInterface = dataRepository::CatalogInterface< CornerPointMeshPartition,
                                                              string const & >;
 
   /**
@@ -77,7 +77,7 @@ public:
    * @brief Define the catalog name for this class
    * @return the catalog name
    */
-  static string catalogName() { return "CPMeshComm"; }
+  static string catalogName() { return "CornerPointMeshPartition"; }
 
   /**
    * @brief Const getter for catalog name of this class
@@ -92,29 +92,29 @@ public:
   std::set< int > const & neighborsList() const { return m_neighborsList; }
 
   /**
-   * @brief Rank 0 partitions the domain, and the communication pattern is set up
-   * @param[out] meshDims the dimensions of the problem / the MPI partition
+   * @brief The main rank partitions the domain, and the communication pattern is set up
+   * @param[out] dims the dimensions of the problem / the MPI partition
    * @details This involves multiple steps:
-   *  1) Rank 0 broadcasts the full domain boundaries (nX, nY, nZ)
-   *  2) Rank 0 partitions the domain in boxes using a simple approach
-   *  3) Rank 0 scatters the partition boundaries
-   *  4) Rank 0 uses the structure of the mesh to figure out the communication pattern
+   *  1) The main rank broadcasts the full domain boundaries (nX, nY, nZ)
+   *  2) The main rank partitions the domain in boxes using a simple approach
+   *  3) The main rank scatters the partition boundaries
+   *  4) The main rank uses the structure of the mesh to figure out the communication pattern
    */
-  void setupMPIPartition( CPMeshDimensions & meshDims );
+  void setupMPIPartition( CornerPointMeshDimensions & dims );
 
 private:
 
   /**
-   * @brief Rank 0 (that has read the number of cells) broadcasts full domain dimensions (nX, nY, nZ)
-   * @param[inout] meshDims the struct describing the local and global mesh dimensions
+   * @brief The main rank (that has read the number of cells) broadcasts full domain dimensions (nX, nY, nZ)
+   * @param[inout] dims the struct describing the local and global mesh dimensions
    */
-  void broadcastDomainDimensions( CPMeshDimensions & meshDims ) const;
+  void broadcastDomainDimensions( CornerPointMeshDimensions & dims ) const;
 
   /**
-   * @brief Rank 0 partitions the full domain and scatters the MPI partition boundaries
-   * @param[inout] meshDims the struct describing the local and global mesh dimensions
+   * @brief The main rank partitions the full domain and scatters the MPI partition boundaries
+   * @param[inout] dims the struct describing the local and global mesh dimensions
    */
-  void scatterPartitionBoundaries( CPMeshDimensions & meshDims );
+  void scatterPartitionBoundaries( CornerPointMeshDimensions & dims );
 
 
   /// Index of the main rank
@@ -134,8 +134,8 @@ private:
 
 };
 
-} // end namespace CPMesh
+} // namespace cornerPointMesh
 
-} // end namespace geosx
+} // namespace geosx
 
-#endif //GEOSX_MESHUTILITIES_CPMESH_CPMESHCOMM_HPP_
+#endif //GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHPARTITION_HPP_

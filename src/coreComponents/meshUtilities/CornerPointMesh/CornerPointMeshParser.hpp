@@ -13,28 +13,28 @@
  */
 
 /**
- * @file CPMeshParser.hpp
+ * @file CornerPointMeshParser.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_CPMESH_CPMESHPARSER_HPP_
-#define GEOSX_MESHUTILITIES_CPMESH_CPMESHPARSER_HPP_
+#ifndef GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHPARSER_HPP_
+#define GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHPARSER_HPP_
 
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
-#include "meshUtilities/CPMesh/CPMeshData.hpp"
+#include "meshUtilities/CornerPointMesh/CornerPointMeshData.hpp"
 
 namespace geosx
 {
 
-namespace CPMesh
+namespace cornerPointMesh
 {
 
 /**
- * @class CPMeshParser
+ * @class CornerPointMeshParser
  * @brief This class is in charge of processing the GRDECL file
  */
-class CPMeshParser
+class CornerPointMeshParser
 {
 
 public:
@@ -43,27 +43,27 @@ public:
    * @brief Constructor.
    * @param name the name of the class
    */
-  CPMeshParser( string const & name );
+  CornerPointMeshParser( string const & name );
 
   /**
    * @brief Destructor.
    */
-  virtual ~CPMeshParser() = default;
+  virtual ~CornerPointMeshParser() = default;
 
   /// Default copy constructor
-  CPMeshParser( CPMeshParser const & ) = default;
+  CornerPointMeshParser( CornerPointMeshParser const & ) = default;
 
   /// Default move constructor
-  CPMeshParser( CPMeshParser && ) = default;
+  CornerPointMeshParser( CornerPointMeshParser && ) = default;
 
   /// Deleted copy assignment operator
-  CPMeshParser & operator=( CPMeshParser const & ) = delete;
+  CornerPointMeshParser & operator=( CornerPointMeshParser const & ) = delete;
 
   /// Deleted move assignment operator
-  CPMeshParser & operator=( CPMeshParser && ) = delete;
+  CornerPointMeshParser & operator=( CornerPointMeshParser && ) = delete;
 
-  /// using alias for templated Catalog CPMeshParser type
-  using CatalogInterface = dataRepository::CatalogInterface< CPMeshParser,
+  /// using alias for templated Catalog CornerPointMeshParser type
+  using CatalogInterface = dataRepository::CatalogInterface< CornerPointMeshParser,
                                                              string const & >;
 
   /**
@@ -80,7 +80,7 @@ public:
    * @brief Define the catalog name for this class
    * @return the catalog name
    */
-  static string catalogName() { return "CPMeshParser"; }
+  static string catalogName() { return "CornerPointMeshParser"; }
 
   /**
    * @brief Const getter for catalog name of this class
@@ -95,19 +95,19 @@ public:
    * @param[out] nY the number of cells in the Y direction
    * @param[out] nZ the number of cells in the Z direction
    */
-  void readNumberOfCells( Path const & filePath,
-                          localIndex & nX,
-                          localIndex & nY,
-                          localIndex & nZ ) const;
+  static void readNumberOfCells( Path const & filePath,
+                                 localIndex & nX,
+                                 localIndex & nY,
+                                 localIndex & nZ );
 
   /**
    * @brief Each rank reads its part of the mesh
    * @details This involves reading the main keywords (COORD, ZCORN, ACTNUM), plus the property keywords
    * @param[in] filePath the path to the file
-   * @param[in] cPMeshDims the topogical mesh information (to get nX, nY, nZ, size of partition, etc)
+   * @param[in] dims the topogical mesh information (to get nX, nY, nZ, size of partition, etc)
    */
   void readMesh( Path const & filePath,
-                 CPMeshDimensions const & cPMeshDims );
+                 CornerPointMeshDimensions const & dims );
 
   /**
    * @brief Non-const getter for the local content of COORD
@@ -176,51 +176,51 @@ private:
    * @details This is a carry-over from PAMELA, but this function should go if we want to load only local data
    * (i.e., data corresponding to the MPI domain owned by each rank)
    */
-  std::string extractDataBelowKeyword( std::istringstream & stringBlock ) const;
+  static std::string extractDataBelowKeyword( std::istringstream & stringBlock );
 
   /**
    * @brief Read the local content of the COORD keyword (i.e, data corresponding to the MPI domain owned by each rank)
    * @details This function will have to be rewritten
    * @param meshFile the content of the mesh file
-   * @param cPMeshDims the datastructure describing CP mesh
+   * @param dims the datastructure describing CP mesh
    */
   void readLocalCOORD( std::istringstream & meshFile,
-                       CPMeshDimensions const & cPMeshDims );
+                       CornerPointMeshDimensions const & dims );
 
   /**
    * @brief Read the local content of the ZCORN keyword (i.e, data corresponding to the MPI domain owned by each rank)
    * @details This function will have to be rewritten
    * @param meshFile the content of the mesh file
-   * @param cPMeshDims the datastructure describing CP mesh
+   * @param dims the datastructure describing CP mesh
    */
   void readLocalZCORN( std::istringstream & meshFile,
-                       CPMeshDimensions const & cPMeshDims );
+                       CornerPointMeshDimensions const & dims );
 
   /**
    * @brief Read the local content of the ACTNUM keyword (i.e, data corresponding to the MPI domain owned by each rank)
    * @details This function will have to be rewritten
    * @param meshFile the content of the mesh file
-   * @param cPMeshDims the datastructure describing CP mesh
+   * @param dims the datastructure describing CP mesh
    */
   void readLocalACTNUM( std::istringstream & meshFile,
-                        CPMeshDimensions const & cPMeshDims );
+                        CornerPointMeshDimensions const & dims );
 
   /**
    * @brief Read the local content of a cell-centered property keyword (i.e, data corresponding to the MPI domain owned by each rank)
    * @details This function will have to be rewritten
    * @param meshFile the content of the mesh file
-   * @param cPMeshDims the datastructure describing CP mesh
+   * @param dims the datastructure describing CP mesh
    * @param prop the property array to fill
    */
   void readLocalPROP( std::istringstream & meshFile,
-                      CPMeshDimensions const & cPMeshDims,
+                      CornerPointMeshDimensions const & dims,
                       array1d< real64 > & prop );
 
   /**
    * @brief If ACTNUM is absent from the file, fill the actnum vector with ones (all cells are active)
-   * @param cPMeshDims the datastructure describing CP mesh
+   * @param dims the datastructure describing CP mesh
    */
-  void fillLocalACTNUM( CPMeshDimensions const & cPMeshDims );
+  void fillLocalACTNUM( CornerPointMeshDimensions const & dims );
 
 
   /// local content of the COORD keyword in the GRDECL file
@@ -252,8 +252,8 @@ private:
 
 };
 
-} // end namespace CPMesh
+} // namespace cornerPointMesh
 
-} // end namespace geosx
+} // namespace geosx
 
-#endif //GEOSX_MESHUTILITIES_CPMESH_CPMESHPARSER_HPP_
+#endif //GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHPARSER_HPP_

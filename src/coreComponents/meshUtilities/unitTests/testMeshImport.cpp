@@ -167,7 +167,7 @@ TEST( MeshImport, testCPGReader_ECLIPSE )
   inputStreamMesh <<
     "<?xml version=\"1.0\" ?>" <<
     "  <Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-    "  <CornerPointMeshGenerator name=\"ToyModel\" " <<
+    "  <ExternalCornerPointMesh name=\"ToyModel\" " <<
     "  file=\"" << eclipseFilePath.c_str()<< "\"/>"<<
     "</Mesh>";
   const string inputStringMesh = inputStreamMesh.str();

@@ -155,13 +155,6 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
-.. _XML_CornerPointMeshGenerator:
-
-Element: CornerPointMeshGenerator
-=================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CornerPointMeshGenerator.rst
-
-
 .. _XML_Coulomb:
 
 Element: Coulomb
@@ -258,6 +251,13 @@ Element: Events
 Element: ExtendedDruckerPrager
 ==============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ExtendedDruckerPrager.rst
+
+
+.. _XML_ExternalCornerPointMesh:
+
+Element: ExternalCornerPointMesh
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ExternalCornerPointMesh.rst
 
 
 .. _XML_FieldSpecification:
@@ -936,13 +936,6 @@ Datastructure: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
 
 
-.. _DATASTRUCTURE_CornerPointMeshGenerator:
-
-Datastructure: CornerPointMeshGenerator
-=======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CornerPointMeshGenerator_other.rst
-
-
 .. _DATASTRUCTURE_Coulomb:
 
 Datastructure: Coulomb
@@ -1039,6 +1032,13 @@ Datastructure: Events
 Datastructure: ExtendedDruckerPrager
 ====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/ExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ExternalCornerPointMesh:
+
+Datastructure: ExternalCornerPointMesh
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ExternalCornerPointMesh_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:

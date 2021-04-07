@@ -13,28 +13,28 @@
  */
 
 /**
- * @file CPMeshBuilder.hpp
+ * @file CornerPointMeshBuilder.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_CPMESH_CPMESHBUILDER_HPP_
-#define GEOSX_MESHUTILITIES_CPMESH_CPMESHBUILDER_HPP_
+#ifndef GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHBUILDER_HPP_
+#define GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHBUILDER_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
-#include "meshUtilities/CPMesh/CPMeshParser.hpp"
-#include "meshUtilities/CPMesh/CPMeshData.hpp"
-#include "meshUtilities/CPMesh/CPMeshComm.hpp"
+#include "meshUtilities/CornerPointMesh/CornerPointMeshParser.hpp"
+#include "meshUtilities/CornerPointMesh/CornerPointMeshData.hpp"
+#include "meshUtilities/CornerPointMesh/CornerPointMeshPartition.hpp"
 
 namespace geosx
 {
 
-namespace CPMesh
+namespace cornerPointMesh
 {
 
 /**
- * @class CPMeshBuilder
+ * @class CornerPointMeshBuilder
  * @brief This class is in charge of constructing a conforming mesh from an Eclipse corner-point mesh
  */
-class CPMeshBuilder
+class CornerPointMeshBuilder
 {
 
 public:
@@ -43,25 +43,25 @@ public:
    * @brief Constructor.
    * @param name the name of the class
    */
-  CPMeshBuilder( string const & name );
+  CornerPointMeshBuilder( string const & name );
 
   /// Default virtual destructor
-  virtual ~CPMeshBuilder() = default;
+  virtual ~CornerPointMeshBuilder() = default;
 
   /// Default copy constructor
-  CPMeshBuilder( CPMeshBuilder const & ) = default;
+  CornerPointMeshBuilder( CornerPointMeshBuilder const & ) = default;
 
   /// Default move constructor
-  CPMeshBuilder( CPMeshBuilder && ) = default;
+  CornerPointMeshBuilder( CornerPointMeshBuilder && ) = default;
 
   /// Deleted copy assignment operator
-  CPMeshBuilder & operator=( CPMeshBuilder const & ) = delete;
+  CornerPointMeshBuilder & operator=( CornerPointMeshBuilder const & ) = delete;
 
   /// Deleted move assignment operator
-  CPMeshBuilder & operator=( CPMeshBuilder && ) = delete;
+  CornerPointMeshBuilder & operator=( CornerPointMeshBuilder && ) = delete;
 
-/// using alias for templated Catalog CPMeshBuilder type
-  using CatalogInterface = dataRepository::CatalogInterface< CPMeshBuilder,
+/// using alias for templated Catalog CornerPointMeshBuilder type
+  using CatalogInterface = dataRepository::CatalogInterface< CornerPointMeshBuilder,
                                                              string const & >;
 
   /**
@@ -79,7 +79,7 @@ public:
    * @brief Define the catalog name for this class
    * @return the catalog name
    */
-  static string catalogName() { return "CPMeshBuilder"; }
+  static string catalogName() { return "CornerPointMeshBuilder"; }
 
   /**
    * @brief Const getter for catalog name of this class
@@ -99,29 +99,31 @@ public:
    * @brief Const getter for the (unique) vertex positions
    * @return the 2D array of vertex positions
    */
-  arrayView2d< real64 const > vertices() const
-  { return m_meshVertices.m_vertices.toViewConst(); }
+  arrayView2d< real64 const > vertexPositions() const
+  { return m_vertices.m_vertexPositions.toViewConst(); }
 
   /**
    * @brief Const getter for the map from corner-point vertex to (unique) vertex
    * @return the map from corner-point vertex to (unique) vertex
+   * @note cp stands for corner point
    */
-  arrayView1d< localIndex const > cPVertexToVertex() const
-  { return m_meshVertices.m_cPVertexToVertex.toViewConst(); }
+  arrayView1d< localIndex const > cpVertexToVertex() const
+  { return m_vertices.m_cpVertexToVertex.toViewConst(); }
 
   /**
    * @brief Const getter for the map from local corner-point vertex index to global corner-point vertex index
    * @return the map from local corner-point vertex index to global corner-point vertex index
+   * @note cp stands for corner point
    */
-  arrayView1d< globalIndex const > cPVertexToGlobalCPVertex() const
-  { return m_meshVertices.m_cPVertexToGlobalCPVertex.toViewConst(); }
+  arrayView1d< globalIndex const > cpVertexToGlobalCPVertex() const
+  { return m_vertices.m_cpVertexToGlobalCPVertex.toViewConst(); }
 
   /**
    * @brief Const getter for the map from local vertex index to global vertex index
    * @return the map from local vertex index to global corner-point vertex index
    */
   arrayView1d< globalIndex const > vertexToGlobalVertex() const
-  { return m_meshVertices.m_vertexToGlobalVertex.toViewConst(); }
+  { return m_vertices.m_vertexToGlobalVertex.toViewConst(); }
 
   // cells
 
@@ -130,28 +132,28 @@ public:
    * @return the map from active cell inside partition to active cell
    */
   arrayView1d< localIndex const > activeCellInsidePartitionToActiveCell() const
-  { return m_meshCells.m_activeCellInsidePartitionToActiveCell.toViewConst(); }
+  { return m_cells.m_activeCellInsidePartitionToActiveCell.toViewConst(); }
 
   /**
    * @brief Const getter for the map from active cell to cell
    * @return the map from active cell to cell
    */
   arrayView1d< localIndex const > activeCellToCell() const
-  { return m_meshCells.m_activeCellToCell.toViewConst(); }
+  { return m_cells.m_activeCellToCell.toViewConst(); }
 
   /**
    * @brief Const getter for the map from cell to its first corner-point vertex
    * @return the map from cell to its first corner-point vertex
    */
   arrayView1d< localIndex const > cellToCPVertices() const
-  { return m_meshCells.m_cellToCPVertices.toViewConst(); }
+  { return m_cells.m_cellToCPVertices.toViewConst(); }
 
   /**
    * @brief Const getter for the map from local active cell index to global cell index
    * @return the map from from local active cell index to global cell index
    */
   arrayView1d< globalIndex const > activeCellToGlobalCell() const
-  { return m_meshCells.m_activeCellToGlobalCell.toViewConst(); }
+  { return m_cells.m_activeCellToGlobalCell.toViewConst(); }
 
   // properties
 
@@ -159,21 +161,21 @@ public:
    * @brief Const getter for the porosity field (includes inactive cells!)
    * @return an array of porosity values
    */
-  arrayView1d< real64 const > porosityField() const { return m_meshParser.poro().toViewConst(); }
+  arrayView1d< real64 const > porosityField() const { return m_parser.poro().toViewConst(); }
 
   /**
    * @brief Const getter for the porosity field (includes inactive cells!)
    * @return an array of permeability values
    */
-  arrayView2d< real64 const > permeabilityField() const { return m_meshParser.perm().toViewConst(); }
+  arrayView2d< real64 const > permeabilityField() const { return m_parser.perm().toViewConst(); }
 
   // MPI information
 
   /**
    * @brief Const getter for the topological mesh information
-   * @return the topological mesh information encapsulated in an object of type CPMeshData
+   * @return the topological mesh information encapsulated in an object of type CornerPointMeshData
    */
-  std::set< int > const & neighborsList() const { return m_meshComm.neighborsList(); }
+  std::set< int > const & neighborsList() const { return m_partition.neighborsList(); }
 
 
 private:
@@ -204,22 +206,23 @@ private:
    * @param xPos x-position of the eight corner-point vertices
    * @param yPos y-position of the eight corner-point vertices
    * @param zPos z-position of the eight corner-point vertices
+   * @return true if the cell is valid, and false otherwise
    */
-  bool processActiveHexahedron( localIndex const i,
-                                localIndex const j,
-                                localIndex const k,
-                                localIndex const nXLocal,
-                                localIndex const nYLocal,
-                                localIndex const iMinOverlap,
-                                localIndex const iMaxOverlap,
-                                localIndex const jMinOverlap,
-                                localIndex const jMaxOverlap,
-                                array1d< real64 > const & coord,
-                                array1d< real64 > const & zcorn,
-                                array1d< real64 > & xPos,
-                                array1d< real64 > & yPos,
-                                array1d< real64 > & zPos,
-                                array1d< bool > & cPVertexIsInside ) const;
+  static bool processActiveHexahedron( localIndex const i,
+                                       localIndex const j,
+                                       localIndex const k,
+                                       localIndex const nXLocal,
+                                       localIndex const nYLocal,
+                                       localIndex const iMinOverlap,
+                                       localIndex const iMaxOverlap,
+                                       localIndex const jMinOverlap,
+                                       localIndex const jMaxOverlap,
+                                       array1d< real64 > const & coord,
+                                       array1d< real64 > const & zcorn,
+                                       array1d< real64 > & xPos,
+                                       array1d< real64 > & yPos,
+                                       array1d< real64 > & zPos,
+                                       array1d< bool > & cpVertexIsInside );
 
   /**
    * @brief Loop over the corner-point vertices and filter out duplicates.
@@ -233,30 +236,30 @@ private:
 
 
   /// Object holding the mesh (and MPI partition) dimensions
-  CPMeshDimensions m_meshDims;
+  CornerPointMeshDimensions m_dims;
 
   /// Object storing vertex data
-  CPMeshVertices m_meshVertices;
+  CornerPointMeshVertices m_vertices;
 
   /// Object storing face data
-  CPMeshFaces m_meshFaces;
+  CornerPointMeshFaces m_faces;
 
   /// Object storing cell data
-  CPMeshCells m_meshCells;
+  CornerPointMeshCells m_cells;
 
   /// Object in charge of parsing the GRDECL file
-  CPMeshParser m_meshParser;
+  CornerPointMeshParser m_parser;
 
   /// Object holding the communication info
-  CPMeshComm m_meshComm;
+  CornerPointMeshPartition m_partition;
 
   /// Name of the mesh
   string m_meshName;
 
 };
 
-} // end namespace CPMesh
+} // namespace CornerPointMesh
 
-} // end namespace geosx
+} // namespace geosx
 
-#endif //GEOSX_MESHUTILITIES_CPMESH_CPMESHBUILDER_HPP_
+#endif //GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHBUILDER_HPP_

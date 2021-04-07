@@ -16,31 +16,31 @@
  * @file OutputUtilities.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_CPMESH_UTILITIES_OUTPUTUTILITIES_HPP_
-#define GEOSX_MESHUTILITIES_CPMESH_UTILITIES_OUTPUTUTILITIES_HPP_
+#ifndef GEOSX_MESHUTILITIES_CORNERPOINTMESH_UTILITIES_OUTPUTUTILITIES_HPP_
+#define GEOSX_MESHUTILITIES_CORNERPOINTMESH_UTILITIES_OUTPUTUTILITIES_HPP_
 
-#include "meshUtilities/CPMesh/CPMeshData.hpp"
+#include "meshUtilities/CornerPointMesh/CornerPointMeshData.hpp"
 
 namespace geosx
 {
 
-namespace CPMesh
+namespace cornerPointMesh
 {
 
-namespace OutputUtilities
+namespace outputUtilities
 {
 
 /**
  * @brief Debug function that outputs a vtk file representing the new mesh
- * @param[in] meshVertices the struct holding vertex information
- * @param[in] meshFaces the struct holding face information
- * @param[in] meshCells the struct holding cell information
+ * @param[in] vertices the struct holding vertex information
+ * @param[in] faces the struct holding face information
+ * @param[in] cells the struct holding cell information
  */
-void outputDebugVTKFile( CPMeshVertices const & meshVertices,
-                         CPMeshFaces const & meshFaces,
-                         CPMeshCells const & meshCells )
+void outputDebugVTKFile( CornerPointMeshVertices const & vertices,
+                         CornerPointMeshFaces const & faces,
+                         CornerPointMeshCells const & cells )
 {
-  GEOSX_UNUSED_VAR( meshFaces ); // not needed for now
+  GEOSX_UNUSED_VAR( faces ); // not needed for now
 
   std::ofstream myfile;
   myfile.open ( "debug.vtk" );
@@ -49,16 +49,16 @@ void outputDebugVTKFile( CPMeshVertices const & meshVertices,
   myfile << "ASCII\n";
   myfile << "DATASET UNSTRUCTURED_GRID\n";
 
-  array2d< real64 > const & vertices = meshVertices.m_vertices;
-  myfile << "POINTS " << vertices.size() << " float\n";
-  for( localIndex iVertex = 0; iVertex < vertices.size( 0 ); ++iVertex )
+  array2d< real64 > const & vertexPositions = vertices.m_vertexPositions;
+  myfile << "POINTS " << vertexPositions.size() << " float\n";
+  for( localIndex iVertex = 0; iVertex < vertexPositions.size( 0 ); ++iVertex )
   {
-    myfile << vertices( iVertex, 0 ) << " " << vertices( iVertex, 1 ) << " " << vertices( iVertex, 2 ) << "\n";
+    myfile << vertexPositions( iVertex, 0 ) << " " << vertexPositions( iVertex, 1 ) << " " << vertexPositions( iVertex, 2 ) << "\n";
   }
 
-  array1d< localIndex > const & activeCellToCell = meshCells.m_activeCellToCell;
-  array1d< localIndex > const & cellToCPVertices = meshCells.m_cellToCPVertices;
-  array1d< localIndex > const & cPVertexToVertex = meshVertices.m_cPVertexToVertex;
+  array1d< localIndex > const & activeCellToCell = cells.m_activeCellToCell;
+  array1d< localIndex > const & cellToCPVertices = cells.m_cellToCPVertices;
+  array1d< localIndex > const & cpVertexToVertex = vertices.m_cpVertexToVertex;
   localIndex const nActiveCells = activeCellToCell.size();
 
   myfile << "CELLS " << nActiveCells << " " << 9*nActiveCells << "\n";
@@ -67,9 +67,11 @@ void outputDebugVTKFile( CPMeshVertices const & meshVertices,
     localIndex const iLocalCell = activeCellToCell( iActiveCell );
     localIndex const iFirstCPVertex = cellToCPVertices( iLocalCell );
     myfile << "8 ";
+
+    localIndex const order[8] = { 0, 1, 3, 2, 4, 5, 7, 6 };
     for( localIndex pos = 0; pos < 8; ++pos )
     {
-      myfile << cPVertexToVertex( iFirstCPVertex + pos ) << " ";
+      myfile << cpVertexToVertex( iFirstCPVertex + order[pos] ) << " ";
     }
     myfile << "\n";
   }
@@ -83,10 +85,10 @@ void outputDebugVTKFile( CPMeshVertices const & meshVertices,
 }
 
 
-} // end namespace OutputUtilities
+} // namespace outputUtilities
 
-} // end namespace CPMesh
+} // namespace cornerPointMesh
 
-} // end namespace geosx
+} // namespace geosx
 
-#endif //GEOSX_MESHUTILITIES_CPMESH_OUTPUTUTILITIES_HPP_
+#endif //GEOSX_MESHUTILITIES_CORNERPOINTMESH_OUTPUTUTILITIES_HPP_
