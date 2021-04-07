@@ -228,7 +228,7 @@ public:
       }
       //add pressure driving term
       //linear pressure degradation
-      stack.localResidual[ a ] += detJ*(m_fluidPressure(k)+m_deltaFluidPressure(k))*traceOfStrain*N[a]*ell/Gc;
+      stack.localResidual[ a ] -= detJ*(m_fluidPressure(k)+m_deltaFluidPressure(k))*traceOfStrain*N[a]*ell/Gc;
       //quadratic pressure degradation
       //stack.localResidual[ a ] += 2.0*detJ*(1.0 - qp_damage)*(m_fluidPressure(k)+m_deltaFluidPressure(k))*traceOfStrain*N[a]*ell/Gc;
       

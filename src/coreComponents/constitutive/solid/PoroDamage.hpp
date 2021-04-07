@@ -172,7 +172,7 @@ public:
   virtual real64 getBiotCoefficient( localIndex const k, localIndex const q ) const override
   {
     real64 biotCoefficient = UPDATE_BASE::getBiotCoefficient( k,q );
-    return biotCoefficient + (1-m_damage( k, q ))*(1-biotCoefficient);
+    return biotCoefficient + (m_damage( k, q ))*(1-biotCoefficient);
     //return biotCoefficient + (1-m_damage( k, q ))*(1-m_damage( k,q ))*(1-biotCoefficient);
   }
 
