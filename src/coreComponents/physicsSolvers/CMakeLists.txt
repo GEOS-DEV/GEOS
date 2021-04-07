@@ -45,6 +45,7 @@ set( physicsSolvers_headers
      multiphysics/CompositionalMultiphaseReservoir.hpp
      multiphysics/SinglePhasePoroelasticKernel.hpp
      multiphysics/MultiphasePoroelasticKernel.hpp
+     simplePDE/LaplaceBase.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/LaplaceVEM.hpp
@@ -101,6 +102,7 @@ set( physicsSolvers_sources
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
      multiphysics/CompositionalMultiphaseReservoir.cpp
+     simplePDE/LaplaceBase.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/LaplaceVEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
