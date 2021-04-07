@@ -8,6 +8,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticSEM:
+
+Element: AcousticSEM
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/AcousticSEM.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -62,6 +69,13 @@ Element: BrooksCoreyCapillaryPressure
 Element: BrooksCoreyRelativePermeability
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
+
+
+.. _XML_CO2BrineFluid:
+
+Element: CO2BrineFluid
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/CO2BrineFluid.rst
 
 
 .. _XML_CellElementRegion:
@@ -358,6 +372,13 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/LaplaceFEM.rst
 
 
+.. _XML_LaplaceVEM:
+
+Element: LaplaceVEM
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/LaplaceVEM.rst
+
+
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -370,13 +391,6 @@ Element: LinearSolverParameters
 Element: Mesh
 =============
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
-
-
-.. _XML_MultiPhaseMultiComponentFluid:
-
-Element: MultiPhaseMultiComponentFluid
-======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
 
 
 .. _XML_MultiphasePoroelastic:
@@ -768,6 +782,13 @@ Datastructure Definitions
 ********************************
 
 
+.. _DATASTRUCTURE_AcousticSEM:
+
+Datastructure: AcousticSEM
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/AcousticSEM_other.rst
+
+
 .. _DATASTRUCTURE_Benchmarks:
 
 Datastructure: Benchmarks
@@ -822,6 +843,13 @@ Datastructure: BrooksCoreyCapillaryPressure
 Datastructure: BrooksCoreyRelativePermeability
 ==============================================
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrineFluid:
+
+Datastructure: CO2BrineFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/CO2BrineFluid_other.rst
 
 
 .. _DATASTRUCTURE_CellElementRegion:
@@ -1132,6 +1160,13 @@ Datastructure: LaplaceFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/LaplaceFEM_other.rst
 
 
+.. _DATASTRUCTURE_LaplaceVEM:
+
+Datastructure: LaplaceVEM
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/LaplaceVEM_other.rst
+
+
 .. _DATASTRUCTURE_Level0:
 
 Datastructure: Level0
@@ -1158,13 +1193,6 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
-
-
-.. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
-
-Datastructure: MultiPhaseMultiComponentFluid
-============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
 
 
 .. _DATASTRUCTURE_MultiphasePoroelastic:
