@@ -1,21 +1,3 @@
-
-#
-# Specify all headers
-#
-set(common_headers
-    ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
-    BufferAllocator.hpp
-    DataTypes.hpp
-    EnumStrings.hpp
-    Path.hpp
-    GeosxMacros.hpp
-    Stopwatch.hpp
-    TimingMacros.hpp
-    Logger.hpp
-    DataLayouts.hpp
-    Tensor.hpp
-   )
-
 #
 # Specify all sources
 #
@@ -46,7 +28,6 @@ endif()
 
 blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
-                 HEADERS               ${common_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
 #                 SHARED TRUE

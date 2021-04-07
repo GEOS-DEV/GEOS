@@ -1,5 +1,4 @@
 set( subdirs
-     math
      common
      linearAlgebra
      codingUtilities
@@ -14,7 +13,6 @@ set( subdirs
      mpiCommunications
      physicsSolvers
      python
-     virtualElement
      )
 
 

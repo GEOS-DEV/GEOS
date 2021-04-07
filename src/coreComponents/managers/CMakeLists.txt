@@ -1,42 +1,4 @@
 #
-# Specify all headers
-#
-set(managers_headers
-    DomainPartition.hpp
-    EventManager.hpp
-    Events/EventBase.hpp
-    Events/PeriodicEvent.hpp
-    Events/HaltEvent.hpp
-    Events/SoloEvent.hpp
-    Outputs/OutputManager.hpp
-    Outputs/OutputBase.hpp
-    Outputs/SiloOutput.hpp
-    Outputs/RestartOutput.hpp
-    Outputs/TimeHistoryOutput.hpp
-    Tasks/TasksManager.hpp
-    Tasks/TaskBase.hpp
-    TimeHistory/TimeHistoryCollection.hpp
-    TimeHistory/PackCollection.hpp
-    TimeHistory/HistoryIO.hpp
-    TimeHistory/HistoryDataSpec.hpp
-    Outputs/BlueprintOutput.hpp
-    Outputs/PythonOutput.hpp
-    Functions/FunctionBase.hpp
-    Functions/TableFunction.hpp
-    Functions/FunctionManager.hpp
-    ObjectManagerBase.hpp
-    ProblemManager.hpp
-    NumericalMethodsManager.hpp
-    FieldSpecification/FieldSpecificationBase.hpp
-    FieldSpecification/FieldSpecificationManager.hpp
-    FieldSpecification/DirichletBoundaryCondition.hpp
-    FieldSpecification/SourceFluxBoundaryCondition.hpp
-    initialization.hpp
-    GeosxState.hpp
-   )
-
-
-#
 # Specify all sources
 #
 
@@ -72,21 +34,16 @@ set(managers_sources
    )
 
 if( ENABLE_MATHPRESSO )
-  list( APPEND managers_headers
-        Functions/SymbolicFunction.hpp
-        Functions/CompositeFunction.hpp )
   list( APPEND managers_sources
         Functions/SymbolicFunction.cpp
         Functions/CompositeFunction.cpp )
 endif()
 
 if( ENABLE_MPI )
-    list( APPEND managers_headers Outputs/ChomboIO.hpp )
     list( APPEND managers_sources Outputs/ChomboIO.cpp )
 endif()
 
 if( ENABLE_VTK )
-    list( APPEND managers_headers Outputs/VTKOutput.hpp )
     list( APPEND managers_sources Outputs/VTKOutput.cpp )
 endif()
 
@@ -118,7 +75,6 @@ endif()
 
 blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
-                 HEADERS               ${managers_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )

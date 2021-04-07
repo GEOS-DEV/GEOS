@@ -1,69 +1,4 @@
 add_subdirectory (GEOSX_PTP)
-
-#
-# Specify solver headers
-#
-set( physicsSolvers_headers
-     LinearSolverParameters.hpp
-     NonlinearSolverParameters.hpp
-     PhysicsSolverManager.hpp
-     SolverBase.hpp
-     fluidFlow/CompositionalMultiphaseBase.hpp
-     fluidFlow/CompositionalMultiphaseFVM.hpp
-     fluidFlow/CompositionalMultiphaseHybridFVM.hpp          
-     fluidFlow/CompositionalMultiphaseBaseKernels.hpp
-     fluidFlow/CompositionalMultiphaseFVMKernels.hpp
-     fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
-     fluidFlow/HybridFVMHelperKernels.hpp          
-     fluidFlow/FlowSolverBase.hpp
-     fluidFlow/ProppantTransport.hpp
-     fluidFlow/ProppantTransportKernels.hpp
-     fluidFlow/SinglePhaseBase.hpp
-     fluidFlow/SinglePhaseFVM.hpp
-     fluidFlow/SinglePhaseHybridFVM.hpp     
-     fluidFlow/SinglePhaseBaseKernels.hpp
-     fluidFlow/SinglePhaseFVMKernels.hpp          
-     fluidFlow/SinglePhaseHybridFVMKernels.hpp     
-     fluidFlow/SinglePhaseProppantBase.hpp
-     fluidFlow/SinglePhaseProppantBaseKernels.hpp
-     fluidFlow/wells/WellSolverBase.hpp
-     fluidFlow/wells/WellSolverBase.hpp
-     fluidFlow/wells/SinglePhaseWell.hpp
-     fluidFlow/wells/SinglePhaseWellKernels.hpp     
-     fluidFlow/wells/CompositionalMultiphaseWell.hpp
-     fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
-     fluidFlow/wells/WellControls.hpp
-     multiphysics/FlowProppantTransportSolver.hpp
-     multiphysics/HydrofractureSolver.hpp
-     multiphysics/LagrangianContactSolver.hpp
-     multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/PoroelasticSolver.hpp
-     multiphysics/MultiphasePoroelasticSolver.hpp
-     multiphysics/PoroelasticSolverEmbeddedFractures.hpp
-     multiphysics/ReservoirSolverBase.hpp
-     multiphysics/SinglePhaseReservoir.hpp
-     multiphysics/CompositionalMultiphaseReservoir.hpp
-     multiphysics/SinglePhasePoroelasticKernel.hpp
-     multiphysics/MultiphasePoroelasticKernel.hpp
-     simplePDE/LaplaceFEM.hpp
-     simplePDE/LaplaceFEMKernels.hpp
-     simplePDE/LaplaceVEM.hpp
-     simplePDE/PhaseFieldDamageFEM.hpp
-     solidMechanics/SolidMechanicsEmbeddedFractures.hpp
-     solidMechanics/SolidMechanicsLagrangianFEM.hpp
-     solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
-     solidMechanics/SolidMechanicsEFEMKernels.hpp
-     solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
-     solidMechanics/SolidMechanicsPoroElasticKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
-     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-     surfaceGeneration/SurfaceGenerator.hpp
-     surfaceGeneration/EmbeddedSurfaceGenerator.hpp
-     wavePropagation/AcousticWaveEquationSEM.hpp
-     )
-
 #
 # Specify solver sources
 #
@@ -135,7 +70,6 @@ endif()
 
 blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
-                 HEADERS               ${physicsSolvers_headers}
                  DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
                  OBJECT                ${buildAsObj}
                )

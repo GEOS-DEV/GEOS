@@ -1,26 +1,4 @@
 #
-# Specify all headers
-#
-set(dataRepository_headers
-    BufferOps_inline.hpp
-    BufferOps.hpp
-    BufferOpsDevice.hpp
-    ExecutableGroup.hpp
-    Group.hpp
-    InputFlags.hpp
-    KeyIndexT.hpp
-    MappedVector.hpp
-    ObjectCatalog.hpp
-    ReferenceWrapper.hpp
-    RestartFlags.hpp
-    ConduitRestart.hpp
-    wrapperHelpers.hpp
-    Wrapper.hpp
-    WrapperBase.hpp
-    xmlWrapper.hpp
-    )
-
-#
 # Specify all sources
 #
 set(dataRepository_sources
@@ -65,7 +43,6 @@ endif()
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
-                 HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )

@@ -1,17 +1,3 @@
-
-#
-# Specify all headers
-#
-set(mpiCommunications_headers
-    CommunicationTools.hpp
-    MpiWrapper.hpp
-    NeighborCommunicator.hpp
-    PartitionBase.hpp
-    SpatialPartition.hpp
-    NeighborData.hpp
-   )
-
-
 #
 # Specify all sources
 #
@@ -45,7 +31,6 @@ endif()
 
 blt_add_library( NAME                  mpiCommunications
                  SOURCES               ${mpiCommunications_sources}
-                 HEADERS               ${mpiCommunications_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )

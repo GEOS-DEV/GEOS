@@ -1,16 +1,3 @@
-
-#
-# Specify all headers
-#
-set( codingUtilities_headers
-     traits.hpp
-     StringUtilities.hpp
-     UnitTestUtilities.hpp
-     Utilities.hpp
-     static_if.hpp
-     SFINAE_Macros.hpp
-   )
-
 #
 # Specify all sources
 #
@@ -22,7 +9,6 @@ set( dependencyList common )
 
 blt_add_library( NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}
-                 HEADERS               ${codingUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )

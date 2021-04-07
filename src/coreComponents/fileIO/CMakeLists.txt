@@ -1,13 +1,3 @@
-
-
-#
-# Specify all headers
-#
-set( fileIO_headers
-     timeHistory/TimeHistHDF.hpp
-     silo/SiloFile.hpp
-     schema/schemaUtilities.hpp )
-
 #
 # Specify all sources
 #
@@ -25,17 +15,10 @@ endif()
 if( ENABLE_MPI )
   add_subdirectory(coupling/hdf5_interface)
   set( dependencyList ${dependencyList} mpi hdf5_interface)
-  list( APPEND fileIO_headers coupling/ChomboCoupler.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp )
 endif() 
 
 if( ENABLE_VTK )
-  list( APPEND fileIO_headers
-               vtk/VTKPVDWriter.hpp
-               vtk/VTKVTMWriter.hpp
-               vtk/VTKGEOSXData.hpp
-               vtk/VTKPolyDataWriterInterface.hpp )
-
   list( APPEND fileIO_sources
                vtk/VTKGEOSXData.cpp
                vtk/VTKPVDWriter.cpp
@@ -60,7 +43,6 @@ endif()
 
 blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
-                 HEADERS               ${fileIO_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )

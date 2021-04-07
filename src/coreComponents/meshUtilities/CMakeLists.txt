@@ -1,24 +1,3 @@
-
-#
-# Specify all headers
-#
-set(meshUtilities_headers
-    ComputationalGeometry.hpp
-    MeshManager.hpp
-    MeshGeneratorBase.hpp
-    InternalMeshGenerator.hpp
-    InternalWellGenerator.hpp
-    PerforationData.hpp
-    Perforation.hpp
-    MeshUtilities.hpp
-    SimpleGeometricObjects/GeometricObjectManager.hpp
-    SimpleGeometricObjects/SimpleGeometricObjectBase.hpp
-    SimpleGeometricObjects/Box.hpp
-    SimpleGeometricObjects/ThickPlane.hpp
-    SimpleGeometricObjects/BoundedPlane.hpp
-    StructuredGridUtilities.hpp
-   )
-
 #
 # Specify all sources
 #
@@ -49,7 +28,6 @@ set( dependencyList common )
 
 if( ENABLE_PAMELA )
     message(STATUS "Adding PAMELAMeshGenerator sources and headers")
-    set( meshUtilities_headers ${meshUtilities_headers} PAMELAMeshGenerator.hpp )
     set( meshUtilities_sources ${meshUtilities_sources} PAMELAMeshGenerator.cpp)
     set( dependencyList ${dependencyList} PAMELA )
 endif()
@@ -64,7 +42,6 @@ endif()
 
 blt_add_library( NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
-                 HEADERS               ${meshUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
