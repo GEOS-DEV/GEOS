@@ -168,7 +168,7 @@ template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDataByIndexDevice ( buffer_unit_type * & buffer,
                         ArrayView< T const, NDIM, USD > const & var,
-                        const T_INDICES & indices,
+                        T_INDICES const & indices,
                         parallelDeviceEvents & events );
 
 //------------------------------------------------------------------------------

@@ -157,7 +157,7 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&] GEOSX_DEVICE ( T const & value )
       {
         *threadBuffer = value;
-        threadBuffer++;
+        ++threadBuffer;
       } );
     } ) );
 
@@ -209,7 +209,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
     LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
     {
       value = *threadBuffer;
-      threadBuffer++;
+      ++threadBuffer;
     } );
   } ) );
 
