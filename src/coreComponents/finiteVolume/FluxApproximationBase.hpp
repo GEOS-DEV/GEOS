@@ -25,6 +25,7 @@
 #include "CellElementStencilTPFA.hpp"
 #include "managers/DomainPartition.hpp"
 #include "SurfaceElementStencil.hpp"
+#include "FaceElementToCellStencil.hpp"
 #include "EmbeddedSurfaceToCellStencil.hpp"
 
 namespace geosx
@@ -313,7 +314,10 @@ template< typename LAMBDA >
 void FluxApproximationBase::forAllStencils( MeshLevel const & mesh, LAMBDA && lambda ) const
 {
   //TODO remove dependence on CellElementStencilTPFA and SurfaceElementStencil
-  forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, std::forward< LAMBDA >( lambda ) );
+  forStencils< CellElementStencilTPFA,
+               SurfaceElementStencil,
+               EmbeddedSurfaceToCellStencil,
+               FaceElementToCellStencil >( mesh, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename TYPE, typename ... TYPES, typename LAMBDA >
@@ -330,7 +334,10 @@ template< typename LAMBDA >
 void FluxApproximationBase::forAllStencils( MeshLevel & mesh, LAMBDA && lambda )
 {
   //TODO remove dependence on CellElementStencilTPFA and SurfaceElementStencil
-  forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, std::forward< LAMBDA >( lambda ) );
+  forStencils< CellElementStencilTPFA,
+               SurfaceElementStencil,
+               EmbeddedSurfaceToCellStencil,
+               FaceElementToCellStencil >( mesh, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename TYPE, typename ... TYPES, typename LAMBDA >

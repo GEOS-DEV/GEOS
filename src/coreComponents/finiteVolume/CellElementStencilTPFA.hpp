@@ -254,9 +254,11 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
   }
 
   // Do harmonic and arithmetic averaging
+  real64 const product = halfTrans[0]*halfTrans[1];
+  real64 const sum = halfTrans[0]+halfTrans[1];
 
-  real64 const harmonicWeight   = halfTrans[0]*halfTrans[1] / (halfTrans[0]+halfTrans[1]);
-  real64 const arithmeticWeight = ( halfTrans[0]+halfTrans[1] )/ 2;
+  real64 const harmonicWeight   = sum > 0 ? product / sum : 0.0;
+  real64 const arithmeticWeight = sum / 2;
 
   real64 const meanPermCoeff = 1.0; //TODO make it a member if it is really necessary
 

@@ -869,6 +869,52 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
+  launch< FaceElementToCellStencil >( FaceElementToCellStencil const & GEOSX_UNUSED_PARAM( stencil ),
+                                      localIndex const GEOSX_UNUSED_PARAM( numDofPerCell ),
+                                      real64 const GEOSX_UNUSED_PARAM( dt ),
+                                      globalIndex const GEOSX_UNUSED_PARAM( rankOffset ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                      integer const GEOSX_UNUSED_PARAM( updateProppantPacking ),
+                                      R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
+                                      ElementViewConst< arrayView1d< globalIndex const > > const & GEOSX_UNUSED_PARAM( dofNumber ),
+                                      ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( ghostRank ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dPres ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantConc ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dProppantConc ),
+                                      ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( componentDens ),
+                                      ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dComponentDens_dPres ),
+                                      ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM( dComponentDens_dComponentConc ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravDepth ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dens ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dPres ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dProppantConc ),
+                                      ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dComponentConc ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( visc ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dPres ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dProppantConc ),
+                                      ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dComponentConc ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidDensity ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dFluidDens_dPres ),
+                                      ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dFluidDens_dComponentConc ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( settlingFactor ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dPres ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dProppantConc ),
+                                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dComponentConc ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( collisionFactor ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dCollisionFactor_dProppantConc ),
+                                      ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+                                      ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+                                      CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                      arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
+{
+  GEOSX_ERROR( "Not implemented" );
+}
+
+
+template<>
+void FluxKernel::
   launch< SurfaceElementStencil >( SurfaceElementStencil const & stencil,
                                    localIndex const numDofPerCell,
                                    real64 const dt,
@@ -1149,6 +1195,21 @@ void FluxKernel::
 
 template<>
 void FluxKernel::
+  launchCellBasedFluxCalculation< FaceElementToCellStencil >( FaceElementToCellStencil const & GEOSX_UNUSED_PARAM( stencil ),
+                                                              ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                                              R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
+                                                              ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
+                                                              ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravDepth ),
+                                                              ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dens ),
+                                                              ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( visc ),
+                                                              ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+                                                              ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+                                                              ElementView< arrayView2d< real64 > > const & GEOSX_UNUSED_PARAM( cellBasedFlux ) )
+{}
+
+
+template<>
+void FluxKernel::
   launchCellBasedFluxCalculation< SurfaceElementStencil >( SurfaceElementStencil const & stencil,
                                                            FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
                                                            R1Tensor const & unitGravityVector,
@@ -1244,6 +1305,31 @@ void ProppantPackVolumeKernel::
                                                                        ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantLiftFlux ) )
 {}
 
+template<>
+void ProppantPackVolumeKernel::
+  launchProppantPackVolumeCalculation< FaceElementToCellStencil >( FaceElementToCellStencil const & GEOSX_UNUSED_PARAM( stencil ),
+                                                                   real64 const GEOSX_UNUSED_PARAM( dt ),
+                                                                   real64 const GEOSX_UNUSED_PARAM( proppantDensity ),
+                                                                   real64 const GEOSX_UNUSED_PARAM( proppantDiameter ),
+                                                                   real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
+                                                                   R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
+                                                                   real64 const GEOSX_UNUSED_PARAM( criticalShieldsNumber ),
+                                                                   real64 const GEOSX_UNUSED_PARAM( frictionCoefficient ),
+                                                                   ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( settlingFactor ),
+                                                                   ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( density ),
+                                                                   ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidDensity ),
+                                                                   ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidViscosity ),
+                                                                   ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
+                                                                   ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantBoundaryElement ),
+                                                                   ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+                                                                   ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( volume ),
+                                                                   ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
+                                                                   ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( cellBasedFlux ),
+                                                                   ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( conc ),
+                                                                   ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+                                                                   ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ),
+                                                                   ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantLiftFlux ) )
+{}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -1545,6 +1631,17 @@ void ProppantPackVolumeKernel::
                                                                   ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ),
                                                                   ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( conc ),
                                                                   ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ) )
+{}
+
+template<>
+void ProppantPackVolumeKernel::
+  launchProppantPackVolumeUpdate< FaceElementToCellStencil >( FaceElementToCellStencil const & GEOSX_UNUSED_PARAM( stencil ),
+                                                              R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
+                                                              real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
+                                                              ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
+                                                              ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ),
+                                                              ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( conc ),
+                                                              ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ) )
 {}
 
 template<>

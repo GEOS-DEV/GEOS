@@ -55,6 +55,8 @@ public:
   {
     /// @return The key for fractureStencil
     static constexpr char const * edfmStencilString() { return "edfmStencil"; }
+
+    static constexpr char const * faceToCellStencilString() { return "faceElementToCellStencil"; }
   };
 
 protected:
