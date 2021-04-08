@@ -190,6 +190,21 @@ protected:
 
   void postProcessInput() override;
 
+  /**
+   * @brief Get the label mapping of element vertices indexes onto node indexes for a type of element.
+   * @param[in] elementType the string identifier of the element type
+   * @param[in] index ndim-sptialized Element index.
+   * @param[in] iEle the index of Element begin processed
+   * @param[out] nodeIDInBox array to map element vertices index to node indexes
+   * @param[in] size the number of node on the element
+   *
+   */
+  void getElemToNodesRelationInBox( const string & elementType,
+                                    const int index[],
+                                    const int & iEle,
+                                    int nodeIDInBox[],
+                                    const int size );
+
   /// Mesh number of dimension
   int m_dim;
 
