@@ -18,25 +18,8 @@ set(mainInterface_sources
     GeosxState.cpp
    )
 
-if( BUILD_OBJ_LIBS )
-  set( dependencyList events fileIO optionparser RAJA conduit adiak)
-else()
-  set( dependencyList 
-       common 
-       fileIO
-       linearAlgebra
-       mesh
-       physicsSolvers
-       fileIO
-       codingUtilities
-       dataRepository
-       finiteVolume
-       finiteElement
-       constitutive
-       optionparser
-       RAJA
-       conduit )
-endif()
+set( dependencyList events fileIO optionparser RAJA conduit)
+
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
@@ -61,7 +44,7 @@ endif()
 blt_add_library( NAME                  mainInterface
                  SOURCES               ${mainInterface_sources}
                  HEADERS               ${mainInterface_headers}
-                 DEPENDS_ON            adiak ${dependencyList}
+                 DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
 

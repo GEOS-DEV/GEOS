@@ -79,6 +79,7 @@ else()
 endif()
 
 if( BUILD_OBJ_LIBS )
+  message( "Using cmake  Object Libraries" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  mainInterface physicsSolvers
@@ -87,6 +88,7 @@ if( BUILD_OBJ_LIBS )
                     SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
 else()
+  message( "Using blt blt_combine_static_libraries" )
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE ${CSL_TYPE}

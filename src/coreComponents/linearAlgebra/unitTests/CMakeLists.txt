@@ -4,8 +4,6 @@
 set( LAI_tests
      testLAOperations.cpp 
      testArrayLAOperations.cpp
-     testKrylovSolvers.cpp
-     testLAIHelperFunctions.cpp
     )
 
 set( nranks 2 )

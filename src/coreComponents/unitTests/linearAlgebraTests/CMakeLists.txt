@@ -3,6 +3,8 @@
 #
 set( LAI_tests
      testDofManager.cpp
+     testLAIHelperFunctions.cpp
+     testKrylovSolvers.cpp
     )
 
 set( nranks 2 )
@@ -10,7 +12,7 @@ set( nranks 2 )
 #
 # Add gtest C++ based tests
 #
-set( dependencyList gtest )
+set( dependencyList gtest geosx_core)
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )

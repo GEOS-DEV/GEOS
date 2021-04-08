@@ -18,7 +18,7 @@
 
 #include <gtest/gtest.h>
 
-#include "testLinearAlgebraUtils.hpp"
+#include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/initializeEnvironment.hpp"

@@ -120,8 +120,8 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
 endif()
 
 if( CMAKE_HOST_APPLE )
-    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
-    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
+#    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
+#    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
 elseif( CUDA_ENABLED )
     set(GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "")
     set(GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "")

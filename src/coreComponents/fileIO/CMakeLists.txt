@@ -97,7 +97,7 @@ endif()
 blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
-                 DEPENDS_ON            ${dependencyList} adiak caliper
+                 DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
 
