@@ -269,6 +269,9 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     SingleFluidBase const & fluid =
       getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
+    PermeabilityBase const & permeabilityModel =
+       getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+
     mimeticInnerProductDispatch( mimeticInnerProductBase,
                                  [&] ( auto const mimeticInnerProduct )
     {
@@ -279,6 +282,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                    esr,
                                                    subRegion,
                                                    fluid,
+                                                   permeabilityModel,
                                                    m_regionFilter.toViewConst(),
                                                    nodePosition,
                                                    elemRegionList,

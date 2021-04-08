@@ -59,6 +59,156 @@ struct FluxKernel
    * @param[in] dDens_dPres The change in material density for each element
    * @param[in] mob The fluid mobility in each element
    * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
+   * @param[in] permeability
+   * @param[in] dPerm_dPres The derivative of permeability wrt pressure in each element
+   * @param[in] transTMultiplier
+   * @param[in] gravityVector
+   * @param[out] localMatrix The linear system matrix
+   * @param[out] localRhs The linear system residual
+   */
+  template< typename STENCILWRAPPER_TYPE >
+  static void
+  launch( STENCILWRAPPER_TYPE const & stencilWrapper,
+          real64 const dt,
+          globalIndex const rankOffset,
+          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+          ElementViewConst< arrayView1d< real64 const > > const & pres,
+          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const > > const & dens,
+          ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & mob,
+          ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+          R1Tensor const & GEOSX_UNUSED_PARAM ( gravityVector ),
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs )
+  {
+    constexpr localIndex maxNumFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+    constexpr localIndex maxStencilSize = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
+
+
+    forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    {
+      localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
+      localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
+
+      // working arrays
+      stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
+      stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
+      stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
+
+      // compute transmissibility
+      real64 transmissiblity[2], dTrans_dPres[2];
+      stencilWrapper.computeTransmissibility( iconn, permeability, transmissiblity );
+      stencilWrapper.dTrans_dPressure( iconn, dPerm_dPres, dTrans_dPres );
+
+      compute( stencilSize,
+               seri[iconn],
+               sesri[iconn],
+               sei[iconn],
+               transmissiblity,
+               dTrans_dPres,
+               pres,
+               dPres,
+               gravCoef,
+               dens,
+               dDens_dPres,
+               mob,
+               dMob_dPres,
+               dt,
+               localFlux,
+               localFluxJacobian );
+
+
+      // extract DOF numbers
+      for( localIndex i = 0; i < stencilSize; ++i )
+      {
+        dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+      }
+
+      for( localIndex i = 0; i < numFluxElems; ++i )
+      {
+
+        if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
+        {
+          globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+          localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
+          GEOSX_ASSERT_GE( localRow, 0 );
+          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
+                                                                            dofColIndices.data(),
+                                                                            localFluxJacobian[i].dataIfContiguous(),
+                                                                            stencilSize );
+
+        }
+      }
+
+    } );
+  }
+
+  /**
+   * @brief Compute flux and its derivatives for a given tpfa connector.
+   *
+   *
+   */
+  GEOSX_HOST_DEVICE
+  static void
+  compute( localIndex const numFluxElems,
+           arraySlice1d< localIndex const > const & seri,
+           arraySlice1d< localIndex const > const & sesri,
+           arraySlice1d< localIndex const > const & sei,
+           real64 const (&transmissibility)[2],
+           real64 const (&dTrans_dPres)[2],
+           ElementViewConst< arrayView1d< real64 const > > const & pres,
+           ElementViewConst< arrayView1d< real64 const > > const & dPres,
+           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView2d< real64 const > > const & dens,
+           ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+           ElementViewConst< arrayView1d< real64 const > > const & mob,
+           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+           real64 const dt,
+           arraySlice1d< real64 > const & flux,
+           arraySlice2d< real64 > const & fluxJacobian );
+};
+
+
+/******************************** PoroelasticFluxKernel ********************************/
+
+struct PoroelasticFluxKernel
+{
+  /**
+   * @brief The type for element-based non-constitutive data parameters.
+   * Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  /**
+   * @brief launches the kernel to assemble the flux contributions to the linear system.
+   * @tparam STENCIL_TYPE The type of the stencil that is being used.
+   * @param[in] stencil The stencil object.
+   * @param[in] dt The timestep for the integration step.
+   * @param[in] dofNumber The dofNumbers for each element
+   * @param[in] pres The pressures in each element
+   * @param[in] dPres The change in pressure for each element
+   * @param[in] gravCoef The factor for gravity calculations (g*H)
+   * @param[in] dens The material density in each element
+   * @param[in] dDens_dPres The change in material density for each element
+   * @param[in] mob The fluid mobility in each element
+   * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
    * @param[out] jacobian The linear system matrix
    * @param[out] residual The linear system residual
    */
@@ -176,7 +326,6 @@ struct FluxKernel
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian );
 };
-
 
 struct FaceDirichletBCKernel
 {

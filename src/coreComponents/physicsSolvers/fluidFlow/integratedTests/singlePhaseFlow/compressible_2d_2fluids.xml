@@ -177,7 +177,7 @@
   </FieldSpecifications>
 
   <Outputs>
-    <VTK
+    <Silo
       name="siloOutput"/>
 
     <Restart

@@ -187,16 +187,6 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
 {
   GEOSX_MARK_FUNCTION;
 
-#if 1 // TODO why is this even here???
-  if( !m_derivativeFluxResidual_dAperture )
-  {
-    m_derivativeFluxResidual_dAperture =
-      std::make_unique< CRSMatrix< real64, localIndex > >( localMatrix.numRows(), localMatrix.numColumns() );
-    m_derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-  }
-  m_derivativeFluxResidual_dAperture->template setValues< serialPolicy >( 0.0 );
-#endif
-
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
@@ -255,28 +245,30 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
+
+  // TODO need to add derivatives w.r.t. to displacement and aperture.
   fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
-    FluxKernel::launch( stencilWrapper,
-                        dt,
-                        dofManager.rankOffset(),
-                        elemDofNumber.toNestedViewConst(),
-                        m_elemGhostRank.toNestedViewConst(),
-                        m_pressure.toNestedViewConst(),
-                        m_deltaPressure.toNestedViewConst(),
-                        m_gravCoef.toNestedViewConst(),
-                        m_density.toNestedViewConst(),
-                        m_dDens_dPres.toNestedViewConst(),
-                        m_mobility.toNestedViewConst(),
-                        m_dMobility_dPres.toNestedViewConst(),
-                        m_permeability.toNestedViewConst(),
-                        m_dPerm_dPressure.toNestedViewConst(),
-                        m_transTMultiplier.toNestedViewConst(),
-                        this->gravityVector(),
-                        localMatrix,
-                        localRhs );
+    PoroelasticFluxKernel::launch( stencilWrapper,
+                                   dt,
+                                   dofManager.rankOffset(),
+                                   elemDofNumber.toNestedViewConst(),
+                                   m_elemGhostRank.toNestedViewConst(),
+                                   m_pressure.toNestedViewConst(),
+                                   m_deltaPressure.toNestedViewConst(),
+                                   m_gravCoef.toNestedViewConst(),
+                                   m_density.toNestedViewConst(),
+                                   m_dDens_dPres.toNestedViewConst(),
+                                   m_mobility.toNestedViewConst(),
+                                   m_dMobility_dPres.toNestedViewConst(),
+                                   m_permeability.toNestedViewConst(),
+                                   m_dPerm_dPressure.toNestedViewConst(),
+                                   m_transTMultiplier.toNestedViewConst(),
+                                   this->gravityVector(),
+                                   localMatrix,
+                                   localRhs );
   } );
 }
 

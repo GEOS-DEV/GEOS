@@ -87,6 +87,10 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  arrayView3d< real64 const > const permeability() const { return m_permeability;}
+
+  arrayView3d< real64 const > const dPerm_dPressure() const { return m_dPerm_dPressure;}
+
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * permeabilityString() { return "permeability"; }
