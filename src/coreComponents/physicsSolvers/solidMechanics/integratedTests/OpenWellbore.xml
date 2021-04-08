@@ -30,11 +30,13 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       radius="{ 0.1, 2 }"
-      theta="{ 0, 90 }"
+      theta="{ 0, 180 }"
       zCoords="{ 0, 1 }"
       nr="{ 5 }"
-      nt="{ 4 }"
+      nt="{ 8 }"
       nz="{ 1 }"
+      trajectory="{ { -0.1, 0.0, 0.0 },
+                    {  0.1, 0.0, 1.0 } }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
@@ -106,7 +108,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ tpos, xpos }"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="yConstraint"
@@ -114,11 +116,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-<<<<<<< HEAD:src/coreComponents/physicsSolvers/solidMechanics/integratedTests/OpenWellbore.xml
-      setNames="{ yneg, ypos }"/>
-=======
-      setNames="{ tneg, ypos }"/>
->>>>>>> refs/rewritten/feature-sytuan-InternalWellbore-3:src/coreComponents/physicsSolvers/solidMechanics/integratedTests/wellbore.xml
+      setNames="{ tneg, tpos, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"

@@ -35,6 +35,8 @@
       nr="{ 4 }"
       nt="{ 16 }"
       nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, 0.0 },
+                    { 0.0, 0.0, 1.0 } }"
       cellBlockNames="{ cb1 }"
       />
   </Mesh>
