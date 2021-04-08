@@ -99,12 +99,6 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "A position tolerance to verify if a node belong to a nodeset" );
 }
 
-/**
- * @param domain
- */
-void InternalMeshGenerator::generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
-
 void InternalMeshGenerator::postProcessInput()
 {
   if( m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6" )
@@ -669,11 +663,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   }
 
   coordinateTransformation( nodeManager );
-
-  if( m_delayMeshDeformation == 0 )
-  {
-    remapMesh( domain );
-  }
 }
 
 /**
@@ -967,10 +956,6 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
     }
   }
 }
-
-void InternalMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARAM( domain ) )
-{}
-
 
 void
 InternalMeshGenerator::
