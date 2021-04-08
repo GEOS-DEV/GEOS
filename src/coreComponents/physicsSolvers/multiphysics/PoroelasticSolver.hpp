@@ -143,6 +143,11 @@ public:
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
   };
 
+  SolidMechanicsLagrangianFEM & getSolidSolver()
+  {
+    return this->getParent().getGroup<SolidMechanicsLagrangianFEM>( m_solidSolverName );
+  }
+
 protected:
 
   virtual void postProcessInput() override;

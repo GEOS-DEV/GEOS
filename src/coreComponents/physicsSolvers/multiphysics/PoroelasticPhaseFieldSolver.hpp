@@ -42,7 +42,7 @@ public:
     return "PoroelasticPhaseField";
   }
 
-  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   virtual void
   implicitStepSetup( real64 const & time_n,
@@ -78,21 +78,20 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto couplingTypeOptionString = "couplingTypeOption";
+    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOption"; }
 
-    constexpr static auto totalMeanStressString = "totalMeanStress";
-    constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
+    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
+    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
 
-    constexpr static auto poroelasticSolverNameString = "poroelasticSolverName";
-    constexpr static auto damageSolverNameString = "damageSolverName";
-    constexpr static auto subcyclingOptionString = "subcycling";
-
+    constexpr static char const * poroelasticSolverNameString() { return "poroelasticSolverName"; }
+    constexpr static char const * damageSolverNameString() { return "damageSolverName"; }
+    constexpr static char const * subcyclingOptionString() { return "subcycling"; } 
   } PoroelasticPhaseFieldSolverViewKeys;
 
 protected:
   virtual void postProcessInput() override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
 private:
 

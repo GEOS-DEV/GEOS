@@ -44,41 +44,41 @@ PoroelasticPhaseFieldSolver::PoroelasticPhaseFieldSolver( const string & name,
   m_couplingTypeOption( CouplingTypeOption::FixedStress )
 
 {
-  registerWrapper( viewKeyStruct::poroelasticSolverNameString, &m_poroelasticSolverName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::poroelasticSolverNameString(), &m_poroelasticSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription(
     "Name of the poroelastic solver to use in the PhaseFieldFracture solver" );
 
-  registerWrapper( viewKeyStruct::damageSolverNameString, &m_damageSolverName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::damageSolverNameString(), &m_damageSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription(
     "Name of the damage mechanics solver to use in the PhaseFieldFracture solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionString, &m_couplingTypeOption )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionString(), &m_couplingTypeOption ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Coupling option. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::subcyclingOptionString, &m_subcyclingOption )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::subcyclingOptionString(), &m_subcyclingOption ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "turn on subcycling on each load step" );
 
 }
 
-void PoroelasticPhaseFieldSolver::registerDataOnMesh( dataRepository::Group * const MeshBodies )
+void PoroelasticPhaseFieldSolver::registerDataOnMesh( Group & meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    ElementRegionManager * const elemManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager & elemManager = meshBody.getMeshLevel( 0 ).getElemManager();
 
-    elemManager->forElementSubRegions< CellElementSubRegion,
-                                       FaceElementSubRegion >( [ &]( auto & elementSubRegion ) -> void
+    elemManager.forElementSubRegions< CellElementSubRegion,
+                                      FaceElementSubRegion >( [&] ( auto & elementSubRegion )
     {
-      elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString )->
+      elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString() ).
         setDescription( "Total Mean Stress" );
-      elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString )->
+      elementSubRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() ).
         setDescription( "Total Mean Stress" );
     } );
-  }
+  } );
 }
 
 void PoroelasticPhaseFieldSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -86,20 +86,18 @@ void PoroelasticPhaseFieldSolver::implicitStepSetup( real64 const & GEOSX_UNUSED
                                                   DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-    elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString );
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-    elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
 
   //***** loop over all elements and initialize the derivative arrays *****
-  forAllElemsInMesh( mesh, [ &]( localIndex const er,
-                                 localIndex const esr,
-                                 localIndex const k ) -> void
+  forAllElemsInMesh( mesh, [ &]( localIndex const er, localIndex const esr, localIndex const k )
   {
     oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
   } );
@@ -118,12 +116,14 @@ void PoroelasticPhaseFieldSolver::postProcessInput()
     // will never converge.
     std::cout<<m_poroelasticSolverName<<std::endl;
     PoroelasticSolver &
-    poroelasticSolver = *( this->getParent()->getGroup( m_poroelasticSolverName )->groupCast< PoroelasticSolver * >() );
+      poroelasticSolver = this->getParent().getGroup< PoroelasticSolver >( m_poroelasticSolverName );
     integer & minNewtonIterSolid = poroelasticSolver.getNonlinearSolverParameters().m_minIterNewton;
+    
     PhaseFieldDamageFEM &
-    damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
+    damageSolver = this->getParent().getGroup<PhaseFieldDamageFEM>( m_damageSolverName );
     damageSolver.setPressureTerm();
     integer & minNewtonIterFluid = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
+    
     //GEOSX_ERROR_IF( &poroelasticSolver == 0, "Poroelastic solver not found or invalid type: " << m_poroelasticSolverName );
     //GEOSX_ERROR_IF( &damageSolver == 0, "Damage solver not found or invalid type: " << m_damageSolverName );
     minNewtonIterSolid = 0;
@@ -131,7 +131,7 @@ void PoroelasticPhaseFieldSolver::postProcessInput()
   }
 }
 
-void PoroelasticPhaseFieldSolver::initializePostInitialConditionsPreSubGroups( Group * const )
+void PoroelasticPhaseFieldSolver::initializePostInitialConditionsPreSubGroups()
 {}
 
 PoroelasticPhaseFieldSolver::~PoroelasticPhaseFieldSolver()
@@ -141,24 +141,24 @@ PoroelasticPhaseFieldSolver::~PoroelasticPhaseFieldSolver()
 
 void PoroelasticPhaseFieldSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager & elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-    elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString );
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-    elemManager->constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [ &]( localIndex const er,
                                  localIndex const esr,
-                                 localIndex const k ) -> void
+                                 localIndex const k )
   {
     totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
   } );
 }
-
+  
 real64 PoroelasticPhaseFieldSolver::solverStep( real64 const & time_n,
                                              real64 const & dt,
                                              int const cycleNumber,
@@ -187,10 +187,10 @@ real64 PoroelasticPhaseFieldSolver::splitOperatorStep( real64 const & time_n,
   real64 dtReturnTemporary;
 
   PoroelasticSolver &
-  poroelasticSolver = *( this->getParent()->getGroup( m_poroelasticSolverName )->groupCast< PoroelasticSolver * >() );
+  poroelasticSolver = this->getParent().getGroup< PoroelasticSolver >( m_poroelasticSolverName );
 
   PhaseFieldDamageFEM &
-  damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
+  damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
 
   damageSolver.setupSystem( domain,
                             damageSolver.getDofManager(),
@@ -297,40 +297,40 @@ void PoroelasticPhaseFieldSolver::mapDamageToQuadrature( DomainPartition & domai
 {
 
   GEOSX_MARK_FUNCTION;
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager & nodeManager = mesh.getNodeManager();
 
   PoroelasticSolver &
-  poroelasticSolver = *( this->getParent()->getGroup( m_poroelasticSolverName )->groupCast< PoroelasticSolver * >() );
+  poroelasticSolver = this->getParent().getGroup< PoroelasticSolver > ( m_poroelasticSolverName );
 
   PhaseFieldDamageFEM const &
-  damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
+  damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
 
   string const & damageFieldName = damageSolver.getFieldName();
 
   //should get reference to damage field here.
-  arrayView1d< real64 const > const nodalDamage = nodeManager->getReference< array1d< real64 > >( damageFieldName );
+  arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
 
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegionManager &  elemManager = mesh.getElemManager();
 
-  ConstitutiveManager * const constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-  constitutiveRelations = elemManager->constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+  constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
 
 
   // begin region loop
-  forTargetSubRegionsComplete< CellElementSubRegion >( *mesh, [this, &poroelasticSolver, nodalDamage]
+  forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [this, &poroelasticSolver, nodalDamage]
                                                          ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &,
                                                          CellElementSubRegion & elementSubRegion )
   {
-    constitutive::ConstitutiveBase * const
-      solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( poroelasticSolver.getSolidSolver()->solidMaterialNames()[targetIndex] );
+    constitutive::ConstitutiveBase &
+    solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( poroelasticSolver.getSolidSolver().solidMaterialNames()[targetIndex] );
 
-    ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto * const damageModel )
+    ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto & damageModel )
     {
-      using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
-      typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
+      using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
+      typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
       arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();

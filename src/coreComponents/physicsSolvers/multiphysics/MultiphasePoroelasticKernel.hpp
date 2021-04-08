@@ -134,7 +134,7 @@ public:
     m_poroRef( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::referencePorosityString() ) ),
     m_numComponents( numComponents ),
     m_numPhases( numPhases ),
-    m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient() )
+    m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient( 0,0 ) )
   {
     if( m_numComponents > numMaxComponentsMultiphasePoroelastic )
     {

@@ -167,7 +167,7 @@ public:
     #endif
   }
 
-  //this function implements a modified Biot Coefficient that depends on the damage
+  // //this function implements a modified Biot Coefficient that depends on the damage
   GEOSX_HOST_DEVICE
   virtual real64 getBiotCoefficient( localIndex const k, localIndex const q ) const override
   {
@@ -204,7 +204,7 @@ public:
 
   virtual void postProcessInput() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 

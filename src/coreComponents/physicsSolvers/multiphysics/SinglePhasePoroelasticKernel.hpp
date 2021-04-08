@@ -118,7 +118,7 @@ public:
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
     m_poroRef( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::referencePorosityString() ) ),
-    m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient() )
+    m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient( 0,0 ) )
   {}
 
   //*****************************************************************************
@@ -234,7 +234,11 @@ public:
     m_constitutiveUpdate.smallStrainUpdate( k, q, strainIncrement, totalStress, stiffness );
 
     // --- Subtract pressure term
-    real64 const biotTimesPressure = m_biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+    real64 myBiotCoefficient = m_constitutiveUpdate.getBiotCoefficient( k, q );
+
+    //real64 const biotTimesPressure = m_biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+    real64 const biotTimesPressure = myBiotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+
     totalStress[0] -= biotTimesPressure;
     totalStress[1] -= biotTimesPressure;
     totalStress[2] -= biotTimesPressure;
@@ -249,16 +253,19 @@ public:
     real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
     real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                         //
     real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local );//
-    real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
+    real64 const porosityOld = m_poroRef( k ) + myBiotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
     real64 const dPorosity_dPressure = biotSkeletonModulusInverse;                                                     //
-    real64 const dPorosity_dVolStrainIncrement =  m_biotCoefficient;                                                   //
+    real64 const dPorosity_dVolStrainIncrement =  myBiotCoefficient;                                                   //
                                                                                                                        //
-    GEOSX_ERROR_IF_GT_MSG( fabs( m_biotCoefficient - 1.0 ),                                                            //
+    GEOSX_ERROR_IF_GT_MSG( fabs( myBiotCoefficient - 1.0 ),                                                            //
                            1e-10,                                                                                      //
                            "Correct only for Biot's coefficient equal to 1" );                                         //
     // --------------------------------------------------------------------------------------------------------------- //
+    //real64 const porosityNew = porosityOld
+    //                           + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
+    //                           + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
     real64 const porosityNew = porosityOld
-                               + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
+                               + myBiotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
                                + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
 
 
@@ -416,7 +423,7 @@ protected:
   arrayView1d< real64 const > const m_poroRef;
 
   /// Biot's coefficient
-  real64 const m_biotCoefficient;
+  real64 m_biotCoefficient;
 
 
 };

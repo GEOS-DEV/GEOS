@@ -70,7 +70,9 @@ public:
    * @return Biot coefficient
    */
   GEOSX_HOST_DEVICE
+  
   virtual real64 getBiotCoefficient( localIndex const k, localIndex const q ) const
+  //virtual real64 getBiotCoefficient( ) const
   {
     GEOSX_UNUSED_VAR( k )
     GEOSX_UNUSED_VAR( q )

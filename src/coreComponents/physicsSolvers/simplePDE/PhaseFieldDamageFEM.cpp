@@ -225,7 +225,6 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
   arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
   // Initialize all entries to zero
-#if 1 // Andre...this is the new code
   localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
   localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
   if (m_pressureTerm == 0) {
