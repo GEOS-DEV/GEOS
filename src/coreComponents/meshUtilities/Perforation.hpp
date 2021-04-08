@@ -114,14 +114,14 @@ public:
    */
   struct viewKeyStruct
   {
-    /// String key for the linear distance from well head
-    static constexpr auto distanceFromHeadString  = "distanceFromHead";
-    /// String key for the well transmissibility at this perforation
-    static constexpr auto wellTransmissibilityString = "transmissibility";
+    /// @return String key for the linear distance from well head
+    static constexpr char const * distanceFromHeadString() { return "distanceFromHead"; }
+    /// @return String key for the well transmissibility at this perforation
+    static constexpr char const * wellTransmissibilityString() { return "transmissibility"; }
     /// ViewKey for the linear distance from well head
-    dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString };
+    dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString() };
     /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString };
+    dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString() };
   }
   /// ViewKey struct for the Perforation class
   viewKeysPerforation;

@@ -70,6 +70,7 @@ public:
    * @param nodeManager Reference to the NodeManager object.
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
    * @param inputDofNumber The dof number for the primary field.
    * @param rankOffset dof index offset of current rank
    * @param inputSparsity The sparsity pattern to fill.
@@ -78,15 +79,17 @@ public:
   SparsityKernelBase( NodeManager const & nodeManager,
                       EdgeManager const & edgeManager,
                       FaceManager const & faceManager,
+                      localIndex const targetRegionIndex,
                       SUBREGION_TYPE const & elementSubRegion,
                       FE_TYPE const & finiteElementSpace,
-                      CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                      CONSTITUTIVE_TYPE & inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
                       SparsityPattern< globalIndex > & inputSparsity ):
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -240,6 +243,7 @@ real64 fillSparsity( MeshLevel & mesh,
                      SparsityPattern< globalIndex > & inputSparsityPattern )
 {
   GEOSX_MARK_FUNCTION;
+
   regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,
                                 REGION_TYPE,

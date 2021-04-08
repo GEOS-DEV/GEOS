@@ -12,16 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file NeighborCommunicator.hpp
- */
-
 #ifndef GEOSX_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 #define GEOSX_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 
 #include "MpiWrapper.hpp"
 
 #include "common/DataTypes.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
 
@@ -38,16 +35,14 @@ inline int CommTag( int const GEOSX_UNUSED_PARAM( senderRank ),
 }
 
 class MeshLevel;
-class ObjectManagerBase;
 class NeighborCommunicator
 {
 public:
 
-  NeighborCommunicator();
+  explicit NeighborCommunicator( int rank );
 
-  NeighborCommunicator( int rank ):
-    NeighborCommunicator()
-  { setNeighborRank( rank ); }
+  NeighborCommunicator():
+    NeighborCommunicator( -1 ){};
 
   void mpiISendReceive( buffer_unit_type const * const sendBuffer,
                         int const sendSize,
@@ -268,21 +263,23 @@ public:
   void packCommBufferForSync( std::map< string, string_array > const & fieldNames,
                               MeshLevel const & meshLevel,
                               int const commID,
-                              bool on_device = false );
+                              bool onDevice,
+                              parallelDeviceEvents & events );
 
   int packCommSizeForSync( std::map< string, string_array > const & fieldNames,
                            MeshLevel const & meshLevel,
                            int const commID,
-                           bool on_device = false );
+                           bool onDevice,
+                           parallelDeviceEvents & events );
 
   void sendRecvBuffers( int const commID );
 
   void unpackBufferForSync( std::map< string, string_array > const & fieldNames,
-                            MeshLevel * const meshLevel,
+                            MeshLevel & meshLevel,
                             int const commID,
-                            bool on_device = false );
+                            bool onDevice,
+                            parallelDeviceEvents & events );
 
-  void setNeighborRank( int const rank ) { m_neighborRank = rank; }
   int neighborRank() const { return m_neighborRank; }
 
   void clear();
@@ -306,7 +303,6 @@ public:
   {
     return m_receiveBufferSize[commID];
   }
-
 
   buffer_type const & sendBuffer( int commID ) const
   {
@@ -332,6 +328,7 @@ public:
   void addNeighborGroupToMesh( MeshLevel & mesh ) const;
 
 private:
+
   int m_neighborRank;
 
   int m_sendBufferSize[maxComm];

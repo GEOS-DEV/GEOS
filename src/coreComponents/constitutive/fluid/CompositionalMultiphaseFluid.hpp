@@ -30,6 +30,8 @@ class CompositionalMultiphaseFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
+  using exec_policy = serialPolicy;
+
   CompositionalMultiphaseFluid( string const & name, Group * const parent );
 
   virtual ~CompositionalMultiphaseFluid() override;
@@ -45,13 +47,13 @@ public:
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
-    static constexpr auto equationsOfStateString             = "equationsOfState";
-    static constexpr auto componentCriticalPressureString    = "componentCriticalPressure";
-    static constexpr auto componentCriticalTemperatureString = "componentCriticalTemperature";
-    static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
-    static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
-    static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
-  } viewKeysCompositionalMultiphaseFluid;
+    static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
+    static constexpr char const * componentCriticalPressureString() { return "componentCriticalPressure"; }
+    static constexpr char const * componentCriticalTemperatureString() { return "componentCriticalTemperature"; }
+    static constexpr char const * componentAcentricFactorString() { return "componentAcentricFactor"; }
+    static constexpr char const * componentVolumeShiftString() { return "componentVolumeShift"; }
+    static constexpr char const * componentBinaryCoeffString() { return "componentBinaryCoeff"; }
+  };
 
 protected:
   virtual void postProcessInput() override;

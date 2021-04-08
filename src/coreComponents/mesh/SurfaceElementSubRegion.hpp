@@ -195,25 +195,24 @@ public:
    */
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
-    /// Face element to cell regions map string.
-    static constexpr auto surfaceElementsToCellRegionsString    = "fractureElementsToCellRegions";
+    /// @return Face element to cell regions map string.
+    static constexpr char const * surfaceElementsToCellRegionsString() { return "fractureElementsToCellRegions"; }
 
-    /// Face element to cell subregions map string.
-    static constexpr auto surfaceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
+    /// @return Face element to cell subregions map string.
+    static constexpr char const * surfaceElementsToCellSubRegionsString() { return "fractureElementsToCellSubRegions"; }
 
-    /// Face element to cell indices map string.
-    static constexpr auto surfaceElementsToCellIndexString    = "fractureElementsToCellIndices";
+    /// @return Face element to cell indices map string.
+    static constexpr char const * surfaceElementsToCellIndexString() { return "fractureElementsToCellIndices"; }
 
 
-    /// Embedded surface element aperture string
-    static constexpr auto elementApertureString        = "elementAperture";
+    /// @return Embedded surface element aperture string
+    static constexpr char const * elementApertureString() { return "elementAperture"; }
 
-    /// Embedded surface element surface are string
-    static constexpr auto elementAreaString            = "elementArea";
+    /// @return Embedded surface element surface are string
+    static constexpr char const * elementAreaString() { return "elementArea"; }
 
-    /// Mass creation string.
-    constexpr static auto creationMassString = "creationMass";
-
+    /// @return Mass creation string.
+    constexpr static char const * creationMassString() { return "creationMass"; }
   };
 
   /// Map between the face elements and the cells

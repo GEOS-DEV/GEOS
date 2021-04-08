@@ -59,15 +59,13 @@ public:
 ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    constexpr static auto filePathString = "file";
-    constexpr static auto scaleString = "scale";
-    constexpr static auto fieldsToImportString = "fieldsToImport";
-    constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
-    constexpr static auto reverseZString = "reverseZ";
+    constexpr static char const * filePathString() { return "file"; }
+    constexpr static char const * scaleString() { return "scale"; }
+    constexpr static char const * fieldsToImportString() { return "fieldsToImport"; }
+    constexpr static char const * fieldNamesInGEOSXString() { return "fieldNamesInGEOSX"; }
+    constexpr static char const * reverseZString() { return "reverseZ"; }
   };
 /// @endcond
-
-  virtual void generateElementRegions( DomainPartition & domain ) override;
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
@@ -77,15 +75,7 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void generateMesh( DomainPartition * const domain ) override;
-
-  virtual void getElemToNodesRelationInBox ( const string & elementType,
-                                             const int index[],
-                                             const int & iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) override;
-
-  virtual void remapMesh ( dataRepository::Group * const domain ) override;
+  virtual void generateMesh( DomainPartition & domain ) override;
 
 protected:
 
@@ -156,7 +146,7 @@ public:
      */
     static string retrieveSurfaceOrRegionName( string const & pamelaLabel )
     {
-      string_array const splitLabel = stringutilities::Tokenize( pamelaLabel, m_separator );
+      string_array const splitLabel = stringutilities::tokenize( pamelaLabel, m_separator );
       return splitLabel[splitLabel.size() -2 ];
     }
 private:

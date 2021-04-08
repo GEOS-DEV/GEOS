@@ -115,6 +115,16 @@ std::size_t MpiWrapper::getSizeofMpiType( MPI_Datatype const type )
   return 0;
 }
 
+bool MpiWrapper::initialized()
+{
+#ifdef GEOSX_USE_MPI
+  int ret = false;
+  MPI_CHECK_ERROR( MPI_Initialized( &ret ) );
+  return ret;
+#else
+  return false;
+#endif
+}
 
 int MpiWrapper::init( int * argc, char * * * argv )
 {
@@ -164,6 +174,99 @@ int MpiWrapper::test( MPI_Request * request, int * flag, MPI_Status * status )
   return 0;
 }
 
+int MpiWrapper::testAny( int count, MPI_Request array_of_requests[], int * idx, int * flag, MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Testany( count, array_of_requests, idx, flag, array_of_statuses );
+#endif
+  *flag = 0;
+  return 0;
+}
+
+int MpiWrapper::testSome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Testsome( count, array_of_requests, outcount, array_of_indices, array_of_statuses );
+#endif
+  *outcount = 0;
+  return 0;
+}
+
+int MpiWrapper::testAll( int count, MPI_Request array_of_requests[], int * flag, MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Testall( count, array_of_requests, flag, array_of_statuses );
+#endif
+  *flag = 0;
+  return 0;
+}
+
+int MpiWrapper::check( MPI_Request * request, int * flag, MPI_Status * status )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Request_get_status( *request, flag, status );
+#endif
+  *flag = 0;
+  return 0;
+}
+
+int MpiWrapper::checkAny( int count, MPI_Request array_of_requests[], int * idx, int * flag, MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  bool found = false;
+  int flagCache = -1;
+  int rval = MPI_SUCCESS;
+  std::vector< int > rvals( count );
+  for( int jdx = 0; jdx < count; ++jdx )
+  {
+    *flag = 0;
+    rvals[ jdx ] = MPI_Request_get_status( array_of_requests[ jdx ], flag, &array_of_statuses[ jdx ] );
+    if( *flag && !found )
+    {
+      *idx = jdx;
+      flagCache = *flag;
+    }
+    if( rvals[ jdx ] != MPI_SUCCESS )
+    {
+      rval = rvals[ jdx ];
+    }
+  }
+  if( found )
+  {
+    *flag = flagCache;
+  }
+  return rval;
+#endif
+  *flag = 0;
+  return 0;
+}
+
+int MpiWrapper::checkAll( int count, MPI_Request array_of_requests[], int * flag, MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  // assume all passing, any that don't pass set the flag to false
+  *flag = 1;
+  int rval = MPI_SUCCESS;
+  std::vector< int > rvals( count );
+  int iFlag = 0;
+  for( int idx = 0; idx < count; ++idx )
+  {
+    rvals[ idx ] = MPI_Request_get_status( array_of_requests[ idx ], &iFlag, &array_of_statuses[ idx ] );
+    if( !iFlag )
+    {
+      *flag = iFlag;
+    }
+    if( rvals[ idx ] != MPI_SUCCESS )
+    {
+      rval = rvals[ idx ];
+    }
+  }
+  return rval;
+#endif
+  *flag = 0;
+  return 0;
+}
+
 int MpiWrapper::wait( MPI_Request * request, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI
@@ -172,15 +275,15 @@ int MpiWrapper::wait( MPI_Request * request, MPI_Status * status )
   return 0;
 }
 
-int MpiWrapper::waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status * status )
+int MpiWrapper::waitAny( int count, MPI_Request array_of_requests[], int * indx, MPI_Status array_of_statuses[] )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Waitany( count, array_of_requests, indx, status );
+  return MPI_Waitany( count, array_of_requests, indx, array_of_statuses );
 #endif
   return 0;
 }
 
-int MpiWrapper::waitsome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] )
+int MpiWrapper::waitSome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Waitsome( count, array_of_requests, outcount, array_of_indices, array_of_statuses );
@@ -189,7 +292,7 @@ int MpiWrapper::waitsome( int count, MPI_Request array_of_requests[], int * outc
   return 0;
 }
 
-int MpiWrapper::waitall( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] )
+int MpiWrapper::waitAll( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Waitall( count, array_of_requests, array_of_statuses );
@@ -214,7 +317,7 @@ int MpiWrapper::activeWaitAny( const int count, MPI_Request array_of_requests[],
   {
     int idx = 0;
     MPI_Status stat;
-    int err = waitany( count, array_of_requests, &idx, &stat );
+    int err = waitAny( count, array_of_requests, &idx, &stat );
     if( err != MPI_SUCCESS )
       return err;
     if( idx != MPI_UNDEFINED )   // only if all(requests == MPI_REQUEST_NULL)
@@ -234,7 +337,7 @@ int MpiWrapper::activeWaitSome( const int count, MPI_Request array_of_requests[]
     int rcvd = 0;
     std::vector< int > indices( count, -1 );
     std::vector< MPI_Status > stats( count );
-    int err = waitsome( count, array_of_requests, &rcvd, &indices[0], &stats[0] );
+    int err = waitSome( count, array_of_requests, &rcvd, &indices[0], &stats[0] );
     if( err != MPI_SUCCESS )
       return err;
     if( rcvd > 0 )

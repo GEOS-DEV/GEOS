@@ -101,10 +101,14 @@ static void addUmpireHighWaterMarks()
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::sum( mark );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " <<
+    std::size_t const maxMark = MpiWrapper::max( mark );
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
                       std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
+                      std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
 
-    pushStatsIntoAdiak( allocatorName + " high water mark", mark );
+    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
+    pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 }
 
@@ -213,21 +217,15 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
   bool const noXML = options[INPUT].count() == 0 && options[SCHEMA].count() == 0;
   if( parse.error() || options[HELP] || (argc == 0) || noXML )
   {
-    int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 80;
+    int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 120;
     option::printUsage( fwrite, stdout, usage, columns );
 
-    if( !options[HELP] )
+    if( options[HELP] )
     {
-      GEOSX_LOG_RANK_0( "Bad input arguments" );
+      throw NotAnError();
     }
 
-    if( noXML )
-    {
-      GEOSX_LOG_RANK_0( "An input xml must be specified!" );
-    }
-
-    MpiWrapper::finalize();
-    exit( !options[HELP] );
+    GEOSX_THROW( "Bad command line arguments.", InputError );
   }
 
   // Iterate over the remaining inputs
@@ -421,7 +419,11 @@ void setupOpenMP()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMPI( int argc, char * argv[] )
 {
-  MpiWrapper::init( &argc, &argv );
+  if( !MpiWrapper::initialized() )
+  {
+    MpiWrapper::init( &argc, &argv );
+  }
+
   MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
 }
 
@@ -456,9 +458,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
   GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
 
-  string xmlDir, xmlName;
-  splitPath( commandLineOptions.inputFileName, xmlDir, xmlName );
-  adiak::value( "XML File", xmlName );
+  adiak::value( "XML File", splitPath( commandLineOptions.inputFileName ).second );
   adiak::value( "Problem name", commandLineOptions.problemName );
 
   // MPI info

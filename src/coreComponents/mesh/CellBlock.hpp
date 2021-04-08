@@ -24,9 +24,6 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-
-class StableTimeStep;
-
 namespace geosx
 {
 
@@ -104,74 +101,11 @@ public:
   ///@{
 
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & facemanager ) override;
+                                                    FaceManager const & faceManager ) override;
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
-
-  /**
-   * @brief Compute the center of each element in the subregion.
-   * @param[in] X an arrayView of (const) node positions
-   */
-  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
-  {
-    arrayView2d< real64 > const & elementCenters = m_elementCenter;
-    localIndex nNodes = numNodesPerElement();
-
-    forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
-    {
-      LvArray::tensorOps::copy< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, 0 ) ] );
-      for( localIndex a = 1; a < nNodes; ++a )
-      {
-        LvArray::tensorOps::add< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, a ) ] );
-      }
-
-      LvArray::tensorOps::scale< 3 >( elementCenters[ k ], 1.0 / nNodes );
-    } );
-  }
-
-  /**
-   * @brief Compute the volume of the k-th element in the subregion.
-   * @param[in] k the index of the element in the subregion
-   * @param[in] X an arrayView of (const) node positions
-   */
-  inline void calculateCellVolumesKernel( localIndex const k,
-                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
-  {
-    LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
-
-    real64 Xlocal[10][3];
-
-    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-    {
-      LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ m_toNodesRelation( k, a ) ] );
-    }
-    LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
-
-    if( m_numNodesPerElement == 8 )
-    {
-      m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 4 )
-    {
-      m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 6 )
-    {
-      m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 5 )
-    {
-      m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
-    }
-    else
-    {
-      GEOSX_ERROR( "GEOX does not support cells with " << m_numNodesPerElement << " nodes" );
-    }
-  }
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
   ///@}
-
   /**
    * @name Getters / Setters
    */
@@ -274,7 +208,7 @@ public:
   T & addProperty( string const & propertyName )
   {
     m_externalPropertyNames.emplace_back( propertyName );
-    return this->registerWrapper< T >( propertyName )->reference();
+    return this->registerWrapper< T >( propertyName ).reference();
   }
 
   /**
@@ -287,8 +221,7 @@ public:
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      dataRepository::WrapperBase * const wrapper = this->getWrapperBase( externalPropertyName );
-      lambda( wrapper );
+      lambda( this->getWrapperBase( externalPropertyName ) );
     }
   }
 
@@ -309,6 +242,46 @@ private:
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;
 
+  /**
+   * @brief Compute the volume of the k-th element in the subregion.
+   * @param[in] k the index of the element in the subregion
+   * @param[in] X an arrayView of (const) node positions
+   */
+  inline void calculateCellVolumesKernel( localIndex const k,
+                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+  {
+    LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
+
+    real64 Xlocal[10][3];
+
+    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+    {
+      LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ m_toNodesRelation( k, a ) ] );
+    }
+    LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
+
+    if( m_numNodesPerElement == 8 )
+    {
+      m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
+    }
+    else if( m_numNodesPerElement == 4 )
+    {
+      m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
+    }
+    else if( m_numNodesPerElement == 6 )
+    {
+      m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
+    }
+    else if( m_numNodesPerElement == 5 )
+    {
+      m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
+    }
+    else
+    {
+      GEOSX_ERROR( "GEOX does not support cells with " << m_numNodesPerElement << " nodes" );
+    }
+  }
 };
 
 }

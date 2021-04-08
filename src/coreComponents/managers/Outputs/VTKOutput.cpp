@@ -18,6 +18,8 @@
 
 #include "VTKOutput.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 
 namespace geosx
 {
@@ -27,27 +29,29 @@ using namespace dataRepository;
 VTKOutput::VTKOutput( string const & name,
                       Group * const parent ):
   OutputBase( name, parent ),
-  m_plotFileRoot(),
+  m_plotFileRoot( name ),
   m_writeFaceMesh(),
   m_plotLevel(),
-  m_writer( name )
+  m_writeBinaryData( 1 ),
+  m_writer( getGlobalState().getCommandLineOptions().outputDirectory + '/' + m_plotFileRoot )
 {
-  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
+    setDefaultValue( m_plotFileRoot ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the root file for this output." );
+
+  registerWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "" );
+  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Level detail plot. Only fields with lower of equal plot level will be output." );
 
-  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel )->
-    setApplyDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "" );
-
-  registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData )->
-    setApplyDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Output the data in binary format" );
 
 }
@@ -55,16 +59,18 @@ VTKOutput::VTKOutput( string const & name,
 VTKOutput::~VTKOutput()
 {}
 
-
+void VTKOutput::postProcessInput()
+{
+  m_writer.setOutputLocation( getGlobalState().getCommandLineOptions().outputDirectory, m_plotFileRoot );
+}
 
 bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const cycleNumber,
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
                          real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
-                         Group * domain )
+                         DomainPartition & domain )
 {
-  DomainPartition * domainPartition = Group::groupCast< DomainPartition * >( domain );
   if( m_writeBinaryData )
   {
     m_writer.setOutputMode( vtk::VTKOutputMode::BINARY );
@@ -74,7 +80,7 @@ bool VTKOutput::execute( real64 const time_n,
     m_writer.setOutputMode( vtk::VTKOutputMode::ASCII );
   }
   m_writer.setPlotLevel( m_plotLevel );
-  m_writer.write( time_n, cycleNumber, *domainPartition );
+  m_writer.write( time_n, cycleNumber, domain );
 
   return false;
 }

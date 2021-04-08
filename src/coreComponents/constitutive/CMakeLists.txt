@@ -13,15 +13,16 @@ set( constitutive_headers
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
      contact/Coulomb.hpp
+     fluid/DeadOilFluid.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
-     fluid/PVTFunctions/BrineCO2DensityFunction.hpp
-     fluid/PVTFunctions/BrineViscosityFunction.hpp
-     fluid/PVTFunctions/CO2SolubilityFunction.hpp
-     fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
+     fluid/PVTFunctions/BrineCO2Density.hpp
+     fluid/PVTFunctions/BrineViscosity.hpp
+     fluid/PVTFunctions/CO2Solubility.hpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
      fluid/PVTFunctions/PVTFunctionBase.hpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp
-     fluid/PVTFunctions/UtilityFunctions.hpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.hpp
+     fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/SingleFluidBase.hpp
      fluid/singleFluidSelector.hpp
      fluid/MultiFluidBase.hpp
@@ -55,6 +56,8 @@ set( constitutive_headers
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/relativePermeabilitySelector.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
+     relativePermeability/TableRelativePermeability.hpp
+     relativePermeability/RelativePermeabilityInterpolators.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
@@ -71,14 +74,14 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactRelationBase.cpp
      contact/Coulomb.cpp
+     fluid/DeadOilFluid.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
-     fluid/MultiPhaseMultiComponentFluid.cpp     
-     fluid/PVTFunctions/BrineCO2DensityFunction.cpp
-     fluid/PVTFunctions/BrineViscosityFunction.cpp 
-     fluid/PVTFunctions/CO2SolubilityFunction.cpp
-     fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
-     fluid/PVTFunctions/UtilityFunctions.cpp
+     fluid/MultiPhaseMultiComponentFluid.cpp
+     fluid/PVTFunctions/BrineCO2Density.cpp
+     fluid/PVTFunctions/BrineViscosity.cpp
+     fluid/PVTFunctions/CO2Solubility.cpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.cpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.cpp
      fluid/SingleFluidBase.cpp
      fluid/MultiFluidBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
@@ -101,6 +104,7 @@ set( constitutive_sources
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
+     relativePermeability/TableRelativePermeability.cpp     
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp

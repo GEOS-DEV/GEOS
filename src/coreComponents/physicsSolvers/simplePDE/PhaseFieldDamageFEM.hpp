@@ -51,7 +51,7 @@ public:
     return "PhaseFieldDamageFEM";
   }
 
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -141,15 +141,12 @@ public:
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
 //    static constexpr auto coeffFieldName = "coeffFieldName";
-    static constexpr auto coeffName = "coeffField";
-    static constexpr auto localDissipationOption = "localDissipation";
-    static constexpr auto solidModelNamesString = "solidMaterialNames";
+    static constexpr char const * coeffNameString() { return "coeffField"; }
+    static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
+    static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
-    dataRepository::ViewKey timeIntegrationOption =
-    { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName =
-    { "fieldName" };
-
+    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
+    dataRepository::ViewKey fieldVarName = { "fieldName" };
   } PhaseFieldDamageFEMViewKeys;
 
   inline ParallelVector const * getSolution() const

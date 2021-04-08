@@ -17,7 +17,7 @@
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
       discretization="fluidTPFA"
@@ -200,9 +200,8 @@
   </ElementRegions>
 
   <Constitutive>
-    <BlackOilFluid
+    <DeadOilFluid
       name="fluid1"
-      fluidType="DeadOil"
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
@@ -213,12 +212,11 @@
       referencePressure="0.0"
       compressibility="1e-9"/>
 
-    <BrooksCoreyRelativePermeability
+    <TableRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
-      phaseRelPermExponent="{ 2.0, 2.0, 1.5 }"
-      phaseRelPermMaxValue="{ 0.8, 0.9, 0.9 }"/>
+      waterOilRelPermTableNames="{ waterRelPermTable, oilRelPermTableForOW }"
+      gasOilRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -295,7 +293,33 @@
       scale="0.001"/>
   </FieldSpecifications>
 
-  <Functions/>
+  <Functions>
+
+    <TableFunction
+      name="waterRelPermTable"
+      coordinateFiles="{ satw.txt }"
+      voxelFile="krw.txt"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="oilRelPermTableForOW"
+      coordinateFiles="{ sato.txt }"
+      voxelFile="krow.txt"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="gasRelPermTable"
+      coordinateFiles="{ satg.txt }"
+      voxelFile="krg.txt"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="oilRelPermTableForOG"
+      coordinateFiles="{ sato.txt }"
+      voxelFile="krog.txt"
+      interpolation="linear"/>
+  
+  </Functions>
 
   <Outputs>
     <Silo
@@ -304,4 +328,5 @@
     <Restart
       name="restartOutput"/>
   </Outputs>
+  
 </Problem>

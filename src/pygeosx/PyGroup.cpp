@@ -49,7 +49,7 @@ struct PyGroup
 /**
  *
  */
-static PyObject * PyGroup_repr( PyObject * const obj )
+static PyObject * PyGroup_repr( PyObject * const obj ) noexcept
 {
   PyGroup const * const pyGroup = LvArray::python::convert< PyGroup >( obj, getPyGroupType() );
   if( pyGroup == nullptr )
@@ -62,6 +62,7 @@ static PyObject * PyGroup_repr( PyObject * const obj )
   string const path = pyGroup->group->getPath();
   string const type = LvArray::system::demangle( typeid( *(pyGroup->group) ).name() );
   string const repr = path + " ( " + type + " )";
+
   return PyUnicode_FromString( repr.c_str() );
 }
 
@@ -74,7 +75,7 @@ static constexpr char const * PyGroup_groupsDocString =
   "_______\n"
   "list of Group\n"
   "    A list containing each subgroup.";
-static PyObject * PyGroup_groups( PyGroup * const self, PyObject * const args )
+static PyObject * PyGroup_groups( PyGroup * const self, PyObject * const args ) noexcept
 {
   GEOSX_UNUSED_VAR( args );
 
@@ -83,25 +84,28 @@ static PyObject * PyGroup_groups( PyGroup * const self, PyObject * const args )
 
   localIndex const numSubGroups = self->group->numSubGroups();
 
-  PyObject * pyList = PyList_New( numSubGroups );
+  LvArray::python::PyObjectRef<> pyList = PyList_New( numSubGroups );
+  if( pyList == nullptr )
+  {
+    return nullptr;
+  }
+
   Py_ssize_t i = 0;
   bool error = false;
-  self->group->forSubGroups( [pyList, &i, &error] ( dataRepository::Group & subGroup )
+  self->group->forSubGroups( [&pyList, &i, &error] ( dataRepository::Group & subGroup )
   {
     PyObject * const retGroup = createNewPyGroup( subGroup );
-    error = error || retGroup == nullptr;
-
-    PyList_SET_ITEM( pyList, i, retGroup );
+    error |= retGroup == nullptr;
+    error |= PyList_SetItem( pyList.get(), i, retGroup );
     ++i;
   } );
 
   if( error )
   {
-    Py_DECREF( pyList );
     return nullptr;
   }
 
-  return pyList;
+  return pyList.release();
 }
 
 static constexpr char const * PyGroup_wrappersDocString =
@@ -113,7 +117,7 @@ static constexpr char const * PyGroup_wrappersDocString =
   "_______\n"
   "list of Wrapper\n"
   "    A list containing each wrapper.";
-static PyObject * PyGroup_wrappers( PyGroup * const self, PyObject * const args )
+static PyObject * PyGroup_wrappers( PyGroup * const self, PyObject * const args ) noexcept
 {
   GEOSX_UNUSED_VAR( args );
 
@@ -122,25 +126,28 @@ static PyObject * PyGroup_wrappers( PyGroup * const self, PyObject * const args 
 
   localIndex const numWrappers = self->group->numWrappers();
 
-  PyObject * pyList = PyList_New( numWrappers );
+  LvArray::python::PyObjectRef<> pyList = PyList_New( numWrappers );
+  if( pyList == nullptr )
+  {
+    return nullptr;
+  }
+
   Py_ssize_t i = 0;
   bool error = false;
-  self->group->forWrappers( [pyList, &i, &error] ( dataRepository::WrapperBase & wrapper )
+  self->group->forWrappers( [&pyList, &i, &error] ( dataRepository::WrapperBase & wrapper )
   {
     PyObject * const retWrapper = createNewPyWrapper( wrapper );
-    error = error || retWrapper == nullptr;
-
-    PyList_SET_ITEM( pyList, i, retWrapper );
+    error |= retWrapper == nullptr;
+    error |= PyList_SetItem( pyList.get(), i, retWrapper );
     ++i;
   } );
 
   if( error )
   {
-    Py_DECREF( pyList );
     return nullptr;
   }
 
-  return pyList;
+  return pyList.release();
 }
 
 static constexpr char const * PyGroup_getGroupDocString =
@@ -159,7 +166,7 @@ static constexpr char const * PyGroup_getGroupDocString =
   "_______\n"
   "Group\n"
   "    The group at the relative path.";
-static PyObject * PyGroup_getGroup( PyGroup * const self, PyObject * const args )
+static PyObject * PyGroup_getGroup( PyGroup * const self, PyObject * const args ) noexcept
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
@@ -183,20 +190,24 @@ static PyObject * PyGroup_getGroup( PyGroup * const self, PyObject * const args 
     return nullptr;
   }
 
-  dataRepository::Group * const result = self->group->getGroupByPath( path );
-  if( result == nullptr && defaultReturnValue == nullptr )
+  try
   {
-    PyErr_SetString( PyExc_ValueError, ( "No Group at " + self->group->getPath() + "/" + path ).c_str() );
-    return nullptr;
+    return createNewPyGroup( self->group->getGroupByPath( path ) );
   }
-  else if( result == nullptr )
+  // If the path isn't valid then getGroupByPath will throw a std::domain_error
+  catch( std::domain_error const & e )
   {
+    // If no default return value was specified then this results in a Python exception.
+    if( defaultReturnValue == nullptr )
+    {
+      PyErr_SetString( PyExc_KeyError, e.what() );
+      return nullptr;
+    }
+
+    // Otherwise we return the default value.
     Py_INCREF( defaultReturnValue );
     return defaultReturnValue;
   }
-
-  // Create a new Group and set the dataRepository::Group it points to.
-  return createNewPyGroup( *result );
 }
 
 static constexpr char const * PyGroup_getWrapperDocString =
@@ -215,7 +226,7 @@ static constexpr char const * PyGroup_getWrapperDocString =
   "_______\n"
   "Wrapper\n"
   "    The wrapper at the relative path.";
-static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const args )
+static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const args ) noexcept
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
@@ -240,24 +251,28 @@ static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const arg
   }
 
   string groupPath, wrapperName;
-  splitPath( path, groupPath, wrapperName );
+  std::tie( groupPath, wrapperName ) = splitPath( path );
 
-  dataRepository::Group * const group = self->group->getGroupByPath( groupPath );
-
-  dataRepository::WrapperBase * const result = group->getWrapperBase( wrapperName );
-  if( result == nullptr && defaultReturnValue == nullptr )
+  try
   {
-    PyErr_SetString( PyExc_ValueError, ( "No Wrapper at " + self->group->getPath() + "/" + groupPath ).c_str() );
-    return nullptr;
+    dataRepository::Group & group = self->group->getGroupByPath( groupPath );
+    dataRepository::WrapperBase & wrapper = group.getWrapperBase( wrapperName );
+    return createNewPyWrapper( wrapper );
   }
-  else if( result == nullptr )
+  // If the path isn't valid then either getGroupByPath or getWrapperBase will throw a std::domain_error
+  catch( std::domain_error const & e )
   {
+    // If no default return value was specified then this results in a Python exception.
+    if( defaultReturnValue == nullptr )
+    {
+      PyErr_SetString( PyExc_KeyError, e.what() );
+      return nullptr;
+    }
+
+    // Otherwise we return the default value.
     Py_INCREF( defaultReturnValue );
     return defaultReturnValue;
   }
-
-  // Create a new Group and set the dataRepository::Group it points to.
-  return createNewPyWrapper( *result );
 }
 
 static constexpr char const * PyGroup_registerDocString =

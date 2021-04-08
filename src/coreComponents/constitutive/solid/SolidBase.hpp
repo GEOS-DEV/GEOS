@@ -572,7 +572,7 @@ public:
    * @param parent Object's parent group (element subregion)
    * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
    */
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
@@ -581,10 +581,10 @@ public:
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto stressString = "stress";                  ///< New stress key
-    static constexpr auto oldStressString = "oldStress";            ///< Old stress key
-    static constexpr auto densityString  = "density";               ///< Density key
-    static constexpr auto defaultDensityString  = "defaultDensity"; ///< Default density key
+    static constexpr char const * stressString() { return "stress"; }                  ///< New stress key
+    static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
+    static constexpr char const * densityString() { return "density"; }                ///< Density key
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
   };
 
 

@@ -22,6 +22,7 @@
 #include "MpiWrapper.hpp"
 
 #include "common/DataTypes.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/GeosxState.hpp"
 
 #include <set>
@@ -31,6 +32,7 @@ namespace geosx
 
 
 class ObjectManagerBase;
+class NodeManager;
 class NeighborCommunicator;
 class MeshLevel;
 class ElementRegionManager;
@@ -87,7 +89,7 @@ public:
   ~CommunicationTools();
 
   void assignGlobalIndices( ObjectManagerBase & object,
-                            ObjectManagerBase const & compositionObject,
+                            NodeManager const & compositionObject,
                             std::vector< NeighborCommunicator > & neighbors );
 
   void assignNewGlobalIndices( ObjectManagerBase & object,
@@ -103,30 +105,54 @@ public:
   CommID getCommID()
   { return CommID( m_freeCommIDs ); }
 
-  void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+  void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
   void synchronizeFields( const std::map< string, string_array > & fieldNames,
-                          MeshLevel * const mesh,
+                          MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & allNeighbors,
-                          bool on_device = false );
+                          bool onDevice );
 
   void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                     MeshLevel * const mesh,
+                                     MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
-                                     bool on_device = false );
+                                     bool onDevice );
 
   void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                MeshLevel * const mesh,
+                                MeshLevel & mesh,
                                 std::vector< NeighborCommunicator > & allNeighbors,
                                 MPI_iCommData & icomm,
-                                bool on_device = false );
+                                bool onDevice );
 
-  void synchronizeUnpack( MeshLevel * const mesh,
+  void asyncPack( const std::map< string, string_array > & fieldNames,
+                  MeshLevel & mesh,
+                  std::vector< NeighborCommunicator > & neighbors,
+                  MPI_iCommData & icomm,
+                  bool onDevice,
+                  parallelDeviceEvents & events );
+
+  void asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
+                      MPI_iCommData & icomm,
+                      bool onDevice,
+                      parallelDeviceEvents & events );
+
+  void synchronizeUnpack( MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & neighbors,
                           MPI_iCommData & icomm,
-                          bool on_device = false );
+                          bool onDevice );
+
+  bool asyncUnpack( MeshLevel & mesh,
+                    std::vector< NeighborCommunicator > & neighbors,
+                    MPI_iCommData & icomm,
+                    bool onDevice,
+                    parallelDeviceEvents & events );
+
+  void finalizeUnpack( MeshLevel & mesh,
+                       std::vector< NeighborCommunicator > & neighbors,
+                       MPI_iCommData & icomm,
+                       bool onDevice,
+                       parallelDeviceEvents & events );
 
 private:
   std::set< int > m_freeCommIDs;

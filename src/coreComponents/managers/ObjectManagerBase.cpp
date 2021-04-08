@@ -29,8 +29,8 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( string const & name,
                                       Group * const parent ):
   Group( name, parent ),
-  m_sets( groupKeyStruct::setsString, this ),
-  m_neighborGroup( groupKeyStruct::neighborDataString, this ),
+  m_sets( groupKeyStruct::setsString(), this ),
+  m_neighborGroup( groupKeyStruct::neighborDataString(), this ),
   m_localToGlobalMap(),
   m_globalToLocalMap(),
   m_isExternal(),
@@ -38,22 +38,22 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
   m_ghostRank(),
   m_neighborData()
 {
-  registerGroup( groupKeyStruct::setsString, &m_sets );
-  registerGroup( groupKeyStruct::neighborDataString, &m_neighborGroup );
+  registerGroup( groupKeyStruct::setsString(), &m_sets );
+  registerGroup( groupKeyStruct::neighborDataString(), &m_neighborGroup );
 
-  registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::localToGlobalMapString(), &m_localToGlobalMap ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Array that contains a map from localIndex to globalIndex." );
 
-  registerWrapper( viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap );
+  registerWrapper( viewKeyStruct::globalToLocalMapString(), &m_globalToLocalMap );
 
-  registerWrapper( viewKeyStruct::isExternalString, &m_isExternal );
+  registerWrapper( viewKeyStruct::isExternalString(), &m_isExternal );
 
-  registerWrapper( viewKeyStruct::ghostRankString, &m_ghostRank )->
-    setApplyDefaultValue( -2 )->
+  registerWrapper( viewKeyStruct::ghostRankString(), &m_ghostRank ).
+    setApplyDefaultValue( -2 ).
     setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString, &m_domainBoundaryIndicator );
+  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString(), &m_domainBoundaryIndicator );
 
   m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
@@ -211,7 +211,8 @@ void ObjectManagerBase::constructGlobalToLocalMap()
 localIndex ObjectManagerBase::packSize( string_array const & wrapperNames,
                                         arrayView1d< localIndex const > const & packList,
                                         integer const recursive,
-                                        bool on_device ) const
+                                        bool onDevice,
+                                        parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
   buffer_unit_type * junk;
@@ -219,7 +220,8 @@ localIndex ObjectManagerBase::packSize( string_array const & wrapperNames,
                                             wrapperNames,
                                             packList,
                                             recursive,
-                                            on_device );
+                                            onDevice,
+                                            events );
 
   return packedSize;
 }
@@ -228,11 +230,12 @@ localIndex ObjectManagerBase::pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
                                     arrayView1d< localIndex const > const & packList,
                                     integer const recursive,
-                                    bool on_device ) const
+                                    bool onDevice,
+                                    parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += this->packPrivate< true >( buffer, wrapperNames, packList, recursive, on_device );
+  packedSize += this->packPrivate< true >( buffer, wrapperNames, packList, recursive, onDevice, events );
 
   return packedSize;
 }
@@ -242,7 +245,8 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
                                            string_array const & wrapperNames,
                                            arrayView1d< localIndex const > const & packList,
                                            integer const recursive,
-                                           bool on_device ) const
+                                           bool onDevice,
+                                           parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
@@ -282,17 +286,17 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
     packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperNamesForPacking.size() );
     for( auto const & wrapperName : wrapperNamesForPacking )
     {
-      dataRepository::WrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
-      if( wrapper!=nullptr )
+      if( this->hasWrapper( wrapperName ) )
       {
+        dataRepository::WrapperBase const & wrapper = this->getWrapperBase( wrapperName );
         packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
         if( DOPACK )
         {
-          packedSize += wrapper->packByIndex( buffer, packList, true, on_device );
+          packedSize += wrapper.packByIndex( buffer, packList, true, onDevice, events );
         }
         else
         {
-          packedSize += wrapper->packByIndexSize( packList, true, on_device );
+          packedSize += wrapper.packByIndexSize( packList, true, onDevice, events );
         }
       }
       else
@@ -302,8 +306,6 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
     }
   }
 
-
-
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "SubGroups" ) );
@@ -311,7 +313,7 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : this->getSubGroups() )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, on_device );
+      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
     }
   }
 
@@ -325,7 +327,8 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
 localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
                                       arrayView1d< localIndex > & packList,
                                       integer const recursive,
-                                      bool on_device )
+                                      bool onDevice,
+                                      parallelDeviceEvents & events )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -352,8 +355,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
       if( wrapperName != "nullptr" )
       {
-        WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-        unpackedSize += wrapper->unpackByIndex( buffer, packList, true, on_device );
+        unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
       }
     }
   }
@@ -372,7 +374,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     {
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->getGroup( subGroupName )->unpack( buffer, packList, recursive, on_device );
+      unpackedSize += this->getGroup( subGroupName ).unpack( buffer, packList, recursive, onDevice, events );
     }
   }
 
@@ -391,7 +393,7 @@ localIndex ObjectManagerBase::packParentChildMapsPrivate( buffer_unit_type * & b
   if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
     arrayView1d< localIndex const > const parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ParentIndex::key ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ParentIndex::key() ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              parentIndex,
                                              packList,
@@ -402,7 +404,7 @@ localIndex ObjectManagerBase::packParentChildMapsPrivate( buffer_unit_type * & b
   if( this->hasExtrinsicData< extrinsicMeshData::ChildIndex >() )
   {
     arrayView1d< localIndex const > const & childIndex = this->getExtrinsicData< extrinsicMeshData::ChildIndex >();
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ChildIndex::key ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ChildIndex::key() ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              childIndex,
                                              packList,
@@ -431,8 +433,8 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
     arrayView1d< localIndex > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
-    GEOSX_ERROR_IF( shouldBeParentIndexString != extrinsicMeshData::ParentIndex::key,
-                    "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << extrinsicMeshData::ParentIndex::key );
+    GEOSX_ERROR_IF( shouldBeParentIndexString != extrinsicMeshData::ParentIndex::key(),
+                    "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << extrinsicMeshData::ParentIndex::key() );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -445,8 +447,8 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
     arrayView1d< localIndex > const & childIndex = this->getExtrinsicData< extrinsicMeshData::ChildIndex >();
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
-    GEOSX_ERROR_IF( shouldBeChildIndexString != extrinsicMeshData::ChildIndex::key,
-                    "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << extrinsicMeshData::ChildIndex::key );
+    GEOSX_ERROR_IF( shouldBeChildIndexString != extrinsicMeshData::ChildIndex::key(),
+                    "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << extrinsicMeshData::ChildIndex::key() );
     unpackedSize += bufferOps::Unpack( buffer,
                                        childIndex,
                                        packList,
@@ -539,7 +541,7 @@ localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer
   localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, this->getName() );
 
   // this doesn't link without the string()...no idea why.
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString() ) );
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
@@ -562,7 +564,7 @@ localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer
   if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
     arrayView1d< localIndex const > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ParentIndex::key ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ParentIndex::key() ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              parentIndex,
                                              packList,
@@ -579,7 +581,7 @@ localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer
     for( auto const & keyGroupPair : this->getSubGroups() )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
-      ObjectManagerBase const * const subObjectManager = Group::groupCast< ObjectManagerBase const * >( keyGroupPair.second );
+      ObjectManagerBase const * const subObjectManager = dynamicCast< ObjectManagerBase const * >( keyGroupPair.second );
       if( subObjectManager )
       {
         packedSize += subObjectManager->packGlobalMapsPrivate< DOPACK >( buffer, packList, recursive );
@@ -605,7 +607,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
-  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect" );
+  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::Unpack(): label incorrect" );
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int sendingRank;
@@ -684,7 +686,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
     arrayView1d< localIndex > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
     string parentIndicesString;
     unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
-    GEOSX_ERROR_IF( parentIndicesString != extrinsicMeshData::ParentIndex::key, "ObjectManagerBase::Unpack(): label incorrect" );
+    GEOSX_ERROR_IF( parentIndicesString != extrinsicMeshData::ParentIndex::key(), "ObjectManagerBase::Unpack(): label incorrect" );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -708,8 +710,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->getGroup< ObjectManagerBase >( subGroupName )->
-                        unpackGlobalMaps( buffer, packList, recursive );
+      unpackedSize += this->getGroup< ObjectManagerBase >( subGroupName ).unpackGlobalMaps( buffer, packList, recursive );
     }
   }
 
@@ -724,11 +725,11 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
 
 void ObjectManagerBase::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::localToGlobalMapString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::globalToLocalMapString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::ghostRankString ));
-  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ParentIndex::key ));
-  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ChildIndex::key ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::localToGlobalMapString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::globalToLocalMapString() ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::ghostRankString() ));
+  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ParentIndex::key() ));
+  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ChildIndex::key() ));
 
 }
 

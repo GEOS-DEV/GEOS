@@ -53,13 +53,11 @@ public:
 
   /**
    * @brief Perform initalization after all subgroups have been initialized.
-   *        Check for existing files and data spaces/sets on restart, else create the
-   *        file and data spaces/sets and output any set index metatata for the time
-   *        history.
-   * @param group The problem manager cast to a group.
+   *   Check for existing files and data spaces/sets on restart, else create the
+   *   file and data spaces/sets and output any set index metatata for the time history.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void initializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups() override;
 
   /**
    * @brief Writes out a time history file.
@@ -70,7 +68,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
   /**
    * @brief Writes out a time history file at the end of the simulation.
    * @copydoc ExecutableGroup::cleanup()
@@ -79,7 +77,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition & domain ) override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeys
@@ -98,7 +96,7 @@ private:
    * @param group The ProblemManager cast to a Group
    * @param collector The HistoryCollector to intialize
    */
-  void initCollectorParallel( ProblemManager & problemManager, HistoryCollection * collector );
+  void initCollectorParallel( ProblemManager & problemManager, HistoryCollection & collector );
 
   /// The paths of the collectors to collect history from.
   string_array m_collectorPaths;

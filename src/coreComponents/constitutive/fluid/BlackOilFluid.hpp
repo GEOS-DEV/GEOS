@@ -32,11 +32,7 @@ class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
-  enum class FluidType : integer
-  {
-    DeadOil,
-    LiveOil
-  };
+  using exec_policy = serialPolicy;
 
   BlackOilFluid( string const & name, Group * const parent );
 
@@ -53,10 +49,9 @@ public:
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
-    static constexpr auto surfaceDensitiesString = "surfaceDensities";
-    static constexpr auto tableFilesString = "tableFiles";
-    static constexpr auto fluidTypeString = "fluidType";
-  } viewKeysBlackOilFluid;
+    static constexpr char const * surfaceDensitiesString() { return "surfaceDensities"; }
+    static constexpr char const * tableFilesString() { return "tableFiles"; }
+  };
 
 protected:
   virtual void postProcessInput() override;
@@ -71,12 +66,7 @@ private:
   // Black-oil table filenames
   path_array m_tableFiles;
 
-  // Type of black-oil fluid (live/dead)
-  FluidType m_fluidType;
-
 };
-
-ENUM_STRINGS( BlackOilFluid::FluidType, "DeadOil", "LiveOil" )
 
 } /* namespace constitutive */
 

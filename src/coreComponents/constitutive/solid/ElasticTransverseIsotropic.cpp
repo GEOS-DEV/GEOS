@@ -38,52 +38,51 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   m_c44(),
   m_c66()
 {
-  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverse, &m_defaultYoungsModulusTransverse )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverseString(), &m_defaultYoungsModulusTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Bulk Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultYoungsModulusAxial, &m_defaultYoungsModulusAxial )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultYoungsModulusAxialString(), &m_defaultYoungsModulusAxial ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Shear Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverse, &m_defaultPoissonTransverse )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverseString(), &m_defaultPoissonTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Shear Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverse, &m_defaultPoissonAxialTransverse )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverseString(), &m_defaultPoissonAxialTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Shear Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverse, &m_defaultShearModulusAxialTransverse )->
-    setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverseString(), &m_defaultShearModulusAxialTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Shear Modulus Parameter" );
 
 
-  registerWrapper( viewKeyStruct::c11, &m_c11 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c11String(), &m_c11 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::c13, &m_c13 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c13String(), &m_c13 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::c33, &m_c33 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c33String(), &m_c33 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::c44, &m_c44 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c44String(), &m_c44 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::c66, &m_c66 )->
-    setApplyDefaultValue( -1 )->
+  registerWrapper( viewKeyStruct::c66String(), &m_c66 ).
+    setApplyDefaultValue( -1 ).
     setDescription( "Elastic Bulk Modulus Field" );
-
 }
 
 
@@ -109,19 +108,19 @@ void ElasticTransverseIsotropic::postProcessInput()
   real64 const c44Default = Gat;
   real64 const c66Default = 0.5 * Ea / ( 1 + Nut );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() ).
     setApplyDefaultValue( c11Default );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() ).
     setApplyDefaultValue( c13Default );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() ).
     setApplyDefaultValue( c33Default );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() ).
     setApplyDefaultValue( c44Default );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66 )->
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() ).
     setApplyDefaultValue( c66Default );
 }
 

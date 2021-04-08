@@ -19,11 +19,11 @@
 
 #include "mpiCommunications/CommunicationTools.hpp"
 
-
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include <algorithm>
 
@@ -46,7 +46,7 @@ CommunicationTools::~CommunicationTools()
 }
 
 void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
-                                              ObjectManagerBase const & compositionObject,
+                                              NodeManager const & compositionObject,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
   GEOSX_MARK_FUNCTION;
@@ -69,7 +69,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   // get the relation to the composition object used that will be used to identify the main object. For example,
   // a face can be identified by its nodes.
   std::vector< std::vector< globalIndex > > objectToCompositionObject;
-  object.extractMapFromObjectForAssignGlobalIndexNumbers( &compositionObject, objectToCompositionObject );
+  object.extractMapFromObjectForAssignGlobalIndexNumbers( compositionObject, objectToCompositionObject );
 
   // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with
@@ -147,7 +147,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   for( std::size_t count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
-    MpiWrapper::waitany( commData.size,
+    MpiWrapper::waitAny( commData.size,
                          commData.mpiSizeRecvBufferRequest.data(),
                          &neighborIndex,
                          commData.mpiSizeRecvBufferStatus.data() );
@@ -179,7 +179,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
   for( std::size_t count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
-    MpiWrapper::waitany( commData.size,
+    MpiWrapper::waitAny( commData.size,
                          commData.mpiRecvBufferRequest.data(),
                          &neighborIndex,
                          commData.mpiRecvBufferStatus.data() );
@@ -356,8 +356,8 @@ CommunicationTools::
     localIndex const esr = iter.first.second;
     std::set< localIndex > const & indexList = iter.second;
 
-    ElementSubRegionBase * const subRegion = elementManager.getRegion( er )->getSubRegion( esr );
-    arrayView1d< globalIndex > const & localToGlobal = subRegion->localToGlobalMap();
+    ElementSubRegionBase & subRegion = elementManager.getRegion( er ).getSubRegion( esr );
+    arrayView1d< globalIndex > const & localToGlobal = subRegion.localToGlobalMap();
 
     for( localIndex const newLocalIndex : indexList )
     {
@@ -366,7 +366,7 @@ CommunicationTools::
                                       << localToGlobal[newLocalIndex] );
 
       localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
-      subRegion->updateGlobalToLocalMap( newLocalIndex );
+      subRegion.updateGlobalToLocalMap( newLocalIndex );
 
       nIndicesAssigned += 1;
     }
@@ -377,14 +377,14 @@ CommunicationTools::
 
 void
 CommunicationTools::
-  findMatchedPartitionBoundaryObjects( ObjectManagerBase * const objectManager,
+  findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOSX_MARK_FUNCTION;
-  arrayView1d< integer > const & domainBoundaryIndicator = objectManager->getDomainBoundaryIndicator();
+  arrayView1d< integer > const & domainBoundaryIndicator = objectManager.getDomainBoundaryIndicator();
 
   array1d< globalIndex > globalPartitionBoundaryObjectsIndices;
-  objectManager->constructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
+  objectManager.constructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
 
 
   // send the size of the partitionBoundaryObjects to neighbors
@@ -403,7 +403,7 @@ CommunicationTools::
     for( std::size_t i=0; i<allNeighbors.size(); ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      localIndex_array & matchedPartitionBoundaryObjects = objectManager->getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
+      localIndex_array & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
 
       neighbor.mpiWaitAll( commID );
       localIndex localCounter = 0;
@@ -413,7 +413,7 @@ CommunicationTools::
       {
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
-          localIndex const localMatchedIndex = objectManager->globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
+          localIndex const localMatchedIndex = objectManager.globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
           matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;
           ++localCounter;
@@ -567,7 +567,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
   }
 
   /// Wait on the initial send requests.
-  MpiWrapper::waitall( nonLocalGhostsRequests.size(), nonLocalGhostsRequests.data(), MPI_STATUSES_IGNORE );
+  MpiWrapper::waitAll( nonLocalGhostsRequests.size(), nonLocalGhostsRequests.data(), MPI_STATUSES_IGNORE );
 }
 
 /**
@@ -646,10 +646,10 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
   GEOSX_MARK_FUNCTION;
   CommID commID = CommunicationTools::getCommID();
 
-  NodeManager & nodeManager = *( meshLevel.getNodeManager() );
-  EdgeManager & edgeManager = *( meshLevel.getEdgeManager() );
-  FaceManager & faceManager = *( meshLevel.getFaceManager() );
-  ElementRegionManager & elemManager = *( meshLevel.getElemManager() );
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   auto sendGhosts = [&] ( int idx )
   {
@@ -724,19 +724,20 @@ void CommunicationTools::findGhosts( MeshLevel & meshLevel,
 }
 
 void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                                       MeshLevel * const mesh,
+                                                       MeshLevel & mesh,
                                                        std::vector< NeighborCommunicator > & neighbors,
                                                        MPI_iCommData & icomm,
-                                                       bool on_device )
+                                                       bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
   icomm.fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   icomm.resize( neighbors.size() );
 
-  for( std::size_t neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
+  parallelDeviceEvents events;
+  for( std::size_t neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    int const bufferSize = neighbor.packCommSizeForSync( fieldNames, *mesh, icomm.commID, on_device );
+    int const bufferSize = neighbor.packCommSizeForSync( fieldNames, mesh, icomm.commID, onDevice, events );
 
     neighbor.mpiISendReceiveBufferSizes( icomm.commID,
                                          icomm.mpiSizeSendBufferRequest[neighborIndex],
@@ -745,27 +746,42 @@ void CommunicationTools::synchronizePackSendRecvSizes( const std::map< string, s
 
     neighbor.resizeSendBuffer( icomm.commID, bufferSize );
   }
+  waitAllDeviceEvents( events );
 }
 
 
-void CommunicationTools::synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                                  MeshLevel * const mesh,
-                                                  std::vector< NeighborCommunicator > & neighbors,
-                                                  MPI_iCommData & icomm,
-                                                  bool on_device )
+void CommunicationTools::asyncPack( const std::map< string, string_array > & fieldNames,
+                                    MeshLevel & mesh,
+                                    std::vector< NeighborCommunicator > & neighbors,
+                                    MPI_iCommData & icomm,
+                                    bool onDevice,
+                                    parallelDeviceEvents & events )
 {
   GEOSX_MARK_FUNCTION;
-
-  MPI_iCommData sizeComm;
   for( NeighborCommunicator & neighbor : neighbors )
   {
-    neighbor.packCommBufferForSync( fieldNames, *mesh, icomm.commID, on_device );
+    neighbor.packCommBufferForSync( fieldNames, mesh, icomm.commID, onDevice, events );
+  }
+}
+
+void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
+                                        MPI_iCommData & icomm,
+                                        bool onDevice,
+                                        parallelDeviceEvents & events )
+{
+  GEOSX_MARK_FUNCTION;
+  if( onDevice )
+  {
+    waitAllDeviceEvents( events );
   }
 
-  for( std::size_t count=0; count<neighbors.size(); ++count )
+  // could swap this to test and make this function call async as well, only launch the sends/recvs for
+  // those we've already recv'd sizing for, go back to some usefule compute / launch some other compute, then
+  // check this again
+  for( std::size_t count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
-    MpiWrapper::waitany( icomm.size,
+    MpiWrapper::waitAny( icomm.size,
                          icomm.mpiSizeRecvBufferRequest.data(),
                          &neighborIndex,
                          icomm.mpiSizeRecvBufferStatus.data() );
@@ -777,49 +793,106 @@ void CommunicationTools::synchronizePackSendRecv( const std::map< string, string
                                      icomm.mpiRecvBufferRequest[neighborIndex],
                                      MPI_COMM_GEOSX );
   }
-
-
 }
 
-void CommunicationTools::synchronizeUnpack( MeshLevel * const mesh,
-                                            std::vector< NeighborCommunicator > & neighbors,
-                                            MPI_iCommData & icomm,
-                                            bool on_device )
+void CommunicationTools::synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
+                                                  MeshLevel & mesh,
+                                                  std::vector< NeighborCommunicator > & neighbors,
+                                                  MPI_iCommData & icomm,
+                                                  bool onDevice )
+{
+  GEOSX_MARK_FUNCTION;
+  parallelDeviceEvents events;
+  asyncPack( fieldNames, mesh, neighbors, icomm, onDevice, events );
+  asyncSendRecv( neighbors, icomm, onDevice, events );
+}
+
+
+bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
+                                      std::vector< NeighborCommunicator > & neighbors,
+                                      MPI_iCommData & icomm,
+                                      bool onDevice,
+                                      parallelDeviceEvents & events )
 {
   GEOSX_MARK_FUNCTION;
 
-  // unpack the buffers
-  for( std::size_t count=0; count<neighbors.size(); ++count )
-  {
-    int neighborIndex;
-    MpiWrapper::waitany( icomm.size,
-                         icomm.mpiRecvBufferRequest.data(),
-                         &neighborIndex,
-                         icomm.mpiRecvBufferStatus.data() );
+  int recvCount = 0;
+  std::vector< int > neighborIndices;
+  neighborIndices.reserve( icomm.size );
+  MpiWrapper::testSome( icomm.size,
+                        icomm.mpiRecvBufferRequest.data(),
+                        &recvCount,
+                        &neighborIndices[0],
+                        icomm.mpiRecvBufferStatus.data() );
 
-    NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    neighbor.unpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, on_device );
+  for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
+  {
+    NeighborCommunicator & neighbor = neighbors[ neighborIndices[ recvIdx ] ];
+    neighbor.unpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, onDevice, events );
   }
 
-  MpiWrapper::waitall( icomm.size,
+  // we don't want to check if the request has completed,
+  //  we want to check that we've processed the resulting buffer
+  //  which means that we've tested the request and it has been
+  //  deallocated and set to MPI_REQUEST_NULL
+  int allDone = true;
+  const MPI_Request * reqs = icomm.mpiRecvBufferRequest.data( );
+  for( int idx = 0; idx < icomm.size; ++idx )
+  {
+    if( reqs[ idx ] != MPI_REQUEST_NULL )
+    {
+      allDone = false;
+      break;
+    }
+  }
+
+  return allDone;
+}
+
+void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
+                                         std::vector< NeighborCommunicator > & neighbors,
+                                         MPI_iCommData & icomm,
+                                         bool onDevice,
+                                         parallelDeviceEvents & events )
+{
+  GEOSX_MARK_FUNCTION;
+
+  // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
+  GEOSX_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
+  if( onDevice )
+  {
+    waitAllDeviceEvents( events );
+  }
+
+  MpiWrapper::waitAll( icomm.size,
                        icomm.mpiSizeSendBufferRequest.data(),
                        icomm.mpiSizeSendBufferStatus.data() );
 
-  MpiWrapper::waitall( icomm.size,
+  MpiWrapper::waitAll( icomm.size,
                        icomm.mpiSendBufferRequest.data(),
                        icomm.mpiSendBufferStatus.data() );
 
 }
 
-void CommunicationTools::synchronizeFields( const std::map< string, string_array > & fieldNames,
-                                            MeshLevel * const mesh,
+void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
-                                            bool on_device )
+                                            MPI_iCommData & icomm,
+                                            bool onDevice )
+{
+  GEOSX_MARK_FUNCTION;
+  parallelDeviceEvents events;
+  finalizeUnpack( mesh, neighbors, icomm, onDevice, events );
+}
+
+void CommunicationTools::synchronizeFields( const std::map< string, string_array > & fieldNames,
+                                            MeshLevel & mesh,
+                                            std::vector< NeighborCommunicator > & neighbors,
+                                            bool onDevice )
 {
   MPI_iCommData icomm;
-  synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm, on_device );
-  synchronizePackSendRecv( fieldNames, mesh, neighbors, icomm, on_device );
-  synchronizeUnpack( mesh, neighbors, icomm, on_device );
+  synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm, onDevice );
+  synchronizePackSendRecv( fieldNames, mesh, neighbors, icomm, onDevice );
+  synchronizeUnpack( mesh, neighbors, icomm, onDevice );
 }
 
 

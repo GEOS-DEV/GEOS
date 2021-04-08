@@ -8,6 +8,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticSEM:
+
+Element: AcousticSEM
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/AcousticSEM.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -64,6 +71,13 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
+.. _XML_CO2BrineFluid:
+
+Element: CO2BrineFluid
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/CO2BrineFluid.rst
+
+
 .. _XML_CellElementRegion:
 
 Element: CellElementRegion
@@ -85,11 +99,11 @@ Element: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction.rst
 
 
-.. _XML_CompositionalMultiphaseFlow:
+.. _XML_CompositionalMultiphaseFVM:
 
-Element: CompositionalMultiphaseFlow
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow.rst
+Element: CompositionalMultiphaseFVM
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM.rst
 
 
 .. _XML_CompositionalMultiphaseFluid:
@@ -97,6 +111,13 @@ Element: CompositionalMultiphaseFlow
 Element: CompositionalMultiphaseFluid
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
+
+
+.. _XML_CompositionalMultiphaseHybridFVM:
+
+Element: CompositionalMultiphaseHybridFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM.rst
 
 
 .. _XML_CompositionalMultiphaseReservoir:
@@ -174,6 +195,13 @@ Element: DamageSpectralElasticIsotropic
 Element: DamageVolDevElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic.rst
+
+
+.. _XML_DeadOilFluid:
+
+Element: DeadOilFluid
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid.rst
 
 
 .. _XML_Dirichlet:
@@ -351,6 +379,13 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/LaplaceFEM.rst
 
 
+.. _XML_LaplaceVEM:
+
+Element: LaplaceVEM
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/LaplaceVEM.rst
+
+
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -365,11 +400,11 @@ Element: Mesh
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
 
 
-.. _XML_MultiPhaseMultiComponentFluid:
+.. _XML_MultiphasePoroelastic:
 
-Element: MultiPhaseMultiComponentFluid
-======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
+Element: MultiphasePoroelastic
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic.rst
 
 
 .. _XML_NonlinearSolverParameters:
@@ -687,6 +722,13 @@ Element: TableFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction.rst
 
 
+.. _XML_TableRelativePermeability:
+
+Element: TableRelativePermeability
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TableRelativePermeability.rst
+
+
 .. _XML_Tasks:
 
 Element: Tasks
@@ -768,6 +810,13 @@ Datastructure Definitions
 ********************************
 
 
+.. _DATASTRUCTURE_AcousticSEM:
+
+Datastructure: AcousticSEM
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/AcousticSEM_other.rst
+
+
 .. _DATASTRUCTURE_Benchmarks:
 
 Datastructure: Benchmarks
@@ -824,6 +873,13 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_CO2BrineFluid:
+
+Datastructure: CO2BrineFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/CO2BrineFluid_other.rst
+
+
 .. _DATASTRUCTURE_CellElementRegion:
 
 Datastructure: CellElementRegion
@@ -845,11 +901,11 @@ Datastructure: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction_other.rst
 
 
-.. _DATASTRUCTURE_CompositionalMultiphaseFlow:
+.. _DATASTRUCTURE_CompositionalMultiphaseFVM:
 
-Datastructure: CompositionalMultiphaseFlow
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow_other.rst
+Datastructure: CompositionalMultiphaseFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseFluid:
@@ -857,6 +913,13 @@ Datastructure: CompositionalMultiphaseFlow
 Datastructure: CompositionalMultiphaseFluid
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseHybridFVM:
+
+Datastructure: CompositionalMultiphaseHybridFVM
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseReservoir:
@@ -941,6 +1004,13 @@ Datastructure: DamageSpectralElasticIsotropic
 Datastructure: DamageVolDevElasticIsotropic
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DeadOilFluid:
+
+Datastructure: DeadOilFluid
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/DeadOilFluid_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:
@@ -1125,6 +1195,13 @@ Datastructure: LaplaceFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/LaplaceFEM_other.rst
 
 
+.. _DATASTRUCTURE_LaplaceVEM:
+
+Datastructure: LaplaceVEM
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/LaplaceVEM_other.rst
+
+
 .. _DATASTRUCTURE_Level0:
 
 Datastructure: Level0
@@ -1153,11 +1230,11 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
 
 
-.. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
+.. _DATASTRUCTURE_MultiphasePoroelastic:
 
-Datastructure: MultiPhaseMultiComponentFluid
-============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
+Datastructure: MultiphasePoroelastic
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiphasePoroelastic_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:
@@ -1473,6 +1550,13 @@ Datastructure: SymbolicFunction
 Datastructure: TableFunction
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
+
+
+.. _DATASTRUCTURE_TableRelativePermeability:
+
+Datastructure: TableRelativePermeability
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TableRelativePermeability_other.rst
 
 
 .. _DATASTRUCTURE_Tasks:

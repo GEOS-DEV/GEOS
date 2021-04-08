@@ -42,11 +42,9 @@ void CellBlockManager::resize( integer_array const & numElements,
                                string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
 {
   localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
-//  Group * elementRegions = this->getGroup(keys::cellBlocks);
   for( localIndex reg=0; reg<numRegions; ++reg )
   {
-    CellBlock * elemRegion = this->getRegion( regionNames[reg] );
-    elemRegion->resize( numElements[reg] );
+    this->getRegion( regionNames[reg] ).resize( numElements[reg] );
   }
 }
 

@@ -22,6 +22,8 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/FunctionManager.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 
 namespace geosx
 {
@@ -38,34 +40,34 @@ SiloOutput::SiloOutput( string const & name,
   m_writeFaceElementMesh( 1 ),
   m_plotLevel()
 {
-  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( "plot" )->
+  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "plot" ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeEdgeMesh, &m_writeEdgeMesh )->
-    setDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::writeEdgeMesh, &m_writeEdgeMesh ).
+    setDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeFaceMesh, &m_writeFaceMesh )->
-    setDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::writeFaceMesh, &m_writeFaceMesh ).
+    setDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeCellElementMesh, &m_writeCellElementMesh )->
-    setDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::writeCellElementMesh, &m_writeCellElementMesh ).
+    setDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeFaceElementMesh, &m_writeFaceElementMesh )->
-    setDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::writeFaceElementMesh, &m_writeFaceElementMesh ).
+    setDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel )->
-    setApplyDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "" );
 
 }
@@ -80,11 +82,10 @@ bool SiloOutput::execute( real64 const time_n,
                           integer const cycleNumber,
                           integer const eventCounter,
                           real64 const eventProgress,
-                          Group * domain )
+                          DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition * domainPartition = Group::groupCast< DomainPartition * >( domain );
   SiloFile silo;
 
   int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
@@ -93,6 +94,7 @@ bool SiloOutput::execute( real64 const time_n,
 
   integer const numFiles = parallelThreads() == 0 ? size : parallelThreads();
 
+  silo.setOutputDirectory( getGlobalState().getCommandLineOptions().outputDirectory ),
   silo.setPlotLevel( m_plotLevel );
   silo.setWriteEdgeMesh( m_writeEdgeMesh );
   silo.setWriteFaceMesh( m_writeFaceMesh );
@@ -101,7 +103,7 @@ bool SiloOutput::execute( real64 const time_n,
   silo.setPlotFileRoot( m_plotFileRoot );
   silo.initialize( numFiles );
   silo.waitForBatonWrite( rank, cycleNumber, eventCounter, false );
-  silo.writeDomainPartition( *domainPartition, cycleNumber, time_n + dt * eventProgress, 0 );
+  silo.writeDomainPartition( domain, cycleNumber, time_n + dt * eventProgress, 0 );
   silo.handOffBaton();
   silo.clearEmptiesFromMultiObjects( cycleNumber );
   silo.finish();

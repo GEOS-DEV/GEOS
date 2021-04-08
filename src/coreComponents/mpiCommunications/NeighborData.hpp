@@ -39,16 +39,16 @@ public:
   NeighborData( string const & name, Group * const parent ):
     dataRepository::Group( name, parent )
   {
-    this->registerWrapper( "matchedPartitionBoundaryObjects", &m_matchedPartitionBoundary )->
+    this->registerWrapper( "matchedPartitionBoundaryObjects", &m_matchedPartitionBoundary ).
       setSizedFromParent( 0 );
 
-    this->registerWrapper( "ghostsToSend", &m_ghostsToSend )->
+    this->registerWrapper( "ghostsToSend", &m_ghostsToSend ).
       setSizedFromParent( 0 );
 
-    this->registerWrapper( "ghostsToReceive", &m_ghostsToReceive )->
+    this->registerWrapper( "ghostsToReceive", &m_ghostsToReceive ).
       setSizedFromParent( 0 );
 
-    this->registerWrapper( "adjacencyList", &m_adjacencyList )->
+    this->registerWrapper( "adjacencyList", &m_adjacencyList ).
       setSizedFromParent( 0 );
   }
 

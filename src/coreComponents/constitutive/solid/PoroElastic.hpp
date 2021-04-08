@@ -141,7 +141,7 @@ public:
    * @param parent Object's parent group (an element region)
    * @param numConstitutivePointsPerParentIndex (number of quadrature points per element)
    */
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
@@ -193,9 +193,9 @@ public:
   /// Data view keys
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
-    static constexpr auto compressibilityString =  "compressibility";     ///< Compressibility key
-    static constexpr auto referencePressureString =  "referencePressure"; ///< Ref pressure key
-    static constexpr auto biotCoefficientString =  "BiotCoefficient";     ///< Biot key
+    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * referencePressureString() { return "referencePressure"; }
+    static constexpr char const * biotCoefficientString() { return "BiotCoefficient"; }
   };
 
 

@@ -178,6 +178,8 @@ public:
     return size;
   }
 
+  static bool initialized();
+
   static int init( int * argc, char * * * argv );
 
   static void finalize();
@@ -188,13 +190,52 @@ public:
 
   static int test( MPI_Request * request, int * flag, MPI_Status * status );
 
+  static int testAny( int count, MPI_Request array_of_requests[], int * idx, int * flags, MPI_Status array_of_statuses[] );
+
+  static int testSome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] );
+
+  static int testAll( int count, MPI_Request array_of_requests[], int * flags, MPI_Status array_of_statuses[] );
+
+  /**
+   * The same as test but doesn't deallocate requests regardless of their source.
+   * @param[in] request The MPI_Request to check for completion
+   * @param[out] flag Whether the request has completed or not
+   * @param[out] status The current status of the request
+   **/
+  static int check( MPI_Request * request, int * flag, MPI_Status * status );
+
+  /**
+   * The same as testany but doesn't deallocate requests regardless of their source.
+   * @note Since this doesn't deallocate or set request to MPI_REQUEST_NULL repeated calls
+   *       to it with the same set of requests will return the first completed request each time
+   *       thus if the first request is complete, that will always be returned unless the user
+   *       deallocates/overwrites the request with MPI_REQUEST_NULL
+   * @param[in] count The number of requests in the array to check
+   * @param[in] request The MPI_Requests to check for completion
+   * @param[out] idx The index of the first request in the array that is complete
+   * @param[out] flag Whether a request has completed or not
+   * @param[out] status The current status of all requests
+   **/
+  static int checkAny( int count, MPI_Request array_of_requests[], int * idx, int * flag, MPI_Status array_of_statuses[] );
+
+  /**
+   * The same as testall but doesn't deallocate requests regardless of their source.
+   * @note Since this doesn't deallocate or set request to MPI_REQUEST_NULL repeated calls
+   *       to it with a set of already-completed requests will continue to return.
+   * @param[in] count The number of requests in the array to check
+   * @param[in] request The MPI_Requests to check for completion
+   * @param[out] flag Whether all requests have completed or not
+   * @param[out] status The current status of all requests
+   **/
+  static int checkAll( int count, MPI_Request array_of_requests[], int * flag, MPI_Status array_of_statuses[] );
+
   static int wait( MPI_Request * request, MPI_Status * status );
 
-  static int waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status * status );
+  static int waitAny( int count, MPI_Request array_of_requests[], int * indx, MPI_Status array_of_statuses[] );
 
-  static int waitsome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] );
+  static int waitSome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] );
 
-  static int waitall( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] );
+  static int waitAll( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] );
 
   static double wtime( void );
 
