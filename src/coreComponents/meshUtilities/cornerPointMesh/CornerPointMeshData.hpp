@@ -182,44 +182,49 @@ struct CornerPointMeshDimensions
     m_jMaxOverlap = jMaxOverlap;
   }
 
+  /**
+   * @brief Helper function to know if a column of cells is inside the partition
+   * @param[in] iLocal the local index of the column in the X-direction
+   * @param[in] jLocal the local index of the column in the Y-direction
+   * @return true if the column of cells (iLocal,jLocal) is inside the partition, false otherwise
+   */
+  bool columnIsInsidePartition( localIndex const iLocal, localIndex const jLocal ) const
+  {
+    return !( (iLocal == 0 && m_iMinOverlap == 1) ||
+              (jLocal == 0 && m_jMinOverlap == 1) ||
+              (iLocal+1 == nXLocal() && m_iMaxOverlap == 1) ||
+              (jLocal+1 == nYLocal() && m_jMaxOverlap == 1) );
+  }
+
 private:
 
   /// global information
 
   /// total number of cells in the x direction
   localIndex m_nX;
-
   /// total number of cells in the y direction
   localIndex m_nY;
-
   /// total number of cells in the z direction
   localIndex m_nZ;
-
 
 
   /// local information: definition of the MPI partition
 
   /// beginning of the MPI partition in the x direction
   localIndex m_iMin;
-
   /// beginning of the MPI partition in the y direction
   localIndex m_jMin;
-
   /// end of the MPI partition in the x direction
   localIndex m_iMax;
-
   /// end of the MPI partition in the y direction
   localIndex m_jMax;
 
   /// overlap in the x-min direction
   localIndex m_iMinOverlap;
-
   /// overlap in the y-min direction
   localIndex m_jMinOverlap;
-
   /// overlap in the x-max direction
   localIndex m_iMaxOverlap;
-
   /// overlap in the y-max direction
   localIndex m_jMaxOverlap;
 
@@ -236,24 +241,21 @@ struct CornerPointMeshVertices
 
   /// vertex positions obtained by filtering out duplicates in m_cpVertexPositions
   array2d< real64 > m_vertexPositions;
-
   /// map from vertex local index to vertex global index
   array1d< globalIndex > m_vertexToGlobalVertex;
 
-  // corner-point vertices
+
+  // helpers for corner-point vertices
 
   /// original (duplicated) CPG vertex position
   array2d< real64 > m_cpVertexPositions;
-
   /// true if the corner-point vertex belongs to a pillar inside this partition, false otherwise
   array1d< bool > m_cpVertexIsInsidePartition;
 
   /// map from cpVertex local index to unique (filtered) vertex
   array1d< localIndex > m_cpVertexToVertex;
-
   /// map from cpVertex local index to cpVertex global index
   array1d< globalIndex > m_cpVertexToGlobalCPVertex;
-
 
 };
 
@@ -263,7 +265,10 @@ struct CornerPointMeshVertices
  */
 struct CornerPointMeshFaces
 {
-  // TODO
+
+  /// map from a face local index to its unique vertices
+  ArrayOfArrays< localIndex > m_faceToVertices;
+
 };
 
 /**
@@ -273,17 +278,25 @@ struct CornerPointMeshFaces
 struct CornerPointMeshCells
 {
 
-  /// map from active cell (inside partition) local index to active cell local index
-  array1d< localIndex > m_activeCellInsidePartitionToActiveCell;
+  /// map from active cell local index to cell global index
+  array1d< globalIndex > m_ownedActiveCellToGlobalCell;
+  /// map from an active cell local index inside the partition to its faces
+  ArrayOfArrays< localIndex > m_ownedActiveCellToFaces;
 
-  /// map from active cell local index to cell local index
-  array1d< localIndex > m_activeCellToCell;
+  // helpers
 
   /// map from local index to original CPG nodes
   array1d< localIndex > m_cellToCPVertices;
 
-  /// map from active cell local index to cell global index
-  array1d< globalIndex > m_activeCellToGlobalCell;
+  /// map from active cell (inside partition) local index to active cell local index
+  array1d< localIndex > m_ownedActiveCellToActiveCell;
+  /// map from active cell local index to active cell (inside partition) local index
+  array1d< localIndex > m_activeCellToOwnedActiveCell;
+
+  /// map from active cell local index to cell local index
+  array1d< localIndex > m_activeCellToCell;
+  /// map from active cell local index to cell local index
+  array1d< localIndex > m_cellToActiveCell;
 
 };
 

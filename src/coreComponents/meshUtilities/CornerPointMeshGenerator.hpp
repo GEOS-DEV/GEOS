@@ -24,7 +24,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/EnumStrings.hpp"
 #include "meshUtilities/MeshGeneratorBase.hpp"
-#include "meshUtilities/CornerPointMesh/CornerPointMeshBuilder.hpp"
+#include "meshUtilities/cornerPointMesh/CornerPointMeshBuilder.hpp"
 
 namespace geosx
 {

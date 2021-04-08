@@ -17,13 +17,13 @@ set(meshUtilities_headers
     SimpleGeometricObjects/Box.hpp
     SimpleGeometricObjects/ThickPlane.hpp
     SimpleGeometricObjects/BoundedPlane.hpp
-    CornerPointMesh/CornerPointMeshBuilder.hpp
-    CornerPointMesh/CornerPointMeshParser.hpp
-    CornerPointMesh/CornerPointMeshData.hpp
-    CornerPointMesh/CornerPointMeshPartition.hpp
-    CornerPointMesh/utilities/StringUtilities.hpp
-    CornerPointMesh/utilities/GeometryUtilities.hpp
-    CornerPointMesh/utilities/OutputUtilities.hpp
+    cornerPointMesh/CornerPointMeshBuilder.hpp
+    cornerPointMesh/CornerPointMeshParser.hpp
+    cornerPointMesh/CornerPointMeshData.hpp
+    cornerPointMesh/CornerPointMeshPartition.hpp
+    cornerPointMesh/utilities/StringUtilities.hpp
+    cornerPointMesh/utilities/GeometryUtilities.hpp
+    cornerPointMesh/utilities/OutputUtilities.hpp
     StructuredGridUtilities.hpp
    )
 
@@ -46,10 +46,10 @@ set(meshUtilities_sources
     SimpleGeometricObjects/Cylinder.cpp
     SimpleGeometricObjects/ThickPlane.cpp
     SimpleGeometricObjects/BoundedPlane.cpp
-    CornerPointMesh/CornerPointMeshBuilder.cpp
-    CornerPointMesh/CornerPointMeshParser.cpp
-    CornerPointMesh/CornerPointMeshPartition.cpp
-    CornerPointMesh/utilities/StringUtilities.cpp    
+    cornerPointMesh/CornerPointMeshBuilder.cpp
+    cornerPointMesh/CornerPointMeshParser.cpp
+    cornerPointMesh/CornerPointMeshPartition.cpp
+    cornerPointMesh/utilities/StringUtilities.cpp    
    )
 
 if( BUILD_OBJ_LIBS)

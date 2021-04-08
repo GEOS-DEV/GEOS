@@ -21,8 +21,8 @@
 #include "codingUtilities/Utilities.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "meshUtilities/CornerPointMesh/utilities/GeometryUtilities.hpp"
-#include "meshUtilities/CornerPointMesh/utilities/OutputUtilities.hpp"
+#include "meshUtilities/cornerPointMesh/utilities/GeometryUtilities.hpp"
+#include "meshUtilities/cornerPointMesh/utilities/OutputUtilities.hpp"
 
 namespace geosx
 {
@@ -78,7 +78,7 @@ void CornerPointMeshBuilder::postProcessMesh()
   filterVertices();
 
   // match faces, deal with the non-conforming case
-  buildFaces();
+  //buildFaces();
 
   // for now, do some debugging
   outputDebugVTKFile( m_vertices, m_faces, m_cells );
@@ -120,13 +120,13 @@ void CornerPointMeshBuilder::buildCornerPointCells()
   cpVertexIsInsidePartition.resize( nCPVertices );
 
   // cell maps
-  array1d< localIndex > & activeCellInsidePartitionToActiveCell = m_cells.m_activeCellInsidePartitionToActiveCell;
+  array1d< globalIndex > & ownedActiveCellToGlobalCell = m_cells.m_ownedActiveCellToGlobalCell;
+  array1d< localIndex > & ownedActiveCellToActiveCell = m_cells.m_ownedActiveCellToActiveCell;
   array1d< localIndex > & activeCellToCell = m_cells.m_activeCellToCell;
-  array1d< globalIndex > & activeCellToGlobalCell = m_cells.m_activeCellToGlobalCell;
   array1d< localIndex > & cellToCPVertices = m_cells.m_cellToCPVertices;
-  activeCellInsidePartitionToActiveCell.reserve( nLocalCells );
+  ownedActiveCellToGlobalCell.reserve( nLocalCells );
+  ownedActiveCellToActiveCell.reserve( nLocalCells );
   activeCellToCell.reserve( nLocalCells );
-  activeCellToGlobalCell.reserve( nLocalCells );
   cellToCPVertices.resize( nLocalCells );
 
   array1d< real64 > xPos( nCPVerticesPerCell );
@@ -151,29 +151,24 @@ void CornerPointMeshBuilder::buildCornerPointCells()
         if( actnum( iLocalCell ) == 1 )
         {
           // compute the positions of the eight vertices
-          isValid = processActiveHexahedron( i, j, k,
-                                             nXLocal, nYLocal,
-                                             iMinOverlap, iMaxOverlap,
-                                             jMinOverlap, jMaxOverlap,
-                                             coord, zcorn,
-                                             xPos, yPos, zPos,
-                                             cpVertexIsInside );
+          isValid =
+            computeCellCoordinates( i, j, k, nXLocal, nYLocal,
+                                    iMinOverlap, iMaxOverlap, jMinOverlap, jMaxOverlap,
+                                    coord, zcorn,
+                                    xPos, yPos, zPos, cpVertexIsInside );
         }
 
         if( isValid )
         {
-
           // cell maps
 
           // assign local and global indices
           activeCellToCell.emplace_back( iLocalCell );
-          activeCellToGlobalCell.emplace_back( iGlobalCell );
           // decide flag specifying whether the cell is in the overlap or not
-          bool const isInside = !( (i == 0 && iMinOverlap == 1) || (j == 0 && jMinOverlap == 1) ||
-                                   (i+1 == nXLocal && iMaxOverlap == 1) || (j+1 == nYLocal && jMaxOverlap == 1) );
-          if( isInside )
+          if( m_dims.columnIsInsidePartition( i, j ) )
           {
-            activeCellInsidePartitionToActiveCell.emplace_back( activeCellToCell.size()-1 );
+            ownedActiveCellToActiveCell.emplace_back( activeCellToCell.size()-1 );
+            ownedActiveCellToGlobalCell.emplace_back( iGlobalCell );
           }
 
           // vertex maps
@@ -197,18 +192,43 @@ void CornerPointMeshBuilder::buildCornerPointCells()
       }
     }
   }
+  populateReverseCellMaps( nLocalCells, activeCellToCell.size(),
+                           activeCellToCell, ownedActiveCellToActiveCell,
+                           m_cells.m_cellToActiveCell, m_cells.m_activeCellToOwnedActiveCell );
 }
 
-bool CornerPointMeshBuilder::processActiveHexahedron( localIndex const i, localIndex const j, localIndex const k,
-                                                      localIndex const nXLocal, localIndex const nYLocal,
-                                                      localIndex const iMinOverlap, localIndex const iMaxOverlap,
-                                                      localIndex const jMinOverlap, localIndex const jMaxOverlap,
-                                                      array1d< real64 > const & coord,
-                                                      array1d< real64 > const & zcorn,
-                                                      array1d< real64 > & xPos,
-                                                      array1d< real64 > & yPos,
-                                                      array1d< real64 > & zPos,
-                                                      array1d< bool > & cpVertexIsInside )
+void CornerPointMeshBuilder::populateReverseCellMaps( localIndex const nCells,
+                                                      localIndex const nActiveCells,
+                                                      array1d< localIndex > const & activeCellToCell,
+                                                      array1d< localIndex > const & ownedActiveCellToActiveCell,
+                                                      array1d< localIndex > & cellToActiveCell,
+                                                      array1d< localIndex > & activeCellToOwnedActiveCell )
+{
+  cellToActiveCell.resize( nCells );
+  activeCellToOwnedActiveCell.resize( nActiveCells );
+  cellToActiveCell.setValues< serialPolicy >( -1 );
+  activeCellToOwnedActiveCell.setValues< serialPolicy >( -1 );
+
+  for( localIndex iActiveCell = 0; iActiveCell < activeCellToCell.size(); ++iActiveCell )
+  {
+    cellToActiveCell( activeCellToCell( iActiveCell ) ) = iActiveCell;
+  }
+  for( localIndex iOwnedActiveCell = 0; iOwnedActiveCell < ownedActiveCellToActiveCell.size(); ++iOwnedActiveCell )
+  {
+    activeCellToOwnedActiveCell( ownedActiveCellToActiveCell( iOwnedActiveCell ) ) = iOwnedActiveCell;
+  }
+}
+
+bool CornerPointMeshBuilder::computeCellCoordinates( localIndex const i, localIndex const j, localIndex const k,
+                                                     localIndex const nXLocal, localIndex const nYLocal,
+                                                     localIndex const iMinOverlap, localIndex const iMaxOverlap,
+                                                     localIndex const jMinOverlap, localIndex const jMaxOverlap,
+                                                     array1d< real64 > const & coord,
+                                                     array1d< real64 > const & zcorn,
+                                                     array1d< real64 > & xPos,
+                                                     array1d< real64 > & yPos,
+                                                     array1d< real64 > & zPos,
+                                                     array1d< bool > & cpVertexIsInside )
 {
   localIndex const iXmLocal = k*8*nXLocal*nYLocal + j*4*nXLocal + 2*i;
   localIndex const iXpLocal = iXmLocal + 2*nXLocal;
@@ -391,7 +411,158 @@ void CornerPointMeshBuilder::filterVertices()
 
 void CornerPointMeshBuilder::buildFaces()
 {
-  // TODO
+  // not ready for review, in construction
+
+  // allocate space for the maps
+  localIndex const nOwnedActiveCells = m_cells.m_ownedActiveCellToActiveCell.size();
+  localIndex const faceCapacity = 4;
+
+  ArrayOfArrays< localIndex > & ownedActiveCellToFaces = m_cells.m_ownedActiveCellToFaces;
+  ownedActiveCellToFaces.resize( nOwnedActiveCells, faceCapacity );
+  // TODO: reserve space for faceToNodes
+
+  // TODO: the construction of faces involves loops in the (j,i,k) order,
+  //       which is not ideal giving the layout of the arrays used here.
+  //       See if it is worth permuting the arrays before this step.
+
+  // Step 1: construct faces in the X and Y directions (between columns of cells)
+  buildVerticalFaces( "X" );
+  buildVerticalFaces( "Y" );
+
+  // Step 2: construct faces in the Z direction (in a column of cells)
+  buildHorizontalFaces();
+}
+
+void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
+{
+  // not ready for review, in construction
+  GEOSX_UNUSED_VAR( direction );
+}
+
+void CornerPointMeshBuilder::buildHorizontalFaces()
+{
+  // not ready for review, in construction
+  localIndex const nXLocal = m_dims.nXLocal();
+  localIndex const nYLocal = m_dims.nYLocal();
+  localIndex const nZLocal = m_dims.nZLocal();
+
+  // cells
+  array1d< localIndex > const & cellToCPVertices = m_cells.m_cellToCPVertices;
+  array1d< localIndex > const & cellToActiveCell = m_cells.m_cellToActiveCell;
+  array1d< localIndex > const & activeCellToOwnedActiveCell = m_cells.m_activeCellToOwnedActiveCell;
+  ArrayOfArrays< localIndex > & ownedActiveCellToFaces = m_cells.m_ownedActiveCellToFaces;
+
+  // faces
+  ArrayOfArrays< localIndex > & faceToVertices = m_faces.m_faceToVertices;
+
+  // vertices
+  array1d< localIndex > const & cpVertexToVertex = m_vertices.m_cpVertexToVertex;
+
+  // loop over owned cells only
+  for( localIndex j = 0; j < nYLocal; ++j )
+  {
+    for( localIndex i = 0; i < nXLocal; ++i )
+    {
+      if( m_dims.columnIsInsidePartition( i, j ) )
+      {
+
+        // we are in column of cells, we can now loop over all the faces in this column
+        localIndex const nFacesInColumn = nZLocal+1;
+        for( localIndex iface = 0; iface < nFacesInColumn; ++iface )
+        {
+          // k-index of the cell before the face
+          localIndex const kPrev = iface-1;
+          // k-index of the cell after the face
+          localIndex const kNext = iface;
+
+          // local index of the previous cell
+          localIndex iCellPrev = -1;
+          // local index of the next cell
+          localIndex iCellNext = -1;
+          // local index of the previous active cell
+          localIndex iActiveCellPrev = -1;
+          // local index of the next active cell
+          localIndex iActiveCellNext = -1;
+
+          bool const onTopBoundary = (kPrev == -1);
+          bool const onBottomBoundary = (kNext == nZLocal);
+          bool const isInInterior = !onTopBoundary && !onBottomBoundary;
+          if( !onTopBoundary )
+          {
+            iCellPrev = kPrev*nXLocal*nYLocal + j*nXLocal + i;
+            iActiveCellPrev = cellToActiveCell( iCellPrev );
+          }
+          if( !onBottomBoundary )
+          {
+            iCellNext = kNext*nXLocal*nYLocal + j*nXLocal + i;
+            iActiveCellNext = cellToActiveCell( iCellNext );
+          }
+
+          bool const prevIsActive = (iActiveCellPrev != -1);
+          bool const nextIsActive = (iActiveCellNext != -1);
+
+          // this is an interior cell between active cells
+          if( isInInterior && prevIsActive && nextIsActive )
+          {
+            // get the bottom vertices of the previous face
+            localIndex const iFirstVertexPrev = cellToCPVertices( iCellPrev );
+            localIndex const vertices[4] = { cpVertexToVertex( iFirstVertexPrev ),
+                                             cpVertexToVertex( iFirstVertexPrev + 1 ),
+                                             cpVertexToVertex( iFirstVertexPrev + 2 ),
+                                             cpVertexToVertex( iFirstVertexPrev + 3 ) };
+            addHorizontalFace( vertices,
+                               activeCellToOwnedActiveCell( iActiveCellPrev ),
+                               activeCellToOwnedActiveCell( iActiveCellNext ),
+                               ownedActiveCellToFaces,
+                               faceToVertices );
+          }
+          // this is either: an interior face between an active cell and an inactive cell
+          //             or: an boundary face at the bottom
+          else if( prevIsActive || nextIsActive )
+          {
+            // get the bottom vertices of the previous face
+            localIndex const iFirstVertex = prevIsActive ? cellToCPVertices( iCellPrev ) : cellToCPVertices( iCellNext );
+            localIndex const iActiveCell = prevIsActive ? iActiveCellPrev : iActiveCellNext;
+            localIndex const firstPos = prevIsActive ? 0 : 4;
+            localIndex const vertices[4] = { cpVertexToVertex( iFirstVertex + firstPos ),
+                                             cpVertexToVertex( iFirstVertex + firstPos + 1 ),
+                                             cpVertexToVertex( iFirstVertex + firstPos + 2 ),
+                                             cpVertexToVertex( iFirstVertex + firstPos + 3 ) };
+            addHorizontalFace( vertices,
+                               activeCellToOwnedActiveCell( iActiveCell ),
+                               -1,
+                               ownedActiveCellToFaces,
+                               faceToVertices );
+          }
+        }
+      }
+    }
+  }
+}
+
+void CornerPointMeshBuilder::addHorizontalFace( localIndex const (&faceVertices)[ 4 ],
+                                                localIndex const iOwnedActiveCellPrev,
+                                                localIndex const iOwnedActiveCellNext,
+                                                ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
+                                                ArrayOfArrays< localIndex > & faceToVertices )
+{
+  // populate the face-to-vertices map
+  localIndex const newFaceId = faceToVertices.size();
+  faceToVertices.appendArray( 4 );
+  faceToVertices( newFaceId, 0 ) = faceVertices[ 0 ];
+  faceToVertices( newFaceId, 1 ) = faceVertices[ 1 ];
+  faceToVertices( newFaceId, 2 ) = faceVertices[ 2 ];
+  faceToVertices( newFaceId, 3 ) = faceVertices[ 3 ];
+
+  // populate the cell-to-face map
+  if( iOwnedActiveCellPrev != -1 )
+  {
+    ownedActiveCellToFaces.emplaceBack( iOwnedActiveCellPrev, newFaceId );
+  }
+  if( iOwnedActiveCellNext != -1 )
+  {
+    ownedActiveCellToFaces.emplaceBack( iOwnedActiveCellNext, newFaceId );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( CornerPointMeshBuilder, CornerPointMeshBuilder, string const & )

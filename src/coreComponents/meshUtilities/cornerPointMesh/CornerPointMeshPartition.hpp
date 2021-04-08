@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
-#include "meshUtilities/CornerPointMesh/CornerPointMeshData.hpp"
+#include "meshUtilities/cornerPointMesh/CornerPointMeshData.hpp"
 
 namespace geosx
 {

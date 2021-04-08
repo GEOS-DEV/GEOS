@@ -18,7 +18,7 @@
 
 #include "CornerPointMeshParser.hpp"
 
-#include "meshUtilities/CornerPointMesh/utilities/StringUtilities.hpp"
+#include "meshUtilities/cornerPointMesh/utilities/StringUtilities.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include <iostream>
 

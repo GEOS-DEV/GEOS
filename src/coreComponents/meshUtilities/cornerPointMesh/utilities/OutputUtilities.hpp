@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESHUTILITIES_CORNERPOINTMESH_UTILITIES_OUTPUTUTILITIES_HPP_
 #define GEOSX_MESHUTILITIES_CORNERPOINTMESH_UTILITIES_OUTPUTUTILITIES_HPP_
 
-#include "meshUtilities/CornerPointMesh/CornerPointMeshData.hpp"
+#include "meshUtilities/cornerPointMesh/CornerPointMeshData.hpp"
 
 namespace geosx
 {

@@ -20,9 +20,9 @@
 #define GEOSX_MESHUTILITIES_CORNERPOINTMESH_CORNERPOINTMESHBUILDER_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
-#include "meshUtilities/CornerPointMesh/CornerPointMeshParser.hpp"
-#include "meshUtilities/CornerPointMesh/CornerPointMeshData.hpp"
-#include "meshUtilities/CornerPointMesh/CornerPointMeshPartition.hpp"
+#include "meshUtilities/cornerPointMesh/CornerPointMeshParser.hpp"
+#include "meshUtilities/cornerPointMesh/CornerPointMeshData.hpp"
+#include "meshUtilities/cornerPointMesh/CornerPointMeshPartition.hpp"
 
 namespace geosx
 {
@@ -131,8 +131,8 @@ public:
    * @brief Const getter for the map from active cell inside partition to active cell
    * @return the map from active cell inside partition to active cell
    */
-  arrayView1d< localIndex const > activeCellInsidePartitionToActiveCell() const
-  { return m_cells.m_activeCellInsidePartitionToActiveCell.toViewConst(); }
+  arrayView1d< localIndex const > ownedActiveCellToActiveCell() const
+  { return m_cells.m_ownedActiveCellToActiveCell.toViewConst(); }
 
   /**
    * @brief Const getter for the map from active cell to cell
@@ -152,8 +152,8 @@ public:
    * @brief Const getter for the map from local active cell index to global cell index
    * @return the map from from local active cell index to global cell index
    */
-  arrayView1d< globalIndex const > activeCellToGlobalCell() const
-  { return m_cells.m_activeCellToGlobalCell.toViewConst(); }
+  arrayView1d< globalIndex const > ownedActiveCellToGlobalCell() const
+  { return m_cells.m_ownedActiveCellToGlobalCell.toViewConst(); }
 
   // properties
 
@@ -195,44 +195,86 @@ private:
   void buildCornerPointCells();
 
   /**
-   * @brief Using ZCORN and COORD, compute the position of the eight corner-point vertices in cell (i,j,k)
-   * @param i index in the x-direction
-   * @param j index in the y-direction
-   * @param k index in the z-direction
-   * @param nXLocal number of cells in the x-direction on my rank
-   * @param nYLocal number of cells in the y-direction on my rank
-   * @param coord local content of the COORD keyword
-   * @param zcorn local content of the ZCORN keyword
-   * @param xPos x-position of the eight corner-point vertices
-   * @param yPos y-position of the eight corner-point vertices
-   * @param zPos z-position of the eight corner-point vertices
-   * @return true if the cell is valid, and false otherwise
-   */
-  static bool processActiveHexahedron( localIndex const i,
-                                       localIndex const j,
-                                       localIndex const k,
-                                       localIndex const nXLocal,
-                                       localIndex const nYLocal,
-                                       localIndex const iMinOverlap,
-                                       localIndex const iMaxOverlap,
-                                       localIndex const jMinOverlap,
-                                       localIndex const jMaxOverlap,
-                                       array1d< real64 > const & coord,
-                                       array1d< real64 > const & zcorn,
-                                       array1d< real64 > & xPos,
-                                       array1d< real64 > & yPos,
-                                       array1d< real64 > & zPos,
-                                       array1d< bool > & cpVertexIsInside );
-
-  /**
    * @brief Loop over the corner-point vertices and filter out duplicates.
    */
   void filterVertices();
 
   /**
-   * @brief For the non-conforming case, build faces (not implemented yet)
+   * @brief For the non-conforming case, build faces
    */
   void buildFaces();
+
+  /**
+   * @brief For the non-conforming case, build vertical faces
+   * @param[in] direction the direction considered (either X or Y)
+   */
+  void buildVerticalFaces( string const & direction );
+
+  /**
+   * @brief For the non-conforming case, build horizontal faces
+   */
+  void buildHorizontalFaces();
+
+  /**
+   * @brief Using ZCORN and COORD, compute the position of the eight corner-point vertices in cell (i,j,k)
+   * @param[in] i index in the x-direction
+   * @param[in] j index in the y-direction
+   * @param[in] k index in the z-direction
+   * @param[in] nXLocal number of cells in the x-direction on my rank
+   * @param[in] nYLocal number of cells in the y-direction on my rank
+   * @param[in] coord local content of the COORD keyword
+   * @param[in] zcorn local content of the ZCORN keyword
+   * @param[out] xPos x-position of the eight corner-point vertices
+   * @param[out] yPos y-position of the eight corner-point vertices
+   * @param[out] zPos z-position of the eight corner-point vertices
+   * @param[out] cpVertexIsIndex vector specifying if each corner-point vertex is inside the partition
+   * @return true if the cell is valid, and false otherwise
+   */
+  static bool computeCellCoordinates( localIndex const i,
+                                      localIndex const j,
+                                      localIndex const k,
+                                      localIndex const nXLocal,
+                                      localIndex const nYLocal,
+                                      localIndex const iMinOverlap,
+                                      localIndex const iMaxOverlap,
+                                      localIndex const jMinOverlap,
+                                      localIndex const jMaxOverlap,
+                                      array1d< real64 > const & coord,
+                                      array1d< real64 > const & zcorn,
+                                      array1d< real64 > & xPos,
+                                      array1d< real64 > & yPos,
+                                      array1d< real64 > & zPos,
+                                      array1d< bool > & cpVertexIsInside );
+
+  /**
+   * @brief Populate the "reverse maps" from cellToActiveCell and activeCellToOwnedActiveCell
+   * @param[in] nCells number of cells in the MPI partition
+   * @param[in] nActiveCells number of active cells in the MPI partition
+   * @param[in] activeCellToCell
+   * @param[in] ownedActiveCellToActiveCell
+   * @param[out] cellToActiveCell
+   * @param[out] activeCellToOwnedActiveCell
+   */
+  static void populateReverseCellMaps( localIndex const nCells,
+                                       localIndex const nActiveCells,
+                                       array1d< localIndex > const & activeCellToCell,
+                                       array1d< localIndex > const & ownedActiveCellToActiveCell,
+                                       array1d< localIndex > & cellToActiveCell,
+                                       array1d< localIndex > & activeCellToOwnedActiveCell );
+
+  /**
+   * @brief add a horizontal face made of four vertices to the maps
+   * @param[in] faceVertices the four vertices of face k
+   * @param[in] iOwnedActiveCellPrev index of the owned active cell before the face (k-1)
+   * @param[in] iOwnedActiveCellNext index of the owned active cell after the face (k)
+   * @param[out] ownedActiveCellToFaces map from owned active cell to faces
+   * @param[out] faceToVertices map from face to vertices
+   */
+  static void addHorizontalFace( localIndex const (&faceVertices)[ 4 ],
+                                 localIndex const iOwnedActiveCellPrev,
+                                 localIndex const iOwnedActiveCellNext,
+                                 ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
+                                 ArrayOfArrays< localIndex > & faceToVertices );
 
 
   /// Object holding the mesh (and MPI partition) dimensions
