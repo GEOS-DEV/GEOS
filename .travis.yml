@@ -13,8 +13,8 @@ geosx_before_script: &geosx_before_script
   before_script:
   - git submodule update --init --recursive src/cmake/blt
   - git submodule update --init --recursive src/coreComponents/LvArray
-  - git submodule update --init --recursive src/externalComponents/PVTPackage
-  - git submodule update --init src/externalComponents/PAMELA
+  - git submodule update --init --recursive src/coreComponents/constitutive/PVTPackage
+  - git submodule update --init src/coreComponents/mesh/PAMELA
   - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
   - git submodule update --init --recursive src/coreComponents/physicsSolvers/GEOSX_PTP
   
