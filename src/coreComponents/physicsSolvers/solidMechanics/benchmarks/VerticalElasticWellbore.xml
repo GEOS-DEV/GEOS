@@ -35,6 +35,8 @@
       nr="{ 30 }"
       nt="{ 40 }"
       nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, 0.0 },
+                    { 0.0, 0.0, 1.0 } }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
