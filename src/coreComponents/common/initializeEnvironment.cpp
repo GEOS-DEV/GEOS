@@ -16,7 +16,6 @@
 
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "LvArray/src/system.hpp"
 
 // TPL includes
