@@ -263,11 +263,13 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (& nu
   }
 }
 
-void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],
-                                                                        real64 (& minExtent)[3],
-                                                                        real64 (& maxExtent)[3],
-                                                                        arraySlice1d< real64 const > const & X,
-                                                                        real64 const tol )
+void InternalWellboreGenerator::
+  setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],
+                                          real64 (& minExtent)[3],
+                                          real64 (& maxExtent)[3],
+                                          arraySlice1d< real64 const,
+                                                        nodes::REFERENCE_POSITION_USD-1 > const & X,
+                                          real64 const tol )
 {
   GEOSX_UNUSED_VAR( minExtent );
   if( m_isFullAnnulus )
