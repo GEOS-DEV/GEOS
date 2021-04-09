@@ -173,29 +173,8 @@ void LaplaceVEM::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
                                     DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
-
-  // Note: here we cannot use SolverBase::setupSystem, because it does:
-  //       m_localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  //       and that creates problems (integratedTests failures) on Lassen for CPU-only implicit simulations
-
-  m_dofManager.setMesh( domain, 0, 0 );
-
-  setupDofs( domain, m_dofManager );
-  m_dofManager.reorderByRank();
-
-  localIndex const numLocalRows = m_dofManager.numLocalDofs();
-
-  SparsityPattern< globalIndex > pattern;
-  m_dofManager.setSparsityPattern( pattern );
-  m_localMatrix.assimilate< serialPolicy >( std::move( pattern ) );
-
-  m_localRhs.resize( numLocalRows );
-  m_localSolution.resize( numLocalRows );
-
-  m_localMatrix.setName( this->getName() + "/localMatrix" );
-  m_localRhs.setName( this->getName() + "/localRhs" );
-  m_localSolution.setName( this->getName() + "/localSolution" );
+  // Computation of the sparsity pattern
+  setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 }
 
 void LaplaceVEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -212,6 +191,42 @@ void LaplaceVEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain )
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
                           DofManager::Connector::Elem );
+}
+
+/* SETUP SYSTEM
+   Setting up the system using the base class method
+ */
+
+void LaplaceVEM::setupSystem( DomainPartition & domain,
+                              DofManager & dofManager,
+                              CRSMatrix< real64, globalIndex > & localMatrix,
+                              array1d< real64 > & localRhs,
+                              array1d< real64 > & localSolution,
+                              bool const GEOSX_UNUSED_PARAM(setSparsity) )
+{
+  GEOSX_MARK_FUNCTION;
+
+  // Note: here we cannot use SolverBase::setupSystem, because it does:
+  //       m_localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  //       and that creates problems (integratedTests failures) on Lassen for CPU-only implicit simulations
+
+  dofManager.setMesh( domain, 0, 0 );
+
+  setupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  localIndex const numLocalRows = dofManager.numLocalDofs();
+
+  SparsityPattern< globalIndex > pattern;
+  dofManager.setSparsityPattern( pattern );
+  localMatrix.assimilate< serialPolicy >( std::move( pattern ) );
+
+  localRhs.resize( numLocalRows );
+  localSolution.resize( numLocalRows );
+
+  localMatrix.setName( this->getName() + "/localMatrix" );
+  localRhs.setName( this->getName() + "/localRhs" );
+  localSolution.setName( this->getName() + "/localSolution" );
 }
 
 /*
