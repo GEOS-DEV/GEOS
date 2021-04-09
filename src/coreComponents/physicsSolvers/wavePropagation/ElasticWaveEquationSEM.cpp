@@ -520,7 +520,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
           }
 
 
-          real64 const alpha = 1.0/ vp[k];
+          real64 const alpha = 0.0;//1.0/ vp[k];
 
           for( localIndex kfe=0; kfe< numFacesPerElem; ++kfe )
           {
@@ -689,6 +689,7 @@ real64 ElasticWaveEquationSEM::evaluateRickerOrder2( real64 const & t, real64 co
   real64 pi = 2.0*acos( 0 );
   real64 lam = (f0*pi)*(f0*pi);
   pulse = 2.0*lam*(2.0*lam*(t-o_tpeak)*(t-o_tpeak)-1.0)*exp( -lam*(t-o_tpeak)*(t-o_tpeak));
+  
 
   return pulse;
 }
@@ -763,33 +764,43 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
         real64 gradN[ numNodesPerElem ][ 3 ];
 
         //Declaration of the nine components of matrix sigma V2: no arrayview
-        real64 sigmaxx[numNodesPerElem] = {{0.0}};
-        real64 sigmaxy[numNodesPerElem] = {{0.0}};
-        real64 sigmaxz[numNodesPerElem] = {{0.0}};
-        real64 sigmayx[numNodesPerElem] = {{0.0}};
-        real64 sigmayy[numNodesPerElem] = {{0.0}};
-        real64 sigmayz[numNodesPerElem] = {{0.0}};
-        real64 sigmazx[numNodesPerElem] = {{0.0}};
-        real64 sigmazy[numNodesPerElem] = {{0.0}};
-        real64 sigmazz[numNodesPerElem] = {{0.0}};
-       // real64 lambda[numElem] = {{0.0}};
+        // real64 sigmaxx[numNodesPerElem] = {{0.0}};
+        // real64 sigmaxy[numNodesPerElem] = {{0.0}};
+        // real64 sigmaxz[numNodesPerElem] = {{0.0}};
+        // real64 sigmayx[numNodesPerElem] = {{0.0}};
+        // real64 sigmayy[numNodesPerElem] = {{0.0}};
+        // real64 sigmayz[numNodesPerElem] = {{0.0}};
+        // real64 sigmazx[numNodesPerElem] = {{0.0}};
+        // real64 sigmazy[numNodesPerElem] = {{0.0}};
+        // real64 sigmazz[numNodesPerElem] = {{0.0}};
+        // real64 lambda[numElem] = {{0.0}};
 
         // Declaration of the stiffness matrix 'line'
-        //real64 Rh_ij = 0.0;
+        real64 Rxx_ij = 0.0;
+        real64 Ryy_ij = 0.0;
+        real64 Rzz_ij = 0.0;
+        real64 Rxy_ij = 0.0;
+        real64 Ryx_ij = 0.0;
+        real64 Ryz_ij = 0.0;
+        real64 Rzy_ij = 0.0;
+        real64 Rxz_ij = 0.0;
+        real64 Rzx_ij = 0.0;
+
+        
 
         for( localIndex k=0; k<elemsToNodes.size( 0 ); ++k )
         {
 
           //Declaration of the first derivatives in space of the displacement V2: no arrayView (acollade)
-          real64 dux_dx[numNodesPerElem] = {{0.0}};
-	  real64 duy_dx[numNodesPerElem] = {{0.0}};
-	  real64 duz_dx[numNodesPerElem] = {{0.0}};
-	  real64 dux_dy[numNodesPerElem] = {{0.0}};
-	  real64 duy_dy[numNodesPerElem] = {{0.0}};
-	  real64 duz_dy[numNodesPerElem] = {{0.0}};
-	  real64 dux_dz[numNodesPerElem] = {{0.0}};
-	  real64 duy_dz[numNodesPerElem] = {{0.0}};
-	  real64 duz_dz[numNodesPerElem] = {{0.0}};
+          // real64 dux_dx[numNodesPerElem] = {{0.0}};
+	        // real64 duy_dx[numNodesPerElem] = {{0.0}};
+	        // real64 duz_dx[numNodesPerElem] = {{0.0}};
+	        // real64 dux_dy[numNodesPerElem] = {{0.0}};
+	        // real64 duy_dy[numNodesPerElem] = {{0.0}};
+	        // real64 duz_dy[numNodesPerElem] = {{0.0}};
+	        // real64 dux_dz[numNodesPerElem] = {{0.0}};
+	        // real64 duy_dz[numNodesPerElem] = {{0.0}};
+	        // real64 duz_dz[numNodesPerElem] = {{0.0}};
 
           // Computation of the Lamé coefficients lambda and mu
           mu[k] = rho[k] * vs[k] * vs[k];
@@ -803,6 +814,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
             {
               xLocal[i][a] = X[elemsToNodes[k][i]][a];
             }
+
           }
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
@@ -812,37 +824,63 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
             real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
 
-            for( localIndex i=0; i<numNodesPerElem; ++i )
-            {
-	      dux_dx[i] += ux_n[elemsToNodes[k][i]] * gradN[i][0];
-	      duy_dx[i] += uy_n[elemsToNodes[k][i]] * gradN[i][0];
-	      duz_dx[i] += uz_n[elemsToNodes[k][i]] * gradN[i][0];
-	      dux_dy[i] += ux_n[elemsToNodes[k][i]] * gradN[i][1];
-	      duy_dy[i] += uy_n[elemsToNodes[k][i]] * gradN[i][1];
-	      duz_dy[i] += uz_n[elemsToNodes[k][i]] * gradN[i][1];
-	      dux_dz[i] += ux_n[elemsToNodes[k][i]] * gradN[i][2];
-	      duy_dz[i] += uy_n[elemsToNodes[k][i]] * gradN[i][2];
-	      duz_dz[i] += uz_n[elemsToNodes[k][i]] * gradN[i][2];
+            // for( localIndex i=0; i<numNodesPerElem; ++i )
+            // {
+	          //   dux_dx[i] += ux_n[elemsToNodes[k][i]] * gradN[i][0];
+	          //   duy_dx[i] += uy_n[elemsToNodes[k][i]] * gradN[i][0];
+	          //   duz_dx[i] += uz_n[elemsToNodes[k][i]] * gradN[i][0];
+	          //   dux_dy[i] += ux_n[elemsToNodes[k][i]] * gradN[i][1];
+	          //   duy_dy[i] += uy_n[elemsToNodes[k][i]] * gradN[i][1];
+	          //   duz_dy[i] += uz_n[elemsToNodes[k][i]] * gradN[i][1];
+	          //   dux_dz[i] += ux_n[elemsToNodes[k][i]] * gradN[i][2];
+	          //   duy_dz[i] += uy_n[elemsToNodes[k][i]] * gradN[i][2];
+	          //   duz_dz[i] += uz_n[elemsToNodes[k][i]] * gradN[i][2];
 
-	      sigmaxx[i] = (lambda[k] + 2*mu[k]) * dux_dx[i] + lambda[k] * (duy_dy[i] + duz_dz[i]);
-              sigmayy[i] = (lambda[k] + 2*mu[k]) * duy_dy[i] + lambda[k] * (dux_dx[i] + duz_dz[i]);
-              sigmazz[i] = (lambda[k] + 2*mu[k]) * duz_dz[i] + lambda[k] * (duy_dy[i] + dux_dx[i]);
-              sigmaxy[i] = mu[k] * (dux_dy[i] + duy_dx[i]);
-              sigmaxz[i] = mu[k] * (dux_dz[i] + duz_dx[i]);
-              sigmayz[i] = mu[k] * (duz_dy[i] + duy_dz[i]);
-              sigmayx[i] = sigmaxy[i];
-              sigmazy[i] = sigmayz[i];
-              sigmazx[i] = sigmaxz[i];
-            }
-	    for( localIndex i=0; i<numNodesPerElem; ++i )
-	      {
-		for(localIndex j=0; j<numNodesPerElem; ++j)
-		  {
-		    stiffnessVector_x[elemsToNodes[k][i]] += detJ * (sigmaxx[j] * gradN[j][0] + sigmaxy[j] * gradN[j][1] + sigmaxz[j] * gradN[j][2]);
-		    stiffnessVector_y[elemsToNodes[k][i]] += detJ * (sigmayx[j] * gradN[j][0] + sigmayy[j] * gradN[j][1] + sigmayz[j] * gradN[j][2]);
-		    stiffnessVector_z[elemsToNodes[k][i]] += detJ * (sigmazx[j] * gradN[j][0] + sigmazy[j] * gradN[j][1] + sigmazz[j] * gradN[j][2]);
-		  }
-	      }
+	          //   sigmaxx[i] = (lambda[k] + 2*mu[k]) * dux_dx[i] + lambda[k] * (duy_dy[i] + duz_dz[i]);
+            //   sigmayy[i] = (lambda[k] + 2*mu[k]) * duy_dy[i] + lambda[k] * (dux_dx[i] + duz_dz[i]);
+            //   sigmazz[i] = (lambda[k] + 2*mu[k]) * duz_dz[i] + lambda[k] * (duy_dy[i] + dux_dx[i]);
+            //   sigmaxy[i] = mu[k] * (dux_dy[i] + duy_dx[i]);
+            //   sigmaxz[i] = mu[k] * (dux_dz[i] + duz_dx[i]);
+            //   sigmayz[i] = mu[k] * (duz_dy[i] + duy_dz[i]);
+            //   sigmayx[i] = sigmaxy[i];
+            //   sigmazy[i] = sigmayz[i];
+            //   sigmazx[i] = sigmaxz[i];
+            // }
+
+	          for( localIndex i=0; i<numNodesPerElem; ++i )
+	          {
+		          for(localIndex j=0; j<numNodesPerElem; ++j)
+		            {
+
+                  // Rxx_ij = detJ * (lambda[k]+2.0*mu[k])*gradN[j][0]*gradN[i][0];
+                  // Ryy_ij = detJ * (lambda[k]+2.0*mu[k])*gradN[j][1]*gradN[i][1];
+                  // Rzz_ij = detJ * (lambda[k]+2.0*mu[k])*gradN[j][2]*gradN[i][2];
+                  // Rxy_ij = detJ * mu[k]*gradN[j][1]*gradN[i][1];
+                  // Ryx_ij = detJ * mu[k]*gradN[j][0]*gradN[i][0];
+                  // Rxz_ij = detJ * mu[k]*gradN[j][2]*gradN[i][2];
+                  // Rzx_ij = detJ * mu[k]*gradN[j][0]*gradN[i][0];
+                  // Ryz_ij = detJ * mu[k]*gradN[j][2]*gradN[i][2];
+                  // Rzy_ij = detJ * mu[k]*gradN[j][1]*gradN[i][1];
+
+                  Rxx_ij = detJ * ((lambda[k]+2.0*mu[k])*gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][2]*gradN[i][2]);
+                  Ryy_ij = detJ * ((lambda[k]+2.0*mu[k])*gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][2]*gradN[i][2]);
+                  Rzz_ij = detJ * ((lambda[k]+2.0*mu[k])*gradN[j][2]*gradN[i][2] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0]);
+                  Rxy_ij = detJ * (mu[k] * gradN[j][1]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][1]);
+                  Ryx_ij = detJ * (mu[k] * gradN[j][0]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][0]);
+                  Rxz_ij = detJ * (mu[k] * gradN[j][2]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][2]);
+                  Rzx_ij = detJ * (mu[k] * gradN[j][0]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][0]);
+                  Ryz_ij = detJ * (mu[k] * gradN[j][2]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][2]);
+                  Rzy_ij = detJ * (mu[k] * gradN[j][1]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][1]);
+
+
+                  stiffnessVector_x[elemsToNodes[k][i]] += Rxx_ij * ux_n[elemsToNodes[k][j]] + Rxy_ij*uy_n[elemsToNodes[k][j]] + Rxz_ij*uz_n[elemsToNodes[k][j]];
+                  stiffnessVector_y[elemsToNodes[k][i]] += Ryx_ij * ux_n[elemsToNodes[k][j]] + Ryy_ij*uy_n[elemsToNodes[k][j]] + Ryz_ij*uz_n[elemsToNodes[k][j]];
+                  stiffnessVector_z[elemsToNodes[k][i]] += Rzx_ij * ux_n[elemsToNodes[k][j]] + Rzy_ij*uy_n[elemsToNodes[k][j]] + Rzz_ij*uz_n[elemsToNodes[k][j]];
+		              // stiffnessVector_x[elemsToNodes[k][i]] += detJ * (sigmaxx[j] * gradN[j][0] + sigmaxy[j] * gradN[j][1] + sigmaxz[j] * gradN[j][2]);
+		              // stiffnessVector_y[elemsToNodes[k][i]] += detJ * (sigmayx[j] * gradN[j][0] + sigmayy[j] * gradN[j][1] + sigmayz[j] * gradN[j][2]);
+		              // stiffnessVector_z[elemsToNodes[k][i]] += detJ * (sigmazx[j] * gradN[j][0] + sigmazy[j] * gradN[j][1] + sigmazz[j] * gradN[j][2]);
+		            }
+	          }
           }
 
         }
@@ -859,9 +897,9 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
-      ux_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2*mass[a] * ux_n[a] - dt2*stiffnessVector_x[a] - (mass[a] - (dt/2)*damping[a]) * ux_nm1[a] + dt2*rhs[a] );
-      uy_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2*mass[a] * uy_n[a] - dt2*stiffnessVector_y[a] - (mass[a] - (dt/2)*damping[a]) * uy_nm1[a] + dt2*rhs[a] );
-      uz_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2*mass[a] * uz_n[a] - dt2*stiffnessVector_z[a] - (mass[a] - (dt/2)*damping[a]) * uz_nm1[a] + dt2*rhs[a] );
+      ux_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2.0*mass[a] * ux_n[a] - dt2*stiffnessVector_x[a] - (mass[a] - (dt/2)*damping[a]) * ux_nm1[a] + dt2*rhs[a] );
+      uy_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2.0*mass[a] * uy_n[a] - dt2*stiffnessVector_y[a] - (mass[a] - (dt/2)*damping[a]) * uy_nm1[a] + dt2*rhs[a] );
+      uz_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2.0*mass[a] * uz_n[a] - dt2*stiffnessVector_z[a] - (mass[a] - (dt/2)*damping[a]) * uz_nm1[a] + dt2*rhs[a] );
     }
   }
 
