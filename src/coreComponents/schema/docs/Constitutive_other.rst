@@ -3,10 +3,12 @@
 ===================================== ==== ========================================================== 
 Name                                  Type Description                                                
 ===================================== ==== ========================================================== 
+BlackOilFluid                         node :ref:`DATASTRUCTURE_BlackOilFluid`                         
 BrooksCoreyBakerRelativePermeability  node :ref:`DATASTRUCTURE_BrooksCoreyBakerRelativePermeability`  
 BrooksCoreyCapillaryPressure          node :ref:`DATASTRUCTURE_BrooksCoreyCapillaryPressure`          
 BrooksCoreyRelativePermeability       node :ref:`DATASTRUCTURE_BrooksCoreyRelativePermeability`       
 CO2BrineFluid                         node :ref:`DATASTRUCTURE_CO2BrineFluid`                         
+CompositionalMultiphaseFluid          node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`          
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
 Coulomb                               node :ref:`DATASTRUCTURE_Coulomb`                               

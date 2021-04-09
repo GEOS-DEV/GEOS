@@ -215,9 +215,9 @@ def buildTableValues(type_map,
 # Config
 schema_name = 'schema.xsd'
 additional_documentation_name = 'schema.xsd.other'
-complete_output = '../../../docs/sphinx/CompleteXMLSchema'
+complete_output = '../../docs/sphinx/CompleteXMLSchema'
 output_folder = 'docs'
-sphinx_path = '../../coreComponents/fileIO/schema/docs'
+sphinx_path = '../../coreComponents/schema/docs'
 xsd = '{http://www.w3.org/2001/XMLSchema}'
 
 

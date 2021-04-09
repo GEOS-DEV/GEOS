@@ -3,10 +3,12 @@
 ===================================== ==== ======= ================================================ 
 Name                                  Type Default Description                                      
 ===================================== ==== ======= ================================================ 
+BlackOilFluid                         node         :ref:`XML_BlackOilFluid`                         
 BrooksCoreyBakerRelativePermeability  node         :ref:`XML_BrooksCoreyBakerRelativePermeability`  
 BrooksCoreyCapillaryPressure          node         :ref:`XML_BrooksCoreyCapillaryPressure`          
 BrooksCoreyRelativePermeability       node         :ref:`XML_BrooksCoreyRelativePermeability`       
 CO2BrineFluid                         node         :ref:`XML_CO2BrineFluid`                         
+CompositionalMultiphaseFluid          node         :ref:`XML_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node         :ref:`XML_CompressibleSinglePhaseFluid`          
 Contact                               node         :ref:`XML_Contact`                               
 Coulomb                               node         :ref:`XML_Coulomb`                               

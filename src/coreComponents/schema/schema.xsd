@@ -481,6 +481,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -537,6 +538,20 @@
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PAMELAMeshGeneratorType">
+		<!--fieldNamesInGEOSX => Name of the fields within GEOSX-->
+		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
+		<!--fieldsToImport => Fields to be imported from the external mesh file-->
+		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
+		<!--file => path to the mesh file-->
+		<xsd:attribute name="file" type="path" use="required" />
+		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
+		<xsd:attribute name="reverseZ" type="integer" default="0" />
+		<!--scale => Scale the coordinates of the vertices-->
+		<xsd:attribute name="scale" type="real64" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -842,24 +857,18 @@ the relative residual norm satisfies:
 	</xsd:complexType>
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-<<<<<<< HEAD
-=======
 			<xsd:element name="AcousticSEM" type="AcousticSEMType" />
 			<xsd:element name="CompositionalMultiphaseFVM" type="CompositionalMultiphaseFVMType" />
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
->>>>>>> develop
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LagrangianContact" type="LagrangianContactType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
-<<<<<<< HEAD
-=======
 			<xsd:element name="LaplaceVEM" type="LaplaceVEMType" />
 			<xsd:element name="MultiphasePoroelastic" type="MultiphasePoroelasticType" />
->>>>>>> develop
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
@@ -878,8 +887,6 @@ the relative residual norm satisfies:
 		<!--gravityVector => Gravity vector used in the physics solvers-->
 		<xsd:attribute name="gravityVector" type="R1Tensor" default="0,0,-9.81" />
 	</xsd:complexType>
-<<<<<<< HEAD
-=======
 	<xsd:complexType name="AcousticSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1079,7 +1086,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
 		</xsd:restriction>
 	</xsd:simpleType>
->>>>>>> develop
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1209,8 +1215,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient" />
 		</xsd:restriction>
 	</xsd:simpleType>
-<<<<<<< HEAD
-=======
 	<xsd:complexType name="LaplaceVEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1271,7 +1275,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:pattern value=".*[\[\]`$].*|FIM" />
 		</xsd:restriction>
 	</xsd:simpleType>
->>>>>>> develop
 	<xsd:complexType name="PhaseFieldDamageFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1547,48 +1550,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="WellControlsType">
-		<!--control => Well control. Valid options:
-* BHP
-* phaseVolRate
-* totalVolRate-->
-		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
-		<!--injectionStream => Global component densities for the injection stream-->
-		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
-		<!--referenceElevation => Reference elevation where BHP control is enforced-->
-		<xsd:attribute name="referenceElevation" type="real64" use="required" />
-		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used-->
-		<xsd:attribute name="surfacePressure" type="real64" default="0" />
-		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used-->
-		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
-		<!--targetBHP => Target bottom-hole pressure-->
-		<xsd:attribute name="targetBHP" type="real64" use="required" />
-		<!--targetPhaseName => Name of the target phase-->
-		<xsd:attribute name="targetPhaseName" type="string" default="" />
-		<!--targetPhaseRate => Target phase volumetric rate-->
-		<xsd:attribute name="targetPhaseRate" type="real64" default="0" />
-		<!--targetTotalRate => Target total volumetric rate-->
-		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
-		<!--type => Well type. Valid options:
-* producer
-* injector-->
-		<xsd:attribute name="type" type="geosx_WellControls_Type" use="required" />
-		<!--useSurfaceConditions => Flag to specify whether rates are checked at surface or reservoir conditions.
-Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
-		<xsd:attribute name="useSurfaceConditions" type="integer" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:simpleType name="geosx_WellControls_Control">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="geosx_WellControls_Type">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="SolidMechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1751,10 +1712,12 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
 			<xsd:element name="CO2BrineFluid" type="CO2BrineFluidType" />
+			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
@@ -1778,6 +1741,20 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BlackOilFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--surfaceDensities => List of surface densities for each phase-->
+		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
+		<!--tableFiles => List of filenames with input PVT tables-->
+		<xsd:attribute name="tableFiles" type="path_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation
@@ -1836,6 +1813,28 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseFluidType">
+		<!--componentAcentricFactor => Component acentric factors-->
+		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
+		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
+		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
+		<!--componentCriticalPressure => Component critical pressures-->
+		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
+		<!--componentCriticalTemperature => Component critical temperatures-->
+		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--componentVolumeShift => Component volume shifts-->
+		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
+		<!--equationsOfState => List of equation of state types for each phase-->
+		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
