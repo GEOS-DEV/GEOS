@@ -49,6 +49,7 @@ if read_the_docs_build:
                   "coreComponents/meshUtilities",
                   "coreComponents/finiteElement/kernelInterface",
                   "coreComponents/mesh/ExtrinsicMeshData.hpp",
+                  "coreComponents/physicsSolvers/materialPointMethod/MPM.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
                   "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp",
                   "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp",

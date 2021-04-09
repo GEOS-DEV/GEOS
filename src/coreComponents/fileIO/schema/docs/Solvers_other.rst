@@ -12,7 +12,6 @@ FlowProppantTransport            node :ref:`DATASTRUCTURE_FlowProppantTransport`
 Hydrofracture                    node :ref:`DATASTRUCTURE_Hydrofracture`                    
 LagrangianContact                node :ref:`DATASTRUCTURE_LagrangianContact`                
 LaplaceFEM                       node :ref:`DATASTRUCTURE_LaplaceFEM`                       
-MaterialPointMethod              node :ref:`DATASTRUCTURE_MaterialPointMethod`              
 PhaseFieldDamageFEM              node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node :ref:`DATASTRUCTURE_PhaseFieldFracture`               
 Poroelastic                      node :ref:`DATASTRUCTURE_Poroelastic`                      
@@ -27,6 +26,7 @@ SolidMechanicsEmbeddedFractures  node :ref:`DATASTRUCTURE_SolidMechanicsEmbedded
 SolidMechanicsLagrangianSSLE     node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`     
 SolidMechanics_LagrangianFEM     node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`     
 SurfaceGenerator                 node :ref:`DATASTRUCTURE_SurfaceGenerator`                 
+explicit_MPM                     node :ref:`DATASTRUCTURE_explicit_MPM`                     
 ================================ ==== ===================================================== 
 
 

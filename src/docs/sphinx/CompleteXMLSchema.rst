@@ -365,13 +365,6 @@ Element: LinearSolverParameters
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters.rst
 
 
-.. _XML_MaterialPointMethod:
-
-Element: MaterialPointMethod
-============================
-.. include:: ../../coreComponents/fileIO/schema/docs/MaterialPointMethod.rst
-
-
 .. _XML_Mesh:
 
 Element: Mesh
@@ -748,6 +741,13 @@ Element: WellControls
 Element: WellElementRegion
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/WellElementRegion.rst
+
+
+.. _XML_explicit_MPM:
+
+Element: explicit_MPM
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/explicit_MPM.rst
 
 
 .. _XML_lassen:
@@ -1144,13 +1144,6 @@ Datastructure: Level0
 Datastructure: LinearSolverParameters
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters_other.rst
-
-
-.. _DATASTRUCTURE_MaterialPointMethod:
-
-Datastructure: MaterialPointMethod
-==================================
-.. include:: ../../coreComponents/fileIO/schema/docs/MaterialPointMethod_other.rst
 
 
 .. _DATASTRUCTURE_Mesh:
@@ -1599,6 +1592,13 @@ Datastructure: elementSubRegions
 Datastructure: embeddedSurfacesEdgeManager
 ==========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/embeddedSurfacesEdgeManager_other.rst
+
+
+.. _DATASTRUCTURE_explicit_MPM:
+
+Datastructure: explicit_MPM
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/explicit_MPM_other.rst
 
 
 .. _DATASTRUCTURE_finiteVolumeStencils:
