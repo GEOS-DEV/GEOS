@@ -41,6 +41,7 @@ void CellElementRegion::generateMesh( Group & cellBlocks )
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
+    // FIXME base class CellElementRegion depends on its derivated class CellElementSubRegion
     CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
     CellBlock & source = cellBlocks.getGroup< CellBlock >( subRegion.getName() );
     subRegion.copyFromCellBlock( source );

@@ -15,6 +15,7 @@
 
 #include "CellElementSubRegion.hpp"
 
+#include "mesh/MeshLevel.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
@@ -23,8 +24,16 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
-  CellBlock( name, parent )
+  ElementSubRegionBase( name, parent ),
+  m_toNodesRelation(),
+  m_toEdgesRelation(),
+  m_toFacesRelation(),
+  m_externalPropertyNames()
 {
+  registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
+  registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
+
   registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
     setSizedFromParent( 0 );
 
@@ -39,8 +48,52 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
 
 CellElementSubRegion::~CellElementSubRegion()
 {
-  // TODO Auto-generated destructor stub
+  // Left blank
 }
+
+void CellElementSubRegion::setElementType( string const & elementType )
+{
+  m_elementTypeString = elementType;
+
+  if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
+  {
+    // Hexahedron
+    this->setNumNodesPerElement( 8 );
+    this->setNumEdgesPerElement( 12 );
+    this->setNumFacesPerElement( 6 );
+  }
+  else if( !m_elementTypeString.compare( 0, 4, "C3D4" ))
+  {
+    // Tetrahedron
+    this->setNumNodesPerElement( 4 );
+    this->setNumEdgesPerElement( 6 );
+    this->setNumFacesPerElement( 4 );
+  }
+  else if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
+  {
+    // Triangular prism
+    this->setNumNodesPerElement( 6 );
+    this->setNumEdgesPerElement( 9 );
+    this->setNumFacesPerElement( 5 );
+  }
+  else if( !m_elementTypeString.compare( 0, 4, "C3D5" ))
+  {
+    // Pyramid
+    this->setNumNodesPerElement( 5 );
+    this->setNumEdgesPerElement( 8 );
+    this->setNumFacesPerElement( 5 );
+  }
+  else
+  {
+    GEOSX_ERROR( "Error.  Don't know what kind of element this is." );
+  }
+
+  m_toNodesRelation.resize( 0, m_numNodesPerElement );
+  m_toEdgesRelation.resize( 0, m_numEdgesPerElement );
+  m_toFacesRelation.resize( 0, m_numFacesPerElement );
+
+}
+
 
 void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
 {
@@ -186,5 +239,237 @@ void CellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
                                     clearIfUnmapped );
 }
 
+localIndex CellElementSubRegion::getNumFaceNodes( localIndex const GEOSX_UNUSED_PARAM( elementIndex ),
+                                       localIndex const localFaceIndex ) const
+{
+  if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
+    return 4;
+  if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
+  {
+    if( localFaceIndex == 0 )
+      return 4;
+    if( localFaceIndex == 1 )
+      return 4;
+    if( localFaceIndex == 2 )
+      return 3;
+    if( localFaceIndex == 3 )
+      return 3;
+    if( localFaceIndex == 4 )
+      return 4;
+  }
+  if( !m_elementTypeString.compare( 0, 4, "C3D4" ))
+    return 3;
+  if( !m_elementTypeString.compare( 0, 4, "C3D5" ))
+  {
+    if( localFaceIndex == 0 )
+      return 4;
+    if( localFaceIndex == 1 )
+      return 3;
+    if( localFaceIndex == 2 )
+      return 3;
+    if( localFaceIndex == 3 )
+      return 3;
+    if( localFaceIndex == 4 )
+      return 3;
+  }
+
+  GEOSX_ERROR( "Error. Don't know what kind of element this is and cannot build faces." );
+  return -1;
+}
+
+
+localIndex CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
+                                    localIndex const localFaceIndex,
+                                    localIndex * const nodeIndicies ) const
+{
+  if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
+  {
+    if( localFaceIndex == 0 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
+    }
+    else if( localFaceIndex == 1 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][1];
+    }
+    else if( localFaceIndex == 2 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][2];
+    }
+    else if( localFaceIndex == 3 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
+    }
+    else if( localFaceIndex == 4 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][7];
+    }
+    else if( localFaceIndex == 5 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][6];
+    }
+    return 4;
+  }
+  else if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
+  {
+    if( localFaceIndex == 0 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
+      return 4;
+    }
+    else if( localFaceIndex == 1 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][1];
+      return 4;
+    }
+    else if( localFaceIndex == 2 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
+    }
+    else if( localFaceIndex == 3 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
+      return 3;
+    }
+    else if( localFaceIndex == 4 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
+      return 4;
+    }
+  }
+  else if( !m_elementTypeString.compare( 0, 4, "C3D4" ))
+  {
+    if( localFaceIndex == 0 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][1];
+    }
+    else if( localFaceIndex == 1 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+    }
+    else if( localFaceIndex == 2 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
+    }
+    else if( localFaceIndex == 3 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+    }
+
+    return 3;
+  }
+  else if( !m_elementTypeString.compare( 0, 4, "C3D5" ))
+  {
+    if( localFaceIndex == 0 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][3];
+      return 4;
+    }
+    else if( localFaceIndex == 1 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
+    }
+    else if( localFaceIndex == 2 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
+    }
+    else if( localFaceIndex == 3 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
+    }
+    else if( localFaceIndex == 4 )
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
+    }
+  }
+
+  GEOSX_ERROR( "Error. Don't know what kind of element this is and cannot build faces." );
+  return -1;
+}
+
+void CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
+                              localIndex const localFaceIndex,
+                              localIndex_array & nodeIndicies ) const
+{
+  nodeIndicies.resize( getNumFaceNodes( elementIndex, localFaceIndex ) );
+  localIndex const numNodes = getFaceNodes( elementIndex, localFaceIndex, nodeIndicies.data() );
+  GEOSX_DEBUG_VAR( numNodes );
+  GEOSX_ASSERT_EQ( numNodes, nodeIndicies.size() );
+}
+
+void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                     FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
+{
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
+  {
+    calculateCellVolumesKernel( k, X );
+  } );
+}
+
+void CellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
+{
+  this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
+  this->m_toEdgesRelation.setRelatedObject( mesh.getEdgeManager() );
+  this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
+}
+
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementSubRegion, string const &, Group * const )
 
 } /* namespace geosx */

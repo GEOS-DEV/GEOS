@@ -267,8 +267,8 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
     elementRegion.forElementSubRegions< CellElementSubRegion >
       ( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      CellBlock::NodeMapType const & elemToNodeMap = elemSubRegion.nodeList();
-      CellBlock::FaceMapType const & elementToFaceMap = elemSubRegion.faceList();
+      CellElementSubRegion::NodeMapType const & elemToNodeMap = elemSubRegion.nodeList();
+      CellElementSubRegion::FaceMapType const & elementToFaceMap = elemSubRegion.faceList();
       arrayView2d< real64 const > elemCenters = elemSubRegion.getElementCenter();
       arrayView1d< real64 const > elemVolumes = elemSubRegion.getElementVolume();
       arrayView1d< integer const > const & elemGhostRank = elemSubRegion.ghostRank();

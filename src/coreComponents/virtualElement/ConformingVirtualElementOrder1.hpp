@@ -21,7 +21,7 @@
 
 #include "VirtualElementBase.hpp"
 
-#include "meshUtilities/CellBlock.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -63,8 +63,8 @@ public:
   static void
   computeProjectors( localIndex const & cellIndex,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                     CellBlock::NodeMapType const & cellToNodeMap,
-                     CellBlock::FaceMapType const & elementToFaceMap,
+                     CellElementSubRegion::NodeMapType const & cellToNodeMap,
+                     CellElementSubRegion::FaceMapType const & elementToFaceMap,
                      FaceManager::NodeMapType const & faceToNodeMap,
                      FaceManager::EdgeMapType const & faceToEdgeMap,
                      EdgeManager::NodeMapType const & edgeToNodeMap,
