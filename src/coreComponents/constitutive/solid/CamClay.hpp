@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_CAMCLAY_HPP
 #define GEOSX_CONSTITUTIVE_SOLID_CAMCLAY_HPP
 
-#include "ElasticIsotropic.hpp"
+#include "ElasticIsotropicPressureDependent.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
@@ -37,7 +37,7 @@ namespace constitutive
  * Class to provide material updates that may be
  * called from a kernel function.
  */
-class CamClayUpdates : public ElasticIsotropicUpdates
+class CamClayUpdates : public ElasticIsotropicPressureDependentUpdates
 {
 public:
 
@@ -59,10 +59,10 @@ public:
                   arrayView1d< real64 const > const & shearModulus,
                   arrayView3d< real64, solid::STRESS_USD > const & newStress,
                   arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress ),
-    m_refPressure( refPressure ),
-    m_refStrainVol( refStrainVol ),
-    m_recompressionIndex( recompressionIndex ),
+    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, bulkModulus, shearModulus, newStress, oldStress ),
+//    m_refPressure( refPressure ),
+//    m_refStrainVol( refStrainVol ),
+//    m_recompressionIndex( recompressionIndex ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_shapeParameter( shapeParameter ),
@@ -89,7 +89,7 @@ public:
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
 
   // Bring in base implementations to prevent hiding warnings
-  using ElasticIsotropicUpdates::smallStrainUpdate;
+  using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
   //using ElasticIsotropicUpdates::saveStress;
 
     GEOSX_HOST_DEVICE
@@ -125,14 +125,14 @@ public:
 
 private:
 
-  /// A reference to the ArrayView holding the reference pressure for each quadrature point.
-  arrayView1d< real64 const > const m_refPressure;
-
-  /// A reference to the ArrayView holding the reference volumetric strain for each quadrature point.
-  arrayView1d< real64 const > const m_refStrainVol;
-
-  /// A reference to the ArrayView holding the recompression index  for each element.
-  arrayView1d< real64 const > const m_recompressionIndex;
+//  /// A reference to the ArrayView holding the reference pressure for each quadrature point.
+//  arrayView1d< real64 const > const m_refPressure;
+//
+//  /// A reference to the ArrayView holding the reference volumetric strain for each quadrature point.
+//  arrayView1d< real64 const > const m_refStrainVol;
+//
+//  /// A reference to the ArrayView holding the recompression index  for each element.
+//  arrayView1d< real64 const > const m_recompressionIndex;
 
   /// A reference to the ArrayView holding the virgin compression index for each element.
   arrayView1d< real64 const > const m_virginCompressionIndex;
@@ -151,43 +151,47 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void CamClayUpdates::evaluateYield( real64 const p,
-                                    real64 const q,
-                                    real64 const pc,
-                                    real64 const M,
-                                    real64 const alpha,
-                                    real64 const Cc,
-                                    real64 const Cr,
-                                    real64 const bulkModulus,
-                                    real64 const mu,
-                                    real64 & f,
-                                    real64 & df_dp,
-                                    real64 & df_dq,
-                                    real64 & df_dpc,
-                                    real64 & df_dp_dve,
-                                    real64 & df_dq_dse ) const
-{
-    real64 const c = alpha/(alpha+1)*std::abs(pc);
-    real64 a = alpha;
-    
-  if( std::abs(p) <= c )
-  {
-      a = 1.0;
-  }
-
-    f = q*q/(M*M)- a*a*p *(2*a/(a+1)*pc-p)+a*a*(a-1)/(a+1)* pc*pc;
-    real64 alphaTerm = 2. * a*a*a / (a+1.);
-    df_dp = -alphaTerm * pc + 2. * a * a * p;
-    df_dq = 2. * q /(M*M);
-    df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p;
-    real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
-    df_dp_dve = 2. * a * alpha * bulkModulus - alphaTerm * dpc_dve;
-    df_dq_dse = 2. /(M*M) * 3. * mu;
-    
-    
-}
+//GEOSX_HOST_DEVICE
+//GEOSX_FORCE_INLINE
+//void CamClayUpdates::evaluateYield( real64 const p,
+//                                    real64 const q,
+//                                    real64 const pc,
+//                                    real64 const M,
+//                                    real64 const alpha,
+//                                    real64 const Cc,
+//                                    real64 const Cr,
+//                                    real64 const bulkModulus,
+//                                    real64 const mu,
+//                                    real64 & f,
+//                                    real64 & df_dp,
+//                                    real64 & df_dq,
+//                                    real64 & df_dpc,
+//                                    real64 & df_dp_dve,
+//                                    real64 & df_dq_dse ) const
+//{
+//    real64 const c = alpha/(alpha+1)*pc;
+//    real64 a = alpha;
+//    real64 pa = pc;
+//    real64 factor = 1.0;
+//
+//  if( p >= c ) // Use MCC
+//  {
+//      a = 1.0;
+//      factor = 2*alpha/ (alpha+1) ;
+//      pa = factor * pc;
+//  }
+//
+//    f = q*q/(M*M)- a*a*p *(2*a/(a+1)*pc-p)+a*a*(a-1)/(a+1)* pc*pc;
+//    real64 alphaTerm = 2. * a*a*a / (a+1.);
+//    df_dp = -alphaTerm * pc + 2. * a * a * p;
+//    df_dq = 2. * q /(M*M);
+//    df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p;
+//    real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
+//    df_dp_dve = 2. * a * alpha * bulkModulus - alphaTerm * dpc_dve;
+//    df_dq_dse = 2. /(M*M) * 3. * mu;
+//
+//
+//}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -303,19 +307,20 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   stiffness[5][5] = mu;
 
   // check yield function F <= 0
-  real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
-  evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
+ // real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
+  //evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
     
-  //real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+  real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 
   if( yield < 1e-9 ) // elasticity
   {
+// std::cout << "elastic " <<  "\n " << std::endl;
     saveStress( k, q, stress );
     return;
   }
 
 // else, plasticity (trial stress point lies outside yield surface)
-//   std::cout << "plastic " <<  "\n " << std::endl;
+   std::cout << "plastic " <<  "\n " << std::endl;
 
 
   real64 solution[3], residual[3], delta[3];
@@ -336,19 +341,19 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     bulkModulus = -trialP/Cr;
     pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
 
-    evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
+    //evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
       
-    //yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
+    yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 
     // derivatives of yield surface
-    //real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
-    //real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
-    //real64 df_dq = 2. * trialQ /(M*M);
-    //real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
+    real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
+    real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
+    real64 df_dq = 2. * trialQ /(M*M);
+    real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
     real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
 
-    //real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
-    //real64 df_dq_dse = 2. /(M*M) * 3. * mu;
+    real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
+    real64 df_dq_dse = 2. /(M*M) * 3. * mu;
     //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
 
 
@@ -478,7 +483,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
  *
  * Modified Cam-Clay and Delft-Egg material model.
  */
-class CamClay : public ElasticIsotropic
+class CamClay : public ElasticIsotropicPressureDependent
 {
 public:
 
@@ -525,14 +530,14 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for default friction angle
-    static constexpr char const * defaultRefPressureString() { return "defaultRefPressure"; }
-
-    /// string/key for default dilation angle
-    static constexpr char const * defaultRefStrainVolString() { return "defaultRefStrainVol"; }
-
-    /// string/key for default hardening rate
-    static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
+//    /// string/key for default friction angle
+//    static constexpr char const * defaultRefPressureString() { return "defaultRefPressure"; }
+//
+//    /// string/key for default dilation angle
+//    static constexpr char const * defaultRefStrainVolString() { return "defaultRefStrainVol"; }
+//
+//    /// string/key for default hardening rate
+//    static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
 
     /// string/key for default cohesion
     static constexpr char const * defaultVirginCompressionIndexString() { return "defaultVirginCompressionIndex"; }
@@ -546,14 +551,14 @@ public:
     /// string/key for default cohesion
     static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
 
-    /// string/key for friction angle
-    static constexpr char const * refPressureString() { return "refPressure"; }
-
-    /// string/key for dilation angle
-    static constexpr char const * refStrainVolString() { return "refStrainVol"; }
-
-    /// string/key for cohesion
-    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
+//    /// string/key for friction angle
+//    static constexpr char const * refPressureString() { return "refPressure"; }
+//
+//    /// string/key for dilation angle
+//    static constexpr char const * refStrainVolString() { return "refStrainVol"; }
+//
+//    /// string/key for cohesion
+//    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
 
     /// string/key for cohesion
     static constexpr char const * virginCompressionIndexString() { return "virginCompressionIndex"; }
@@ -620,14 +625,14 @@ public:
 protected:
   virtual void postProcessInput() override;
 
-  /// Material parameter: The default value of reference pressure
-  real64 m_defaultRefPressure;
-
-  /// Material parameter: The default value of reference volumetric strain
-  real64 m_defaultRefStrainVol;
-
-  /// Material parameter: The default value of the recompression index
-  real64 m_defaultRecompressionIndex;
+//  /// Material parameter: The default value of reference pressure
+//  real64 m_defaultRefPressure;
+//
+//  /// Material parameter: The default value of reference volumetric strain
+//  real64 m_defaultRefStrainVol;
+//
+//  /// Material parameter: The default value of the recompression index
+//  real64 m_defaultRecompressionIndex;
 
   /// Material parameter: The default value of the virgin compression index
   real64 m_defaultVirginCompressionIndex;
@@ -641,14 +646,14 @@ protected:
   /// Material parameter: The default value of the preconsolidation pressure
   real64 m_defaultPreConsolidationPressure;
 
-  /// Material parameter: The reference pressure for each quadrature point
-  array1d< real64 > m_refPressure;
-
-  /// Material parameter: The reference volumetric strain for each quadrature point
-  array1d< real64 > m_refStrainVol;
-
-  /// Material parameter: The recompression index for each element
-  array1d< real64 > m_recompressionIndex;
+//  /// Material parameter: The reference pressure for each quadrature point
+//  array1d< real64 > m_refPressure;
+//
+//  /// Material parameter: The reference volumetric strain for each quadrature point
+//  array1d< real64 > m_refStrainVol;
+//
+//  /// Material parameter: The recompression index for each element
+//  array1d< real64 > m_recompressionIndex;
 
   /// Material parameter: The virgin compression index for each element
   array1d< real64 > m_virginCompressionIndex;

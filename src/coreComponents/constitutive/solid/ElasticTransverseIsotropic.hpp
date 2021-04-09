@@ -141,7 +141,7 @@ public:
   // miscellaneous getters
 
   GEOSX_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, real64 ( &stiffness )[6][6] ) const override final;
+  virtual void getElasticStiffness( localIndex const k, real64 ( &stiffness )[6][6] , localIndex const q ) const override final;
 
 
 private:
@@ -166,9 +166,11 @@ private:
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
-                                                             real64 ( & stiffness )[6][6] ) const
+                                                             real64 ( & stiffness )[6][6] ,
+                                                            localIndex const q=0 ) const
 {
-  LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
+    GEOSX_UNUSED_VAR( q );
+    LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
   stiffness[0][0] = m_c11[k];
   stiffness[0][1] = m_c11[k] - 2 * m_c66[k];

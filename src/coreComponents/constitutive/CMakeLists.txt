@@ -42,6 +42,7 @@ set( constitutive_headers
      solid/DruckerPragerExtended.hpp
      solid/CamClay.hpp
      solid/ElasticIsotropic.hpp
+     solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
@@ -98,6 +99,7 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/CamClay.cpp
      solid/ElasticIsotropic.cpp
+     solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp

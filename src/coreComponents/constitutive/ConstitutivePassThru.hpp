@@ -27,6 +27,7 @@
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/CamClay.hpp"
 #include "solid/ElasticIsotropic.hpp"
+#include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/PoroElastic.hpp"
 
@@ -96,6 +97,10 @@ struct ConstitutivePassThru< SolidBase >
     {
       lambda( *ptr8 );
     }
+    else if( auto * const ptr9 = dynamic_cast< ElasticIsotropicPressureDependent * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr9 );
+    }
     else
     {
       GEOSX_ERROR( "ConstitutivePassThru< SolidBase >::execute failed. The constitutive relation is named "
@@ -158,6 +163,10 @@ struct ConstitutivePassThru< PoroElasticBase >
     else if( auto * const ptr5 = dynamic_cast< PoroElastic< ElasticTransverseIsotropic > * >( &constitutiveRelation ) )
     {
       lambda( *ptr5 );
+    }
+    else if( auto * const ptr6 = dynamic_cast< PoroElastic< ElasticIsotropicPressureDependent > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr6 );
     }
     else
     {

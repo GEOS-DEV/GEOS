@@ -418,15 +418,23 @@ public:
    * @param k the element number
    * @param stiffness the stiffness array
    */
-  GEOSX_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( stiffness );
-    GEOSX_ERROR( "getElasticStiffness() not implemented for this model" );
-  }
-
-
+    GEOSX_HOST_DEVICE
+    virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] , localIndex const q=0) const
+    {
+      GEOSX_UNUSED_VAR( k );
+      GEOSX_UNUSED_VAR( q );
+      GEOSX_UNUSED_VAR( stiffness );
+      GEOSX_ERROR( "getElasticStiffness() not implemented for this model" );
+    }
+    
+//    GEOSX_HOST_DEVICE
+//  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+//  {
+//    GEOSX_UNUSED_VAR( k );
+//    GEOSX_UNUSED_VAR( stiffness );
+//    GEOSX_ERROR( "getElasticStiffness() not implemented for this model" );
+//  }
+    
   /**
    * @brief Perform a finite-difference stiffness computation
    *

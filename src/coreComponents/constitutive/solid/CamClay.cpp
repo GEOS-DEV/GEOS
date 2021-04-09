@@ -25,17 +25,11 @@ namespace constitutive
 {
 
 CamClay::CamClay( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultRefPressure(),
-  m_defaultRefStrainVol(),
-  m_defaultRecompressionIndex(),
+  ElasticIsotropicPressureDependent( name, parent ),
   m_defaultVirginCompressionIndex(),
   m_defaultCslSlope(),
   m_defaultShapeParameter(),
   m_defaultPreConsolidationPressure(),
-  m_refPressure(),
-  m_refStrainVol(),
-  m_recompressionIndex(),
   m_virginCompressionIndex(),
   m_cslSlope(),
   m_shapeParameter(),
@@ -44,25 +38,10 @@ CamClay::CamClay( string const & name, Group * const parent ):
 {
   // register default values
 
-  registerWrapper( viewKeyStruct::defaultRefPressureString(), &m_defaultRefPressure ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Reference pressure" );
-
-  registerWrapper( viewKeyStruct::defaultRefStrainVolString(), &m_defaultRefStrainVol ).
-    setApplyDefaultValue( 1e-6 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Reference volumetric strain" );
-
-  registerWrapper( viewKeyStruct::defaultRecompressionIndexString(), &m_defaultRecompressionIndex ).
-    setApplyDefaultValue( 2e-3 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Recompresion index" );
-
   registerWrapper( viewKeyStruct::defaultVirginCompressionIndexString(), &m_defaultVirginCompressionIndex ).
     setApplyDefaultValue( 5e-3 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Virgin Compression index" );
+    setDescription( "Virgin compression index" );
 
   registerWrapper( viewKeyStruct::defaultCslSlopeString(), &m_defaultCslSlope ).
     setApplyDefaultValue( 1.0 ).
@@ -75,23 +54,11 @@ CamClay::CamClay( string const & name, Group * const parent ):
     setDescription( "Shape parameter for the yield surface" );
 
   registerWrapper( viewKeyStruct::defaultPreConsolidationPressureString(), &m_defaultPreConsolidationPressure ).
-    setApplyDefaultValue( 5e6 ).
+    setApplyDefaultValue( -1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Initial preconsolidation pressure" );
 
   // register fields
-
-  registerWrapper( viewKeyStruct::refPressureString(), &m_refPressure ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Reference pressure" );
-
-  registerWrapper( viewKeyStruct::refStrainVolString(), &m_refStrainVol ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "eference volumetric strain" );
-
-  registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Recompression index" );
 
   registerWrapper( viewKeyStruct::virginCompressionIndexString(), &m_virginCompressionIndex ).
     setApplyDefaultValue( -1 ).
@@ -126,21 +93,20 @@ void CamClay::allocateConstitutiveData( dataRepository::Group & parent,
   m_newPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
 
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropicPressureDependent::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 
 void CamClay::postProcessInput()
 {
-  ElasticIsotropic::postProcessInput();
+  ElasticIsotropicPressureDependent::postProcessInput();
 
   GEOSX_THROW_IF( m_defaultCslSlope <= 0, "Non-positive slope of critical state line detected", InputError );
-  GEOSX_THROW_IF( m_defaultRecompressionIndex <= 0, "Non-positive recompresion index detected", InputError );
   GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= 0, "Non-positive virgin compression index detected", InputError );
   GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex, "Recompression index should exceed virgin recompression index", InputError );
 
-  real64 poisson = conversions::BulkModAndShearMod::toPoissonRatio( -1*m_defaultRefPressure/m_defaultRecompressionIndex, m_defaultShearModulus );
-  GEOSX_THROW_IF( poisson < 0, "Elastic parameters lead to negative Poisson ratio at reference pressure", InputError );
+//  real64 poisson = conversions::BulkModAndShearMod::toPoissonRatio( -1*m_defaultRefPressure/m_defaultRecompressionIndex, m_defaultShearModulus );
+//  GEOSX_THROW_IF( poisson < 0, "Elastic parameters lead to negative Poisson ratio at reference pressure", InputError );
 
   // set results as array default values
 
@@ -149,15 +115,6 @@ void CamClay::postProcessInput()
 
   getWrapper< array2d< real64 > >( viewKeyStruct::newPreConsolidationPressureString() ).
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
-
-  getWrapper< array1d< real64 > >( viewKeyStruct::refPressureString() ).
-    setApplyDefaultValue( m_defaultRefPressure );
-
-  getWrapper< array1d< real64 > >( viewKeyStruct::refStrainVolString() ).
-    setApplyDefaultValue( m_defaultRefStrainVol );
-
-  getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
-    setApplyDefaultValue( m_defaultRecompressionIndex );
 
   getWrapper< array1d< real64 > >( viewKeyStruct::virginCompressionIndexString() ).
     setApplyDefaultValue( m_defaultVirginCompressionIndex );

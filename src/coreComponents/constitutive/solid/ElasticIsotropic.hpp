@@ -116,7 +116,8 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
-                                    real64 ( &stiffness )[6][6] ) const override;
+                                    real64 ( &stiffness )[6][6] ,
+                                   localIndex const q ) const override;
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
@@ -153,9 +154,11 @@ protected:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
-                                                   real64 ( & stiffness )[6][6] ) const
+                                                   real64 ( & stiffness )[6][6] ,
+                                                  localIndex const q =0) const
 {
-  real64 const G = m_shearModulus[k];
+    GEOSX_UNUSED_VAR( q );
+    real64 const G = m_shearModulus[k];
   real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
