@@ -21,6 +21,8 @@
 
 #include "VirtualElementBase.hpp"
 
+#include "meshUtilities/CellBlock.hpp"
+
 namespace geosx
 {
 namespace virtualElement

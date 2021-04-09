@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
 #define GEOSX_MESH_CELLBLOCKMANAGER_H_
 
-#include "CellBlock.hpp"
+#include "meshUtilities/CellBlock.hpp"
 
 namespace geosx
 {

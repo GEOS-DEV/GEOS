@@ -19,8 +19,8 @@
 #ifndef GEOSX_MESH_CELLBLOCK_HPP_
 #define GEOSX_MESH_CELLBLOCK_HPP_
 
-#include "ElementSubRegionBase.hpp"
-#include "FaceManager.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
+#include "mesh/FaceManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -100,10 +100,10 @@ public:
    */
   ///@{
 
-  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
+  void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) override;
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
+  void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
   ///@}
   /**
@@ -111,7 +111,7 @@ public:
    */
   ///@{
 
-  virtual void setElementType( string const & elementType ) override;
+  void setElementType( string const & elementType ) override;
 
   /**
    * @brief Get the number of the nodes in a face of the element.

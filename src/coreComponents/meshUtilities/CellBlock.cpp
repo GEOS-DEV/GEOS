@@ -18,9 +18,9 @@
  */
 
 #include "CellBlock.hpp"
-#include "MeshLevel.hpp"
+#include "mesh/MeshLevel.hpp"
 
-#include "NodeManager.hpp"
+#include "mesh/NodeManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 

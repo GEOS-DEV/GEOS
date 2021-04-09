@@ -16,7 +16,7 @@
 #ifndef GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 
-#include "CellBlock.hpp"
+#include "meshUtilities/CellBlock.hpp"
 
 namespace geosx
 {

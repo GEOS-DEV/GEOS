@@ -11,6 +11,7 @@ set(meshUtilities_headers
     PerforationData.hpp
     Perforation.hpp
     MeshUtilities.hpp
+    CellBlock.hpp
     SimpleGeometricObjects/GeometricObjectManager.hpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.hpp
     SimpleGeometricObjects/Box.hpp
@@ -31,6 +32,7 @@ set(meshUtilities_sources
     PerforationData.cpp
     Perforation.cpp
     MeshUtilities.cpp
+    CellBlock.cpp
     SimpleGeometricObjects/GeometricObjectManager.cpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.cpp
     SimpleGeometricObjects/Box.cpp
