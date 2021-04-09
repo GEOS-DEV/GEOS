@@ -84,17 +84,17 @@ using namespace dataRepository;
 //START_SPHINX_INCLUDE_01
 LaplaceFEM::LaplaceFEM( const string & name,
                         Group * const parent ):
-  SolverBase( name, parent ),
-  m_fieldName( "primaryField" ),
-  m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
+  LaplaceBase( name, parent )// ,
+  // m_fieldName( "primaryField" ),
+  // m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
 {
-  registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
+  // registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
+  //   setInputFlag( InputFlags::REQUIRED ).
+  //   setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
-  registerWrapper( laplaceFEMViewKeys.fieldVarName.key(), &m_fieldName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of field variable" );
+  // registerWrapper( laplaceFEMViewKeys.fieldVarName.key(), &m_fieldName ).
+  //   setInputFlag( InputFlags::REQUIRED ).
+  //   setDescription( "Name of field variable" );
 }
 //END_SPHINX_INCLUDE_01
 

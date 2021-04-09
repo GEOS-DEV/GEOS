@@ -16,7 +16,7 @@
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_VEM_HPP_
 
 #include "common/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
-#include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
+#include "physicsSolvers/simplePDE/LaplaceBase.hpp"  // an abstraction class shared by all Laplace solvers
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"  // interface to linear solvers and linear algebra libraries
 
@@ -29,7 +29,7 @@ namespace geosx
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
 //START_SPHINX_INCLUDE_02
-class LaplaceVEM : public SolverBase
+class LaplaceVEM : public LaplaceBase
 {
 public:
   // The default nullary constructor is disabled to avoid compiler auto-generation:
@@ -122,12 +122,12 @@ public:
 
   // Choice of transient treatment options (steady, backward, forward Euler scheme):
   //START_SPHINX_INCLUDE_01
-  enum class TimeIntegrationOption : integer
-  {
-    SteadyState,
-    ImplicitTransient,
-    ExplicitTransient
-  };
+  // enum class TimeIntegrationOption : integer
+  // {
+  //   SteadyState,
+  //   ImplicitTransient,
+  //   ExplicitTransient
+  // };
   //END_SPHINX_INCLUDE_01
 
 
@@ -144,9 +144,9 @@ public:
 
 private:
 
-  // These two classes are specific to the Laplace solver:
-  string m_fieldName;  // User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
-  TimeIntegrationOption m_timeIntegrationOption;  // Choice of transient treatment (SteadyState, ImplicitTransient or ExplicitTransient)
+//   // These two classes are specific to the Laplace solver:
+//   string m_fieldName;  // User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
+//   TimeIntegrationOption m_timeIntegrationOption;  // Choice of transient treatment (SteadyState, ImplicitTransient or ExplicitTransient)
 
   static constexpr localIndex m_maxCellNodes = 10;
   static constexpr localIndex m_maxFaceNodes = 10;
@@ -162,7 +162,7 @@ private:
    at the namespace scope (in this case, right after the ``LaplaceVEM`` class definition is complete):
  */
 //START_SPHINX_INCLUDE_05
-ENUM_STRINGS( LaplaceVEM::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient" )
+// ENUM_STRINGS( LaplaceVEM::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient" )
 //END_SPHINX_INCLUDE_05
 
 } /* namespace geosx */
