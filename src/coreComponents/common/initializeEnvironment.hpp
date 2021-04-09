@@ -128,8 +128,16 @@ void setupMPI( int argc, char * argv[] );
 void finalizeMPI();
 
 
+/**
+ * @brief Setup/init the environment.
+ * @param [in] argc the number of command line arguments.
+ * @param [in,out] argv the command line arguments.
+ */
 void setupEnvironment( int argc, char * argv[] );
 
+/**
+ * @brief Cleanup/finalize the environment.
+ */
 void cleanupEnvironment();
 
 #if defined( GEOSX_USE_CALIPER )

@@ -29,6 +29,7 @@ set( geosx_core_defines "" )
 set( buildAsObj FALSE)
 if ( BUILD_OBJ_LIBS)
   set(buildAsObj TRUE)
+  set( LvArrayBuildAsObj TRUE)
 endif()
 
 list( APPEND coreLibs lvarray)
