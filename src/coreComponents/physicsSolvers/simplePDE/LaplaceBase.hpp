@@ -40,6 +40,9 @@ public:
   // Destructor
   virtual ~LaplaceBase() override;
 
+  // This method ties properties with their supporting mesh
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
+
 //END_SPHINX_INCLUDE_02
 
   // Choice of transient treatment options (steady, backward, forward Euler scheme):

@@ -119,18 +119,18 @@ LaplaceVEM::~LaplaceVEM()
      The description here is simply an additional metadata for the newly mounted property.
  */
 //START_SPHINX_INCLUDE_02
-void LaplaceVEM::registerDataOnMesh( Group & meshBodies )
-{
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
-  {
-    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
+// void LaplaceVEM::registerDataOnMesh( Group & meshBodies )
+// {
+//   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+//   {
+//     NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
 
-    nodes.registerWrapper< real64_array >( m_fieldName ).
-      setApplyDefaultValue( 0.0 ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setDescription( "Primary field variable" );
-  } );
-}
+//     nodes.registerWrapper< real64_array >( m_fieldName ).
+//       setApplyDefaultValue( 0.0 ).
+//       setPlotLevel( PlotLevel::LEVEL_0 ).
+//       setDescription( "Primary field variable" );
+//   } );
+// }
 //END_SPHINX_INCLUDE_02
 
 

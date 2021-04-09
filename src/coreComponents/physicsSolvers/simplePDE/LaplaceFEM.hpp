@@ -47,7 +47,7 @@ public:
   static string catalogName() { return "LaplaceFEM"; }
 
   // This method ties properties with their supporting mesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override final;
+  // virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
 //END_SPHINX_INCLUDE_02
 /**
