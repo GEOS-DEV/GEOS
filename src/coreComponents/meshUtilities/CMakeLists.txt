@@ -54,6 +54,13 @@ if( ENABLE_PAMELA )
     set( dependencyList ${dependencyList} PAMELA )
 endif()
 
+if( ENABLE_VTK )
+    message(STATUS "Adding VTKMeshGenerator sources and headers")
+    set( meshUtilities_headers ${meshUtilities_headers} VTKMeshGenerator.hpp )
+    set( meshUtilities_sources ${meshUtilities_sources} VTKMeshGenerator.cpp)
+    set( dependencyList ${dependencyList} VTK::CommonCore VTK::CommonSystem VTK::CommonMisc VTK::IOCore VTK::IOLegacy VTK::IOXML VTK::expat VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::loguru )
+endif()
+
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
 endif()
