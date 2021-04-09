@@ -24,7 +24,7 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
 #include "constitutive/permeability/permeabilitySelector.hpp"
-#include "constitutive/porosity/PressureDependentPorosity.hpp"
+#include "constitutive/solid/CompressibleRock.hpp"
 #include "managers/GeosxState.hpp"
 #include "managers/ProblemManager.hpp"
 
@@ -39,7 +39,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
   m_fluidModelNames(),
-  m_porosityModelNames(),
+  m_solidModelNames(),
   m_permeabilityModelNames(),
   m_poroElasticFlag( 0 ),
   m_coupledWellsFlag( 0 ),
@@ -62,10 +62,10 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setSizedFromParent( 0 ).
     setDescription( "Names of fluid constitutive models for each region." );
 
-  this->registerWrapper( viewKeyStruct::porosityNamesString(), &m_porosityModelNames ).
+  this->registerWrapper( viewKeyStruct::solidNamesString(), &m_solidModelNames ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Names of porosity constitutive models for each region." );
+    setDescription( "Names of solid constitutive models for each region." );
 
   this->registerWrapper( viewKeyStruct::permeabilityNamesString(), &m_permeabilityModelNames ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -123,7 +123,7 @@ void FlowSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
   checkModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString() );
-  checkModelNames( m_porosityModelNames, viewKeyStruct::porosityNamesString() );
+  checkModelNames( m_solidModelNames, viewKeyStruct::solidNamesString() );
   checkModelNames( m_permeabilityModelNames, viewKeyStruct::permeabilityNamesString() );
 }
 
@@ -138,7 +138,7 @@ void FlowSolverBase::initializePreSubGroups()
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
     validateModelMapping( meshLevel.getElemManager(), m_permeabilityModelNames );
-    // validateModelMapping( meshLevel.getElemManager(), m_porosityModelNames );
+    // validateModelMapping( meshLevel.getElemManager(), m_solidModelNames );
   } );
 
   // fill stencil targetRegions
@@ -221,17 +221,17 @@ void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
   // update porosity
-  PressureDependentPorosity & porosityModel =
-    getConstitutiveModel< PressureDependentPorosity >( subRegion, m_porosityModelNames[targetIndex] );
+  CompressibleRock & solidModel =
+    getConstitutiveModel< CompressibleRock >( subRegion, m_solidModelNames[targetIndex] );
 
-  PressureDependentPorosity::KernelWrapper porosityWrapper = porosityModel.createKernelWrapper();
+  CompressibleRock::KernelWrapper porosityWrapper = solidModel.createKernelWrapper();
 
   PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
                                                     porosityWrapper,
                                                     pressure,
                                                     deltaPressure );
 
-  arrayView2d< real64 const > const & porosity = porosityModel.getPorosity();
+  arrayView2d< real64 const > const & porosity = solidModel.getPorosity();
 
   PermeabilityBase & perm =
     getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
@@ -255,10 +255,10 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
   // update porosity
-  PressureDependentPorosity & porosityModel =
-    getConstitutiveModel< PressureDependentPorosity >( subRegion, m_porosityModelNames[targetIndex] );
+  CompressibleRock & solidModel =
+    getConstitutiveModel< CompressibleRock >( subRegion, m_solidModelNames[targetIndex] );
 
-  PressureDependentPorosity::KernelWrapper porosityWrapper = porosityModel.createKernelWrapper();
+  CompressibleRock::KernelWrapper porosityWrapper = solidModel.createKernelWrapper();
 
   PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
                                                     porosityWrapper,
@@ -346,7 +346,7 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
 
   localIndex const regionIndex = this->targetRegionIndex( regionName );
 
-  std::vector< string > rval{ m_porosityModelNames[regionIndex], m_fluidModelNames[regionIndex] };
+  std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
 }

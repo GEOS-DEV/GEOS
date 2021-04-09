@@ -13,62 +13,53 @@
  */
 
 /**
- * @file PressureDependentPorosity.hpp
+ * @file CompressibleRock.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_POROSITY_PRESSUREDEPENDENTPOROSITY_HPP_
-#define GEOSX_CONSTITUTIVE_POROSITY_PRESSUREDEPENDENTPOROSITY_HPP_
-
-#include "PorosityBase.hpp"
+#ifndef GEOSX_CONSTITUTIVE_POROSITY_COMPRESSIBLEROCK_HPP_
+#define GEOSX_CONSTITUTIVE_POROSITY_COMPRESSIBLEROCK_HPP_
 
 #include "constitutive/ExponentialRelation.hpp"
+#include "RockBase.hpp"
 
 namespace geosx
 {
 namespace constitutive
 {
 
-class PressureDependentPorosityUpdate
+class CompressibleRockUpdates : RockBaseUpdates
 {
 public:
 
-  /**
-   * @brief Get number of elements in this wrapper.
-   * @return number of elements
-   */
-  GEOSX_HOST_DEVICE
-  localIndex numElems() const { return m_porosity.size( 0 ); }
-
-  /**
-   * @brief Get number of gauss points per element.
-   * @return number of gauss points per element
-   */
-  GEOSX_HOST_DEVICE
-  localIndex numGauss() const { return m_porosity.size( 1 ); }
-
-  PressureDependentPorosityUpdate( arrayView2d< real64 > const & porosity,
-                                   arrayView2d< real64 > const & dPorosity_dPressure,
-                                   arrayView1d< real64 > const & referencePorosity,
-                                   real64 const & referencePressure,
-                                   real64 const & compressibility )
-    : m_porosity( porosity ),
-    m_dPorosity_dPressure( dPorosity_dPressure ),
+  CompressibleRockUpdates( arrayView2d< real64 > const & newPorosity,
+                           arrayView2d< real64 > const & oldPorosity,
+                           arrayView2d< real64 > const & dPorosity_dPressure,
+                           real64 const & compressibility,
+                           real64 const & grainBulkModulus,
+                           real64 const & grainDensity,
+                           arrayView1d< real64 > const & referencePorosity,
+                           real64 const & referencePressure ):
+   RockBaseUpdates( newPorosity,
+                    oldPorosity,
+                    dPorosity_dPressure,
+                    compressibility,
+                    grainBulkModulus,
+                    grainDensity ),
     m_referencePorosity( referencePorosity ),
-    m_referencePressure( referencePressure ),
-    m_compressibility ( compressibility )
+    m_referencePressure( referencePressure )
   {}
 
   /// Default copy constructor
-  PressureDependentPorosityUpdate( PressureDependentPorosityUpdate const & ) = default;
+  CompressibleRockUpdates( CompressibleRockUpdates const & ) = default;
 
   /// Default move constructor
-  PressureDependentPorosityUpdate( PressureDependentPorosityUpdate && ) = default;
+  CompressibleRockUpdates( CompressibleRockUpdates && ) = default;
 
   /// Deleted copy assignment operator
-  PressureDependentPorosityUpdate & operator=( PressureDependentPorosityUpdate const & ) = delete;
+  CompressibleRockUpdates & operator=( CompressibleRockUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  PressureDependentPorosityUpdate & operator=( PressureDependentPorosityUpdate && ) = delete;
+  CompressibleRockUpdates & operator=( CompressibleRockUpdates && ) = delete;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -89,32 +80,26 @@ public:
                real64 const & pressure ) const
   {
     compute( pressure,
-             m_porosity[k][q],
+             m_newPorosity[k][q],
              m_dPorosity_dPressure[k][q],
              m_referencePorosity[k] );
   }
 
 private:
-  arrayView2d< real64 > m_porosity;
-
-  arrayView2d< real64 > m_porosityOld;
-
-  arrayView2d< real64 > m_dPorosity_dPressure;
 
   arrayView1d< real64 > m_referencePorosity;
 
   real64 m_referencePressure;
 
-  real64 m_compressibility;
 };
 
 
-class PressureDependentPorosity : public PorosityBase
+class CompressibleRock : public RockBase
 {
 public:
-  PressureDependentPorosity( string const & name, Group * const parent );
+  CompressibleRock( string const & name, Group * const parent );
 
-  virtual ~PressureDependentPorosity() override;
+  virtual ~CompressibleRock() override;
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -122,19 +107,18 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static string catalogName() { return "PressureDependentPorosity"; }
+  static string catalogName() { return "CompressibleRock"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  struct viewKeyStruct : public PorosityBase::viewKeyStruct
+  struct viewKeyStruct : public RockBase::viewKeyStruct
   {
-    static constexpr char const * compressibilityString() { return "compressibility"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * referencePorosityString() { return "referencePorosity"; }
     static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
   } viewKeys;
 
-  using KernelWrapper = PressureDependentPorosityUpdate;
+  using KernelWrapper = CompressibleRockUpdates;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -142,11 +126,14 @@ public:
    */
   KernelWrapper createKernelWrapper()
   {
-    return KernelWrapper( m_porosity,
+    return KernelWrapper( m_newPorosity,
+                          m_oldPorosity,
                           m_dPorosity_dPressure,
+                          m_compressibility,
+                          m_grainBulkModulus,
+                          m_grainDensity,
                           m_referencePorosity,
-                          m_referencePressure,
-                          m_compressibility );
+                          m_referencePressure );
   }
 
 
@@ -154,7 +141,6 @@ protected:
   virtual void postProcessInput() override;
 
   real64 m_referencePressure;
-  real64 m_compressibility;
   array1d< real64 > m_referencePorosity;
   real64 m_defaultReferencePorosity;
 
@@ -166,4 +152,4 @@ protected:
 } /* namespace geosx */
 
 
-#endif //GEOSX_CONSTITUTIVE_POROSITY_PRESSUREDEPENDENTPOROSITY_HPP_
+#endif //GEOSX_CONSTITUTIVE_POROSITY_COMPRESSIBLEROCK_HPP_

@@ -35,7 +35,7 @@
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
-#include "constitutive/porosity/PorosityBase.hpp"
+#include "constitutive/solid/RockBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -547,9 +547,9 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh ) const
     arrayView3d< real64 const > const phaseDens = fluid.phaseDensity();
     arrayView4d< real64 const > const phaseCompFrac = fluid.phaseCompFraction();
 
-    PorosityBase & porosityModel = getConstitutiveModel< PorosityBase >( subRegion, m_porosityModelNames[targetIndex] );
-    arrayView2d< real64 const > const & poro = porosityModel.getPorosity();
-    arrayView2d< real64 > const & poroOld = porosityModel.getPorosityOld();
+    RockBase & solidModel = getConstitutiveModel< RockBase >( subRegion, m_solidModelNames[targetIndex] );
+    arrayView2d< real64 const > const & poro = solidModel.getPorosity();
+    arrayView2d< real64 > const & poroOld = solidModel.getOldPorosity();
 
     arrayView1d< real64 > const totalDensOld =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
@@ -667,11 +667,11 @@ void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition con
     arrayView3d< real64 const > const & phaseCompFracOld =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString() );
 
-    PorosityBase const & porosityModel = getConstitutiveModel< PorosityBase >( subRegion, m_porosityModelNames[targetIndex] );
+    RockBase const & solidModel = getConstitutiveModel< RockBase >( subRegion, m_solidModelNames[targetIndex] );
 
-    arrayView2d< real64 const > const & porosity    = porosityModel.getPorosity();
-    arrayView2d< real64 const > const & porosityOld = porosityModel.getPorosityOld();
-    arrayView2d< real64 const > const & dPoro_dPres = porosityModel.dPorosity_dPressure();
+    arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
+    arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
+    arrayView2d< real64 const > const & dPoro_dPres = solidModel.dPorosity_dPressure();
 
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
     arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
@@ -733,11 +733,11 @@ void CompositionalMultiphaseBase::assembleVolumeBalanceTerms( DomainPartition co
     arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
 
-    PorosityBase const & porosityModel = getConstitutiveModel< PorosityBase >( subRegion, m_porosityModelNames[targetIndex] );
+    RockBase const & solidModel = getConstitutiveModel< RockBase >( subRegion, m_solidModelNames[targetIndex] );
     arrayView2d< real64 const > const & porosity =
-      porosityModel.getPorosity();
+      solidModel.getPorosity();
     arrayView2d< real64 const > const & dPoro_dPres =
-      porosityModel.dPorosity_dPressure();
+      solidModel.dPorosity_dPressure();
 
     KernelLaunchSelector2< VolumeBalanceKernel >( m_numComponents, m_numPhases,
                                                   subRegion.size(),

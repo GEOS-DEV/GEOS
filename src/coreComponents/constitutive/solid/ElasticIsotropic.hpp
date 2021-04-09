@@ -47,11 +47,24 @@ public:
    * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    */
-  ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
-                           arrayView1d< real64 const > const & shearModulus,
+  ElasticIsotropicUpdates( arrayView2d< real64 > const & newPorosity,
+                           arrayView2d< real64 > const & oldPorosity,
+                           arrayView2d< real64 > const & dPorosity_dPressure,
+                           real64 const & compressibility,
+                           real64 const & grainBulkModulus,
+                           real64 const & grainDensity,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                           arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    SolidBaseUpdates( newStress, oldStress ),
+                           arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                           arrayView1d< real64 const > const & bulkModulus,
+                           arrayView1d< real64 const > const & shearModulus ):
+    SolidBaseUpdates( newPorosity,
+                      oldPorosity,
+                      dPorosity_dPressure,
+                      compressibility,
+                      grainBulkModulus,
+                      grainDensity,
+                      newStress,
+                      oldStress ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
@@ -445,17 +458,29 @@ public:
   {
     if( includeState )
     {
-      return ElasticIsotropicUpdates( m_bulkModulus,
-                                      m_shearModulus,
+      return ElasticIsotropicUpdates( m_newPorosity,
+                                      m_oldPorosity,
+                                      m_dPorosity_dPressure,
+                                      m_compressibility,
+                                      m_grainBulkModulus,
+                                      m_grainDensity,
                                       m_newStress,
-                                      m_oldStress );
+                                      m_oldStress,
+                                      m_bulkModulus,
+                                      m_shearModulus );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
     {
-      return ElasticIsotropicUpdates( m_bulkModulus,
-                                      m_shearModulus,
+      return ElasticIsotropicUpdates( m_newPorosity,
+                                      m_oldPorosity,
+                                      m_dPorosity_dPressure,
+                                      m_compressibility,
+                                      m_grainBulkModulus,
+                                      m_grainDensity,
                                       arrayView3d< real64, solid::STRESS_USD >(),
-                                      arrayView3d< real64, solid::STRESS_USD >() );
+                                      arrayView3d< real64, solid::STRESS_USD >(),
+                                      m_bulkModulus,
+                                      m_shearModulus );
     }
   }
 

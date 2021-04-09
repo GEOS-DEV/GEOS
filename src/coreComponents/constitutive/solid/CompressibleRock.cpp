@@ -13,10 +13,10 @@
  */
 
 /**
- * @file PressureDependentPorosity.cpp
+ * @file CompressibleRock.cpp
  */
 
-#include "PressureDependentPorosity.hpp"
+#include "CompressibleRock.hpp"
 
 namespace geosx
 {
@@ -26,17 +26,13 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-PressureDependentPorosity::PressureDependentPorosity( string const & name, Group * const parent ):
-  PorosityBase( name, parent ),
+CompressibleRock::CompressibleRock( string const & name, Group * const parent ):
+  RockBase( name, parent ),
   m_referencePorosity()
 {
-  registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Solid compressibility" );
-
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Reference pressure for fluid compressibility" );
+    setDescription( "Reference pressure for solid compressibility" );
 
   registerWrapper( viewKeyStruct::defaultRefererencePorosityString(), &m_defaultReferencePorosity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -46,10 +42,10 @@ PressureDependentPorosity::PressureDependentPorosity( string const & name, Group
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-PressureDependentPorosity::~PressureDependentPorosity() = default;
+CompressibleRock::~CompressibleRock() = default;
 
 std::unique_ptr< ConstitutiveBase >
-PressureDependentPorosity::deliverClone( string const & name,
+CompressibleRock::deliverClone( string const & name,
                                          Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
@@ -57,18 +53,18 @@ PressureDependentPorosity::deliverClone( string const & name,
   return clone;
 }
 
-void PressureDependentPorosity::allocateConstitutiveData( dataRepository::Group & parent,
+void CompressibleRock::allocateConstitutiveData( dataRepository::Group & parent,
                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-void PressureDependentPorosity::postProcessInput()
+void CompressibleRock::postProcessInput()
 {
   this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressureDependentPorosity, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRock, string const &, Group * const )
 }
 } /* namespace geosx */

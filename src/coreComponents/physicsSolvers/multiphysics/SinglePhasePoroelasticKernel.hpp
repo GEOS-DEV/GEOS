@@ -118,7 +118,7 @@ public:
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
     m_poroRef( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::referencePorosityString() ) ),
-    m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient() )
+    m_biotCoefficient( 1.0 )
   {}
 
   //*****************************************************************************

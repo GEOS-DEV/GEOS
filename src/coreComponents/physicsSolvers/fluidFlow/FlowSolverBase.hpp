@@ -93,7 +93,7 @@ public:
 
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
-    static constexpr char const * porosityNamesString() { return "porosityNames"; }
+    static constexpr char const * solidNamesString() { return "solidNames"; }
 
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
 
@@ -157,8 +157,8 @@ protected:
   /// name of the fluid constitutive model
   array1d< string > m_fluidModelNames;
 
-  /// name of the porosity constitutive model
-  array1d< string > m_porosityModelNames;
+  /// name of the solid constitutive model
+  array1d< string > m_solidModelNames;
 
   /// name of the permeability constituive model
   array1d< string > m_permeabilityModelNames;

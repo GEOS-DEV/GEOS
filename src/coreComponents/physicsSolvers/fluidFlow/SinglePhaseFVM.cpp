@@ -21,7 +21,7 @@
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
-#include "constitutive/porosity/PorosityBase.hpp"
+#include "constitutive/solid/RockBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/GeosxState.hpp"
 #include "managers/ProblemManager.hpp"

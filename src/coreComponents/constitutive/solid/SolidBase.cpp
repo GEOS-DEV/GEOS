@@ -27,10 +27,9 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
+  RockBase( name, parent ),
   m_newStress( 0, 0, 6 ),
-  m_oldStress( 0, 0, 6 ),
-  m_density()
+  m_oldStress( 0, 0, 6 )
 {
   registerWrapper( viewKeyStruct::stressString(), &m_newStress ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -40,14 +39,6 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
     setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Previous Material Stress" );
-
-  registerWrapper( viewKeyStruct::densityString(), &m_density ).
-    setApplyDefaultValue( -1 ). // will be overwritten
-    setDescription( "Material Density" );
-
-  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default Material Density" );
 }
 
 
@@ -65,11 +56,10 @@ void SolidBase::postProcessInput()
 void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_density.resize( 0, numConstitutivePointsPerParentIndex );
   m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  RockBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 

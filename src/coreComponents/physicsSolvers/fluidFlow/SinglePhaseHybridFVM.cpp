@@ -20,7 +20,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/porosity/PorosityBase.hpp"
+#include "constitutive/solid/RockBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -374,10 +374,10 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const & densOld = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
-    PorosityBase const & porosityModel = this->template getConstitutiveModel< PorosityBase >( subRegion,
-                                                                                              m_porosityModelNames[targetIndex] );
+    RockBase const & solidModel = this->template getConstitutiveModel< RockBase >( subRegion,
+                                                                                   m_solidModelNames[targetIndex] );
 
-    arrayView2d< real64 const > const & poroOld = porosityModel.getPorosityOld();
+    arrayView2d< real64 const > const & poroOld = solidModel.getOldPorosity();
 
     SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                         parallelDeviceReduce >( localRhs,

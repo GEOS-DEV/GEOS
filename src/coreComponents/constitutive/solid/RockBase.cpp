@@ -13,10 +13,10 @@
  */
 
 /**
- * @file PorosityBase.cpp
+ * @file RockBase.cpp
  */
 
-#include "PorosityBase.hpp"
+#include "RockBase.hpp"
 
 namespace geosx
 {
@@ -27,47 +27,62 @@ namespace constitutive
 {
 
 
-PorosityBase::PorosityBase( string const & name, Group * const parent ):
+RockBase::RockBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
-  m_porosity(),
-  m_porosityOld(),
-  m_dPorosity_dPressure()
+  m_newPorosity(),
+  m_oldPorosity(),
+  m_dPorosity_dPressure(),
+  m_compressibility(),
+  m_grainBulkModulus(),
+  m_grainDensity()
 {
-  registerWrapper( viewKeyStruct::porosityString(), &m_porosity ).
+  registerWrapper( viewKeyStruct::newPorosityString(), &m_newPorosity ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( -1.0 ); // will be overwritten
 
-  registerWrapper( viewKeyStruct::porosityOldString(), &m_porosityOld ).
+  registerWrapper( viewKeyStruct::oldPorosityString(), &m_oldPorosity ).
     setApplyDefaultValue( -1.0 );// will be overwritten
 
   registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure ).
     setApplyDefaultValue( 0.0 );// will be overwritten
+
+  registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Solid compressibility" );
+
+  registerWrapper( viewKeyStruct::grainBulkModulusString(), &m_grainBulkModulus ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Grains bulk modulus" );
+
+  registerWrapper( viewKeyStruct::grainDensityString(), &m_grainDensity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Grains density" );
 }
 
-PorosityBase::~PorosityBase() = default;
+RockBase::~RockBase() = default;
 
 std::unique_ptr< ConstitutiveBase >
-PorosityBase::deliverClone( string const & name,
-                            Group * const parent ) const
+RockBase::deliverClone( string const & name,
+                        Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
   return clone;
 }
 
-void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
+void RockBase::allocateConstitutiveData( dataRepository::Group & parent,
                                              localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
-  m_porosityOld.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newPorosity.resize( 0, numConstitutivePointsPerParentIndex );
+  m_oldPorosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_dPorosity_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-void PorosityBase::postProcessInput()
+void RockBase::postProcessInput()
 {}
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorosityBase, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, RockBase, string const &, Group * const )
 }
 } /* namespace geosx */

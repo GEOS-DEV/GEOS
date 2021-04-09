@@ -23,7 +23,6 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
-#include "constitutive/solid/PoroElastic.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"

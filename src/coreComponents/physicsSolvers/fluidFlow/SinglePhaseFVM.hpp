@@ -67,7 +67,7 @@ public:
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
   using BASE::m_fluidModelNames;
-  using BASE::m_porosityModelNames;
+  using BASE::m_solidModelNames;
   using BASE::m_permeabilityModelNames;
   using BASE::m_poroElasticFlag;
   using BASE::m_coupledWellsFlag;

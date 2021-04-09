@@ -42,9 +42,9 @@ set( constitutive_headers
      solid/DruckerPragerExtended.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticTransverseIsotropic.hpp
-     solid/PoroElastic.hpp
-     solid/PoreVolumeCompressibleSolid.hpp
+     solid/CompressibleRock.hpp
      solid/PropertyConversions.hpp
+     solid/RockBase.hpp
      solid/SolidBase.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
@@ -62,8 +62,6 @@ set( constitutive_headers
      permeability/CarmanKozenyPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/permeabilitySelector.hpp
-     porosity/PorosityBase.hpp
-     porosity/PressureDependentPorosity.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
@@ -102,8 +100,8 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticTransverseIsotropic.cpp
-     solid/PoroElastic.cpp
-     solid/PoreVolumeCompressibleSolid.cpp
+     solid/CompressibleRock.hpp
+     solid/RockBase.cpp
      solid/SolidBase.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
@@ -114,8 +112,6 @@ set( constitutive_sources
      permeability/ConstantPermeability.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
-     porosity/PorosityBase.cpp
-     porosity/PressureDependentPorosity.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
