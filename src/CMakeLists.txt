@@ -124,18 +124,6 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                        )
 endif()
 
-#add_custom_target(graphviz ALL
-#                  "${CMAKE_COMMAND}" "--graphviz=dependency.dot" .
-#                  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-
-
-#add_custom_target(graphviz ALL
-#    COMMAND ${CMAKE_COMMAND} "--graphviz=dependency.dot" .
-#    COMMAND dot -Tpng dependency.dot -o dependency.png
-#    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-#)
-
-
 if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
 endif()

@@ -18,9 +18,9 @@
 
 #include "EventManager.hpp"
 
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "events/EventBase.hpp"
 #include "common/TimingMacros.hpp"
+#include "events/EventBase.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
