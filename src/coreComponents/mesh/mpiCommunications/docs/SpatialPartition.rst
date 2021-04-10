@@ -35,7 +35,7 @@ This concept of ghosting and communications between owned cells and ghost cells 
 other types of elements in GEOSX (Faces, Edges, Nodes).
 The next figure summarizes the way nodes, edges, faces and cells are ghosted.
 
-.. figure:: ../../../coreComponents/mpiCommunications/docs/split.svg
+.. figure:: ../../../../coreComponents/mesh/mpiCommunications/docs/split.svg
    :align: center
    :width: 700
    :figclass: align-center
