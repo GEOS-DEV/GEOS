@@ -23,7 +23,6 @@
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-//#include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
 /**

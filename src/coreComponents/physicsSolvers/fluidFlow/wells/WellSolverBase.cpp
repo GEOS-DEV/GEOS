@@ -19,7 +19,6 @@
 #include "WellSolverBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
-//#include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "mesh/WellElementRegion.hpp"

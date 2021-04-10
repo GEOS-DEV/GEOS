@@ -22,7 +22,6 @@
 #include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-//#include "mainInterface/GeosxState.hpp"
 
 #include <set>
 

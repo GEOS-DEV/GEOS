@@ -22,8 +22,6 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 
-//#include "mainInterface/GeosxState.hpp"
-
 namespace geosx
 {
 

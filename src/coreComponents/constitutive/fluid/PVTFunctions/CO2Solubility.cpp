@@ -20,7 +20,6 @@
 
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
-//#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {

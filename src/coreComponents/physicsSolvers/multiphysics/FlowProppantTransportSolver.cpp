@@ -21,7 +21,6 @@
 #include "FlowProppantTransportSolver.hpp"
 
 #include "mesh/DomainPartition.hpp"
-//#include "mainInterface/GeosxState.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/ProppantTransport.hpp"

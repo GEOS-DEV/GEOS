@@ -18,7 +18,6 @@
 
 #include "PeriodicEvent.hpp"
 #include "functions/FunctionManager.hpp"
-//#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {

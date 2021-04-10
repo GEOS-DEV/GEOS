@@ -22,8 +22,6 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "functions/FunctionManager.hpp"
-////#include "mainInterface/GeosxState.hpp"
-//#include "mainInterface/initialization.hpp"
 
 namespace geosx
 {

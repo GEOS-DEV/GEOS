@@ -19,7 +19,6 @@
 #ifndef SIMPLEGEOMETRICOBJECTS_H_
 #define SIMPLEGEOMETRICOBJECTS_H_
 
-//#include "common/Common.h"
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "dataRepository/ObjectCatalog.hpp"

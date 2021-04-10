@@ -1,5 +1,4 @@
 #include "PackCollection.hpp"
-//#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {

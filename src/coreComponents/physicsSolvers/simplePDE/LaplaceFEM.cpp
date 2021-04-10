@@ -26,7 +26,6 @@
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-//#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {
