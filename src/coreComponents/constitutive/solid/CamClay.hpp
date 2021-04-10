@@ -60,9 +60,6 @@ public:
                   arrayView3d< real64, solid::STRESS_USD > const & newStress,
                   arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
     ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, bulkModulus, shearModulus, newStress, oldStress ),
-//    m_refPressure( refPressure ),
-//    m_refStrainVol( refStrainVol ),
-//    m_recompressionIndex( recompressionIndex ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_shapeParameter( shapeParameter ),
@@ -92,22 +89,22 @@ public:
   using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
   //using ElasticIsotropicUpdates::saveStress;
 
-    GEOSX_HOST_DEVICE
-    void evaluateYield( real64 const p,
-                       real64 const q,
-                       real64 const pc,
-                       real64 const M,
-                       real64 const alpha,
-                       real64 const Cc,
-                       real64 const Cr,
-                       real64 const bulkModulus,
-                       real64 const mu,
-                       real64 & f,
-                       real64 & df_dp,
-                       real64 & df_dq,
-                       real64 & df_dpc,
-                       real64 & df_dp_dve,
-                       real64 & df_dq_dse ) const;
+//    GEOSX_HOST_DEVICE
+//    void evaluateYield( real64 const p,
+//                       real64 const q,
+//                       real64 const pc,
+//                       real64 const M,
+//                       real64 const alpha,
+//                       real64 const Cc,
+//                       real64 const Cr,
+//                       real64 const bulkModulus,
+//                       real64 const mu,
+//                       real64 & f,
+//                       real64 & df_dp,
+//                       real64 & df_dq,
+//                       real64 & df_dpc,
+//                       real64 & df_dp_dve,
+//                       real64 & df_dq_dse ) const;
     
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -217,6 +214,9 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 pc    = oldPc;
   real64 bulkModulus  = -p0/Cr;
 
+    // elastic predictor (assume strainIncrement is all elastic)
+    ElasticIsotropicPressureDependentUpdates::smallStrainUpdate(k, q, strainIncrement, stress, stiffness);
+    /*
   // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
   real64 oldP;
@@ -305,24 +305,37 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   stiffness[3][3] = mu;
   stiffness[4][4] = mu;
   stiffness[5][5] = mu;
+*/
+    real64 trialP;
+    real64 trialQ;
+    real64 deviator[6];
 
+    twoInvariant::stressDecomposition( stress,
+                                       trialP,
+                                       trialQ,
+                                       deviator );
+    
   // check yield function F <= 0
  // real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
   //evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
+    
+
     
   real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 
   if( yield < 1e-9 ) // elasticity
   {
 // std::cout << "elastic " <<  "\n " << std::endl;
-    saveStress( k, q, stress );
+   // saveStress( k, q, stress );
     return;
   }
 
 // else, plasticity (trial stress point lies outside yield surface)
-   std::cout << "plastic " <<  "\n " << std::endl;
+ //  std::cout << "plastic " <<  "\n " << std::endl;
 
-
+    real64 eps_s_trial = trialQ/3.0/mu;
+    real64 eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;;
+    
   real64 solution[3], residual[3], delta[3];
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 

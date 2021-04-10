@@ -265,9 +265,7 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
                                        oldDeviator,
                                        oldStrainElastic );
 
-    // elastic predictor (assume strainIncrement is all elastic)
-    // TODO: define ElasticIsotropicPressureUpdates to call here, similar to the line below
-    //ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    // Total elastic strain
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -345,22 +343,20 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
                                          oldDeviator,
                                          oldStrainElastic );
 
-      // elastic predictor (assume strainIncrement is all elastic)
-      // TODO: define ElasticIsotropicPressureUpdates to call here, similar to the line below
-      //ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+      // Total elastic strain
 
       for( localIndex i=0; i<6; ++i )
       {
         strainElasticTotal[i] = oldStrainElastic[i] + strainIncrement[i];
       }
-      // two-invariant decomposition of trial elastic strain
+      // two-invariant decomposition of elastic strain
 
       twoInvariant::strainDecomposition( strainElasticTotal,
                                          eps_v_elastic,
                                          eps_s_elastic,
                                          deviator );
 
-      // Calculate trial mean and deviatoric stress
+      // Calculate mean and deviatoric stress
 
       real64 P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
       real64 Q = 3. * mu * eps_s_elastic;
@@ -370,7 +366,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
                                          deviator,
                                          stress );
     real64 bulkModulus = -P/Cr;
-      saveStress( k, q, stress );
+    
+  saveStress( k, q, stress );
   stiffness.m_bulkModulus = bulkModulus;
   stiffness.m_shearModulus = m_shearModulus[k];
 }
@@ -429,14 +426,14 @@ public:
     /// string/key for default bulk modulus
     static constexpr char const * defaultBulkModulusString() { return "defaultBulkModulus"; }
 
-    /// string/key for default poisson ratio
-    static constexpr char const * defaultPoissonRatioString() { return "defaultPoissonRatio"; }
+//    /// string/key for default poisson ratio
+//    static constexpr char const * defaultPoissonRatioString() { return "defaultPoissonRatio"; }
 
     /// string/key for default shear modulus
     static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
 
-    /// string/key for default Young's modulus
-    static constexpr char const * defaultYoungsModulusString() { return "defaultYoungsModulus"; }
+//    /// string/key for default Young's modulus
+//    static constexpr char const * defaultYoungsModulusString() { return "defaultYoungsModulus"; }
       
       /// string/key for default reference pressure
       static constexpr char const * defaultRefPressureString() { return "defaultRefPressure"; }
