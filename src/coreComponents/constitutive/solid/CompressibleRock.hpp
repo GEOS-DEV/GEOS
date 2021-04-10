@@ -27,26 +27,26 @@ namespace geosx
 namespace constitutive
 {
 
-class CompressibleRockUpdates : RockBaseUpdates
+class CompressibleRockUpdates : public RockBaseUpdates
 {
 public:
 
   CompressibleRockUpdates( arrayView2d< real64 > const & newPorosity,
                            arrayView2d< real64 > const & oldPorosity,
                            arrayView2d< real64 > const & dPorosity_dPressure,
-                           real64 const & compressibility,
-                           real64 const & grainBulkModulus,
-                           real64 const & grainDensity,
                            arrayView1d< real64 > const & referencePorosity,
-                           real64 const & referencePressure ):
-   RockBaseUpdates( newPorosity,
-                    oldPorosity,
-                    dPorosity_dPressure,
-                    compressibility,
-                    grainBulkModulus,
-                    grainDensity ),
-    m_referencePorosity( referencePorosity ),
-    m_referencePressure( referencePressure )
+                           real64 const & grainBulkModulus,
+                           arrayView2d< real64 > const & grainDensity,
+                           real64 const & referencePressure,
+                           real64 const & compressibility ):
+    RockBaseUpdates( newPorosity,
+                     oldPorosity,
+                     dPorosity_dPressure,
+                     referencePorosity,
+                     grainBulkModulus,
+                     grainDensity ),
+    m_referencePressure( referencePressure ),
+    m_compressibility( compressibility )
   {}
 
   /// Default copy constructor
@@ -63,10 +63,10 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void compute( real64 const & pressure,
-                real64 & porosity,
-                real64 & dPorosity_dPressure,
-                real64 const & referencePorosity ) const
+  void computePorosity( real64 const & pressure,
+                        real64 & porosity,
+                        real64 & dPorosity_dPressure,
+                        real64 const & referencePorosity ) const
   {
 
     porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
@@ -75,21 +75,21 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void update( localIndex const k,
-               localIndex const q,
-               real64 const & pressure ) const
+  virtual void updatePorosity( localIndex const k,
+                               localIndex const q,
+                               real64 const & pressure ) const override
   {
-    compute( pressure,
-             m_newPorosity[k][q],
-             m_dPorosity_dPressure[k][q],
-             m_referencePorosity[k] );
+    computePorosity( pressure,
+                     m_newPorosity[k][q],
+                     m_dPorosity_dPressure[k][q],
+                     m_referencePorosity[k] );
   }
 
 private:
 
-  arrayView1d< real64 > m_referencePorosity;
-
   real64 m_referencePressure;
+
+  real64 m_compressibility;
 
 };
 
@@ -114,8 +114,7 @@ public:
   struct viewKeyStruct : public RockBase::viewKeyStruct
   {
     static constexpr char const * referencePressureString() { return "referencePressure"; }
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
-    static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
+    static constexpr char const * compressibilityString() { return "compressibility"; }
   } viewKeys;
 
   using KernelWrapper = CompressibleRockUpdates;
@@ -129,11 +128,11 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_oldPorosity,
                           m_dPorosity_dPressure,
-                          m_compressibility,
+                          m_referencePorosity,
                           m_grainBulkModulus,
                           m_grainDensity,
-                          m_referencePorosity,
-                          m_referencePressure );
+                          m_referencePressure,
+                          m_compressibility );
   }
 
 
@@ -141,8 +140,8 @@ protected:
   virtual void postProcessInput() override;
 
   real64 m_referencePressure;
-  array1d< real64 > m_referencePorosity;
-  real64 m_defaultReferencePorosity;
+
+  real64 m_compressibility;
 
 };
 

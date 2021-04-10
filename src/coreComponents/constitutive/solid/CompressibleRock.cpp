@@ -28,25 +28,23 @@ namespace constitutive
 
 CompressibleRock::CompressibleRock( string const & name, Group * const parent ):
   RockBase( name, parent ),
-  m_referencePorosity()
+  m_referencePressure(),
+  m_compressibility()
 {
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference pressure for solid compressibility" );
 
-  registerWrapper( viewKeyStruct::defaultRefererencePorosityString(), &m_defaultReferencePorosity ).
+  registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value of the reference porosity" );
-
-  registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
-    setApplyDefaultValue( m_defaultReferencePorosity );
+    setDescription( "Solid compressibility" );
 }
 
 CompressibleRock::~CompressibleRock() = default;
 
 std::unique_ptr< ConstitutiveBase >
 CompressibleRock::deliverClone( string const & name,
-                                         Group * const parent ) const
+                                Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
@@ -54,9 +52,9 @@ CompressibleRock::deliverClone( string const & name,
 }
 
 void CompressibleRock::allocateConstitutiveData( dataRepository::Group & parent,
-                                                          localIndex const numConstitutivePointsPerParentIndex )
+                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  RockBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void CompressibleRock::postProcessInput()

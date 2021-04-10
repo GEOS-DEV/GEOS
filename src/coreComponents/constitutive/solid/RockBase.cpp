@@ -32,7 +32,8 @@ RockBase::RockBase( string const & name, Group * const parent ):
   m_newPorosity(),
   m_oldPorosity(),
   m_dPorosity_dPressure(),
-  m_compressibility(),
+  m_referencePorosity(),
+  m_defaultReferencePorosity(),
   m_grainBulkModulus(),
   m_grainDensity()
 {
@@ -46,17 +47,23 @@ RockBase::RockBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure ).
     setApplyDefaultValue( 0.0 );// will be overwritten
 
-  registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
+  registerWrapper( viewKeyStruct::defaultRefererencePorosityString(), &m_defaultReferencePorosity ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Solid compressibility" );
+    setDescription( "Default value of the reference porosity" );
+
+  registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
+    setApplyDefaultValue( 1.0 );
 
   registerWrapper( viewKeyStruct::grainBulkModulusString(), &m_grainBulkModulus ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Grains bulk modulus" );
+    setDescription( "Grain bulk modulus" );
 
   registerWrapper( viewKeyStruct::grainDensityString(), &m_grainDensity ).
+    setDescription( "Grain density" );
+
+  registerWrapper( viewKeyStruct::defaultGrainDensityString(), &m_defaultGrainDensity ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Grains density" );
+    setDescription( "Default grain density. It's used to set the default value of the grain density." );
 }
 
 RockBase::~RockBase() = default;
@@ -71,7 +78,7 @@ RockBase::deliverClone( string const & name,
 }
 
 void RockBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                             localIndex const numConstitutivePointsPerParentIndex )
+                                         localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newPorosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldPorosity.resize( 0, numConstitutivePointsPerParentIndex );
@@ -81,7 +88,10 @@ void RockBase::allocateConstitutiveData( dataRepository::Group & parent,
 }
 
 void RockBase::postProcessInput()
-{}
+{
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::grainDensityString() ).
+    setApplyDefaultValue( m_defaultGrainDensity );
+}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, RockBase, string const &, Group * const )
 }

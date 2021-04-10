@@ -47,13 +47,13 @@ public:
   RockBaseUpdates( arrayView2d< real64 > const & newPorosity,
                    arrayView2d< real64 > const & oldPorosity,
                    arrayView2d< real64 > const & dPorosity_dPressure,
-                   real64 const & compressibility,
+                   arrayView1d< real64 > const & referencePorosity,
                    real64 const & grainBulkModulus,
-                   real64 const & grainDensity ):
+                   arrayView2d< real64 > const & grainDensity ):
     m_newPorosity( newPorosity ),
     m_oldPorosity( oldPorosity ),
     m_dPorosity_dPressure( dPorosity_dPressure ),
-    m_compressibility ( compressibility ),
+    m_referencePorosity ( referencePorosity ),
     m_grainBulkModulus( grainBulkModulus ),
     m_grainDensity( grainDensity )
   {}
@@ -71,6 +71,13 @@ public:
   RockBaseUpdates & operator=( RockBaseUpdates && ) = delete;
 
 
+  virtual void updatePorosity( localIndex const GEOSX_UNUSED_PARAM( k ),
+                               localIndex const GEOSX_UNUSED_PARAM( q ),
+                               real64 const & GEOSX_UNUSED_PARAM( pressure )  ) const
+  {
+    GEOSX_ERROR( "Called updatePorosity of RockBase." );
+  }
+
 protected:
   arrayView2d< real64 > m_newPorosity;
 
@@ -78,11 +85,11 @@ protected:
 
   arrayView2d< real64 > m_dPorosity_dPressure;
 
-  real64 m_compressibility;
+  arrayView1d< real64 > m_referencePorosity;
 
   real64 m_grainBulkModulus;
 
-  real64 m_grainDensity;
+  arrayView2d< real64 > m_grainDensity;
 };
 
 
@@ -108,18 +115,56 @@ public:
     static constexpr char const * newPorosityString() { return "porosity"; }
     static constexpr char const * oldPorosityString() { return "oldPorosity"; }
     static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
-    static constexpr char const * compressibilityString() { return "compressibility"; }
+    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
+    static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
     static constexpr char const * grainBulkModulusString() { return "grainBulkModulus"; }
     static constexpr char const * grainDensityString() { return "grainDensity"; }
+    static constexpr char const * defaultGrainDensityString() { return "defaultGrainDensity"; }    ///< Density key
   } viewKeys;
 
+  /**
+   * @brief Const accessor for newPorosity.
+   * @return Accessor
+   */
   arrayView2d< real64 const > const  getPorosity() const { return m_newPorosity; }
 
+  /**
+   * @brief Const/non-mutable accessor for oldPorosity.
+   * @return Accessor
+   */
   arrayView2d< real64 const > const  getOldPorosity() const { return m_oldPorosity; }
 
+
+  /**
+   * @brief Non-Const/mutable accessor for oldPorosity
+   * @return Accessor
+   */
   arrayView2d< real64 > const getOldPorosity() { return m_oldPorosity; }
 
+
+  /**
+   * @brief Const/non-mutable accessor for dPorosity_dPressure
+   * @return Accessor
+   */
   arrayView2d< real64 const > const  dPorosity_dPressure() const { return m_dPorosity_dPressure; }
+
+  /**
+   * @brief Non-const/Mutable accessor for density.
+   * @return Accessor
+   */
+  arrayView2d< real64 > const getDensity()
+  {
+    return m_grainDensity;
+  }
+
+  /**
+   * @brief Const/non-mutable accessor for density
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const getDensity() const
+  {
+    return m_grainDensity;
+  }
 
 protected:
   virtual void postProcessInput() override;
@@ -130,11 +175,19 @@ protected:
 
   array2d< real64 > m_dPorosity_dPressure;
 
+  array1d< real64 > m_referencePorosity;
+
+  real64 m_defaultReferencePorosity;
+
   real64 m_compressibility;
 
   real64 m_grainBulkModulus;
 
-  real64 m_grainDensity;
+  /// The material density at a quadrature point.
+  array2d< real64 > m_grainDensity;
+
+  /// defaultGrainDensity
+  real64 m_defaultGrainDensity = 0;
 };
 
 }/* namespace constitutive */

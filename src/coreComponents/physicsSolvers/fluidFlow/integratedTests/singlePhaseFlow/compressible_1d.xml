@@ -8,7 +8,7 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
-      porosityNames="{porosityModel}"
+      solidNames="{rock}"
       permeabilityNames="{ permeabilityModel }"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -85,7 +85,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, porosityModel, permeabilityModel }"/>
+      materialList="{ water, rock, permeabilityModel }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -99,11 +99,13 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PressureDependentPorosity
-      name="porosityModel"
+    <CompressibleRock
+      name="rock"
       referencePressure="0.0"
       defaultReferencePorosity ="0.2"
-      compressibility="1e-9"/>
+      compressibility="1e-9"
+      defaultGrainDensity="1"
+      grainBulkModulus="1.0e9"/>
       
     <ConstantPermeability
       name="permeabilityModel"

@@ -47,10 +47,7 @@ SolidBase::~SolidBase()
 
 
 void SolidBase::postProcessInput()
-{
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
-    setApplyDefaultValue( m_defaultDensity );
-}
+{}
 
 
 void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
@@ -71,11 +68,15 @@ void SolidBase::saveConvergedState() const
   arrayView3d< real64 const, solid::STRESS_USD > newStress = m_newStress;
   arrayView3d< real64, solid::STRESS_USD > oldStress = m_oldStress;
 
+  arrayView2d< real64 const > newPorosity = m_newPorosity;
+  arrayView2d< real64 > oldPorosity = m_oldPorosity;
+
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
       LvArray::tensorOps::copy< 6 >( oldStress[k][q], newStress[k][q] );
+      oldPorosity[k][q] = newPorosity[k][q];
     }
   } );
 }

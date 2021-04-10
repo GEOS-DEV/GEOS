@@ -36,15 +36,15 @@ struct PorosityKernel
   template< typename POLICY, typename SOLID_WRAPPER >
   static void
   launch( localIndex const size,
-          SOLID_WRAPPER const & porWrapper,
+          SOLID_WRAPPER const & solidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      for( localIndex q = 0; q < porWrapper.numGauss(); ++q )
+      for( localIndex q = 0; q < solidWrapper.numGauss(); ++q )
       {
-        porWrapper.update( k, q, pres[k] + dPres[k] );
+        solidWrapper.updatePorosity( k, q, pres[k] + dPres[k] );
       }
     } );
   }

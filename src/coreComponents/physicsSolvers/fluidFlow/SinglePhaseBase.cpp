@@ -429,7 +429,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
   RockBase const & solidModel = getConstitutiveModel< RockBase >( subRegion,
-                                                                             m_solidModelNames[targetIndex] );
+                                                                  m_solidModelNames[targetIndex] );
 
   arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
@@ -471,7 +471,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const & dDens_dPres = fluidProps.dDens_dPres;
 
   RockBase const & solidModel = getConstitutiveModel< RockBase >( subRegion,
-                                                                             m_solidModelNames[targetIndex] );
+                                                                  m_solidModelNames[targetIndex] );
 
   arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();

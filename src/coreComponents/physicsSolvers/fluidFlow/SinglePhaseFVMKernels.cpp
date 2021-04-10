@@ -129,7 +129,7 @@ void PoroelasticFluxKernel::compute( localIndex const numFluxElems,
                                      arraySlice1d< localIndex const > const & sesri,
                                      arraySlice1d< localIndex const > const & sei,
                                      real64 const (&transmissibility)[2],
-                                     real64 const (&dTrans_dPres)[2],                                     ElementViewConst< arrayView1d< real64 const > > const & pres,
+                                     real64 const (&dTrans_dPres)[2], ElementViewConst< arrayView1d< real64 const > > const & pres,
                                      ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                      ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                      ElementViewConst< arrayView2d< real64 const > > const & dens,
@@ -207,7 +207,7 @@ void PoroelasticFluxKernel::compute( localIndex const numFluxElems,
     real64 const dFlux_dTrans = mobility  * (  1 - dDensMean_dP[ke] * sumWeightGrav ) + dMobility_dP[ke] * potDif;
 
     dFlux_dP[ke] = mobility * transmissibility[ke] * (  1 - dDensMean_dP[ke] * sumWeightGrav ) +
-        dFlux_dTrans * dTrans_dPres[ke];
+                   dFlux_dTrans * dTrans_dPres[ke];
   }
 
   // populate local flux vector and derivatives

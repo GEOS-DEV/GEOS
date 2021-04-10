@@ -100,7 +100,7 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticTransverseIsotropic.cpp
-     solid/CompressibleRock.hpp
+     solid/CompressibleRock.cpp
      solid/RockBase.cpp
      solid/SolidBase.cpp
      relativePermeability/RelativePermeabilityBase.cpp

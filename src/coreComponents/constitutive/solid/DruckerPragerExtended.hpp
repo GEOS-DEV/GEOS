@@ -56,9 +56,9 @@ public:
                                 arrayView2d< real64 > const & newPorosity,
                                 arrayView2d< real64 > const & oldPorosity,
                                 arrayView2d< real64 > const & dPorosity_dPressure,
-                                real64 const & compressibility,
+                                arrayView1d< real64 > const & referencePorosity,
                                 real64 const & grainBulkModulus,
-                                real64 const & grainDensity,
+                                arrayView2d< real64 > const & grainDensity,
                                 arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                 arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                 arrayView1d< real64 const > const & bulkModulus,
@@ -66,7 +66,7 @@ public:
     ElasticIsotropicUpdates( newPorosity,
                              oldPorosity,
                              dPorosity_dPressure,
-                             compressibility,
+                             referencePorosity,
                              grainBulkModulus,
                              grainDensity,
                              newStress,
@@ -102,6 +102,7 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
+  using ElasticIsotropicUpdates::smallStrainUpdate_porosity;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -116,6 +117,18 @@ public:
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
+
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate_porosity( localIndex const k,
+                                           localIndex const q,
+                                           real64 const & pressure,
+                                           real64 const & deltaPressure,
+                                           real64 const ( &strainIncrement )[6],
+                                           real64 & porosity,
+                                           real64 & dPorosity_dPressure,
+                                           real64 & dPorosity_dVolStrainIncrement,
+                                           real64 ( &stress )[6],
+                                           DiscretizationOps & stiffness ) const final;
 
 private:
   /// A reference to the ArrayView holding the initial friction param for each element.
@@ -329,6 +342,27 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void DruckerPragerExtendedUpdates::smallStrainUpdate_porosity( localIndex const k,
+                                                               localIndex const q,
+                                                               real64 const & pressure,
+                                                               real64 const & deltaPressure,
+                                                               real64 const ( &strainIncrement )[6],
+                                                               real64 & porosity,
+                                                               real64 & dPorosity_dPressure,
+                                                               real64 & dPorosity_dVolStrainIncrement,
+                                                               real64 ( & stress )[6],
+                                                               DiscretizationOps & stiffness ) const
+{
+  GEOSX_UNUSED_VAR( pressure );
+  GEOSX_UNUSED_VAR( deltaPressure );
+  GEOSX_UNUSED_VAR( porosity );
+  GEOSX_UNUSED_VAR( dPorosity_dPressure );
+  GEOSX_UNUSED_VAR( dPorosity_dVolStrainIncrement );
+  smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+}
+
 
 /**
  * @class DruckerPragerExtended
@@ -435,7 +469,7 @@ public:
                                          m_newPorosity,
                                          m_oldPorosity,
                                          m_dPorosity_dPressure,
-                                         m_compressibility,
+                                         m_referencePorosity,
                                          m_grainBulkModulus,
                                          m_grainDensity,
                                          m_newStress,
@@ -462,10 +496,16 @@ public:
                           m_hardening,
                           m_newState,
                           m_oldState,
-                          m_bulkModulus,
-                          m_shearModulus,
+                          m_newPorosity,
+                          m_oldPorosity,
+                          m_dPorosity_dPressure,
+                          m_referencePorosity,
+                          m_grainBulkModulus,
+                          m_grainDensity,
                           m_newStress,
-                          m_oldStress );
+                          m_oldStress,
+                          m_bulkModulus,
+                          m_shearModulus );
   }
 
 

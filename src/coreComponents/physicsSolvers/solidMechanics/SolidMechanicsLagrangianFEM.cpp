@@ -1030,7 +1030,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   if( m_effectiveStress==1 )
   {
     GEOSX_UNUSED_VAR( dt );
-    assemblyLaunch< constitutive::PoroElasticBase,
+    assemblyLaunch< constitutive::SolidBase,
                     SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
                                                                                   dofManager,
                                                                                   localMatrix,
