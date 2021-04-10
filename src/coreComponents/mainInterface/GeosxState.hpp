@@ -16,8 +16,8 @@
  * @file GeosxState.hpp
  */
 
-#ifndef GEOSX_MANAGERS_GEOSXSTATE_HPP_
-#define GEOSX_MANAGERS_GEOSXSTATE_HPP_
+#ifndef GEOSX_MAININTERFACE_GEOSXSTATE_HPP_
+#define GEOSX_MAININTERFACE_GEOSXSTATE_HPP_
 
 // Source includes
 #include "common/DataTypes.hpp"
@@ -255,4 +255,4 @@ GeosxState & getGlobalState();
 
 } // namespace geosx
 
-#endif /* GEOSX_MANAGERS_GEOSXSTATE_HPP_ */
+#endif /* GEOSX_MAININTERFACE_GEOSXSTATE_HPP_ */

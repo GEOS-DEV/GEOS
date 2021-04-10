@@ -16,8 +16,8 @@
  * @file VTKOutput.hpp
  */
 
-#ifndef GEOSX_MANAGERS_OUTPUTS_VTKOUTPUT_HPP_
-#define GEOSX_MANAGERS_OUTPUTS_VTKOUTPUT_HPP_
+#ifndef GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
+#define GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
@@ -96,4 +96,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_OUTPUTS_VTKOUTPUT_HPP_ */
+#endif /* GEOSX_FILEIO_OUTPUTS_VTKOUTPUT_HPP_ */

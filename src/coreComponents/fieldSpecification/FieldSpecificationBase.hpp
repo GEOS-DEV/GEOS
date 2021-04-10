@@ -16,8 +16,8 @@
  * @file FieldSpecificationBase.hpp
  */
 
-#ifndef GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
-#define GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#ifndef GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#define GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/traits.hpp"
@@ -1099,4 +1099,4 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
 
 }
 
-#endif
+#endif //GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP

@@ -17,8 +17,8 @@
  */
 
 
-#ifndef GEOSX_MANAGERS_EVENTS_HALTEVENT_HPP_
-#define GEOSX_MANAGERS_EVENTS_HALTEVENT_HPP_
+#ifndef GEOSX_EVENTS_HALTEVENT_HPP_
+#define GEOSX_EVENTS_HALTEVENT_HPP_
 
 #include "events/EventBase.hpp"
 
@@ -82,4 +82,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_EVENTS_HALTEVENT_HPP_ */
+#endif /* GEOSX_EVENTS_HALTEVENT_HPP_ */

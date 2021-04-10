@@ -16,8 +16,8 @@
  * @file DomainPartition.hpp
  */
 
-#ifndef GEOSX_MANAGERS_DOMAINPARTITION_HPP_
-#define GEOSX_MANAGERS_DOMAINPARTITION_HPP_
+#ifndef GEOSX_MESH_DOMAINPARTITION_HPP_
+#define GEOSX_MESH_DOMAINPARTITION_HPP_
 
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -244,4 +244,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_DOMAINPARTITION_HPP_ */
+#endif /* GEOSX_MESH_DOMAINPARTITION_HPP_ */

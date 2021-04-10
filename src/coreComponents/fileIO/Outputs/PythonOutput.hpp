@@ -16,8 +16,8 @@
  * @file PythonOutput.hpp
  */
 
-#ifndef GEOSX_MANAGERS_OUTPUTS_PYTHONOUTPUT_HPP_
-#define GEOSX_MANAGERS_OUTPUTS_PYTHONOUTPUT_HPP_
+#ifndef GEOSX_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_
+#define GEOSX_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_
 
 #include "fileIO/Outputs/OutputBase.hpp"
 
@@ -79,4 +79,4 @@ public:
 
 } // namespace geosx
 
-#endif // GEOSX_MANAGERS_OUTPUTS_PYTHONOUTPUT_HPP_
+#endif // GEOSX_FILEIO_OUTPUTS_PYTHONOUTPUT_HPP_

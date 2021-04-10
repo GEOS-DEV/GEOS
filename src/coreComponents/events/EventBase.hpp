@@ -16,8 +16,8 @@
  * @file EventBase.hpp
  */
 
-#ifndef GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_
-#define GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_
+#ifndef GEOSX_EVENTS_EVENTSBASE_HPP_
+#define GEOSX_EVENTS_EVENTSBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
@@ -335,4 +335,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_ */
+#endif /* GEOSX_EVENTS_EVENTSBASE_HPP_ */

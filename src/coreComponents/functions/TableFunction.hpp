@@ -16,8 +16,8 @@
  * @file TableFunction.hpp
  */
 
-#ifndef GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
-#define GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
+#ifndef GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_
+#define GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -468,4 +468,4 @@ ENUM_STRINGS( TableFunction::InterpolationType, "linear", "nearest", "upper", "l
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_ */
+#endif /* GEOSX_FUNCTIONS_TABLEFUNCTION_HPP_ */

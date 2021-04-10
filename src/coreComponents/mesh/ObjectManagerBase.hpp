@@ -16,8 +16,8 @@
  * @file ObjectManagerBase.hpp
  */
 
-#ifndef GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
-#define GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
+#ifndef GEOSX_MESH_OBJECTMANAGERBASE_HPP_
+#define GEOSX_MESH_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
@@ -1106,4 +1106,4 @@ void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
  */
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 
-#endif /* GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_ */
+#endif /* GEOSX_MESH_OBJECTMANAGERBASE_HPP_ */

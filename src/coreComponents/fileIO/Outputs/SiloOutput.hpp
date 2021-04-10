@@ -16,8 +16,8 @@
  * @file SiloOutput.hpp
  */
 
-#ifndef GEOSX_MANAGERS_OUTPUTS_SILOOUTPUT_HPP_
-#define GEOSX_MANAGERS_OUTPUTS_SILOOUTPUT_HPP_
+#ifndef GEOSX_FILEIO_OUTPUTS_SILOOUTPUT_HPP_
+#define GEOSX_FILEIO_OUTPUTS_SILOOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 
@@ -96,4 +96,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_OUTPUTS_SILOOUTPUT_HPP_ */
+#endif /* GEOSX_FILEIO_OUTPUTS_SILOOUTPUT_HPP_ */

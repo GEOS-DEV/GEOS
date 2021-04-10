@@ -16,8 +16,8 @@
  * @file PeriodicEvent.hpp
  */
 
-#ifndef GEOSX_MANAGERS_EVENTS_PERIODICEVENT_HPP_
-#define GEOSX_MANAGERS_EVENTS_PERIODICEVENT_HPP_
+#ifndef GEOSX_EVENTS_PERIODICEVENT_HPP_
+#define GEOSX_EVENTS_PERIODICEVENT_HPP_
 
 #include "events/EventBase.hpp"
 
@@ -152,4 +152,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_EVENTS_PERIODICEVENT_HPP_ */
+#endif /* GEOSX_EVENTS_PERIODICEVENT_HPP_ */

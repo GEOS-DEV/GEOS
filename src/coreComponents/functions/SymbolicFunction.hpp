@@ -11,8 +11,8 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
-#ifndef GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_
-#define GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_
+#ifndef GEOSX_FUNCTIONS_SYMBOLICFUNCTION_HPP_
+#define GEOSX_FUNCTIONS_SYMBOLICFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -104,4 +104,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_ */
+#endif /* GEOSX_FUNCTIONS_SYMBOLICFUNCTION_HPP_ */

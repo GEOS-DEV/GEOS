@@ -16,8 +16,8 @@
  * @file OutputManager.hpp
  */
 
-#ifndef GEOSX_MANAGERS_OUTPUTS_OUTPUTMANAGER_HPP_
-#define GEOSX_MANAGERS_OUTPUTS_OUTPUTMANAGER_HPP_
+#ifndef GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
+#define GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -62,4 +62,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_OUTPUTS_OUTPUTMANAGER_HPP_ */
+#endif /* GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_ */

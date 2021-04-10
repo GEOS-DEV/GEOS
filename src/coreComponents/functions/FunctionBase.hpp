@@ -16,8 +16,8 @@
  * @file FunctionBase.hpp
  */
 
-#ifndef GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_
-#define GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_
+#ifndef GEOSX_FUNCTIONS_FUNCTIONBASE_HPP_
+#define GEOSX_FUNCTIONS_FUNCTIONBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
@@ -211,4 +211,4 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
 }
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_ */
+#endif /* GEOSX_FUNCTIONS_FUNCTIONBASE_HPP_ */
