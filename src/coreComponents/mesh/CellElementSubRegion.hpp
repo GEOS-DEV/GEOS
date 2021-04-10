@@ -150,7 +150,7 @@ public:
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : public CellBlock::viewKeyStruct
+  struct viewKeyStruct : public ElementSubRegionBase::viewKeyStruct
   {
     /// @return String key for the constitutive point volume fraction
     static constexpr char const * constitutivePointVolumeFractionString() { return "ConstitutivePointVolumeFraction"; }
@@ -175,7 +175,7 @@ public:
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
 
-  void setElementType( string const & elementType ) override;
+  void setElementType( string const & elementType ) final;
 
   /**
    * @brief Get the number of the nodes in a face of the element.

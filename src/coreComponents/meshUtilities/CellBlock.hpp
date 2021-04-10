@@ -19,8 +19,8 @@
 #ifndef GEOSX_MESH_CELLBLOCK_HPP_
 #define GEOSX_MESH_CELLBLOCK_HPP_
 
-#include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/FaceManager.hpp"
+#include "dataRepository/Group.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -34,7 +34,7 @@ namespace geosx
  * element-to-node map, element-to-face map, and element-to-edge map) and
  * and methods to compute the geometry of an element (cell center and volume)
  */
-class CellBlock : public ElementSubRegionBase
+class CellBlock : public dataRepository::Group
 {
 public:
 
@@ -44,26 +44,6 @@ public:
   using EdgeMapType = FixedOneToManyRelation;
   /// Alias for the type of the element-to-face map
   using FaceMapType = FixedOneToManyRelation;
-
-  /**
-   * @name Static factory catalog functions
-   */
-  ///@{
-
-  /**
-   * @brief Const getter for the catalog name.
-   * @return the name of this type in the catalog
-   */
-  static const string catalogName()
-  { return "CellBlock"; }
-
-  /**
-   * @copydoc catalogName()
-   */
-  virtual const string getCatalogName() const override final
-  { return CellBlock::catalogName(); }
-
-  ///@}
 
   /**
    * @name Constructor / Destructor
@@ -91,7 +71,7 @@ public:
   /**
    * @brief Destructor.
    */
-  virtual ~CellBlock() override;
+  ~CellBlock() override = default;
 
   ///@}
 
@@ -100,18 +80,34 @@ public:
    */
   ///@{
 
-  void calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & faceManager ) override;
-
-  void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
-
   ///@}
   /**
    * @name Getters / Setters
    */
   ///@{
 
-  void setElementType( string const & elementType ) override;
+  void setElementType( string const & elementType );
+
+  /**
+   * @brief Get the type of element in this subregion.
+   * @return a string specifying the type of element in this subregion
+   *
+   * See class FiniteElementBase for possible element type.
+   */
+  string getElementTypeString() const
+  { return m_elementTypeString; }
+
+  /**
+   * @brief Get the number of nodes per element.
+   * @return number of nodes per element
+   */
+  localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
+
+  /**
+   * @brief Get the number of faces per element.
+   * @return number of faces per element
+   */
+  localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
 
   /**
    * @brief Get the element-to-node map.
@@ -123,19 +119,6 @@ public:
    * @copydoc nodeList()
    */
   NodeMapType const & nodeList() const { return m_toNodesRelation; }
-
-  /**
-   * @brief Get the local index of the a-th node of the k-th element.
-   * @param[in] k the index of the element
-   * @param[in] a the index of the node in the element
-   * @return a reference to the local index of the node
-   */
-  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
-
-  /**
-   * @copydoc nodeList( localIndex const k, localIndex a )
-   */
-  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
 
   /**
    * @brief Get the element-to-edge map.
@@ -158,6 +141,22 @@ public:
    * @copydoc faceList()
    */
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
+  /**
+   * @brief Get local to global map.
+   * @return The mapping relationship as a array.
+   */
+  arrayView1d< globalIndex > localToGlobalMap()
+  { return m_localToGlobalMap; }
+
+  /**
+   * @brief Get local to global map, const version.
+   * @return The mapping relationship as a array.
+   */
+  arrayView1d< globalIndex const > localToGlobalMap() const
+  { return m_localToGlobalMap; }
+
+  void resize( dataRepository::indexType const newSize ) final;
 
   ///@}
 
@@ -195,7 +194,16 @@ public:
 
   ///@}
 
-protected:
+private:
+
+  /// Number of nodes per element in this subregion.
+  localIndex m_numNodesPerElement;
+
+  /// Number of edges per element in this subregion.
+  localIndex m_numEdgesPerElement;
+
+  /// Number of faces per element in this subregion.
+  localIndex m_numFacesPerElement;
 
   /// Element-to-node relation
   NodeMapType m_toNodesRelation;
@@ -206,50 +214,14 @@ protected:
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
 
-private:
+  /// Contains the global index of each object.
+  array1d< globalIndex > m_localToGlobalMap;
+
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;
 
-  /**
-   * @brief Compute the volume of the k-th element in the subregion.
-   * @param[in] k the index of the element in the subregion
-   * @param[in] X an arrayView of (const) node positions
-   */
-  inline void calculateCellVolumesKernel( localIndex const k,
-                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
-  {
-    LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
-
-    real64 Xlocal[10][3];
-
-    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-    {
-      LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ m_toNodesRelation( k, a ) ] );
-    }
-    LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
-
-    if( m_numNodesPerElement == 8 )
-    {
-      m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 4 )
-    {
-      m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 6 )
-    {
-      m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 5 )
-    {
-      m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
-    }
-    else
-    {
-      GEOSX_ERROR( "GEOX does not support cells with " << m_numNodesPerElement << " nodes" );
-    }
-  }
+  /// Type of element in this subregion.
+  string m_elementTypeString;
 };
 
 }

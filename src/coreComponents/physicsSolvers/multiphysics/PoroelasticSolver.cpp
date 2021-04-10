@@ -277,7 +277,7 @@ void PoroelasticSolver::updateDeformationForCoupling( DomainPartition & domain )
     poroOld = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::porosityOldString() );
 
     arrayView1d< real64 const > const &
-    volume = elementSubRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
+    volume = elementSubRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
     arrayView1d< real64 > const &
     dVol = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaVolumeString() );
