@@ -20,7 +20,6 @@
 #define GEOSX_MESH_NODEMANAGER_HPP_
 
 #include "mesh/ObjectManagerBase.hpp"
-#include <string.h>
 #include "CellBlockManager.hpp"
 #include "ToElementRelation.hpp"
 

@@ -18,9 +18,6 @@
 
 #include "RestartOutput.hpp"
 #include "fileIO/silo/SiloFile.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "functions/FunctionManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 
 namespace geosx
 {
@@ -44,7 +41,6 @@ bool RestartOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 {
   GEOSX_MARK_FUNCTION;
 
-//  ProblemManager & problemManager = getGlobalState().getProblemManager();
   Group & rootGroup = this->getGroupByPath( "/Problem" );
 
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo

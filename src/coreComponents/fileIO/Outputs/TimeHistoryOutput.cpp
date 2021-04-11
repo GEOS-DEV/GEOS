@@ -102,7 +102,7 @@ void TimeHistoryOutput::initializePostSubGroups()
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    string const outputDirectory = getOutputDirectory();//getGlobalState().getCommandLineOptions().outputDirectory;
+    string const outputDirectory = getOutputDirectory();
     if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
     {
       makeDirsForPath( outputDirectory );
@@ -112,7 +112,6 @@ void TimeHistoryOutput::initializePostSubGroups()
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
 
-//  ProblemManager & pm = getGlobalState().getProblemManager();
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   for( auto collector_path : m_collectorPaths )
   {

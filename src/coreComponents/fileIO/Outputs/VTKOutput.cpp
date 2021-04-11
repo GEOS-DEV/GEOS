@@ -17,7 +17,6 @@
  */
 
 #include "VTKOutput.hpp"
-#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {

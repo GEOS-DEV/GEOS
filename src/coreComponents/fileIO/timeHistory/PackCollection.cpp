@@ -32,7 +32,6 @@ void PackCollection::initializePostSubGroups()
 {
   localIndex numSets = m_setNames.size( );
   m_collectionCount = numSets == 0 ? 1 : numSets;
-//  DomainPartition & domain = this->getGroupByPath<DomainPartition>("/Problem/domain");
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   updateSetsIndices( domain );
   HistoryCollection::initializePostSubGroups();

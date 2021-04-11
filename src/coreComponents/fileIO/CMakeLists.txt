@@ -4,13 +4,13 @@
 # Specify all headers
 #
 set( fileIO_headers
-    Outputs/OutputManager.hpp
-    Outputs/OutputBase.hpp
-    Outputs/SiloOutput.hpp
-    Outputs/RestartOutput.hpp
-    Outputs/TimeHistoryOutput.hpp
-    Outputs/BlueprintOutput.hpp
-    Outputs/PythonOutput.hpp
+     Outputs/OutputManager.hpp
+     Outputs/OutputBase.hpp
+     Outputs/SiloOutput.hpp
+     Outputs/RestartOutput.hpp
+     Outputs/TimeHistoryOutput.hpp
+     Outputs/BlueprintOutput.hpp
+     Outputs/PythonOutput.hpp
      silo/SiloFile.hpp
      timeHistory/TimeHistHDF.hpp
      timeHistory/TimeHistoryCollection.hpp
@@ -22,13 +22,13 @@ set( fileIO_headers
 # Specify all sources
 #
 set( fileIO_sources
-    Outputs/OutputManager.cpp
-    Outputs/OutputBase.cpp
-    Outputs/SiloOutput.cpp
-    Outputs/RestartOutput.cpp
-    Outputs/TimeHistoryOutput.cpp
-    Outputs/BlueprintOutput.cpp
-    Outputs/PythonOutput.cpp
+     Outputs/OutputManager.cpp
+     Outputs/OutputBase.cpp
+     Outputs/SiloOutput.cpp
+     Outputs/RestartOutput.cpp
+     Outputs/TimeHistoryOutput.cpp
+     Outputs/BlueprintOutput.cpp
+     Outputs/PythonOutput.cpp
      silo/SiloFile.cpp
      timeHistory/PackCollection.cpp
      timeHistory/TimeHistHDF.cpp
@@ -55,11 +55,6 @@ if( ENABLE_MPI )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp)
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp)
 endif() 
-
-
-if( ENABLE_VTK )
-endif()
-
 
 if( ENABLE_VTK )
   list( APPEND fileIO_headers
