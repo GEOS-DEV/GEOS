@@ -108,7 +108,7 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
    )
 
-if( BUILD_OBJ_LIBS)
+if( GEOSX_BUILD_OBJ_LIBS)
   set( dependencyList dataRepository functions)
 else()
   set( dependencyList 

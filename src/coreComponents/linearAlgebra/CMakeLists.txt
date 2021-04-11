@@ -49,7 +49,7 @@ set( linearAlgebra_sources
      utilities/LAIHelperFunctions.cpp
      DofManager.cpp )
 
-if( BUILD_OBJ_LIBS )
+if( GEOSX_BUILD_OBJ_LIBS )
   set( dependencyList mesh blas lapack RAJA)
 else()
   set( dependencyList 

@@ -98,12 +98,6 @@ parser.add_argument("-tpl",
                     action='store_true',
                     help="build third party libraries")
 
-#parser.add_argument("-gvz",
-#                    "--graphviz",
-#                    type=str, 
-#                    default="",
-#                    help="Generate graphviz dependency graph")
-
 args, unknown_args = parser.parse_known_args()
 if unknown_args:
     print("[config-build]: Passing the following unknown arguments directly to cmake... %s" % unknown_args)

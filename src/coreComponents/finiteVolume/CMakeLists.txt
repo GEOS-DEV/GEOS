@@ -34,8 +34,8 @@ set( finiteVolume_sources
      HybridMimeticDiscretization.cpp
    )
 
-if ( BUILD_OBJ_LIBS )
-  set( dependencyList mesh codingUtilities functions fieldSpecification )
+if ( GEOSX_BUILD_OBJ_LIBS )
+  set( dependencyList mesh codingUtilities fieldSpecification )
 else()
   set( dependencyList 
        common

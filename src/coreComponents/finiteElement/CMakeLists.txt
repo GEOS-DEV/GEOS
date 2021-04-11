@@ -28,7 +28,7 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
    )
 
-if( BUILD_OBJ_LIBS)
+if( GEOSX_BUILD_OBJ_LIBS)
   set( dependencyList dataRepository codingUtilities)
 else()
   set( dependencyList 

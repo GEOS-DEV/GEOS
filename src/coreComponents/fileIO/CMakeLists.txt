@@ -34,7 +34,7 @@ set( fileIO_sources
      timeHistory/TimeHistHDF.cpp
       )
 
-if( BUILD_OBJ_LIBS)
+if( GEOSX_BUILD_OBJ_LIBS)
   set( dependencyList mesh constitutive silo hdf5 )
 else()
   set( dependencyList 

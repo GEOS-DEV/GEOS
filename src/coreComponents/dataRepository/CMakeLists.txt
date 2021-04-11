@@ -40,7 +40,7 @@ if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
-if( BUILD_OBJ_LIBS )
+if( GEOSX_BUILD_OBJ_LIBS )
   set (dependencyList codingUtilities pugixml )
 else()
   set( dependencyList 

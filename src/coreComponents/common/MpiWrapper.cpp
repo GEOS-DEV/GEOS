@@ -19,7 +19,7 @@
  * @file MpiWrapper.cpp
  */
 
-#include "common/MpiWrapper.hpp"
+#include "MpiWrapper.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

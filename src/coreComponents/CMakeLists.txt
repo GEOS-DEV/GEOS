@@ -27,7 +27,7 @@ set( geosx_core_defines "" )
 
 
 set( buildAsObj FALSE)
-if ( BUILD_OBJ_LIBS)
+if ( GEOSX_BUILD_OBJ_LIBS )
   set(buildAsObj TRUE)
   set( LvArrayBuildAsObj TRUE CACHE BOOL "" FORCE)
 endif()
@@ -79,12 +79,11 @@ else()
   set( CSL_TYPE STATIC )
 endif()
 
-if( BUILD_OBJ_LIBS )
+if( GEOSX_BUILD_OBJ_LIBS )
   message( "Using cmake  Object Libraries" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  mainInterface physicsSolvers
-#                    DEPENDS_ON  ${coreLibs}
                     OBJECT ${buildAsObj}
                     SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
