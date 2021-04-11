@@ -48,11 +48,6 @@ bool RestartOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   char fileName[200] = {0};
   sprintf( fileName, "%s_%s_%09d", getFileNameRoot().c_str(), "restart", cycleNumber );
 
-
-
-  //problemManager.prepareToWrite();
-  //writeTree( fileName, getGlobalState().getRootConduitNode() );
-  //problemManager.finishWriting();
   rootGroup.prepareToWrite();
   writeTree( joinPath( OutputBase::getOutputDirectory(), fileName ), *(rootGroup.getConduitNode().parent()) );
   rootGroup.finishWriting();

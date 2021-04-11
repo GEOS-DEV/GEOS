@@ -51,7 +51,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
 {
   bool const freshInit = ( m_recordCount == 0 );
 
-  string const outputDirectory = getOutputDirectory();//getGlobalState().getCommandLineOptions().outputDirectory;
+  string const outputDirectory = getOutputDirectory();
   string const outputFile = joinPath( outputDirectory, m_filename );
 
   // rank == 0 do time output for the collector

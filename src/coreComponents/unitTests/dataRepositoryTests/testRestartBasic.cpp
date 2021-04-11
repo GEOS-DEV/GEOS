@@ -44,7 +44,6 @@ class SingleWrapperTest : public ::testing::Test
 public:
 
   SingleWrapperTest():
-//    m_state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ),
     m_node( std::make_unique< conduit::Node >() ),
     m_group( std::make_unique< Group >( m_groupName, *m_node ) ),
     m_groupSize( rand( 0, 100 ) )
@@ -91,7 +90,6 @@ private:
   string const m_wrapperName = "wrapper";
   string const m_fileName = "testRestartBasic_SingleWrapperTest";
 
-//  GeosxState m_state;
   std::unique_ptr< conduit::Node > m_node;
   std::unique_ptr< Group > m_group;
   int m_groupSize;

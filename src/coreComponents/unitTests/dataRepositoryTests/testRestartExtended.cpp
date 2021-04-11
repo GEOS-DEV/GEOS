@@ -478,8 +478,6 @@ int main( int argc, char * argv[] )
 {
   testing::InitGoogleTest( &argc, argv );
 
-//  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
-
   geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
