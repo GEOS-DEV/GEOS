@@ -16,10 +16,11 @@
 #ifndef GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 
-#include "meshUtilities/CellBlock.hpp"
+#include "meshUtilities/CellBlockABC.hpp"
 
 #include "mesh/NodeManager.hpp"
 #include "mesh/FaceManager.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
 #include "ElementSubRegionBase.hpp"
 
 
@@ -91,7 +92,7 @@ public:
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
    * @param source the CellBlock whose properties (connectivity info) will be copied
    */
-  void copyFromCellBlock( CellBlock & source );
+  void copyFromCellBlock( CellBlockABC & source );
 
   ///@}
 

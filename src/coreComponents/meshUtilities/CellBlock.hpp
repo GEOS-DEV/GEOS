@@ -23,6 +23,7 @@
 #include "dataRepository/Group.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "meshUtilities/CellBlockABC.hpp"
 
 namespace geosx
 {
@@ -34,12 +35,10 @@ namespace geosx
  * element-to-node map, element-to-face map, and element-to-edge map) and
  * and methods to compute the geometry of an element (cell center and volume)
  */
-class CellBlock : public dataRepository::Group
+class CellBlock : public CellBlockABC
 {
 public:
 
-  /// Alias for the type of the element-to-node map
-  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
   /// Alias for the type of the element-to-edge map
   using EdgeMapType = FixedOneToManyRelation;
   /// Alias for the type of the element-to-face map
@@ -88,37 +87,19 @@ public:
 
   void setElementType( string const & elementType );
 
-  /**
-   * @brief Get the type of element in this subregion.
-   * @return a string specifying the type of element in this subregion
-   *
-   * See class FiniteElementBase for possible element type.
-   */
-  string getElementTypeString() const
+  string getElementTypeString() const override
   { return m_elementTypeString; }
 
-  /**
-   * @brief Get the number of nodes per element.
-   * @return number of nodes per element
-   */
-  localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
+  localIndex const & numNodesPerElement() const override { return m_numNodesPerElement; }
 
-  /**
-   * @brief Get the number of faces per element.
-   * @return number of faces per element
-   */
-  localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
-
-  /**
-   * @brief Get the element-to-node map.
-   * @return a reference to the element-to-node map
-   */
-  NodeMapType & nodeList() { return m_toNodesRelation; }
+  localIndex const & numFacesPerElement() const override { return m_numFacesPerElement; }
 
   /**
    * @copydoc nodeList()
    */
-  NodeMapType const & nodeList() const { return m_toNodesRelation; }
+  NodeMapType & nodeList() { return m_toNodesRelation; }
+
+  NodeMapType const & nodeList() const override { return m_toNodesRelation; }
 
   /**
    * @brief Get the element-to-edge map.
@@ -143,17 +124,13 @@ public:
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
   /**
-   * @brief Get local to global map.
+   * @brief Get local to global map, non-const version.
    * @return The mapping relationship as a array.
    */
   arrayView1d< globalIndex > localToGlobalMap()
   { return m_localToGlobalMap; }
 
-  /**
-   * @brief Get local to global map, const version.
-   * @return The mapping relationship as a array.
-   */
-  arrayView1d< globalIndex const > localToGlobalMap() const
+  arrayView1d< globalIndex const > localToGlobalMap() const override
   { return m_localToGlobalMap; }
 
   void resize( dataRepository::indexType const newSize ) final;
@@ -176,20 +153,6 @@ public:
   {
     m_externalPropertyNames.emplace_back( propertyName );
     return this->registerWrapper< T >( propertyName ).reference();
-  }
-
-  /**
-   * @brief Helper function to apply a lambda function over all the external properties of the subregion
-   * @tparam LAMBDA the type of the lambda function
-   * @param lambda lambda function that is applied to the wrappers of external properties
-   */
-  template< typename LAMBDA >
-  void forExternalProperties( LAMBDA && lambda )
-  {
-    for( auto & externalPropertyName : m_externalPropertyNames )
-    {
-      lambda( this->getWrapperBase( externalPropertyName ) );
-    }
   }
 
   ///@}
@@ -222,6 +185,16 @@ private:
 
   /// Type of element in this subregion.
   string m_elementTypeString;
+
+  std::list< dataRepository::WrapperBase * > getExternalProperties() override
+  {
+    std::list< dataRepository::WrapperBase * > result;
+    for( auto & externalPropertyName : m_externalPropertyNames )
+    {
+      result.push_back( &this->getWrapperBase( externalPropertyName ) );
+    }
+    return result;
+  }
 };
 
 }

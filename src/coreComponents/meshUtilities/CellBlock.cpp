@@ -12,23 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file CellBlock.cpp
- *
- */
-
 #include "CellBlock.hpp"
-#include "mesh/MeshLevel.hpp"
-
-#include "mesh/NodeManager.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
 CellBlock::CellBlock( string const & name, Group * const parent ):
-  Group( name, parent )
+  CellBlockABC( name, parent )
 {}
 
 void CellBlock::setElementType( string const & elementType )

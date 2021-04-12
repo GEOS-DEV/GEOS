@@ -33,6 +33,7 @@ set(meshUtilities_sources
     Perforation.cpp
     MeshUtilities.cpp
     CellBlock.cpp
+    CellBlockABC.hpp
     SimpleGeometricObjects/GeometricObjectManager.cpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.cpp
     SimpleGeometricObjects/Box.cpp

@@ -12,11 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file CellElementRegion.cpp
- */
-
 #include "CellElementRegion.hpp"
+#include "meshUtilities/CellBlockABC.hpp"
 
 namespace geosx
 {
@@ -43,7 +40,7 @@ void CellElementRegion::generateMesh( Group & cellBlocks )
   {
     // FIXME base class CellElementRegion depends on its derivated class CellElementSubRegion
     CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
-    CellBlock & source = cellBlocks.getGroup< CellBlock >( subRegion.getName() );
+    CellBlockABC & source = cellBlocks.getGroup< CellBlockABC >( subRegion.getName() );
     subRegion.copyFromCellBlock( source );
   }
 }

@@ -16,7 +16,7 @@
 #include "CellElementSubRegion.hpp"
 
 #include "mesh/MeshLevel.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
+#include "meshUtilities/CellBlockABC.hpp"
 
 namespace geosx
 {
@@ -95,7 +95,7 @@ void CellElementSubRegion::setElementType( string const & elementType )
 }
 
 
-void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
+void CellElementSubRegion::copyFromCellBlock( CellBlockABC & source )
 {
   this->setElementType( source.getElementTypeString());
   this->setNumNodesPerElement( source.numNodesPerElement() );

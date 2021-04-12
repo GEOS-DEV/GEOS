@@ -20,7 +20,6 @@
 
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "managers/DomainPartition.hpp"
-#include "CellBlock.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 namespace geosx
