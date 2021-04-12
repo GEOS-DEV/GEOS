@@ -19,7 +19,7 @@ set( codingUtilities_sources
      StringUtilities.cpp
    )
 
-set( dependencyList common lvarray )
+set( dependencyList common )
 
 blt_add_library( NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}

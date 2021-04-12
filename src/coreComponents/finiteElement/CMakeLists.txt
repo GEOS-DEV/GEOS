@@ -28,17 +28,7 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
    )
 
-if( GEOSX_BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository codingUtilities)
-else()
-  set( dependencyList 
-       common
-       mesh
-       codingUtilities
-       dataRepository
-       constitutive
-      )
-endif()
+set( dependencyList dataRepository codingUtilities)
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

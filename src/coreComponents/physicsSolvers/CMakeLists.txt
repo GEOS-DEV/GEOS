@@ -92,22 +92,7 @@ set( physicsSolvers_sources
      wavePropagation/AcousticWaveEquationSEM.cpp
      )
 
-if( GEOSX_BUILD_OBJ_LIBS)
-  set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
-else()
-  set( dependencyList 
-       common
-       linearAlgebra
-       lvarray
-       mesh
-       managers
-       codingUtilities
-       dataRepository
-       finiteVolume
-       finiteElement
-       constitutive
-     )
-endif()
+set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 
 
 set( externalComponentDeps "" )

@@ -34,17 +34,7 @@ set( finiteVolume_sources
      HybridMimeticDiscretization.cpp
    )
 
-if ( GEOSX_BUILD_OBJ_LIBS )
-  set( dependencyList mesh codingUtilities fieldSpecification )
-else()
-  set( dependencyList 
-       common
-       mesh
-       managers
-       codingUtilities
-       dataRepository
-      )
-endif()
+set( dependencyList mesh codingUtilities fieldSpecification )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

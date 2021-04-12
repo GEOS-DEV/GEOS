@@ -108,18 +108,7 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
    )
 
-if( GEOSX_BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository functions)
-else()
-  set( dependencyList 
-       common
-       managers
-       codingUtilities
-       dataRepository
-     )
-endif()
-
-
+set( dependencyList dataRepository functions)
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

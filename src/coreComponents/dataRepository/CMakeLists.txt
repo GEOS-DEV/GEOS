@@ -40,14 +40,7 @@ if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
-if( GEOSX_BUILD_OBJ_LIBS )
-  set (dependencyList codingUtilities pugixml )
-else()
-  set( dependencyList 
-       common 
-       managers
-       codingUtilities)
-endif()
+set (dependencyList codingUtilities pugixml )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

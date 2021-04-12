@@ -49,23 +49,7 @@ set( linearAlgebra_sources
      utilities/LAIHelperFunctions.cpp
      DofManager.cpp )
 
-if( GEOSX_BUILD_OBJ_LIBS )
-  set( dependencyList mesh blas lapack RAJA)
-else()
-  set( dependencyList 
-       common 
-       blas
-       lapack
-       RAJA
-       mesh
-       lvarray
-       managers
-       finiteVolume
-       codingUtilities
-       finiteElement
-      )
-endif()
-
+set( dependencyList mesh blas lapack RAJA)
 
 if( ENABLE_MPI )
     list( APPEND dependencyList mpi )

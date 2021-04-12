@@ -34,20 +34,8 @@ set( fileIO_sources
      timeHistory/TimeHistHDF.cpp
       )
 
-if( GEOSX_BUILD_OBJ_LIBS)
-  set( dependencyList mesh constitutive silo hdf5 )
-else()
-  set( dependencyList 
-       lvarray
-       common
-       managers
-       codingUtilities
-       dataRepository
-       constitutive
-       silo
-       pugixml
-       RAJA  )
-endif()
+set( dependencyList mesh constitutive silo hdf5 )
+
 
 if( ENABLE_MPI )
   add_subdirectory(coupling/hdf5_interface)
