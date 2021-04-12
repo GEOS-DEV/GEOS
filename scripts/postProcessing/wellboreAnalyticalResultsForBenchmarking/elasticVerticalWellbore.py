@@ -28,17 +28,20 @@ for line in open('radialStress.curve', 'r'):
 plt.subplot(221)
 plt.plot(r, sig_geosx, 'ko', label='GEOSX result')
 plt.plot(r, sig_anal,  'k', linewidth=2, label='Analytic')
-plt.plot(r, dsig,  'k--', linewidth=2, label='Error')
-plt.ylabel('Radial stress (MPa)')
+plt.ylabel('Stress (MPa)')
 plt.xlim(a,3*a)
+plt.title("Radial stress")
 
-plt.subplot(223)
-plt.plot(r, dsigRelative, 'k', linewidth=2)
+ax = plt.subplot(223)
+plt.plot(r, dsigRelative, 'k', linewidth=2, label='Relative error')
 plt.xlabel('r (m)')
 plt.ylabel('Relative error (%)')
-plt.xlim(a,3*a)
 plt.ylim(-10,10)
-
+ax2 = ax.twinx()
+plt.plot(r, dsig,  'k--', linewidth=2, label='Absolute error')
+plt.ylim(-1,1)
+plt.xlim(a,3*a)
+plt.title('Radial stress error')
 
 # Tangent stress
 r, sig_geosx, sig_anal, dsig, dsigRelative = [], [], [], [], []
@@ -59,15 +62,23 @@ for line in open('tangentStress.curve', 'r'):
 plt.subplot(222)
 plt.plot(r, sig_geosx, 'ko', label='GEOSX result')
 plt.plot(r, sig_anal,  'k', linewidth=2, label='Analytic')
-plt.plot(r, dsig,  'k--', linewidth=2, label='Error')
-plt.ylabel('Tangent stress (MPa)')
+plt.ylabel('Stress (MPa)')
 plt.xlim(a,3*a)
 plt.legend()
+plt.title('Tangent stress')
 
-plt.subplot(224)
-plt.plot(r, dsigRelative, 'k', linewidth=2)
+ax = plt.subplot(224)
+l1 = plt.plot(r, dsigRelative, 'k', linewidth=2, label='Relative error')
 plt.xlabel('r (m)')
-plt.xlim(a,3*a)
 plt.ylim(-10,10)
+ax.legend(loc=0);
+ax2 = ax.twinx()
+l2 = plt.plot(r, dsig,  'k--', linewidth=2, label='Absolute error')
+plt.ylabel('Absolute error (MPa)')
+plt.ylim(-1,1)
+plt.xlim(a,3*a)
+plt.title('Tangent stress error')
+ls = l1+l2
+ax.legend(ls, [ ls[0].get_label(), ls[1].get_label() ])
 
 plt.show()
