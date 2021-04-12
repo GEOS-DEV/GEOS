@@ -154,14 +154,14 @@ public:
                   }
                 }
                 
-                for( localIndex i=0; i<6; ++i )
-                {
-                  for( localIndex j=0; j<6; ++j )
-                  {
-                    printf( "[%8.4e vs %8.4e] ", stiffnessFD[i][j], stiffness[i][j] );
-                  }
-                  printf( "\n" );
-                }
+//                for( localIndex i=0; i<6; ++i )
+//                {
+//                  for( localIndex j=0; j<6; ++j )
+//                  {
+//                    printf( "[%8.4e vs %8.4e] ", stiffnessFD[i][j], stiffness[i][j] );
+//                  }
+//                  printf( "\n" );
+//                }
                 real64 eps3 = 1e-8*LvArray::tensorOps::l2Norm< 6 >( strainIncrement );
               real64 stress3[6] = {};
                 

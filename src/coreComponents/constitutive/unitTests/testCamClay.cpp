@@ -143,7 +143,7 @@ void testCamClayDriver()
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
       cmw.smallStrainUpdate( k, 0, data.strainIncrement, stressLocal, stiffnessLocal );
-        std::cout<< stressLocal[0] <<std::endl;
+    //    std::cout<< stressLocal[0] <<std::endl;
     } );
     cm.saveConvergedState();
   }
