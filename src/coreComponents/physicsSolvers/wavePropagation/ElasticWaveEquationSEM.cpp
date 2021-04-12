@@ -302,11 +302,11 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                 //   sourceNodeIds[isrc][a] = elemsToNodes[k][a];
                 //   sourceConstants[isrc][a] = Ntest[a];
                 // }
-                for( localIndex c=0; c<6; ++c )
+                for( localIndex c=0; c<2; ++c )
                 {
-                  for( localIndex b=0; b<6; ++b )
+                  for( localIndex b=0; b<2; ++b )
                  {
-                   for( localIndex a=0; a<6; ++a )
+                   for( localIndex a=0; a<2; ++a )
                    {
                      real64 const Grad[3] = { finiteElement::LagrangeBasis1::gradient( a, coordsOnRefElem[0])*
                                     finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1])*
