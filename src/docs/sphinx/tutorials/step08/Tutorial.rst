@@ -289,7 +289,7 @@ times with the numerical solution (markers).
    def getHydromechanicalParametersFromXML( xmlFilePath ):
        tree = ElementTree.parse(xmlFilePath)
 
-       param1 = tree.find('Constitutive/PoroLinearElasticIsotropic')
+       param1 = tree.find('Constitutive/PoroElasticIsotropic')
        param2 = tree.find('Constitutive/CompressibleSinglePhaseFluid')
        param3 = tree.findall('FieldSpecifications/FieldSpecification')
 
