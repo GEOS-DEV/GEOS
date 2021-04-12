@@ -24,7 +24,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group * const parent ):
+InternalWellboreGenerator::InternalWellboreGenerator( string const & name,
+                                                      Group * const parent ):
   InternalMeshGenerator( name, parent ),
   m_trajectory(),
   m_cartesianOuterBoundary(),
@@ -46,29 +47,29 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
     setInputFlag( InputFlags::FALSE );
 
 
-  registerWrapper( viewKeyStruct::radiusString(), &(m_vertices[0]) ).
+  registerWrapper( viewKeyStruct::radiusString(), &( m_vertices[0] ) ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Wellbore radius" );
 
-  registerWrapper( viewKeyStruct::thetaString(), &(m_vertices[1]) ).
+  registerWrapper( viewKeyStruct::thetaString(), &( m_vertices[1] ) ).
     setApplyDefaultValue( 360.0 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Tangent angle defining geometry size: 90 for quarter, 180 for half and 360 for full wellbore geometry" );
 
-  registerWrapper( viewKeyStruct::rElemsString(), &(m_nElems[0]) ).
+  registerWrapper( viewKeyStruct::rElemsString(), &( m_nElems[0] ) ).
     setApplyDefaultValue( 10 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of elements in the radial direction" );
 
-  registerWrapper( viewKeyStruct::tElemsString(), &(m_nElems[1]) ).
+  registerWrapper( viewKeyStruct::tElemsString(), &( m_nElems[1] ) ).
     setApplyDefaultValue( 40 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of elements in the tangent direction" );
 
   // TODO to enable the use of radial bias
-  registerWrapper( viewKeyStruct::rBiasString(), &(m_nElemBias[0]) ).
+  registerWrapper( viewKeyStruct::rBiasString(), &( m_nElemBias[0] ) ).
     setApplyDefaultValue( -0.8 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -90,24 +91,24 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Automatically set number and spacing of elements in the radial direction. "
-                    "This overrides the values of nr!!" );
+                    "This overrides the values of nr" );
 
 }
 
 void InternalWellboreGenerator::postProcessInput()
 {
 
-  GEOSX_ERROR_IF( m_nElems[1].size()>1,
+  GEOSX_ERROR_IF( m_nElems[1].size() > 1,
                   "Only one block in the theta direction is currently supported. "
                   "This is specified by the nt keyword in InternalWellbore" );
 
-  GEOSX_ERROR_IF( m_nElems[2].size()>1,
+  GEOSX_ERROR_IF( m_nElems[2].size() > 1,
                   "Only one block in the z direction is currently supported. "
                   "This is specified by the nz keyword in InternalWellbore" );
 
 
 
-  GEOSX_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) !=3,
+  GEOSX_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
                   "Input for trajectory should be specified in the form of "
                   "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
 
@@ -126,8 +127,6 @@ void InternalWellboreGenerator::postProcessInput()
     m_trajectory[1][i] = m_trajectory[1][i] + scalet * trajectoryVector[i];
   }
 
-
-
   arrayView1d< real64 const > const theta = m_vertices[1];
   real64 const dTheta = theta.back() - theta[0];
 
@@ -138,9 +137,9 @@ void InternalWellboreGenerator::postProcessInput()
   }
 
   // automatically set radial coordinates
-  if( m_autoSpaceRadialElems.size()>0 )
+  if( m_autoSpaceRadialElems.size() > 0 )
   {
-    localIndex const numRadialBlocks = m_vertices[0].size()-1;
+    localIndex const numRadialBlocks = m_vertices[0].size() - 1;
 
     // loop over blocks in the radial direction (i-direction).
     for( localIndex iBlock=0; iBlock<numRadialBlocks; ++iBlock )
@@ -158,11 +157,10 @@ void InternalWellboreGenerator::postProcessInput()
       // Are we going to auto-size this block??
       if( m_autoSpaceRadialElems[iBlock] == 1 )
       {
-
         // We have to set the starting index for this block so that we skip any
         // values that are fixed from the last block when we scale the radial
         // coordinates.
-        localIndex const startingIndex = m_radialCoords.size()-1;
+        localIndex const startingIndex = m_radialCoords.size() - 1;
 
         // keep a count of actual number of radial elements...we will resize
         // the number of elements later.
@@ -171,8 +169,6 @@ void InternalWellboreGenerator::postProcessInput()
         // This is the factor so that all the coordinates end up s.t. the inner
         // and outer radial coordinates are preserved.
         real64 scalingFactor = 0;
-
-//        printf( "  i   r_i      t_i     rip1_0    tip1_0    r_ip1\n" );
 
         // Loop over an excessive number of elements in the radial direction.
         // This bound needs to be more than we will end up with.
@@ -189,9 +185,6 @@ void InternalWellboreGenerator::postProcessInput()
           // set the next radius a some combination of the inner and outer radius for this "element".
           constexpr real64 c = 0.5;
           real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * t_i + c * tElemSize_ip1_0;
-
-//          printf( "%5ld %8.4f %8.4f %8.4f %8.4f %8.4f \n", i, m_radialCoords.back(), t_i, r_ip1_0, tElemSize_ip1_0, r_ip1 );
-
 
           // if the radius of the next layer is bigger than rOuter, we figure
           // out where to cut off the layer.
@@ -220,8 +213,6 @@ void InternalWellboreGenerator::postProcessInput()
             m_radialCoords.emplace_back( r_ip1 );
           }
         }
-//        std::cout<<actualNumberOfRadialElements<<", "<<scalingFactor<<std::endl;
-//        std::cout<<m_radialCoords.size()<<std::endl;
 
         // set the number of actual radial elements specified by the auto
         // spacing
@@ -247,13 +238,12 @@ void InternalWellboreGenerator::postProcessInput()
         }
       }
     }
-//    std::cout<<m_radialCoords<<std::endl;
   }
 
   InternalMeshGenerator::postProcessInput();
 }
 
-void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (& numNodesInDir)[3] )
+void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer ( & numNodesInDir )[3] )
 {
   GEOSX_UNUSED_VAR( numNodesInDir );
   if( m_isFullAnnulus )
@@ -263,9 +253,9 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer (& nu
 }
 
 void InternalWellboreGenerator::
-  setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],
-                                          real64 (& minExtent)[3],
-                                          real64 (& maxExtent)[3],
+  setNodeGlobalIndicesOnPeriodicBoundary( int ( & index )[3],
+                                          real64 ( & minExtent )[3],
+                                          real64 ( & maxExtent )[3],
                                           arraySlice1d< real64 const,
                                                         nodes::REFERENCE_POSITION_USD-1 > const & X,
                                           real64 const tol )
@@ -286,11 +276,11 @@ void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( integer co
                                                                       integer const iBlock,
                                                                       integer const jBlock,
                                                                       integer const kBlock,
-                                                                      int (& globalIJK)[3],
-                                                                      int const (&numElemsInDirForBlock)[3],
-                                                                      integer const (&numNodesInDir)[3],
-                                                                      int const (&firstElemIndexInPartition)[3],
-                                                                      localIndex (& nodeOfBox)[8] )
+                                                                      int ( & globalIJK )[3],
+                                                                      int const ( &numElemsInDirForBlock )[3],
+                                                                      integer const ( &numNodesInDir )[3],
+                                                                      int const ( &firstElemIndexInPartition )[3],
+                                                                      localIndex ( & nodeOfBox )[8] )
 {
   GEOSX_UNUSED_VAR( i, k, iBlock, kBlock );
   if( m_isFullAnnulus )
@@ -316,26 +306,23 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
   SortedArray< localIndex > & ynegNodes = nodeSets.getReference< SortedArray< localIndex > >( string( "yneg" ) );
   SortedArray< localIndex > & yposNodes = nodeSets.getReference< SortedArray< localIndex > >( string( "ypos" ) );
 
-  //  // Wellbore nodesets
-  //  // rneg, rpos, tneg and tpos are the named used by the end-used in the input files. Consider modifying them with care.
   SortedArray< localIndex > & rnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rneg" ) ).reference();
   SortedArray< localIndex > & rposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "rpos" ) ).reference();
   SortedArray< localIndex > & tnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tneg" ) ).reference();
   SortedArray< localIndex > & tposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "tpos" ) ).reference();
 
-  real64 const cartesianMappingInnerRadius = m_cartesianOuterBoundary<m_vertices[0].size() ?
+  real64 const cartesianMappingInnerRadius = m_cartesianOuterBoundary < m_vertices[0].size() ?
                                              m_vertices[0][m_cartesianOuterBoundary] :
                                              1e99;
 
-  // ***** Map to radial mesh *****
+  // Map to radial mesh
   for( localIndex a = 0; a<nodeManager.size(); ++a )
   {
     real64 meshTheta = X[a][1] * M_PI / 180.0;
-    int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
+    int meshAxis = static_cast< int >( round( meshTheta * 2.0 / M_PI ) );
     real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
     real64 meshRout = m_max[0] / cos( meshPhi );
     real64 meshRact;
-
 
     if( X[a][0] > cartesianMappingInnerRadius )
     {
@@ -392,8 +379,7 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
     }
   }
 
-
-  // ***** Map to inclined wellbore *****
+  // Map to inclined wellbore
   {
     for( int localNodeIndex=0; localNodeIndex<nodeManager.size(); ++localNodeIndex )
     {
@@ -404,7 +390,6 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
 
       // Compute cylindrical coordinates of a reference centered vertical wellbore
       real64 rCoord = sqrt( xCoord * xCoord + yCoord * yCoord );
-
 
       {
         real64 tCoord;
@@ -426,7 +411,7 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
 
         // Radial distance of the outer square boundary of a reference centered vertical wellbore
         real64 meshTheta = tCoord * M_PI / 180.0;
-        int meshAxis = static_cast< int >(round( meshTheta * 2.0 / M_PI ));
+        int meshAxis = static_cast< int >( round( meshTheta * 2.0 / M_PI ) );
         real64 meshPhi = fabs( meshTheta - meshAxis * M_PI / 2.0 );
         real64 meshRout = m_cartesianOuterBoundary < m_vertices[0].size() ? m_max[0] / cos( meshPhi ) : m_max[0];
 
