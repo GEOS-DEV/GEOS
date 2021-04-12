@@ -51,9 +51,6 @@ set( linearAlgebra_sources
 
 set( dependencyList mesh blas lapack RAJA)
 
-if( ENABLE_MPI )
-    list( APPEND dependencyList mpi )
-endif()
 
 list( APPEND linearAlgebra_headers
       interfaces/direct/SuiteSparse.hpp
@@ -142,12 +139,22 @@ if( ENABLE_PETSC )
 endif()
 
 if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+    list( APPEND dependencyList openmp )
 endif()
 
 if ( ENABLE_CUDA )
-    set( dependencyList ${dependencyList} cuda )
+    list( APPEND dependencyList cuda )
 endif()
+
+if ( ENABLE_MKL )
+    list( APPEND dependencyList mkl )
+endif()
+
+if( ENABLE_MPI )
+    list( APPEND dependencyList mpi )
+endif()
+
+
 
 blt_add_library( NAME                  linearAlgebra
                  SOURCES               ${linearAlgebra_sources}

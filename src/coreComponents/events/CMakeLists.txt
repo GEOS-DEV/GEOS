@@ -26,31 +26,7 @@ set(events_sources
     tasks/TasksManager.cpp
    )
 
-set( dependencyList dataRepository fileIO lvarray common conduit)
-
-if( ENABLE_MPI )
-  set( dependencyList ${dependencyList} mpi )
-endif()
-
-if( ENABLE_MATHPRESSO )
-   set( dependencyList ${dependencyList} mathpresso )
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if ( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
-endif()
-
-if ( ENABLE_MKL )
-  set( dependencyList ${dependencyList} mkl )
-endif()
+set( dependencyList dataRepository fileIO)
 
 blt_add_library( NAME                  events
                  SOURCES               ${events_sources}
