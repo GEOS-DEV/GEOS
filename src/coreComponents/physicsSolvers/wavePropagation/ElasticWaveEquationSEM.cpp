@@ -46,10 +46,21 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each source point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
+  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants_x ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
+  
+  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants_y ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
+
+  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants_z ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds" );
+
 
   registerWrapper( viewKeyStruct::sourceIsLocalString(), &m_sourceIsLocal ).
     setInputFlag( InputFlags::FALSE ).
@@ -119,7 +130,9 @@ void ElasticWaveEquationSEM::postProcessInput()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
 
   m_sourceNodeIds.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstants_x.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstants_y.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstants_z.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
   m_sourceIsLocal.resizeDimension< 0 >( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
@@ -150,7 +163,9 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::Displacementx_np1,
                                        extrinsicMeshData::Displacementy_np1,
                                        extrinsicMeshData::Displacementz_np1,
-                                       extrinsicMeshData::ForcingRHS,
+                                       extrinsicMeshData::ForcingRHS_x,
+                                       extrinsicMeshData::ForcingRHS_y,
+                                       extrinsicMeshData::ForcingRHS_z,
                                        extrinsicMeshData::MassVector,
                                        extrinsicMeshData::DampingVector,
                                        extrinsicMeshData::StiffnessVector_x,
@@ -185,10 +200,14 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
-  arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
+  arrayView2d< real64 > const sourceConstants_x = m_sourceConstants_x.toView();
+  arrayView2d< real64 > const sourceConstants_y = m_sourceConstants_y.toView();
+  arrayView2d< real64 > const sourceConstants_z = m_sourceConstants_z.toView();
   arrayView1d< localIndex > const sourceIsLocal = m_sourceIsLocal.toView();
   sourceNodeIds.setValues< serialPolicy >( -1 );
-  sourceConstants.setValues< serialPolicy >( -1 );
+  sourceConstants_x.setValues< serialPolicy >( -1 );
+  sourceConstants_y.setValues< serialPolicy >( -1 );
+  sourceConstants_z.setValues< serialPolicy >( -1 );
   sourceIsLocal.setValues< serialPolicy >( 0 );
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
@@ -275,14 +294,40 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                   }
                 }
 
-                real64 Ntest[8];
-                finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+                // real64 Ntest[8];
+                // finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
-                for( localIndex a=0; a< numNodesPerElem; ++a )
+                // for( localIndex a=0; a< numNodesPerElem; ++a )
+                // {
+                //   sourceNodeIds[isrc][a] = elemsToNodes[k][a];
+                //   sourceConstants[isrc][a] = Ntest[a];
+                // }
+                for( localIndex c=0; c<6; ++c )
                 {
-                  sourceNodeIds[isrc][a] = elemsToNodes[k][a];
-                  sourceConstants[isrc][a] = Ntest[a];
-                }
+                  for( localIndex b=0; b<6; ++b )
+                 {
+                   for( localIndex a=0; a<6; ++a )
+                   {
+                     real64 const Grad[3] = { finiteElement::LagrangeBasis1::gradient( a, coordsOnRefElem[0])*
+                                    finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1])*
+                                    finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2]),
+                                    finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0])*
+                                    finiteElement::LagrangeBasis1::gradient( b, coordsOnRefElem[1])*
+                                    finiteElement::LagrangeBasis1::value( c, coordsOnRefElem[2]),
+                                    finiteElement::LagrangeBasis1::value( a, coordsOnRefElem[0])*
+                                    finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1])*
+                                    finiteElement::LagrangeBasis1::gradient( c, coordsOnRefElem[2])};
+
+                     localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+
+                     sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
+                     sourceConstants_x[isrc][nodeIndex] = Grad[0] * invJ[0][0] + Grad[1] * invJ[1][0] + Grad[2] * invJ[2][0];
+                     sourceConstants_y[isrc][nodeIndex] = Grad[0] * invJ[0][1] + Grad[1] * invJ[1][1] + Grad[2] * invJ[2][1];
+                     sourceConstants_z[isrc][nodeIndex] = Grad[0] * invJ[0][2] + Grad[1] * invJ[1][2] + Grad[2] * invJ[2][2];
+
+                   }
+                 }
+               }
               }
             }
           } // End loop over all source
@@ -351,21 +396,26 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 }
 
 
-void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs )
+void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
-  arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
+  arrayView2d< real64 const > const sourceConstants_x   = m_sourceConstants_x.toViewConst();
+  arrayView2d< real64 const > const sourceConstants_y   = m_sourceConstants_y.toViewConst();
+  arrayView2d< real64 const > const sourceConstants_z   = m_sourceConstants_z.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
 
   real64 const fi = evaluateRickerOrder2( time, this->m_timeSourceFrequency );
 
-  for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
-  {
+  
+  for( localIndex isrc = 0; isrc < m_sourceConstants_x.size( 0 ); ++isrc )
+  { std::cout << sourceIsLocal[isrc] << std::endl;
     if( sourceIsLocal[isrc] == 1 )
     {
-      for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
+      for( localIndex inode = 0; inode < m_sourceConstants_x.size( 1 ); ++inode )
       {
-        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * fi;
+        rhs_x[sourceNodeIds[isrc][inode]] = sourceConstants_x[isrc][inode] * fi;
+        rhs_y[sourceNodeIds[isrc][inode]] = sourceConstants_y[isrc][inode] * fi;
+        rhs_z[sourceNodeIds[isrc][inode]] = sourceConstants_z[isrc][inode] * fi;
       }
     }
   }
@@ -730,7 +780,9 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   arrayView1d< real64 > const stiffnessVector_y = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_y >();
   arrayView1d< real64 > const stiffnessVector_z = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_z >();
 
-  arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
+  arrayView1d< real64 > const rhs_x = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_x >();
+  arrayView1d< real64 > const rhs_y = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_y >();
+  arrayView1d< real64 > const rhs_z = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_z >();
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -760,7 +812,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
        // localIndex numElem = elemsToNodes.size( 0 );
 
-        real64 N[numNodesPerElem];
         real64 gradN[ numNodesPerElem ][ 3 ];
 
         //Declaration of the nine components of matrix sigma V2: no arrayview
@@ -804,7 +855,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
           // Computation of the Lamé coefficients lambda and mu
           mu[k] = rho[k] * vs[k] * vs[k];
-          lambda[k] = rho[k] * vp[k] * vp[k] - 2*mu[k];
+          lambda[k] = rho[k] * vp[k] * vp[k] - 2.0*mu[k];
 
           real64 xLocal[numNodesPerElem][3] = {{0.0}};
 
@@ -819,8 +870,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
-            FE_TYPE::calcN( q, N );
-
             real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
 
@@ -889,7 +938,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
   } );
 
-  addSourceToRightHandSide( time_n, rhs );
+  addSourceToRightHandSide( time_n, rhs_x, rhs_y, rhs_z );
 
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
@@ -897,9 +946,9 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
-      ux_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2.0*mass[a] * ux_n[a] - dt2*stiffnessVector_x[a] - (mass[a] - (dt/2)*damping[a]) * ux_nm1[a] + dt2*rhs[a] );
-      uy_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2.0*mass[a] * uy_n[a] - dt2*stiffnessVector_y[a] - (mass[a] - (dt/2)*damping[a]) * uy_nm1[a] + dt2*rhs[a] );
-      uz_np1[a] = (1.0/(mass[a] + (dt/2)*damping[a]))*(2.0*mass[a] * uz_n[a] - dt2*stiffnessVector_z[a] - (mass[a] - (dt/2)*damping[a]) * uz_nm1[a] + dt2*rhs[a] );
+      ux_np1[a] = (1.0/(mass[a]))*(2.0*mass[a] * ux_n[a] - dt2*stiffnessVector_x[a] - (mass[a]) * ux_nm1[a] + dt2*rhs_x[a] );
+      uy_np1[a] = (1.0/(mass[a]))*(2.0*mass[a] * uy_n[a] - dt2*stiffnessVector_y[a] - (mass[a]) * uy_nm1[a] + dt2*rhs_y[a] );
+      uz_np1[a] = (1.0/(mass[a]))*(2.0*mass[a] * uz_n[a] - dt2*stiffnessVector_z[a] - (mass[a]) * uz_nm1[a] + dt2*rhs_z[a] );
     }
   }
 
@@ -928,7 +977,9 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     stiffnessVector_x[a] = 0.0;
     stiffnessVector_y[a] = 0.0;
     stiffnessVector_z[a] = 0.0;
-    rhs[a] = 0.0;
+    rhs_x[a] = 0.0;
+    rhs_y[a] = 0.0;
+    rhs_z[a] = 0.0;
 
 
   }

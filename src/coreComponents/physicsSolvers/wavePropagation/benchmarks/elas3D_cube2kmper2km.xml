@@ -12,7 +12,7 @@
       discretization="FE1"
       targetRegions="{ Region }"
       sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
-      timeSourceFrequency="5.0"
+      timeSourceFrequency="2.0"
       receiverCoordinates="{ { 1105,1005, 1005 } }"
       rickerOrder="2"
       outputSismoTrace="1"/>
@@ -42,7 +42,7 @@
 
 
   <Events
-    maxTime="0.2">
+    maxTime="1.0">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
@@ -52,7 +52,7 @@
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.005"
+      timeFrequency="0.1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
@@ -180,7 +180,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Region/elementSubRegions/cb"
       fieldName="mediumVelocityVs"
-      scale="0"
+      scale="855"
       setNames="{ all }"/>
 
     <FieldSpecification

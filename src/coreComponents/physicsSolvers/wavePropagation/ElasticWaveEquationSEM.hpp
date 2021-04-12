@@ -119,7 +119,7 @@ private:
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
   /// Multiply the precomputed term by the ricker and add to the right-hand side
-  void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs );
+  void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z);
 
   /// Apply free surface condition to the face define in the geometry box from the xml
   void applyFreeSurfaceBC( real64 const time, DomainPartition & domain );
@@ -138,6 +138,15 @@ private:
 
   /// Constant part of the source for the nodes listed in m_sourceNodeIds
   array2d< real64 > m_sourceConstants;
+
+    /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  array2d< real64 > m_sourceConstants_x;
+
+    /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  array2d< real64 > m_sourceConstants_y;
+
+    /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  array2d< real64 > m_sourceConstants_z;
 
   /// Flag that indicates whether the source is local or not to the MPI rank
   array1d< localIndex > m_sourceIsLocal;
@@ -244,8 +253,24 @@ EXTRINSIC_MESH_DATA_TRAIT( Displacementz_np1,
                            WRITE_AND_READ,
                            "z-component of displacement at time n+1." );
 
-EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
-                           "rhs",
+EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_x,
+                           "rhs_x",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "RHS" );
+                          
+EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_y,
+                           "rhs_y",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "RHS" );
+          
+EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_z,
+                           "rhs_z",
                            array1d< real64 >,
                            0,
                            NOPLOT,
