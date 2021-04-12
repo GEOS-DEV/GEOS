@@ -107,6 +107,32 @@ public:
 //                       real64 & df_dq_dse ) const;
     
   GEOSX_HOST_DEVICE
+  void evaluateYield( real64 const p,
+                      real64 const q,
+                      real64 const pc,
+                      real64 const M,
+                      real64 const a,
+                      real64 & f,
+                      real64 & df_dp,
+                      real64 & df_dq,
+                      real64 & df_dpc,
+                      real64 & df_dpp,
+                      real64 & df_dqq ) const;
+
+  GEOSX_HOST_DEVICE
+  void evaluateYieldWetSide( real64 const p,
+                             real64 const q,
+                             real64 const pc,
+                             real64 const M,
+                             real64 const a,
+                             real64 & f,
+                             real64 & df_dp,
+                             real64 & df_dq,
+                             real64 & df_dpc,
+                             real64 & df_dpp,
+                             real64 & df_dqq ) const;
+
+  GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
@@ -121,15 +147,6 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
 private:
-
-//  /// A reference to the ArrayView holding the reference pressure for each quadrature point.
-//  arrayView1d< real64 const > const m_refPressure;
-//
-//  /// A reference to the ArrayView holding the reference volumetric strain for each quadrature point.
-//  arrayView1d< real64 const > const m_refStrainVol;
-//
-//  /// A reference to the ArrayView holding the recompression index  for each element.
-//  arrayView1d< real64 const > const m_recompressionIndex;
 
   /// A reference to the ArrayView holding the virgin compression index for each element.
   arrayView1d< real64 const > const m_virginCompressionIndex;
@@ -147,6 +164,7 @@ private:
   arrayView2d< real64 > const m_oldPreConsolidationPressure;
 
 };
+
 
 //GEOSX_HOST_DEVICE
 //GEOSX_FORCE_INLINE
@@ -166,29 +184,84 @@ private:
 //                                    real64 & df_dp_dve,
 //                                    real64 & df_dq_dse ) const
 //{
-//    real64 const c = alpha/(alpha+1)*pc;
+//    real64 const c = alpha/(alpha+1.)*pc;
 //    real64 a = alpha;
 //    real64 pa = pc;
 //    real64 factor = 1.0;
+//    real64 factor_deriv = 1.0;
 //
 //  if( p >= c ) // Use MCC
 //  {
 //      a = 1.0;
 //      factor = 2*alpha/ (alpha+1) ;
 //      pa = factor * pc;
+//      factor_deriv = 1. / (alpha*apha);
 //  }
+//    real64 alphaTerm = 2. * a*a*a / (a+1.);
+//    df_dp = (-alphaTerm * pc + 2. * a * a * p) * factor_deriv;
+//    df_dq = 2. * q /(M*M);
+//    df_dpc = (2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p) * factor_deriv;
+//    real64 dpc_dve = -1./(Cc-Cr) * pc;
+//    df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor_deriv;
+//    df_dq_dse = 2. /(M*M) * 3. * mu;
 //
 //    f = q*q/(M*M)- a*a*p *(2*a/(a+1)*pc-p)+a*a*(a-1)/(a+1)* pc*pc;
-//    real64 alphaTerm = 2. * a*a*a / (a+1.);
-//    df_dp = -alphaTerm * pc + 2. * a * a * p;
-//    df_dq = 2. * q /(M*M);
-//    df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p;
-//    real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
-//    df_dp_dve = 2. * a * alpha * bulkModulus - alphaTerm * dpc_dve;
-//    df_dq_dse = 2. /(M*M) * 3. * mu;
+
 //
 //
 //}
+
+//GEOSX_HOST_DEVICE
+//GEOSX_FORCE_INLINE
+//void CamClayUpdates::evaluateYieldWetSide( real64 const p,
+//                                           real64 const q,
+//                                           real64 const pc,
+//                                           real64 const M,
+//                                           real64 const a,
+//                                           real64 & f,
+//                                           real64 & df_dp,
+//                                           real64 & df_dq,
+//                                           real64 & df_dpc,
+//                                           real64 & df_dpp,
+//                                           real64 & df_dqq ) const
+//{
+//  real64 const b = 2*a/(a+1);
+//  real64 const c = a*a*(a-1)/(a+1);
+//  f = q*q/(M*M)- a*a*p*(b*pc-p)+c*pc*pc;
+//  df_dp = -a*a*(b*pc-2*p);
+//  df_dq = 2*q/(M*M);
+//  df_dpc = -a*a*b*p + 2*c*pc;
+//  df_dpp = 2*a*a;
+//  df_dqq = 2/(M*M);
+//}
+//
+//
+//GEOSX_HOST_DEVICE
+//GEOSX_FORCE_INLINE
+//void CamClayUpdates::evaluateYield( real64 const p,
+//                                    real64 const q,
+//                                    real64 const pc,
+//                                    real64 const M,
+//                                    real64 const a,
+//                                    real64 & f,
+//                                    real64 & df_dp,
+//                                    real64 & df_dq,
+//                                    real64 & df_dpc,
+//                                    real64 & df_dpp,
+//                                    real64 & df_dqq ) const
+//{
+//  if( -q/p <= M )
+//  {
+//    evaluateYieldWetSide( p, q, pc, M, a, f, df_dp, df_dq, df_dpc, df_dpp, df_dqq );
+//  }
+//  else
+//  {
+//    real64 b=2*a/(a+1);
+//    evaluateYieldWetSide( p, q, b*pc, M, 1.0, f, df_dp, df_dq, df_dpc, df_dpp, df_dqq );
+//    df_dpc *= b;
+//  }
+//}
+//
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -255,8 +328,6 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
                                      oldStrainElastic );
 
   // elastic predictor (assume strainIncrement is all elastic)
-  // TODO: define ElasticIsotropicPressureUpdates to call here, similar to the line below
-  //ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
   for( localIndex i=0; i<6; ++i )
   {
@@ -320,12 +391,19 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
                                        deviator );
     
   // check yield function F <= 0
+
  // real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
   //evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
     
 
     
   real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+//
+//  //real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+//
+//  real64 yield, df_dp, df_dq, df_dpc, df_dpp, df_dqq;
+//  evaluateYield( trialP, trialQ, pc, M, alpha, yield, df_dp, df_dq, df_dpc, df_dpp, df_dqq );
+//
 
   if( yield < 1e-9 ) // elasticity
   {
@@ -363,7 +441,6 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
       pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
      // pc = oldPc + h *(eps_v_trial-solution[0]); //Linear hardening version
 
-    //evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
       
     yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 
@@ -378,6 +455,20 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     real64 df_dp_dve = 2. * alpha * alpha * bulkModulus + alphaTerm * dpc_dve;
     real64 df_dq_dse = 2. /(M*M) * 3. * mu;
     //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve; //not used
+//
+//    //yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
+//    evaluateYield( trialP, trialQ, pc, M, alpha, yield, df_dp, df_dq, df_dpc, df_dpp, df_dqq );
+//
+//    // derivatives of yield surface
+//    //real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
+//    //real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
+//    //real64 df_dq = 2. * trialQ /(M*M);
+//    //real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
+//    real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
+//    //real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
+//    //real64 df_dq_dse = 2. /(M*M) * 3. * mu;
+//    ////real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
+//
 
 
     // assemble residual system
@@ -409,6 +500,17 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     jacobian[2][0] = bulkModulus * df_dp - dpc_dve * df_dpc;
     jacobian[2][1] = 3.0 * mu * df_dq;
     jacobian[2][2] = 0.0;
+//
+//    real64 dp_dve = bulkModulus;
+//    real64 dq_dse = 3*mu;
+//
+//    jacobian[0][0] = 1. + solution[2] * df_dpp * dp_dve;
+//    jacobian[0][2] = df_dp;
+//    jacobian[1][1] = 1. + solution[2]*df_dqq*dq_dse;
+//    jacobian[1][2] = df_dq;
+//    jacobian[2][0] = df_dp*dp_dve - df_dpc*dpc_dve;
+//    jacobian[2][1] = df_dq * dq_dse;
+//    jacobian[2][2] = 0.0;
 
     LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
