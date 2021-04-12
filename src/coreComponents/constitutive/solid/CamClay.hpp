@@ -197,11 +197,11 @@ void CamClayUpdates::evaluateYield( real64 const p,
       factor_deriv = 1. / (alpha*alpha);
   }
     real64 alphaTerm = 2. * a*a*a / (a+1.);
-    df_dp = (-alphaTerm * pc + 2. * a * a * p) * factor_deriv;
+    df_dp = -alphaTerm * pa + 2. * a * a * p;
     df_dq = 2. * q /(M*M);
-    df_dpc = (2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p) * factor_deriv;
+    df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p * factor;
     real64 dpc_dve = -1./(Cc-Cr) * pc;
-    df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor_deriv;
+    df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor;
     df_dq_dse = 2. /(M*M) * 3. * mu;
 
     f = q*q/(M*M)- a*a*p *(2.*a/(a+1.)*pa-p)+a*a*(a-1.)/(a+1.)* pc*pc;
@@ -481,7 +481,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-      //std::cout<<"iter= "<<iter<<"resid = "<<norm<<std::endl;
+      std::cout<<"iter= "<<iter<<"resid = "<<norm<<std::endl;
     if( iter==0 )
     {
       normZero = norm;
