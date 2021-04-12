@@ -74,25 +74,25 @@ TEST( FieldSpecification, Recursive )
   CellBlock & reg0Hex = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg0hex" );
   reg0Hex.setElementType( "C3D8" );
   reg0Hex.resize( nbHexReg0 );
-  auto & cellToVertexreg0Hex = reg0Hex.nodeList();
+  auto & cellToVertexreg0Hex = reg0Hex.getElemToNode();
   cellToVertexreg0Hex.resize( nbHexReg0, 8 );
 
   CellBlock & reg0Tet= cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg0tet" );
   reg0Tet.setElementType( "C3D4" );
   reg0Tet.resize( nbTetReg0 );
-  auto & cellToVertexreg0Tet = reg0Tet.nodeList();
+  auto & cellToVertexreg0Tet = reg0Tet.getElemToNode();
   cellToVertexreg0Tet.resize( nbTetReg0, 4 );
 
   CellBlock & reg1Hex = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg1hex" );
   reg1Hex.setElementType( "C3D8" );
   reg1Hex.resize( nbHexReg1 );
-  auto & cellToVertexreg1Hex = reg1Hex.nodeList();
+  auto & cellToVertexreg1Hex = reg1Hex.getElemToNode();
   cellToVertexreg1Hex.resize( nbHexReg1, 8 );
 
   CellBlock & reg1Tet = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg1tet" );
   reg1Tet.setElementType( "C3D4" );
   reg1Tet.resize( nbTetReg1 );
-  auto & cellToVertexreg1Tet = reg1Tet.nodeList();
+  auto & cellToVertexreg1Tet = reg1Tet.getElemToNode();
   cellToVertexreg1Tet.resize( nbTetReg1, 4 );
 
   ElementRegionManager & elemManager = meshLevel0.getElemManager();

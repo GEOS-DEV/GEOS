@@ -59,7 +59,7 @@ public:
    * @brief Get the element-to-node map.
    * @return a reference to the element-to-node map
    */
-  virtual NodeMapType const & nodeList() const = 0;
+  virtual NodeMapType const & getElemToNode() const = 0;
 
   /**
    * @brief Get local to global map.

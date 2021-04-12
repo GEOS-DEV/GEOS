@@ -97,9 +97,9 @@ public:
   /**
    * @copydoc nodeList()
    */
-  NodeMapType & nodeList() { return m_toNodesRelation; }
+  NodeMapType & getElemToNode() { return m_toNodesRelation; }
 
-  NodeMapType const & nodeList() const override { return m_toNodesRelation; }
+  NodeMapType const & getElemToNode() const override { return m_toNodesRelation; }
 
   /**
    * @brief Get the element-to-edge map.
