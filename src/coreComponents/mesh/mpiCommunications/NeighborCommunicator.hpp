@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
-#define GEOSX_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
+#ifndef GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
+#define GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 
 #include "common/MpiWrapper.hpp"
 
@@ -386,4 +386,4 @@ void NeighborCommunicator::mpiISendReceive( array1d< T > const & sendBuffer,
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_ */
+#endif /* GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_ */

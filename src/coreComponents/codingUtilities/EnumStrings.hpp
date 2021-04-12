@@ -21,10 +21,10 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOSX_COMMON_ENUM_HPP_
-#define GEOSX_COMMON_ENUM_HPP_
+#ifndef GEOSX_CODINGUTILITIES_ENUM_HPP_
+#define GEOSX_CODINGUTILITIES_ENUM_HPP_
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 
@@ -178,4 +178,4 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
 
 } // namespace geosx
 
-#endif //GEOSX_COMMON_ENUM_HPP_
+#endif //GEOSX_CODINGUTILITIES_ENUM_HPP_

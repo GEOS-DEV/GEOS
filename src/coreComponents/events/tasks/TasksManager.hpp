@@ -16,8 +16,8 @@
  * @file TasksManager.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_TASKSMANAGER_TASKSMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_TASKSMANAGER_TASKSMANAGER_HPP_
+#ifndef GEOSX_EVENTS_TASKS_TASKSMANAGER_HPP_
+#define GEOSX_EVENTS_TASKS_TASKSMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "TaskBase.hpp"

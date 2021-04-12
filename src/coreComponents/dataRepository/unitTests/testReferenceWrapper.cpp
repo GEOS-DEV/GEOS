@@ -15,7 +15,7 @@
 
 #include <gtest/gtest.h>
 
-#include "dataRepository/ReferenceWrapper.hpp"
+#include "ReferenceWrapper.hpp"
 #include "Array.hpp"
 
 #include <functional>

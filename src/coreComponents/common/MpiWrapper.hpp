@@ -19,10 +19,10 @@
  * @file MpiWrapper.hpp
  */
 
-#ifndef GEOSX_MPICOMMUNICATIONS_MPIWRAPPER_HPP_
-#define GEOSX_MPICOMMUNICATIONS_MPIWRAPPER_HPP_
+#ifndef GEOSX_COMMON_MPIWRAPPER_HPP_
+#define GEOSX_COMMON_MPIWRAPPER_HPP_
 
-#include "common/DataTypes.hpp"
+#include "DataTypes.hpp"
 
 #if defined(GEOSX_USE_MPI)
   #include <mpi.h>
@@ -942,4 +942,4 @@ T MpiWrapper::max( T const & value, MPI_Comm comm )
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MPICOMMUNICATIONS_MPIWRAPPER_HPP_ */
+#endif /* GEOSX_COMMON_MPIWRAPPER_HPP_ */

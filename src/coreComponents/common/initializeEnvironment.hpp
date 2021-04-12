@@ -16,8 +16,8 @@
 #define GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
 
 // Source includes
-#include "common/DataTypes.hpp"
-#include "common/MpiWrapper.hpp"
+#include "DataTypes.hpp"
+#include "MpiWrapper.hpp"
 
 // TPL includes
 #ifdef GEOSX_USE_CALIPER

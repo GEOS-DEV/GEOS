@@ -16,8 +16,8 @@
  * @file HistoryDataSpec.hpp
  */
 
-#ifndef GEOSX_HISTORY_DATA_SPEC_HPP_
-#define GEOSX_HISTORY_DATA_SPEC_HPP_
+#ifndef GEOSX_DATAREPOSITORY_HISTORYDATASPEC_HPP_
+#define GEOSX_DATAREPOSITORY_HISTORYDATASPEC_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"

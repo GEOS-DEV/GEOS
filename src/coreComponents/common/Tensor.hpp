@@ -15,7 +15,7 @@
 #ifndef GEOSX_COMMON_TENSOR_HPP_
 #define GEOSX_COMMON_TENSOR_HPP_
 
-#include "common/GeosxMacros.hpp"
+#include "GeosxMacros.hpp"
 
 namespace geosx
 {

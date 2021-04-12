@@ -14,8 +14,8 @@
 
 #include "initializeEnvironment.hpp"
 
-#include "common/TimingMacros.hpp"
-#include "common/Path.hpp"
+#include "TimingMacros.hpp"
+#include "Path.hpp"
 #include "LvArray/src/system.hpp"
 
 // TPL includes

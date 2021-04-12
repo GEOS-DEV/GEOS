@@ -16,8 +16,8 @@
  * @file TaskBase.hpp
  */
 
-#ifndef TASKBASE_HPP_
-#define TASKBASE_HPP_
+#ifndef GEOSX_EVENTS_TASKS_TASKBASE_HPP_
+#define GEOSX_EVENTS_TASKS_TASKBASE_HPP_
 
 
 #include <limits>
@@ -77,4 +77,4 @@ public:
 
 } /* namespace */
 
-#endif /* TASKBASE_HPP_ */
+#endif /* GEOSX_EVENTS_TASKS_TASKBASE_HPP_ */

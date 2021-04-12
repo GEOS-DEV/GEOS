@@ -16,8 +16,8 @@
  * @file PerforationData.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_PERFORATIONDATA_HPP
-#define GEOSX_MESHUTILITIES_PERFORATIONDATA_HPP
+#ifndef GEOSX_MESH_PERFORATIONDATA_HPP
+#define GEOSX_MESH_PERFORATIONDATA_HPP
 
 #include "dataRepository/Group.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -298,4 +298,4 @@ private:
 
 } //namespace geosx
 
-#endif //GEOSX_MESHUTILITIES_PERFORATIONDATA_HPP
+#endif //GEOSX_MESH_PERFORATIONDATA_HPP

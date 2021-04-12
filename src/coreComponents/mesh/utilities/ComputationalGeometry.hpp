@@ -16,8 +16,8 @@
  * @file ComputationalGeometry.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_
-#define GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_
+#ifndef GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_
+#define GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
@@ -550,4 +550,4 @@ real64 PyramidVolume( real64 const X[][3] )
 } // namespace computationalGeometry
 } // namespace geosx
 
-#endif /* GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_ */
+#endif /* GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_ */

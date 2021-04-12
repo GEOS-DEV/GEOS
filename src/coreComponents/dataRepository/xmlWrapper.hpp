@@ -21,7 +21,7 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "dataRepository/DefaultValue.hpp"
+#include "DefaultValue.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/input.hpp"

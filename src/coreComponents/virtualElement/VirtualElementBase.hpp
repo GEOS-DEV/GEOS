@@ -35,7 +35,7 @@ class VirtualElementBase
 public:
 
   /// Default constructor.
-  VirtualElementBase();
+  VirtualElementBase() = default;
 
   /// Default destructor.
   virtual ~VirtualElementBase() = default;

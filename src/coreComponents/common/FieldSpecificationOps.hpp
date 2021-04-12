@@ -19,7 +19,7 @@
 #ifndef GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
 #define GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
 
-#include "common/DataTypes.hpp"
+#include "DataTypes.hpp"
 
 namespace geosx
 {

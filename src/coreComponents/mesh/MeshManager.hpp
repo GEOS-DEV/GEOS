@@ -16,8 +16,8 @@
  * @file MeshManager.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_MESHMANAGER_HPP_
-#define GEOSX_MESHUTILITIES_MESHMANAGER_HPP_
+#ifndef GEOSX_MESH_MESHMANAGER_HPP_
+#define GEOSX_MESH_MESHMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -79,4 +79,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MESHMANAGER_HPP_ */
+#endif /* GEOSX_MESH_MESHMANAGER_HPP_ */

@@ -16,8 +16,8 @@
  * @file PackCollection.hpp
  */
 
-#ifndef GEOSX_PackCollection_HPP_
-#define GEOSX_PackCollection_HPP_
+#ifndef GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
+#define GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 
 #include "TimeHistoryCollection.hpp"
 
