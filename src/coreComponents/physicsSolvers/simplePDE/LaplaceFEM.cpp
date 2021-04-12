@@ -147,52 +147,52 @@ LaplaceFEM::~LaplaceFEM()
    The SolverStep method thus returns the time step value that is was actually capable of solving for with good convergence.
  */
 
-real64 LaplaceFEM::solverStep( real64 const & time_n,
-                               real64 const & dt,
-                               const int cycleNumber,
-                               DomainPartition & domain )
-{
-  real64 dtReturn = dt;
-  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
-  {
-    dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
-  }
-  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
-           m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
-  {
-    dtReturn = this->linearImplicitStep( time_n, dt, cycleNumber, domain );
-  }
-  return dtReturn;
-}
+// real64 LaplaceFEM::solverStep( real64 const & time_n,
+//                                real64 const & dt,
+//                                const int cycleNumber,
+//                                DomainPartition & domain )
+// {
+//   real64 dtReturn = dt;
+//   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
+//   {
+//     dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
+//   }
+//   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
+//            m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
+//   {
+//     dtReturn = this->linearImplicitStep( time_n, dt, cycleNumber, domain );
+//   }
+//   return dtReturn;
+// }
 
 /*
    IMPLICIT STEP SETUP
    This method uses the system setup from LaplaceFEM (see below).
    It "deactivates" the time variables (with the GEOSX_UNUSED_PARAM macro) and does a steady state system set-up.
  */
-void LaplaceFEM::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                    real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                    DomainPartition & domain )
-{
-  // Computation of the sparsity pattern
-  setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
-}
+// void LaplaceFEM::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+//                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+//                                     DomainPartition & domain )
+// {
+//   // Computation of the sparsity pattern
+//   setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+// }
 
-void LaplaceFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                       DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
+// void LaplaceFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+//                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
+//                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+// {}
 
-void LaplaceFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                            DofManager & dofManager ) const
-{
-  dofManager.addField( m_fieldName,
-                       DofManager::Location::Node );
+// void LaplaceFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+//                             DofManager & dofManager ) const
+// {
+//   dofManager.addField( m_fieldName,
+//                        DofManager::Location::Node );
 
-  dofManager.addCoupling( m_fieldName,
-                          m_fieldName,
-                          DofManager::Connector::Elem );
-}
+//   dofManager.addCoupling( m_fieldName,
+//                           m_fieldName,
+//                           DofManager::Connector::Elem );
+// }
 
 /* SETUP SYSTEM
    Setting up the system using the base class method
@@ -282,55 +282,55 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   //END_SPHINX_INCLUDE_04
 }
 
-void LaplaceFEM::applySystemSolution( DofManager const & dofManager,
-                                      arrayView1d< real64 const > const & localSolution,
-                                      real64 const scalingFactor,
-                                      DomainPartition & domain )
-{
-  dofManager.addVectorToField( localSolution,
-                               m_fieldName,
-                               m_fieldName,
-                               scalingFactor );
+// void LaplaceFEM::applySystemSolution( DofManager const & dofManager,
+//                                       arrayView1d< real64 const > const & localSolution,
+//                                       real64 const scalingFactor,
+//                                       DomainPartition & domain )
+// {
+//   dofManager.addVectorToField( localSolution,
+//                                m_fieldName,
+//                                m_fieldName,
+//                                scalingFactor );
 
-  // Synchronize ghost nodes
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( m_fieldName );
+//   // Synchronize ghost nodes
+//   std::map< string, string_array > fieldNames;
+//   fieldNames["node"].emplace_back( m_fieldName );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
-}
+//   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+//                                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+//                                                               domain.getNeighbors(),
+//                                                               true );
+// }
 
 /*
    APPLY BOUNDARY CONDITIONS
    Here, this call is the generic call from SolverBase.
    All it does is to call a specific Dirichlet boundary condition implemented for this solver
  */
-void LaplaceFEM::applyBoundaryConditions( real64 const time_n,
-                                          real64 const dt,
-                                          DomainPartition & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs )
-{
-  applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
-}
+// void LaplaceFEM::applyBoundaryConditions( real64 const time_n,
+//                                           real64 const dt,
+//                                           DomainPartition & domain,
+//                                           DofManager const & dofManager,
+//                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+//                                           arrayView1d< real64 > const & localRhs )
+// {
+//   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+// }
 
 /*
    SOLVE SYSTEM
    This method is simply initiating the solution and right-hand side
    and pass is to the base class solver.
  */
-void LaplaceFEM::solveSystem( DofManager const & dofManager,
-                              ParallelMatrix & matrix,
-                              ParallelVector & rhs,
-                              ParallelVector & solution )
-{
-  rhs.scale( -1.0 ); // TODO decide if we want this here
-  solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
-}
+// void LaplaceFEM::solveSystem( DofManager const & dofManager,
+//                               ParallelMatrix & matrix,
+//                               ParallelVector & rhs,
+//                               ParallelVector & solution )
+// {
+//   rhs.scale( -1.0 ); // TODO decide if we want this here
+//   solution.zero();
+//   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+// }
 
 /*
    DIRICHLET BOUNDARY CONDITIONS
@@ -366,10 +366,10 @@ void LaplaceFEM::applyDirichletBCImplicit( real64 const time,
   } );
 }
 
-void LaplaceFEM::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
+// void LaplaceFEM::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+// {}
 
 //START_SPHINX_INCLUDE_00
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_00
-} /* namespace ANST */
+} /* namespace geosx */

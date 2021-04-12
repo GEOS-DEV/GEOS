@@ -44,6 +44,67 @@ public:
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
 //END_SPHINX_INCLUDE_02
+/**
+ * @defgroup Solver Interface Functions
+ *
+ * These functions provide the primary interface that is required for derived classes
+ */
+/**@{*/
+
+  //START_SPHINX_INCLUDE_03
+  virtual real64 solverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition & domain ) override;
+
+  virtual void
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
+
+  virtual void
+  setupDofs( DomainPartition const & domain,
+             DofManager & dofManager ) const override;
+
+  virtual void
+  applyBoundaryConditions( real64 const time,
+                           real64 const dt,
+                           DomainPartition & domain,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void
+  solveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
+
+  virtual void
+  applySystemSolution( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor,
+                       DomainPartition & domain ) override;
+
+  virtual void
+    resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+
+  virtual void
+  implicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override;
+
+  //END_SPHINX_INCLUDE_03
+  /**@}*/
+
+  // This method is specific to this Laplace solver
+  // It is used to apply Dirichlet boundary condition
+  // and called when the base class applyBoundaryConditions() is called
+  virtual void applyDirichletBCImplicit( real64 const time,
+                                         DofManager const & dofManager,
+                                         DomainPartition & domain,
+                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         arrayView1d< real64 > const & localRhs ) = 0;
 
   // Choice of transient treatment options (steady, backward, forward Euler scheme):
   //START_SPHINX_INCLUDE_01
