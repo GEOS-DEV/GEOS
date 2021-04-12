@@ -56,7 +56,7 @@ blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
 #                 SHARED TRUE
                )
 

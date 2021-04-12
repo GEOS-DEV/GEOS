@@ -44,7 +44,7 @@ blt_add_library( NAME                  fieldSpecification
                  SOURCES               ${fieldSpecification_sources}
                  HEADERS               ${fieldSpecification_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( fieldSpecification PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

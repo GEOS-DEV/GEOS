@@ -25,7 +25,7 @@ blt_add_library( NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}
                  HEADERS               ${codingUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

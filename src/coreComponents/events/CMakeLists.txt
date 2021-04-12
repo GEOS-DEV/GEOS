@@ -56,7 +56,7 @@ blt_add_library( NAME                  events
                  SOURCES               ${events_sources}
                  HEADERS               ${events_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( events PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

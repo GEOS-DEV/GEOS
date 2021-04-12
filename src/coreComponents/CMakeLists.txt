@@ -26,10 +26,8 @@ set( geosx_core_include_dirs "" )
 set( geosx_core_defines "" )
 
 
-set( buildAsObj FALSE)
 if ( GEOSX_BUILD_OBJ_LIBS )
-  set(buildAsObj TRUE)
-  set( LvArrayBuildAsObj TRUE CACHE BOOL "" FORCE)
+  set( LVARRAY_BUILD_OBJ_LIBS TRUE CACHE BOOL "" FORCE)
 endif()
 
 list( APPEND coreLibs lvarray)
@@ -84,7 +82,7 @@ if( GEOSX_BUILD_OBJ_LIBS )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  mainInterface physicsSolvers
-                    OBJECT ${buildAsObj}
+                    OBJECT ${GEOSX_BUILD_OBJ_LIBS}
                     SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
 else()

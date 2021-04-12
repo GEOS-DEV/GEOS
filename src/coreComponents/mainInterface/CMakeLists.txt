@@ -45,7 +45,7 @@ blt_add_library( NAME                  mainInterface
                  SOURCES               ${mainInterface_sources}
                  HEADERS               ${mainInterface_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
