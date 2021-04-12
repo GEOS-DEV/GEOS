@@ -87,50 +87,49 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
-  //using ElasticIsotropicUpdates::saveStress;
 
-//    GEOSX_HOST_DEVICE
-//    void evaluateYield( real64 const p,
-//                       real64 const q,
-//                       real64 const pc,
-//                       real64 const M,
-//                       real64 const alpha,
-//                       real64 const Cc,
-//                       real64 const Cr,
-//                       real64 const bulkModulus,
-//                       real64 const mu,
-//                       real64 & f,
-//                       real64 & df_dp,
-//                       real64 & df_dq,
-//                       real64 & df_dpc,
-//                       real64 & df_dp_dve,
-//                       real64 & df_dq_dse ) const;
+    GEOSX_HOST_DEVICE
+    void evaluateYield( real64 const p,
+                       real64 const q,
+                       real64 const pc,
+                       real64 const M,
+                       real64 const alpha,
+                       real64 const Cc,
+                       real64 const Cr,
+                       real64 const bulkModulus,
+                       real64 const mu,
+                       real64 & f,
+                       real64 & df_dp,
+                       real64 & df_dq,
+                       real64 & df_dpc,
+                       real64 & df_dp_dve,
+                       real64 & df_dq_dse ) const;
     
-  GEOSX_HOST_DEVICE
-  void evaluateYield( real64 const p,
-                      real64 const q,
-                      real64 const pc,
-                      real64 const M,
-                      real64 const a,
-                      real64 & f,
-                      real64 & df_dp,
-                      real64 & df_dq,
-                      real64 & df_dpc,
-                      real64 & df_dpp,
-                      real64 & df_dqq ) const;
+//  GEOSX_HOST_DEVICE
+//  void evaluateYield( real64 const p,
+//                      real64 const q,
+//                      real64 const pc,
+//                      real64 const M,
+//                      real64 const a,
+//                      real64 & f,
+//                      real64 & df_dp,
+//                      real64 & df_dq,
+//                      real64 & df_dpc,
+//                      real64 & df_dpp,
+//                      real64 & df_dqq ) const;
 
-  GEOSX_HOST_DEVICE
-  void evaluateYieldWetSide( real64 const p,
-                             real64 const q,
-                             real64 const pc,
-                             real64 const M,
-                             real64 const a,
-                             real64 & f,
-                             real64 & df_dp,
-                             real64 & df_dq,
-                             real64 & df_dpc,
-                             real64 & df_dpp,
-                             real64 & df_dqq ) const;
+//  GEOSX_HOST_DEVICE
+//  void evaluateYieldWetSide( real64 const p,
+//                             real64 const q,
+//                             real64 const pc,
+//                             real64 const M,
+//                             real64 const a,
+//                             real64 & f,
+//                             real64 & df_dp,
+//                             real64 & df_dq,
+//                             real64 & df_dpc,
+//                             real64 & df_dpp,
+//                             real64 & df_dqq ) const;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -166,50 +165,49 @@ private:
 };
 
 
-//GEOSX_HOST_DEVICE
-//GEOSX_FORCE_INLINE
-//void CamClayUpdates::evaluateYield( real64 const p,
-//                                    real64 const q,
-//                                    real64 const pc,
-//                                    real64 const M,
-//                                    real64 const alpha,
-//                                    real64 const Cc,
-//                                    real64 const Cr,
-//                                    real64 const bulkModulus,
-//                                    real64 const mu,
-//                                    real64 & f,
-//                                    real64 & df_dp,
-//                                    real64 & df_dq,
-//                                    real64 & df_dpc,
-//                                    real64 & df_dp_dve,
-//                                    real64 & df_dq_dse ) const
-//{
-//    real64 const c = alpha/(alpha+1.)*pc;
-//    real64 a = alpha;
-//    real64 pa = pc;
-//    real64 factor = 1.0;
-//    real64 factor_deriv = 1.0;
-//
-//  if( p >= c ) // Use MCC
-//  {
-//      a = 1.0;
-//      factor = 2*alpha/ (alpha+1) ;
-//      pa = factor * pc;
-//      factor_deriv = 1. / (alpha*apha);
-//  }
-//    real64 alphaTerm = 2. * a*a*a / (a+1.);
-//    df_dp = (-alphaTerm * pc + 2. * a * a * p) * factor_deriv;
-//    df_dq = 2. * q /(M*M);
-//    df_dpc = (2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p) * factor_deriv;
-//    real64 dpc_dve = -1./(Cc-Cr) * pc;
-//    df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor_deriv;
-//    df_dq_dse = 2. /(M*M) * 3. * mu;
-//
-//    f = q*q/(M*M)- a*a*p *(2*a/(a+1)*pc-p)+a*a*(a-1)/(a+1)* pc*pc;
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CamClayUpdates::evaluateYield( real64 const p,
+                                    real64 const q,
+                                    real64 const pc,
+                                    real64 const M,
+                                    real64 const alpha,
+                                    real64 const Cc,
+                                    real64 const Cr,
+                                    real64 const bulkModulus,
+                                    real64 const mu,
+                                    real64 & f,
+                                    real64 & df_dp,
+                                    real64 & df_dq,
+                                    real64 & df_dpc,
+                                    real64 & df_dp_dve,
+                                    real64 & df_dq_dse ) const
+{
+    real64 const c = alpha/(alpha+1.)*pc;
+    real64 a = alpha;
+    real64 pa = pc;
+    real64 factor = 1.0;
+    real64 factor_deriv = 1.0;
 
-//
-//
-//}
+  if( p >= c ) // Use MCC
+  {
+      a = 1.0;
+      factor = 2.*alpha/ (alpha+1.) ;
+      pa = factor * pc;
+      factor_deriv = 1. / (alpha*alpha);
+  }
+    real64 alphaTerm = 2. * a*a*a / (a+1.);
+    df_dp = (-alphaTerm * pc + 2. * a * a * p) * factor_deriv;
+    df_dq = 2. * q /(M*M);
+    df_dpc = (2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p) * factor_deriv;
+    real64 dpc_dve = -1./(Cc-Cr) * pc;
+    df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor_deriv;
+    df_dq_dse = 2. /(M*M) * 3. * mu;
+
+    f = q*q/(M*M)- a*a*p *(2.*a/(a+1.)*pa-p)+a*a*(a-1.)/(a+1.)* pc*pc;
+
+
+}
 
 //GEOSX_HOST_DEVICE
 //GEOSX_FORCE_INLINE
@@ -392,12 +390,12 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     
   // check yield function F <= 0
 
- // real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
-  //evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
+  real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
+  evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
     
 
     
-  real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+ // real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 //
 //  //real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 //
@@ -441,7 +439,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
       pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
      // pc = oldPc + h *(eps_v_trial-solution[0]); //Linear hardening version
 
-      
+ /*
     yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 
     // derivatives of yield surface
@@ -455,7 +453,10 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     real64 df_dp_dve = 2. * alpha * alpha * bulkModulus + alphaTerm * dpc_dve;
     real64 df_dq_dse = 2. /(M*M) * 3. * mu;
     //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve; //not used
-//
+*/
+      evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
+      real64 dpc_dve = -1./(Cc-Cr) * pc;
+      
 //    //yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 //    evaluateYield( trialP, trialQ, pc, M, alpha, yield, df_dp, df_dq, df_dpc, df_dpp, df_dqq );
 //
