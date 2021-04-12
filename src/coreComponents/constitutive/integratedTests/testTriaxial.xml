@@ -5,11 +5,11 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="camclay"
-      useNumericalTangent="0"
+      useNumericalTangent="1"
       mode="triaxial" 
       strainFunction="strainFunction"
       stressFunction="stressFunction"
-      steps="500"
+      steps="100"
       output="output.txt" />
   </Tasks>
 
@@ -55,10 +55,10 @@
       defaultRefPressure="-1.0"
       defaultRefStrainVol="0"
       defaultShearModulus="200.0"
-      defaultBulkModulus="0"  
+      defaultBulkModulus="1000"
       defaultPreConsolidationPressure="-1.5"
       defaultShapeParameter="1.0"
-      defaultCslSlope="1.05"
+      defaultCslSlope="1.00"
       defaultVirginCompressionIndex="0.003"
       defaultRecompressionIndex="0.002"/>
 

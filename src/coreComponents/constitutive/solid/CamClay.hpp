@@ -203,20 +203,21 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 const oldPc  = m_oldPreConsolidationPressure[k][q];   //pre-consolidation pressure
   real64 const mu     = m_shearModulus[k];
-  real64 const p0     = m_refPressure[k];
+  //real64 const p0     = m_refPressure[k];
 
-  real64 const eps_v0 = m_refStrainVol[k];
+ // real64 const eps_v0 = m_refStrainVol[k];
   real64 const M      = m_cslSlope[k];
   real64 const Cr     = m_recompressionIndex[k];
   real64 const Cc     = m_virginCompressionIndex[k];
   real64 const alpha  = m_shapeParameter[k];
 
   real64 pc    = oldPc;
-  real64 bulkModulus  = -p0/Cr;
+  //real64 bulkModulus  = -p0/Cr;
+    real64 bulkModulus  = m_bulkModulus[k]; //Linear elasticity version
 
     // elastic predictor (assume strainIncrement is all elastic)
-    ElasticIsotropicPressureDependentUpdates::smallStrainUpdate(k, q, strainIncrement, stress, stiffness);
-    /*
+ //   ElasticIsotropicPressureDependentUpdates::smallStrainUpdate(k, q, strainIncrement, stress, stiffness);
+ //   /*
   // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
   real64 oldP;
@@ -241,7 +242,8 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-  real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+  //real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+    real64 oldElasticStrainVol = oldP/bulkModulus;
   real64 oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.
@@ -269,7 +271,8 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   // Calculate trial mean and deviatoric stress
 
-  real64 trialP = p0 * std::exp( -1./Cr* (eps_v_trial-eps_v0));
+  //real64 trialP = p0 * std::exp( -1./Cr* (eps_v_trial-eps_v0));
+    real64 trialP = bulkModulus * eps_v_trial;
   real64 trialQ = 3. * mu * eps_s_trial;
 
   twoInvariant::stressRecomposition( trialP,
@@ -279,7 +282,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   // set stiffness to elastic predictor
 
-  bulkModulus = -trialP/Cr;
+  //bulkModulus = -trialP/Cr;
   real64 lame = bulkModulus - 2./3. * mu;
 
   for( localIndex i=0; i<6; ++i )
@@ -305,15 +308,15 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   stiffness[3][3] = mu;
   stiffness[4][4] = mu;
   stiffness[5][5] = mu;
-*/
-    real64 trialP;
-    real64 trialQ;
-    real64 deviator[6];
+//*/
+//    real64 trialP;
+//    real64 trialQ;
+//    real64 deviator[6];
 
-    twoInvariant::stressDecomposition( stress,
-                                       trialP,
-                                       trialQ,
-                                       deviator );
+//    twoInvariant::stressDecomposition( stress,
+//                                       trialP,
+//                                       trialQ,
+//                                       deviator );
     
   // check yield function F <= 0
  // real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
@@ -326,15 +329,17 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   if( yield < 1e-9 ) // elasticity
   {
 // std::cout << "elastic " <<  "\n " << std::endl;
-   // saveStress( k, q, stress );
+    saveStress( k, q, stress );
     return;
   }
 
 // else, plasticity (trial stress point lies outside yield surface)
- //  std::cout << "plastic " <<  "\n " << std::endl;
+  // std::cout << "plastic " <<  "\n " << std::endl;
 
-    real64 eps_s_trial = trialQ/3.0/mu;
-    real64 eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;;
+  //  real64 eps_s_trial = trialQ/3.0/mu;
+ //   real64 eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
+     eps_v_trial = trialP/bulkModulus;
+    eps_s_trial = trialQ/3.0/mu;
     
   real64 solution[3], residual[3], delta[3];
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
@@ -349,10 +354,12 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-    trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
+    //trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
+    trialP = solution[0] * bulkModulus;
     trialQ = 3. * mu * solution[1];
-    bulkModulus = -trialP/Cr;
-    pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
+    //bulkModulus = -trialP/Cr;
+      real64 h = 1.0 / (Cc-Cr);
+      pc = oldPc + h *(eps_v_trial-solution[0]);//oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
 
     //evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
       
@@ -363,9 +370,9 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
     real64 df_dq = 2. * trialQ /(M*M);
     real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
-    real64 dpc_dve = -1./(Cc-Cr) * pc;   //TODO: Check negative or positive
+      real64 dpc_dve = 1./(Cc-Cr);//-1./(Cc-Cr) * pc;   //TODO: Check negative or positive
 
-    real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
+    real64 df_dp_dve = 2. * alpha * alpha * bulkModulus + alphaTerm * dpc_dve;
     real64 df_dq_dse = 2. /(M*M) * 3. * mu;
     //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
 
@@ -418,14 +425,14 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   // construct consistent tangent stiffness
 
-  LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
+  LvArray::tensorOps::fill< 6, 6 >( stiffness, 0.0 );
   real64 BB[2][2] = {{}};
 
-  real64 dpc_dve = -1./(Cc-Cr) * pc;
+    real64 dpc_dve = 1./(Cc-Cr);//-1./(Cc-Cr) * pc;
   real64 a1= 1. + solution[2]*dpc_dve;
   real64 a2 = trialP * dpc_dve;
 
-  bulkModulus = -trialP/Cr;
+  //bulkModulus = -trialP/Cr;
 
   BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
   BB[0][1] =bulkModulus*jacobianInv[0][1];
@@ -449,7 +456,15 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 c5 = 2./3. * BB[1][1] - c1;
 
   real64 identity[6];
-
+    
+    for( localIndex i=0; i<6; ++i )
+    {
+      for( localIndex j=0; j<6; ++j )
+      {
+          stiffness[i][j] =  0.0;
+      }
+    }
+    
   for( localIndex i=0; i<3; ++i )
   {
     stiffness[i][i] = c1;

@@ -79,11 +79,11 @@ void testCamClayDriver()
     "      defaultRefPressure=\"-1.0\" "
     "      defaultRefStrainVol=\"0.0\" "
     "      defaultShearModulus=\"200.0\" "
-    "      defaultBulkModulus=\"0.0\" " // TODO: remove as free parameter
+    "      defaultBulkModulus=\"1000.0\" " // TODO: remove as free parameter
     "      defaultPreConsolidationPressure =\"-1.5\" "
     "      defaultShapeParameter=\"1.0\" "
-    "      defaultCslSlope=\"1.05\" "
-    "      defaultVirginCompressionIndex=\"0.02\" "
+    "      defaultCslSlope=\"1.0\" "
+    "      defaultVirginCompressionIndex=\"0.003\" "
     "      defaultRecompressionIndex=\"0.002\"/>"
     "</Constitutive>";
 
@@ -128,9 +128,9 @@ void testCamClayDriver()
   // set initial stress
 
   real64 stress[6] = {0};
-  stress[0] = -1.5;
-  stress[1] = -1.5;
-  stress[2] = -1.5;
+  stress[0] = -1.0;
+  stress[1] = -1.0;
+  stress[2] = -1.0;
 
   setStress( cmw, stress );
 
@@ -143,6 +143,7 @@ void testCamClayDriver()
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
       cmw.smallStrainUpdate( k, 0, data.strainIncrement, stressLocal, stiffnessLocal );
+        std::cout<< stressLocal[0] <<std::endl;
     } );
     cm.saveConvergedState();
   }
@@ -150,7 +151,7 @@ void testCamClayDriver()
   // get final stress state in p-q space
 
   getStress( cmw, stress );
-
+    
   real64 invariantP, invariantQ;
   real64 deviator[6];
 
