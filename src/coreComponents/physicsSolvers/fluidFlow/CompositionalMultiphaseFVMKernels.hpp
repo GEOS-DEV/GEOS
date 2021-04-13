@@ -119,7 +119,8 @@ struct FluxKernel
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           arraySlice1d< real64 const > const stencilWeights,
+           real64 const (&transmissibility)[2],
+           real64 const (&dTrans_dPres)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -142,15 +143,17 @@ struct FluxKernel
            arraySlice1d< real64 > const localFlux,
            arraySlice2d< real64 > const localFluxJacobian );
 
-  template< localIndex NC, typename STENCIL_TYPE >
+  template< localIndex NC, typename STENCILWRAPPER_TYPE >
   static void
   launch( localIndex const numPhases,
-          STENCIL_TYPE const & stencil,
+          STENCILWRAPPER_TYPE const & stencilWrapper,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
           ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,

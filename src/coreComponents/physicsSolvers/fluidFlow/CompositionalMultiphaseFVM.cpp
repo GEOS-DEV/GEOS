@@ -84,14 +84,14 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
 
 
 void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
-                                                    DomainPartition const & domain,
+                                                    DomainPartition & domain,
                                                     DofManager const & dofManager,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   /*
    * Force phase compositions to be moved to device.
@@ -135,25 +135,29 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     } );
   } );
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( getName() + "/accessors/" + dofKey );
 
-  fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
   {
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
     KernelLaunchSelector1< FluxKernel >( m_numComponents,
                                          m_numPhases,
-                                         stencil,
+                                         stencilWrapper,
                                          dofManager.rankOffset(),
                                          elemDofNumber.toNestedViewConst(),
                                          m_elemGhostRank.toNestedViewConst(),
                                          m_pressure.toNestedViewConst(),
                                          m_deltaPressure.toNestedViewConst(),
+                                         m_permeability.toNestedViewConst(),
+                                         m_dPerm_dPressure.toNestedViewConst(),
                                          m_gravCoef.toNestedViewConst(),
                                          m_phaseMob.toNestedViewConst(),
                                          m_dPhaseMob_dPres.toNestedViewConst(),

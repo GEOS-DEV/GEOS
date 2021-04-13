@@ -361,6 +361,8 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate_porosity( localIndex const 
   GEOSX_UNUSED_VAR( dPorosity_dPressure );
   GEOSX_UNUSED_VAR( dPorosity_dVolStrainIncrement );
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+
+  //TODO fill in this.
 }
 
 
