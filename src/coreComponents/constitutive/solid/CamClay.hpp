@@ -88,23 +88,23 @@ public:
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
 
-    GEOSX_HOST_DEVICE
-    void evaluateYield( real64 const p,
-                       real64 const q,
-                       real64 const pc,
-                       real64 const M,
-                       real64 const alpha,
-                       real64 const Cc,
-                       real64 const Cr,
-                       real64 const bulkModulus,
-                       real64 const mu,
-                       real64 & f,
-                       real64 & df_dp,
-                       real64 & df_dq,
-                       real64 & df_dpc,
-                       real64 & df_dp_dve,
-                       real64 & df_dq_dse ) const;
-    
+  GEOSX_HOST_DEVICE
+  void evaluateYield( real64 const p,
+                      real64 const q,
+                      real64 const pc,
+                      real64 const M,
+                      real64 const alpha,
+                      real64 const Cc,
+                      real64 const Cr,
+                      real64 const bulkModulus,
+                      real64 const mu,
+                      real64 & f,
+                      real64 & df_dp,
+                      real64 & df_dq,
+                      real64 & df_dpc,
+                      real64 & df_dp_dve,
+                      real64 & df_dq_dse ) const;
+
 //  GEOSX_HOST_DEVICE
 //  void evaluateYield( real64 const p,
 //                      real64 const q,
@@ -183,28 +183,26 @@ void CamClayUpdates::evaluateYield( real64 const p,
                                     real64 & df_dp_dve,
                                     real64 & df_dq_dse ) const
 {
-    real64 const c = alpha/(alpha+1.)*pc;
-    real64 a = alpha;
-    real64 pa = pc;
-    real64 factor = 1.0;
-    real64 factor_deriv = 1.0;
+  real64 const c = alpha/(alpha+1.)*pc;
+  real64 a = alpha;
+  real64 pa = pc;
+  real64 factor = 1.0;
 
   if( p >= c ) // Use MCC
   {
-      a = 1.0;
-      factor = 2.*alpha/ (alpha+1.) ;
-      pa = factor * pc;
-      factor_deriv = 1. / (alpha*alpha);
+    a = 1.0;
+    factor = 2.*alpha/ (alpha+1.);
+    pa = factor * pc;
   }
-    real64 alphaTerm = 2. * a*a*a / (a+1.);
-    df_dp = -alphaTerm * pa + 2. * a * a * p;
-    df_dq = 2. * q /(M*M);
-    df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p * factor;
-    real64 dpc_dve = -1./(Cc-Cr) * pc;
-    df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor;
-    df_dq_dse = 2. /(M*M) * 3. * mu;
+  real64 alphaTerm = 2. * a*a*a / (a+1.);
+  df_dp = -alphaTerm * pa + 2. * a * a * p;
+  df_dq = 2. * q /(M*M);
+  df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p * factor;
+  real64 dpc_dve = -1./(Cc-Cr) * pc;
+  df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor;
+  df_dq_dse = 2. /(M*M) * 3. * mu;
 
-    f = q*q/(M*M)- a*a*p *(2.*a/(a+1.)*pa-p)+a*a*(a-1.)/(a+1.)* pc*pc;
+  f = q*q/(M*M)- a*a*p *(2.*a/(a+1.)*pa-p)+a*a*(a-1.)/(a+1.)* pc*pc;
 
 
 }
@@ -286,116 +284,116 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 bulkModulus  = -p0/Cr;
   //real64 bulkModulus  = m_bulkModulus[k]; //Linear elasticity version
 
-    // elastic predictor (assume strainIncrement is all elastic)
-    ElasticIsotropicPressureDependentUpdates::smallStrainUpdate(k, q, strainIncrement, stress, stiffness);
-    /*
-  // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
+  // elastic predictor (assume strainIncrement is all elastic)
+  ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+  /*
+     // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
-  real64 oldP;
-  real64 oldQ;
-  real64 oldDeviator[6];
+     real64 oldP;
+     real64 oldQ;
+     real64 oldDeviator[6];
+     real64 deviator[6];
+     real64 oldStrainElastic[6];
+     real64 strainElasticTrial[6];
+     real64 eps_s_trial;
+     real64 eps_v_trial;
+
+     for( localIndex i=0; i<6; ++i )
+     {
+     stress[i] = m_oldStress[k][q][i];
+     }
+
+     twoInvariant::stressDecomposition( stress,
+                                   oldP,
+                                   oldQ,
+                                   oldDeviator );
+
+     // Recover elastic strains from the previous step, based on stress from the previous step
+     // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
+
+     real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+     //  real64 oldElasticStrainVol = oldP/bulkModulus; //Linear elasticity version
+     real64 oldElasticStrainDev = oldQ/3./mu;
+
+     // Now recover the old strain tensor from the strain invariants.
+     // Note that we need the deviatoric direction (n-hat) from the previous step.
+
+     twoInvariant::strainRecomposition( oldElasticStrainVol,
+                                   oldElasticStrainDev,
+                                   oldDeviator,
+                                   oldStrainElastic );
+
+     // elastic predictor (assume strainIncrement is all elastic)
+
+     for( localIndex i=0; i<6; ++i )
+     {
+     strainElasticTrial[i] = oldStrainElastic[i] + strainIncrement[i];
+     }
+     // two-invariant decomposition of trial elastic strain
+
+     twoInvariant::strainDecomposition( strainElasticTrial,
+                                   eps_v_trial,
+                                   eps_s_trial,
+                                   deviator );
+
+     // Calculate trial mean and deviatoric stress
+
+     real64 trialP = p0 * std::exp( -1./Cr* (eps_v_trial-eps_v0));
+     //  real64 trialP = bulkModulus * eps_v_trial; //Linear elasticity version
+     real64 trialQ = 3. * mu * eps_s_trial;
+
+     twoInvariant::stressRecomposition( trialP,
+                                   trialQ,
+                                   deviator,
+                                   stress );
+
+     // set stiffness to elastic predictor
+
+     bulkModulus = -trialP/Cr;
+     real64 lame = bulkModulus - 2./3. * mu;
+
+     for( localIndex i=0; i<6; ++i )
+     {
+     for( localIndex j=0; j<6; ++j )
+     {
+     stiffness[i][j] = 0;
+     }
+     }
+
+     stiffness[0][0] = lame + 2.*mu;
+     stiffness[0][1] = lame;
+     stiffness[0][2] = lame;
+
+     stiffness[1][0] = lame;
+     stiffness[1][1] = lame + 2.*mu;
+     stiffness[1][2] = lame;
+
+     stiffness[2][0] = lame;
+     stiffness[2][1] = lame;
+     stiffness[2][2] = lame + 2.*mu;
+
+     stiffness[3][3] = mu;
+     stiffness[4][4] = mu;
+     stiffness[5][5] = mu;
+   */
+
+  real64 trialP;
+  real64 trialQ;
   real64 deviator[6];
-  real64 oldStrainElastic[6];
-  real64 strainElasticTrial[6];
-  real64 eps_s_trial;
-  real64 eps_v_trial;
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    stress[i] = m_oldStress[k][q][i];
-  }
 
   twoInvariant::stressDecomposition( stress,
-                                     oldP,
-                                     oldQ,
-                                     oldDeviator );
-
-  // Recover elastic strains from the previous step, based on stress from the previous step
-  // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
-
-  real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-  //  real64 oldElasticStrainVol = oldP/bulkModulus; //Linear elasticity version
-  real64 oldElasticStrainDev = oldQ/3./mu;
-
-  // Now recover the old strain tensor from the strain invariants.
-  // Note that we need the deviatoric direction (n-hat) from the previous step.
-
-  twoInvariant::strainRecomposition( oldElasticStrainVol,
-                                     oldElasticStrainDev,
-                                     oldDeviator,
-                                     oldStrainElastic );
-
-  // elastic predictor (assume strainIncrement is all elastic)
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    strainElasticTrial[i] = oldStrainElastic[i] + strainIncrement[i];
-  }
-  // two-invariant decomposition of trial elastic strain
-
-  twoInvariant::strainDecomposition( strainElasticTrial,
-                                     eps_v_trial,
-                                     eps_s_trial,
+                                     trialP,
+                                     trialQ,
                                      deviator );
 
-  // Calculate trial mean and deviatoric stress
-
-  real64 trialP = p0 * std::exp( -1./Cr* (eps_v_trial-eps_v0));
-  //  real64 trialP = bulkModulus * eps_v_trial; //Linear elasticity version
-  real64 trialQ = 3. * mu * eps_s_trial;
-
-  twoInvariant::stressRecomposition( trialP,
-                                     trialQ,
-                                     deviator,
-                                     stress );
-
-  // set stiffness to elastic predictor
-
-  bulkModulus = -trialP/Cr;
-  real64 lame = bulkModulus - 2./3. * mu;
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    for( localIndex j=0; j<6; ++j )
-    {
-      stiffness[i][j] = 0;
-    }
-  }
-
-  stiffness[0][0] = lame + 2.*mu;
-  stiffness[0][1] = lame;
-  stiffness[0][2] = lame;
-
-  stiffness[1][0] = lame;
-  stiffness[1][1] = lame + 2.*mu;
-  stiffness[1][2] = lame;
-
-  stiffness[2][0] = lame;
-  stiffness[2][1] = lame;
-  stiffness[2][2] = lame + 2.*mu;
-
-  stiffness[3][3] = mu;
-  stiffness[4][4] = mu;
-  stiffness[5][5] = mu;
-*/
-    
-    real64 trialP;
-    real64 trialQ;
-    real64 deviator[6];
-
-    twoInvariant::stressDecomposition( stress,
-                                       trialP,
-                                       trialQ,
-                                       deviator );
-    
   // check yield function F <= 0
 
   real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
-  evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
-    
+  evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
 
-    
- // real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+
+
+  // real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 //
 //  //real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
 //
@@ -406,18 +404,18 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   if( yield < 1e-9 ) // elasticity
   {
 // std::cout << "elastic " <<  "\n " << std::endl;
- //   saveStress( k, q, stress );
+//   saveStress( k, q, stress );
     return;
   }
 
 // else, plasticity (trial stress point lies outside yield surface)
-  // std::cout << "plastic " <<  "\n " << std::endl;
+// std::cout << "plastic " <<  "\n " << std::endl;
 
   //  real64 eps_s_trial = trialQ/3.0/mu;
-    real64 eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
+  real64 eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
   //   eps_v_trial = trialP/bulkModulus; //Linear elasticity version
-    real64 eps_s_trial = trialQ/3.0/mu;
-    
+  real64 eps_s_trial = trialQ/3.0/mu;
+
   real64 solution[3], residual[3], delta[3];
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
 
@@ -435,28 +433,28 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     //trialP = solution[0] * bulkModulus; //Linear elasticity version
     trialQ = 3. * mu * solution[1];
     bulkModulus = -trialP/Cr;
-     // real64 h = 1.0 / (Cc-Cr); //Linear hardening version
-      pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
-     // pc = oldPc + h *(eps_v_trial-solution[0]); //Linear hardening version
+    // real64 h = 1.0 / (Cc-Cr); //Linear hardening version
+    pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
+    // pc = oldPc + h *(eps_v_trial-solution[0]); //Linear hardening version
 
- /*
-    yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
+    /*
+       yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 
-    // derivatives of yield surface
-    real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
-    real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
-    real64 df_dq = 2. * trialQ /(M*M);
-    real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
-   //   real64 dpc_dve = 1./(Cc-Cr);//linear hardening version
-      real64 dpc_dve = -1./(Cc-Cr) * pc;
+       // derivatives of yield surface
+       real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.);
+       real64 df_dp = -alphaTerm * pc + 2. * alpha * alpha* trialP;
+       real64 df_dq = 2. * trialQ /(M*M);
+       real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP;
+       //   real64 dpc_dve = 1./(Cc-Cr);//linear hardening version
+         real64 dpc_dve = -1./(Cc-Cr) * pc;
 
-    real64 df_dp_dve = 2. * alpha * alpha * bulkModulus + alphaTerm * dpc_dve;
-    real64 df_dq_dse = 2. /(M*M) * 3. * mu;
-    //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve; //not used
-*/
-      evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse);
-      real64 dpc_dve = -1./(Cc-Cr) * pc;
-      
+       real64 df_dp_dve = 2. * alpha * alpha * bulkModulus + alphaTerm * dpc_dve;
+       real64 df_dq_dse = 2. /(M*M) * 3. * mu;
+       //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve; //not used
+     */
+    evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
+    real64 dpc_dve = -1./(Cc-Cr) * pc;
+
 //    //yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
 //    evaluateYield( trialP, trialQ, pc, M, alpha, yield, df_dp, df_dq, df_dpc, df_dpp, df_dqq );
 //
@@ -481,7 +479,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-      std::cout<<"iter= "<<iter<<"resid = "<<norm<<std::endl;
+    //  std::cout<<"iter= "<<iter<<"resid = "<<norm<<std::endl;
     if( iter==0 )
     {
       normZero = norm;
@@ -563,15 +561,15 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 c5 = 2./3. * BB[1][1] - c1;
 
   real64 identity[6];
-    
-    for( localIndex i=0; i<6; ++i )
+
+  for( localIndex i=0; i<6; ++i )
+  {
+    for( localIndex j=0; j<6; ++j )
     {
-      for( localIndex j=0; j<6; ++j )
-      {
-          stiffness[i][j] =  0.0;
-      }
+      stiffness[i][j] =  0.0;
     }
-    
+  }
+
   for( localIndex i=0; i<3; ++i )
   {
     stiffness[i][i] = c1;

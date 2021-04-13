@@ -46,22 +46,22 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Reference Volumetric Strain" );
-    
-    registerWrapper( viewKeyStruct::defaultRecompressionIndexString(), &m_defaultRecompressionIndex ).
-      setApplyDefaultValue( 2e-3 ).
-      setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "Recompresion Index" );
-    
-    registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
-      setApplyDefaultValue( -1 ).
-      setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "Elastic Bulk Modulus Parameter" );
 
-    registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
-      setApplyDefaultValue( -1 ).
-      setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "Elastic Shear Modulus Parameter" );
-    
+  registerWrapper( viewKeyStruct::defaultRecompressionIndexString(), &m_defaultRecompressionIndex ).
+    setApplyDefaultValue( 2e-3 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Recompresion Index" );
+
+  registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Elastic Bulk Modulus Parameter" );
+
+  registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Elastic Shear Modulus Parameter" );
+
 
 //  registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString() ).
 //    setApplyDefaultValue( -1 ).
@@ -80,18 +80,18 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
   registerWrapper( viewKeyStruct::refStrainVolString(), &m_refStrainVol ).
     setApplyDefaultValue( -1 ).
     setDescription( "Reference Volumetric Strain" );
-    
-    registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
-      setApplyDefaultValue( -1 ).
-      setDescription( "Recompression Index Field" );
-    
-    registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
-      setApplyDefaultValue( -1 ).
-      setDescription( "Elastic bulk Modulus" );
 
-    registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
-      setApplyDefaultValue( -1 ).
-      setDescription( "Elastic Shear Modulus" );
+  registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Recompression Index Field" );
+
+  registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Elastic bulk Modulus" );
+
+  registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Elastic Shear Modulus" );
 }
 
 
@@ -128,11 +128,11 @@ void ElasticIsotropicPressureDependent::postProcessInput()
 //    ++numConstantsSpecified;
 //    errorCheck += "K, ";
 //  }
-    if( Cr >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "Cr, ";
-    }
+  if( Cr >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "Cr, ";
+  }
   if( G >= 0.0 )
   {
     ++numConstantsSpecified;
@@ -142,9 +142,11 @@ void ElasticIsotropicPressureDependent::postProcessInput()
 
   GEOSX_ERROR_IF( numConstantsSpecified != 2,
                   "A specific pair of elastic constants is required: (Cr, G). " );
-      GEOSX_THROW_IF( m_defaultRecompressionIndex <= 0, "Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
-      real64 poisson = conversions::BulkModAndShearMod::toPoissonRatio( -1*m_defaultRefPressure/m_defaultRecompressionIndex, m_defaultShearModulus );
-      GEOSX_THROW_IF( poisson < 0, "Elastic parameters lead to negative Poisson ratio at reference pressure " << poisson << " p0="<< m_defaultRefPressure << ", Cr= " << m_defaultRecompressionIndex << ", G=" << m_defaultShearModulus , InputError );
+  GEOSX_THROW_IF( m_defaultRecompressionIndex <= 0, "Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
+  real64 poisson = conversions::BulkModAndShearMod::toPoissonRatio( -1*m_defaultRefPressure/m_defaultRecompressionIndex, m_defaultShearModulus );
+  GEOSX_THROW_IF( poisson < 0,
+                  "Elastic parameters lead to negative Poisson ratio at reference pressure " << poisson << " p0="<< m_defaultRefPressure << ", Cr= " << m_defaultRecompressionIndex << ", G=" << m_defaultShearModulus,
+                  InputError );
 
 
 //  if( nu >= 0.0 && E >= 0.0 )
@@ -190,14 +192,14 @@ void ElasticIsotropicPressureDependent::postProcessInput()
   this->getWrapper< array1d< real64 > >( viewKeyStruct::refStrainVolString() ).
     setApplyDefaultValue( m_defaultRefStrainVol );
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
-      setApplyDefaultValue( m_defaultRecompressionIndex );
-    
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString() ).
-      setApplyDefaultValue( m_defaultBulkModulus );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
+    setApplyDefaultValue( m_defaultRecompressionIndex );
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
-      setApplyDefaultValue( m_defaultShearModulus );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString() ).
+    setApplyDefaultValue( m_defaultBulkModulus );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
+    setApplyDefaultValue( m_defaultShearModulus );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropicPressureDependent, string const &, Group * const )

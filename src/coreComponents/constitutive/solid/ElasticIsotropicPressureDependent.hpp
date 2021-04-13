@@ -54,7 +54,7 @@ public:
                                             arrayView1d< real64 const > const & bulkModulus,
                                             arrayView1d< real64 const > const & shearModulus,
                                             arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                                            arrayView3d< real64, solid::STRESS_USD > const & oldStress):
+                                            arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
     SolidBaseUpdates( newStress, oldStress ),
     m_refPressure( refPressure ),
     m_refStrainVol( refStrainVol ),
@@ -98,8 +98,8 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
-                                    real64 ( &stiffness )[6][6] ,
-                                   localIndex const q) const override;
+                                    real64 ( &stiffness )[6][6],
+                                    localIndex const q ) const override;
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
@@ -109,18 +109,18 @@ public:
 
 protected:
 
-    /// A reference to the ArrayView holding the reference pressure for each element.
-    arrayView1d< real64 const > const m_refPressure;
+  /// A reference to the ArrayView holding the reference pressure for each element.
+  arrayView1d< real64 const > const m_refPressure;
 
-    /// A reference to the ArrayView holding the reference volumetric strain for each element.
-    arrayView1d< real64 const > const m_refStrainVol;
+  /// A reference to the ArrayView holding the reference volumetric strain for each element.
+  arrayView1d< real64 const > const m_refStrainVol;
 
-    /// A reference to the ArrayView holding the recompression index for each element.
-    arrayView1d< real64 const > const m_recompressionIndex;
-    
-    /// A reference to the ArrayView holding the bulk modulus for each element.
-    arrayView1d< real64 const > const m_bulkModulus;
-    
+  /// A reference to the ArrayView holding the recompression index for each element.
+  arrayView1d< real64 const > const m_recompressionIndex;
+
+  /// A reference to the ArrayView holding the bulk modulus for each element.
+  arrayView1d< real64 const > const m_bulkModulus;
+
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
 };
@@ -129,244 +129,243 @@ protected:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex const k,
-                                                   real64 ( & stiffness )[6][6],
-                                                   localIndex const q ) const
+                                                                    real64 ( & stiffness )[6][6],
+                                                                    localIndex const q ) const
 {
-    real64 const mu     = m_shearModulus[k];
-    real64 const Cr     = m_recompressionIndex[k];
-      
-      real64 deviator[6];
-      real64 stress[6];
-      real64 P;
-      real64 Q;
+  real64 const mu     = m_shearModulus[k];
+  real64 const Cr     = m_recompressionIndex[k];
 
-    LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
-    
-    for( localIndex i=0; i<6; ++i )
-    {
-      stress[i] = m_newStress[k][q][i];
-    }
-      
-      twoInvariant::stressDecomposition( stress,
-                                         P,
-                                         Q,
-                                         deviator );
-      
-      real64 bulkModulus = -P/Cr;
-      
-      real64 const lambda = bulkModulus - 2./3. * mu;
-      
-    stiffness[0][0] = lambda + 2*mu;
-    stiffness[0][1] = lambda;
-    stiffness[0][2] = lambda;
+  real64 deviator[6];
+  real64 stress[6];
+  real64 P;
+  real64 Q;
 
-    stiffness[1][0] = lambda;
-    stiffness[1][1] = lambda + 2*mu;
-    stiffness[1][2] = lambda;
+  LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
-    stiffness[2][0] = lambda;
-    stiffness[2][1] = lambda;
-    stiffness[2][2] = lambda + 2*mu;
+  for( localIndex i=0; i<6; ++i )
+  {
+    stress[i] = m_newStress[k][q][i];
+  }
 
-    stiffness[3][3] = mu;
-    stiffness[4][4] = mu;
-    stiffness[5][5] = mu;
+  twoInvariant::stressDecomposition( stress,
+                                     P,
+                                     Q,
+                                     deviator );
+
+  real64 bulkModulus = -P/Cr;
+
+  real64 const lambda = bulkModulus - 2./3. * mu;
+
+  stiffness[0][0] = lambda + 2*mu;
+  stiffness[0][1] = lambda;
+  stiffness[0][2] = lambda;
+
+  stiffness[1][0] = lambda;
+  stiffness[1][1] = lambda + 2*mu;
+  stiffness[1][2] = lambda;
+
+  stiffness[2][0] = lambda;
+  stiffness[2][1] = lambda;
+  stiffness[2][2] = lambda + 2*mu;
+
+  stiffness[3][3] = mu;
+  stiffness[4][4] = mu;
+  stiffness[5][5] = mu;
 }
 
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex const k,
-                                                                localIndex const q,
-                                                                real64 ( & elasticStrain)[6] ) const
+                                                                 localIndex const q,
+                                                                 real64 ( & elasticStrain)[6] ) const
 {
-    real64 const mu     = m_shearModulus[k];
-    real64 const p0     = m_refPressure[k];
-    real64 const eps_v0 = m_refStrainVol[k];
-    real64 const Cr     = m_recompressionIndex[k];
-    real64 deviator[6];
-    real64 stress[6];
-    real64 P;
-    real64 Q;
-    
-    for( localIndex i=0; i<6; ++i )
-    {
-      stress[i] = m_newStress[k][q][i];
-    }
-    
-    twoInvariant::stressDecomposition( stress,
-                                       P,
-                                       Q,
-                                       deviator );
-    
+  real64 const mu     = m_shearModulus[k];
+  real64 const p0     = m_refPressure[k];
+  real64 const eps_v0 = m_refStrainVol[k];
+  real64 const Cr     = m_recompressionIndex[k];
+  real64 deviator[6];
+  real64 stress[6];
+  real64 P;
+  real64 Q;
 
-    
-    real64 elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
-    real64 elasticStrainDev = Q/3./mu;
-    
-    twoInvariant::strainRecomposition( elasticStrainVol,
-                                       elasticStrainDev,
-                                       deviator,
-                                       elasticStrain );
+  for( localIndex i=0; i<6; ++i )
+  {
+    stress[i] = m_newStress[k][q][i];
+  }
+
+  twoInvariant::stressDecomposition( stress,
+                                     P,
+                                     Q,
+                                     deviator );
+
+
+
+  real64 elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
+  real64 elasticStrainDev = Q/3./mu;
+
+  twoInvariant::strainRecomposition( elasticStrainVol,
+                                     elasticStrainDev,
+                                     deviator,
+                                     elasticStrain );
 
 }
-
 
 
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const ( &strainIncrement )[6],
-                                                 real64 ( & stress )[6],
-                                                 real64 ( & stiffness )[6][6] ) const
+                                                                  localIndex const q,
+                                                                  real64 const ( &strainIncrement )[6],
+                                                                  real64 ( & stress )[6],
+                                                                  real64 ( & stiffness )[6][6] ) const
 {
   //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
-    // Rename variables for easier implementation
+  // Rename variables for easier implementation
 
-    real64 const mu     = m_shearModulus[k];
-    real64 const p0     = m_refPressure[k];
-    real64 const eps_v0 = m_refStrainVol[k];
-    real64 const Cr     = m_recompressionIndex[k];
+  real64 const mu     = m_shearModulus[k];
+  real64 const p0     = m_refPressure[k];
+  real64 const eps_v0 = m_refStrainVol[k];
+  real64 const Cr     = m_recompressionIndex[k];
 
-    // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
+  // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
-    real64 oldP;
-    real64 oldQ;
-    real64 oldDeviator[6];
-    real64 deviator[6];
-    real64 oldStrainElastic[6];
-    real64 strainElasticTotal[6];
-    real64 eps_s_elastic;
-    real64 eps_v_elastic;
+  real64 oldP;
+  real64 oldQ;
+  real64 oldDeviator[6];
+  real64 deviator[6];
+  real64 oldStrainElastic[6];
+  real64 strainElasticTotal[6];
+  real64 eps_s_elastic;
+  real64 eps_v_elastic;
 
-    for( localIndex i=0; i<6; ++i )
-    {
-      stress[i] = m_oldStress[k][q][i];
-    }
+  for( localIndex i=0; i<6; ++i )
+  {
+    stress[i] = m_oldStress[k][q][i];
+  }
 
-    twoInvariant::stressDecomposition( stress,
-                                       oldP,
-                                       oldQ,
-                                       oldDeviator );
+  twoInvariant::stressDecomposition( stress,
+                                     oldP,
+                                     oldQ,
+                                     oldDeviator );
 
-    // Recover elastic strains from the previous step, based on stress from the previous step
-    // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
+  // Recover elastic strains from the previous step, based on stress from the previous step
+  // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-    real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-    real64 oldElasticStrainDev = oldQ/3./mu;
+  real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+  real64 oldElasticStrainDev = oldQ/3./mu;
 
-    // Now recover the old strain tensor from the strain invariants.
-    // Note that we need the deviatoric direction (n-hat) from the previous step.
+  // Now recover the old strain tensor from the strain invariants.
+  // Note that we need the deviatoric direction (n-hat) from the previous step.
 
-    twoInvariant::strainRecomposition( oldElasticStrainVol,
-                                       oldElasticStrainDev,
-                                       oldDeviator,
-                                       oldStrainElastic );
+  twoInvariant::strainRecomposition( oldElasticStrainVol,
+                                     oldElasticStrainDev,
+                                     oldDeviator,
+                                     oldStrainElastic );
 
-    // Total elastic strain
+  // Total elastic strain
 
-    for( localIndex i=0; i<6; ++i )
-    {
-      strainElasticTotal[i] = oldStrainElastic[i] + strainIncrement[i];
-    }
-    // two-invariant decomposition of trial elastic strain
+  for( localIndex i=0; i<6; ++i )
+  {
+    strainElasticTotal[i] = oldStrainElastic[i] + strainIncrement[i];
+  }
+  // two-invariant decomposition of trial elastic strain
 
-    twoInvariant::strainDecomposition( strainElasticTotal,
-                                       eps_v_elastic,
-                                       eps_s_elastic,
-                                       deviator );
+  twoInvariant::strainDecomposition( strainElasticTotal,
+                                     eps_v_elastic,
+                                     eps_s_elastic,
+                                     deviator );
 
-    // Calculate trial mean and deviatoric stress
+  // Calculate trial mean and deviatoric stress
 
-    real64 P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
-    real64 Q = 3. * mu * eps_s_elastic;
+  real64 P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
+  real64 Q = 3. * mu * eps_s_elastic;
 
-    twoInvariant::stressRecomposition( P,
-                                       Q,
-                                       deviator,
-                                       stress );
-    saveStress( k, q, stress );
-    getElasticStiffness( k, stiffness , q );
+  twoInvariant::stressRecomposition( P,
+                                     Q,
+                                     deviator,
+                                     stress );
+  saveStress( k, q, stress );
+  getElasticStiffness( k, stiffness, q );
 }
 
 //TODO: implement the discretizationOps version of smallStrainUpdate
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const ( &strainIncrement )[6],
-                                                 real64 ( & stress )[6],
-                                                 DiscretizationOps & stiffness ) const
+                                                                  localIndex const q,
+                                                                  real64 const ( &strainIncrement )[6],
+                                                                  real64 ( & stress )[6],
+                                                                  DiscretizationOps & stiffness ) const
 {
-    //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
-      // Rename variables for easier implementation
+  //smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  // Rename variables for easier implementation
 
-      real64 const mu     = m_shearModulus[k];
-      real64 const p0     = m_refPressure[k];
-      real64 const eps_v0 = m_refStrainVol[k];
-      real64 const Cr     = m_recompressionIndex[k];
+  real64 const mu     = m_shearModulus[k];
+  real64 const p0     = m_refPressure[k];
+  real64 const eps_v0 = m_refStrainVol[k];
+  real64 const Cr     = m_recompressionIndex[k];
 
-      // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
+  // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
-      real64 oldP;
-      real64 oldQ;
-      real64 oldDeviator[6];
-      real64 deviator[6];
-      real64 oldStrainElastic[6];
-      real64 strainElasticTotal[6];
-      real64 eps_s_elastic;
-      real64 eps_v_elastic;
+  real64 oldP;
+  real64 oldQ;
+  real64 oldDeviator[6];
+  real64 deviator[6];
+  real64 oldStrainElastic[6];
+  real64 strainElasticTotal[6];
+  real64 eps_s_elastic;
+  real64 eps_v_elastic;
 
-      for( localIndex i=0; i<6; ++i )
-      {
-        stress[i] = m_oldStress[k][q][i];
-      }
+  for( localIndex i=0; i<6; ++i )
+  {
+    stress[i] = m_oldStress[k][q][i];
+  }
 
-      twoInvariant::stressDecomposition( stress,
-                                         oldP,
-                                         oldQ,
-                                         oldDeviator );
+  twoInvariant::stressDecomposition( stress,
+                                     oldP,
+                                     oldQ,
+                                     oldDeviator );
 
-      // Recover elastic strains from the previous step, based on stress from the previous step
-      // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
+  // Recover elastic strains from the previous step, based on stress from the previous step
+  // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-      real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-      real64 oldElasticStrainDev = oldQ/3./mu;
+  real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+  real64 oldElasticStrainDev = oldQ/3./mu;
 
-      // Now recover the old strain tensor from the strain invariants.
-      // Note that we need the deviatoric direction (n-hat) from the previous step.
+  // Now recover the old strain tensor from the strain invariants.
+  // Note that we need the deviatoric direction (n-hat) from the previous step.
 
-      twoInvariant::strainRecomposition( oldElasticStrainVol,
-                                         oldElasticStrainDev,
-                                         oldDeviator,
-                                         oldStrainElastic );
+  twoInvariant::strainRecomposition( oldElasticStrainVol,
+                                     oldElasticStrainDev,
+                                     oldDeviator,
+                                     oldStrainElastic );
 
-      // Total elastic strain
+  // Total elastic strain
 
-      for( localIndex i=0; i<6; ++i )
-      {
-        strainElasticTotal[i] = oldStrainElastic[i] + strainIncrement[i];
-      }
-      // two-invariant decomposition of elastic strain
+  for( localIndex i=0; i<6; ++i )
+  {
+    strainElasticTotal[i] = oldStrainElastic[i] + strainIncrement[i];
+  }
+  // two-invariant decomposition of elastic strain
 
-      twoInvariant::strainDecomposition( strainElasticTotal,
-                                         eps_v_elastic,
-                                         eps_s_elastic,
-                                         deviator );
+  twoInvariant::strainDecomposition( strainElasticTotal,
+                                     eps_v_elastic,
+                                     eps_s_elastic,
+                                     deviator );
 
-      // Calculate mean and deviatoric stress
+  // Calculate mean and deviatoric stress
 
-      real64 P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
-      real64 Q = 3. * mu * eps_s_elastic;
+  real64 P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
+  real64 Q = 3. * mu * eps_s_elastic;
 
-      twoInvariant::stressRecomposition( P,
-                                         Q,
-                                         deviator,
-                                         stress );
-    real64 bulkModulus = -P/Cr;
-    
+  twoInvariant::stressRecomposition( P,
+                                     Q,
+                                     deviator,
+                                     stress );
+  real64 bulkModulus = -P/Cr;
+
   saveStress( k, q, stress );
   stiffness.m_bulkModulus = bulkModulus;
   stiffness.m_shearModulus = m_shearModulus[k];
@@ -434,28 +433,28 @@ public:
 
 //    /// string/key for default Young's modulus
 //    static constexpr char const * defaultYoungsModulusString() { return "defaultYoungsModulus"; }
-      
-      /// string/key for default reference pressure
-      static constexpr char const * defaultRefPressureString() { return "defaultRefPressure"; }
 
-      /// string/key for default reference volumetric strain
-      static constexpr char const * defaultRefStrainVolString() { return "defaultRefStrainVol"; }
+    /// string/key for default reference pressure
+    static constexpr char const * defaultRefPressureString() { return "defaultRefPressure"; }
 
-      /// string/key for default recompression index
-      static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
+    /// string/key for default reference volumetric strain
+    static constexpr char const * defaultRefStrainVolString() { return "defaultRefStrainVol"; }
+
+    /// string/key for default recompression index
+    static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
 
     /// string/key for reference pressure
     static constexpr char const * refPressureString() { return "refPressure"; }
 
     /// string/key for reference volumetric strain
     static constexpr char const * refStrainVolString() { return "refStrainVol"; }
-      
-      /// string/key for recompression index
-      static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
-      /// string/key for shear modulus
-      static constexpr char const * bulkModulusString() { return "bulkModulus"; }
-      /// string/key for shear modulus
-      static constexpr char const * shearModulusString() { return "shearModulus"; }
+
+    /// string/key for recompression index
+    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
+    /// string/key for shear modulus
+    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
+    /// string/key for shear modulus
+    static constexpr char const * shearModulusString() { return "shearModulus"; }
   };
 
   /**
@@ -497,22 +496,22 @@ public:
     if( includeState )
     {
       return ElasticIsotropicPressureDependentUpdates( m_refPressure,
-                                                      m_refStrainVol,
-                                                      m_recompressionIndex,
-                                                      m_bulkModulus,
-                                      m_shearModulus,
-                                      m_newStress,
-                                      m_oldStress );
+                                                       m_refStrainVol,
+                                                       m_recompressionIndex,
+                                                       m_bulkModulus,
+                                                       m_shearModulus,
+                                                       m_newStress,
+                                                       m_oldStress );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
     {
       return ElasticIsotropicPressureDependentUpdates( m_refPressure,
-                                                      m_refStrainVol,
-                                                      m_recompressionIndex,
-                                                      m_bulkModulus,
-                                      m_shearModulus,
-                                      arrayView3d< real64, solid::STRESS_USD >(),
-                                      arrayView3d< real64, solid::STRESS_USD >() );
+                                                       m_refStrainVol,
+                                                       m_recompressionIndex,
+                                                       m_bulkModulus,
+                                                       m_shearModulus,
+                                                       arrayView3d< real64, solid::STRESS_USD >(),
+                                                       arrayView3d< real64, solid::STRESS_USD >() );
     }
   }
 
@@ -528,11 +527,11 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
-                         m_refPressure,
-                         m_refStrainVol,
-                         m_recompressionIndex,
-                         m_bulkModulus,
-                         m_shearModulus,
+                          m_refPressure,
+                          m_refStrainVol,
+                          m_recompressionIndex,
+                          m_bulkModulus,
+                          m_shearModulus,
                           m_newStress,
                           m_oldStress );
   }
@@ -548,30 +547,30 @@ protected:
 
   /// The default value of the shear modulus for any new allocations.
   real64 m_defaultRefStrainVol;
-    
-    /// The default value of the bulk modulus for any new allocations.
-    real64 m_defaultRecompressionIndex;
 
-    /// The default value of the shear modulus for any new allocations.
-    real64 m_defaultBulkModulus;
-    
-    /// The default value of the shear modulus for any new allocations.
-    real64 m_defaultShearModulus;
+  /// The default value of the bulk modulus for any new allocations.
+  real64 m_defaultRecompressionIndex;
+
+  /// The default value of the shear modulus for any new allocations.
+  real64 m_defaultBulkModulus;
+
+  /// The default value of the shear modulus for any new allocations.
+  real64 m_defaultShearModulus;
 
   /// The bulk modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_refPressure;
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_refStrainVol;
-    
-    /// The bulk modulus for each upper level dimension (i.e. cell) of *this
-    array1d< real64 > m_recompressionIndex;
 
-    /// The shear modulus for each upper level dimension (i.e. cell) of *this
-    array1d< real64 > m_bulkModulus;
-    
-    /// The shear modulus for each upper level dimension (i.e. cell) of *this
-    array1d< real64 > m_shearModulus;
+  /// The bulk modulus for each upper level dimension (i.e. cell) of *this
+  array1d< real64 > m_recompressionIndex;
+
+  /// The shear modulus for each upper level dimension (i.e. cell) of *this
+  array1d< real64 > m_bulkModulus;
+
+  /// The shear modulus for each upper level dimension (i.e. cell) of *this
+  array1d< real64 > m_shearModulus;
 
 };
 
