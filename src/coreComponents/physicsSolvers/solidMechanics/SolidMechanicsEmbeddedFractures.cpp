@@ -27,16 +27,16 @@
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -111,7 +111,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  updateState( getGlobalState().getProblemManager().getDomainPartition() );
+  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
 
@@ -473,7 +473,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                        real64 const dt,
                                                        DomainPartition & domain )
 {
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply( time_n+ dt,
                    domain,
@@ -599,10 +599,10 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 
   updateState( domain );
 }

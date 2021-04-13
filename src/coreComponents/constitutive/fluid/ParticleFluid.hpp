@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
 
 namespace geosx
