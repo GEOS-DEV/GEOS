@@ -56,9 +56,9 @@ def calculDt(problem):
 
         if elem_volume.to_numpy()[i] < V:
 
-            xradius = np.linalg.norm(node_position.to_numpy()[elem_list.to_numpy()[i][0]] - node_position.to_numpy()[elem_list.to_numpy()[0][nx]])/2
-            yradius = np.linalg.norm(node_position.to_numpy()[elem_list.to_numpy()[i][0]] - node_position.to_numpy()[elem_list.to_numpy()[0][ny]])/2
-            zradius = np.linalg.norm(node_position.to_numpy()[elem_list.to_numpy()[i][0]] - node_position.to_numpy()[elem_list.to_numpy()[0][nz]])/2
+            xradius = np.linalg.norm(node_position.to_numpy()[elem_list.to_numpy()[i][0]] - node_position.to_numpy()[elem_list.to_numpy()[i][nx]])/2
+            yradius = np.linalg.norm(node_position.to_numpy()[elem_list.to_numpy()[i][0]] - node_position.to_numpy()[elem_list.to_numpy()[i][ny]])/2
+            zradius = np.linalg.norm(node_position.to_numpy()[elem_list.to_numpy()[i][0]] - node_position.to_numpy()[elem_list.to_numpy()[i][nz]])/2
 
             if xradius < h:
                 h = xradius

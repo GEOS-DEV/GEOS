@@ -19,8 +19,6 @@ pygeosxPath = wavePropagationPath + "/pygeosx/"
 segyPath = pygeosxPath + "/segyAcquisition/"
 xmlPath = sys.argv[2]
 
-acqName = "linearEquispacedY=6751/"
-
 
 def multiProcessing(shot_list, nb_proc = 1):
     p = []
@@ -107,9 +105,7 @@ def main():
 
     #shot_list = segy_acquisition(segyPath + acqName, wavelet, dt)
 
-    #export_for_acquisition(shot_list, segyPath, acqName)
-
-    #multiProcessing(shot_list)
+    multiProcessing(shot_list)
 
 
 
