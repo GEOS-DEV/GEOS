@@ -6,35 +6,41 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ permeabilityModel }"
+      fluidNames="{ fluid1 }"
+      solidNames="{ rock, fractureFilling }"
+      permeabilityNames="{ rockPerm, fracPerm }"
       relPermNames="{ relperm }"
       temperature="300"
       useMass="0"
-      targetRegions="{ region }">
+      targetRegions="{ Domain, Fracture }"
+      initialDt= "1e4">
       <NonlinearSolverParameters
-        newtonTol="1.0e-10"
+        newtonTol="1.0e-6"
         newtonMaxIter="15"
         maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
         solverType="direct"
-        directParallel="0"  
+        directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseFVM>
-
+    <EmbeddedSurfaceGenerator
+      name="SurfaceGenerator"
+      logLevel="1"
+      solidMaterialNames="{ rock }"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegion="Fracture"/>
   </Solvers>
 
   <Mesh>
     <InternalMesh
-      name="mesh"
+      name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 10 }"
-      yCoords="{ 0, 1 }"
+      xCoords="{ 0, 41 }"
+      yCoords="{ 0, 41 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 1 }"
+      nx="{ 41 }"
+      ny="{ 41 }"
       nz="{ 1 }"
       cellBlockNames="{ block1 }"/>
   </Mesh>
@@ -47,29 +53,33 @@
 
     <Box
       name="sink"
-      xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 1.01"/>
+      xMin=" 40.99, 40.99, -0.01"
+      xMax="41.01, 41.01, 1.01"/>
+    
+    <BoundedPlane
+      name="FracturePlane"
+      normal="0, 1, 0"
+      origin="10.5, 3.5, 0.5"
+      lengthVector="1, 0, 0"
+      widthVector="0, 0, 1"
+      dimensions="{ 15, 1 }"/>  
   </Geometry>
 
   <Events
     maxTime="2e7">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+    
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e6"
+      timeFrequency="1e5"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
-      forceDt="1e4"
       beginTime="0"
-      endTime="1e5"
-      target="/Solvers/compflow"/>
-
-    <PeriodicEvent
-      name="solverApplications2"
-      forceDt="1e5"
-      beginTime="1e5"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
@@ -90,20 +100,25 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="region"
+      name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid, rock, permeabilityModel, relperm }"/>
+      materialList="{ fluid1, rock, rockPerm, relperm }"/>
+	<SurfaceElementRegion 
+	  name="Fracture"
+	  defaultAperture="1.0e-4"
+	  materialList="{ fluid1, fractureFilling, relperm, fracPerm }"
+	  subRegionType="embeddedElement" />
   </ElementRegions>
 
   <Constitutive>
-    <DeadOilFluid
-      name="fluid"
+     <DeadOilFluid
+      name="fluid1"
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
-   <CompressibleRock
+    <CompressibleRock
       name="rock"
       referencePressure="0.0"
       defaultReferencePorosity ="0.2"
@@ -111,9 +126,13 @@
       defaultGrainDensity="1"
       grainBulkModulus="1.0e9"/>
       
-    <ConstantPermeability
-      name="permeabilityModel"
-      permeabilityComponents="1.0e-16, 1.0e-16, 1.0e-16"/>
+    <CompressibleRock
+      name="fractureFilling"
+      referencePressure="0.0"
+      defaultReferencePorosity ="1.0"
+      compressibility="0.0"
+      defaultGrainDensity="1"
+      grainBulkModulus="1.0e9"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -121,42 +140,84 @@
       phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9, 0.9 }"/>
+      
+    <ParallelPlatesPermeability
+      name="fracPerm"/>
+    
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="1.0e-14, 1.0e-14, 1.0e-14"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <!-- Initial pressure: ~75 bar -->
+    <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
-      scale="7.5e6"/>
+      scale="5e6"/>
+      
+    <FieldSpecification
+      name="initialFracturePressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="pressure"
+      scale="5e6"/>
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
       name="initialComposition_oil"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
+      
+    <FieldSpecification
+      name="initialCompositionFracture_oil"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.6"/>      
 
     <FieldSpecification
       name="initialComposition_gas"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
-
+      
+    <FieldSpecification
+      name="initialCompositionFracture_gas"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.399"/>
+      
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.001"/>
+      
+    <FieldSpecification
+      name="initialCompositionFracture_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="globalCompFraction"
       component="2"
       scale="0.001"/>
@@ -164,7 +225,7 @@
     <!-- Injection pressure: ~10 bar -->
     <FieldSpecification
       name="sourceTermPressure"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
       scale="1e7"
       setNames="{ source }"/>
@@ -173,7 +234,7 @@
     <FieldSpecification
       name="sourceTermComposition_oil"
       setNames="{ source }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="globalCompFraction"
       component="0"
       scale="0.1"/>
@@ -181,7 +242,7 @@
     <FieldSpecification
       name="sourceTermComposition_gas"
       setNames="{ source }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="globalCompFraction"
       component="1"
       scale="0.1"/>
@@ -189,24 +250,24 @@
     <FieldSpecification
       name="sourceTermComposition_water"
       setNames="{ source }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="globalCompFraction"
       component="2"
       scale="0.8"/>
 
-    <!-- Production pressure: ~40 bar, -->
+    <!-- Production pressure: ~2 bar, -->
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
-      scale="4e6"
+      scale="2e5"
       setNames="{ sink }"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
     <FieldSpecification
       name="sinkTermComposition_oil"
       setNames="{ sink }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
@@ -214,7 +275,7 @@
     <FieldSpecification
       name="sinkTermComposition_gas"
       setNames="{ sink }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
@@ -222,15 +283,15 @@
     <FieldSpecification
       name="sinkTermComposition_water"
       setNames="{ sink }"
-      objectPath="ElementRegions/region/block1"
+      objectPath="ElementRegions/Domain/block1"
       fieldName="globalCompFraction"
       component="2"
       scale="0.001"/>
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>

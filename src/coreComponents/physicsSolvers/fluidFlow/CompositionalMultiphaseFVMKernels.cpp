@@ -236,13 +236,14 @@ INST_PhaseMobilityKernel( 5, 3 );
 
 /******************************** FluxKernel ********************************/
 
-template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+template< localIndex NC, localIndex MAX_NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 FluxKernel::
   compute( localIndex const numPhases,
            localIndex const stencilSize,
+           localIndex const numFluxElems,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
@@ -271,32 +272,31 @@ FluxKernel::
            arraySlice2d< real64 > const localFluxJacobian )
 {
   localIndex constexpr NDOF = NC + 1;
-  localIndex const NP = numPhases;
 
-  real64 compFlux[NC]{};
-  real64 dCompFlux_dP[MAX_STENCIL][NC]{};
-  real64 dCompFlux_dC[MAX_STENCIL][NC][NC]{};
+  stackArray1d< real64, NC > compFlux( NC );
+  stackArray2d< real64, MAX_STENCIL_SIZE * NC > dCompFlux_dP( stencilSize, NC );
+  stackArray3d< real64, MAX_STENCIL_SIZE * NC * NC > dCompFlux_dC( stencilSize, NC, NC );
 
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases; ++ip )
   {
     // clear working arrays
     real64 densMean{};
-    real64 dDensMean_dP[NUM_ELEMS]{};
-    real64 dDensMean_dC[NUM_ELEMS][NC]{};
+    stackArray1d< real64, MAX_NUM_ELEMS > dDensMean_dP( numFluxElems );
+    stackArray2d< real64, MAX_NUM_ELEMS * NC > dDensMean_dC( numFluxElems, NC );
 
     // create local work arrays
     real64 phaseFlux{};
-    real64 dPhaseFlux_dP[MAX_STENCIL]{};
-    real64 dPhaseFlux_dC[MAX_STENCIL][NC]{};
+    real64 dPhaseFlux_dP[MAX_STENCIL_SIZE]{};
+    real64 dPhaseFlux_dC[MAX_STENCIL_SIZE][NC]{};
 
     real64 presGrad{};
-    real64 dPresGrad_dP[MAX_STENCIL]{};
-    real64 dPresGrad_dC[MAX_STENCIL][NC]{};
+    stackArray1d< real64, MAX_STENCIL_SIZE> dPresGrad_dP( stencilSize );
+    stackArray2d< real64, MAX_STENCIL_SIZE*NC > dPresGrad_dC( stencilSize, NC );
 
     real64 gravHead{};
-    real64 dGravHead_dP[NUM_ELEMS]{};
-    real64 dGravHead_dC[NUM_ELEMS][NC]{};
+    stackArray1d< real64, MAX_NUM_ELEMS > dGravHead_dP( numFluxElems );
+    stackArray2d< real64, MAX_NUM_ELEMS * NC > dGravHead_dC( numFluxElems, NC );
 
     real64 dCapPressure_dC[NC]{};
 
@@ -304,7 +304,7 @@ FluxKernel::
     real64 dProp_dC[NC]{};
 
     // calculate quantities on primary connected cells
-    for( localIndex i = 0; i < NUM_ELEMS; ++i )
+    for( localIndex i = 0; i < numFluxElems; ++i )
     {
       localIndex const er  = seri[i];
       localIndex const esr = sesri[i];
@@ -350,7 +350,7 @@ FluxKernel::
       {
         capPressure = phaseCapPressure[er][esr][ei][0][ip];
 
-        for( localIndex jp = 0; jp < NP; ++jp )
+        for( localIndex jp = 0; jp < numPhases; ++jp )
         {
           real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
           dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
@@ -378,7 +378,7 @@ FluxKernel::
       gravHead += densMean * gravD;
 
       // need to add contributions from both cells the mean density depends on
-      for( localIndex j = 0; j < NUM_ELEMS; ++j )
+      for( localIndex j = 0; j < numFluxElems; ++j )
       {
         dGravHead_dP[j] += dDensMean_dP[j] * gravD + dGravD_dP * densMean;
         for( localIndex jc = 0; jc < NC; ++jc )
@@ -423,7 +423,7 @@ FluxKernel::
     }
 
     // gravitational head depends only on the two cells connected (same as mean density)
-    for( localIndex ke = 0; ke < NUM_ELEMS; ++ke )
+    for( localIndex ke = 0; ke < numFluxElems; ++ke )
     {
       dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
       for( localIndex jc = 0; jc < NC; ++jc )
@@ -547,55 +547,57 @@ FluxKernel::
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  localIndex constexpr NUM_ELEMS   = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-  localIndex constexpr MAX_STENCIL = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+  constexpr localIndex MAX_NUM_ELEMS = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+  constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
 
-    localIndex const stencilSize = MAX_STENCIL;
-    localIndex constexpr NDOF = NC + 1;
+    localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
+    localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
+    constexpr localIndex NDOF = NC + 1;
 
     // working arrays
-    stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
-    stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
+    stackArray1d< globalIndex, MAX_NUM_ELEMS * NDOF > dofColIndices( stencilSize * NDOF );
+    stackArray1d< real64, MAX_NUM_ELEMS * NC >                      localFlux( numFluxElems * NC );
+    stackArray2d< real64, MAX_NUM_ELEMS * NC * MAX_STENCIL_SIZE * NDOF > localFluxJacobian( numFluxElems * NC, stencilSize * NDOF );
 
     // compute transmissibility
     real64 transmissiblity[2], dTrans_dPres[2];
     stencilWrapper.computeTransmissibility( iconn, permeability, transmissiblity );
     stencilWrapper.dTrans_dPressure( iconn, dPerm_dPres, dTrans_dPres );
 
-    FluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL >( numPhases,
-                                                       stencilSize,
-                                                       seri[iconn],
-                                                       sesri[iconn],
-                                                       sei[iconn],
-                                                       transmissiblity,
-                                                       dTrans_dPres,
-                                                       pres,
-                                                       dPres,
-                                                       gravCoef,
-                                                       phaseMob,
-                                                       dPhaseMob_dPres,
-                                                       dPhaseMob_dComp,
-                                                       dPhaseVolFrac_dPres,
-                                                       dPhaseVolFrac_dComp,
-                                                       dCompFrac_dCompDens,
-                                                       phaseMassDens,
-                                                       dPhaseMassDens_dPres,
-                                                       dPhaseMassDens_dComp,
-                                                       phaseCompFrac,
-                                                       dPhaseCompFrac_dPres,
-                                                       dPhaseCompFrac_dComp,
-                                                       phaseCapPressure,
-                                                       dPhaseCapPressure_dPhaseVolFrac,
-                                                       capPressureFlag,
-                                                       dt,
-                                                       localFlux,
-                                                       localFluxJacobian );
+    FluxKernel::compute< NC, MAX_NUM_ELEMS, MAX_STENCIL_SIZE >( numPhases,
+                                                                stencilSize,
+                                                                numFluxElems,
+                                                                seri[iconn],
+                                                                sesri[iconn],
+                                                                sei[iconn],
+                                                                transmissiblity,
+                                                                dTrans_dPres,
+                                                                pres,
+                                                                dPres,
+                                                                gravCoef,
+                                                                phaseMob,
+                                                                dPhaseMob_dPres,
+                                                                dPhaseMob_dComp,
+                                                                dPhaseVolFrac_dPres,
+                                                                dPhaseVolFrac_dComp,
+                                                                dCompFrac_dCompDens,
+                                                                phaseMassDens,
+                                                                dPhaseMassDens_dPres,
+                                                                dPhaseMassDens_dComp,
+                                                                phaseCompFrac,
+                                                                dPhaseCompFrac_dPres,
+                                                                dPhaseCompFrac_dComp,
+                                                                phaseCapPressure,
+                                                                dPhaseCapPressure_dPhaseVolFrac,
+                                                                capPressureFlag,
+                                                                dt,
+                                                                localFlux,
+                                                                localFluxJacobian );
 
     // populate dof indices
-    globalIndex dofColIndices[ MAX_STENCIL * NDOF ];
     for( localIndex i = 0; i < stencilSize; ++i )
     {
       globalIndex const offset = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
@@ -609,7 +611,7 @@ FluxKernel::
     // TODO: apply equation/variable change transformation(s)
 
     // Add to residual/jacobian
-    for( localIndex i = 0; i < NUM_ELEMS; ++i )
+    for( localIndex i = 0; i < numFluxElems; ++i )
     {
       if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
       {
@@ -622,7 +624,7 @@ FluxKernel::
         {
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[i * NC + ic] );
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
-                                                                            dofColIndices,
+                                                                            dofColIndices.data(),
                                                                             localFluxJacobian[i * NC + ic].dataIfContiguous(),
                                                                             stencilSize * NDOF );
         }

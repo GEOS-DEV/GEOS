@@ -10,7 +10,7 @@
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
       permeabilityNames="{ rock_permeability, fracture_permeability }"
-      porosityNames="{ rock_porosity, fracture_porosity }">
+      solidNames="{ rock, fracfilling }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>
@@ -99,12 +99,12 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock_permeability, rock_porosity }"/>
+      materialList="{ water, rock_permeability, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture = "1e-4"
-      materialList="{ water, fracture_permeability, fracture_porosity }"
+      materialList="{ water, fracture_permeability, fracfilling }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
 
@@ -119,21 +119,25 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
       
-   <PressureDependentPorosity
-      name="rock_porosity"
+   <CompressibleRock
+      name="rock"
       referencePressure="0.0"
-      defaultReferencePorosity ="0.01"
-      compressibility="1e-8"/>
+      defaultReferencePorosity ="0.1"
+      compressibility="1e-8"
+      defaultGrainDensity="1"
+      grainBulkModulus="1.0e9"/>
       
     <ConstantPermeability
       name="rock_permeability"
       permeabilityComponents="2e-16, 2e-16, 2e-16"/>
       
-    <PressureDependentPorosity
-      name="fracture_porosity"
+    <CompressibleRock
+      name="fracfilling"
       referencePressure="0.0"
-      defaultReferencePorosity ="1.00"
-      compressibility="0.0"/>
+      defaultReferencePorosity ="1.0"
+      compressibility="0.0"
+      defaultGrainDensity="1"
+      grainBulkModulus="1.0e9"/>
       
     <ParallelPlatesPermeability
       name="fracture_permeability"/>  
@@ -145,6 +149,14 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
+      fieldName="pressure"
+      scale="0.0"/>
+      
+   <FieldSpecification
+      name="initialPressureFrac"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="pressure"
       scale="0.0"/>
 

@@ -202,6 +202,8 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
+    std::cout<< "stencil size is: " << stencilWrapper.size() << std::endl;
+
     FluxKernel::launch( stencilWrapper,
                         dt,
                         dofManager.rankOffset(),

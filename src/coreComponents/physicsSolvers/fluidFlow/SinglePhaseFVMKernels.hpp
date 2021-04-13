@@ -103,7 +103,7 @@ struct FluxKernel
       // working arrays
       stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
       stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-      stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
+      stackArray2d< real64, maxNumFluxElems * maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
 
       // compute transmissibility
       real64 transmissiblity[2], dTrans_dPres[2];

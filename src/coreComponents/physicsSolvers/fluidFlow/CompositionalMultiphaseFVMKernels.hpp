@@ -110,12 +110,13 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+  template< localIndex NC, localIndex MAX_NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  compute( localIndex const stencilSize,
-           localIndex const numPhases,
+  compute( localIndex const numPhases,
+           localIndex const stencilSize,
+           localIndex const numFluxElems,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,

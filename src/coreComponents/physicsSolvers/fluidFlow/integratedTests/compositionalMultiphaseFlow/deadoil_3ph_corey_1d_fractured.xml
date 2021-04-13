@@ -2,16 +2,17 @@
 
 <Problem>
   <Solvers>
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
       fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
+      solidNames="{ rock, fractureFilling }"
+      permeabilityNames="{ rockPerm, fracPerm }"
       relPermNames="{ relperm }"
       temperature="300"
       useMass="0"
-      targetRegions="{ Domain }">
+      targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
         newtonMaxIter="15"
@@ -21,7 +22,7 @@
         solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </CompositionalMultiphaseFlow>
+    </CompositionalMultiphaseFVM>
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       logLevel="1"
@@ -65,11 +66,15 @@
 
   <Events
     maxTime="2e7">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+    
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
@@ -104,27 +109,37 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, rock, relperm }"/>
+      materialList="{ fluid1, rock, rockPerm, relperm }"/>
 	<SurfaceElementRegion 
 	  name="Fracture"
-	  defaultAperture="1e-3"
-	  materialList="{ fluid1, rock, relperm, fracPerm }"
+	  defaultAperture="1.0e-4"
+	  materialList="{ fluid1, fractureFilling, relperm, fracPerm }"
 	  subRegionType="embeddedElement" />
   </ElementRegions>
 
   <Constitutive>
-    <BlackOilFluid
+     <DeadOilFluid
       name="fluid1"
-      fluidType="DeadOil"
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleRock
       name="rock"
       referencePressure="0.0"
-      compressibility="1e-9"/>
+      defaultReferencePorosity ="0.2"
+      compressibility="1e-9"
+      defaultGrainDensity="1"
+      grainBulkModulus="1.0e9"/>
+      
+    <CompressibleRock
+      name="fractureFilling"
+      referencePressure="0.0"
+      defaultReferencePorosity ="1.0"
+      compressibility="0.0"
+      defaultGrainDensity="1"
+      grainBulkModulus="1.0e9"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -135,45 +150,13 @@
       
     <ParallelPlatesPermeability
       name="fracPerm"/>
-      
+    
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="1.0e-16, 1.0e-16, 1.0e-16"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1"
-      fieldName="referencePorosity"
-      scale="0.2"/>
-
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"
@@ -314,8 +297,8 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>
