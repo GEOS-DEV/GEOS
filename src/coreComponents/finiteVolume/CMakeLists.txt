@@ -34,11 +34,7 @@ set( finiteVolume_sources
      HybridMimeticDiscretization.cpp
    )
 
-if ( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository codingUtilities managers)
-else()
-  set( dependencyList common)
-endif()
+set( dependencyList mesh codingUtilities fieldSpecification )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -52,11 +48,9 @@ blt_add_library( NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}
                  HEADERS               ${finiteVolume_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
                
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
-
-add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX finiteVolume )

@@ -28,11 +28,7 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
    )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository codingUtilities)
-else()
-  set( dependencyList common)
-endif()
+set( dependencyList dataRepository codingUtilities)
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -46,7 +42,7 @@ blt_add_library( NAME                  finiteElement
                  SOURCES               ${finiteElement_sources}
                  HEADERS               ${finiteElement_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
                
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

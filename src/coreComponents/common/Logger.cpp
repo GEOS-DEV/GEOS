@@ -17,8 +17,8 @@
  */
 
 // Source includes
-#include "common/Logger.hpp"
-#include "common/Path.hpp"
+#include "Logger.hpp"
+#include "Path.hpp"
 
 namespace geosx
 {

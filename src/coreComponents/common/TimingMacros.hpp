@@ -26,7 +26,7 @@
 #define GEOSX_COMMON_TIMINGMACROS_HPP_
 
 #include "common/GeosxConfig.hpp"
-#include "common/GeosxMacros.hpp"
+#include "GeosxMacros.hpp"
 
 #ifdef GEOSX_USE_CALIPER
 #include <caliper/cali.h>

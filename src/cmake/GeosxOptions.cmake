@@ -75,9 +75,9 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
 
-option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
+option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
@@ -116,8 +116,8 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
 endif()
 
 if( CMAKE_HOST_APPLE )
-    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
-    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
+#    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
+#    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
 elseif( CUDA_ENABLED )
     set(GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "")
     set(GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "")

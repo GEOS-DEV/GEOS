@@ -193,7 +193,7 @@ The model is represented by ``<CO2BrineFluid>`` node in the input.
 
 The following attributes are supported:
 
-.. include:: ../../../coreComponents/fileIO/schema/docs/CO2BrineFluid.rst
+.. include:: ../../../coreComponents/schema/docs/CO2BrineFluid.rst
 
 Supported phase names are:
 

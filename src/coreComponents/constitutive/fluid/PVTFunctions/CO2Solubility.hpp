@@ -22,7 +22,7 @@
 #include "FlashModelBase.hpp"
 
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geosx
 {

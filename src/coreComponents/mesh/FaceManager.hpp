@@ -20,7 +20,7 @@
 #define GEOSX_MESH_FACEMANAGER_HPP_
 
 #include "ToElementRelation.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 
 namespace geosx
 {

@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 struct stabledt

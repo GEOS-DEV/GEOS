@@ -21,7 +21,7 @@
 
 
 #include <map>
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 
 namespace geosx
 {

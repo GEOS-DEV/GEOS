@@ -18,8 +18,7 @@
 
 #include "constitutive/fluid/PVTFunctions/BrineCO2Density.hpp"
 
-#include "managers/Functions/FunctionManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geosx
 {
@@ -78,7 +77,7 @@ void BrineCO2Density::makeTable( string_array const & inputPara )
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateBrineDensity( tableCoords, salinity, densities );
 
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
   m_brineDensityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "brineDensityTable" ) );
   m_brineDensityTable->setTableCoordinates( tableCoords.getCoords() );
   m_brineDensityTable->setTableValues( densities );

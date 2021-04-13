@@ -16,7 +16,7 @@
  * @file StringUtilities.cpp
  */
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "StringUtilities.hpp"
 
 namespace geosx
 {

@@ -21,7 +21,7 @@
 #define GEOSX_MESH_WELLELEMENTREGION_HPP_
 
 #include "mesh/ElementRegionBase.hpp"
-#include "meshUtilities/InternalWellGenerator.hpp"
+#include "mesh/generators/InternalWellGenerator.hpp"
 
 namespace geosx
 {

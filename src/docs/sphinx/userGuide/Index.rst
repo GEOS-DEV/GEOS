@@ -13,17 +13,17 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/constitutive/docs/Constitutive
 
-   /coreComponents/managers/docs/EventManager
+   /coreComponents/events/docs/EventManager
 
-   /coreComponents/managers/docs/TasksManager
+   /coreComponents/events/docs/TasksManager
 
-   /coreComponents/managers/docs/FunctionManager
+   /coreComponents/functions/docs/FunctionManager
 
    /coreComponents/linearAlgebra/docs/LinearSolvers.rst
 
-   /coreComponents/managers/docs/NumericalMethodsManager
+   /coreComponents/discretizationMethods/docs/NumericalMethodsManager
 
-   /coreComponents/mpiCommunications/docs/SpatialPartition.rst
+   /coreComponents/mesh/mpiCommunications/docs/SpatialPartition.rst
 
    /coreComponents/fileIO/doc/Outputs.rst
 

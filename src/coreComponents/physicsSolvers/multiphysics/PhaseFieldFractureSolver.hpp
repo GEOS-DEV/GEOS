@@ -17,10 +17,10 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
@@ -106,4 +106,4 @@ ENUM_STRINGS( PhaseFieldFractureSolver::CouplingTypeOption, "FixedStress", "Tigh
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_ */

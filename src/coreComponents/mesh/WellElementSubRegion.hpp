@@ -17,7 +17,7 @@
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
-#include "meshUtilities/PerforationData.hpp"
+#include "mesh/PerforationData.hpp"
 
 namespace geosx
 {
