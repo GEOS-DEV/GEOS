@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
 #define GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "MeshGeneratorBase.hpp"
 
