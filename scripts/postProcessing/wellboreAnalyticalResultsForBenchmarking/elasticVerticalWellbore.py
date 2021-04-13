@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-a = 0.1
-p0 = -10.0
+a = 0.1 #m
+p0 = -10.0 # MPa
 
-K = 5.5556e9
-G = 4.16667e9
+K = 5.5556e9 # GPa
+G = 4.16667e9 # GPa
 
-listr = np.arange(a,10*a,0.1*a)
+listr = np.arange( a, 10*a, 0.1*a )
 listSigrr = []
 listSigtt = []
 for r in listr:
@@ -19,9 +19,9 @@ for r in listr:
 
 fig = plt.figure(figsize=[13,5])
 
+# Radial stress
 plt.subplot(121)
 plt.plot(listr,listSigrr, 'k', linewidth=2, label='Analytic')
-
 
 x, y = [], []
 for line in open('radialStress.curve', 'r'):
@@ -33,6 +33,10 @@ plt.plot(x,y,'ko', label='GEOSX result')
 plt.xlabel('r (m)')
 plt.ylabel('Radial stress (MPa)')
 plt.xlim(a,3*a)
+
+
+
+# Tangent stress
 plt.subplot(122)
 plt.plot(listr,listSigtt, 'k', linewidth=2, label='Analytic')
 

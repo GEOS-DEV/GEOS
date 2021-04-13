@@ -95,6 +95,27 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name, Group
 
 void InternalWellboreGenerator::postProcessInput()
 {
+  m_vertices[0].resize( 2 );
+  m_vertices[1].resize( 2 );
+  m_vertices[2].resize( 2 );
+
+  m_nElems[0].resize( 1 );
+  m_nElems[1].resize( 1 );
+  m_nElems[2].resize( 1 );  //TODO extend to a trajectory defined by a polyline
+  m_nElemBias[0].resize( 1 );
+
+  m_vertices[0][0]  = m_radius;
+  m_vertices[0][1]  = m_rOut;
+  m_vertices[1][0]  = 0;
+  m_vertices[1][1]  = m_theta;
+
+  m_vertices[2][0]  = m_trajectory[0][2];
+  m_vertices[2][1]  = m_trajectory[1][2];
+
+  m_nElems[0][0]    = m_rElems;
+  m_nElems[1][0]    = m_tElems;
+  m_nElemBias[0][0] = m_rBias;
+
   InternalMeshGenerator::postProcessInput();
 
 
