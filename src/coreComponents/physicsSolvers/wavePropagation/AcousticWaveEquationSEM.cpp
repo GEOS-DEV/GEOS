@@ -35,7 +35,8 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
   SolverBase( name,
               parent )
 {
-
+  GEOSX_MARK_FUNCTION;
+  
   registerWrapper( viewKeyStruct::sourceCoordinatesString(), &m_sourceCoordinates ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
@@ -104,7 +105,8 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 
 void AcousticWaveEquationSEM::postProcessInput()
 {
-
+  GEOSX_MARK_FUNCTION;
+  
   GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
                   InputError );
@@ -132,6 +134,7 @@ void AcousticWaveEquationSEM::postProcessInput()
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
+  GEOSX_MARK_FUNCTION;
 
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
@@ -165,6 +168,8 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 {
+  GEOSX_MARK_FUNCTION;
+  
   NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
@@ -283,6 +288,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 
 void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs )
 {
+  GEOSX_MARK_FUNCTION;
+  
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
@@ -304,6 +311,8 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
 
 void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayView1d< real64 > const pressure_np1 )
 {
+  GEOSX_MARK_FUNCTION;
+  
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
@@ -342,6 +351,8 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
 /// Use for now until we get the same functionality in TimeHistory
 void AcousticWaveEquationSEM::saveSismo( localIndex isismo, real64 val_pressure, char *filename )
 {
+  GEOSX_MARK_FUNCTION;
+  
   std::ofstream f( filename, std::ios::app );
   f<< isismo << " " << val_pressure << std::endl;
   f.close();
@@ -350,6 +361,8 @@ void AcousticWaveEquationSEM::saveSismo( localIndex isismo, real64 val_pressure,
 
 void AcousticWaveEquationSEM::initializePreSubGroups()
 {
+  GEOSX_MARK_FUNCTION;
+  
   SolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -369,6 +382,8 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
+  GEOSX_MARK_FUNCTION;
+  
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
@@ -501,6 +516,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
+  
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -568,12 +585,14 @@ real64 AcousticWaveEquationSEM::solverStep( real64 const & time_n,
                                             real64 const & dt,
                                             integer const cycleNumber,
                                             DomainPartition & domain )
-{
+{  
   return explicitStep( time_n, dt, cycleNumber, domain );
 }
 
 real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
 {
+  GEOSX_MARK_FUNCTION;
+  
   real64 const o_tpeak = 1.0/f0;
   real64 pulse = 0.0;
   if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
@@ -613,7 +632,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               integer const cycleNumber,
                                               DomainPartition & domain )
 {
-
+  GEOSX_MARK_FUNCTION;
+  
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
