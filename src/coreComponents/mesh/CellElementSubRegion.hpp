@@ -16,11 +16,10 @@
 #ifndef GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 
-#include "meshUtilities/CellBlockABC.hpp"
-
+#include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/FaceManager.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "ElementSubRegionBase.hpp"
 
 

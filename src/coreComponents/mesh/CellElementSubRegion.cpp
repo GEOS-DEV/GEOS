@@ -16,7 +16,6 @@
 #include "CellElementSubRegion.hpp"
 
 #include "mesh/MeshLevel.hpp"
-#include "meshUtilities/CellBlockABC.hpp"
 
 namespace geosx
 {

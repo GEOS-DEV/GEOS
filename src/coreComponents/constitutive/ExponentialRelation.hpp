@@ -20,7 +20,7 @@
 #define GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 #include <cmath>
 

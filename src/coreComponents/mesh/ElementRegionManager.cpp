@@ -18,12 +18,13 @@
 #include "ElementRegionManager.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
-#include "meshUtilities/MeshManager.hpp"
+#include "mesh/MeshManager.hpp"
+#include "schema/schemaUtilities.hpp"
 
 namespace geosx
 {

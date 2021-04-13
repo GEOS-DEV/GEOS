@@ -16,8 +16,8 @@
  * @file Stopwatch.hpp
  */
 
-#ifndef GEOSX_STOPWATCH_HPP
-#define GEOSX_STOPWATCH_HPP
+#ifndef GEOSX_COMMON_STOPWATCH_HPP
+#define GEOSX_COMMON_STOPWATCH_HPP
 
 #include <chrono>
 
