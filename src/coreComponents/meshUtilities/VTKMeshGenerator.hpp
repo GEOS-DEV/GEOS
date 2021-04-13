@@ -24,6 +24,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 
 #include "MeshGeneratorBase.hpp"
+#include "mesh/CellBlockManager.hpp"
 
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -79,6 +80,31 @@ protected:
    * any other initialization operations.
    */
   void postProcessInput() override final;
+
+private:
+
+  /**
+   * @brief Get the number of points of a cell knowing its vtk cell type
+   * @param[in] cellType the vtk cell type
+   * @return the number of points contained in the cell
+   */
+  localIndex GetNumberOfPoints(int cellType );
+
+  /**
+   * @brief Write a CellBlock of a given cell type
+   * @param[in] name the name of the cellBlock to be written
+   * @param[in] nbcells number of cells the CellBlock will contain
+   * @param[in] cellType the vtk cell type for cells of the CellBlock being written
+   * @param[in] cellBlockManager the CellBlockManager
+   */
+  void WriteCellBlock( string const & name, localIndex nbCells, int cellType, CellBlockManager & cellBlockManager ); 
+
+  /**
+   * @brief Write the hexahedron vertices
+   * @details The node ordering from VTK differs from the node ordering in GEOSX
+   * @param[in,out] cellToVertex list of nodes organized per cells
+   */
+  void WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex );
 
 private:
 
