@@ -20,8 +20,8 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_VECTORBASE_HPP_
 
 #include "linearAlgebra/common.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/MpiWrapper.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

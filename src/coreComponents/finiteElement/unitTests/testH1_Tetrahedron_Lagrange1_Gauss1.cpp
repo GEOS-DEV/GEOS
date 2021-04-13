@@ -17,8 +17,7 @@
  */
 
 #include "finiteElement/elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
-#include "managers/initialization.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"
 
@@ -168,13 +167,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
-  testing::InitGoogleTest();
-
-  basicSetup( argc, argv, false );
-
+  ::testing::InitGoogleTest( &argc, argv );
   int const result = RUN_ALL_TESTS();
-
-  basicCleanup();
-
   return result;
 }

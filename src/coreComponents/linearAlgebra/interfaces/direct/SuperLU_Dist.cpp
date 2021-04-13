@@ -18,7 +18,7 @@
 
 #include "SuperLU_Dist.hpp"
 #include "linearAlgebra/common.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/Stopwatch.hpp"
 
 namespace geosx

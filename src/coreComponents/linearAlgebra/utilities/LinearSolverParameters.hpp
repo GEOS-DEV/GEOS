@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geosx
 {

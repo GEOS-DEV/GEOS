@@ -24,7 +24,7 @@
 #include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -217,6 +217,7 @@ public:
 
 protected:
 
+  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
