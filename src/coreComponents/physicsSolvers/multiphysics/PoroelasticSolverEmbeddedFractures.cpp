@@ -39,7 +39,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

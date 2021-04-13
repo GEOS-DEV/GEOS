@@ -13,6 +13,7 @@ set(common_headers
     Logger.hpp
     MpiWrapper.hpp
     Path.hpp
+    GEOS_RAJA_Interface.hpp
     Stopwatch.hpp
     Tensor.hpp
     TimingMacros.hpp

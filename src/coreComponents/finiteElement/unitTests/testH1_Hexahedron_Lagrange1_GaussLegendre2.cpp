@@ -16,7 +16,7 @@
  * @file testH1_Hexahedron_Lagrange1_GaussLegendre2
  */
 
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"
 

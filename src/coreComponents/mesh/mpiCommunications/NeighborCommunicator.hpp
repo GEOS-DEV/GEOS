@@ -18,7 +18,7 @@
 #include "common/MpiWrapper.hpp"
 
 #include "common/DataTypes.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
 

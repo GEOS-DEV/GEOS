@@ -33,7 +33,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
 #include "linearAlgebra/solvers/PreconditionerBlockJacobi.hpp"

@@ -21,7 +21,7 @@
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include <type_traits>
 

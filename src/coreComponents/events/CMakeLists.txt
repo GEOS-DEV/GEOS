@@ -26,7 +26,12 @@ set(events_sources
     tasks/TasksManager.cpp
    )
 
-set( dependencyList dataRepository fileIO)
+set( dependencyList fileIO RAJA )
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif( )
+
 
 blt_add_library( NAME                  events
                  SOURCES               ${events_sources}

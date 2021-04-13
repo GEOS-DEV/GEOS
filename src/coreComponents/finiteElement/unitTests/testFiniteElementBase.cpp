@@ -16,7 +16,7 @@
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "gtest/gtest.h"
 #include "testFiniteElementHelpers.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include <chrono>
 
 

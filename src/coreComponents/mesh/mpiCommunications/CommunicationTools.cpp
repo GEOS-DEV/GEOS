@@ -23,7 +23,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include <algorithm>
 

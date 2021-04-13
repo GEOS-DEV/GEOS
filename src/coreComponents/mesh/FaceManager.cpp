@@ -23,7 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "ElementRegionManager.hpp"
 #include "utilities/ComputationalGeometry.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "common/Logger.hpp"
 #include "LvArray/src/tensorOps.hpp"
 

@@ -16,7 +16,7 @@
  * @file testLinearTriangleFaceShapeFunctionKernel.cpp
  */
 
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"
 

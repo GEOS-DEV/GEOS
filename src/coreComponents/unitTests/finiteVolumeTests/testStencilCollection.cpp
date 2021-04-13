@@ -15,7 +15,7 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "finiteVolume/FluxStencil.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

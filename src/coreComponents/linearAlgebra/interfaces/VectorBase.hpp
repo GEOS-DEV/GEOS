@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "common/MpiWrapper.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

@@ -18,7 +18,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "LvArray/src/Array.hpp"
 
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #ifdef UMPIRE_ENABLE_CUDA
 #include "umpire/alloc/CudaPinnedAllocator.hpp"

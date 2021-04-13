@@ -21,7 +21,7 @@
 #include "InputFlags.hpp"
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "HistoryDataSpec.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)

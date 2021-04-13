@@ -22,7 +22,7 @@
 
 #include "NodeManager.hpp"
 #include "utilities/ComputationalGeometry.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

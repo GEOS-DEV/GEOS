@@ -35,7 +35,7 @@
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include "SinglePhasePoroelasticKernel.hpp"
 
