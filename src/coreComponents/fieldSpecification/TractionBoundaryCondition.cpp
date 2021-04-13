@@ -18,7 +18,7 @@
 
 #include "TractionBoundaryCondition.hpp"
 
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geosx
 {
@@ -122,7 +122,7 @@ void TractionBoundaryCondition::launch( real64 const time,
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   string const & functionName = this->getFunctionName();
 
