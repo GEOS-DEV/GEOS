@@ -19,13 +19,13 @@
 // Source includes
 #include "LaplaceVEM.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "common/TimingMacros.hpp"
-#include "common/DataTypes.hpp"
+// #include "mpiCommunications/CommunicationTools.hpp"
+// #include "common/TimingMacros.hpp"
+// #include "common/DataTypes.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/GeosxState.hpp"
+// #include "managers/DomainPartition.hpp"
+// #include "managers/NumericalMethodsManager.hpp"
+// #include "managers/GeosxState.hpp"
 
 namespace geosx
 {

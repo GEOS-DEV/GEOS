@@ -128,7 +128,7 @@ public:
   } laplaceBaseViewKeys;
   //END_SPHINX_INCLUDE_04
 
-protected:     // TODO consider making these private
+protected:
 
   // These two classes are specific to the Laplace solver:
   string m_fieldName;      // User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
