@@ -24,7 +24,7 @@ def shot_simul(rank, xml, shot_list, tracePath):
     """
 
     problem = initialize(rank, xml)
-    do_shots(problem, shot_list, tracePath)
+    do_shots(rank, problem, shot_list, tracePath)
 
 
 
@@ -43,17 +43,13 @@ def initialize(rank, xml):
     """
 
     problem = pygeosx.initialize(rank, xml)
-    #Should be :
-    #    problem = pygeosx.initialize()(rank, sys.argv),
-    #Once the seismic acquisition from segy file is implemented
-
     pygeosx.apply_initial_conditions()
 
     return problem
 
 
 
-def do_shots(problem, shot_list, tracePath):
+def do_shots(rank, problem, shot_list, tracePath):
     """ Given a GEOSX problem, a list of shots, and a time step,
         solve wave eqn with different configurations
 
@@ -115,7 +111,8 @@ def do_shots(problem, shot_list, tracePath):
     nb_shot = len(shot_list)
 
     ishot = 0
-    print_shot_config(shot_list, ishot)
+    if rank:
+        print_shot_config(shot_list, ishot)
 
     #Set first source and receivers positions in GEOSX
     src_pos          = shot_list[ishot].getSource().getCoord()
@@ -127,7 +124,8 @@ def do_shots(problem, shot_list, tracePath):
 
     #Update shot flag
     shot_list[ishot].flagUpdate("In Progress")
-    print_flag(shot_list)
+    if rank:
+        print_flag(shot_list)
 
     while (np.array([shot.getFlag() for shot in shot_list]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
         #Save pressure
@@ -136,16 +134,18 @@ def do_shots(problem, shot_list, tracePath):
 
         else:
             pressure_at_receivers[maxCycle, :] = pressure_geosx.to_numpy()[:]
-            print_pressure(pressure_at_receivers, ishot)
+            if rank:
+                print_pressure(pressure_at_receivers, ishot)
 
             #Segy export and flag update
-            if outputSismoTrace == 0 :
-                export_to_segy(pressure_at_receivers,
-                               shot_list[ishot].getSource().getCoord(),
-                               shot_list[ishot].getReceiverSet().getSetCoord(),
-                               ishot,
-                               dt_cycle,
-                               tracePath)
+            if rank:
+                if outputSismoTrace == 0 :
+                    export_to_segy(pressure_at_receivers,
+                                   shot_list[ishot].getSource().getCoord(),
+                                   shot_list[ishot].getReceiverSet().getSetCoord(),
+                                   ishot,
+                                   dt_cycle,
+                                   tracePath)
 
             shot_list[ishot].flagUpdate("Done")
 
@@ -158,7 +158,8 @@ def do_shots(problem, shot_list, tracePath):
             #Increment shot
             ishot += 1
             if ishot < nb_shot:
-                print_shot_config(shot_list, ishot)
+                if rank:
+                    print_shot_config(shot_list, ishot)
 
                 #Set new receivers and source positions in GEOSX
                 src_pos          = shot_list[ishot].getSource().getCoord()
@@ -171,4 +172,5 @@ def do_shots(problem, shot_list, tracePath):
                 #Update shot flag
                 shot_list[ishot].flagUpdate("In Progress")
 
-            print_flag(shot_list)
+            if rank:
+                print_flag(shot_list)

@@ -12,6 +12,9 @@ import os, glob
 from shot import *
 from receiver import *
 from source import *
+from segyManager import export_for_acquisition
+
+from mpmain import segyPath
 
 
 def segy_acquisition(folder_path, wavelet, dt):
@@ -38,7 +41,7 @@ def segy_acquisition(folder_path, wavelet, dt):
 
                 receiver_list.append(Receiver([receiverX, receiverY, receiverZ]))
 
-                receivers = ReceiverSet(receiver_list)
+            receivers = ReceiverSet(receiver_list)
 
             shot_list.append(Shot(source, receivers))
 
@@ -54,7 +57,8 @@ def moving_acquisition(box,
                        nbreceiversx = 1,
                        nbreceiversy = 1,
                        lenRx = 0,
-                       lenRy = 0):
+                       lenRy = 0,
+                       export = 0):
 
     """Marine seismic acquisition reprensenting a boat pulling a source
        and a set of receivers in a squared domain
@@ -115,7 +119,7 @@ def moving_acquisition(box,
 
     xposleft = np.linspace(xmin + 0.3*movex, xmin + 0.3*movex + lenRx, nbreceiversx)
     xposright = np.linspace(xmax - 0.3*movex, xmax - 0.3*movex - lenRx, nbreceiversx)
-    print(ymin -lenRy/2)
+
     ypos = np.linspace(ymin - lenRy/2, ymin + lenRy/2, nbreceiversy)
 
     receiversbaseleft = ReceiverSet([Receiver([x, y, zmax]) for x in xposleft for y in ypos])
@@ -144,11 +148,17 @@ def moving_acquisition(box,
                 srcpos[0] -= movex
                 receivers.linearSetMove(0, -movex)
 
+            rcvset = receivers.getInsideDomain(box)
+
             # Define source location and type
             source = Source(srcpos, wavelet, dt)
 
-            shot = Shot(source, copy.deepcopy(receivers))
+            shot = Shot(source, copy.deepcopy(rcvset))
             shots.append(shot)
+
+    if export:
+        acq_name = "/moving_Sx=" + str(nbsourcesx) +"_Sy=" + str(nbsourcesy) + "_Rx=" + str(nbreceiversx) + "_Ry=" + str(nbreceiversy) + "/"
+        export_for_acquisition(shots, segyPath, acq_name)
 
     return shots
 
@@ -159,7 +169,8 @@ def random_acquisition(box,
                        dt,
                        nbsources,
                        nbreceiversx,
-                       nbreceiversy):
+                       nbreceiversy,
+                       export = 0):
     """Random seismic acquisition, the positions of sources are set randomly,
        the receivers are set as a grid over the domain
 
@@ -213,6 +224,10 @@ def random_acquisition(box,
         shot = Shot(source, receivers)
         shots.append(shot)
 
+    if export:
+        acq_name = "/random_nbS=" + str(nbsources) + "_Rx=" + str(nbreceiversx) + "_Ry=" + str(nbreceiversy) + "/"
+        export_for_acquisition(shots, segyPath, acq_name)
+
     return shots
 
 
@@ -221,46 +236,38 @@ def random_acquisition(box,
 def equispaced_acquisition(box,
                            wavelet,
                            dt,
-                           nbsourcesx,
-                           nbsourcesy,
-                           nbreceiversx,
-                           nbreceiversy
+                           sourcex,
+                           sourcey,
+                           depthSource,
+                           receiversx,
+                           receiversy,
+                           depthReceivers,
+                           export = 0
                            ):
 
+    xr = np.linspace(receiversx[0], receiversx[1], receiversx[2])
+    yr = np.linspace(receiversy[0], receiversy[1], receiversy[2])
 
-    xmin = box[0][0]
-    xmax = box[0][1]
+    xs = np.linspace(sourcex[0], sourcex[1], sourcex[2])
+    ys = np.linspace(sourcey[0], sourcey[1], sourcey[2])
 
-    ymin = box[1][0]
-    ymax = box[1][1]
+    receivers = ReceiverSet([Receiver([x, y, depthReceivers]) for x in xr for y in yr])
 
-    zmin = box[2][0]
-    zmax = box[2][1]
+   # receivers = receivers.getInsideDomain(box)
 
+    shots = []
 
-    xpos = np.linspace(xmin, xmax, nbreceiversx)
-    ypos = np.linspace(ymin, ymax, nbreceiversy)
+    for i in range(len(ys)):
+        for j in range(len(xs)):
 
-    receivers = ReceiverSet([Receiver([x, y, zmax]) for x in xpos for y in ypos])
-
-    receivers=receivers.getInsideDomain(box)
-
-    local_sources = nbsourcesx , nbsourcesy
-
-    shots=list()
-
-    for i in range(int(local_sources[0])):
-        for j in range(int(local_sources[1])):
-
-            idx = i + local_sources[0]
-            jdx = j + local_sources[1]
-
-            srcpos = [xmin + (xmax-xmin)*(idx+1.0)/(nbsourcesx+1.0), ymin + (ymax-ymin)*(jdx+1.0)/(nbsourcesy+1.0), zmax]
-
-            # Define source location and type
+            srcpos = [xs[j], ys[i], depthSource]
             source = Source(srcpos, wavelet, dt)
 
             shot = Shot(source, receivers)
             shots.append(shot)
+
+    if export:
+        acq_name = "/equispaced_Sx=" + str(len(xs)) +"_Sy=" + str(len(ys)) + "_Rx=" + str(len(xr)) + "_Ry=" + str(len(yr)) + "/"
+        export_for_acquisition(shots, segyPath, acq_name)
 
     return shots
