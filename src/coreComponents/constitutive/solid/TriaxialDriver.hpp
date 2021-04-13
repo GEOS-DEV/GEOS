@@ -120,40 +120,40 @@ public:
             else
             {
               real64 jacobian = stiffness[1][1]+stiffness[1][2];
-                std::cout<<"Analytical Jacobian = "<< jacobian <<std::endl;
-                
-                // check FD vs. analytical tangent:
-                real64 stressFD[6];          // perturbed stress
-                real64 strainIncrementFD[6]; // perturbed strain
-                real64 stiffnessFD[6][6];
+              std::cout<<"Analytical Jacobian = "<< jacobian <<std::endl;
 
-                for( localIndex i=0; i<6; ++i )
+              // check FD vs. analytical tangent:
+              real64 stressFD[6];            // perturbed stress
+              real64 strainIncrementFD[6];   // perturbed strain
+              real64 stiffnessFD[6][6];
+
+              for( localIndex i=0; i<6; ++i )
+              {
+                strainIncrementFD[i] = strainIncrement[i];
+                norm += fabs( strainIncrement[i] );
+              }
+
+              real64 eps = 1e-12*norm;       // finite difference perturbation
+
+              constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
+
+              for( localIndex i=0; i<6; ++i )
+              {
+                strainIncrementFD[i] += eps;
+
+                if( i>0 )
                 {
-                  strainIncrementFD[i] = strainIncrement[i];
-                  norm += fabs( strainIncrement[i] );
+                  strainIncrementFD[i-1] -= eps;
                 }
 
-                real64 eps = 1e-12*norm;     // finite difference perturbation
+                constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrementFD, stressFD, stiffnessFD );
 
-                constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrement, stress, stiffness );
-
-                for( localIndex i=0; i<6; ++i )
+                for( localIndex j=0; j<6; ++j )
                 {
-                  strainIncrementFD[i] += eps;
-
-                  if( i>0 )
-                  {
-                    strainIncrementFD[i-1] -= eps;
-                  }
-
-                    constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrementFD, stressFD, stiffnessFD );
-
-                  for( localIndex j=0; j<6; ++j )
-                  {
-                    stiffnessFD[j][i] = (stressFD[j]-stress[j])/eps;
-                  }
+                  stiffnessFD[j][i] = (stressFD[j]-stress[j])/eps;
                 }
-                
+              }
+
 //                for( localIndex i=0; i<6; ++i )
 //                {
 //                  for( localIndex j=0; j<6; ++j )
@@ -162,16 +162,16 @@ public:
 //                  }
 //                  printf( "\n" );
 //                }
-                real64 eps3 = 1e-8*LvArray::tensorOps::l2Norm< 6 >( strainIncrement );
+              real64 eps3 = 1e-8*LvArray::tensorOps::l2Norm< 6 >( strainIncrement );
               real64 stress3[6] = {};
-                
+
               strainIncrement[1] += eps3;
               strainIncrement[2] += eps3;
 
               constitutiveUpdate.smallStrainUpdate( 0, 0, strainIncrement, stress3, stiffness );
               real64 jacobian2 = (stress3[1]-stress[1]) / eps3;
-                std::cout<<"numerical Jacobian = "<<jacobian2<<std::endl;
-               // jacobian = jacobian2;
+              std::cout<<"numerical Jacobian = "<<jacobian2<<std::endl;
+              // jacobian = jacobian2;
               strainIncrement[1] -= eps3;
               strainIncrement[2] -= eps3;
 
@@ -179,7 +179,7 @@ public:
               {
                 eps = 1e-8*LvArray::tensorOps::l2Norm< 6 >( strainIncrement );
                 real64 stress2[6] = {};
-                  
+
                 strainIncrement[1] += eps;
                 strainIncrement[2] += eps;
 
@@ -196,7 +196,7 @@ public:
             }
           }
           castedSolid.saveConvergedState();
-            std::cout<<"Stress components: "<<stress[0]<<" , "<<stress[1]<<" , "<<stress[2]<<" , "<<stress[3]<<" , "<<stress[4]<<" , "<<stress[5]<<std::endl;
+          std::cout<<"Stress components: "<<stress[0]<<" , "<<stress[1]<<" , "<<stress[2]<<" , "<<stress[3]<<" , "<<stress[4]<<" , "<<stress[5]<<std::endl;
           m_axialStress[n] = stress[0];
           m_radialStress[n] = stress[1];
           m_axialStress[n] = stress[0];
