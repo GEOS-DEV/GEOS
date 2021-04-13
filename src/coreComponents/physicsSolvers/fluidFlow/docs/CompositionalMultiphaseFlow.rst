@@ -182,7 +182,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM.rst
+.. include:: /coreComponents/schema/docs/CompositionalMultiphaseFVM.rst
 
 .. _input_example:
 

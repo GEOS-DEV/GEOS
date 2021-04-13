@@ -17,7 +17,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "LvArray/src/output.hpp"
 
 

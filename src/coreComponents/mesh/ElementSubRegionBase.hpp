@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 #define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 namespace geosx
 {
 

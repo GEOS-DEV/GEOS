@@ -18,7 +18,7 @@
 
 #include "WellElementRegion.hpp"
 
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 
 namespace geosx

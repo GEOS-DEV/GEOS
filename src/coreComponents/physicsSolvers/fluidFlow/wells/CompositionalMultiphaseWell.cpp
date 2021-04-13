@@ -18,7 +18,7 @@
 
 #include "CompositionalMultiphaseWell.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -27,13 +27,12 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/PerforationData.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/PerforationData.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
@@ -339,7 +338,7 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
 {
   WellSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
@@ -401,7 +400,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 {
   WellSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
@@ -1313,10 +1312,10 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaMixtureConnRateString() ) );
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 
   // update properties
   updateStateAll( domain );

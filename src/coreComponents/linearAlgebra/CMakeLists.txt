@@ -49,16 +49,8 @@ set( linearAlgebra_sources
      utilities/LAIHelperFunctions.cpp
      DofManager.cpp )
 
-if( BUILD_OBJ_LIBS )
-  set( dependencyList common blas lapack RAJA managers)
-else()
-  set( dependencyList common blas lapack RAJA )
-endif()
+set( dependencyList mesh blas lapack RAJA)
 
-
-if( ENABLE_MPI )
-    list( APPEND dependencyList mpi )
-endif()
 
 list( APPEND linearAlgebra_headers
       interfaces/direct/SuiteSparse.hpp
@@ -147,23 +139,34 @@ if( ENABLE_PETSC )
 endif()
 
 if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+    list( APPEND dependencyList openmp )
 endif()
 
 if ( ENABLE_CUDA )
-    set( dependencyList ${dependencyList} cuda )
+    list( APPEND dependencyList cuda )
 endif()
+
+if ( ENABLE_MKL )
+    list( APPEND dependencyList mkl )
+endif()
+
+if( ENABLE_MPI )
+    list( APPEND dependencyList mpi )
+endif()
+
+
 
 blt_add_library( NAME                  linearAlgebra
                  SOURCES               ${linearAlgebra_sources}
                  HEADERS               ${linearAlgebra_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
-geosx_add_code_checks( PREFIX linearAlgebra )
+add_subdirectory(unitTests)
 
-add_subdirectory( unitTests )
+geosx_add_code_checks( PREFIX linearAlgebra )
 
 message( "Leaving /src/coreComponents/linearAlgebra/CMakeLists.txt")

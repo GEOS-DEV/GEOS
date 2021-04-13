@@ -18,7 +18,7 @@
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
 #include "WellElementSubRegion.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "EmbeddedSurfaceSubRegion.hpp"
 
 namespace geosx

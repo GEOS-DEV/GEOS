@@ -18,6 +18,7 @@ set(dataRepository_headers
     Wrapper.hpp
     WrapperBase.hpp
     xmlWrapper.hpp
+    HistoryDataSpec.hpp
     )
 
 #
@@ -39,11 +40,7 @@ if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
-if( BUILD_OBJ_LIBS )
-  set (dependencyList common lvarray codingUtilities pugixml fileIO)
-else()
-  set( dependencyList common codingUtilities)
-endif()
+set (dependencyList codingUtilities pugixml )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -67,7 +64,7 @@ blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

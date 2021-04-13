@@ -1,5 +1,5 @@
 #include "BufferAllocator.hpp"
-#include "common/DataTypes.hpp"
+#include "DataTypes.hpp"
 
 #ifdef GEOSX_USE_CHAI
 namespace geosx

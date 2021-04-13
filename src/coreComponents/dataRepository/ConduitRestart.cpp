@@ -18,11 +18,9 @@
 
 // Source includes
 #include "ConduitRestart.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
 
 // TPL includes
 #include <conduit_relay.hpp>
@@ -34,7 +32,7 @@ namespace dataRepository
 
 string writeRootFile( conduit::Node & root, string const & rootPath )
 {
-  string const completeRootPath = joinPath( getGlobalState().getCommandLineOptions().outputDirectory, rootPath );
+  string const completeRootPath = rootPath;
   string const rootFileName = splitPath( completeRootPath ).second;
 
   if( MpiWrapper::commRank() == 0 )

@@ -16,8 +16,8 @@
  * File: Interpolation.hpp
  */
 
-#ifndef INTERPOLATION_HPP_
-#define INTERPOLATION_HPP_
+#ifndef GEOSX_MATH_INTERPOLATION_HPP_
+#define GEOSX_MATH_INTERPOLATION_HPP_
 
 
 namespace geosx
@@ -84,4 +84,4 @@ static real64 ParabolicInterpolationThreePoints( real64 const lambdac,
 
 }
 
-#endif // INTERPOLATION_HPP
+#endif // GEOSX_MATH_INTERPOLATION_HPP_

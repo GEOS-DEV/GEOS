@@ -19,24 +19,23 @@
 
 
 #include <physicsSolvers/multiphysics/MultiphasePoroelasticSolver.hpp>
-#include "../solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include "MultiphasePoroelasticKernel.hpp"
 

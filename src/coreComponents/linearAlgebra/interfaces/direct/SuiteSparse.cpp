@@ -21,7 +21,7 @@
 #endif
 
 #include "SuiteSparse.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/Stopwatch.hpp"
 
 namespace geosx

@@ -66,7 +66,7 @@ Summary
 
 The following table summarizes the available input parameters for the linear solver.
 
-.. include:: ../../fileIO/schema/docs/LinearSolverParameters.rst
+.. include:: ../../schema/docs/LinearSolverParameters.rst
 
 ***************************
 Preconditioner descriptions

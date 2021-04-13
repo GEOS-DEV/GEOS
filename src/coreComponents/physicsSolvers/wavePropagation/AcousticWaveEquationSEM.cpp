@@ -21,9 +21,9 @@
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/ProblemManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -352,7 +352,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -369,7 +369,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   real64 const time = 0.0;
@@ -501,8 +501,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
-  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
@@ -709,7 +709,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( "pressure_np1" );
 
-  CommunicationTools syncFields;
+  CommunicationTools & syncFields = CommunicationTools::getInstance();
   syncFields.synchronizeFields( fieldNames,
                                 domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                 domain.getNeighbors(),

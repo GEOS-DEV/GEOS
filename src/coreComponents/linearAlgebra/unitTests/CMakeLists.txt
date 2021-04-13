@@ -4,29 +4,17 @@
 set( LAI_tests
      testLAOperations.cpp 
      testArrayLAOperations.cpp
-     testKrylovSolvers.cpp
-     testDofManager.cpp
-     testLAIHelperFunctions.cpp)
+    )
 
 set( nranks 2 )
 
 #
 # Add gtest C++ based tests
 #
-set( dependencyList gtest )
+set( dependencyList gtest linearAlgebra )
 
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core conduit)
-else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)
-endif()
-
-if ( ENABLE_MPI )
-  set ( dependencyList ${dependencyList} mpi )
-endif()
-
-if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if ( ENABLE_CUDA )

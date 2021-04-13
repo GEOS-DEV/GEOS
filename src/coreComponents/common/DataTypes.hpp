@@ -24,11 +24,11 @@
 
 // Source includes
 #include "common/GeosxConfig.hpp"
-#include "common/GeosxMacros.hpp"
-#include "common/BufferAllocator.hpp"
-#include "common/DataLayouts.hpp"
-#include "common/Tensor.hpp"
-#include "common/Logger.hpp"
+#include "GeosxMacros.hpp"
+#include "BufferAllocator.hpp"
+#include "DataLayouts.hpp"
+#include "Tensor.hpp"
+#include "Logger.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"

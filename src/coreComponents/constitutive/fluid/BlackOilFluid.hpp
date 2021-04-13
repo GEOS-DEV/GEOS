@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidPVTPackageWrapper.hpp"
 
 namespace geosx

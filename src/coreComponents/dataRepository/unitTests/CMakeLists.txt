@@ -4,23 +4,12 @@
 
 set( dataRepository_tests
      testDefaultValue.cpp
-     testObjectCatalog.cpp
-     testRestartBasic.cpp
-     testRestartExtended.cpp
      testWrapper.cpp
      testXmlWrapper.cpp
      testBufferOps.cpp
-     testPacking.cpp
-     testWrapperHelpers.cpp
    )
 
-set( dependencyList gtest conduit )
-
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core)
-else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
-endif()
+set( dependencyList gtest dataRepository conduit RAJA )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -48,4 +37,3 @@ foreach(test ${dataRepository_tests})
     blt_add_test( NAME ${test_name}
                   COMMAND ${test_name} )
 endforeach()
-

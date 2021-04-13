@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP
 
 #include "common/DataTypes.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 using namespace geosx;
 

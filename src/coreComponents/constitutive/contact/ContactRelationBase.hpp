@@ -20,7 +20,7 @@
 #define GEOSX_CONSTITUTIVE_CONTACTRELATIONS_CONTACTRELATIONBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "managers/Functions/FunctionBase.hpp"
+#include "functions/FunctionBase.hpp"
 
 namespace geosx
 {

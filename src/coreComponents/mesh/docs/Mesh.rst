@@ -23,7 +23,7 @@ Basic Example
 The Internal Mesh Generator allows one to quickly build simple cartesian grids and divide
 them into several regions.  The following attributes are supported in the input block for InternalMesh:
 
-.. include:: /coreComponents/fileIO/schema/docs/InternalMesh.rst
+.. include:: /coreComponents/schema/docs/InternalMesh.rst
 
 
 The following is an example XML ``<mesh>`` block, which will generate a vertical beam with two ``CellBlocks`` (one in red and one in blue in the following picture).

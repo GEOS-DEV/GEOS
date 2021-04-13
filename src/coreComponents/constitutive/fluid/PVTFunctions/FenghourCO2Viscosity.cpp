@@ -19,8 +19,7 @@
 #include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
 
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
-#include "managers/Functions/FunctionManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geosx
 {
@@ -67,7 +66,7 @@ void FenghourCO2Viscosity::makeTable( string_array const & inputPara )
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, density );
   calculateCO2Viscosity( tableCoords, density, viscosity );
 
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
   m_CO2ViscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
   m_CO2ViscosityTable->setTableCoordinates( tableCoords.getCoords() );
   m_CO2ViscosityTable->setTableValues( viscosity );

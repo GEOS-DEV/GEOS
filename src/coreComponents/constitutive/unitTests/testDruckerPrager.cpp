@@ -20,7 +20,7 @@
 #include "constitutive/solid/InvariantDecompositions.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 using namespace geosx;
 using namespace ::geosx::constitutive;

@@ -21,8 +21,8 @@
 #include "pygeosx.hpp"
 #include "PyGroup.hpp"
 #include "PyWrapper.hpp"
-#include "managers/initialization.hpp"
-#include "managers/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 // System includes
 #pragma GCC diagnostic push

@@ -22,7 +22,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

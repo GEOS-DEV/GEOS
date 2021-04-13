@@ -17,7 +17,6 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -570,8 +569,22 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
 
   if( path[ 0 ] == '/' )
   {
-    currentGroup = &getGlobalState().getProblemManagerAsGroup();
-    previousPosition = 1;
+    bool foundTarget = false;
+    for( int i=0; i<1000; ++i )
+    {
+      if( currentGroup->m_parent != nullptr )
+      {
+        currentGroup = currentGroup->m_parent;
+      }
+      else
+      {
+        foundTarget = true;
+        previousPosition = 1;
+        break;
+      }
+    }
+    GEOSX_ERROR_IF( !foundTarget,
+                    "Could not find the specified path from the starting group." );
   }
 
   string::size_type currentPosition;
@@ -582,7 +595,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
 
     previousPosition = currentPosition + 1;
 
-    if( curGroupName == "" || curGroupName == "." )
+    if( curGroupName == "" || curGroupName == "." || curGroupName==currentGroup->m_name )
     {
       continue;
     }

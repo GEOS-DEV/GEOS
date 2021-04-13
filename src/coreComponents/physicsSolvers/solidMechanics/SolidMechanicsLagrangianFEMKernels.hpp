@@ -23,7 +23,7 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/Kinematics.h"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

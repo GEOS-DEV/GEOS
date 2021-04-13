@@ -21,7 +21,7 @@
 #define GEOSX_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geosx
 {
