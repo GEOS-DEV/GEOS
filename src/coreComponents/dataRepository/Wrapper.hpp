@@ -214,7 +214,7 @@ public:
 
   ///@}
 
-  /// @copydoc geosx::WrapperBase::getHistoryMetadata
+  /// @copydoc WrapperBase::getHistoryMetadata
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
@@ -227,7 +227,7 @@ public:
   ///@{
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::isPackable
+  /// @copydoc WrapperBase::isPackable
   virtual
   bool isPackable( bool onDevice ) const override
   {
@@ -243,7 +243,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::pack
+  /// @copydoc WrapperBase::pack
   virtual
   localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
@@ -268,7 +268,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packByIndex
+  /// @copydoc WrapperBase::packByIndex
   virtual
   localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
@@ -296,7 +296,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packSize
+  /// @copydoc WrapperBase::packSize
   virtual
   localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
@@ -322,7 +322,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packByIndexSize
+  /// @copydoc WrapperBase::packByIndexSize
   virtual
   localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
@@ -351,7 +351,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::unpack
+  /// @copydoc WrapperBase::unpack
   virtual
   localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
@@ -381,7 +381,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::unpackByIndex
+  /// @copydoc WrapperBase::unpackByIndex
   virtual
   localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {

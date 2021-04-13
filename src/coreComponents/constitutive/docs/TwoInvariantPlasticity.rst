@@ -125,7 +125,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/DruckerPrager.rst
+.. include:: /coreComponents/schema/docs/DruckerPrager.rst
 
 Example
 -------------------
@@ -205,7 +205,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/CamClay.rst
+.. include:: /coreComponents/schema/docs/CamClay.rst
 
 Example
 -----------------------
@@ -240,7 +240,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/DelftEgg.rst
+.. include:: /coreComponents/schema/docs/DelftEgg.rst
 
 Example
 ----------------------

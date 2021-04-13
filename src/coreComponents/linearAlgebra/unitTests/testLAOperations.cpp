@@ -19,9 +19,9 @@
 #include <gtest/gtest.h>
 
 #include "common/DataTypes.hpp"
+#include "common/initializeEnvironment.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "managers/initialization.hpp"
 #include "testLinearAlgebraUtils.hpp"
 
 using namespace geosx;
@@ -789,9 +789,9 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geosx::setupEnvironment( argc, argv );
 
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geosx::cleanupEnvironment();
   return result;
 }
