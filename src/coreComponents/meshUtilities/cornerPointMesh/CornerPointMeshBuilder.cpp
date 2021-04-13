@@ -80,6 +80,9 @@ void CornerPointMeshBuilder::postProcessMesh()
   // match faces, deal with the non-conforming case
   //buildFaces();
 
+  // construct map linking a region to its cells
+  formRegions();
+
   // for now, do some debugging
   outputDebugVTKFile( m_vertices, m_faces, m_cells );
 }
@@ -336,6 +339,44 @@ bool CornerPointMeshBuilder::computeCellCoordinates( localIndex const i, localIn
   cpVertexIsInside( 7 ) = fourthPillarIsInside;
 
   return true;
+}
+
+
+void CornerPointMeshBuilder::formRegions()
+{
+  array1d< localIndex > const & activeCellToCell = m_cells.m_activeCellToCell;
+  array1d< localIndex > const & ownedActiveCellToActiveCell = m_cells.m_ownedActiveCellToActiveCell;
+  array1d< localIndex > const & regionId = m_parser.regionId();
+
+  // Step 1: find the largest region index
+  localIndex const nOwnedActiveCells = ownedActiveCellToActiveCell.size();
+  localIndex localMaxRegionId = 0;
+  for( localIndex iOwnedActiveCell = 0; iOwnedActiveCell < nOwnedActiveCells; ++iOwnedActiveCell )
+  {
+    localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
+    localIndex const iCell = activeCellToCell( iActiveCell );
+    localIndex const rid = regionId( iCell );
+    if( rid > localMaxRegionId )
+    {
+      localMaxRegionId = rid;
+    }
+  }
+  localIndex const globalMaxRegionId = MpiWrapper::max( localMaxRegionId );
+
+  // Step 2: construct the map region to elements
+  ArrayOfArrays< localIndex > & regionToOwnedActiveCell = m_regions.m_regionToOwnedActiveCell;
+  localIndex const regionCapacity =
+    static_cast< real64 >( nOwnedActiveCells )
+    / static_cast< real64 >( globalMaxRegionId+1 );
+  regionToOwnedActiveCell.resize( globalMaxRegionId+1, regionCapacity );
+
+  for( localIndex iOwnedActiveCell = 0; iOwnedActiveCell < nOwnedActiveCells; ++iOwnedActiveCell )
+  {
+    localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
+    localIndex const iCell = activeCellToCell( iActiveCell );
+
+    regionToOwnedActiveCell.emplaceBack( regionId( iCell ), iOwnedActiveCell );
+  }
 }
 
 

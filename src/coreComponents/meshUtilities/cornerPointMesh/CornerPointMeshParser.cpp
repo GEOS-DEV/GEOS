@@ -89,6 +89,7 @@ void CornerPointMeshParser::readMesh( Path const & filePath,
   bool foundPERMX = false;
   bool foundPERMY = false;
   bool foundPERMZ = false;
+  bool foundREGIONS = false;
 
   std::string line;
   while( getline( meshFile, line ) )
@@ -137,11 +138,20 @@ void CornerPointMeshParser::readMesh( Path const & filePath,
     {
       readLocalPROP( meshFile, dims, m_poro );
     }
+    else if( line == "REGIONS" )
+    {
+      foundREGIONS = true;
+      readLocalPROP( meshFile, dims, m_regionId );
+    }
   }
 
   if( !foundACTNUM )
   {
-    fillLocalACTNUM( dims );
+    fillLocalPROP( dims, m_actnum, static_cast< localIndex >( 1 ) ); // default actnum value = 1
+  }
+  if( !foundREGIONS )
+  {
+    fillLocalPROP( dims, m_regionId, static_cast< localIndex >( 0 ) ); // default region id = 0
   }
 
   // TODO: error out if one of them is missing
@@ -292,9 +302,10 @@ void CornerPointMeshParser::readLocalACTNUM( std::istringstream & meshFile,
   }
 }
 
+template< typename T >
 void CornerPointMeshParser::readLocalPROP( std::istringstream & meshFile,
                                            CornerPointMeshDimensions const & dims,
-                                           array1d< real64 > & prop )
+                                           array1d< T > & prop )
 {
   localIndex const nX = dims.nX();
   localIndex const nY = dims.nY();
@@ -334,15 +345,37 @@ void CornerPointMeshParser::readLocalPROP( std::istringstream & meshFile,
   }
 }
 
-void CornerPointMeshParser::fillLocalACTNUM( CornerPointMeshDimensions const & dims )
+template
+void CornerPointMeshParser::readLocalPROP< real64 >( std::istringstream & meshFile,
+                                                     CornerPointMeshDimensions const & dims,
+                                                     array1d< real64 > & prop );
+template
+void CornerPointMeshParser::readLocalPROP< localIndex >( std::istringstream & meshFile,
+                                                         CornerPointMeshDimensions const & dims,
+                                                         array1d< localIndex > & prop );
+
+
+template< typename T >
+void CornerPointMeshParser::fillLocalPROP( CornerPointMeshDimensions const & dims,
+                                           array1d< T > & prop,
+                                           T defaultValue )
 {
   localIndex const nXLocal = dims.nXLocal();
   localIndex const nYLocal = dims.nYLocal();
   localIndex const nZLocal = dims.nZLocal();
 
-  m_actnum.resize( nXLocal*nYLocal*nZLocal );
-  m_actnum.setValues< serialPolicy >( 1 );
+  prop.resize( nXLocal*nYLocal*nZLocal );
+  prop.template setValues< serialPolicy >( defaultValue );
 }
+
+template
+void CornerPointMeshParser::fillLocalPROP< real64 >( CornerPointMeshDimensions const & dims,
+                                                     array1d< real64 > & prop,
+                                                     real64 defaultValue );
+template
+void CornerPointMeshParser::fillLocalPROP< localIndex >( CornerPointMeshDimensions const & dims,
+                                                         array1d< localIndex > & prop,
+                                                         localIndex defaultValue );
 
 std::string CornerPointMeshParser::extractDataBelowKeyword( std::istringstream & stringBlock )
 {

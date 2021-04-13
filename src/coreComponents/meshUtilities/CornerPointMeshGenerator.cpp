@@ -152,66 +152,77 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
   LvArray::tensorOps::subtract< 3 >( xMax, xMin );
   meshBody.setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( xMax ) );
 
-  // Step 2: fill cell information
+  // Step 2: fill cell information for each region
 
-  CellBlock * cellBlock = &cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "DEFAULT_HEX" );
+  ArrayOfArraysView< localIndex const > regionId = m_cpMeshBuilder->regionId();
 
-  // temporary accessors while we only support the conforming case
-  // this is not what we ultimately want, which is instead:
-  //  -> map from elem to faces
-  //  -> map from face to nodes
-  // what is below is a temporary mess (that maybe, should be hidden in CPMeshData)
-  arrayView1d< localIndex const > ownedActiveCellToActiveCell = m_cpMeshBuilder->ownedActiveCellToActiveCell();
-  arrayView1d< globalIndex const > ownedActiveCellToGlobalCell = m_cpMeshBuilder->ownedActiveCellToGlobalCell();
-
-  arrayView1d< localIndex const > activeCellToCell = m_cpMeshBuilder->activeCellToCell();
-  arrayView1d< localIndex const > cellToCPVertices = m_cpMeshBuilder->cellToCPVertices();
-  arrayView1d< localIndex const > cpVertexToVertex = m_cpMeshBuilder->cpVertexToVertex();
-
-  localIndex const nOwnedActiveCells = ownedActiveCellToActiveCell.size();
-  cellBlock->setElementType( "C3D8" );
-  cellBlock->resize( nOwnedActiveCells );
-
-  arrayView1d< globalIndex > cellLocalToGlobal = cellBlock->localToGlobalMap();
-  auto & cellToVertex = cellBlock->nodeList(); // TODO: remove auto
-  cellToVertex.resize( nOwnedActiveCells, 8 );
-
-  for( localIndex iOwnedActiveCell = 0; iOwnedActiveCell < nOwnedActiveCells; ++iOwnedActiveCell )
+  for( localIndex er = 0; er < regionId.size(); ++er )
   {
-    // this filtering is needed because the CPMeshBuilder uses a layer of cells around each MPI partition
-    // to facilitate the treatment of non-matching faces at the boundary between MPI partitions.
-    // But, it should be hidden in CPMeshBuilder/CPMeshData. I will take care of this when we handle the non-conforming case.
-    localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
-    localIndex const iFirstCPVertex = cellToCPVertices( activeCellToCell( iActiveCell ) );
 
-    // temporary code while we don't support the non-conforming case
-    cellToVertex( iOwnedActiveCell, 0 ) = cpVertexToVertex( iFirstCPVertex );
-    cellToVertex( iOwnedActiveCell, 1 ) = cpVertexToVertex( iFirstCPVertex + 1 );
-    cellToVertex( iOwnedActiveCell, 2 ) = cpVertexToVertex( iFirstCPVertex + 2 );
-    cellToVertex( iOwnedActiveCell, 3 ) = cpVertexToVertex( iFirstCPVertex + 3 );
-    cellToVertex( iOwnedActiveCell, 4 ) = cpVertexToVertex( iFirstCPVertex + 4 );
-    cellToVertex( iOwnedActiveCell, 5 ) = cpVertexToVertex( iFirstCPVertex + 5 );
-    cellToVertex( iOwnedActiveCell, 6 ) = cpVertexToVertex( iFirstCPVertex + 6 );
-    cellToVertex( iOwnedActiveCell, 7 ) = cpVertexToVertex( iFirstCPVertex + 7 );
+    CellBlock * cellBlock = &cellBlockManager.getGroup( keys::cellBlocks ).
+                              registerGroup< CellBlock >( "DEFAULT_HEX_"+std::to_string( er ) );
 
-    cellLocalToGlobal( iOwnedActiveCell ) = ownedActiveCellToGlobalCell( iOwnedActiveCell );
-  }
+    if( regionId.sizeOfArray( er ) == 0 )
+    {
+      continue;
+    }
 
-  // Step 3: fill property information
+    // temporary accessors while we only support the conforming case
+    // this is not what we ultimately want, which is instead:
+    //  -> map from elem to faces
+    //  -> map from face to nodes
+    // what is below is a temporary mess (that maybe, should be hidden in CPMeshData)
+    arraySlice1d< localIndex const > ownedActiveCellsInRegion = regionId[er];
+    arrayView1d< localIndex const > ownedActiveCellToActiveCell = m_cpMeshBuilder->ownedActiveCellToActiveCell();
+    arrayView1d< globalIndex const > ownedActiveCellToGlobalCell = m_cpMeshBuilder->ownedActiveCellToGlobalCell();
 
-  if( cellBlock != nullptr && cellBlock->size() > 0 )
-  {
+    arrayView1d< localIndex const > activeCellToCell = m_cpMeshBuilder->activeCellToCell();
+    arrayView1d< localIndex const > cellToCPVertices = m_cpMeshBuilder->cellToCPVertices();
+    arrayView1d< localIndex const > cpVertexToVertex = m_cpMeshBuilder->cpVertexToVertex();
+
+    localIndex const nOwnedActiveCellsInRegion = ownedActiveCellsInRegion.size();
+    cellBlock->setElementType( "C3D8" );
+    cellBlock->resize( nOwnedActiveCellsInRegion );
+
+    arrayView1d< globalIndex > cellLocalToGlobal = cellBlock->localToGlobalMap();
+    auto & cellToVertex = cellBlock->nodeList(); // TODO: remove auto
+    cellToVertex.resize( nOwnedActiveCellsInRegion, 8 );
+
+    for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
+    {
+      localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
+      // this filtering is needed because the CPMeshBuilder uses a layer of cells around each MPI partition
+      // to facilitate the treatment of non-matching faces at the boundary between MPI partitions.
+      // But, it should be hidden in CPMeshBuilder/CPMeshData. I will take care of this when we handle the non-conforming case.
+      localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
+      localIndex const iFirstCPVertex = cellToCPVertices( activeCellToCell( iActiveCell ) );
+
+      // temporary code while we don't support the non-conforming case
+      cellToVertex( iOwnedActiveCellInRegion, 0 ) = cpVertexToVertex( iFirstCPVertex );
+      cellToVertex( iOwnedActiveCellInRegion, 1 ) = cpVertexToVertex( iFirstCPVertex + 1 );
+      cellToVertex( iOwnedActiveCellInRegion, 2 ) = cpVertexToVertex( iFirstCPVertex + 2 );
+      cellToVertex( iOwnedActiveCellInRegion, 3 ) = cpVertexToVertex( iFirstCPVertex + 3 );
+      cellToVertex( iOwnedActiveCellInRegion, 4 ) = cpVertexToVertex( iFirstCPVertex + 4 );
+      cellToVertex( iOwnedActiveCellInRegion, 5 ) = cpVertexToVertex( iFirstCPVertex + 5 );
+      cellToVertex( iOwnedActiveCellInRegion, 6 ) = cpVertexToVertex( iFirstCPVertex + 6 );
+      cellToVertex( iOwnedActiveCellInRegion, 7 ) = cpVertexToVertex( iFirstCPVertex + 7 );
+
+      cellLocalToGlobal( iOwnedActiveCellInRegion ) = ownedActiveCellToGlobalCell( iOwnedActiveCellInRegion );
+    }
+
+    // Step 3: fill property information
 
     // Step 3.a: fill porosity in active cells
     arrayView1d< real64 const > porosityField = m_cpMeshBuilder->porosityField();
     if( !porosityField.empty() )
     {
       arrayView1d< real64 > referencePorosity = cellBlock->addProperty< array1d< real64 > >( "referencePorosity" ).toView();
-      for( localIndex iOwnedActiveCell = 0; iOwnedActiveCell < nOwnedActiveCells; ++iOwnedActiveCell )
+      for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
       {
+        localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
         localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
         localIndex const iCell = activeCellToCell( iActiveCell );
-        referencePorosity( iOwnedActiveCell ) = porosityField( iCell );
+        referencePorosity( iOwnedActiveCellInRegion ) = porosityField( iCell );
       }
     }
 
@@ -221,15 +232,15 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
     {
       array2d< real64 > & permeability = cellBlock->addProperty< array2d< real64 > >( "permeability" );
       permeability.resizeDimension< 1 >( 3 );
-      for( localIndex iOwnedActiveCell = 0; iOwnedActiveCell < nOwnedActiveCells; ++iOwnedActiveCell )
+      for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
       {
-        // this filtering is needed because the CPMeshBuilder uses a layer of cells around each MPI partition
+        localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
         localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
         localIndex const iCell = activeCellToCell( iActiveCell );
         for( localIndex dim = 0; dim < 3; dim++ )
         {
-          permeability( iOwnedActiveCell, dim ) =
-            m_toSquareMeter * permeabilityField( iCell, dim );
+          permeability( iOwnedActiveCellInRegion, dim ) =
+            LvArray::math::max( 1e-19, m_toSquareMeter * permeabilityField( iCell, dim ) );
         }
       }
     }

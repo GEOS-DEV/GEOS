@@ -30,8 +30,8 @@ namespace cornerPointMeshStringUtilities
 void eclipseDataBufferToVector( string & inputBuffer, std::vector< double > & v )
 {
   string const star( "*" );
-  int positionOfStar( 0 );
-  int nRepetitions( 0 );
+  localIndex positionOfStar( 0 );
+  localIndex nRepetitions( 0 );
   double repeatedValue( 0. );
 
   // split the inputBuffer in chunks of information (spaces are used to split)
@@ -46,7 +46,7 @@ void eclipseDataBufferToVector( string & inputBuffer, std::vector< double > & v 
     if( chunk.size() > 0 )
     {
       // does this word contain a star "*"
-      positionOfStar = static_cast< int >( chunk.find( star ) );
+      positionOfStar = static_cast< localIndex >( chunk.find( star ) );
       if( positionOfStar > 0 )
       {
         string const nTimesValueIsRepeated( chunk.substr( 0, positionOfStar ) );
@@ -67,12 +67,12 @@ void eclipseDataBufferToVector( string & inputBuffer, std::vector< double > & v 
   while (splitBuffer);
 }
 
-void eclipseDataBufferToVector( string & inputBuffer, std::vector< int > & v )
+void eclipseDataBufferToVector( string & inputBuffer, std::vector< localIndex > & v )
 {
   string const star( "*" );
-  int positionOfStar( 0 );
-  int nRepetitions( 0 );
-  int repeatedValue( 0 );
+  localIndex positionOfStar( 0 );
+  localIndex nRepetitions( 0 );
+  localIndex repeatedValue( 0 );
 
   // split the inputBuffer in chunks of information (spaces are used to split)
   std::istringstream splitBuffer( inputBuffer );
@@ -86,19 +86,19 @@ void eclipseDataBufferToVector( string & inputBuffer, std::vector< int > & v )
     if( word.size()>0 )
     {
       // does this word contain a "*"
-      positionOfStar = static_cast< int >( word.find( star ) );
+      positionOfStar = static_cast< localIndex >( word.find( star ) );
       if( positionOfStar > 0 )
       {
         string const multiplierAsString( word.substr( 0, positionOfStar ) );
         string const valueAsString( word.substr( positionOfStar+1, word.size() ) );
         nRepetitions = std::stoi( multiplierAsString );
         repeatedValue = std::stoi( valueAsString );
-        std::fill_n( back_inserter( v ), nRepetitions, repeatedValue ); // append nRepetitions of the repeatedValue as int
+        std::fill_n( back_inserter( v ), nRepetitions, repeatedValue ); // append nRepetitions of the repeatedValue as localIndex
       }
       else
       {
         // The value is only present once (no repetition)
-        repeatedValue = std::stoi( word ); // conversion to integer
+        repeatedValue = static_cast< localIndex >( std::stoi( word ) ); // conversion to localIndex
         v.push_back( repeatedValue ); // append the repeatedValue once
       }
     }
@@ -132,8 +132,8 @@ void trim( string & str )
 {
   if( str.size() > 0 )
   {
-    int first = int(str.find_first_not_of( ' ' ));
-    int last = int(str.find_last_not_of( ' ' ));
+    localIndex const first = static_cast< localIndex >( str.find_first_not_of( ' ' ) );
+    localIndex const last = static_cast< localIndex >(str.find_last_not_of( ' ' ));
     if( first < 0 )
     {
       str.resize( 0 );

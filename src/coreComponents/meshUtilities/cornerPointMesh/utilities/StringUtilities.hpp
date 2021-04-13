@@ -27,8 +27,8 @@ namespace geosx
 namespace cornerPointMeshStringUtilities
 {
 
-void eclipseDataBufferToVector( string & inputBuffer, std::vector< double > & outputVector );
-void eclipseDataBufferToVector( string & inputBuffer, std::vector< int > & outputVector );
+void eclipseDataBufferToVector( string & inputBuffer, std::vector< real64 > & outputVector );
+void eclipseDataBufferToVector( string & inputBuffer, std::vector< localIndex > & outputVector );
 string fileToString( const string filePath );
 void trim( string & str );
 bool removeStringAndFollowingContentFromLine( string toBeRemoved, string & line );

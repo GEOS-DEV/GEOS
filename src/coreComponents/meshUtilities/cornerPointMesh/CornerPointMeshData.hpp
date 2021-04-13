@@ -300,6 +300,17 @@ struct CornerPointMeshCells
 
 };
 
+/**
+ * @struct CornerPointMeshRegions
+ * @brief Struct storing region information
+ */
+struct CornerPointMeshRegions
+{
+
+  /// map from a region to its owned active cell local indices
+  ArrayOfArrays< localIndex > m_regionToOwnedActiveCell;
+
+};
 
 } // namespace cornerPointMesh
 

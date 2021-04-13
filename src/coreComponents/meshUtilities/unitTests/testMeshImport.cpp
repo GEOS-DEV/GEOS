@@ -176,7 +176,7 @@ TEST( MeshImport, testCPGReader_ECLIPSE )
   inputStreamRegion <<
     "<?xml version=\"1.0\" ?>" <<
     "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-    "  <CellElementRegion name=\"0\" cellBlocks=\"{DEFAULT_HEX}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"0\" cellBlocks=\"{DEFAULT_HEX_0}\" materialList=\"{water, rock}\"/>" <<
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 

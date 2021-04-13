@@ -169,6 +169,14 @@ public:
    */
   arrayView2d< real64 const > permeabilityField() const { return m_parser.perm().toViewConst(); }
 
+  // regions
+
+  /**
+   * @brief Const getter for the region indices
+   * @return an array of arrays mapping each region to its cells
+   */
+  ArrayOfArraysView< localIndex const > regionId() const { return m_regions.m_regionToOwnedActiveCell.toViewConst(); }
+
   // MPI information
 
   /**
@@ -198,6 +206,11 @@ private:
    * @brief Loop over the corner-point vertices and filter out duplicates.
    */
   void filterVertices();
+
+  /**
+   * @brief Associate each region with its cells
+   */
+  void formRegions();
 
   /**
    * @brief For the non-conforming case, build faces
@@ -288,6 +301,9 @@ private:
 
   /// Object storing cell data
   CornerPointMeshCells m_cells;
+
+  /// Object storing regions
+  CornerPointMeshRegions m_regions;
 
   /// Object in charge of parsing the GRDECL file
   CornerPointMeshParser m_parser;

@@ -169,6 +169,19 @@ public:
    */
   array1d< real64 > const & poro() const { return m_poro; }
 
+  /**
+   * @brief Non-const getter for the local content of REGION
+   * @return the local content of REGION
+   */
+  array1d< localIndex > & regionId() { return m_regionId; }
+
+  /**
+   * @brief Const getter for the local content of REGION
+   * @return the local content of REGION
+   */
+  array1d< localIndex > const & regionId() const { return m_regionId; }
+
+
 private:
 
   /**
@@ -208,19 +221,28 @@ private:
   /**
    * @brief Read the local content of a cell-centered property keyword (i.e, data corresponding to the MPI domain owned by each rank)
    * @details This function will have to be rewritten
+   * @tparam T the type of the data in prop
    * @param meshFile the content of the mesh file
    * @param dims the datastructure describing CP mesh
    * @param prop the property array to fill
    */
+  template< typename T >
   void readLocalPROP( std::istringstream & meshFile,
                       CornerPointMeshDimensions const & dims,
-                      array1d< real64 > & prop );
+                      array1d< T > & prop );
 
   /**
-   * @brief If ACTNUM is absent from the file, fill the actnum vector with ones (all cells are active)
+   * @brief If the property is absent from the file, fill the vector with the default value
+   * @tparam T the type of the default value
    * @param dims the datastructure describing CP mesh
+   * @param prop the property array to fill
+   * @param defaultValue the default value to use here
    */
-  void fillLocalACTNUM( CornerPointMeshDimensions const & dims );
+  template< typename T >
+  void fillLocalPROP( CornerPointMeshDimensions const & dims,
+                      array1d< T > & prop,
+                      T defaultValue );
+
 
 
   /// local content of the COORD keyword in the GRDECL file
@@ -246,6 +268,9 @@ private:
 
   /// local content of the PORO keyword in the GRDECL file
   array1d< real64 > m_poro;
+
+  /// local content of the REGION keywork in the GRDECL file
+  array1d< localIndex > m_regionId;
 
   /// name of the mesh
   string m_meshName;
