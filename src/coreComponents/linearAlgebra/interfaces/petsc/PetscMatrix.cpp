@@ -24,7 +24,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscUtils.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <petscvec.h>
 #include <petscmat.h>

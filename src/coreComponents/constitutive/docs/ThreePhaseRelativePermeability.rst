@@ -50,7 +50,7 @@ node.
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/BrooksCoreyBakerRelativePermeability.rst
+.. include:: /coreComponents/schema/docs/BrooksCoreyBakerRelativePermeability.rst
 
 Below are some comments on the model parameters.
 
