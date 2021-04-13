@@ -291,8 +291,8 @@ FluxKernel::
     real64 dPhaseFlux_dC[MAX_STENCIL_SIZE][NC]{};
 
     real64 presGrad{};
-    stackArray1d< real64, MAX_STENCIL_SIZE> dPresGrad_dP( stencilSize );
-    stackArray2d< real64, MAX_STENCIL_SIZE*NC > dPresGrad_dC( stencilSize, NC );
+    stackArray1d< real64, MAX_STENCIL_SIZE > dPresGrad_dP( stencilSize );
+    stackArray2d< real64, MAX_STENCIL_SIZE *NC > dPresGrad_dC( stencilSize, NC );
 
     real64 gravHead{};
     stackArray1d< real64, MAX_NUM_ELEMS > dGravHead_dP( numFluxElems );

@@ -103,9 +103,7 @@
       name="rock"
       referencePressure="0.0"
       defaultReferencePorosity ="0.2"
-      compressibility="1e-9"
-      defaultGrainDensity="1"
-      grainBulkModulus="1.0e9"/>
+      compressibility="1e-9"/>
       
     <ConstantPermeability
       name="permeabilityModel"

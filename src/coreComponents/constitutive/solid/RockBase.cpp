@@ -91,6 +91,9 @@ void RockBase::postProcessInput()
 {
   this->getWrapper< array2d< real64 > >( viewKeyStruct::grainDensityString() ).
     setApplyDefaultValue( m_defaultGrainDensity );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
+    setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, RockBase, string const &, Group * const )

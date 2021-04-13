@@ -9,7 +9,7 @@
       discretization="tpfaFlow"
       targetRegions="{ Region1, Region2 }"
       fluidNames="{ fluid }"
-      porosityNames="{ rock1_porosity, rock2_porosity }"
+      solidNames="{ rock1, rock2 }"
       permeabilityNames="{ rock1_permeability, rock2_permeability }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -79,12 +79,12 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ fluid, rock1_porosity, rock1_permeability }"/>
+      materialList="{ fluid, rock1, rock1_permeability }"/>
 
     <CellElementRegion
       name="Region2"
       cellBlocks="{ block2 }"
-      materialList="{ fluid, rock2_porosity, rock2_permeability }"/>
+      materialList="{ fluid, rock2, rock2_permeability }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -98,8 +98,8 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-   <PressureDependentPorosity
-      name="rock1_porosity"
+   <CompressibleRock
+      name="rock1"
       referencePressure="0.0"
       defaultReferencePorosity ="0.05"
       compressibility="1e-8"/>
@@ -108,8 +108,8 @@
       name="rock1_permeability"
       permeabilityComponents="2e-16, 2e-16, 2e-16"/>
       
-    <PressureDependentPorosity
-      name="rock2_porosity"
+    <CompressibleRock
+      name="rock2"
       referencePressure="0.0"
       defaultReferencePorosity ="0.05"
       compressibility="1e-10"/>

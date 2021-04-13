@@ -38,6 +38,16 @@ CompressibleRock::CompressibleRock( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Solid compressibility" );
+
+  /// These are not used so we can make them optional.
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::grainDensityString() ).
+    setInputFlag( InputFlags::OPTIONAL );
+
+  this->getWrapper< real64 >( viewKeyStruct::defaultGrainDensityString() ).
+    setInputFlag( InputFlags::OPTIONAL );
+
+  this->getWrapper< real64 >( viewKeyStruct::grainBulkModulusString() ).
+    setInputFlag( InputFlags::OPTIONAL );
 }
 
 CompressibleRock::~CompressibleRock() = default;

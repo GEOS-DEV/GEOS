@@ -9,7 +9,7 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       permeabilityNames="{ fracture_permeability }"
-      porosityNames="{ fracture_porosity }">
+      solidNaems="{ fractureFilling }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"/>
@@ -124,7 +124,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-5"
-      materialList="{ water, fracture_porosity, fracture_permeability }"/>
+      materialList="{ water, fractureFilling, fracture_permeability }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -138,8 +138,8 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PressureDependentPorosity
-      name="fracture_porosity"
+    <CompressibleRock
+      name="fractureFilling"
       referencePressure="0.0"
       defaultReferencePorosity ="1.00"
       compressibility="0.0"/>

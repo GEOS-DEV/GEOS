@@ -10,7 +10,7 @@
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
       permeabilityNames="{ rock_permeability, fracture_permeability }"
-      porosityNames="{ rock_porosity, fracture_porosity }">
+      solidNames ="{ rock, fractureFilling }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"
@@ -119,12 +119,12 @@
      <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock_permeability, rock_porosity }"/>
+      materialList="{ water, rock_permeability, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture = "1e-4"
-      materialList="{ water, fracture_permeability, fracture_porosity }"/>
+      materialList="{ water, fracture_permeability, fractureFilling }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -138,8 +138,8 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PressureDependentPorosity
-      name="rock_porosity"
+    <CompressibleRock
+      name="rock"
       referencePressure="0.0"
       defaultReferencePorosity ="0.01"
       compressibility="1e-9"/>
@@ -148,8 +148,8 @@
       name="rock_permeability"
       permeabilityComponents="5e-19, 5e-19, 5e-19"/>
       
-    <PressureDependentPorosity
-      name="fracture_porosity"
+    <CompressibleRock
+      name="fractureFilling"
       referencePressure="0.0"
       defaultReferencePorosity ="1.00"
       compressibility="0.0"/>
