@@ -394,9 +394,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
 
   // real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
-//
-//  //real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
-//
+    //
 //  real64 yield, df_dp, df_dq, df_dpc, df_dpp, df_dqq;
 //  evaluateYield( trialP, trialQ, pc, M, alpha, yield, df_dp, df_dq, df_dpc, df_dpp, df_dqq );
 //
@@ -492,16 +490,18 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
     // solve Newton system
 
+    real64 dp_dve = bulkModulus;
+    real64 dq_dse = 3. *mu;
+      
     jacobian[0][0] = 1. + solution[2] * df_dp_dve;
     jacobian[0][2] = df_dp;
     jacobian[1][1] = 1. + solution[2]*df_dq_dse;
     jacobian[1][2] = df_dq;
-    jacobian[2][0] = bulkModulus * df_dp - dpc_dve * df_dpc;
-    jacobian[2][1] = 3.0 * mu * df_dq;
+    jacobian[2][0] = dp_dve * df_dp - dpc_dve * df_dpc;
+    jacobian[2][1] = dq_dse * df_dq;
     jacobian[2][2] = 0.0;
 //
-//    real64 dp_dve = bulkModulus;
-//    real64 dq_dse = 3*mu;
+
 //
 //    jacobian[0][0] = 1. + solution[2] * df_dpp * dp_dve;
 //    jacobian[0][2] = df_dp;
@@ -533,9 +533,27 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 BB[2][2] = {{}};
 
   //  real64 dpc_dve = 1./(Cc-Cr);//-1./(Cc-Cr) * pc; //linear hardening version
-  real64 dpc_dve = -1./(Cc-Cr) * pc;
-  real64 a1= 1. + solution[2]*dpc_dve;
-  real64 a2 = trialP * dpc_dve;
+    real64 const c = alpha/(alpha+1.)*pc;
+    real64 dpc_dve = -1./(Cc-Cr) * pc;
+    real64 df_dp_depsv;
+    real64 factor;
+    if( trialP >= c ) // Use MCC
+    {
+
+        factor = 2.*alpha/ (alpha+1.);
+        df_dpc = -factor * trialP;
+        df_dp_depsv = factor * dpc_dve;
+    }
+    else
+    {
+         factor = 2. * alpha*alpha*alpha / (alpha+1.);
+        df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - factor * trialP;
+        df_dp_depsv = factor * dpc_dve;
+    }
+    
+  
+  real64 a1= 1. + solution[2]*df_dp_depsv;
+  real64 a2 = -df_dpc * dpc_dve;
 
   bulkModulus = -trialP/Cr;
 
