@@ -18,10 +18,10 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
 
-#include <complex>
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
-#include "linearAlgebra/common.hpp"
+#include "linearAlgebra/common/common.hpp"
+
+#include <complex>
 
 namespace geosx
 {
