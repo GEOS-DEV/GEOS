@@ -75,7 +75,7 @@ def main():
     frequency = 10.0
     wavelet   = ricker(maxT, dt, frequency)
 
-    """
+
     shot_list = equispaced_acquisition(boundary_box,
                                        wavelet,
                                        dt,
@@ -88,8 +88,8 @@ def main():
                                        export = 1
                                        )
 
-    """
 
+    """
     shot_list = moving_acquisition(boundary_box,
                                    wavelet,
                                    dt,
@@ -101,11 +101,11 @@ def main():
                                    lenRy = 0,
                                    export = 1)
 
-
+    """
 
     #shot_list = segy_acquisition(segyPath + acqName, wavelet, dt)
 
-    multiProcessing(shot_list)
+    #multiProcessing(shot_list)
 
 
 

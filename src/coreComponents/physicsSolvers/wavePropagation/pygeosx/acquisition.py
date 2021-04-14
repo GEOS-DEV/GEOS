@@ -157,7 +157,7 @@ def moving_acquisition(box,
             shots.append(shot)
 
     if export:
-        acq_name = "/moving_Sx=" + str(nbsourcesx) +"_Sy=" + str(nbsourcesy) + "_Rx=" + str(nbreceiversx) + "_Ry=" + str(nbreceiversy) + "/"
+        acq_name = "/moving_SxSy=" + str(nbsourcesx) + "x" + str(nbsourcesy) + "_RxRy=" + str(nbreceiversx) + "x" + str(nbreceiversy) + "_zoneR=" + str(2*lenRx) + "x" + str(2*lenRy) + "/"
         export_for_acquisition(shots, segyPath, acq_name)
 
     return shots
@@ -225,7 +225,7 @@ def random_acquisition(box,
         shots.append(shot)
 
     if export:
-        acq_name = "/random_nbS=" + str(nbsources) + "_Rx=" + str(nbreceiversx) + "_Ry=" + str(nbreceiversy) + "/"
+        acq_name = "/random_nbS=" + str(nbsources) + "_RxRy=" + str(nbreceiversx) + "x" + str(nbreceiversy) + "/"
         export_for_acquisition(shots, segyPath, acq_name)
 
     return shots
@@ -267,7 +267,7 @@ def equispaced_acquisition(box,
             shots.append(shot)
 
     if export:
-        acq_name = "/equispaced_Sx=" + str(len(xs)) +"_Sy=" + str(len(ys)) + "_Rx=" + str(len(xr)) + "_Ry=" + str(len(yr)) + "/"
+        acq_name = "/equispaced_SxSy=" + str(len(xs)) +"x" + str(len(ys)) + "_RxRy=" + str(len(xr)) + "x" + str(len(yr)) + "/"
         export_for_acquisition(shots, segyPath, acq_name)
 
     return shots
