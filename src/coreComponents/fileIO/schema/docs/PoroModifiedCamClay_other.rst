@@ -3,7 +3,6 @@
 =========================== ============== ===================================== 
 Name                        Type           Description                           
 =========================== ============== ===================================== 
-bulkModulus                 real64_array   Elastic Bulk Modulus Field            
 cslSlope                    real64_array   Slope of the critical state line      
 dPVMult_dDensity            real64_array2d (no description available)            
 density                     real64_array2d Material Density                      
@@ -11,9 +10,9 @@ oldPreConsolidationPressure real64_array2d Old preconsolidation pressure
 oldStress                   real64_array3d Previous Material Stress              
 poreVolumeMultiplier        real64_array2d (no description available)            
 preConsolidationPressure    real64_array2d New preconsolidation pressure         
-recompressionIndex          real64_array   Recompression index                   
-refPressure                 real64_array   Reference pressure                    
-refStrainVol                real64_array   eference volumetric strain            
+recompressionIndex          real64_array   Recompression Index Field             
+refPressure                 real64         Reference Pressure Field              
+refStrainVol                real64         Reference Volumetric Strain           
 shapeParameter              real64_array   Shape parameter for the yield surface 
 shearModulus                real64_array   Elastic Shear Modulus                 
 stress                      real64_array3d Current Material Stress               

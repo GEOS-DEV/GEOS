@@ -64,13 +64,6 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
-.. _XML_CamClay:
-
-Element: CamClay
-================
-.. include:: ../../coreComponents/fileIO/schema/docs/CamClay.rst
-
-
 .. _XML_CellElementRegion:
 
 Element: CellElementRegion
@@ -209,6 +202,13 @@ Element: DruckerPrager
 Element: ElasticIsotropic
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropic.rst
+
+
+.. _XML_ElasticIsotropicPressureDependent:
+
+Element: ElasticIsotropicPressureDependent
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropicPressureDependent.rst
 
 
 .. _XML_ElasticTransverseIsotropic:
@@ -379,6 +379,13 @@ Element: Mesh
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
 
 
+.. _XML_ModifiedCamClay:
+
+Element: ModifiedCamClay
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/ModifiedCamClay.rst
+
+
 .. _XML_MultiPhaseMultiComponentFluid:
 
 Element: MultiPhaseMultiComponentFluid
@@ -484,13 +491,6 @@ Element: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
 
 
-.. _XML_PoroCamClay:
-
-Element: PoroCamClay
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroCamClay.rst
-
-
 .. _XML_PoroDruckerPrager:
 
 Element: PoroDruckerPrager
@@ -517,6 +517,13 @@ Element: PoroElasticTransverseIsotropic
 Element: PoroExtendedDruckerPrager
 ==================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroExtendedDruckerPrager.rst
+
+
+.. _XML_PoroModifiedCamClay:
+
+Element: PoroModifiedCamClay
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroModifiedCamClay.rst
 
 
 .. _XML_Poroelastic:
@@ -838,13 +845,6 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
-.. _DATASTRUCTURE_CamClay:
-
-Datastructure: CamClay
-======================
-.. include:: ../../coreComponents/fileIO/schema/docs/CamClay_other.rst
-
-
 .. _DATASTRUCTURE_CellElementRegion:
 
 Datastructure: CellElementRegion
@@ -990,6 +990,13 @@ Datastructure: DruckerPrager
 Datastructure: ElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticIsotropicPressureDependent:
+
+Datastructure: ElasticIsotropicPressureDependent
+================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropicPressureDependent_other.rst
 
 
 .. _DATASTRUCTURE_ElasticTransverseIsotropic:
@@ -1181,6 +1188,13 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
 
 
+.. _DATASTRUCTURE_ModifiedCamClay:
+
+Datastructure: ModifiedCamClay
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ModifiedCamClay_other.rst
+
+
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
 
 Datastructure: MultiPhaseMultiComponentFluid
@@ -1286,13 +1300,6 @@ Datastructure: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
 
 
-.. _DATASTRUCTURE_PoroCamClay:
-
-Datastructure: PoroCamClay
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroCamClay_other.rst
-
-
 .. _DATASTRUCTURE_PoroDruckerPrager:
 
 Datastructure: PoroDruckerPrager
@@ -1319,6 +1326,13 @@ Datastructure: PoroElasticTransverseIsotropic
 Datastructure: PoroExtendedDruckerPrager
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PoroModifiedCamClay:
+
+Datastructure: PoroModifiedCamClay
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_Poroelastic:
