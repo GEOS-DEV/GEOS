@@ -41,6 +41,27 @@ public:
   }
 
   /**
+   * @brief Constructor.
+   * @param resultVar reference to the variable that will store the result upon destruction (a common use case).
+   */
+  Stopwatch( real64 & resultVar )
+    : m_result( &resultVar )
+  {
+    zero();
+  }
+
+  /**
+   * @brief Destructor.
+   */
+  ~Stopwatch()
+  {
+    if( m_result )
+    {
+      *m_result = elapsedTime();
+    }
+  }
+
+  /**
    * @brief Zero out the timer.
    */
   void zero()
@@ -63,6 +84,9 @@ private:
 
   /// Time point of the last timer restart
   std::chrono::steady_clock::time_point m_start;
+
+  /// The variable to store timer elapsed time result upon leaving scope
+  real64 * m_result{};
 };
 
 } // end geosx

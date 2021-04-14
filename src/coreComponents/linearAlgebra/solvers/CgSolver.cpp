@@ -18,11 +18,11 @@
  */
 
 
-#include "CGsolver.hpp"
+#include "CgSolver.hpp"
 
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "common/LinearOperator.hpp"
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
 
@@ -44,31 +44,31 @@ namespace geosx
 // ----------------------------
 // Empty constructor.
 template< typename VECTOR >
-CGsolver< VECTOR >::CGsolver( LinearOperator< Vector > const & A,
-                              LinearOperator< Vector > const & M,
-                              real64 const tolerance,
-                              localIndex const maxIterations,
-                              integer const verbosity )
-  : KrylovSolver< VECTOR >( A, M, tolerance, maxIterations, verbosity )
-{}
+CgSolver< VECTOR >::CgSolver( LinearSolverParameters params,
+                              LinearOperator< Vector > const & A,
+                              LinearOperator< Vector > const & M )
+  : KrylovSolver< VECTOR >( std::move( params ), A, M )
+{
+  GEOSX_ERROR_IF( !m_params.isSymmetric, "Cannot use CG solver with a non-symmetric system" );
+}
 
 // ----------------------------
 // Destructor
 // ----------------------------
 template< typename VECTOR >
-CGsolver< VECTOR >::~CGsolver() = default;
+CgSolver< VECTOR >::~CgSolver() = default;
 
 // ----------------------------
 // Monolithic CG solver
 // ----------------------------
 template< typename VECTOR >
-void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
+void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
 {
-  Stopwatch watch;
+  Stopwatch watch( m_result.solveTime );
 
   // Compute the target absolute tolerance
-  real64 const absTol = b.norm2() * m_tolerance;
+  real64 const absTol = b.norm2() * m_params.krylov.relTolerance;
 
   // Define residual vector
   VectorTemp r = createTempVector( b );
@@ -89,12 +89,12 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   p.zero();
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_result.numIterations = 0;
-  m_residualNorms.resize( m_maxIterations + 1 );
+  m_residualNorms.resize( m_params.krylov.maxIterations + 1 );
 
   localIndex k;
   real64 rnorm = 0.0;
 
-  for( k = 0; k <= m_maxIterations; ++k )
+  for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
     rnorm = r.norm2();
     logProgress( k, rnorm );
@@ -121,7 +121,7 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
     // compute alpha
     real64 const pAp = p.dot( Ap );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
     real64 const alpha = tau / pAp;
 
     // Update x = x + alpha*p
@@ -135,8 +135,7 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   }
 
   m_result.numIterations = k;
-  m_result.residualReduction = rnorm / absTol * m_tolerance;
-  m_result.solveTime = watch.elapsedTime();
+  m_result.residualReduction = rnorm / absTol * m_params.krylov.relTolerance;
 
   logResult();
   m_residualNorms.resize( m_result.numIterations + 1 );
@@ -148,18 +147,18 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 // Explicit Instantiations
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class CGsolver< TrilinosInterface::ParallelVector >;
-template class CGsolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
+template class CgSolver< TrilinosInterface::ParallelVector >;
+template class CgSolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-template class CGsolver< HypreInterface::ParallelVector >;
-template class CGsolver< BlockVectorView< HypreInterface::ParallelVector > >;
+template class CgSolver< HypreInterface::ParallelVector >;
+template class CgSolver< BlockVectorView< HypreInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class CGsolver< PetscInterface::ParallelVector >;
-template class CGsolver< BlockVectorView< PetscInterface::ParallelVector > >;
+template class CgSolver< PetscInterface::ParallelVector >;
+template class CgSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
 } //namespace geosx

@@ -52,16 +52,16 @@ public:
   virtual ~LinearOperator() = default;
 
   /**
-   * @brief Apply operator to a vector
-   * @param src Input vector (x).
-   * @param dst Output vector (b).
+   * @brief Apply operator to a vector, <tt>dst = this(src)</tt>.
+   * @param src input vector
+   * @param dst output vector
    *
    * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
    */
   virtual void apply( Vector const & src, Vector & dst ) const = 0;
 
   /**
-   * @brief Compute residual <tt>r = Ax - b</tt>.
+   * @brief Compute residual <tt>r = b - this(x)</tt>.
    *
    * @param x Input solution.
    * @param b Input right hand side.
@@ -87,6 +87,31 @@ public:
    * @return Number of global columns in the operator.
    */
   virtual globalIndex numGlobalCols() const = 0;
+
+  /**
+   * @brief Get the number of local rows.
+   * @return Number of local rows in the operator.
+   */
+  virtual localIndex numLocalRows() const = 0;
+
+  /**
+   * @brief Get the number of local columns.
+   * @return Number of local columns in the operator.
+   *
+   * @note The use of term "local columns" refers not to physical partitioning of columns across ranks
+   *       (as e.g. matrices are partitioned by rows and typically physically store all column entries),
+   *       but to the partitioning of a compatible vector object that this operator can be applied to.
+   */
+  virtual localIndex numLocalCols() const = 0;
+
+  /**
+   * @brief Get the MPI communicator the matrix was created with
+   * @return MPI communicator passed in @p create...()
+   *
+   * @note when build without MPI, may return anything
+   *       (MPI_Comm will be a mock type defined in MpiWrapper)
+   */
+  virtual MPI_Comm getComm() const = 0;
 };
 
 }

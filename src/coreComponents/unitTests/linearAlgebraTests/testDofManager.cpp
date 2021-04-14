@@ -17,19 +17,19 @@
  * @brief This test file is part of the ctest suite and tests the DofManager functionality.
  */
 
-#include "gtest/gtest.h"
-
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/DofManager.hpp"
+#include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "unitTests/linearAlgebraTests/testDofManagerUtils.hpp"
 
-#include "testDofManagerUtils.hpp"
+#include "gtest/gtest.h"
 
 #include <memory>
 
@@ -58,28 +58,21 @@ char const * xmlInput =
   "  </ElementRegions>"
   "</Problem>";
 
-CommandLineOptions g_commandLineOptions;
-
 /**
  * @brief Base class for all DofManager test fixtures.
  */
 class DofManagerTestBase : public ::testing::Test
 {
-public:
+protected:
 
   using Base = ::testing::Test;
 
   DofManagerTestBase():
     Base(),
-    state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ),
+    state( std::make_unique< CommandLineOptions >() ),
     dofManager( "test" )
-  {}
-
-protected:
-
-  void SetUp() override
   {
-    setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 );
     dofManager.setMesh( state.getProblemManager().getDomainPartition(), 0, 0 );
   }
@@ -980,9 +973,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerRestrictorTest, PetscInterface,
 
 int main( int argc, char * * argv )
 {
-  ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geosx::basicSetup( argc, argv );
-  int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
-  return result;
+  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  return RUN_ALL_TESTS();
 }

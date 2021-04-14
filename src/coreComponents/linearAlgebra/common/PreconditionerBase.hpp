@@ -15,8 +15,8 @@
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
 #define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
 
-#include "linearAlgebra/common.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/common/common.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
 
 namespace geosx
 {
@@ -32,9 +32,7 @@ class PreconditionerBase : public LinearOperator< typename LAI::ParallelVector >
 {
 public:
 
-  PreconditionerBase()
-    : m_mat{}
-  {}
+  PreconditionerBase() = default;
 
   virtual ~PreconditionerBase() = default;
 
@@ -51,22 +49,11 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat )
+  virtual void setup( Matrix const & mat )
   {
     GEOSX_LAI_ASSERT( mat.ready() );
+    GEOSX_LAI_ASSERT_MSG( mat.numLocalRows() == mat.numLocalCols(), "Matrix must be square" );
     m_mat = &mat;
-  }
-
-  /**
-   * @brief Compute the preconditioner from a matrix
-   * @param mat the matrix to precondition
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
-   */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager )
-  {
-    GEOSX_UNUSED_VAR( dofManager );
-    compute( mat );
   }
 
   /**
@@ -104,6 +91,36 @@ public:
   }
 
   /**
+   * @brief Get the number of local rows.
+   * @return Number of local rows in the operator.
+   */
+  virtual localIndex numLocalRows() const override
+  {
+    return m_mat->numLocalRows();
+  }
+
+  /**
+   * @brief Get the number of local columns.
+   * @return Number of local columns in the operator.
+   */
+  virtual localIndex numLocalCols() const override
+  {
+    return m_mat->numLocalCols();
+  }
+
+  /**
+   * @brief Get the MPI communicator the matrix was created with
+   * @return MPI communicator passed in @p create...()
+   *
+   * @note when build without MPI, may return anything
+   *       (MPI_Comm will be a mock type defined in MpiWrapper)
+   */
+  virtual MPI_Comm getComm() const override
+  {
+    return m_mat->getComm();
+  }
+
+  /**
    * @brief Chech if preconditioner is ready to use
    * @return @p true if compute() has been called but not clear().
    */
@@ -138,7 +155,8 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const
   {
-    GEOSX_ERROR( "PreconditionerBase::preconditionerMatrix called!. Should be overridden." );
+    GEOSX_ERROR( "PreconditionerBase::preconditionerMatrix called. This is not supposed to happen."
+                 "Check the value of hasPreconditionerMatrix() before accessing this function." );
     // This is here just to be able to compile ...
     return *m_mat;
   }
@@ -146,7 +164,7 @@ public:
 private:
 
   /// Pointer to the matrix
-  Matrix const * m_mat;
+  Matrix const * m_mat{};
 };
 
 }

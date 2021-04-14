@@ -15,8 +15,8 @@
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
 #define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
 
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
 
 namespace geosx
 {
@@ -43,24 +43,12 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override
+  virtual void setup( Matrix const & mat ) override
   {
     GEOSX_LAI_ASSERT( mat.ready() );
     m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
     mat.extractDiagonal( m_diagInv );
     m_diagInv.reciprocal();
-  }
-
-  /**
-   * @brief Compute the preconditioner from a matrix
-   * @param mat the matrix to precondition
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
-   */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) override
-  {
-    GEOSX_UNUSED_VAR( dofManager );
-    compute( mat );
   }
 
   /**

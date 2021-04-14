@@ -16,177 +16,149 @@
  * @file testLAIHelperFunctions.cpp
  */
 
-// Source includes
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
-#include "dataRepository/Group.hpp"
 #include "linearAlgebra/DofManager.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "unitTests/linearAlgebraTests/testDofManagerUtils.hpp"
 
-// TPL includes
 #include <gtest/gtest.h>
-#include <conduit.hpp>
 
 using namespace geosx;
 
 static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 static real64 const tolerance  = machinePrecision;//1e-10;
 
+char const * xmlInput =
+  "<Problem>"
+  "  <Mesh>"
+  "    <InternalMesh name=\"mesh1\""
+  "                  elementTypes=\"{C3D8}\""
+  "                  xCoords=\"{0, 1}\""
+  "                  yCoords=\"{0, 1}\""
+  "                  zCoords=\"{0, 1}\""
+  "                  nx=\"{6}\""
+  "                  ny=\"{9}\""
+  "                  nz=\"{5}\""
+  "                  cellBlockNames=\"{block1}\"/>"
+  "  </Mesh>"
+  "  <ElementRegions>"
+  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy_material}\" />"
+  "  </ElementRegions>"
+  "</Problem>";
+
+template< typename LAI >
 class LAIHelperFunctionsTest : public ::testing::Test
 {
 protected:
 
-  /**
-   * @brief Provide a very simple xml input, with an internally generated mesh.
-   */
-  static void SetUpTestCase()
+  using Base = ::testing::Test;
+
+  LAIHelperFunctionsTest():
+    Base(),
+    state( std::make_unique< CommandLineOptions >() )
   {
-    string const inputStream =
-      "<Problem>"
-      "  <Mesh>"
-      "    <InternalMesh name=\"mesh1\""
-      "                  elementTypes=\"{C3D8}\""
-      "                  xCoords=\"{0, 1}\""
-      "                  yCoords=\"{0, 1}\""
-      "                  zCoords=\"{0, 1}\""
-      "                  nx=\"{6}\""
-      "                  ny=\"{9}\""
-      "                  nz=\"{5}\""
-      "                  cellBlockNames=\"{block1}\"/>"
-      "  </Mesh>"
-      "  <ElementRegions>"
-      "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy_material}\" />"
-      "  </ElementRegions>"
-      "</Problem>";
-
-    xmlWrapper::xmlDocument xmlDocument;
-    xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
-    if( !xmlResult )
-    {
-      GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-      GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-      GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-    }
-
-    ProblemManager & problemManager = getGlobalState().getProblemManager();
-    int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-    dataRepository::Group & commandLine =
-      problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
-    commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).setApplyDefaultValue( mpiSize );
-
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-    problemManager.processInputFileRecursive( xmlProblemNode );
-
-    // Open mesh levels
-    DomainPartition & domain = problemManager.getDomainPartition();
-    MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
-    meshManager.generateMeshLevels( domain );
-
-    ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-    elementManager.processInputFileRecursive( topLevelNode );
-    elementManager.postProcessInputRecursive();
-
-    problemManager.problemSetup();
-    problemManager.applyInitialConditions();
+    geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 );
   }
+
+  GeosxState state;
+  MeshLevel * mesh;
 };
 
-TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
+TYPED_TEST_SUITE_P( LAIHelperFunctionsTest );
+
+TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
 {
+  using Matrix = typename TypeParam::ParallelMatrix;
+  using Vector = typename TypeParam::ParallelVector;
+
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager & nodeManager = meshLevel.getNodeManager();
+  NodeManager const & nodeManager = meshLevel.getNodeManager();
 
   arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
   DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
-  string_array Region;
-  Region.emplace_back( "region1" );
+  string_array regions;
+  regions.emplace_back( "region1" );
 
-  dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, Region );
+  dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, regions );
   dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connector::Elem );
   dofManager.reorderByRank();
 
-  localIndex nDof = 3*nodeManager.size();
+  localIndex const numLocalDof = 3 * nodeManager.getNumberOfLocalIndices();
 
-  arrayView1d< globalIndex > const & dofNumber =  nodeManager.getReference< globalIndex_array >( dofManager.getKey( "nodalVariable" )  );
-  arrayView1d< integer > const & isNodeGhost = nodeManager.ghostRank();
+  arrayView1d< globalIndex const > const dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( "nodalVariable" ) );
+  arrayView1d< integer const > const isNodeGhost = nodeManager.ghostRank();
 
-  ParallelVector nodalVariable, expectedPermutedVector;
-  nodalVariable.createWithLocalSize( nDof, MPI_COMM_GEOSX );
+  Vector nodalVariable, expectedPermutedVector;
+  nodalVariable.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   nodalVariable.set( 0 );
-  expectedPermutedVector.createWithLocalSize( nDof, MPI_COMM_GEOSX );
+  expectedPermutedVector.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   expectedPermutedVector.set( 0 );
 
   nodalVariable.open();
   expectedPermutedVector.open();
-  for( localIndex a=0; a <nodeManager.size(); a++ )
+  for( localIndex a = 0; a < nodeManager.size(); ++a )
   {
     if( isNodeGhost[a] < 0 )
     {
-      for( localIndex d=0; d < 3; d++ )
+      for( localIndex d = 0; d < 3; ++d )
       {
-        localIndex index = dofNumber( a ) + d;
-        real64 Value = nodeLocalToGlobal[a] * 3 + d;
-        nodalVariable.add( index, Value );
-        index =  nodeLocalToGlobal[a] * 3 + d;
-        expectedPermutedVector.add( index, Value );
+        real64 const value = nodeLocalToGlobal[a] * 3 + d;
+        nodalVariable.add( dofNumber[a] + d, value );
+        expectedPermutedVector.add( nodeLocalToGlobal[a] * 3 + d, value );
       }
     }
   }
   nodalVariable.close();
   expectedPermutedVector.close();
 
-  ParallelMatrix permutationMatrix;
-
-  LAIHelperFunctions::CreatePermutationMatrix( nodeManager,
-                                               nDof,
-                                               nDof,
+  Matrix permutationMatrix;
+  LAIHelperFunctions::createPermutationMatrix( nodeManager,
                                                3,
                                                dofManager.getKey( "nodalVariable" ),
                                                permutationMatrix );
-
-  ParallelVector permutedVector = LAIHelperFunctions::PermuteVector( nodalVariable, permutationMatrix );
+  Vector permutedVector = LAIHelperFunctions::permuteVector( nodalVariable, permutationMatrix );
 
   permutedVector.axpy( -1, expectedPermutedVector );
-
-  real64 vectorNorm = permutedVector.norm1();
-
+  real64 const vectorNorm = permutedVector.norm1();
   EXPECT_LT( vectorNorm, tolerance );
-
 }
 
-TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
+TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
 {
+  using Matrix = typename TypeParam::ParallelMatrix;
+  using Vector = typename TypeParam::ParallelVector;
+
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = meshLevel.getElemManager();;
+  ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
-  string_array region;
-  region.emplace_back( "region1" );
+  string_array regions;
+  regions.emplace_back( "region1" );
 
-  dofManager.addField( "cellCentered", DofManager::Location::Elem, region );
+  dofManager.addField( "cellCentered", DofManager::Location::Elem, regions );
   dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connector::Face );
   dofManager.reorderByRank();
 
-  integer nDof = dofManager.numGlobalDofs( "cellCentered" );
+  integer const numLocalDof = dofManager.numLocalDofs( "cellCentered" );
 
-  ParallelVector cellCenteredVariable, expectedPermutedVector;
-  cellCenteredVariable.createWithLocalSize( nDof, MPI_COMM_GEOSX );
+  Vector cellCenteredVariable, expectedPermutedVector;
+  cellCenteredVariable.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   cellCenteredVariable.set( 0 );
-  expectedPermutedVector.createWithLocalSize( nDof, MPI_COMM_GEOSX );
+  expectedPermutedVector.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   expectedPermutedVector.set( 0 );
 
   cellCenteredVariable.open();
@@ -194,21 +166,17 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
-    arrayView1d< globalIndex const > const &
-    dofNumber = elementSubRegion.getReference< array1d< globalIndex > >( dofManager.getKey( "cellCentered" ) );
-    arrayView1d< integer const > const & isGhost = elementSubRegion.ghostRank();
-    arrayView1d< globalIndex const > const & localToGlobal = elementSubRegion.localToGlobalMap();
+    arrayView1d< globalIndex const > const dofNumber = elementSubRegion.getReference< array1d< globalIndex > >( dofManager.getKey( "cellCentered" ) );
+    arrayView1d< integer const > const isGhost = elementSubRegion.ghostRank();
+    arrayView1d< globalIndex const > const localToGlobal = elementSubRegion.localToGlobalMap();
 
-    for( localIndex k=0; k<numElems; ++k )
+    for( localIndex k = 0; k < numElems; ++k )
     {
       if( dofNumber[k] >= 0 && isGhost[k] < 0 )
       {
-        globalIndex index = dofNumber[k];
-        real64 Value = localToGlobal[k];
-        cellCenteredVariable.add( index, Value );
-        index = localToGlobal[k];
-        Value = localToGlobal[k];
-        expectedPermutedVector.add( index, Value );
+        real64 const value = localToGlobal[k];
+        cellCenteredVariable.add( dofNumber[k], value );
+        expectedPermutedVector.add( localToGlobal[k], value );
       }
     }
   } );
@@ -216,25 +184,33 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
   cellCenteredVariable.close();
   expectedPermutedVector.close();
 
-  ParallelMatrix permutationMatrix;
-
-  LAIHelperFunctions::CreatePermutationMatrix( elemManager,
-                                               nDof,
-                                               nDof,
+  Matrix permutationMatrix;
+  LAIHelperFunctions::createPermutationMatrix( elemManager,
                                                1,
                                                dofManager.getKey( "cellCentered" ),
                                                permutationMatrix );
-
-  // permutationMatrix.print(std::cout);
-  ParallelVector permutedVector = LAIHelperFunctions::PermuteVector( cellCenteredVariable, permutationMatrix );
+  Vector permutedVector = LAIHelperFunctions::permuteVector( cellCenteredVariable, permutationMatrix );
 
   permutedVector.axpy( -1, expectedPermutedVector );
-
-  real64 vectorNorm = permutedVector.norm1();
-
+  real64 const vectorNorm = permutedVector.norm1();
   EXPECT_LT( vectorNorm, tolerance );
-
 }
+
+REGISTER_TYPED_TEST_SUITE_P( LAIHelperFunctionsTest,
+                             nodalVectorPermutation,
+                             cellCenteredVectorPermutation );
+
+#ifdef GEOSX_USE_TRILINOS
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, LAIHelperFunctionsTest, TrilinosInterface, );
+#endif
+
+#ifdef GEOSX_USE_HYPRE
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, LAIHelperFunctionsTest, HypreInterface, );
+#endif
+
+#ifdef GEOSX_USE_PETSC
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAIHelperFunctionsTest, PetscInterface, );
+#endif
 
 /**
  * @function main
@@ -243,7 +219,7 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  GeosxState state( geosx::basicSetup( argc, argv ) );
+  geosx::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;
