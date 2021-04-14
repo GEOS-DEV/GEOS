@@ -147,8 +147,7 @@ void BlockPreconditionerGeneral< LAI >::computeSchurComplement( localIndex const
 }
 
 template< typename LAI >
-void BlockPreconditionerGeneral< LAI >::compute( Matrix const & mat,
-                                                 DofManager const & dofManager )
+void BlockPreconditionerGeneral< LAI >::setup( Matrix const & mat )
 {
   for( localIndex iBlock = 0; iBlock < m_numBlocks; ++iBlock )
   {
@@ -162,18 +161,18 @@ void BlockPreconditionerGeneral< LAI >::compute( Matrix const & mat,
                        mat.numGlobalRows() != this->numGlobalRows() ||
                        mat.numGlobalCols() != this->numGlobalRows();
 
-  Base::compute( mat, dofManager );
+  Base::setup( mat );
 
   if( newSize )
   {
-    reinitialize( mat, dofManager, 0 );
+    reinitialize( mat, *mat.dofManager(), 0 );
   }
   mat.multiplyPtAP( m_prolongators[0].current, m_matBlocks( 0, 0 ) );
   mat.multiplyPtAP( m_prolongators[0].next, m_matBlocks( 1, 1 ) );
   mat.multiplyRAP( m_restrictors[0].current, m_prolongators[0].next, m_matBlocks( 0, 1 ) );
   mat.multiplyRAP( m_restrictors[0].next, m_prolongators[0].current, m_matBlocks( 1, 0 ) );
 
-  m_solvers[0]->compute( m_matBlocks( 0, 0 ), dofManager );
+  m_solvers[0]->setup( m_matBlocks( 0, 0 ) );
   computeSchurComplement( 0 );
 
   // Compute all Schur complements
@@ -182,7 +181,7 @@ void BlockPreconditionerGeneral< LAI >::compute( Matrix const & mat,
     // If the matrix size/structure has changed, need to resize internal LA objects and recompute restrictors.
     if( newSize )
     {
-      reinitialize( mat, dofManager, iBlock );
+      reinitialize( mat, *mat.dofManager(), iBlock );
     }
     Matrix localMat( m_matBlocks( iBlock, iBlock ) );
     localMat.multiplyPtAP( m_prolongators[iBlock].current, m_matBlocks( iBlock, iBlock ) );
@@ -191,16 +190,16 @@ void BlockPreconditionerGeneral< LAI >::compute( Matrix const & mat,
     localMat.multiplyRAP( m_restrictors[iBlock].current, m_prolongators[iBlock].next, m_matBlocks( iBlock, iBlock+1 ) );
     localMat.multiplyRAP( m_restrictors[iBlock].next, m_prolongators[iBlock].current, m_matBlocks( iBlock+1, iBlock ) );
 
-    m_solvers[iBlock]->compute( m_matBlocks( iBlock, iBlock ), dofManager );
+    m_solvers[iBlock]->setup( m_matBlocks( iBlock, iBlock ) );
     computeSchurComplement( iBlock );
   }
 
   // Last Schur complement
   if( newSize )
   {
-    reinitialize( mat, dofManager, m_numBlocks-1 );
+    reinitialize( mat, *mat.dofManager(), m_numBlocks-1 );
   }
-  m_solvers[m_numBlocks-1]->compute( m_matBlocks( m_numBlocks-1, m_numBlocks-1 ), dofManager );
+  m_solvers[m_numBlocks-1]->setup( m_matBlocks( m_numBlocks-1, m_numBlocks-1 ) );
 }
 
 template< typename LAI >

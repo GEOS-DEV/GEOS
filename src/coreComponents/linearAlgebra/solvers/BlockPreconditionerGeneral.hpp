@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER3_HPP_
 
 #include "linearAlgebra/DofManager.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
 #include "linearAlgebra/utilities/BlockOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
 
@@ -134,15 +134,13 @@ public:
    */
   ///@{
 
-  using PreconditionerBase< LAI >::compute;
+  using PreconditionerBase< LAI >::setup;
 
   /**
    * @brief Compute the preconditioner from a matrix
    * @param mat the matrix to precondition
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) override;
+  virtual void setup( Matrix const & mat ) override;
 
   /**
    * @brief Apply operator to a vector

@@ -25,16 +25,16 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/multiphysics/LagrangianContactSolver.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
 #include "linearAlgebra/solvers/PreconditionerBlockJacobi.hpp"
@@ -954,12 +954,12 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
                          { { m_pressureKey, 0, 1 } },
                          std::move( flowPrecond ) );
 
-    if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
+    if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
     {
       if( m_contactSolver->getSolidSolver()->getRigidBodyModes().empty() )
       {
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-        LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+        LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
                                                    m_contactSolver->getSolidSolver()->getRigidBodyModes() );
@@ -1023,12 +1023,12 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
                          { { m_tractionKey, 0, 3 } },
                          std::move( tracPrecond ) );
 
-    if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
+    if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
     {
       if( m_contactSolver->getSolidSolver()->getRigidBodyModes().empty() )
       {
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-        LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+        LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
                                                    m_contactSolver->getSolidSolver()->getRigidBodyModes() );

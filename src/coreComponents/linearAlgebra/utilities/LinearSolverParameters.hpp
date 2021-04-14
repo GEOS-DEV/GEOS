@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geosx
 {
@@ -50,18 +50,22 @@ struct LinearSolverParameters
    */
   enum class PreconditionerType : integer
   {
-    none,    ///< No preconditioner
-    jacobi,  ///< Jacobi smoothing
-    gs,      ///< Gauss-Seidel smoothing
-    sgs,     ///< Symmetric Gauss-Seidel smoothing
-    iluk,    ///< Incomplete LU with k-level of fill
-    ilut,    ///< Incomplete LU with thresholding
-    icc,     ///< Incomplete Cholesky
-    ict,     ///< Incomplete Cholesky with thresholding
-    amg,     ///< Algebraic Multigrid
-    mgr,     ///< Multigrid reduction (Hypre only)
-    block,   ///< Block preconditioner
-    block_fs ///< Block preconditioner with fixed-stress
+    none,      ///< No preconditioner
+    jacobi,    ///< Jacobi smoothing
+    l1jacobi,  ///< l1-Jacobi smoothing
+    gs,        ///< Gauss-Seidel smoothing
+    sgs,       ///< Symmetric Gauss-Seidel smoothing
+    l1sgs,     ///< l1-Symmetric Gauss-Seidel smoothing
+    chebyshev, ///< Chebyshev polynomial smoothing
+    iluk,      ///< Incomplete LU with k-level of fill
+    ilut,      ///< Incomplete LU with thresholding
+    ic,        ///< Incomplete Cholesky
+    ict,       ///< Incomplete Cholesky with thresholding
+    amg,       ///< Algebraic Multigrid
+    mgr,       ///< Multigrid reduction (Hypre only)
+    block,     ///< Block preconditioner
+    block_fs,  ///< Block preconditioner with fixed-stress
+    direct     ///< Direct solver as preconditioner
   };
 
   integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
@@ -69,7 +73,7 @@ struct LinearSolverParameters
   bool isSymmetric = false; ///< Whether input matrix is symmetric (may affect choice of scheme)
   integer stopIfError = 1;  ///< Whether to stop the simulation if the linear solver reports an error
 
-  SolverType solverType = SolverType::direct;                        ///< Solver type
+  SolverType solverType = SolverType::direct;          ///< Solver type
   PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type
 
   /// Direct solver parameters: used for SuperLU_Dist interface through hypre and PETSc
@@ -129,22 +133,72 @@ struct LinearSolverParameters
   /// Algebraic multigrid parameters
   struct AMG
   {
-    integer maxLevels = 20;                  ///< Maximum number of coarsening levels
-    string cycleType = "V";                  ///< AMG cycle type
-    string smootherType = "gaussSeidel";     ///< Smoother type
-    string coarseType = "direct";            ///< Coarse-level solver/smoother
-    string coarseningType = "HMIS";          ///< Coarsening algorithm
-    integer interpolationType = 6;           ///< Coarsening algorithm
-    integer numSweeps = 2;                   ///< Number of smoother sweeps
-    integer numFunctions = 1;                ///< Number of amg functions
-    integer aggresiveNumLevels = 0;          ///< Number of levels for aggressive coarsening.
-    string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
-    real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and
-                                             ///< smoothed-aggregation AMG)
-    integer separateComponents = false;      ///< Apply a separate component filter before AMG construction
-    string nullSpaceType = "constantModes";  ///< Null space type [constantModes,rigidBodyModes]
+    /// AMG cycle type
+    enum class CycleType : integer
+    {
+      V, ///< V-cycle
+      W, ///< W-cycle
+    };
+
+    /// AMG pre/post smoothing option
+    enum class PreOrPost : integer
+    {
+      pre,  ///< pre-smoothing only
+      post, ///< post-smoothing only
+      both  ///< pre- and post-smoothing
+    };
+
+    /// AMG smoother type
+    enum class SmootherType : integer
+    {
+      default_,  ///< Use LAI's default option
+      jacobi,    ///< Jacobi smoothing
+      l1jacobi,  ///< l1-Jacobi smoothing
+      gs,        ///< Gauss-Seidel smoothing
+      sgs,       ///< Symmetric Gauss-Seidel smoothing
+      l1sgs,     ///< l1-Symmetric Gauss-Seidel smoothing
+      chebyshev, ///< Chebyshev polynomial smoothing
+      ilu0,      ///< ILU(0)
+      ilut,      ///< Incomplete LU with thresholding
+      ic0,       ///< Incomplete Cholesky
+      ict,       ///< Incomplete Cholesky with thresholding
+    };
+
+    /// AMG coarse solver type
+    enum class CoarseType : integer
+    {
+      default_,  ///< Use LAI's default option
+      jacobi,    ///< Jacobi
+      l1jacobi,  ///< l1-Jacobi
+      gs,        ///< Gauss-Seidel
+      sgs,       ///< Symmetric Gauss-Seidel
+      l1sgs,     ///< l1-Symmetric Gauss-Seidel
+      chebyshev, ///< Chebyshev polynomial
+      direct     ///< Direct solver as preconditioner
+    };
+
+    /// Null space type
+    enum class NullSpaceType : integer
+    {
+      constantModes,  ///< Constant modes
+      rigidBodyModes, ///< Rigid body modes
+    };
+
+    integer maxLevels = 20;                         ///< Maximum number of coarsening levels
+    CycleType cycleType = CycleType::V;             ///< AMG cycle type
+    SmootherType smootherType = SmootherType::gs;   ///< Smoother type
+    CoarseType coarseType = CoarseType::direct;     ///< Coarse-level solver/smoother
+    string coarseningType = "HMIS";                 ///< Coarsening algorithm
+    integer interpolationType = 6;                  ///< Coarsening algorithm
+    integer numSweeps = 2;                          ///< Number of smoother sweeps
+    integer numFunctions = 1;                       ///< Number of amg functions
+    integer aggresiveNumLevels = 0;                 ///< Number of levels for aggressive coarsening.
+    PreOrPost preOrPostSmoothing = PreOrPost::both; ///< Pre and/or post smoothing
+    real64 threshold = 0.0;                         ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
+    integer separateComponents = false;             ///< Apply a separate component filter before AMG construction
+    NullSpaceType nullSpaceType = NullSpaceType::constantModes; ///< Null space type [constantModes,rigidBodyModes]
   }
-  amg;                                       ///< Algebraic Multigrid (AMG) parameters
+  amg;                                              ///< Algebraic Multigrid (AMG) parameters
 
   /// Multigrid reduction parameters
   struct MGR
@@ -154,6 +208,7 @@ struct LinearSolverParameters
      */
     enum class StrategyType : integer
     {
+      invalid,                          ///< default value, to ensure solver sets something
       compositionalMultiphaseFVM,       ///< finite volume compositional muliphase flow
       compositionalMultiphaseHybridFVM, ///< hybrid finite volume compositional muliphase flow
       compositionalMultiphaseReservoir, ///< reservoir with finite volume compositional multiphase flow
@@ -163,19 +218,19 @@ struct LinearSolverParameters
       hybridSinglePhasePoroelastic      ///< single phase poroelastic with hybrid finite volume single phase flow
     };
 
-    StrategyType strategy;              ///< Predefined MGR solution strategy (solver specific)
-    integer separateComponents = false; ///< Apply a separate displacement component (SDC) filter before AMG construction
-    string displacementFieldName;       ///< Displacement field name need for SDC filter
+    StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
+    integer separateComponents = false;            ///< Apply a separate displacement component (SDC) filter before AMG construction
+    string displacementFieldName;                  ///< Displacement field name need for SDC filter
   }
-  mgr;                                  ///< Multigrid reduction (MGR) parameters
+  mgr;                                             ///< Multigrid reduction (MGR) parameters
 
   /// Incomplete factorization parameters
-  struct ILU
+  struct IFact
   {
     integer fill = 0;        ///< Fill level
     real64 threshold = 0.0;  ///< Dropping threshold
   }
-  ilu;                       ///< Incomplete factorization parameter struct
+  ifact;                       ///< Incomplete factorization parameter struct
 
   /// Domain decomposition parameters
   struct DD
@@ -196,8 +251,11 @@ ENUM_STRINGS( LinearSolverParameters::SolverType,
 ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "none",
               "jacobi",
+              "l1-jacobi",
               "gs",
               "sgs",
+              "l1-sgs",
+              "chebyshev",
               "iluk",
               "ilut",
               "icc",
@@ -205,7 +263,8 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "amg",
               "mgr",
               "block",
-              "block_fs" )
+              "block_fs",
+              "direct" )
 
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
               "none",
@@ -227,6 +286,42 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "lagrangianContactMechanics",
               "singlePhasePoroelastic",
               "hybridSinglePhasePoroelastic" )
+
+ENUM_STRINGS( LinearSolverParameters::AMG::CycleType,
+              "V",
+              "W" )
+
+ENUM_STRINGS( LinearSolverParameters::AMG::PreOrPost,
+              "pre",
+              "post",
+              "both" )
+
+ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
+              "default",
+              "jacobi",
+              "l1jacobi",
+              "gs",
+              "sgs",
+              "l1sgs",
+              "chebyshev",
+              "ilu0",
+              "ilut",
+              "ic0",
+              "ict" )
+
+ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
+              "default",
+              "jacobi",
+              "l1jacobi",
+              "gs",
+              "sgs",
+              "l1sgs",
+              "chebyshev",
+              "direct" )
+
+ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,
+              "constantModes",
+              "rigidBodyModes" )
 
 } /* namespace geosx */
 
