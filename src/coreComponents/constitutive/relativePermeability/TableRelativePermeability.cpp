@@ -18,8 +18,7 @@
 
 #include "TableRelativePermeability.hpp"
 
-#include "managers/GeosxState.hpp"
-#include "managers/Functions/FunctionManager.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geosx
 {
@@ -73,7 +72,7 @@ void TableRelativePermeability::initializePreSubGroups()
 
 void TableRelativePermeability::createAllTableKernelWrappers()
 {
-  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   m_phaseMinVolumeFraction.resize( PhaseType::MAX_NUM_PHASES );
 

@@ -90,7 +90,7 @@
 /// CMake option CMAKE_BUILD_TYPE
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
 
-/// The type that localIndex will be alaised to.
+/// The type that localIndex will be aliased to.
 #define GEOSX_LOCALINDEX_TYPE std::ptrdiff_t
 
 /// An integer flag representing the type that localIndex will be aliased to.

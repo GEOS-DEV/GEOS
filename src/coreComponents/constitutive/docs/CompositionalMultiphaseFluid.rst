@@ -23,7 +23,7 @@ In order to use the model, GEOSX must be built with ``-DENABLE_PVTPACKAGE=ON`` (
 
 The following attributes are supported:
 
-.. include:: ../../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
+.. include:: ../../../coreComponents/schema/docs/CompositionalMultiphaseFluid.rst
 
 Supported phase names are:
 
