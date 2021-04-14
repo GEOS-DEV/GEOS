@@ -60,7 +60,13 @@ function( make_full_config_file
         set( GEOSX_USE_${DEP} TRUE )
         set( ${DEP} TRUE )
     endforeach()
+
+    # Fix some options to avoid changes in commited config for doxygen
     set( GEOSX_CMAKE_BUILD_TYPE "\"Release\"" )
+    set( GEOSX_LOCALINDEX_TYPE "std::ptrdiff_t" )
+    set( GEOSX_LOCALINDEX_TYPE_FLAG "3" )
+    set( GEOSX_GLOBALINDEX_TYPE "long long int" )
+    set( GEOSX_GLOBALINDEX_TYPE_FLAG "2" )
 
     configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
                     ${CMAKE_SOURCE_DIR}/docs/doxygen/GeosxConfig.hpp )

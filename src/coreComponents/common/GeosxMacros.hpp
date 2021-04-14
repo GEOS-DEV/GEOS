@@ -100,4 +100,10 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 /// Doxygen can't parse a `decltype( auto )` return type, using this gets around that.
 #define GEOSX_DECLTYPE_AUTO_RETURN decltype( auto )
 
+/// Macro to concatenate two tokens (low level)
+#define GEOSX_CONCAT_IMPL( A, B ) A ## B
+
+/// Macro to concatenate two tokens (user level)
+#define GEOSX_CONCAT( A, B ) GEOSX_CONCAT_IMPL( A, B )
+
 #endif // GEOSX_COMMON_GEOSXMACROS_HPP_

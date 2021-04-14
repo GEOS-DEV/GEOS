@@ -13,16 +13,16 @@
  */
 
 /**
- * @file BlasLapack.cpp
+ * @file BlasLapackLA.cpp
  */
 
 // Include the corresponding header file.
 #include "BlasLapackLA.hpp"
 
-#include <random>
-
 // BLAS and LAPACK function declaration
-#include "BlasLapackFunctions.h"
+#include "linearAlgebra/interfaces/dense/BlasLapackFunctions.h"
+
+#include <random>
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -31,7 +31,7 @@ namespace geosx
 // Random device and random number generator seed integer array used
 // to populate a vector/matrix with random coefficients
 static std::random_device rd;
-static std::mt19937 gen( rd());
+static std::mt19937 gen( rd() );
 static std::uniform_int_distribution< int > dis( 0, 4095 );
 static std::uniform_int_distribution< int > disOdd( 0, 2047 );
 static int ISEED[] = { dis( gen ), dis( gen ), dis( gen ), disOdd( gen ) * 2 + 1 };

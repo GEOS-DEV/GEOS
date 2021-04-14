@@ -422,7 +422,7 @@ endif()
 ################################
 # HYPRE
 ################################
-if(DEFINED HYPRE_DIR)
+if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
     if( ENABLE_HYPRE_CUDA )
@@ -460,7 +460,7 @@ endif()
 ################################
 # TRILINOS
 ################################
-if(DEFINED TRILINOS_DIR)
+if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
   
     include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
@@ -492,7 +492,7 @@ endif()
 ###############################
 # PETSC
 ###############################
-if(DEFINED PETSC_DIR)
+if(DEFINED PETSC_DIR AND ENABLE_PETSC)
     message(STATUS "PETSC_DIR = ${PETSC_DIR}")
 
     find_and_register(NAME petsc

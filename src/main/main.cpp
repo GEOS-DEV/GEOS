@@ -22,12 +22,6 @@
 #include "mainInterface/GeosxState.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "common/MpiWrapper.hpp"
-
-// TPL includes
-#ifdef GEOSX_USE_CALIPER
-#include <caliper/cali-manager.h>
-#endif
 
 // System includes
 #include <chrono>

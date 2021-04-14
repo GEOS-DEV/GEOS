@@ -15,7 +15,7 @@ option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 
 option( ENABLE_RAJA "Enables RAJA" ON )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
-option( RAJA_ENABLE_TBB "" OFF)
+option( RAJA_ENABLE_TBB "" OFF )
 option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
@@ -28,7 +28,7 @@ option( ENABLE_UNCRUSTIFY "" ON )
 
 option( ENABLE_XML_UPDATES "" ON )
 
-option( ENABLE_FORTRAN "Enables Fortran support" OFF)
+option( ENABLE_FORTRAN "Enables Fortran support" OFF )
 
 option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )

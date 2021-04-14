@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BiCGSTABsolver.hpp
+ * @file BicgstabSolver.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_
@@ -34,7 +34,7 @@ namespace geosx
  *        from Y. Saad (2003).
  */
 template< typename VECTOR >
-class BiCGSTABsolver : public KrylovSolver< VECTOR >
+class BicgstabSolver : public KrylovSolver< VECTOR >
 {
 public:
 
@@ -51,22 +51,18 @@ public:
 
   /**
    * @brief Constructor.
+   * @param [in] params parameters for the solver
    * @param [in] A reference to the system matrix.
    * @param [in] M reference to the preconditioning operator.
-   * @param [in] tolerance relative residual norm reduction tolerance.
-   * @param [in] maxIterations maximum number of Krylov iterations.
-   * @param [in] verbosity solver verbosity level.
    */
-  BiCGSTABsolver( LinearOperator< Vector > const & A,
-                  LinearOperator< Vector > const & M,
-                  real64 const tolerance,
-                  localIndex const maxIterations,
-                  integer const verbosity = 0 );
+  BicgstabSolver( LinearSolverParameters params,
+                  LinearOperator< Vector > const & A,
+                  LinearOperator< Vector > const & M );
 
   /**
    * @brief Virtual destructor.
    */
-  virtual ~BiCGSTABsolver() override;
+  virtual ~BicgstabSolver() override;
 
   ///@}
 
@@ -94,11 +90,9 @@ protected:
   /// Alias for vector type that can be used for temporaries
   using VectorTemp = typename KrylovSolver< VECTOR >::VectorTemp;
 
+  using Base::m_params;
   using Base::m_operator;
   using Base::m_precond;
-  using Base::m_tolerance;
-  using Base::m_maxIterations;
-  using Base::m_logLevel;
   using Base::m_result;
   using Base::m_residualNorms;
   using Base::createTempVector;

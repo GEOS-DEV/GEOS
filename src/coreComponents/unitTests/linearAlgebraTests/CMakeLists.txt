@@ -4,7 +4,6 @@
 set( LAI_tests
      testDofManager.cpp
      testLAIHelperFunctions.cpp
-     testKrylovSolvers.cpp
     )
 
 set( nranks 2 )

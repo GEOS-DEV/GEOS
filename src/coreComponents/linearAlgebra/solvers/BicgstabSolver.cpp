@@ -17,11 +17,11 @@
  *
  */
 
-#include "BiCGSTABsolver.hpp"
+#include "BicgstabSolver.hpp"
 
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "common/LinearOperator.hpp"
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
 
 namespace geosx
@@ -29,25 +29,23 @@ namespace geosx
 
 
 template< typename VECTOR >
-BiCGSTABsolver< VECTOR >::BiCGSTABsolver( LinearOperator< Vector > const & A,
-                                          LinearOperator< Vector > const & M,
-                                          real64 const tolerance,
-                                          localIndex const maxIterations,
-                                          integer const verbosity )
-  : KrylovSolver< VECTOR >( A, M, tolerance, maxIterations, verbosity )
+BicgstabSolver< VECTOR >::BicgstabSolver( LinearSolverParameters params,
+                                          LinearOperator< Vector > const & A,
+                                          LinearOperator< Vector > const & M )
+  : KrylovSolver< VECTOR >( std::move( params ), A, M )
 {}
 
 template< typename VECTOR >
-BiCGSTABsolver< VECTOR >::~BiCGSTABsolver() = default;
+BicgstabSolver< VECTOR >::~BicgstabSolver() = default;
 
 template< typename VECTOR >
-void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
+void BicgstabSolver< VECTOR >::solve( Vector const & b,
                                       Vector & x ) const
 {
-  Stopwatch watch;
+  Stopwatch watch( m_result.solveTime );
 
   // Compute the target absolute tolerance
-  real64 const absTol = b.norm2() * m_tolerance;
+  real64 const absTol = b.norm2() * m_params.krylov.relTolerance;
 
   // Define vectors
   VectorTemp r( x );
@@ -75,12 +73,12 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
   v.zero();
   p.zero();
   m_result.status = LinearSolverResult::Status::NotConverged;
-  m_residualNorms.resize( m_maxIterations + 1 );
+  m_residualNorms.resize( m_params.krylov.maxIterations + 1 );
 
   localIndex k;
   real64 rnorm = 0.0;
 
-  for( k = 0; k <= m_maxIterations; ++k )
+  for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
     rnorm = r.norm2();
     logProgress( k, rnorm );
@@ -95,8 +93,8 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
     // Compute r0.rk
     real64 const rho = r.dot( r0 );
 
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( rho_old );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( omega );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( rho_old )
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( omega )
 
     // Compute beta
     real64 const beta = rho / rho_old * alpha / omega;
@@ -111,7 +109,7 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
 
     // Compute alpha
     real64 const vr0 = v.dot( r0 );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( vr0 );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( vr0 )
     alpha = rho / vr0;
 
     // compute x = x + alpha*y
@@ -132,7 +130,7 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
 
     // Update omega
     real64 const q2 = q.dot( q );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( q2 );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( q2 )
     omega = q.dot( z ) / q2;
 
     // Update x = x + omega*z
@@ -147,8 +145,7 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
   }
 
   m_result.numIterations = k;
-  m_result.residualReduction = rnorm / absTol * m_tolerance;
-  m_result.solveTime = watch.elapsedTime();
+  m_result.residualReduction = rnorm / absTol * m_params.krylov.relTolerance;
 
   logResult();
   m_residualNorms.resize( m_result.numIterations + 1 );
@@ -158,18 +155,18 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
 // Explicit Instantiations
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class BiCGSTABsolver< TrilinosInterface::ParallelVector >;
-template class BiCGSTABsolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
+template class BicgstabSolver< TrilinosInterface::ParallelVector >;
+template class BicgstabSolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-template class BiCGSTABsolver< HypreInterface::ParallelVector >;
-template class BiCGSTABsolver< BlockVectorView< HypreInterface::ParallelVector > >;
+template class BicgstabSolver< HypreInterface::ParallelVector >;
+template class BicgstabSolver< BlockVectorView< HypreInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class BiCGSTABsolver< PetscInterface::ParallelVector >;
-template class BiCGSTABsolver< BlockVectorView< PetscInterface::ParallelVector > >;
+template class BicgstabSolver< PetscInterface::ParallelVector >;
+template class BicgstabSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
 } //namespace geosx
