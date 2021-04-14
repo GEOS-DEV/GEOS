@@ -216,7 +216,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
 
-        forAll< EXEC_POLICY >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
+        forAll< serialPolicy >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
         {
 
           for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
@@ -225,7 +225,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
           }
 
           /// loop over all the source that haven't been found yet
-          forAll< EXEC_POLICY >( sourceCoordinates.size( 0 ), [=] ( localIndex const isrc )
+          forAll< serialPolicy >( sourceCoordinates.size( 0 ), [=] ( localIndex const isrc )
           {
             if( sourceIsLocal[isrc] == 0 )
             {
@@ -253,7 +253,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 
 
           /// loop over all the receiver that haven't been found yet
-          forAll< EXEC_POLICY >( receiverCoordinates.size( 0 ), [=] ( localIndex const ircv )
+          forAll< serialPolicy >( receiverCoordinates.size( 0 ), [=] ( localIndex const ircv )
           {
             if( receiverIsLocal[ircv] == 0 )
             {
@@ -296,7 +296,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
 
   real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
 
-  forAll< serialPolicy >( sourceConstants.size( 0 ), [=] ( localIndex const isrc )
+  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
     {
@@ -439,7 +439,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numNodesPerFace = 4;
 
         /// Loop over elements
-        forAll< EXEC_POLICY >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
+        forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
           constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -673,7 +673,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        forAll< EXEC_POLICY >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
+        forAll< EXEC_POLICY >( elemsToNodes.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
         {
           constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -713,7 +713,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   /// Calculate your time integrators
   real64 const dt2 = dt*dt;
-  forAll< EXEC_POLICY >( nodeManager.size(), [=] ( localIndex const a )
+  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
@@ -733,9 +733,9 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   syncFields.synchronizeFields( fieldNames,
                                 domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                 domain.getNeighbors(),
-                                false );
+                                true );
 
-  forAll< EXEC_POLICY >( nodeManager.size(), [=] (localIndex a )
+  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE (localIndex a )
   {
     p_nm1[a]=p_n[a];
     p_n[a] = p_np1[a];
@@ -744,7 +744,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     rhs[a] = 0.0;
   });
 
-  computeSismoTrace( cycleNumber, p_np1 );
+  ///computeSismoTrace( cycleNumber, p_np1 );
 
 
   return dt;
