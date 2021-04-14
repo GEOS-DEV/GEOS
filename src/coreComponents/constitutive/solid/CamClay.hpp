@@ -47,8 +47,8 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-  CamClayUpdates( arrayView1d< real64 const > const & refPressure,
-                  arrayView1d< real64 const > const & refStrainVol,
+  CamClayUpdates( real64 const & refPressure,
+                  real64 const & refStrainVol,
                   arrayView1d< real64 const > const & recompressionIndex,
                   arrayView1d< real64 const > const & virginCompressionIndex,
                   arrayView1d< real64 const > const & cslSlope,
@@ -196,9 +196,9 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 const oldPc  = m_oldPreConsolidationPressure[k][q];   //pre-consolidation pressure
   real64 const mu     = m_shearModulus[k];
-  real64 const p0     = m_refPressure[k];
+  real64 const p0     = m_refPressure;
 
-  real64 const eps_v0 = m_refStrainVol[k];
+  real64 const eps_v0 = m_refStrainVol;
   real64 const M      = m_cslSlope[k];
   real64 const Cr     = m_recompressionIndex[k];
   real64 const Cc     = m_virginCompressionIndex[k];

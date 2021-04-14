@@ -145,8 +145,7 @@ void ElasticIsotropicPressureDependent::postProcessInput()
   GEOSX_THROW_IF( m_defaultRecompressionIndex <= 0, "Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
   real64 poisson = conversions::BulkModAndShearMod::toPoissonRatio( -1*m_defaultRefPressure/m_defaultRecompressionIndex, m_defaultShearModulus );
   GEOSX_THROW_IF( poisson < 0,
-                  "Elastic parameters lead to negative Poisson ratio at reference pressure " << poisson << " p0="<< m_defaultRefPressure << ", Cr= " << m_defaultRecompressionIndex << ", G=" << m_defaultShearModulus,
-                  InputError );
+                  "Elastic parameters lead to negative Poisson ratio at reference pressure ", InputError );
 
 
 //  if( nu >= 0.0 && E >= 0.0 )
@@ -186,10 +185,10 @@ void ElasticIsotropicPressureDependent::postProcessInput()
 //  }
 
   // set results as array default values
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::refPressureString() ).
+  this->getWrapper< real64  >( viewKeyStruct::refPressureString() ).
     setApplyDefaultValue( m_defaultRefPressure );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::refStrainVolString() ).
+  this->getWrapper< real64 >( viewKeyStruct::refStrainVolString() ).
     setApplyDefaultValue( m_defaultRefStrainVol );
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).

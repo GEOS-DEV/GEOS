@@ -48,8 +48,8 @@ public:
    * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    */
-  ElasticIsotropicPressureDependentUpdates( arrayView1d< real64 const > const & refPressure,
-                                            arrayView1d< real64 const > const & refStrainVol,
+  ElasticIsotropicPressureDependentUpdates( real64 const & refPressure,
+                                            real64 const & refStrainVol,
                                             arrayView1d< real64 const > const & recompressionIndex,
                                             arrayView1d< real64 const > const & bulkModulus,
                                             arrayView1d< real64 const > const & shearModulus,
@@ -110,10 +110,10 @@ public:
 protected:
 
   /// A reference to the ArrayView holding the reference pressure for each element.
-  arrayView1d< real64 const > const m_refPressure;
+  real64 const m_refPressure;
 
   /// A reference to the ArrayView holding the reference volumetric strain for each element.
-  arrayView1d< real64 const > const m_refStrainVol;
+  real64 const m_refStrainVol;
 
   /// A reference to the ArrayView holding the recompression index for each element.
   arrayView1d< real64 const > const m_recompressionIndex;
@@ -181,8 +181,8 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
                                                                  real64 ( & elasticStrain)[6] ) const
 {
   real64 const mu     = m_shearModulus[k];
-  real64 const p0     = m_refPressure[k];
-  real64 const eps_v0 = m_refStrainVol[k];
+  real64 const p0     = m_refPressure;
+  real64 const eps_v0 = m_refStrainVol;
   real64 const Cr     = m_recompressionIndex[k];
   real64 deviator[6];
   real64 stress[6];
@@ -225,8 +225,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Rename variables for easier implementation
 
   real64 const mu     = m_shearModulus[k];
-  real64 const p0     = m_refPressure[k];
-  real64 const eps_v0 = m_refStrainVol[k];
+  real64 const p0     = m_refPressure;
+  real64 const eps_v0 = m_refStrainVol;
   real64 const Cr     = m_recompressionIndex[k];
 
   // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
@@ -303,8 +303,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Rename variables for easier implementation
 
   real64 const mu     = m_shearModulus[k];
-  real64 const p0     = m_refPressure[k];
-  real64 const eps_v0 = m_refStrainVol[k];
+  real64 const p0     = m_refPressure;
+  real64 const eps_v0 = m_refStrainVol;
   real64 const Cr     = m_recompressionIndex[k];
 
   // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
@@ -558,10 +558,10 @@ protected:
   real64 m_defaultShearModulus;
 
   /// The bulk modulus for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_refPressure;
+  real64 m_refPressure;
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_refStrainVol;
+  real64 m_refStrainVol;
 
   /// The bulk modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_recompressionIndex;
