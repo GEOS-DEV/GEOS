@@ -13,11 +13,11 @@
  */
 
 /**
- *  @file CamClay.hpp
+ *  @file ModifiedCamClay.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_CAMCLAY_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_CAMCLAY_HPP
+#ifndef GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
+#define GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP
 
 #include "ElasticIsotropicPressureDependent.hpp"
 #include "InvariantDecompositions.hpp"
@@ -32,12 +32,12 @@ namespace constitutive
 {
 
 /**
- * @class CamClayUpdates
+ * @class ModifiedCamClayUpdates
  *
  * Class to provide material updates that may be
  * called from a kernel function.
  */
-class CamClayUpdates : public ElasticIsotropicPressureDependentUpdates
+class ModifiedCamClayUpdates : public ElasticIsotropicPressureDependentUpdates
 {
 public:
 
@@ -47,17 +47,17 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-  CamClayUpdates( real64 const & refPressure,
-                  real64 const & refStrainVol,
-                  arrayView1d< real64 const > const & recompressionIndex,
-                  arrayView1d< real64 const > const & virginCompressionIndex,
-                  arrayView1d< real64 const > const & cslSlope,
-                  arrayView1d< real64 const > const & shapeParameter,
-                  arrayView2d< real64 > const & newPreConsolidationPressure,
-                  arrayView2d< real64 > const & oldPreConsolidationPressure,
-                  arrayView1d< real64 const > const & shearModulus,
-                  arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                  arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
+  ModifiedCamClayUpdates( real64 const & refPressure,
+                          real64 const & refStrainVol,
+                          arrayView1d< real64 const > const & recompressionIndex,
+                          arrayView1d< real64 const > const & virginCompressionIndex,
+                          arrayView1d< real64 const > const & cslSlope,
+                          arrayView1d< real64 const > const & shapeParameter,
+                          arrayView2d< real64 > const & newPreConsolidationPressure,
+                          arrayView2d< real64 > const & oldPreConsolidationPressure,
+                          arrayView1d< real64 const > const & shearModulus,
+                          arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                          arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
     ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, newStress, oldStress ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
@@ -67,19 +67,19 @@ public:
   {}
 
   /// Default copy constructor
-  CamClayUpdates( CamClayUpdates const & ) = default;
+  ModifiedCamClayUpdates( ModifiedCamClayUpdates const & ) = default;
 
   /// Default move constructor
-  CamClayUpdates( CamClayUpdates && ) = default;
+  ModifiedCamClayUpdates( ModifiedCamClayUpdates && ) = default;
 
   /// Deleted default constructor
-  CamClayUpdates() = delete;
+  ModifiedCamClayUpdates() = delete;
 
   /// Deleted copy assignment operator
-  CamClayUpdates & operator=( CamClayUpdates const & ) = delete;
+  ModifiedCamClayUpdates & operator=( ModifiedCamClayUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  CamClayUpdates & operator=( CamClayUpdates && ) =  delete;
+  ModifiedCamClayUpdates & operator=( ModifiedCamClayUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
@@ -142,21 +142,21 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void CamClayUpdates::evaluateYield( real64 const p,
-                                    real64 const q,
-                                    real64 const pc,
-                                    real64 const M,
-                                    real64 const alpha,
-                                    real64 const Cc,
-                                    real64 const Cr,
-                                    real64 const bulkModulus,
-                                    real64 const mu,
-                                    real64 & f,
-                                    real64 & df_dp,
-                                    real64 & df_dq,
-                                    real64 & df_dpc,
-                                    real64 & df_dp_dve,
-                                    real64 & df_dq_dse ) const
+void ModifiedCamClayUpdates::evaluateYield( real64 const p,
+                                            real64 const q,
+                                            real64 const pc,
+                                            real64 const M,
+                                            real64 const alpha,
+                                            real64 const Cc,
+                                            real64 const Cr,
+                                            real64 const bulkModulus,
+                                            real64 const mu,
+                                            real64 & f,
+                                            real64 & df_dp,
+                                            real64 & df_dq,
+                                            real64 & df_dpc,
+                                            real64 & df_dp_dve,
+                                            real64 & df_dq_dse ) const
 {
   real64 const c = alpha/(alpha+1.)*pc;
   real64 a = alpha;
@@ -184,11 +184,11 @@ void CamClayUpdates::evaluateYield( real64 const p,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void CamClayUpdates::smallStrainUpdate( localIndex const k,
-                                        localIndex const q,
-                                        real64 const ( &strainIncrement )[6],
-                                        real64 ( & stress )[6],
-                                        real64 ( & stiffness )[6][6] ) const
+void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
+                                                localIndex const q,
+                                                real64 const ( &strainIncrement )[6],
+                                                real64 ( & stress )[6],
+                                                real64 ( & stiffness )[6][6] ) const
 {
 
   // Rename variables for easier implementation
@@ -405,11 +405,11 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void CamClayUpdates::smallStrainUpdate( localIndex const k,
-                                        localIndex const q,
-                                        real64 const ( &strainIncrement )[6],
-                                        real64 ( & stress )[6],
-                                        DiscretizationOps & stiffness ) const
+void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
+                                                localIndex const q,
+                                                real64 const ( &strainIncrement )[6],
+                                                real64 ( & stress )[6],
+                                                DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
 }
@@ -417,28 +417,28 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
 
 /**
- * @class CamClay
+ * @class ModifiedCamClay
  *
  * Modified Cam-Clay and Delft-Egg material model.
  */
-class CamClay : public ElasticIsotropicPressureDependent
+class ModifiedCamClay : public ElasticIsotropicPressureDependent
 {
 public:
 
-  /// @typedef Alias for CamClayUpdates
-  using KernelWrapper = CamClayUpdates;
+  /// @typedef Alias for ModifiedCamClayUpdates
+  using KernelWrapper = ModifiedCamClayUpdates;
 
   /**
    * constructor
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  CamClay( string const & name, Group * const parent );
+  ModifiedCamClay( string const & name, Group * const parent );
 
   /**
    * Default Destructor
    */
-  virtual ~CamClay() override;
+  virtual ~ModifiedCamClay() override;
 
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
@@ -452,7 +452,7 @@ public:
   ///@{
 
   /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "CamClay";
+  static constexpr auto m_catalogNameString = "ModifiedCamClay";
 
   /**
    * @return A string that is used to register/lookup this class in the registry
@@ -497,22 +497,22 @@ public:
   };
 
   /**
-   * @brief Create a instantiation of the CamClayUpdate class that refers to the data in this.
-   * @return An instantiation of CamClayUpdate.
+   * @brief Create a instantiation of the ModifiedCamClayUpdate class that refers to the data in this.
+   * @return An instantiation of ModifiedCamClayUpdate.
    */
-  CamClayUpdates createKernelUpdates() const
+  ModifiedCamClayUpdates createKernelUpdates() const
   {
-    return CamClayUpdates( m_refPressure,
-                           m_refStrainVol,
-                           m_recompressionIndex,
-                           m_virginCompressionIndex,
-                           m_cslSlope,
-                           m_shapeParameter,
-                           m_newPreConsolidationPressure,
-                           m_oldPreConsolidationPressure,
-                           m_shearModulus,
-                           m_newStress,
-                           m_oldStress );
+    return ModifiedCamClayUpdates( m_refPressure,
+                                   m_refStrainVol,
+                                   m_recompressionIndex,
+                                   m_virginCompressionIndex,
+                                   m_cslSlope,
+                                   m_shapeParameter,
+                                   m_newPreConsolidationPressure,
+                                   m_oldPreConsolidationPressure,
+                                   m_shearModulus,
+                                   m_newStress,
+                                   m_oldStress );
   }
 
   /**
@@ -575,4 +575,4 @@ protected:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_CAMCLAY_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_MODIFIEDCAMCLAY_HPP_ */

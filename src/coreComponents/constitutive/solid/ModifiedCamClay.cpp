@@ -13,10 +13,10 @@
  */
 
 /**
- *  @file CamClay.cpp
+ *  @file ModifiedCamClay.cpp
  */
 
-#include "CamClay.hpp"
+#include "ModifiedCamClay.hpp"
 
 namespace geosx
 {
@@ -24,7 +24,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-CamClay::CamClay( string const & name, Group * const parent ):
+ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
   ElasticIsotropicPressureDependent( name, parent ),
   m_defaultVirginCompressionIndex(),
   m_defaultCslSlope(),
@@ -83,12 +83,12 @@ CamClay::CamClay( string const & name, Group * const parent ):
 }
 
 
-CamClay::~CamClay()
+ModifiedCamClay::~ModifiedCamClay()
 {}
 
 
-void CamClay::allocateConstitutiveData( dataRepository::Group & parent,
-                                        localIndex const numConstitutivePointsPerParentIndex )
+void ModifiedCamClay::allocateConstitutiveData( dataRepository::Group & parent,
+                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
@@ -97,7 +97,7 @@ void CamClay::allocateConstitutiveData( dataRepository::Group & parent,
 }
 
 
-void CamClay::postProcessInput()
+void ModifiedCamClay::postProcessInput()
 {
   ElasticIsotropicPressureDependent::postProcessInput();
 
@@ -129,7 +129,7 @@ void CamClay::postProcessInput()
 }
 
 
-void CamClay::saveConvergedState() const
+void ModifiedCamClay::saveConvergedState() const
 {
   SolidBase::saveConvergedState(); // TODO: not ideal, as we have separate loops for base and derived data
 
@@ -148,6 +148,6 @@ void CamClay::saveConvergedState() const
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CamClay, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ModifiedCamClay, std::string const &, Group * const )
 }
 } /* namespace geosx */

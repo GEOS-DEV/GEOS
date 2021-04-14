@@ -4,7 +4,7 @@
   <Tasks>
     <TriaxialDriver
       name="triaxialDriver"
-      material="camclay"
+      material="modifiedCamclay"
       useNumericalTangent="0"
       mode="triaxial" 
       strainFunction="strainFunction"
@@ -47,8 +47,8 @@
       defaultDilationRatio="1.0"
       defaultHardening="0.001"/>
 
-    <CamClay
-      name="camclay"
+    <ModifiedCamClay
+      name="modifiedCamclay"
       defaultDensity="2700"
       defaultRefPressure="-1.0"
       defaultRefStrainVol="0"

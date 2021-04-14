@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/solid/CamClay.hpp"
+#include "constitutive/solid/ModifiedCamClay.hpp"
 #include "constitutive/solid/InvariantDecompositions.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
@@ -64,7 +64,7 @@ void setStress( CMW cmw,
 
 
 template< typename POLICY >
-void testCamClayDriver()
+void testModifiedCamClayDriver()
 {
   // create a Cam-Clay model, and test xml input
   conduit::Node node;
@@ -73,13 +73,12 @@ void testCamClayDriver()
 
   string const inputStream =
     "<Constitutive>"
-    "   <CamClay"
+    "   <ModifiedCamClay"
     "      name=\"granite\" "
     "      defaultDensity=\"2700\" "
     "      defaultRefPressure=\"-1.0\" "
     "      defaultRefStrainVol=\"0.0\" "
     "      defaultShearModulus=\"200.0\" "
-    "      defaultBulkModulus=\"1000.0\" " // TODO: remove as free parameter
     "      defaultPreConsolidationPressure =\"-1.5\" "
     "      defaultShapeParameter=\"1.0\" "
     "      defaultCslSlope=\"1.0\" "
@@ -107,7 +106,7 @@ void testCamClayDriver()
   dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElem );
 
-  CamClay & cm = constitutiveManager.getConstitutiveRelation< CamClay >( "granite" );
+  ModifiedCamClay & cm = constitutiveManager.getConstitutiveRelation< ModifiedCamClay >( "granite" );
   cm.allocateConstitutiveData( disc, numQuad );
 
   // confirm allocation sizes
@@ -120,7 +119,7 @@ void testCamClayDriver()
   // plastic loading.  at the end of the loading, we confirm the
   // stress point lies on the correctly-positioned yield surface.
 
-  CamClay::KernelWrapper cmw = cm.createKernelUpdates();
+  ModifiedCamClay::KernelWrapper cmw = cm.createKernelUpdates();
 
   StrainData data;
   data.strainIncrement[0] = -1e-4;
@@ -143,7 +142,7 @@ void testCamClayDriver()
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
       cmw.smallStrainUpdate( k, 0, data.strainIncrement, stressLocal, stiffnessLocal );
-    //    std::cout<< stressLocal[0] <<std::endl;
+      //    std::cout<< stressLocal[0] <<std::endl;
     } );
     cm.saveConvergedState();
   }
@@ -151,7 +150,7 @@ void testCamClayDriver()
   // get final stress state in p-q space
 
   getStress( cmw, stress );
-    
+
   real64 invariantP, invariantQ;
   real64 deviator[6];
 
@@ -172,12 +171,12 @@ void testCamClayDriver()
 
 
 #ifdef USE_CUDA
-TEST( CamClayTests, testCamClayDevice )
+TEST( ModifiedCamClayTests, testModifiedCamClayDevice )
 {
-  testCamClayDriver< geosx::parallelDevicePolicy< > >();
+  testModifiedCamClayDriver< geosx::parallelDevicePolicy< > >();
 }
 #endif
-TEST( CamClayTests, testCamClayHost )
+TEST( ModifiedCamClayTests, testModifiedCamClayHost )
 {
-  testCamClayDriver< serialPolicy >();
+  testModifiedCamClayDriver< serialPolicy >();
 }

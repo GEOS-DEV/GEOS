@@ -3,7 +3,7 @@
 #
 
 set( gtest_geosx_tests
-     testCamClay.cpp
+     testModifiedCamClay.cpp
      testDamage.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
