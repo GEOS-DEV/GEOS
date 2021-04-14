@@ -218,6 +218,13 @@ Element: ElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropic.rst
 
 
+.. _XML_ElasticSEM:
+
+Element: ElasticSEM
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticSEM.rst
+
+
 .. _XML_ElasticTransverseIsotropic:
 
 Element: ElasticTransverseIsotropic
@@ -990,6 +997,13 @@ Datastructure: DruckerPrager
 Datastructure: ElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticSEM:
+
+Datastructure: ElasticSEM
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticSEM_other.rst
 
 
 .. _DATASTRUCTURE_ElasticTransverseIsotropic:
