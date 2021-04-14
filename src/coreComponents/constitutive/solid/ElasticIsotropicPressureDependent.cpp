@@ -185,7 +185,7 @@ void ElasticIsotropicPressureDependent::postProcessInput()
 //  }
 
   // set results as array default values
-  this->getWrapper< real64  >( viewKeyStruct::refPressureString() ).
+  this->getWrapper< real64 >( viewKeyStruct::refPressureString() ).
     setApplyDefaultValue( m_defaultRefPressure );
 
   this->getWrapper< real64 >( viewKeyStruct::refStrainVolString() ).
