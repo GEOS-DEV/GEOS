@@ -90,9 +90,11 @@ public:
   string getElementTypeString() const override
   { return m_elementTypeString; }
 
-  localIndex const & numNodesPerElement() const override { return m_numNodesPerElement; }
+  localIndex numNodesPerElement() const override { return m_numNodesPerElement; }
 
-  localIndex const & numFacesPerElement() const override { return m_numFacesPerElement; }
+  localIndex numFacesPerElement() const override { return m_numFacesPerElement; }
+
+  localIndex numElements() const override { return size(); }
 
   /**
    * @copydoc nodeList()

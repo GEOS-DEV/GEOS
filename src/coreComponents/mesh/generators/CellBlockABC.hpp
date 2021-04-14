@@ -47,13 +47,19 @@ public:
    * @brief Get the number of nodes per element.
    * @return number of nodes per element
    */
-  virtual localIndex const & numNodesPerElement() const = 0;
+  virtual localIndex numNodesPerElement() const = 0;
 
   /**
    * @brief Get the number of faces per element.
    * @return number of faces per element
    */
-  virtual localIndex const & numFacesPerElement() const = 0;
+  virtual localIndex numFacesPerElement() const = 0;
+
+  /**
+   * @brief Get the number of elements.
+   * @return number of elements in the cell block
+   */
+  virtual localIndex numElements() const = 0;
 
   /**
    * @brief Get the element-to-node map.

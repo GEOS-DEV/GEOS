@@ -21,6 +21,9 @@
 
 #include "mesh/generators/CellBlock.hpp"
 
+#include <map>
+#include <vector>
+
 namespace geosx
 {
 
@@ -106,6 +109,21 @@ public:
     this->getGroup( dataRepository::keys::cellBlocks ).forSubGroups< CellBlock >( lambda );
   }
 
+  /**
+   * @brief Returns the node to elements mappings.
+   * @return A one to many relationship.
+   */
+  std::map< localIndex, std::vector< localIndex > > getNodeToElem() const;
+
+  /**
+   * @brief Total number of nodes across all the cell blocks.
+   * @return
+   *
+   * It's actually more than the total number of nodes
+   * because we have nodes belonging to multiple cell blocks
+   */
+  localIndex numNodes() const;
+
 private:
 
   /**
@@ -119,7 +137,13 @@ private:
    */
   CellBlockManager & operator=( const CellBlockManager & );
 
+  /**
+   * @brief Returns a group containing the cell blocks as CellBlockABC instances
+   * @return
+   */
+  const Group & getCellBlocks() const;
 
+  localIndex numCellBlocks() const;
 };
 }
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

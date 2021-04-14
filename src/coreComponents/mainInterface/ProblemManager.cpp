@@ -513,7 +513,7 @@ void ProblemManager::generateMesh()
       nodeManager.constructGlobalToLocalMap();
 
       elemManager.generateMesh( cellBlockManager );
-      nodeManager.setElementMaps( elemManager );
+      nodeManager.setElementMaps( domain.getGroup< CellBlockManager >( keys::cellManager ), elemManager );
 
       faceManager.buildFaces( nodeManager, elemManager );
       nodeManager.setFaceMaps( faceManager );

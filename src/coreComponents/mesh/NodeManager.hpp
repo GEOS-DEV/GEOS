@@ -19,12 +19,9 @@
 #ifndef GEOSX_MESH_NODEMANAGER_HPP_
 #define GEOSX_MESH_NODEMANAGER_HPP_
 
+#include "mesh/CellBlockManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
-
-#include <string.h>
-
-class SiloFile;
 
 namespace geosx
 {
@@ -158,10 +155,13 @@ public:
   void setFaceMaps( FaceManager const & faceManager );
 
   /**
-   * @brief Assign the ElementRegionManager \p elementRegionManager to the NodeManager, and performs the node-to-element mapping
+   * @brief Copies the node-to-element mapping from @p cellBlockManager and builds the node to region and node to sub-regions relations.
+   * @param [in] cellBlockManager Contains the raw mesh information.
    * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
+   *
+   * @note maybe split into two parts: the @p cellBlockManager part and the @p elementRegionManager part.
    */
-  void setElementMaps( ElementRegionManager const & elementRegionManager );
+  void setElementMaps( CellBlockManager const & cellBlockManager, ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.

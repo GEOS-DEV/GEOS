@@ -166,37 +166,17 @@ void NodeManager::setFaceMaps( FaceManager const & faceManager )
   m_toFacesRelation.setRelatedObject( faceManager );
 }
 
-
-void NodeManager::setElementMaps( ElementRegionManager const & elementRegionManager )
+void NodeManager::setElementMaps( CellBlockManager const & cellBlockManager, ElementRegionManager const & elementRegionManager )
 {
+  const std::map< localIndex, std::vector< localIndex > > nodeToElem = cellBlockManager.getNodeToElem();
+  const localIndex totalNodeElems = cellBlockManager.numNodes();
+
   GEOSX_MARK_FUNCTION;
 
   ArrayOfArrays< localIndex > & toElementRegionList = m_toElements.m_toElementRegion;
   ArrayOfArrays< localIndex > & toElementSubRegionList = m_toElements.m_toElementSubRegion;
   ArrayOfArrays< localIndex > & toElementList = m_toElements.m_toElementIndex;
   localIndex const numNodes = size();
-
-  // The number of elements attached to the each node.
-  array1d< localIndex > elemsPerNode( numNodes );
-
-  // The total number of elements, the sum of elemsPerNode.
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
-
-  elementRegionManager.
-    forElementSubRegions< CellElementSubRegion >( [&elemsPerNode, &totalNodeElems]( CellElementSubRegion const & subRegion )
-  {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-    forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap, &subRegion] ( localIndex const k )
-    {
-      localIndex const numNodesPerElement = subRegion.numNodesPerElement();
-      totalNodeElems += numNodesPerElement;
-      for( localIndex a = 0; a < numNodesPerElement; ++a )
-      {
-        localIndex const nodeIndex = elemToNodeMap( k, a );
-        RAJA::atomicInc< parallelHostAtomic >( &elemsPerNode[ nodeIndex ] );
-      }
-    } );
-  } );
 
   // Resize the node to elem map.
   toElementRegionList.resize( 0 );
@@ -211,7 +191,9 @@ void NodeManager::setElementMaps( ElementRegionManager const & elementRegionMana
   toElementList.reserve( entriesToReserve );
 
   // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeElems.get() + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
+  localIndex const valuesToReserve = totalNodeElems + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
+  // FIXME I'm not sure that there is a strong needs that these arrays share the same capacities.
+  //       If so they may be allocated in another member function with the elementRegionManager part.
   toElementRegionList.reserveValues( valuesToReserve );
   toElementSubRegionList.reserveValues( valuesToReserve );
   toElementList.reserveValues( valuesToReserve );
@@ -223,35 +205,48 @@ void NodeManager::setElementMaps( ElementRegionManager const & elementRegionMana
     toElementSubRegionList.appendArray( 0 );
     toElementList.appendArray( 0 );
 
-    toElementRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
-    toElementSubRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
-    toElementList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
+    const localIndex numElementsPerNode = nodeToElem.at( nodeID ).size() + getElemMapOverAllocation() ;
+    toElementRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
+    toElementSubRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
+    toElementList.setCapacityOfArray( nodeID, numElementsPerNode );
   }
 
-  // Populate the element maps.
-  // Note that this can't be done in parallel because the three element lists must be in the same order.
-  // If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
-  elementRegionManager.
-    forElementSubRegionsComplete< CellElementSubRegion >( [&toElementRegionList, &toElementSubRegionList, &toElementList]
-                                                            ( localIndex const er, localIndex const esr, ElementRegionBase const &,
-                                                            CellElementSubRegion const & subRegion )
+  // Copy the mapping from cell blocks to the node manager.
+  for( const auto & nes: nodeToElem )
   {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-    for( localIndex k = 0; k < subRegion.size(); ++k )
+    const localIndex & n = nes.first;
+    const std::vector< localIndex > & es = nes.second;
+    for( const localIndex & e: es )
     {
-      for( localIndex a=0; a<subRegion.numNodesPerElement(); ++a )
-      {
-        localIndex const nodeIndex = elemToNodeMap( k, a );
-        toElementRegionList.emplaceBack( nodeIndex, er );
-        toElementSubRegionList.emplaceBack( nodeIndex, esr );
-        toElementList.emplaceBack( nodeIndex, k );
-      }
+      toElementList.emplaceBack( n, e );
     }
-  } );
+  }
+
+  // FIXME This could be delayed until all the standard mappings (i.e. not with regions) are properly assigned
+  // FIXME Also, only this part requires the elementRegionManager, so this may be split, yes...
+  elementRegionManager.forElementSubRegionsComplete< CellElementSubRegion >(
+    [&toElementRegionList, &toElementSubRegionList/*, &toElementList*/]
+      ( localIndex const er,
+        localIndex const esr,
+        ElementRegionBase const &,
+        CellElementSubRegion const & subRegion )
+    {
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
+      for( localIndex k = 0; k < subRegion.size(); ++k )
+      {
+        // TODO This following subRegion.numNodesPerElement() is not flexible enough, use subRegion.numNodesPerElement( k )?
+        for( localIndex a = 0; a < subRegion.numNodesPerElement(); ++a )
+        {
+          localIndex const nodeIndex = elemToNodeMap( k, a );
+          toElementRegionList.emplaceBack( nodeIndex, er );
+          toElementSubRegionList.emplaceBack( nodeIndex, esr );
+//          toElementList.emplaceBack( nodeIndex, k );
+        }
+      }
+    } );
 
   this->m_toElements.setElementRegionManager( elementRegionManager );
 }
-
 
 void NodeManager::compressRelationMaps()
 {
