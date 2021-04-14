@@ -55,11 +55,10 @@ public:
                   arrayView1d< real64 const > const & shapeParameter,
                   arrayView2d< real64 > const & newPreConsolidationPressure,
                   arrayView2d< real64 > const & oldPreConsolidationPressure,
-                  arrayView1d< real64 const > const & bulkModulus,
                   arrayView1d< real64 const > const & shearModulus,
                   arrayView3d< real64, solid::STRESS_USD > const & newStress,
                   arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, bulkModulus, shearModulus, newStress, oldStress ),
+    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, newStress, oldStress ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_shapeParameter( shapeParameter ),
@@ -511,7 +510,6 @@ public:
                            m_shapeParameter,
                            m_newPreConsolidationPressure,
                            m_oldPreConsolidationPressure,
-                           m_bulkModulus,
                            m_shearModulus,
                            m_newStress,
                            m_oldStress );
@@ -536,7 +534,6 @@ public:
                           m_shapeParameter,
                           m_newPreConsolidationPressure,
                           m_oldPreConsolidationPressure,
-                          m_bulkModulus,
                           m_shearModulus,
                           m_newStress,
                           m_oldStress );

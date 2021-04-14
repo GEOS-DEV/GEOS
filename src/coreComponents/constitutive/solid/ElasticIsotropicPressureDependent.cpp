@@ -29,12 +29,10 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
   m_defaultRefPressure(),
   m_defaultRefStrainVol(),
   m_defaultRecompressionIndex(),
-  m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_refPressure(),
   m_refStrainVol(),
   m_recompressionIndex(),
-  m_bulkModulus(),
   m_shearModulus()
 {
   registerWrapper( viewKeyStruct::defaultRefPressureString(), &m_defaultRefPressure ).
@@ -51,11 +49,6 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
     setApplyDefaultValue( 2e-3 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Recompresion Index" );
-
-  registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Elastic Bulk Modulus Parameter" );
 
   registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
     setApplyDefaultValue( -1 ).
@@ -84,10 +77,6 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
   registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
     setApplyDefaultValue( -1 ).
     setDescription( "Recompression Index Field" );
-
-  registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic bulk Modulus" );
 
   registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
     setApplyDefaultValue( -1 ).
@@ -193,9 +182,6 @@ void ElasticIsotropicPressureDependent::postProcessInput()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
     setApplyDefaultValue( m_defaultRecompressionIndex );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString() ).
-    setApplyDefaultValue( m_defaultBulkModulus );
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
     setApplyDefaultValue( m_defaultShearModulus );

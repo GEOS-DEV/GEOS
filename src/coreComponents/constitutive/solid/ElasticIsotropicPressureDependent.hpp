@@ -51,7 +51,6 @@ public:
   ElasticIsotropicPressureDependentUpdates( real64 const & refPressure,
                                             real64 const & refStrainVol,
                                             arrayView1d< real64 const > const & recompressionIndex,
-                                            arrayView1d< real64 const > const & bulkModulus,
                                             arrayView1d< real64 const > const & shearModulus,
                                             arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                             arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
@@ -59,7 +58,6 @@ public:
     m_refPressure( refPressure ),
     m_refStrainVol( refStrainVol ),
     m_recompressionIndex( recompressionIndex ),
-    m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
 
@@ -117,9 +115,6 @@ protected:
 
   /// A reference to the ArrayView holding the recompression index for each element.
   arrayView1d< real64 const > const m_recompressionIndex;
-
-  /// A reference to the ArrayView holding the bulk modulus for each element.
-  arrayView1d< real64 const > const m_bulkModulus;
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
@@ -422,9 +417,6 @@ public:
   /// Keys for data specified in this class.
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for default bulk modulus
-    static constexpr char const * defaultBulkModulusString() { return "defaultBulkModulus"; }
-
 //    /// string/key for default poisson ratio
 //    static constexpr char const * defaultPoissonRatioString() { return "defaultPoissonRatio"; }
 
@@ -451,8 +443,7 @@ public:
 
     /// string/key for recompression index
     static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
-    /// string/key for shear modulus
-    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
+
     /// string/key for shear modulus
     static constexpr char const * shearModulusString() { return "shearModulus"; }
   };
@@ -498,7 +489,6 @@ public:
       return ElasticIsotropicPressureDependentUpdates( m_refPressure,
                                                        m_refStrainVol,
                                                        m_recompressionIndex,
-                                                       m_bulkModulus,
                                                        m_shearModulus,
                                                        m_newStress,
                                                        m_oldStress );
@@ -508,7 +498,6 @@ public:
       return ElasticIsotropicPressureDependentUpdates( m_refPressure,
                                                        m_refStrainVol,
                                                        m_recompressionIndex,
-                                                       m_bulkModulus,
                                                        m_shearModulus,
                                                        arrayView3d< real64, solid::STRESS_USD >(),
                                                        arrayView3d< real64, solid::STRESS_USD >() );
@@ -530,7 +519,6 @@ public:
                           m_refPressure,
                           m_refStrainVol,
                           m_recompressionIndex,
-                          m_bulkModulus,
                           m_shearModulus,
                           m_newStress,
                           m_oldStress );
@@ -552,9 +540,6 @@ protected:
   real64 m_defaultRecompressionIndex;
 
   /// The default value of the shear modulus for any new allocations.
-  real64 m_defaultBulkModulus;
-
-  /// The default value of the shear modulus for any new allocations.
   real64 m_defaultShearModulus;
 
   /// The bulk modulus for each upper level dimension (i.e. cell) of *this
@@ -565,9 +550,6 @@ protected:
 
   /// The bulk modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_recompressionIndex;
-
-  /// The shear modulus for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_bulkModulus;
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;

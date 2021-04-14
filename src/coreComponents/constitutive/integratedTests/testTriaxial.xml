@@ -5,7 +5,7 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="camclay"
-      useNumericalTangent="1"
+      useNumericalTangent="0"
       mode="triaxial" 
       strainFunction="strainFunction"
       stressFunction="stressFunction"
@@ -32,9 +32,8 @@
       name="elasticPressure"
       defaultDensity="2700"
       defaultRefPressure="-1.0"
-      defaultRefStrainVol="0"
+      defaultRefStrainVol="1"
       defaultRecompressionIndex="0.003"
-      defaultBulkModulus="1000"
       defaultShearModulus="200"/>
 
     <ExtendedDruckerPrager 
@@ -48,17 +47,15 @@
       defaultDilationRatio="1.0"
       defaultHardening="0.001"/>
 
-    <!--Note: defaultBulkModulus parameter is not used and will be removed-->
     <CamClay
       name="camclay"
       defaultDensity="2700"
       defaultRefPressure="-1.0"
       defaultRefStrainVol="0"
       defaultShearModulus="200.0"
-      defaultBulkModulus="1000"
       defaultPreConsolidationPressure="-1.5"
-      defaultShapeParameter="1.0"
-      defaultCslSlope="1.00"
+      defaultShapeParameter="1.1"
+      defaultCslSlope="1.2"
       defaultVirginCompressionIndex="0.003"
       defaultRecompressionIndex="0.002"/>
 
@@ -69,7 +66,7 @@
       name="strainFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0, -0.05}"/>
+      values="{ 0, -0.02}"/>
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
