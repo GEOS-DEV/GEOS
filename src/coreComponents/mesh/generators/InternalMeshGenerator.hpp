@@ -26,6 +26,8 @@
 namespace geosx
 {
 
+class NodeManager;
+
 /**
  * @class InternalMeshGenerator
  * @brief The InternalMeshGenerator class is a class handling GEOSX generated meshes.
@@ -49,8 +51,6 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  void generateElementRegions( DomainPartition & domain ) override;
-
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
    * @param childKey the catalog key of the new geometric object to create
@@ -60,14 +60,6 @@ public:
   Group * createChild( string const & childKey, string const & childName ) override;
 
   void generateMesh( DomainPartition & domain ) override;
-
-  void getElemToNodesRelationInBox ( const string & elementType,
-                                     const int index[],
-                                     const int & iEle,
-                                     int nodeIDInBox[],
-                                     const int size ) override;
-
-  void remapMesh ( dataRepository::Group & domain ) override;
 
   /**
    * @return Whether or not a Cartesian mesh is being generated.

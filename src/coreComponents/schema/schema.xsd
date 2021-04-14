@@ -517,7 +517,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
-			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -577,44 +576,6 @@
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="InternalWellboreType">
-		<!--autoSpaceRadialElems => Automatically set number and spacing of elements in the radial direction. This overrides the values of nr!!-->
-		<xsd:attribute name="autoSpaceRadialElems" type="integer_array" default="{0}" />
-		<!--cellBlockNames => Names of each mesh block-->
-		<xsd:attribute name="cellBlockNames" type="string_array" use="required" />
-		<!--elementTypes => Element types of each mesh block-->
-		<xsd:attribute name="elementTypes" type="string_array" use="required" />
-		<!--nr => Number of elements in the radial direction-->
-		<xsd:attribute name="nr" type="integer_array" use="required" />
-		<!--nt => Number of elements in the tangent direction-->
-		<xsd:attribute name="nt" type="integer_array" use="required" />
-		<!--nz => Number of elements in the z-direction within each mesh block-->
-		<xsd:attribute name="nz" type="integer_array" use="required" />
-		<!--positionTolerance => A position tolerance to verify if a node belong to a nodeset-->
-		<xsd:attribute name="positionTolerance" type="real64" default="1e-10" />
-		<!--rBias => Bias of element sizes in the radial direction-->
-		<xsd:attribute name="rBias" type="real64_array" default="{-0.8}" />
-		<!--radius => Wellbore radius-->
-		<xsd:attribute name="radius" type="real64_array" use="required" />
-		<!--theta => Tangent angle defining geometry size: 90 for quarter, 180 for half and 360 for full wellbore geometry-->
-		<xsd:attribute name="theta" type="real64_array" use="required" />
-		<!--trajectory => Coordinates defining the wellbore trajectory-->
-		<xsd:attribute name="trajectory" type="real64_array2d" default="{{0}}" />
-		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
-		<xsd:attribute name="trianglePattern" type="integer" default="0" />
-		<!--useCartesianOuterBoundary => Enforce a Cartesian aligned outer boundary on the outer block starting with the radial block specified in this value-->
-		<xsd:attribute name="useCartesianOuterBoundary" type="integer" default="1000000" />
-		<!--xBias => Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
-		<xsd:attribute name="xBias" type="real64_array" default="{1}" />
-		<!--yBias => Bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
-		<xsd:attribute name="yBias" type="real64_array" default="{1}" />
-		<!--zBias => Bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)-->
-		<xsd:attribute name="zBias" type="real64_array" default="{1}" />
-		<!--zCoords => z-coordinates of each mesh block vertex-->
-		<xsd:attribute name="zCoords" type="real64_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

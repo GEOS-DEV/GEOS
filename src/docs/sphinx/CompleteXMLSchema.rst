@@ -358,13 +358,6 @@ Element: InternalWell
 .. include:: ../../coreComponents/schema/docs/InternalWell.rst
 
 
-.. _XML_InternalWellbore:
-
-Element: InternalWellbore
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/InternalWellbore.rst
-
-
 .. _XML_LagrangianContact:
 
 Element: LagrangianContact
@@ -733,7 +726,7 @@ Element: TimeHistory
 
 Element: Traction
 =================
-.. include:: ../../coreComponents/fileIO/schema/docs/Traction.rst
+.. include:: ../../coreComponents/schema/docs/Traction.rst
 
 
 .. _XML_TwoPointFluxApproximation:
@@ -1160,13 +1153,6 @@ Datastructure: InternalWell
 .. include:: ../../coreComponents/schema/docs/InternalWell_other.rst
 
 
-.. _DATASTRUCTURE_InternalWellbore:
-
-Datastructure: InternalWellbore
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/InternalWellbore_other.rst
-
-
 .. _DATASTRUCTURE_LagrangianContact:
 
 Datastructure: LagrangianContact
@@ -1549,7 +1535,7 @@ Datastructure: TimeHistory
 
 Datastructure: Traction
 =======================
-.. include:: ../../coreComponents/fileIO/schema/docs/Traction_other.rst
+.. include:: ../../coreComponents/schema/docs/Traction_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:

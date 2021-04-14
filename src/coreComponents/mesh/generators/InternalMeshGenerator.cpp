@@ -18,19 +18,18 @@
 
 #include "InternalMeshGenerator.hpp"
 
-#include "mesh/DomainPartition.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
-#include <math.h>
-#include <algorithm>
-
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "common/DataTypes.hpp"
 
-#include "mesh/MeshBody.hpp"
 
-#include "common/TimingMacros.hpp"
+#include <math.h>
+#include <algorithm>
 
 namespace geosx
 {
@@ -110,12 +109,6 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "A position tolerance to verify if a node belong to a nodeset" );
 }
-
-/**
- * @param domain
- */
-void InternalMeshGenerator::generateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
 
 void InternalMeshGenerator::postProcessInput()
 {
@@ -682,10 +675,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   coordinateTransformation( nodeManager );
 
-  if( m_delayMeshDeformation == 0 )
-  {
-    remapMesh( domain );
-  }
 }
 
 /**
@@ -979,10 +968,6 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
     }
   }
 }
-
-void InternalMeshGenerator::remapMesh( dataRepository::Group & GEOSX_UNUSED_PARAM( domain ) )
-{}
-
 
 void
 InternalMeshGenerator::

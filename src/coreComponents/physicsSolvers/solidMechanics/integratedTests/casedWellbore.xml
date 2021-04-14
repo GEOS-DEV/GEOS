@@ -131,11 +131,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-<<<<<<< HEAD
-      setNames="{ xneg, xpos }"/>
-=======
       setNames="{ tpos, xpos }"/>
->>>>>>> refs/rewritten/feature-sytuan-InternalWellbore-3
 
     <FieldSpecification
       name="yConstraint"
@@ -143,11 +139,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-<<<<<<< HEAD
-      setNames="{ yneg, ypos }"/>
-=======
       setNames="{ tneg, ypos }"/>
->>>>>>> refs/rewritten/feature-sytuan-InternalWellbore-3
 
     <FieldSpecification
       name="zconstraint"
@@ -164,11 +156,6 @@
       scale="-1.0e6"
       functionName="timeFunction"
       setNames="{ rneg }"/>
-<<<<<<< HEAD
-      
-      
-=======
->>>>>>> refs/rewritten/feature-sytuan-InternalWellbore-3
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
