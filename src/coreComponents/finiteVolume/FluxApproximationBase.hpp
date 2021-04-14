@@ -202,6 +202,9 @@ public:
     /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
+    /// @return The key for coefficientModelNames
+    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
+
     /// @return The key for areaRelTol
     static constexpr char const * areaRelativeToleranceString() { return "areaRelTol"; }
 
@@ -287,6 +290,9 @@ protected:
 
   /// names of target regions to build the stencil for
   string_array m_targetRegions;
+
+  /// names of target regions to build the stencil for
+  string_array m_coefficientModelNames;
 
   /// relative tolerance
   real64 m_areaRelTol;
