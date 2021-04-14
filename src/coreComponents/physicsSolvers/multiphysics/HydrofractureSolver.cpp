@@ -27,16 +27,15 @@
 #include "finiteElement/Kinematics.h"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 namespace geosx
@@ -226,10 +225,10 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString() ) );
         fieldNames["elems"].emplace_back( "elementAperture" );
 
-        getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                                    domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                                    domain.getNeighbors(),
-                                                                    false );
+        CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                             domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                             domain.getNeighbors(),
+                                                             false );
 
         this->updateDeformationForCoupling( domain );
 

@@ -15,8 +15,8 @@
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
 #define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
 
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
 
 namespace geosx
 {

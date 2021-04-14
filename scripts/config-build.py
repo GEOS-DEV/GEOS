@@ -98,6 +98,11 @@ parser.add_argument("-tpl",
                     action='store_true',
                     help="build third party libraries")
 
+parser.add_argument("-gvz",
+                    "--graphviz",
+                    action="store_true",
+                    help="Generate graphviz dependency graph")
+
 args, unknown_args = parser.parse_known_args()
 if unknown_args:
     print("[config-build]: Passing the following unknown arguments directly to cmake... %s" % unknown_args)
@@ -195,6 +200,12 @@ if args.eclipse:
 if args.xcode:
     cmakeline += ' -G Xcode'
 
+print( "graphviz arg is %s" % args.graphviz)
+if args.graphviz:
+    cmakeline += " --graphviz=dependency.dot"
+    dotline = "dot -Tpng dependency.dot -o dependency.png"
+
+
 if unknown_args:
     cmakeline += " " + " ".join( unknown_args )
 
@@ -218,4 +229,7 @@ print("Changing to build directory...")
 os.chdir(buildpath)
 print("Executing cmake line: '%s'\n" % cmakeline)
 subprocess.call(cmakeline,shell=True)
+
+if args.graphviz:
+    subprocess.call(dotline,shell=True)
 

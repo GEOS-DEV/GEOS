@@ -21,8 +21,8 @@
 #include "MeshLevel.hpp"
 
 #include "NodeManager.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "utilities/ComputationalGeometry.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
