@@ -68,19 +68,18 @@ public:
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
-  /// Returns the value of a Ricker at time t0 with central frequency f0
+  /**
+   * @brief Compute the value of a Ricker (a Gaussian function)
+   * @param time_n time to evaluate the Ricker
+   * @param f0 central frequency of the Ricker
+   * @param order order of the ricker
+   * @return the value of a Ricker evaluated a time_n with f0
+   */
   virtual
-  real64 evaluateRicker( real64 const & t0, real64 const & f0 );
-
-  /// Returns the value of the first derivative of a Ricker at time t0 with central frequency f0
-  virtual
-  real64 evaluateRickerOrder1( real64 const & t, real64 const & f0 );
-
-  /// Returns the value of the second derivative of a Ricker at time t0 with central frequency f0
-  virtual
-  real64 evaluateRickerOrder2( real64 const & t, real64 const & f0 );
+  real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
 
   /**@}*/
+
 
 
   struct viewKeyStruct : SolverBase::viewKeyStruct

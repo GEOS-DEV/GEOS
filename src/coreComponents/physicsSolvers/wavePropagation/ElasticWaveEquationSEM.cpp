@@ -274,7 +274,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
                 real64 coordsOnRefElem[3];
                 localIndex q=0;
-
+                //real64 gradN[ numNodesPerElem ][ 3 ];
                 real64 invJ[3][3]={{0}};
                 FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
 
@@ -320,10 +320,12 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 
                      localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
+                      //real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, nodeIndex, xLocal, gradN );
+
                      sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
-                     sourceConstants_x[isrc][nodeIndex] = Grad[0] * invJ[0][0] + Grad[1] * invJ[1][0] + Grad[2] * invJ[2][0];
-                     sourceConstants_y[isrc][nodeIndex] = Grad[0] * invJ[0][1] + Grad[1] * invJ[1][1] + Grad[2] * invJ[2][1];
-                     sourceConstants_z[isrc][nodeIndex] = Grad[0] * invJ[0][2] + Grad[1] * invJ[1][2] + Grad[2] * invJ[2][2];
+                     sourceConstants_x[isrc][nodeIndex] = (Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2]);
+                     sourceConstants_y[isrc][nodeIndex] = (Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2]);
+                     sourceConstants_z[isrc][nodeIndex] = (Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2]);
 
                    }
                  }
@@ -396,7 +398,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 }
 
 
-void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z )
+void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants_x   = m_sourceConstants_x.toViewConst();
@@ -404,11 +406,11 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time, arra
   arrayView2d< real64 const > const sourceConstants_z   = m_sourceConstants_z.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
 
-  real64 const fi = evaluateRickerOrder2( time, this->m_timeSourceFrequency );
+  real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
 
   
   for( localIndex isrc = 0; isrc < m_sourceConstants_x.size( 0 ); ++isrc )
-  { std::cout << sourceIsLocal[isrc] << std::endl;
+  {
     if( sourceIsLocal[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < m_sourceConstants_x.size( 1 ); ++inode )
@@ -696,53 +698,40 @@ real64 ElasticWaveEquationSEM::solverStep( real64 const & time_n,
 }
 
 
-real64 ElasticWaveEquationSEM::evaluateRicker( real64 const & t0, real64 const & f0 )
+real64 ElasticWaveEquationSEM::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
 {
-  real64 o_tpeak = 1.0/f0;
+  real64 const o_tpeak = 1.0/f0;
   real64 pulse = 0.0;
-  if((t0 <= -0.9*o_tpeak) || (t0 >= 2.9*o_tpeak))
+  if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
     return pulse;
 
-  real64 pi = 2.0*acos( 0 );
-  real64 tmp = f0*t0-1.0;
-  real64 f0tm1_2 = 2*(tmp*pi)*(tmp*pi);
-  real64 gaussian_term = exp( -f0tm1_2 );
-  pulse = -(t0-1)*gaussian_term;
+  constexpr real64 pi = M_PI;
+  real64 const lam = (f0*pi)*(f0*pi);
+
+  switch( order )
+  {
+    case 2:
+    {
+      pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+    }
+    break;
+    case 1:
+    {
+      pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+    }
+    break;
+    case 0:
+    {
+      pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
+    }
+    break;
+    default:
+      GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
+  }
 
   return pulse;
 }
 
-
-real64 ElasticWaveEquationSEM::evaluateRickerOrder1( real64 const & t, real64 const & f0 )
-{
-  real64 o_tpeak = 1.0/f0;
-  real64 pulse = 0.0;
-
-  if((t <= -0.9*o_tpeak) || (t >= 2.9*o_tpeak))
-    return pulse;
-
-  real64 pi = 2.0*acos( 0 );
-  real64 lam = (f0*pi)*(f0*pi);
-  pulse = -2.0*lam*(t-o_tpeak)*exp( -lam*(t-o_tpeak)*(t-o_tpeak));
-
-  return pulse;
-}
-
-
-real64 ElasticWaveEquationSEM::evaluateRickerOrder2( real64 const & t, real64 const & f0 )
-{
-  real64 o_tpeak = 1.0/f0;
-  real64 pulse = 0.0;
-  if((t <= -0.9*o_tpeak) || (t >= 2.9*o_tpeak))
-    return pulse;
-
-  real64 pi = 2.0*acos( 0 );
-  real64 lam = (f0*pi)*(f0*pi);
-  pulse = 2.0*lam*(2.0*lam*(t-o_tpeak)*(t-o_tpeak)-1.0)*exp( -lam*(t-o_tpeak)*(t-o_tpeak));
-  
-
-  return pulse;
-}
 
 
 
@@ -856,7 +845,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
           // Computation of the Lamé coefficients lambda and mu
           mu[k] = rho[k] * vs[k] * vs[k];
           lambda[k] = rho[k] * vp[k] * vp[k] - 2.0*mu[k];
-
+          
           real64 xLocal[numNodesPerElem][3] = {{0.0}};
 
           for( localIndex i=0; i<numNodesPerElem; ++i )
