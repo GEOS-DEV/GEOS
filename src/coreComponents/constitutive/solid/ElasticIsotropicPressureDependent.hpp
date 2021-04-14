@@ -98,8 +98,8 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
-                                    real64 ( &stiffness )[6][6],
-                                    localIndex const q ) const override;
+                                    localIndex const q,
+                                    real64 ( &stiffness )[6][6] ) const override;
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
@@ -129,8 +129,8 @@ protected:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex const k,
-                                                                    real64 ( & stiffness )[6][6],
-                                                                    localIndex const q ) const
+                                                                    localIndex const q,
+                                                                    real64 ( & stiffness )[6][6] ) const
 {
   real64 const mu     = m_shearModulus[k];
   real64 const Cr     = m_recompressionIndex[k];
@@ -287,7 +287,7 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
                                      deviator,
                                      stress );
   saveStress( k, q, stress );
-  getElasticStiffness( k, stiffness, q );
+  getElasticStiffness( k, q, stiffness );
 }
 
 //TODO: implement the discretizationOps version of smallStrainUpdate

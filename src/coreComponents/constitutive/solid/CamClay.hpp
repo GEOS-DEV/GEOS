@@ -209,7 +209,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   //real64 bulkModulus  = m_bulkModulus[k]; //Linear elasticity version
 
   // elastic predictor (assume strainIncrement is all elastic)
-    
+
   ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
   real64 trialP;
@@ -289,7 +289,7 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
 
     real64 dp_dve = bulkModulus;
     real64 dq_dse = 3. *mu;
-      
+
     jacobian[0][0] = 1. + solution[2] * df_dp_dve;
     jacobian[0][2] = df_dp;
     jacobian[1][1] = 1. + solution[2]*df_dq_dse;
@@ -321,25 +321,25 @@ void CamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 BB[2][2] = {{}};
 
   //  real64 dpc_dve = 1./(Cc-Cr);//-1./(Cc-Cr) * pc; //linear hardening version
-    real64 const c = alpha/(alpha+1.)*pc;
-    real64 dpc_dve = -1./(Cc-Cr) * pc;
-    real64 df_dp_depsv;
-    real64 factor;
-    if( trialP >= c ) // Use MCC
-    {
+  real64 const c = alpha/(alpha+1.)*pc;
+  real64 dpc_dve = -1./(Cc-Cr) * pc;
+  real64 df_dp_depsv;
+  real64 factor;
+  if( trialP >= c )   // Use MCC
+  {
 
-        factor = 2.*alpha/ (alpha+1.);
-        df_dpc = -factor * trialP;
-        df_dp_depsv = factor * dpc_dve;
-    }
-    else
-    {
-         factor = 2. * alpha*alpha*alpha / (alpha+1.);
-        df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - factor * trialP;
-        df_dp_depsv = factor * dpc_dve;
-    }
-    
-  
+    factor = 2.*alpha/ (alpha+1.);
+    df_dpc = -factor * trialP;
+    df_dp_depsv = factor * dpc_dve;
+  }
+  else
+  {
+    factor = 2. * alpha*alpha*alpha / (alpha+1.);
+    df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - factor * trialP;
+    df_dp_depsv = factor * dpc_dve;
+  }
+
+
   real64 a1= 1. + solution[2]*df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
 
