@@ -216,7 +216,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
 
-        forAll< serialPolicy >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
         {
 
           for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
@@ -225,7 +225,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
           }
 
           /// loop over all the source that haven't been found yet
-          forAll< serialPolicy >( sourceCoordinates.size( 0 ), [=] ( localIndex const isrc )
+          forAll< EXEC_POLICY >( sourceCoordinates.size( 0 ), [=] ( localIndex const isrc )
           {
             if( sourceIsLocal[isrc] == 0 )
             {
@@ -253,7 +253,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 
 
           /// loop over all the receiver that haven't been found yet
-          forAll< serialPolicy >( receiverCoordinates.size( 0 ), [=] ( localIndex const ircv )
+          forAll< EXEC_POLICY >( receiverCoordinates.size( 0 ), [=] ( localIndex const ircv )
           {
             if( receiverIsLocal[ircv] == 0 )
             {
@@ -439,7 +439,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numNodesPerFace = 4;
 
         /// Loop over elements
-        forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
+        forAll< EXEC_POLICY >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
           constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -673,7 +673,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
+        forAll< EXEC_POLICY >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
           constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -713,7 +713,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   /// Calculate your time integrators
   real64 const dt2 = dt*dt;
-  forAll< serialPolicy >( nodeManager.size(), [=] ( localIndex const a )
+  forAll< EXEC_POLICY >( nodeManager.size(), [=] ( localIndex const a )
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
@@ -735,14 +735,14 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                 domain.getNeighbors(),
                                 false );
 
-  for( localIndex a=0; a<nodeManager.size(); ++a )
+  forAll< EXEC_POLICY >( nodeManager.size(), [=] (localIndex a )
   {
     p_nm1[a]=p_n[a];
     p_n[a] = p_np1[a];
 
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
-  }
+  });
 
   computeSismoTrace( cycleNumber, p_np1 );
 

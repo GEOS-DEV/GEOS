@@ -30,6 +30,9 @@ namespace geosx
 class AcousticWaveEquationSEM : public SolverBase
 {
 public:
+
+  using EXEC_POLICY = parallelDevicePolicy<32>;
+  
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
 
