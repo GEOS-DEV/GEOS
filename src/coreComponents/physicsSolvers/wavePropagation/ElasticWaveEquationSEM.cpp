@@ -21,9 +21,9 @@
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/ProblemManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -473,7 +473,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -482,13 +482,15 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_ERROR_IF( feDiscretization == nullptr, getName() << ": FE discretization not found: " << m_discretizationName );
+  GEOSX_THROW_IF( feDiscretization == nullptr,
+                  getName() << ": FE discretization not found: " << m_discretizationName,
+                  InputError );
 }
 
 
 void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
  // real64 const time = 0.0;
@@ -947,7 +949,7 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   fieldNames["node"].emplace_back( "displacementy_np1" );
   fieldNames["node"].emplace_back( "displacementz_np1" );
 
-  CommunicationTools syncFields;
+  CommunicationTools & syncFields = CommunicationTools::getInstance();
   syncFields.synchronizeFields( fieldNames,
                                 domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                 domain.getNeighbors(),
