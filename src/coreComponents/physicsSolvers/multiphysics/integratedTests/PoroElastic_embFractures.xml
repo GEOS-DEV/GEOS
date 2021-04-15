@@ -3,7 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="0.0, 0.0, 0.0">
-    <PoroelasticEmbeddedFractures
+    <SinglePhasePoromechanicsEmbeddedFractures
       name = "poroSolver"
       targetRegions="{Domain, Fracture}"
       initialDt="1e-3"
@@ -18,7 +18,7 @@
       <LinearSolverParameters
         solverType="direct"
         logLevel="0"/>
-    </PoroelasticEmbeddedFractures>
+    </SinglePhasePoromechanicsEmbeddedFractures>
     
     <SolidMechanicsEmbeddedFractures
       name = "fractureMechSolver"

@@ -17,8 +17,7 @@
  *
  */
 
-
-#include <physicsSolvers/multiphysics/MultiphasePoroelasticSolver.hpp>
+#include "physicsSolvers/multiphysics/MultiphasePoromechanicsSolver.hpp"
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
@@ -37,9 +36,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-#include "MultiphasePoroelasticKernel.hpp"
-
-
+#include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"
 
 namespace geosx
 {
@@ -47,7 +44,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-MultiphasePoroelasticSolver::MultiphasePoroelasticSolver( const string & name,
+MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & name,
                                                           Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
@@ -68,12 +65,12 @@ MultiphasePoroelasticSolver::MultiphasePoroelasticSolver( const string & name,
     setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 }
 
-void MultiphasePoroelasticSolver::registerDataOnMesh( Group & meshBodies )
+void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
 {
   GEOSX_UNUSED_VAR( meshBodies );
 }
 
-void MultiphasePoroelasticSolver::setupDofs( DomainPartition const & domain,
+void MultiphasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
                                              DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -85,7 +82,7 @@ void MultiphasePoroelasticSolver::setupDofs( DomainPartition const & domain,
                           DofManager::Connector::Elem );
 }
 
-void MultiphasePoroelasticSolver::setupSystem( DomainPartition & domain,
+void MultiphasePoromechanicsSolver::setupSystem( DomainPartition & domain,
                                                DofManager & dofManager,
                                                CRSMatrix< real64, globalIndex > & localMatrix,
                                                array1d< real64 > & localRhs,
@@ -106,7 +103,7 @@ void MultiphasePoroelasticSolver::setupSystem( DomainPartition & domain,
 //  }
 }
 
-void MultiphasePoroelasticSolver::implicitStepSetup( real64 const & time_n,
+void MultiphasePoromechanicsSolver::implicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
                                                      DomainPartition & domain )
 {
@@ -115,7 +112,7 @@ void MultiphasePoroelasticSolver::implicitStepSetup( real64 const & time_n,
 
 }
 
-void MultiphasePoroelasticSolver::implicitStepComplete( real64 const & time_n,
+void MultiphasePoromechanicsSolver::implicitStepComplete( real64 const & time_n,
                                                         real64 const & dt,
                                                         DomainPartition & domain )
 {
@@ -123,7 +120,7 @@ void MultiphasePoroelasticSolver::implicitStepComplete( real64 const & time_n,
   m_flowSolver->implicitStepComplete( time_n, dt, domain );
 }
 
-void MultiphasePoroelasticSolver::postProcessInput()
+void MultiphasePoromechanicsSolver::postProcessInput()
 {
   SolverBase::postProcessInput();
 
@@ -134,18 +131,18 @@ void MultiphasePoroelasticSolver::postProcessInput()
 
 }
 
-MultiphasePoroelasticSolver::~MultiphasePoroelasticSolver()
+MultiphasePoromechanicsSolver::~MultiphasePoromechanicsSolver()
 {
   // TODO Auto-generated destructor stub
 }
 
-void MultiphasePoroelasticSolver::resetStateToBeginningOfStep( DomainPartition & domain )
+void MultiphasePoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   m_flowSolver->resetStateToBeginningOfStep( domain );
   m_solidSolver->resetStateToBeginningOfStep( domain );
 }
 
-real64 MultiphasePoroelasticSolver::solverStep( real64 const & time_n,
+real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
                                                 real64 const & dt,
                                                 int const cycleNumber,
                                                 DomainPartition & domain )
@@ -169,7 +166,7 @@ real64 MultiphasePoroelasticSolver::solverStep( real64 const & time_n,
   return dt_return;
 }
 
-void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
+void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                   real64 const dt,
                                                   DomainPartition & domain,
                                                   DofManager const & dofManager,
@@ -200,7 +197,7 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PoroElasticBase,
                                     CellElementSubRegion,
-                                    PoroelasticKernels::Multiphase >( mesh,
+                                    PoromechanicsKernels::Multiphase >( mesh,
                                                                       targetRegionNames(),
                                                                       this->getDiscretizationName(),
                                                                       m_solidSolver->solidMaterialNames(),
@@ -235,7 +232,7 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
 
 }
 
-void MultiphasePoroelasticSolver::applyBoundaryConditions( real64 const time_n,
+void MultiphasePoromechanicsSolver::applyBoundaryConditions( real64 const time_n,
                                                            real64 const dt,
                                                            DomainPartition & domain,
                                                            DofManager const & dofManager,
@@ -255,7 +252,7 @@ void MultiphasePoroelasticSolver::applyBoundaryConditions( real64 const time_n,
                                          localRhs );
 }
 
-real64 MultiphasePoroelasticSolver::calculateResidualNorm( DomainPartition const & domain,
+real64 MultiphasePoromechanicsSolver::calculateResidualNorm( DomainPartition const & domain,
                                                            DofManager const & dofManager,
                                                            arrayView1d< real64 const > const & localRhs )
 {
@@ -275,7 +272,7 @@ real64 MultiphasePoroelasticSolver::calculateResidualNorm( DomainPartition const
   return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }
 
-void MultiphasePoroelasticSolver::solveSystem( DofManager const & dofManager,
+void MultiphasePoromechanicsSolver::solveSystem( DofManager const & dofManager,
                                                ParallelMatrix & matrix,
                                                ParallelVector & rhs,
                                                ParallelVector & solution )
@@ -286,7 +283,7 @@ void MultiphasePoroelasticSolver::solveSystem( DofManager const & dofManager,
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 }
 
-void MultiphasePoroelasticSolver::applySystemSolution( DofManager const & dofManager,
+void MultiphasePoromechanicsSolver::applySystemSolution( DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution,
                                                        real64 const scalingFactor,
                                                        DomainPartition & domain )
@@ -297,6 +294,6 @@ void MultiphasePoroelasticSolver::applySystemSolution( DofManager const & dofMan
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoroelasticSolver, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanicsSolver, string const &, Group * const )
 
 } /* namespace geosx */

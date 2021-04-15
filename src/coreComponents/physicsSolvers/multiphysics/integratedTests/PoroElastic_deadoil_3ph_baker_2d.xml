@@ -3,7 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="0, 0, 0">
-    <MultiphasePoroelastic
+    <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="TwoPhaseFlowSolver"
@@ -20,7 +20,7 @@
 	solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </MultiphasePoroelastic>
+    </MultiphasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
       name="LinearElasticitySolver"

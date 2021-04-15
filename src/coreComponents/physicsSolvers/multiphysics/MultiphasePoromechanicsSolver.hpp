@@ -13,12 +13,12 @@
  */
 
 /**
- * @file PoroelasticSolver.hpp
+ * @file MultiphasePoroelasticSolver.hpp
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -28,20 +28,20 @@ namespace geosx
 
 
 class SolidMechanicsLagrangianFEM;
-class SinglePhaseBase;
+class CompositionalMultiphaseBase;
 
-class PoroelasticSolver : public SolverBase
+class MultiphasePoromechanicsSolver : public SolverBase
 {
 public:
-  PoroelasticSolver( const string & name,
-                     Group * const parent );
-  ~PoroelasticSolver() override;
+  MultiphasePoromechanicsSolver( const string & name,
+                               Group * const parent );
+  ~MultiphasePoromechanicsSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName() { return "Poroelastic"; }
+  static string catalogName() { return "MultiphasePoromechanics"; }
 
   virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
 
@@ -69,12 +69,6 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
-
-  void
-  assembleCouplingTerms( DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs );
 
   virtual void
   applyBoundaryConditions( real64 const time_n,
@@ -115,39 +109,25 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
-  void updateDeformationForCoupling( DomainPartition & domain );
-
-  real64 splitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
-
-
   enum class CouplingTypeOption : integer
   {
-    FIM,
-    SIM_FixedStress
+    FIM
   };
-
-
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
     constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
 
-    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
-    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
-
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
   };
 
+
+
 protected:
 
   virtual void postProcessInput() override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   string m_solidSolverName;
   string m_flowSolverName;
@@ -155,19 +135,15 @@ protected:
   CouplingTypeOption m_couplingTypeOption;
 
   // pointer to the flow sub-solver
-  SinglePhaseBase * m_flowSolver;
+  CompositionalMultiphaseBase * m_flowSolver;
 
   // pointer to the solid mechanics sub-solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
-private:
-
-  void createPreconditioner();
-
 };
 
-ENUM_STRINGS( PoroelasticSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
+ENUM_STRINGS( MultiphasePoromechanicsSolver::CouplingTypeOption, "FIM" )
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_ */
