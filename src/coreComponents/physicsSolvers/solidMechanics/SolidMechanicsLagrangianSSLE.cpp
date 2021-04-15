@@ -20,7 +20,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "finiteElement/Kinematics.h"
-#include "managers/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 
 
 

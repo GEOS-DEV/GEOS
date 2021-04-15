@@ -25,7 +25,7 @@
 #include "EdgeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
-#include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
+#include "simpleGeometricObjects/BoundedPlane.hpp"
 
 namespace geosx
 {

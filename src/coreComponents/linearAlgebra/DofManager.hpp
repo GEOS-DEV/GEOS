@@ -25,6 +25,8 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/NodeManager.hpp"
 
+#include <numeric>
+
 namespace geosx
 {
 
@@ -75,34 +77,6 @@ public:
    * Limit on max number of fields
    */
   static localIndex constexpr MAX_FIELDS = 10;
-
-  /**
-   * Field description
-   */
-  struct FieldDescription
-  {
-    string name; //!< field name
-    Location location; //!< support location
-    std::vector< string > regions; //!< list of support region names
-    localIndex numComponents; //!< number of vector components
-    string key; //!< string key for index array
-    string docstring; //!< documentation string
-    localIndex numLocalDof; //!< number of local rows
-    globalIndex numGlobalDof; //!< number of global rows
-    globalIndex blockOffset;  //!< offset of this field's block in a block-wise ordered system
-    globalIndex rankOffset; //!< field's first DoF on current processor (within its block, ignoring other fields)
-    globalIndex globalOffset; //!< global offset of field's DOFs on current processor for multi-field problems
-  };
-
-  /**
-   * Coupling description
-   */
-  struct CouplingDescription
-  {
-    Connector connector = Connector::None;  //!< geometric object defining dof connections
-    std::vector< string > regions; //!< list of region names
-    FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
-  };
 
   /**
    * @brief Constructor.
@@ -348,12 +322,29 @@ public:
 
 
   /**
-   * @brief Computes an array of size equal to sum of all field local number of dofs containing
-   * unique integer labels associated to components stored in the field descriptions.
+   * @brief Fill a container with unique dof labels for each local dof.
+   * @tparam CONTAINER type of container to fill
+   * @param labels the container to fill
    *
-   * @return array1d of localIndex labels
+   * The labels are assigned starting from zero in increasing order of field registration.
+   * Labels are repeated for each support point of a field.
    */
-  array1d< localIndex > getLocalDofComponentLabels() const;
+  template< typename CONTAINER >
+  void getLocalDofComponentLabels( CONTAINER & labels ) const
+  {
+    labels.resize( numLocalDofs() );
+    typename CONTAINER::value_type labelStart = 0;
+    auto it = labels.begin();
+    for( FieldDescription const & field : m_fields )
+    {
+      localIndex const numComp = field.numComponents;
+      for( localIndex i = 0; i < field.numLocalDof / numComp; ++i, it += numComp )
+      {
+        std::iota( it, it + numComp, labelStart );
+      }
+      labelStart += numComp;
+    }
+  }
 
   /**
    * @brief Return the sum of local dofs across all previous processors w.r.t. to the calling one for
@@ -669,6 +660,34 @@ public:
   void printFieldInfo( std::ostream & os = std::cout ) const;
 
 private:
+
+  /**
+   * Field description
+   */
+  struct FieldDescription
+  {
+    string name; //!< field name
+    Location location; //!< support location
+    std::vector< string > regions; //!< list of support region names
+    localIndex numComponents; //!< number of vector components
+    string key; //!< string key for index array
+    string docstring; //!< documentation string
+    localIndex numLocalDof; //!< number of local rows
+    globalIndex numGlobalDof; //!< number of global rows
+    globalIndex blockOffset;  //!< offset of this field's block in a block-wise ordered system
+    globalIndex rankOffset; //!< field's first DoF on current processor (within its block, ignoring other fields)
+    globalIndex globalOffset; //!< global offset of field's DOFs on current processor for multi-field problems
+  };
+
+  /**
+   * Coupling description
+   */
+  struct CouplingDescription
+  {
+    Connector connector = Connector::None;  //!< geometric object defining dof connections
+    std::vector< string > regions; //!< list of region names
+    FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
+  };
 
   /**
    * @brief Initialize data structure for connectivity and sparsity pattern

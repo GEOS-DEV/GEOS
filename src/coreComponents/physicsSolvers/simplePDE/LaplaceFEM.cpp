@@ -20,13 +20,12 @@
 #include "LaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/DataTypes.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 
 namespace geosx
 {
@@ -296,10 +295,10 @@ void LaplaceFEM::applySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( m_fieldName );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 }
 
 /*
@@ -343,7 +342,7 @@ void LaplaceFEM::applyDirichletBCImplicit( real64 const time,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs )
 {
-  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply( time,
                    domain,

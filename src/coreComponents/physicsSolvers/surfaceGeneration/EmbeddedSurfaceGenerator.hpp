@@ -16,12 +16,12 @@
  * @file EmbeddedSurfaceGenerator.hpp
  */
 
-#ifndef SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
-#define SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
+#define GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
 
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 
 namespace geosx
@@ -127,4 +127,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_ */

@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
-#define DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#ifndef GEOSX_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#define GEOSX_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -21,7 +21,7 @@
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include <type_traits>
 

@@ -109,19 +109,19 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA )
-  add_custom_target( geosx_update_rst_tables
-                     ALL
-                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
-                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                     DEPENDS geosx
-                     )
+    add_custom_target( geosx_update_rst_tables
+                       ALL
+                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
+                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                       DEPENDS geosx
+                       )
 
-  add_custom_target( geosx_validate_all_xml_files
-                     ALL
-                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateXMLFiles.bash -g ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/schema/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
-                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                     DEPENDS geosx_update_rst_tables
-                     )
+    add_custom_target( geosx_validate_all_xml_files
+                       ALL
+                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateXMLFiles.bash -g ${CMAKE_SOURCE_DIR}/coreComponents/schema/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                       DEPENDS geosx_update_rst_tables
+                       )
 endif()
 
 if( SPHINX_FOUND )

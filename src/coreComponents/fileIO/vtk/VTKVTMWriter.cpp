@@ -15,7 +15,7 @@
 
 #include "VTKVTMWriter.hpp"
 
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {

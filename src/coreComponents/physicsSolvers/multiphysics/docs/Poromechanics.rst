@@ -48,7 +48,7 @@ In the main solver, it requires the specification of solidSolverName, fluidSolve
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/Poroelastic.rst
+.. include:: /coreComponents/schema/docs/Poroelastic.rst
 
 * ``couplingTypeOption``: defines the coupling scheme.
 

@@ -18,20 +18,20 @@
 
 #include "EmbeddedSurfaceGenerator.hpp"
 
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/ProblemManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
-#include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
-#include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
+#include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
+#include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
 
 #include "physicsSolvers/GEOSX_PTP/EmbeddedSurfacesParallelSynchronization.hpp"
 
@@ -100,10 +100,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
    */
 
   // Get domain
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // Get geometric object manager
-  GeometricObjectManager & geometricObjManager = getGlobalState().getProblemManager().getGroup< GeometricObjectManager >( "Geometry" );
+  GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
 
   // Get meshLevel
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
