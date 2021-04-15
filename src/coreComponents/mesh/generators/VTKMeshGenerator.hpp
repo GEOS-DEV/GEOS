@@ -97,7 +97,9 @@ private:
    * @param[in] cellType the vtk cell type for cells of the CellBlock being written
    * @param[in] cellBlockManager the CellBlockManager
    */
-  void WriteCellBlock( string const & name, localIndex nbCells, int cellType, CellBlockManager & cellBlockManager ); 
+  void WriteCellBlock( string const & name, localIndex nbCells, int cellType,
+                       CellBlockManager & cellBlockManager,
+                       std::vector< vtkAbstractArray * > const & arraysTobeImported ); 
 
   /**
    * @brief Write the hexahedron vertices

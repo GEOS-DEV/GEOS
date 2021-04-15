@@ -740,7 +740,7 @@ Element: VTK
 
 Element: VTKMeshGenerator
 =========================
-.. include:: ../../coreComponents/fileIO/schema/docs/VTKMeshGenerator.rst
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator.rst
 
 
 .. _XML_VanGenuchtenBakerRelativePermeability:
@@ -1549,7 +1549,7 @@ Datastructure: VTK
 
 Datastructure: VTKMeshGenerator
 ===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/VTKMeshGenerator_other.rst
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator_other.rst
 
 
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:

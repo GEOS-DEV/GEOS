@@ -34,7 +34,7 @@
 
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkUnstructuredGridReader.h>
-
+#include <vtkCellData.h>
 namespace geosx
 {
 using namespace dataRepository;
@@ -157,12 +157,30 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_ERROR_IF( nbHex + nbTet + nbWedge + nbPyr == 0, "Mesh contains no cell");
   GEOSX_LOG_RANK_0_IF( nbOthers > 0, nbOthers << " cells with unsupported types will be ignored and not written");
   CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
-  WriteCellBlock( "hexahedron", nbHex, VTK_HEXAHEDRON, cellBlockManager );
-  WriteCellBlock( "tetrahedron", nbTet, VTK_TETRA, cellBlockManager );
-  WriteCellBlock( "wedges", nbWedge, VTK_WEDGE, cellBlockManager );
-  WriteCellBlock( "pyramids",nbPyr , VTK_PYRAMID, cellBlockManager );
 
+  ///Write properties
+  vtkCellData * cellData = m_vtkMesh->GetCellData();
+  std::vector< vtkAbstractArray * > arrayToBeImported;
+  for( int i = 0; i < cellData->GetNumberOfArrays(); i++)
+  {
+    vtkAbstractArray * curArray = cellData->GetAbstractArray(i);
+    int dataType = curArray->GetDataType();
+    // We support only float and double type. Good assumption?
+    if( dataType != VTK_FLOAT || dataType != VTK_DOUBLE )
+    {
+      GEOSX_LOG_RANK_0( "Underlying ata Type " << curArray->GetDataTypeAsString() << " for array "
+                        << curArray->GetName() << " is not supported by GEOSX and will be ignored "
+                        << "(Only double and float are supported)");
+      continue;
+    }
+    arrayToBeImported.push_back( curArray );
+  }
+  WriteCellBlock( "hexahedron", nbHex, VTK_HEXAHEDRON, cellBlockManager, arrayToBeImported );
+  WriteCellBlock( "tetrahedron", nbTet, VTK_TETRA, cellBlockManager, arrayToBeImported );
+  WriteCellBlock( "wedges", nbWedge, VTK_WEDGE, cellBlockManager, arrayToBeImported );
+  WriteCellBlock( "pyramids",nbPyr , VTK_PYRAMID, cellBlockManager, arrayToBeImported );
 }
+
 
 localIndex VTKMeshGenerator::GetNumberOfPoints( int cellType )
 {
@@ -198,19 +216,21 @@ void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToV
     vtkCell * currentCell = m_vtkMesh->GetCell(c);
     if( currentCell->GetCellType() == VTK_HEXAHEDRON )
     {
-		cellToVertex[cellCount][0] = currentCell->GetPointId(0);
-		cellToVertex[cellCount][1] = currentCell->GetPointId(1);
-		cellToVertex[cellCount][2] = currentCell->GetPointId(3);
-		cellToVertex[cellCount][3] = currentCell->GetPointId(2);
-		cellToVertex[cellCount][4] = currentCell->GetPointId(4);
-		cellToVertex[cellCount][5] = currentCell->GetPointId(5);
-		cellToVertex[cellCount][6] = currentCell->GetPointId(7);
-		cellToVertex[cellCount][7] = currentCell->GetPointId(6);
-        cellCount++;
+		  cellToVertex[cellCount][0] = currentCell->GetPointId(0);
+		  cellToVertex[cellCount][1] = currentCell->GetPointId(1);
+		  cellToVertex[cellCount][2] = currentCell->GetPointId(3);
+		  cellToVertex[cellCount][3] = currentCell->GetPointId(2);
+		  cellToVertex[cellCount][4] = currentCell->GetPointId(4);
+		  cellToVertex[cellCount][5] = currentCell->GetPointId(5);
+		  cellToVertex[cellCount][6] = currentCell->GetPointId(7);
+		  cellToVertex[cellCount][7] = currentCell->GetPointId(6);
+      cellCount++;
     }
   }
 }
-void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, int cellType, CellBlockManager & cellBlockManager )
+void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, int cellType,
+                                       CellBlockManager & cellBlockManager,
+                                       std::vector< vtkAbstractArray * > const & arraysTobeImported )
 {
   if( nbCells > 0)
   {
@@ -220,6 +240,19 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
     cellBlock.setElementType( "C3D" + std::to_string(nbPointsPerCell));
     CellBlock::NodeMapType & cellToVertex = cellBlock.nodeList();
     cellBlock.resize( nbCells );
+    for( vtkAbstractArray * array : arraysTobeImported )
+    {
+      int dimension = array->GetNumberOfTuples();
+      if( dimension == 1 )
+      {
+        real64_array & property = cellBlock.addProperty< real64_array >( array->GetName() );
+      }
+      else
+      {
+        array2d< real64 > & property = cellBlock.addProperty< array2d< real64 > >( array->GetName() );
+        property.resizeDimension< 1 >( dimension );
+      }
+    }
     cellToVertex.resize( nbCells, nbPointsPerCell );
     if( cellType == VTK_HEXAHEDRON ) // Special case for hexahedron because of the ordering
     {
