@@ -491,7 +491,7 @@ void ProblemManager::generateMesh()
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.generateMeshes( domain );
-  Group & cellBlockManager = domain.getGroup( keys::cellManager );
+  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
 
   Group & meshBodies = domain.getMeshBodies();
 
@@ -513,9 +513,9 @@ void ProblemManager::generateMesh()
       nodeManager.constructGlobalToLocalMap();
 
       elemManager.generateMesh( cellBlockManager );
-      nodeManager.setElementMaps( domain.getGroup< CellBlockManager >( keys::cellManager ), elemManager );
+      nodeManager.setElementMaps( cellBlockManager, elemManager );
 
-      faceManager.buildFaces( nodeManager, elemManager );
+      faceManager.buildFaces( nodeManager, elemManager, cellBlockManager );
       nodeManager.setFaceMaps( faceManager );
 
       edgeManager.buildEdges( nodeManager, faceManager );

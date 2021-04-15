@@ -22,6 +22,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
+#include "mesh/CellBlockManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "SurfaceElementRegion.hpp"
@@ -147,7 +148,7 @@ public:
    * @brief Generate the mesh.
    * @param [in] cellBlockManager pointer to the CellBlockManager
    */
-  void generateMesh( Group & cellBlockManager );
+  void generateMesh( CellBlockManager & cellBlockManager );
 
   /**
    * @brief Generate the cell-to-edge map

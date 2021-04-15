@@ -15,12 +15,17 @@
 #ifndef GEOSX_CELLBLOCKABC_HPP
 #define GEOSX_CELLBLOCKABC_HPP
 
-#include "common/DataTypes.hpp"
+#include "mesh/InterObjectRelation.hpp"
 #include "dataRepository/Group.hpp"
+#include "common/DataTypes.hpp"
+
+#include <vector>
 
 namespace geosx
 {
 
+//TODO : as the contract of this class has changed, is it still a cellblock per se ? It can
+// be because cell = elements + faces + edges ? maybe we have to work on the naming
 class CellBlockABC : public dataRepository::Group
 {
 public:
@@ -72,6 +77,18 @@ public:
    * @return The mapping relationship as a array.
    */
   virtual arrayView1d< globalIndex const > localToGlobalMap() const = 0;
+
+  /**
+   * @brief Returns the nodes of face @p iFace of element @p iElement.
+   * @param iElement The element index.
+   * @param iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
+   * @return Sorted list of indices.
+   *
+   * The result is sorted from lower to larger node indices values.
+   * The result is exactly the size of the number of nodes.
+   */
+  virtual std::vector< localIndex > getFaceNodes( localIndex iElement,
+                                                  localIndex iFace ) const = 0;
 
   /**
    * @brief Helper function to apply a lambda function over all the external properties of the subregion

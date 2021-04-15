@@ -19,6 +19,7 @@
 #ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
 #define GEOSX_MESH_CELLBLOCKMANAGER_H_
 
+#include "mesh/ObjectManagerBase.hpp"
 #include "mesh/generators/CellBlock.hpp"
 
 #include <map>
@@ -26,6 +27,8 @@
 
 namespace geosx
 {
+
+class CellBlock; // TODO
 
 namespace dataRepository
 {
@@ -110,19 +113,41 @@ public:
   }
 
   /**
+   * TODO store the map once it's computed
    * @brief Returns the node to elements mappings.
    * @return A one to many relationship.
    */
   std::map< localIndex, std::vector< localIndex > > getNodeToElem() const;
 
   /**
+   * @brief Returns the face to elements mappings.
+   * @return A one to many relationship.
+   */
+  std::map< localIndex, std::vector< localIndex > > getFaceToElem() const;
+
+  /**
+   * @brief Returns the face to nodes mappings.
+   * @param numNodes This should not be here, needs to be removed TODO
+   * @return The one to many relationship.
+   */
+  ArrayOfArrays< localIndex > getFaceToNodes( localIndex numNodes ) const;
+
+  /**
    * @brief Total number of nodes across all the cell blocks.
    * @return
    *
    * It's actually more than the total number of nodes
-   * because we have nodes belonging to multiple cell blocks
+   * because we have nodes belonging to multiple cell blocks and cells
    */
   localIndex numNodes() const;
+
+  /**
+   * @brief Total number of unique nodes across all the cell blocks.
+   * TODO : cache the value once computed
+   * TODO : delete this as we can have this information using the NodeManade
+   * @return
+   */
+  localIndex numUniqueNodes() const;
 
 private:
 

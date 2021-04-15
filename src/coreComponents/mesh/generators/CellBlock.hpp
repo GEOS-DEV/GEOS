@@ -19,7 +19,6 @@
 #ifndef GEOSX_MESH_CELLBLOCK_HPP_
 #define GEOSX_MESH_CELLBLOCK_HPP_
 
-#include "mesh/FaceManager.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -38,11 +37,6 @@ namespace geosx
 class CellBlock : public CellBlockABC
 {
 public:
-
-  /// Alias for the type of the element-to-edge map
-  using EdgeMapType = FixedOneToManyRelation;
-  /// Alias for the type of the element-to-face map
-  using FaceMapType = FixedOneToManyRelation;
 
   /**
    * @name Constructor / Destructor
@@ -96,34 +90,15 @@ public:
 
   localIndex numElements() const override { return size(); }
 
+  std::vector< localIndex > getFaceNodes( localIndex iElement,
+                                          localIndex iFace ) const override;
+
   /**
    * @copydoc nodeList()
    */
   NodeMapType & getElemToNode() { return m_toNodesRelation; }
 
   NodeMapType const & getElemToNode() const override { return m_toNodesRelation; }
-
-  /**
-   * @brief Get the element-to-edge map.
-   * @return a reference to element-to-edge map
-   */
-  FixedOneToManyRelation & edgeList() { return m_toEdgesRelation; }
-
-  /**
-   * @copydoc edgeList()
-   */
-  FixedOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
-
-  /**
-   * @brief Get the element-to-face map.
-   * @return a reference to the element to face map
-   */
-  FixedOneToManyRelation & faceList() { return m_toFacesRelation; }
-
-  /**
-   * @copydoc faceList()
-   */
-  FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
   /**
    * @brief Get local to global map, non-const version.
@@ -172,12 +147,6 @@ private:
 
   /// Element-to-node relation
   NodeMapType m_toNodesRelation;
-
-  /// Element-to-edge relation
-  EdgeMapType m_toEdgesRelation;
-
-  /// Element-to-face relation
-  FaceMapType m_toFacesRelation;
 
   /// Contains the global index of each object.
   array1d< globalIndex > m_localToGlobalMap;

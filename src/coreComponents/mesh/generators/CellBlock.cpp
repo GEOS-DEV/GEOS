@@ -60,8 +60,6 @@ void CellBlock::setElementType( string const & elementType )
   }
 
   m_toNodesRelation.resize( 0, m_numNodesPerElement );
-  m_toEdgesRelation.resize( 0, m_numEdgesPerElement );
-  m_toFacesRelation.resize( 0, m_numFacesPerElement );
 }
 
 void CellBlock::resize( dataRepository::indexType const newSize )
@@ -72,8 +70,196 @@ void CellBlock::resize( dataRepository::indexType const newSize )
   // to be exposed though the `Group` public interface.
   m_localToGlobalMap.resize( newSize );
   m_toNodesRelation.resize( newSize );
-  m_toEdgesRelation.resize( newSize );
-  m_toFacesRelation.resize( newSize );
+}
+
+std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
+                                                   localIndex iFace ) const
+{
+  if( m_elementTypeString == "C3D8" )
+  {
+    if( iFace == 0 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][5],
+        m_toNodesRelation[iElement][4]
+      };
+    }
+    else if( iFace == 1 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][1]
+      };
+    }
+    else if( iFace == 2 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][4],
+        m_toNodesRelation[iElement][6],
+        m_toNodesRelation[iElement][2]
+      };
+    }
+    else if( iFace == 3 )
+    {
+      return {
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][7],
+        m_toNodesRelation[iElement][5]
+      };
+    }
+    else if( iFace == 4 )
+    {
+      return {
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][6],
+        m_toNodesRelation[iElement][7]
+      };
+    }
+    else if( iFace == 5 )
+    {
+      return {
+        m_toNodesRelation[iElement][4],
+        m_toNodesRelation[iElement][5],
+        m_toNodesRelation[iElement][7],
+        m_toNodesRelation[iElement][6]
+      };
+    }
+  }
+  else if( m_elementTypeString == "C3D6" )
+  {
+    if( iFace == 0 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][5],
+        m_toNodesRelation[iElement][4]
+      };
+    }
+    else if( iFace == 1 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][1]
+      };
+    }
+    else if( iFace == 2 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][4]
+      };
+    }
+    else if( iFace == 3 )
+    {
+      return {
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][5]
+      };
+    }
+    else if( iFace == 4 )
+    {
+      return {
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][5],
+        m_toNodesRelation[iElement][4]
+      };
+    }
+  }
+  else if( m_elementTypeString == "C3D4" )
+  {
+    if( iFace == 0 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][1]
+      };
+    }
+    else if( iFace == 1 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][3]
+      };
+    }
+    else if( iFace == 2 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][2]
+      };
+    }
+    else if( iFace == 3 )
+    {
+      return {
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][3]
+      };
+    }
+  }
+  else if( m_elementTypeString == "C3D5" )
+  {
+    if( iFace == 0 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][3]
+      };
+    }
+    else if( iFace == 1 )
+    {
+      return {
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][4]
+      };
+    }
+    else if( iFace == 2 )
+    {
+      return {
+        m_toNodesRelation[iElement][1],
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][4]
+      };
+    }
+    else if( iFace == 3 )
+    {
+      return {
+        m_toNodesRelation[iElement][2],
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][4]
+      };
+    }
+    else if( iFace == 4 )
+    {
+      return {
+        m_toNodesRelation[iElement][3],
+        m_toNodesRelation[iElement][0],
+        m_toNodesRelation[iElement][4]
+      };
+    }
+  }
+
+  GEOSX_ERROR( "Error. Don't know what kind of element this is and cannot build faces." );
+  return {};
 }
 
 }

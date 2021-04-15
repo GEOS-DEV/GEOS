@@ -537,7 +537,7 @@ void populateMaps( ElementRegionManager & elementManager,
 }
 
 
-void FaceManager::buildFaces( NodeManager & nodeManager, ElementRegionManager & elementManager )
+void FaceManager::buildFaces( NodeManager & nodeManager, ElementRegionManager & elementManager, CellBlockManager const & cellBlockManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -565,6 +565,8 @@ void FaceManager::buildFaces( NodeManager & nodeManager, ElementRegionManager & 
                 m_toElements.m_toElementSubRegion,
                 m_toElements.m_toElementIndex,
                 nodeList() );
+
+  nodeList().base() = cellBlockManager.getFaceToNodes( numNodes ); // TODO
 
   // First create the sets
   auto const & nodeSets = nodeManager.sets().wrappers();

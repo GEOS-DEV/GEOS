@@ -59,7 +59,7 @@ void TestMeshImport( string const & inputStringMesh,
   elemManager.processInputFileRecursive( xmlRegionNode );
   elemManager.postProcessInputRecursive();
 
-  Group & cellBlockManager = domain->getGroup( keys::cellManager );
+  CellBlockManager & cellBlockManager = domain->getGroup< CellBlockManager >( keys::cellManager );
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
   elemManager.generateMesh( cellBlockManager );

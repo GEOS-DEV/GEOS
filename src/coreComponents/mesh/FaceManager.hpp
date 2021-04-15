@@ -19,6 +19,7 @@
 #ifndef GEOSX_MESH_FACEMANAGER_HPP_
 #define GEOSX_MESH_FACEMANAGER_HPP_
 
+#include "mesh/CellBlockManager.hpp"
 #include "ToElementRelation.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 
@@ -28,6 +29,7 @@ namespace geosx
 class NodeManager;
 class ElementRegionManager;
 class CellElementSubRegion;
+class CellBlockManager; //TODO
 
 /**
  * @class FaceManager
@@ -131,7 +133,7 @@ public:
    * @param[in] nodeManager mesh node manager
    * @param[in] elemManager element manager
    */
-  void buildFaces( NodeManager & nodeManager, ElementRegionManager & elemManager );
+  void buildFaces( NodeManager & nodeManager, ElementRegionManager & elemManager, CellBlockManager const & cellBlockManager );
 
   /**
    * @brief Compute faces center, area and normal.
