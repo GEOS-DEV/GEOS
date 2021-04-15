@@ -213,8 +213,9 @@ struct LinearSolverParameters
       compositionalMultiphaseReservoir, ///< reservoir with finite volume compositional multiphase flow
       hydrofracture,                    ///< hydrofracture
       lagrangianContactMechanics,       ///< Lagrangian contact mechanics
-      singlePhasePoroelastic,           ///< single phase poroelastic with finite volume single phase flow
-      hybridSinglePhasePoroelastic      ///< single phase poroelastic with hybrid finite volume single phase flow
+      singlePhaseHybridFVM,             ///< hybrid finite volume single-phase flow
+      singlePhasePoromechanics,         ///< single phase poroelastic with finite volume single phase flow
+      hybridSinglePhasePoromechanics    ///< single phase poroelastic with hybrid finite volume single phase flow
     };
 
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
@@ -277,13 +278,15 @@ ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
               "mc64" )
 
 ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
+              "invalid",
               "compositionalMultiphaseFVM",
               "compositionalMultiphaseHybridFVM",
               "compositionalMultiphaseReservoir",
               "hydrofracture",
               "lagrangianContactMechanics",
-              "singlePhasePoroelastic",
-              "hybridSinglePhasePoroelastic" )
+              "singlePhaseHybridFVM",
+              "singlePhasePoromechanics",
+              "hybridSinglePhasePoromechanics" )
 
 ENUM_STRINGS( LinearSolverParameters::AMG::CycleType,
               "V",

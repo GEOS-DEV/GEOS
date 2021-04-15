@@ -375,10 +375,15 @@ void createMGR( LinearSolverParameters const & params,
   using namespace hypre::mgr;
   switch( params.mgr.strategy )
   {
-    case LinearSolverParameters::MGR::StrategyType::singlePhasePoroelastic:
+    case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:
     case LinearSolverParameters::MGR::StrategyType::hydrofracture:
     {
-      setStrategy< SinglePhasePoroelastic >( params.mgr, numComponentsPerField, precond, mgrData );
+      setStrategy< SinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics:
+    {
+      setStrategy< HybridSinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM:
@@ -416,6 +421,8 @@ void createMGR( LinearSolverParameters const & params,
   precond.destroy = HYPRE_MGRDestroy;
 
   // Set custom F-solver based on SDC for mechanics case
+  // Requirement: displacement degrees of freedom are the first being eliminated,
+  //              i.e. they are F-points for the first MGR level
   if( params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && params.mgr.separateComponents )
   {
     HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr );
