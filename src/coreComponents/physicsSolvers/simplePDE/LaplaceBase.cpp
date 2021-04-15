@@ -92,15 +92,15 @@ void LaplaceBase::registerDataOnMesh( Group & meshBodies )
 
 
 /* STEPPING IN TIME
-   Here, we decide how we march in time in the resolutions based on the possible
-   three options set in the XML file (Steady state, Implicit transient, or Explicit transient).
-   Based on these options, we can either perform an Explicit Step (forward Euler),
-   or an Implicit Step (backward Euler).
-   The implementation of the Explicit or Implicit Steps are found in the SolverBase.
-   From now on, we oscillate between specific Laplace solver operations if implemented and more generic SolverBase operations.
-   The initial values of the solver step are all at time_n, and the solver attempts to advance by a time step of dt.
-   This dt time step size is specified initially by the user; and unfortunately, it can sometimes be too large for convergence.
-   The SolverStep method thus returns the time step value that is was actually capable of solving for with good convergence.
+   Here, we decide how we march in time in the resolutions based on the possible three options set
+   in the XML file (Steady state or Implicit transient). In the case of Implicit transient, we
+   perform an implicit step (backward Euler). The implementation of the Implicit Step is found in
+   the SolverBase.  From now on, we oscillate between specific Laplace solver operations if
+   implemented and more generic SolverBase operations.  The initial values of the solver step are
+   all at time_n, and the solver attempts to advance by a time step of dt.  This dt time step size
+   is specified initially by the user; and unfortunately, it can sometimes be too large for
+   convergence.  The SolverStep method thus returns the time step value that was actually capable of
+   solving for with good convergence.
  */
 
 real64 LaplaceBase::solverStep( real64 const & time_n,
@@ -108,17 +108,18 @@ real64 LaplaceBase::solverStep( real64 const & time_n,
                                 const int cycleNumber,
                                 DomainPartition & domain )
 {
-  real64 dtReturn = dt;
-  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
-  {
-    dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
-  }
-  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
-           m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
-  {
-    dtReturn = this->linearImplicitStep( time_n, dt, cycleNumber, domain );
-  }
-  return dtReturn;
+  // real64 dtReturn = dt;
+  // if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
+  // {
+  //   dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
+  // }
+  // else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
+  //          m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
+  // {
+  //   dtReturn = this->linearImplicitStep( time_n, dt, cycleNumber, domain );
+  // }
+  // return dtReturn;
+  return this->linearImplicitStep( time_n, dt, cycleNumber, domain );
 }
 
 /*

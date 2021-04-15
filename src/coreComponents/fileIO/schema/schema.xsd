@@ -1204,15 +1204,14 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
 * SteadyState
-* ImplicitTransient
-* ExplicitTransient-->
+* ImplicitTransient-->
 		<xsd:attribute name="timeIntegrationOption" type="geosx_LaplaceBase_TimeIntegrationOption" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_LaplaceBase_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient" />
+			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="LaplaceVEMType">
@@ -1234,8 +1233,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
 * SteadyState
-* ImplicitTransient
-* ExplicitTransient-->
+* ImplicitTransient-->
 		<xsd:attribute name="timeIntegrationOption" type="geosx_LaplaceBase_TimeIntegrationOption" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />

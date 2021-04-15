@@ -111,8 +111,7 @@ public:
   enum class TimeIntegrationOption : integer
   {
     SteadyState,
-    ImplicitTransient,
-    ExplicitTransient
+    ImplicitTransient
   };
   //END_SPHINX_INCLUDE_01
 
@@ -145,7 +144,7 @@ protected:
    at the namespace scope (in this case, right after the ``LaplaceBase`` class definition is complete):
  */
 //START_SPHINX_INCLUDE_05
-ENUM_STRINGS( LaplaceBase::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient" )
+ENUM_STRINGS( LaplaceBase::TimeIntegrationOption, "SteadyState", "ImplicitTransient" )
 //END_SPHINX_INCLUDE_05
 
 } /* namespace geosx */
