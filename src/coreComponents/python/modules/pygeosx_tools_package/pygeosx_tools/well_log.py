@@ -1,8 +1,9 @@
 
 import numpy as np
+import re
 
 
-def parse_las(fname, variable_start='~CURVE INFORMATION', body_start='~A'):
+def parse_las(fname, variable_start='~C', body_start='~A'):
     """
     Parse an las format log file
 
@@ -14,39 +15,51 @@ def parse_las(fname, variable_start='~CURVE INFORMATION', body_start='~A'):
     Returns:
         np.ndarray: a dict containing the values and unit definitions for each variable in the log
     """
-    variable_names = []
-    variable_units = []
-    variable_values = []
+    results = {}
+    variable_order = []
+
+    # The expected format of the varible definition block is:
+    # name.units code:description
+    variable_regex = re.compile('\s*([^\.^\s]*)\s*(\.[^ ]*) ([^:]*):(.*)')
 
     with open(fname) as f:
         file_location = 0
         for line in f:
-            # Preamble
-            if (file_location == 0):
-                if variable_start in line:
-                    file_location += 1
+            if (line[0] != '#'):
+                # Preamble
+                if (file_location == 0):
+                    if variable_start in line:
+                        file_location += 1
 
-            # Variable definitions
-            elif (file_location == 1):
-                if ('#' not in line):
+                # Variable definitions
+                elif (file_location == 1):
+                    # This is not a comment line
                     if body_start in line:
                         file_location += 1
                     else:
-                        tmp = line.split()
-                        variable_names.append(tmp[0])
-                        variable_units.append(tmp[1])
+                        match = variable_regex.match(line)
+                        if match:
+                            variable_order.append(match[1])
+                            results[match[1]] = {'units': match[2][0:],
+                                                 'code': match[3],
+                                                 'description': match[4],
+                                                 'values': []}
+                        else:
+                            # As a fall-back use the full line
+                            variable_order.append(line[:-1])
+                            results[line[:-1]] = {'units': '',
+                                                  'code': '',
+                                                  'description': '',
+                                                  'values': []}
 
-            # Body
-            else:
-                variable_values.append([float(x) for x in line.split()])
+                # Body
+                else:
+                    for k, v in zip(variable_order, line.split()):
+                        results[k]['values'].append(float(v))
 
-    # Format results
-    results = {}
-    variable_values = np.array(variable_values)
-
-    for ii in range(0, len(variable_names)):
-        results[variable_names[ii]] = {'units': variable_units[ii],
-                                       'values': np.squeeze(variable_values[:, ii])}
+    # Convert values to numpy arrays
+    for k in results:
+        results[k]['values'] = np.array(results[k]['values'])
 
     return results
 

@@ -15,11 +15,9 @@ def run_problem():
     """
     Run the GEOSX problem
     """
-    # Initialize the code
+    # Initialize the code and set initial conditions
     xml.apply_xml_preprocessor()
     problem = pygeosx.initialize(rank, sys.argv)
-
-    # Apply initial conditions
     pygeosx.apply_initial_conditions()
 
     # Rather than specifying the wrapper paths explicitly,

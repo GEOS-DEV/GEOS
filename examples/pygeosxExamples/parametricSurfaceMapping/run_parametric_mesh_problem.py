@@ -6,19 +6,21 @@ import pygeosx
 from pygeosx_tools import wrapper
 
 
-def surface_mapping(x):
+def surface_mapping(x, z_transition=0.5, z_surf=1.0):
     """
-    Function to deform the mesh to match some surface topography
+    Function to deform the mesh to match some surface topography.
+    In this example, the surface elevation is set to:
+    0.1 * sin(2 * pi * r / max(r)), and the mesh deformation
+    is tapered as a function of depth.
 
     Args:
-        x (np.ndarray) the object locations
+        x (np.ndarray): the object locations
+        z_transition (float): depth of the zone to be deformed
+        z_surf (float): average location of the model surface
 
     Returns:
         np.ndarray: new coordinates
     """
-    z_transition = 0.5   # Depth of the zone to be deformed
-    z_surf = 1.0         # Average location of the model surface
-
     R = x[:, 0]**2 + x[:, 1]**2
     delta_surf = 0.1 * np.sin(2.0 * np.pi * R / np.amax(R))
     delta_z = delta_surf * np.maximum(x[:, 2] - z_surf + z_transition, 0.0) / z_transition

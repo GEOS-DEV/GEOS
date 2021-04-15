@@ -3,39 +3,69 @@ import os
 import numpy as np
 
 
-def save_tables(grid, properties, table_root='./tables', axes=['x', 'y', 'z', 't']):
+def save_tables(axes, properties, table_root='./tables', axes_names=[]):
     """
     Saves a set of tables in GEOSX format
     Notes: The shape of these arrays should match the length of each axis in the specified order
            The output directory will be created if it does not exist yet
+           If axes_names are not supplied, then they will be selected based
+           on the dimensionality of the grid: 1D=[t]; 3D=[x, y, z]; 4D=[x, y, z, t]
 
     Args:
-        grid (list): A list of numpy ndarrays defining the table axes
+        axes (list): A list of numpy ndarrays defining the table axes
         properties (dict): A dict of numpy ndarrays defning the table values
         table_root (str): The root path for the output directory
-        axes (list): A list of names for each potential axis (default = ['x', 'y', 'z', 't'])
+        axes_names (list): A list of names for each potential axis (optional)
     """
+    # Check to see if the axes, properties have consistent shapes
+    axes_size = tuple([len(x) for x in axes])
+    axes_dimension = len(axes_size)
+    for k, p in properties.items():
+        property_size = np.shape(p)
+        if (property_size != axes_size):
+            print('Property:', k)
+            print('Grid size:', axes_size)
+            print('Property size', property_size)
+            raise Exception('Table dimensions do not match proprerties')
+
+    # Check the axes names
+    if axes_names:
+        if (axes_dimension != len(axes_names)):
+            print('Axes dimensions:', axes_dimension)
+            print('Number of axis names provided:', len(axes_names))
+            raise Exception('The grid dimensions and axes names do not match')
+    else:
+        if (axes_dimension == 1):
+            axes_names = ['t']
+        elif (axes_dimension == 3):
+            axes_names = ['x', 'y', 'z']
+        elif (axes_dimension == 4):
+            axes_names = ['x', 'y', 'z', 't']
+        else:
+            axes_names = ['x%i' % (ii) for ii in range(axes_dimension)]
+
+    # Write the axes
     os.makedirs(table_root, exist_ok=True)
-    for ii, d in zip(range(len(grid)), axes):
-        np.savetxt('%s/%s.csv' % (table_root, d),
-                   grid[ii],
+    for g, a in zip(axes, axes_names):
+        np.savetxt('%s/%s.csv' % (table_root, a),
+                   g,
                    fmt='%1.5f',
                    delimiter=',')
 
-    for ka in properties:
-        np.savetxt('%s/%s.csv' % (table_root, ka),
-                   np.reshape(properties[ka], (-1), order='F'),
+    for k, p in properties.items():
+        np.savetxt('%s/%s.csv' % (table_root, k),
+                   np.reshape(p, (-1), order='F'),
                    fmt='%1.5e',
                    delimiter=',')
 
 
-def load_tables(axes, properties, table_root='./tables', extension='csv'):
+def load_tables(axes_names, property_names, table_root='./tables', extension='csv'):
     """
     Load a set of tables in GEOSX format
 
     Args:
-        axes (list): Axis file names in the target directory (with no extension)
-        properties (list): Property file names in the target directory (with not extension)
+        axes_names (list): Axis file names in the target directory (with no extension)
+        property_names (list): Property file names in the target directory (with not extension)
         table_root (str): Root path for the table directory
         extension (str): Table file extension (default = 'csv')
 
@@ -43,11 +73,11 @@ def load_tables(axes, properties, table_root='./tables', extension='csv'):
         tuple: List of axes values, and dictionary of table values
     """
     # Load axes
-    X = [np.loadtxt('%s/%s.%s' % (table_root, f, extension), unpack=True) for f in axes]
-    N = tuple([len(tmp) for tmp in X])
+    axes = [np.loadtxt('%s/%s.%s' % (table_root, axis, extension), unpack=True) for axis in axes_names]
+    N = tuple([len(x) for x in axes])
 
     # Load properties
-    p = {f: np.reshape(np.loadtxt('%s/%s.%s' % (table_root, f, extension)), N, order='F') for f in properties}
+    properties = {p: np.reshape(np.loadtxt('%s/%s.%s' % (table_root, p, extension)), N, order='F') for p in property_names}
 
-    return X, p
+    return axes, properties
 
