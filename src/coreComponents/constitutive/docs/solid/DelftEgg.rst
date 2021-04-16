@@ -6,7 +6,10 @@ Model: Delft Egg
 The `Delft-Egg  <https://link.springer.com/chapter/10.1007%2F978-94-011-1046-4_10>`__  plasticity model is a generalization of the Modified Cam-Clay model, with the yield function defined as 
 
 .. math::
-  f = q^2 - M^2 \left[ \alpha^2 \, p \left(\frac{2 \alpha}{\alpha+1} p_c -p \right) - \frac{\alpha^2 (\alpha-1)}{\alpha+1} p_c^2 \right] = 0 , 
+  f = q^2 - M^2 \left[ \alpha^2 \, p \left(\frac{2 \alpha}{\alpha+1} p_c -p \right) - \frac{\alpha^2 (\alpha-1)}{\alpha+1} p_c^2 \right] = 0 \quad ( \text{for }p_c > \frac{\alpha}{\alpha+1} )
+  
+.. math::
+  f = q^2 - M^2 \, p \left(\frac{2 \alpha}{\alpha+1} p_c -p \right) = 0 \quad (\text{for } p_c \leq \frac{\alpha}{\alpha+1} )
 
 where :math:`\alpha \geq 1` is the shape parameter. For :math:`\alpha = 1` leads to a MCC model with an ellipsoidal yield surface. For :math:`\alpha > 1`, the Delft-Egg model with an egg-shaped yield surface will result. 
 The rest of the implementation follows the same procedure as the Modified Cam-Clay model. 
