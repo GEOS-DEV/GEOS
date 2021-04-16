@@ -274,7 +274,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
                 real64 coordsOnRefElem[3];
                 localIndex q=0;
-                //real64 gradN[ numNodesPerElem ][ 3 ];
+                real64 gradN[ numNodesPerElem ][ 3 ];
                 real64 invJ[3][3]={{0}};
                 FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
 
@@ -320,12 +320,12 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 
                      localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
-                      //real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, nodeIndex, xLocal, gradN );
+                      real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, nodeIndex, xLocal, gradN );
 
                      sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
-                     sourceConstants_x[isrc][nodeIndex] = (Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2]);
-                     sourceConstants_y[isrc][nodeIndex] = (Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2]);
-                     sourceConstants_z[isrc][nodeIndex] = (Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2]);
+                     sourceConstants_x[isrc][nodeIndex] =  detJ*(Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2]);
+                     sourceConstants_y[isrc][nodeIndex] = detJ*(Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2]);
+                     sourceConstants_z[isrc][nodeIndex] = detJ*(Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2]);
 
                    }
                  }
@@ -902,20 +902,20 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
                   // Ryz_ij = detJ * mu[k]*gradN[j][2]*gradN[i][2];
                   // Rzy_ij = detJ * mu[k]*gradN[j][1]*gradN[i][1];
 
-                  Rxx_ij = detJ * ((lambda[k]+2.0*mu[k])*gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][2]*gradN[i][2]);
-                  Ryy_ij = detJ * ((lambda[k]+2.0*mu[k])*gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][2]*gradN[i][2]);
-                  Rzz_ij = detJ * ((lambda[k]+2.0*mu[k])*gradN[j][2]*gradN[i][2] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0]);
-                  Rxy_ij = detJ * (mu[k] * gradN[j][1]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][1]);
-                  Ryx_ij = detJ * (mu[k] * gradN[j][0]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][0]);
-                  Rxz_ij = detJ * (mu[k] * gradN[j][2]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][2]);
-                  Rzx_ij = detJ * (mu[k] * gradN[j][0]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][0]);
-                  Ryz_ij = detJ * (mu[k] * gradN[j][2]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][2]);
-                  Rzy_ij = detJ * (mu[k] * gradN[j][1]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][1]);
+                  Rxx_ij =  ((lambda[k]+2.0*mu[k])*gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][2]*gradN[i][2]);
+                  Ryy_ij =  ((lambda[k]+2.0*mu[k])*gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][2]*gradN[i][2]);
+                  Rzz_ij = ((lambda[k]+2.0*mu[k])*gradN[j][2]*gradN[i][2] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0]);
+                  Rxy_ij =  (mu[k] * gradN[j][1]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][1]);
+                  Ryx_ij =  (mu[k] * gradN[j][0]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][0]);
+                  Rxz_ij =  (mu[k] * gradN[j][2]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][2]);
+                  Rzx_ij =  (mu[k] * gradN[j][0]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][0]);
+                  Ryz_ij =  (mu[k] * gradN[j][2]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][2]);
+                  Rzy_ij =  (mu[k] * gradN[j][1]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][1]);
 
 
-                  stiffnessVector_x[elemsToNodes[k][i]] += Rxx_ij * ux_n[elemsToNodes[k][j]] + Rxy_ij*uy_n[elemsToNodes[k][j]] + Rxz_ij*uz_n[elemsToNodes[k][j]];
-                  stiffnessVector_y[elemsToNodes[k][i]] += Ryx_ij * ux_n[elemsToNodes[k][j]] + Ryy_ij*uy_n[elemsToNodes[k][j]] + Ryz_ij*uz_n[elemsToNodes[k][j]];
-                  stiffnessVector_z[elemsToNodes[k][i]] += Rzx_ij * ux_n[elemsToNodes[k][j]] + Rzy_ij*uy_n[elemsToNodes[k][j]] + Rzz_ij*uz_n[elemsToNodes[k][j]];
+                  stiffnessVector_x[elemsToNodes[k][i]] += detJ * (Rxx_ij * ux_n[elemsToNodes[k][j]] + Rxy_ij*uy_n[elemsToNodes[k][j]] + Rxz_ij*uz_n[elemsToNodes[k][j]]);
+                  stiffnessVector_y[elemsToNodes[k][i]] += detJ * (Ryx_ij * ux_n[elemsToNodes[k][j]] + Ryy_ij*uy_n[elemsToNodes[k][j]] + Ryz_ij*uz_n[elemsToNodes[k][j]]);
+                  stiffnessVector_z[elemsToNodes[k][i]] += detJ*( Rzx_ij * ux_n[elemsToNodes[k][j]] + Rzy_ij*uy_n[elemsToNodes[k][j]] + Rzz_ij*uz_n[elemsToNodes[k][j]]);
 		              // stiffnessVector_x[elemsToNodes[k][i]] += detJ * (sigmaxx[j] * gradN[j][0] + sigmaxy[j] * gradN[j][1] + sigmaxz[j] * gradN[j][2]);
 		              // stiffnessVector_y[elemsToNodes[k][i]] += detJ * (sigmayx[j] * gradN[j][0] + sigmayy[j] * gradN[j][1] + sigmayz[j] * gradN[j][2]);
 		              // stiffnessVector_z[elemsToNodes[k][i]] += detJ * (sigmazx[j] * gradN[j][0] + sigmazy[j] * gradN[j][1] + sigmazz[j] * gradN[j][2]);
