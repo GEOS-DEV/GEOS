@@ -390,22 +390,25 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
 
     ArrayOfArraysView< localIndex const > const cellToEmbSurf = subRegion.embeddedSurfacesList().toViewConst();
 
-    for( localIndex ei = 0; ei < fracturedElements.size(); ei++ )
+    forAll<serialPolicy>( fracturedElements.size(), [&,
+                                                     fracturedElements,
+                                                     cellToEmbSurf ] (localIndex const ei)
     {
       localIndex const cellIndex    = fracturedElements[ei];
       localIndex const embSurfIndex = cellToEmbSurf[cellIndex][0];
       setGroupCell.forWrappers< SortedArray< localIndex > >( [&]( auto const & wrapper )
       {
         SortedArrayView< const localIndex > const & targetSetCell = wrapper.reference();
-        SortedArray< localIndex > & targetSetEmbSurf =
-          setGroupEmbSurf.getWrapper< SortedArray< localIndex > >( wrapper.getName() ).reference();
+        targetSetCell.move(LvArray::MemorySpace::CPU);
 
+        SortedArray< localIndex > & targetSetEmbSurf =
+        setGroupEmbSurf.getWrapper< SortedArray< localIndex > >( wrapper.getName() ).reference();
         if( targetSetCell.contains( cellIndex ) )
         {
-          targetSetEmbSurf.insert( embSurfIndex );
+                targetSetEmbSurf.insert( embSurfIndex );
         }
       } );
-    }
+    } );
   } );
 }
 
