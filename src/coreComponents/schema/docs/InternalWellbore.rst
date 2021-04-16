@@ -10,6 +10,7 @@ name                      string         required A name is required for any non
 nr                        integer_array  required Number of elements in the radial direction                                                                           
 nt                        integer_array  required Number of elements in the tangent direction                                                                          
 nz                        integer_array  required Number of elements in the z-direction within each mesh block                                                         
+positionTolerance         real64         1e-10    A position tolerance to verify if a node belong to a nodeset                                                         
 rBias                     real64_array   {-0.8}   Bias of element sizes in the radial direction                                                                        
 radius                    real64_array   required Wellbore radius                                                                                                      
 theta                     real64_array   required Tangent angle defining geometry size: 90 for quarter, 180 for half and 360 for full wellbore geometry                

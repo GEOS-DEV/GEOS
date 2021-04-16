@@ -48,7 +48,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setDescription( "Component of field (if tensor) to apply boundary condition to" );
 
   registerWrapper( viewKeyStruct::directionString(), &m_direction ).
-    setApplyDefaultValue({0,0,0}).
+    setApplyDefaultValue( {0, 0, 0} ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Direction to apply boundary condition to" );
 
