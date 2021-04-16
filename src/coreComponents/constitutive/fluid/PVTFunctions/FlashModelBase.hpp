@@ -35,10 +35,8 @@ class FlashModelBaseUpdate
 {
 public:
 
-  FlashModelBaseUpdate( arrayView1d< string const > const & componentNames,
-                        arrayView1d< real64 const > const & componentMolarWeight )
+  FlashModelBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight )
     :
-    m_componentNames( componentNames ),
     m_componentMolarWeight( componentMolarWeight )
   {}
 
@@ -71,9 +69,6 @@ public:
                         arraySlice3d< real64 > const & dPhaseCompFraction_dCompFraction ) const = 0;
 
 protected:
-
-  /// Array storing the name of the components
-  arrayView1d< string const > m_componentNames;
 
   /// Array storing the component molar weights
   arrayView1d< real64 const > m_componentMolarWeight;

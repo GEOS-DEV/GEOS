@@ -39,15 +39,13 @@ class CO2SolubilityUpdate final : public FlashModelBaseUpdate
 {
 public:
 
-  CO2SolubilityUpdate( arrayView1d< string const > const & componentNames,
-                       arrayView1d< real64 const > const & componentMolarWeight,
+  CO2SolubilityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                        TableFunction * CO2SolubilityTable,
                        localIndex const CO2Index,
                        localIndex const waterIndex,
                        localIndex const phaseGasIndex,
                        localIndex const phaseLiquidIndex )
-    : FlashModelBaseUpdate( componentNames,
-                            componentMolarWeight ),
+    : FlashModelBaseUpdate( componentMolarWeight ),
     m_CO2SolubilityTable( CO2SolubilityTable->createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex ),
@@ -81,10 +79,22 @@ public:
                         arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
                         arraySlice3d< real64 > const & dPhaseCompFraction_dCompFraction ) const;
 
+  /**
+     * @brief Move the KernelWrapper to the given execution space, optionally touching it.
+     * @param space the space to move the KernelWrapper to
+     * @param touch whether the KernelWrapper should be touched in the new space or not
+     * @note This function exists to enable holding KernelWrapper objects in an ArrayView
+     *       and have their contents properly moved between memory spaces.
+     */
+  void move( LvArray::MemorySpace const space, bool const touch = false )
+  {
+    m_CO2SolubilityTable.move( space, touch );
+  }
+
 protected:
 
   /// Table with CO2 solubility tabulated as a function (P,T)
-  TableFunction::KernelWrapper const m_CO2SolubilityTable;
+  TableFunction::KernelWrapper m_CO2SolubilityTable;
 
   /// Index of the CO2 phase
   localIndex const m_CO2Index;

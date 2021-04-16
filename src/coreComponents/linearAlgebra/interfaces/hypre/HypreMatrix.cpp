@@ -1173,7 +1173,7 @@ void HypreMatrix::print( std::ostream & os ) const
         {
 
           sprintf( str,
-#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+#ifdef GEOSX_USE_HYPRE_CUDA
                    "%i%20i%20i%24.10e\n",
 #else
                    "%i%20lli%20lli%24.10e\n",
@@ -1187,7 +1187,7 @@ void HypreMatrix::print( std::ostream & os ) const
         for( HYPRE_Int j = offdiag_IA[i]; j < offdiag_IA[i + 1]; ++j )
         {
           sprintf( str,
-#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+#ifdef GEOSX_USE_HYPRE_CUDA
                    "%i%20i%20i%24.10e\n",
 #else
                    "%i%20lli%20lli%24.10e\n",

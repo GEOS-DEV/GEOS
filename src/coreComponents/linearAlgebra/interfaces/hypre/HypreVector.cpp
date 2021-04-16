@@ -429,7 +429,7 @@ void HypreVector::print( std::ostream & os ) const
       for( localIndex i = 0; i < localSize(); ++i )
       {
         sprintf( str,
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOSX_USE_HYPRE_CUDA)
                  "%i%20i%24.10e\n",
 #else
                  "%i%20lli%24.10e\n",
