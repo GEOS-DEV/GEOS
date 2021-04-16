@@ -792,51 +792,23 @@ localIndex Pack( buffer_unit_type * & buffer,
 {
 
   localIndex length = 0;
-  array1d< localIndex > temp( var.size() );
-
   for( auto a : packList )
   {
-    if( var.count( a ) )
-    {
-      temp[length] = a;
-      ++length;
-    }
+    length += var.count( a );
   }
-  temp.resize( length );
-  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   for( localIndex a=0; a<length; ++a )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[temp[a]] );
+    if( var.count( packList[ a ] ) )
+    {
+      sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[packList[a]] );
+    }
   }
 
   return sizeOfPackedChars;
 }
-
-//template< typename SORTED >
-//localIndex Unpack( buffer_unit_type * & buffer,
-//                   SortedArrayView< localIndex const > const & var,
-//                   arrayView1d< localIndex const > const & packList,
-//                   mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
-//{
-//
-//  localIndex set_length;
-//  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
-//
-//  for( localIndex a=0; a<set_length; ++a )
-//  {
-//    globalIndex temp;
-//    sizeOfUnpackedChars += Unpack( buffer, temp );
-//
-//    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
-//    iter = globalToLocalMap.find( temp );
-//    var.insert( iter->second );
-//  }
-//
-//  return sizeOfUnpackedChars;
-//}
-
 
 template< bool DO_PACKING >
 localIndex Pack( buffer_unit_type * & buffer,

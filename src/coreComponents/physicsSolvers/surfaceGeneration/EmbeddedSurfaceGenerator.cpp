@@ -147,7 +147,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-      for( localIndex cellIndex = 0; cellIndex < subRegion.size(); cellIndex++ )
+      forAll< serialPolicy >( subRegion.size(), [ &, ghostRank,
+                                                  cellToNodes,
+                                                  nodesCoord ] ( localIndex const cellIndex )
       {
         if( ghostRank[cellIndex] < 0 )
         {
@@ -192,7 +194,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
             }
           }
         }
-      } // end loop over cells
+      } );// end loop over cells
     } );// end loop over subregions
   } );// end loop over thick planes
 
@@ -339,11 +341,11 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
 
   arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
 
-  for( localIndex ei = 0; ei < embeddedSurfaceSubRegion.size(); ei++ )
+  forAll< serialPolicy >( embeddedSurfaceSubRegion.size(), [=, &embeddedSurfaceSubRegion, &globalIndexOffset, &elemManager] ( localIndex const ei )
   {
     elemLocalToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex() + 1;
     embeddedSurfaceSubRegion.updateGlobalToLocalMap( ei );
-  }
+  } );
 
   embeddedSurfaceSubRegion.setMaxGlobalIndex();
 
@@ -363,12 +365,11 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
 
   arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
 
-  for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+  forAll< serialPolicy >( embSurfNodeManager.size(), [=, &embSurfNodeManager, &globalIndexOffset] ( localIndex const ni )
   {
     nodesLocalToGlobal( ni ) = ni + globalIndexOffset[ thisRank ];
     embSurfNodeManager.updateGlobalToLocalMap( ni );
-  }
-
+  } );
 }
 
 void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager const & elemManager,

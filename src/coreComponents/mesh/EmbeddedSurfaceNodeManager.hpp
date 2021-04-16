@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
 #define GEOSX_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
 
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include <string.h>
 #include "CellBlockManager.hpp"
 #include "ToElementRelation.hpp"
@@ -162,18 +162,6 @@ public:
   ///@{
 
   virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
-
-  virtual localIndex packGlobalMapsSize( arrayView1d< localIndex const > const & packList,
-                                         integer const recursive ) const override;
-
-  virtual localIndex packGlobalMaps( buffer_unit_type * & buffer,
-                                     arrayView1d< localIndex const > const & packList,
-                                     integer const recursive ) const override;
-
-  virtual localIndex unpackGlobalMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
-                                       integer const recursive ) override;
-
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -344,11 +332,6 @@ public:
   ///@}
 
 private:
-
-  template< bool DOPACK >
-  localIndex packGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList,
-                                    integer const recursive ) const;
 
   /**
    * @brief Pack the upward and downward pointing maps into a buffer.
