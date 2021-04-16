@@ -39,7 +39,12 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   MeshGeneratorBase( name, parent ),
   m_dim( 3 ),
   m_min(),
-  m_max()
+  m_max(),
+  m_coordinatePrecision(1e-10),
+  m_vertices{},
+  m_nElems{},
+  m_nElemBias{},
+  m_setCoords{}
 {
   registerWrapper( viewKeyStruct::xCoordsString(), &(m_vertices[0]) ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -104,10 +109,10 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Pattern by which to decompose the hex mesh into prisms (more explanation required)" );
 
-  registerWrapper( viewKeyStruct::positionToleranceString(), &m_coordinatePrecision ).
-    setApplyDefaultValue( 1e-10 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "A position tolerance to verify if a node belong to a nodeset" );
+//  registerWrapper( viewKeyStruct::positionToleranceString(), &m_coordinatePrecision ).
+//    setApplyDefaultValue( 1e-10 ).
+//    setInputFlag( InputFlags::OPTIONAL ).
+//    setDescription( "A position tolerance to verify if a node belong to a nodeset" );
 }
 
 void InternalMeshGenerator::postProcessInput()

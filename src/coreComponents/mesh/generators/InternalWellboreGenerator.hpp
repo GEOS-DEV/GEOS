@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP
 #define GEOSX_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "InternalMeshGenerator.hpp"
 
@@ -104,7 +104,7 @@ private:
   /// Parameter defining whether or not the outer boundary is cartesian
   int m_cartesianOuterBoundary;
 
-  /// Parameter defining whether or not the full wellbore geometry is considered: max theta = 360°
+  /// Parameter defining whether or not the full wellbore geometry is considered: max theta = 360
   bool m_isFullAnnulus;
 
   /// Parameter for automatic increasing element size in the radial direction

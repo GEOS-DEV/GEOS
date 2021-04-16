@@ -246,7 +246,7 @@
     <Traction
       name="zload"
       objectPath="faceManager"
-      direction="{1,0,1}"
+      direction="{0,0,1}"
       functionName="ForceTimeFunction"
       scale="-3.e0"
       setNames="{ xpos_top }"/>

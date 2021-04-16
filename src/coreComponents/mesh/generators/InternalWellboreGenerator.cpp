@@ -17,8 +17,9 @@
  */
 
 #include "InternalWellboreGenerator.hpp"
-#include "managers/DomainPartition.hpp"
-#include "mpiCommunications/PartitionBase.hpp"
+
+#include "mesh/DomainPartition.hpp"
+#include "mesh/mpiCommunications/PartitionBase.hpp"
 
 namespace geosx
 {

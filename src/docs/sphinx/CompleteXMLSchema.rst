@@ -358,6 +358,13 @@ Element: InternalWell
 .. include:: ../../coreComponents/schema/docs/InternalWell.rst
 
 
+.. _XML_InternalWellbore:
+
+Element: InternalWellbore
+=========================
+.. include:: ../../coreComponents/schema/docs/InternalWellbore.rst
+
+
 .. _XML_LagrangianContact:
 
 Element: LagrangianContact
@@ -1151,6 +1158,13 @@ Datastructure: InternalMesh
 Datastructure: InternalWell
 ===========================
 .. include:: ../../coreComponents/schema/docs/InternalWell_other.rst
+
+
+.. _DATASTRUCTURE_InternalWellbore:
+
+Datastructure: InternalWellbore
+===============================
+.. include:: ../../coreComponents/schema/docs/InternalWellbore_other.rst
 
 
 .. _DATASTRUCTURE_LagrangianContact:
