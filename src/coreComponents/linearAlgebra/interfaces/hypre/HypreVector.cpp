@@ -588,6 +588,16 @@ real64 * HypreVector::extractLocalVector()
   return hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) );
 }
 
+void HypreVector::extract( arrayView1d< real64 > const & localVector ) const
+{
+  GEOSX_LAI_ASSERT_EQ( localSize(), localVector.size() );
+  real64 const * const data = extractLocalVector();
+  forAll< execPolicy >( localSize(), [=] GEOSX_HOST_DEVICE ( HYPRE_Int const i )
+  {
+    localVector[i] = data[i];
+  } );
+}
+
 globalIndex HypreVector::ilower() const
 {
   GEOSX_LAI_ASSERT( created() );

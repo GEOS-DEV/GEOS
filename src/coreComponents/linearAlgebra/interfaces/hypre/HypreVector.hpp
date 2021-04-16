@@ -228,6 +228,11 @@ public:
   virtual real64 * extractLocalVector() override;
 
   /**
+   * @copydoc VectorBase<HypreVector>::extract
+   */
+  virtual void extract( arrayView1d< real64 > const & localVector ) const override;
+
+  /**
    * @copydoc VectorBase<HypreVector>::getComm
    */
   virtual MPI_Comm getComm() const override;
