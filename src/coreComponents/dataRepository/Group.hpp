@@ -21,7 +21,7 @@
 #define GEOSX_DATAREPOSITORY_GROUP_HPP_
 
 #include "InputFlags.hpp"
-#include "dataRepository/ObjectCatalog.hpp"
+#include "ObjectCatalog.hpp"
 #include "MappedVector.hpp"
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"

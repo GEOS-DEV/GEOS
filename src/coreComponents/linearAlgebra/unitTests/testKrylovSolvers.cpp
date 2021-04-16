@@ -16,16 +16,13 @@
  * @file testKrylovSolvers.cpp
  */
 
-#include <gtest/gtest.h>
-
-#include "testLinearAlgebraUtils.hpp"
-
 #include "common/DataTypes.hpp"
-#include "managers/initialization.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/utilities/BlockOperatorWrapper.hpp"
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
+#include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
+#include "linearAlgebra/utilities/BlockOperatorWrapper.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace geosx;
 
@@ -95,9 +92,10 @@ protected:
     EXPECT_TRUE( solver->result().success() );
 
     // Check that solution is within epsilon of true
-    sol_comp.axpy( -1.0, sol_true );
+    VECTOR sol_diff( sol_comp );
+    sol_diff.axpy( -1.0, sol_true );
     real64 const relTol = cond_est * params.krylov.relTolerance;
-    EXPECT_LT( sol_comp.norm2() / sol_true.norm2(), relTol );
+    EXPECT_LT( sol_diff.norm2() / sol_true.norm2(), relTol );
   }
 };
 
@@ -125,8 +123,8 @@ protected:
   {
     // Compute matrix and preconditioner
     globalIndex constexpr n = 100;
-    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
-    this->precond.compute( this->matrix );
+    geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
+    this->precond.setup( this->matrix );
 
     // Set up vectors
     this->sol_true.createWithGlobalSize( this->matrix.numGlobalCols(), MPI_COMM_GEOSX );
@@ -198,7 +196,7 @@ protected:
   void SetUp() override
   {
     globalIndex constexpr n = 100;
-    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );
+    geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );
 
     // We are going to assembly the following dummy system
     // [L 0] [x_true] = [b_0]
@@ -207,7 +205,7 @@ protected:
     this->matrix.set( 1, 1, laplace2D );
 
     // Set up block identity preconditioning operator
-    identity.compute( laplace2D );
+    identity.setup( laplace2D );
     this->precond.set( 0, 0, identity );
     this->precond.set( 1, 1, identity );
 
@@ -265,9 +263,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, KrylovSolverBlockTest, PetscInterface, );
 
 int main( int argc, char * * argv )
 {
-  ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
-  int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
-  return result;
+  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  return RUN_ALL_TESTS();
 }

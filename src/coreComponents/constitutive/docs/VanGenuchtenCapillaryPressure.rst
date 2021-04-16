@@ -52,7 +52,7 @@ node.
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure.rst
+.. include:: /coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 Below are some comments on the model parameters:
 

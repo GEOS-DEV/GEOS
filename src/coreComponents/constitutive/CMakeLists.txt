@@ -111,13 +111,7 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
    )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository)
-else()
-  set( dependencyList common )
-endif()
-
-
+set( dependencyList dataRepository functions)
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
@@ -132,7 +126,10 @@ if( ENABLE_PVTPackage )
          fluid/CompositionalMultiphaseFluid.cpp
          fluid/BlackOilFluid.cpp
        )
+       
+    add_subdirectory( PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
+
 endif()
 
 if ( ENABLE_OPENMP )
@@ -147,11 +144,12 @@ blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}
                  HEADERS               ${constitutive_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 add_subdirectory( unitTests )
 
-geosx_add_code_checks( PREFIX constitutive )
+geosx_add_code_checks( PREFIX constitutive 
+                       EXCLUDES PVTPackage )
