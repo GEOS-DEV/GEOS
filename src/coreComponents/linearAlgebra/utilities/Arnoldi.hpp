@@ -16,109 +16,32 @@
  * @file Arnoldi.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_ARNOLDI_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_ARNOLDI_HPP_
+#ifndef GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
+#define GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
 
-#include "linearAlgebra/interfaces/VectorBase.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "interfaces/dense/BlasLapackLA.hpp"
+#include "common/LinearOperator.hpp"
 
 namespace geosx
 {
 
 /**
- * @brief NormalOperator Simple class to apply the operator A^T * A to a vector
- */
-template< typename MATRIX, typename VECTOR >
-class NormalOperator : public LinearOperator< VECTOR >
-{
-public:
-
-  /**
-   * @brief Sets the matrix
-   * @param matrix the matrix
-   * @param comm the MPI communicator
-   */
-  void set( MATRIX const & matrix, MPI_Comm const comm )
-  {
-    m_matrix = &matrix;
-    m_comm = comm;
-  }
-
-  /**
-   * @brief Returns the global number of rows
-   * @return the global number of rows
-   */
-  globalIndex numGlobalRows() const override
-  {
-    return m_matrix->numGlobalRows();
-  }
-
-  /**
-   * @brief Returns the global number of columns
-   * @return the global number of columns
-   */
-  globalIndex numGlobalCols() const override
-  {
-    return m_matrix->numGlobalCols();
-  }
-
-  /**
-   * @brief Returns the local number of rows
-   * @return the local number of rows
-   */
-  localIndex numLocalRows() const
-  {
-    return m_matrix->numLocalRows();
-  }
-
-  /**
-   * @brief Returns the communicator
-   * @return the communicator
-   */
-  MPI_Comm const & getComm() const
-  {
-    return m_comm;
-  }
-
-  /**
-   * @brief Applies the matrix and its transpose to a vector
-   * @param x the input vector
-   * @param y the output vector
-   */
-  void apply( VECTOR const & x, VECTOR & y ) const override
-  {
-    m_matrix->gemv( 1.0, x, 0.0, y, false );
-    m_matrix->gemv( 1.0, y, 0.0, y, true );
-  }
-
-private:
-
-  /// the matrix object
-  MATRIX const * m_matrix;
-
-  /// the communicator object
-  MPI_Comm m_comm;
-};
-
-/**
  * @brief Function implementing the Arnoldi scheme to compute the largest eigenvalue
+ * @tparam VECTOR vector type of the linear operator
  * @param op the operator whose largest eigenvalue is required
  * @param m the number of iterations (size of the Krylov subspace)
  * @return the largest eigenvalue
  */
-template< typename Operator >
-real64 ArnoldiLargestEigenvalue( Operator const & op, localIndex const m = 4 )
+template< typename VECTOR >
+real64 ArnoldiLargestEigenvalue( LinearOperator< VECTOR > const & op, localIndex const m = 4 )
 {
-  using Vector = typename Operator::Vector;
-
   localIndex const numGlobalRows = LvArray::integerConversion< localIndex >( op.numGlobalRows() );
   localIndex const numLocalRows = op.numLocalRows();
-  localIndex const mInternal = ( m > numGlobalRows ) ? numGlobalRows : m;
+  localIndex const mInternal = std::min( numGlobalRows, m );
 
   // Initialize data structure (Hessenberg matrix and Krylov subspace)
   array2d< real64, MatrixLayout::ROW_MAJOR_PERM > H( mInternal+1, mInternal );
-  array1d< Vector > V( mInternal+1 );
+  array1d< VECTOR > V( mInternal + 1 );
 
   // Initial unitary vector
   V[0].createWithLocalSize( numLocalRows, op.getComm() );
@@ -151,7 +74,7 @@ real64 ArnoldiLargestEigenvalue( Operator const & op, localIndex const m = 4 )
   real64 lambdaMax = 0.0;
   for( localIndex i = 0; i < mInternal; ++i )
   {
-    lambdaMax = ( std::abs( lambda[i] ) > lambdaMax ) ? std::abs( lambda[i] ) : lambdaMax;
+    lambdaMax = std::max( std::abs( lambda[i] ), lambdaMax );
   }
 
   return lambdaMax;
@@ -159,4 +82,4 @@ real64 ArnoldiLargestEigenvalue( Operator const & op, localIndex const m = 4 )
 
 } // namespace geosx
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_ARNOLDI_HPP_
+#endif //GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_

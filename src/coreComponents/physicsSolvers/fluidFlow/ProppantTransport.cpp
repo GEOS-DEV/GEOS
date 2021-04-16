@@ -18,7 +18,6 @@
 
 #include "ProppantTransport.hpp"
 
-#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -29,8 +28,6 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
@@ -468,6 +465,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
     updateProppantMobility( subRegion );
   } );
 
+  real64 const maxProppantConcentration = m_maxProppantConcentration;
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
   {
 
@@ -477,10 +475,10 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      if( proppantConc[ei] >= m_maxProppantConcentration || packVf[ei] >= 1.0 )
+      if( proppantConc[ei] >= maxProppantConcentration || packVf[ei] >= 1.0 )
       {
         packVf[ei] = 1.0;
-        proppantConc[ei] = m_maxProppantConcentration;
+        proppantConc[ei] = maxProppantConcentration;
       }
 
     } );

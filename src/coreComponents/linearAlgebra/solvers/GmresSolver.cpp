@@ -16,7 +16,7 @@
  * @file GMRESsolver.cpp
  */
 
-#include "GMRESsolver.hpp"
+#include "GmresSolver.hpp"
 
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -26,22 +26,18 @@ namespace geosx
 {
 
 template< typename VECTOR >
-GMRESsolver< VECTOR >::GMRESsolver( LinearOperator< Vector > const & A,
-                                    LinearOperator< Vector > const & M,
-                                    real64 tolerance,
-                                    localIndex maxIterations,
-                                    integer verbosity,
-                                    localIndex maxRestart )
-  : KrylovSolver< VECTOR >( A, M, tolerance, maxIterations, verbosity ),
-  m_maxRestart( maxRestart ),
-  m_kspace( m_maxRestart + 1 ),
+GmresSolver< VECTOR >::GmresSolver( LinearSolverParameters params,
+                                    LinearOperator< Vector > const & A,
+                                    LinearOperator< Vector > const & M )
+  : KrylovSolver< VECTOR >( std::move( params ), A, M ),
+  m_kspace( m_params.krylov.maxRestart + 1 ),
   m_kspaceInitialized( false )
 {
-  GEOSX_ERROR_IF_LE_MSG( m_maxRestart, 0, "GMRES: max number of restart iterations must be positive." );
+  GEOSX_ERROR_IF_LE_MSG( m_params.krylov.maxRestart, 0, "GMRES: max number of restart iterations must be positive." );
 }
 
 template< typename VECTOR >
-GMRESsolver< VECTOR >::~GMRESsolver() = default;
+GmresSolver< VECTOR >::~GmresSolver() = default;
 
 namespace
 {
@@ -92,7 +88,7 @@ void Backsolve( localIndex const k,
 }
 
 template< typename VECTOR >
-void GMRESsolver< VECTOR >::solve( Vector const & b,
+void GmresSolver< VECTOR >::solve( Vector const & b,
                                    Vector & x ) const
 {
   // We create Krylov subspace vectors once using the size and partitioning of b.
@@ -100,16 +96,16 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   // the same (or at least compatible) size and partitioning.
   if( !m_kspaceInitialized )
   {
-    for( localIndex i = 0; i < m_maxRestart + 1; ++i )
+    for( localIndex i = 0; i < m_params.krylov.maxRestart + 1; ++i )
     {
       m_kspace[i] = createTempVector( b );
     }
   }
 
-  Stopwatch watch;
+  Stopwatch watch( m_result.solveTime );
 
   // Compute the target absolute tolerance
-  real64 const absTol = b.norm2() * m_tolerance;
+  real64 const absTol = b.norm2() * m_params.krylov.relTolerance;
 
   // Define vectors
   VectorTemp r = createTempVector( b );
@@ -120,20 +116,20 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   m_operator.residual( x, b, r );
 
   // Create upper Hessenberg matrix
-  array2d< real64, MatrixLayout::COL_MAJOR_PERM > H( m_maxRestart + 1, m_maxRestart );
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > H( m_params.krylov.maxRestart + 1, m_params.krylov.maxRestart );
 
   // Create plane rotation storage
-  array1d< real64 > c( m_maxRestart + 1 );
-  array1d< real64 > s( m_maxRestart + 1 );
-  array1d< real64 > g( m_maxRestart + 1 );
+  array1d< real64 > c( m_params.krylov.maxRestart + 1 );
+  array1d< real64 > s( m_params.krylov.maxRestart + 1 );
+  array1d< real64 > g( m_params.krylov.maxRestart + 1 );
 
   m_result.status = LinearSolverResult::Status::NotConverged;
-  m_residualNorms.resize( m_maxIterations + 1 );
+  m_residualNorms.resize( m_params.krylov.maxIterations + 1 );
 
-  localIndex k;
+  localIndex k = 0;
   real64 rnorm = 0.0;
 
-  for( k = 0; k <= m_maxIterations && m_result.status == LinearSolverResult::Status::NotConverged; )
+  while( k <= m_params.krylov.maxIterations && m_result.status == LinearSolverResult::Status::NotConverged )
   {
     // Re-initialize Krylov subspace
     g.setValues< serialPolicy >( 0.0 );
@@ -141,7 +137,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
     m_kspace[0].axpby( 1.0 / g[0], r, 0.0 );
 
     localIndex j;
-    for( j = 0; j < m_maxRestart && k <= m_maxIterations; ++j, ++k )
+    for( j = 0; j < m_params.krylov.maxRestart && k <= m_params.krylov.maxIterations; ++j, ++k )
     {
       // Record iteration progress
       rnorm = std::fabs( g[j] );
@@ -166,7 +162,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
       }
 
       H( j+1, j ) = w.norm2();
-      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j + 1, j ) );
+      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j + 1, j ) )
       m_kspace[j+1].axpby( 1.0 / H( j+1, j ), w, 0.0 );
 
       // Apply all previous rotations to the new column
@@ -196,8 +192,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   }
 
   m_result.numIterations = k;
-  m_result.residualReduction = rnorm / absTol * m_tolerance;
-  m_result.solveTime = watch.elapsedTime();
+  m_result.residualReduction = rnorm / absTol * m_params.krylov.relTolerance;
 
   logResult();
   m_residualNorms.resize( m_result.numIterations + 1 );
@@ -207,18 +202,18 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
 // Explicit Instantiations
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class GMRESsolver< TrilinosInterface::ParallelVector >;
-template class GMRESsolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
+template class GmresSolver< TrilinosInterface::ParallelVector >;
+template class GmresSolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-template class GMRESsolver< HypreInterface::ParallelVector >;
-template class GMRESsolver< BlockVectorView< HypreInterface::ParallelVector > >;
+template class GmresSolver< HypreInterface::ParallelVector >;
+template class GmresSolver< BlockVectorView< HypreInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class GMRESsolver< PetscInterface::ParallelVector >;
-template class GMRESsolver< BlockVectorView< PetscInterface::ParallelVector > >;
+template class GmresSolver< PetscInterface::ParallelVector >;
+template class GmresSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
 } // namespace geosx
