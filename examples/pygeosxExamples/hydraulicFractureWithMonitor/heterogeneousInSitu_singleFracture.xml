@@ -23,7 +23,7 @@
     <Parameter name="dt_max_c" value="4 [s]"/>   
 
     <!-- Etc. -->
-    <Parameter name="table_root" value="./tables"/>
+    <Parameter name="table_root" value="../../hydraulicFracturing/heterogeneousInSituProperties/tables/"/>
     <Parameter name="t_allocation" value="28 [min]"/>
   </Parameters>
 

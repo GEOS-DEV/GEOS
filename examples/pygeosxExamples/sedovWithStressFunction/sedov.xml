@@ -35,15 +35,6 @@
       forceDt="1.0e-5"
       target="/Solvers/lagsolve"/>
 
-    <!-- This event is applied every 5e-4s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
-    <PeriodicEvent
-      name="blueprint"
-      timeFrequency="1.0e-4"
-      targetExactTimestep="0"
-      target="/Outputs/blueprint"/>
-
     <PeriodicEvent
       name="silo"
       timeFrequency="1.0e-4"
@@ -51,10 +42,9 @@
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
-      name="restarts"
-      timeFrequency="5.0e-4"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      name="python"
+      cycleFrequency="5"
+      target="/Outputs/pythonOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -146,16 +136,12 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Blueprint
-      name="blueprint"
-      plotLevel="3"/>
-
     <Silo
       name="siloOutput"
       plotLevel="3"/>
 
-    <Restart
-      name="restartOutput"/>
+    <Python
+      name="pythonOutput"/>
   </Outputs>
 
   <Geometry>

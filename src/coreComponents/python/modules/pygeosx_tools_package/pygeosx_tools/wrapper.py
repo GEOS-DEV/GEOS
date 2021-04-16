@@ -26,25 +26,31 @@ def get_wrapper(problem, target_key, write_flag=False):
         np.ndarray: The wrapper as a numpy ndarray
     """
     local_values = problem.get_wrapper(target_key).value()
-    if write_flag:
-        local_values.set_access_level(pylvarray.MODIFIABLE,
-                                      pylvarray.CPU)
-    else:
-        local_values.set_access_level(pylvarray.CPU)
 
-    if not isinstance(local_values, np.ndarray):
-        local_values = local_values.to_numpy()
+    if hasattr(local_values, "set_access_level"):
+        # Array types will have the set_access_level method
+        # These require additional manipulation before use
+        if write_flag:
+            local_values.set_access_level(pylvarray.MODIFIABLE,
+                                          pylvarray.CPU)
+        else:
+            local_values.set_access_level(pylvarray.CPU)
+
+        if not isinstance(local_values, np.ndarray):
+            local_values = local_values.to_numpy()
     return local_values
 
 
-def get_wrapper_par(problem, target_key, allgather=False):
+def get_wrapper_par(problem, target_key, allgather=False, ghost_key=''):
     """
-    Get a global copy of a wrapper as a numpy ndarray
+    Get a global copy of a wrapper as a numpy ndarray.
+    Note: if ghost_key is set, it will try to remove any ghost elements
 
     Args:
         problem (pygeosx.Group): GEOSX problem handle
         target_key (str): Key for the target wrapper
         allgather (bool): Flag to trigger allgather across ranks (False)
+        ghost_key (str): Key for the corresponding ghost wrapper (default='')
 
     Returns:
         np.ndarray: The wrapper as a numpy ndarray
@@ -57,10 +63,15 @@ def get_wrapper_par(problem, target_key, allgather=False):
         # This is a parallel problem
         # Get the local wrapper size, shape
         local_values = get_wrapper(problem, target_key)
-        N = np.shape(local_values)
-        M = np.prod(N)
+
+        # Filter out ghost ranks if requested
+        if ghost_key:
+            ghost_values = get_wrapper(problem, ghost_key)
+            local_values = local_values[ghost_values < -0.5]
 
         # Find buffer size
+        N = np.shape(local_values)
+        M = np.prod(N)
         all_M = []
         max_M = 0
         if allgather:
@@ -102,7 +113,7 @@ def get_wrapper_par(problem, target_key, allgather=False):
         return all_values
 
 
-def gather_wrapper(problem, key):
+def gather_wrapper(problem, key, ghost_key=''):
     """
     Get a global copy of a wrapper as a numpy ndarray on rank 0
 
@@ -113,10 +124,10 @@ def gather_wrapper(problem, key):
     Returns:
         np.ndarray: The wrapper as a numpy ndarray
     """
-    return get_wrapper_par(problem, key)
+    return get_wrapper_par(problem, key, ghost_key=ghost_key)
 
 
-def allgather_wrapper(problem, key):
+def allgather_wrapper(problem, key, ghost_key=''):
     """
     Get a global copy of a wrapper as a numpy ndarray on all ranks
 
@@ -127,7 +138,7 @@ def allgather_wrapper(problem, key):
     Returns:
         np.ndarray: The wrapper as a numpy ndarray
     """
-    return get_wrapper_par(problem, key, allgather=True)
+    return get_wrapper_par(problem, key, allgather=True, ghost_key=ghost_key)
 
 
 def get_global_value_range(problem, key):

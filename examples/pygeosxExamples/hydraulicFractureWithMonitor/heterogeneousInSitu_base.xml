@@ -29,7 +29,7 @@
       logLevel="0"
       contactRelationName="fractureContact"
       solidMaterialNames="{rock}"
-      targetRegions="{Region2}">
+      targetRegions="{Region2, Fracture}">
       <NonlinearSolverParameters
         newtonMaxIter="5"
         newtonTol="1.0e-6"/>
@@ -132,10 +132,10 @@
       cellBlocks="{cb1}"
       name="Region2"/>
 
-    <FaceElementRegion
-      materialList="{water, rock}"
-      defaultAperture="1.0e-4"
-      name="Fracture"/>
+    <SurfaceElementRegion
+      name="Fracture"
+      defaultAperture="0.02e-3"
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -240,7 +240,7 @@
   <FieldSpecifications>
     <FieldSpecification
       scale="1.0"
-      fieldName="rock_BulkModulus"
+      fieldName="rock_bulkModulus"
       name="bulk_modulus"
       setNames="{all}"
       objectPath="ElementRegions"
@@ -249,7 +249,7 @@
 
     <FieldSpecification
       scale="1.0"
-      fieldName="rock_ShearModulus"
+      fieldName="rock_shearModulus"
       name="shear_modulus"
       setNames="{all}"
       objectPath="ElementRegions"
