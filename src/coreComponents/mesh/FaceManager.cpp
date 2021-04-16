@@ -463,7 +463,7 @@ void FaceManager::buildFaces( NodeManager & nodeManager, ElementRegionManager & 
                 m_toElements.m_toElementSubRegion,
                 m_toElements.m_toElementIndex );
 
-  nodeList().base() = cellBlockManager.getFaceToNodes( numNodes ); // TODO
+  nodeList().base() = cellBlockManager.getFaceToNodes(); // TODO
 
   // First create the sets
   auto const & nodeSets = nodeManager.sets().wrappers();

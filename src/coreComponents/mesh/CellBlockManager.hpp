@@ -119,18 +119,21 @@ public:
    */
   std::map< localIndex, std::vector< localIndex > > getNodeToElem() const;
 
+
   /**
    * @brief Returns the face to elements mappings.
    * @return A one to many relationship.
    */
-  std::map< localIndex, std::vector< localIndex > > getFaceToElem() const;
+  ArrayOfArrays< localIndex > getFaceToElem() const;
 
   /**
    * @brief Returns the face to nodes mappings.
    * @param numNodes This should not be here, needs to be removed TODO
    * @return The one to many relationship.
    */
-  ArrayOfArrays< localIndex > getFaceToNodes( localIndex numNodes ) const;
+  ArrayOfArrays< localIndex > getFaceToNodes() const;
+
+  void buildMaps( localIndex numNodes );
 
   /**
    * @brief Total number of nodes across all the cell blocks.
@@ -169,6 +172,10 @@ private:
   const Group & getCellBlocks() const;
 
   localIndex numCellBlocks() const;
+
+  private:
+  ArrayOfArrays< localIndex >  m_faceToNodes;
+  ArrayOfArrays< localIndex >  m_faceToElems;
 };
 }
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

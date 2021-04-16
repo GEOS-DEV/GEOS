@@ -515,6 +515,7 @@ void ProblemManager::generateMesh()
       elemManager.generateMesh( cellBlockManager );
       nodeManager.setElementMaps( cellBlockManager, elemManager );
 
+      cellBlockManager.buildMaps( nodeManager.size() );
       faceManager.buildFaces( nodeManager, elemManager, cellBlockManager );
       nodeManager.setFaceMaps( faceManager );
 
