@@ -19,10 +19,7 @@
 #include "FiniteElementDiscretization.hpp"
 
 #include "mesh/CellElementSubRegion.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 
@@ -39,13 +36,13 @@ FiniteElementDiscretization::FiniteElementDiscretization( string const & name, G
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::orderString, &m_order )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::orderString(), &m_order ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The order of the finite element basis." );
 
-  registerWrapper( viewKeyStruct::formulationString, &m_formulation )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( "default" )->
+  registerWrapper( viewKeyStruct::formulationString(), &m_formulation ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "default" ).
     setDescription( "Specifier to indicate any specialized formuations. "
                     "For instance, one of the many enhanced assumed strain "
                     "methods of the Hexahedron parent shape would be indicated "

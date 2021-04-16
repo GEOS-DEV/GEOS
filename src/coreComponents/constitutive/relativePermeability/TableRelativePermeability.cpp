@@ -18,8 +18,7 @@
 
 #include "TableRelativePermeability.hpp"
 
-#include "managers/GeosxState.hpp"
-#include "managers/Functions/FunctionManager.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geosx
 {
@@ -33,17 +32,17 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
                                                       Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::waterOilRelPermTableNamesString, &m_waterOilRelPermTableNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::waterOilRelPermTableNamesString(), &m_waterOilRelPermTableNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (water phase, oil phase)\n"
                     "The expected format is \"{ waterPermTableName, oilPermTableName }\", in that order" );
 
-  registerWrapper( viewKeyStruct::gasOilRelPermTableNamesString, &m_gasOilRelPermTableNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::gasOilRelPermTableNamesString(), &m_gasOilRelPermTableNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (gas phase, oil phase)\n"
                     "The expected format is \"{ gasPermTableName, oilPermTableName }\", in that order" );
 
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
     setSizedFromParent( 0 );
 }
 
@@ -65,15 +64,15 @@ void TableRelativePermeability::postProcessInput()
 
 }
 
-void TableRelativePermeability::initializePreSubGroups( Group * const group )
+void TableRelativePermeability::initializePreSubGroups()
 {
-  RelativePermeabilityBase::initializePreSubGroups( group );
+  RelativePermeabilityBase::initializePreSubGroups();
   createAllTableKernelWrappers();
 }
 
 void TableRelativePermeability::createAllTableKernelWrappers()
 {
-  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   m_phaseMinVolumeFraction.resize( PhaseType::MAX_NUM_PHASES );
 
@@ -84,7 +83,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
     // check water-oil relperms
     for( localIndex ip = 0; ip < m_waterOilRelPermTableNames.size(); ++ip )
     {
-      TableFunction const & relPermTable = *functionManager.getGroup< TableFunction const >( m_waterOilRelPermTableNames[ip] );
+      TableFunction const & relPermTable = functionManager.getGroup< TableFunction const >( m_waterOilRelPermTableNames[ip] );
       real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
       if( ip == 0 ) // water
       {
@@ -104,7 +103,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
     // check gas-oil relperms
     for( localIndex ip = 0; ip < m_gasOilRelPermTableNames.size(); ++ip )
     {
-      TableFunction const & relPermTable = *functionManager.getGroup< TableFunction const >( m_gasOilRelPermTableNames[ip] );
+      TableFunction const & relPermTable = functionManager.getGroup< TableFunction const >( m_gasOilRelPermTableNames[ip] );
       real64 const minVolPhaseFrac = validateRelativePermeabilityTable( relPermTable );
       if( ip == 0 ) // gas
       {

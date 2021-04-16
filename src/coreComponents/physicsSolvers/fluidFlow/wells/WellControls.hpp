@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 
 namespace geosx
@@ -222,49 +222,49 @@ public:
   struct viewKeyStruct
   {
     /// String key for the well reference elevation (for BHP control)
-    static constexpr auto refElevString              = "referenceElevation";
+    static constexpr char const * refElevString() { return "referenceElevation"; }
     /// String key for the well type
-    static constexpr auto typeString                 = "type";
+    static constexpr char const * typeString() { return "type"; }
     /// String key for the well control
-    static constexpr auto controlString              = "control";
+    static constexpr char const * controlString() { return "control"; }
     /// String key for the well target BHP
-    static constexpr auto targetBHPString            = "targetBHP";
+    static constexpr char const * targetBHPString() { return "targetBHP"; }
     /// String key for the well target rate
-    static constexpr auto targetTotalRateString      = "targetTotalRate";
+    static constexpr char const * targetTotalRateString() { return "targetTotalRate"; }
     /// String key for the well target phase rate
-    static constexpr auto targetPhaseRateString      = "targetPhaseRate";
+    static constexpr char const * targetPhaseRateString() { return "targetPhaseRate"; }
     /// String key for the well target phase name
-    static constexpr auto targetPhaseNameString      = "targetPhaseName";
+    static constexpr char const * targetPhaseNameString() { return "targetPhaseName"; }
     /// String key for the well injection stream
-    static constexpr auto injectionStreamString      = "injectionStream";
+    static constexpr char const * injectionStreamString() { return "injectionStream"; }
     /// String key for checking the rates at surface conditions
-    static constexpr auto useSurfaceConditionsString = "useSurfaceConditions";
+    static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
     /// String key for the surface pressure
-    static constexpr auto surfacePressureString      = "surfacePressure";
+    static constexpr char const * surfacePressureString() { return "surfacePressure"; }
     /// String key for the surface temperature
-    static constexpr auto surfaceTemperatureString   = "surfaceTemperature";
+    static constexpr char const * surfaceTemperatureString() { return "surfaceTemperature"; }
     /// ViewKey for the reference elevation
-    dataRepository::ViewKey referenceElevation   = { refElevString };
+    dataRepository::ViewKey referenceElevation   = { refElevString() };
     /// ViewKey for the well type
-    dataRepository::ViewKey type                 = { typeString };
+    dataRepository::ViewKey type                 = { typeString() };
     /// ViewKey for the well control
-    dataRepository::ViewKey control              = { controlString };
+    dataRepository::ViewKey control              = { controlString() };
     /// ViewKey for the well target BHP
-    dataRepository::ViewKey targetBHP            = { targetBHPString };
+    dataRepository::ViewKey targetBHP            = { targetBHPString() };
     /// ViewKey for the well target rate
-    dataRepository::ViewKey targetTotalRate      = { targetTotalRateString };
+    dataRepository::ViewKey targetTotalRate      = { targetTotalRateString() };
     /// ViewKey for the well target phase rate
-    dataRepository::ViewKey targetPhaseRate      = { targetPhaseRateString };
+    dataRepository::ViewKey targetPhaseRate      = { targetPhaseRateString() };
     /// ViewKey for the well target phase name
-    dataRepository::ViewKey targetPhaseName      = { targetPhaseNameString };
+    dataRepository::ViewKey targetPhaseName      = { targetPhaseNameString() };
     /// ViewKey for the well injection stream
-    dataRepository::ViewKey injectionStream      = { injectionStreamString };
+    dataRepository::ViewKey injectionStream      = { injectionStreamString() };
     /// ViewKey for the surface conditions flag
-    dataRepository::ViewKey useSurfaceConditions = { useSurfaceConditionsString };
+    dataRepository::ViewKey useSurfaceConditions = { useSurfaceConditionsString() };
     /// ViewKey for the surface pressure
-    dataRepository::ViewKey surfacePressure      = { surfacePressureString };
+    dataRepository::ViewKey surfacePressure      = { surfacePressureString() };
     /// ViewKey for the surface temperature
-    dataRepository::ViewKey surfaceTemperature   = { surfaceTemperatureString };
+    dataRepository::ViewKey surfaceTemperature   = { surfaceTemperatureString() };
 
   }
   /// ViewKey struct for the WellControls class
@@ -272,18 +272,9 @@ public:
 
 protected:
 
-  /**
-   * @brief This function provides capability to post process input values prior to
-   * any other initialization operations.
-   */
   virtual void postProcessInput() override;
 
-  /**
-   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
-   * @param[in] rootGroup A group that is passed in to the initialization functions
-   *                  in order to facilitate the initialization.
-   */
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
 

@@ -18,9 +18,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 #define GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -67,7 +67,7 @@ public:
 
   static string catalogName() { return "SurfaceGenerator"; }
 
-  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group & MeshBody ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -81,9 +81,9 @@ public:
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
-    solverStep( time_n, dt, cycleNumber, *domain->groupCast< DomainPartition * >());
+    solverStep( time_n, dt, cycleNumber, domain );
     return false;
   }
 
@@ -127,8 +127,8 @@ public:
 
 protected:
 
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const problemManager ) override final;
-  virtual void postRestartInitialization( Group * const domain ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  virtual void postRestartInitialization() override final;
 
 private:
 
@@ -506,24 +506,24 @@ private:
    */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto failCriterionString = "failCriterion";
-    constexpr static auto solidMaterialNameString = "solidMaterialNames";
-    constexpr static auto fExternalString = "fExternal";
-    constexpr static auto tipNodesString = "tipNodes";
-    constexpr static auto tipEdgesString = "tipEdges";
-    constexpr static auto tipFacesString = "tipFaces";
-    constexpr static auto trailingFacesString = "trailingFaces";
-    constexpr static auto fractureRegionNameString = "fractureRegion";
-    constexpr static auto mpiCommOrderString = "mpiCommOrder";
+    constexpr static char const * failCriterionString() { return "failCriterion"; }
+    constexpr static char const * solidMaterialNameString() { return "solidMaterialNames"; }
+    constexpr static char const * fExternalString() { return "fExternal"; }
+    constexpr static char const * tipNodesString() { return "tipNodes"; }
+    constexpr static char const * tipEdgesString() { return "tipEdges"; }
+    constexpr static char const * tipFacesString() { return "tipFaces"; }
+    constexpr static char const * trailingFacesString() { return "trailingFaces"; }
+    constexpr static char const * fractureRegionNameString() { return "fractureRegion"; }
+    constexpr static char const * mpiCommOrderString() { return "mpiCommOrder"; }
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
-    constexpr static auto rockToughnessString = "rockToughness";
+    constexpr static char const * rockToughnessString() { return "rockToughness"; }
 
 //    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
-    constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
+    constexpr static char const * nodeBasedSIFString() { return "nodeBasedSIF"; }
 
-  }; //SurfaceGenViewKeys;
+  };
 
 
 private:

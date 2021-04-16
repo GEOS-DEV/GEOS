@@ -20,7 +20,7 @@
 #define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -116,7 +116,7 @@ public:
 
   virtual ~CapillaryPressureBase() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   localIndex numFluidPhases() const { return m_phaseNames.size(); }
@@ -128,13 +128,13 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto phaseNamesString = "phaseNames";
-    static constexpr auto phaseTypesString = "phaseTypes";
-    static constexpr auto phaseOrderString = "phaseOrder";
+    static constexpr char const * phaseNamesString() { return "phaseNames"; }
+    static constexpr char const * phaseTypesString() { return "phaseTypes"; }
+    static constexpr char const * phaseOrderString() { return "phaseOrder"; }
 
-    static constexpr auto phaseCapPressureString                    = "phaseCapPressure";                    // Pc_p
-    static constexpr auto dPhaseCapPressure_dPhaseVolFractionString = "dPhaseCapPressure_dPhaseVolFraction"; // dPc_p/dS_p
-  } viewKeysCapillaryPressureBase;
+    static constexpr char const * phaseCapPressureString() { return "phaseCapPressure"; }
+    static constexpr char const * dPhaseCapPressure_dPhaseVolFractionString() { return "dPhaseCapPressure_dPhaseVolFraction"; }
+  };
 
 protected:
 

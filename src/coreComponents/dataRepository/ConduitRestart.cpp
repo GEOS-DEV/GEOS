@@ -18,11 +18,9 @@
 
 // Source includes
 #include "ConduitRestart.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
 
 // TPL includes
 #include <conduit_relay.hpp>
@@ -34,10 +32,8 @@ namespace dataRepository
 
 string writeRootFile( conduit::Node & root, string const & rootPath )
 {
-  string const completeRootPath = getGlobalState().getCommandLineOptions().outputDirectory + "/" + rootPath;
-
-  string rootDirName, rootFileName;
-  splitPath( completeRootPath, rootDirName, rootFileName );
+  string const completeRootPath = rootPath;
+  string const rootFileName = splitPath( completeRootPath ).second;
 
   if( MpiWrapper::commRank() == 0 )
   {
@@ -72,12 +68,10 @@ string readRootNode( string const & rootPath )
     conduit::relay::io::load( rootPath + ".root", "hdf5", node );
 
     int const nFiles = node.fetch_child( "number_of_files" ).value();
-    GEOSX_ERROR_IF_NE( nFiles, MpiWrapper::commSize() );
+    GEOSX_THROW_IF_NE( nFiles, MpiWrapper::commSize(), InputError );
 
     string const filePattern = node.fetch_child( "file_pattern" ).as_string();
-
-    string rootDirName, rootFileName;
-    splitPath( rootPath, rootDirName, rootFileName );
+    string const rootDirName = splitPath( rootPath ).first;
 
     rankFilePattern = rootDirName + "/" + filePattern;
     GEOSX_LOG_RANK_VAR( rankFilePattern );

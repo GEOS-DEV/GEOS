@@ -1,8 +1,8 @@
 #include "TimeHistHDF.hpp"
 
-#include "managers/Outputs/TimeHistoryOutput.hpp"
+#include "fileIO/Outputs/TimeHistoryOutput.hpp"
 
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <hdf5.h>
 

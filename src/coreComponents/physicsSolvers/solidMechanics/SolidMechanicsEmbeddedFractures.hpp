@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -45,7 +45,7 @@ public:
     return "SolidMechanicsEmbeddedFractures";
   }
 
-  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -118,25 +118,25 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto solidSolverNameString = "solidSolverName";
+    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
 
-    constexpr static auto contactRelationNameString = "contactRelationName";
+    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
-    constexpr static auto dispJumpString = "displacementJump";
+    constexpr static char const * dispJumpString() { return "displacementJump"; }
 
-    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
+    constexpr static char const * deltaDispJumpString() { return "deltaDisplacementJump"; }
 
-    constexpr static auto fractureRegionNameString = "fractureRegionName";
+    constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
 
-    constexpr static auto fractureTractionString = "fractureTraction";
+    constexpr static char const * fractureTractionString() { return "fractureTraction"; }
 
-    constexpr static auto dTraction_dJumpString = "dTraction_dJump";
+    constexpr static char const * dTraction_dJumpString() { return "dTraction_dJump"; }
 
-  } SolidMechanicsEmbeddedFracturesViewKeys;
+  };
 
-  string const & getContactRelationName() const { return m_contactRelationName; };
+  string const & getContactRelationName() const { return m_contactRelationName; }
 
-  string const & getFractureRegionName() const { return m_fractureRegionName; };
+  string const & getFractureRegionName() const { return m_fractureRegionName; }
 
   void applyTractionBC( real64 const time_n,
                         real64 const dt,
@@ -144,7 +144,7 @@ public:
 
 protected:
 
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   virtual void postProcessInput() override final;
 
@@ -166,4 +166,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */

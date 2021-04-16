@@ -21,8 +21,8 @@
 #include "pygeosx.hpp"
 #include "PyGroup.hpp"
 #include "PyWrapper.hpp"
-#include "managers/initialization.hpp"
-#include "managers/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 // System includes
 #pragma GCC diagnostic push
@@ -36,6 +36,79 @@ namespace geosx
 {
 
 std::unique_ptr< GeosxState > g_state;
+
+bool g_alreadyInitialized = false;
+
+PyObject * init( PyObject * const pyArgv, bool const performSetup, long const pythonMPIRank=-1 )
+{
+  LvArray::python::PyObjectRef<> iterator{ PyObject_GetIter( pyArgv ) };
+  if( iterator == nullptr )
+  {
+    return nullptr;
+  }
+
+  // Parse the python list into a std::vector< std::string >
+  std::vector< string > stringArgs;
+  for( LvArray::python::PyObjectRef<> item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
+  {
+    LvArray::python::PyObjectRef<> ascii { PyUnicode_AsASCIIString( item ) };
+    if( ascii == nullptr )
+    {
+      return nullptr;
+    }
+
+    char const * const stringValue = PyBytes_AsString( ascii );
+    if( stringValue == nullptr )
+    {
+      return nullptr;
+    }
+
+    stringArgs.push_back( stringValue );
+  }
+
+  if( PyErr_Occurred() )
+  {
+    return nullptr;
+  }
+
+  std::vector< char * > argv( stringArgs.size() + 1 );
+  for( std::size_t i = 0; i < stringArgs.size(); ++i )
+  {
+    argv[ i ] = const_cast< char * >( stringArgs[ i ].data() );
+  }
+
+  // Perform the initial setup if requested.
+  if( performSetup )
+  {
+    basicSetup( argv.size() - 1, argv.data(), false );
+    g_alreadyInitialized = true;
+
+    // Verify that the ranks match, there is no recovering from this if incorrect.
+    GEOSX_ERROR_IF_NE( pythonMPIRank, MpiWrapper::commRank() );
+  }
+
+  try
+  {
+    // Must first delete the existing state.
+    g_state = nullptr;
+
+    g_state = std::make_unique< GeosxState >( parseCommandLineOptions( argv.size() - 1, argv.data() ) );
+    g_state->initializeDataRepository();
+  }
+  catch( InputError const & e )
+  {
+    g_state = nullptr;
+    PyErr_SetString( PyExc_RuntimeError, e.what() );
+    return nullptr;
+  }
+  catch( NotAnError const & e )
+  {
+    g_state = nullptr;
+    Py_RETURN_NONE;
+  }
+
+  return python::createNewPyGroup( g_state->getProblemManagerAsGroup() );
+}
 
 static constexpr char const * initializeDocString =
   "initialize(rank, args)\n"
@@ -56,11 +129,11 @@ static constexpr char const * initializeDocString =
   "_______\n"
   "Group\n"
   "    The ProblemManager.";
-static PyObject * initialize( PyObject * self, PyObject * args )
+PyObject * initialize( PyObject * self, PyObject * args ) noexcept
 {
   GEOSX_UNUSED_VAR( self );
 
-  PYTHON_ERROR_IF( g_state != nullptr, PyExc_RuntimeError, "State already initialized.", nullptr );
+  PYTHON_ERROR_IF( g_alreadyInitialized, PyExc_RuntimeError, "You have already called initialize, call reinitialize.", nullptr );
 
   long pythonMPIRank;
   PyObject * list;
@@ -69,49 +142,7 @@ static PyObject * initialize( PyObject * self, PyObject * args )
     return nullptr;
   }
 
-  LvArray::python::PyObjectRef<> iterator{ PyObject_GetIter( list ) };
-  if( iterator == nullptr )
-  {
-    return nullptr;
-  }
-
-  std::vector< string > stringArgs;
-  for( LvArray::python::PyObjectRef<> item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
-  {
-    LvArray::python::PyObjectRef<> ascii { PyUnicode_AsASCIIString( item ) };
-    if( ascii == nullptr )
-    {
-      return nullptr;
-    }
-
-    char const * const stringValue = PyBytes_AsString( ascii );
-    if( stringValue == nullptr )
-    {
-      return nullptr;
-    }
-
-    stringArgs.push_back( stringValue );
-  }
-
-  if( PyErr_Occurred() )
-  {
-    return nullptr;
-  }
-
-  std::vector< char * > argv( stringArgs.size() + 1 );
-  for( std::size_t i = 0; i < stringArgs.size(); ++i )
-  {
-    argv[ i ] = const_cast< char * >( stringArgs[ i ].data() );
-  }
-
-  g_state = std::make_unique< GeosxState >( basicSetup( argv.size() - 1, argv.data(), true ) );
-
-  PYTHON_ERROR_IF( pythonMPIRank != MpiWrapper::commRank(), PyExc_ValueError,
-                   "Python MPI rank does not match the GEOSX MPI rank.", nullptr );
-
-  g_state->initializeDataRepository();
-
-  return python::createNewPyGroup( g_state->getProblemManagerAsGroup() );
+  return init( list, true, pythonMPIRank );
 }
 
 static constexpr char const * reinitDocString =
@@ -128,12 +159,9 @@ static constexpr char const * reinitDocString =
   "_______\n"
   "Group\n"
   "    The ProblemManager.";
-static PyObject * reinit( PyObject * self, PyObject * args )
+PyObject * reinit( PyObject * self, PyObject * args ) noexcept
 {
   GEOSX_UNUSED_VAR( self );
-
-  PYTHON_ERROR_IF( g_state == nullptr || g_state->getState() != State::COMPLETED,
-                   PyExc_RuntimeError, "State must be COMPLETED", nullptr );
 
   PyObject * list;
   if( !PyArg_ParseTuple( args, "O", &list ) )
@@ -141,48 +169,7 @@ static PyObject * reinit( PyObject * self, PyObject * args )
     return nullptr;
   }
 
-  LvArray::python::PyObjectRef<> iterator{ PyObject_GetIter( list ) };
-  if( iterator == nullptr )
-  {
-    return nullptr;
-  }
-
-  std::vector< string > stringArgs;
-  for( LvArray::python::PyObjectRef<> item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
-  {
-    LvArray::python::PyObjectRef<> ascii { PyUnicode_AsASCIIString( item ) };
-    if( ascii == nullptr )
-    {
-      return nullptr;
-    }
-
-    char const * const stringValue = PyBytes_AsString( ascii );
-    if( stringValue == nullptr )
-    {
-      return nullptr;
-    }
-
-    stringArgs.push_back( stringValue );
-  }
-
-  if( PyErr_Occurred() )
-  {
-    return nullptr;
-  }
-
-  std::vector< char * > argv( stringArgs.size() + 1 );
-  for( std::size_t i = 0; i < stringArgs.size(); ++i )
-  {
-    argv[ i ] = const_cast< char * >( stringArgs[ i ].data() );
-  }
-
-  // Must first delete the existing state.
-  g_state = nullptr;
-  g_state = std::make_unique< GeosxState >( parseCommandLineOptions( argv.size() - 1, argv.data() ) );
-
-  g_state->initializeDataRepository();
-
-  return python::createNewPyGroup( g_state->getProblemManagerAsGroup() );
+  return init( list, false );
 }
 
 static constexpr char const * applyInitialConditionsDocString =
@@ -193,13 +180,22 @@ static constexpr char const * applyInitialConditionsDocString =
   "Returns\n"
   "_______\n"
   "None\n";
-static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
+PyObject * applyInitialConditions( PyObject * self, PyObject * args ) noexcept
 {
   GEOSX_UNUSED_VAR( self, args );
 
   PYTHON_ERROR_IF( g_state == nullptr, PyExc_RuntimeError, "state must be initialized", nullptr );
 
-  g_state->applyInitialConditions();
+  try
+  {
+    g_state->applyInitialConditions();
+  }
+  catch( std::exception const & e )
+  {
+    PyErr_SetString( PyExc_RuntimeError, e.what() );
+    return nullptr;
+  }
+
   Py_RETURN_NONE;
 }
 
@@ -213,20 +209,22 @@ static constexpr char const * runDocString =
   "int\n"
   "    The state of the simulation. If the simulation has ended the value is ``COMPLETED``. If the "
   "simulation still has steps left to run the value is ``READY_TO_RUN``.";
-static PyObject * run( PyObject * self, PyObject * args )
+PyObject * run( PyObject * self, PyObject * args ) noexcept
 {
   GEOSX_UNUSED_VAR( self, args );
 
   PYTHON_ERROR_IF( g_state == nullptr, PyExc_RuntimeError, "state must be initialized", nullptr );
 
-  // check for python errors raised before returning
   try
   {
     g_state->run();
-  } catch( const LvArray::python::PythonError & )
+  }
+  catch( std::exception const & e )
   {
+    PyErr_SetString( PyExc_RuntimeError, e.what() );
     return nullptr;
   }
+
   return PyLong_FromLong( static_cast< int >( g_state->getState() ) );
 }
 
@@ -238,7 +236,7 @@ static constexpr char const * finalizeDocString =
   "Returns\n"
   "_______\n"
   "None\n";
-static PyObject * finalize( PyObject * self, PyObject * args )
+PyObject * finalize( PyObject * self, PyObject * args ) noexcept
 {
   GEOSX_UNUSED_VAR( self, args );
 
@@ -249,7 +247,6 @@ static PyObject * finalize( PyObject * self, PyObject * args )
 
   g_state = nullptr;
   basicCleanup();
-
   Py_RETURN_NONE;
 }
 

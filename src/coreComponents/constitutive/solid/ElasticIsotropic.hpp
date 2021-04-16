@@ -389,22 +389,22 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for default bulk modulus
-    static constexpr auto defaultBulkModulusString  = "defaultBulkModulus";
+    static constexpr char const * defaultBulkModulusString() { return "defaultBulkModulus"; }
 
     /// string/key for default poisson ratio
-    static constexpr auto defaultPoissonRatioString =  "defaultPoissonRatio";
+    static constexpr char const * defaultPoissonRatioString() { return "defaultPoissonRatio"; }
 
     /// string/key for default shear modulus
-    static constexpr auto defaultShearModulusString = "defaultShearModulus";
+    static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
 
     /// string/key for default Young's modulus
-    static constexpr auto defaultYoungsModulusString =  "defaultYoungsModulus";
+    static constexpr char const * defaultYoungsModulusString() { return "defaultYoungsModulus"; }
 
     /// string/key for bulk modulus
-    static constexpr auto bulkModulusString  = "bulkModulus";
+    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
 
     /// string/key for shear modulus
-    static constexpr auto shearModulusString = "shearModulus";
+    static constexpr char const * shearModulusString() { return "shearModulus"; }
   };
 
   /**

@@ -18,7 +18,7 @@
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -33,8 +33,8 @@ SolverBase::SolverBase( string const & name,
   m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
   m_dofManager( name ),
-  m_linearSolverParameters( groupKeyStruct::linearSolverParametersString, this ),
-  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString, this )
+  m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
+  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -44,42 +44,43 @@ SolverBase::SolverBase( string const & name,
   // This sets a flag to indicate that this object increments time
   this->setTimestepBehavior( 1 );
 
-  registerWrapper( viewKeyStruct::cflFactorString, &m_cflFactor )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::cflFactorString(), &m_cflFactor ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
 
-  registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::FALSE )->
+  registerWrapper( viewKeyStruct::maxStableDtString(), &m_maxStableDt ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
-  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName )->
-    setInputFlag( InputFlags::REQUIRED )->
+  this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
                     "solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` "
                     "should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` "
                     "discretization should be specified." );
 
-  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegionNames )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
 
-  registerWrapper( viewKeyStruct::initialDtString, &m_nextDt )->
-    setApplyDefaultValue( 1e99 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setRestartFlags( RestartFlags::WRITE_AND_READ )->
+  registerWrapper( viewKeyStruct::initialDtString(), &m_nextDt ).
+    setApplyDefaultValue( 1e99 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
-  registerGroup( groupKeyStruct::linearSolverParametersString, &m_linearSolverParameters );
-  registerGroup( groupKeyStruct::nonlinearSolverParametersString, &m_nonlinearSolverParameters );
+  registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
+  registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_localRhs.setName( this->getName() + "/localRhs" );
+  m_matrix.setDofManager( &m_dofManager );
 }
 
 SolverBase::~SolverBase() = default;
@@ -148,7 +149,7 @@ bool SolverBase::execute( real64 const time_n,
                           integer const cycleNumber,
                           integer const GEOSX_UNUSED_PARAM( eventCounter ),
                           real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                          Group * const domain )
+                          DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtRemaining = dt;
@@ -162,7 +163,7 @@ bool SolverBase::execute( real64 const time_n,
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
-                                          *domain->groupCast< DomainPartition * >() );
+                                          domain );
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
@@ -255,6 +256,12 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   if( m_assemblyCallback )
   {
     m_assemblyCallback( m_localMatrix, m_localRhs );
+  }
+
+  // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
+  if( m_precond )
+  {
+    m_precond->clear();
   }
 
   // Compose parallel LA matrix/rhs out of local LA matrix/rhs
@@ -557,6 +564,12 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         krylovParams.relTolerance = eisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
       }
 
+      // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
+      if( m_precond )
+      {
+        m_precond->clear();
+      }
+
       // Compose parallel LA matrix/rhs out of local LA matrix/rhs
       m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
       m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
@@ -791,48 +804,23 @@ void SolverBase::solveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-//  Keep for debugging comparisons
-//  static int count = 0;
-//  if( count < 2 )
-//  {
-//  std::cout<<"************************* MATRIX *************************"<<std::endl;
-//  std::cout<<matrix<<std::endl<<std::endl;
-//  std::cout<<"************************* RHS *************************"<<std::endl;
-//  std::cout<<rhs<<std::endl<<std::endl;
-//  }
-
   LinearSolverParameters const & params = m_linearSolverParameters.get();
-
-  // TODO: We probably want to keep an instance of linear solver as a member of physics solver
-  //       so we can have constant access to last solve statistics, convergence history, etc.
-  //       This requires unifying "LAI interface" solvers with "native" Krylov solvers somehow.
+  matrix.setDofManager( &dofManager );
 
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
-    LinearSolver solver( params );
-    solver.solve( matrix, solution, rhs, &dofManager );
-    m_linearSolverResult = solver.result();
+    std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
+    solver->setup( matrix );
+    solver->solve( rhs, solution );
+    m_linearSolverResult = solver->result();
   }
   else
   {
-    m_precond->compute( matrix, dofManager );
+    m_precond->setup( matrix );
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
     solver->solve( rhs, solution );
     m_linearSolverResult = solver->result();
-    // We need to destroy the preconditioner here, because some LAI (like Trilinos) needs some
-    // information from the original matrix to destroy the preconditioner and due to the natural
-    // order, matrix will be destroyed before, making the code crashing with a segmentation fault
-    m_precond->clear();
   }
-
-  //  Keep for debugging comparisons
-//  if( count < 2 )
-//  {
-//  std::cout<<"************************* SOLUTION *************************"<<std::endl;
-//  std::cout<<solution<<std::endl<<std::endl;
-//  }
-//  ++count;
-
 
   if( params.stopIfError )
   {
@@ -882,9 +870,9 @@ void SolverBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time )
 R1Tensor const SolverBase::gravityVector() const
 {
   R1Tensor rval;
-  if( getParent()->groupCast< PhysicsSolverManager const * >() != nullptr )
+  if( dynamicCast< PhysicsSolverManager const * >( &getParent() ) != nullptr )
   {
-    rval = getParent()->getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString );
+    rval = getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() );
   }
   else
   {

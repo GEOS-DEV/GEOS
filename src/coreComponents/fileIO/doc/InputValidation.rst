@@ -7,7 +7,7 @@ XML Schema
 =================================
 
 An XML schema definition (XSD) file lays out the expected structure of an input XML file.
-During the build process, GEOSX automatically constructs a comprehensive schema from the code's data structure, and updates the version in the source (GEOSX/src/coreComponents/fileIO/schema/schema.xsd).
+During the build process, GEOSX automatically constructs a comprehensive schema from the code's data structure, and updates the version in the source (GEOSX/src/coreComponents/schema/schema.xsd).
 
 
 Schema Components

@@ -25,7 +25,7 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 
 
@@ -161,10 +161,10 @@ public:
    */
   KernelBase( SUBREGION_TYPE const & elementSubRegion,
               FE_TYPE const & finiteElementSpace,
-              CONSTITUTIVE_TYPE * const inputConstitutiveType ):
+              CONSTITUTIVE_TYPE & inputConstitutiveType ):
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_elemGhostRank( elementSubRegion.ghostRank() ),
-    m_constitutiveUpdate( inputConstitutiveType->createKernelUpdates() ),
+    m_constitutiveUpdate( inputConstitutiveType.createKernelUpdates() ),
     m_finiteElementSpace( finiteElementSpace )
   {}
 
@@ -375,10 +375,10 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
   // save the maximum residual contribution for scaling residuals for convergence criteria.
   real64 maxResidualContribution = 0;
 
-  NodeManager & nodeManager = *(mesh.getNodeManager());
-  EdgeManager & edgeManager = *(mesh.getEdgeManager());
-  FaceManager & faceManager = *(mesh.getFaceManager());
-  ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
+  NodeManager & nodeManager = mesh.getNodeManager();
+  EdgeManager & edgeManager = mesh.getEdgeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
 
   // Create a tuple that contains the kernelConstructorParams, as the lambda does not properly catch the parameter pack
@@ -411,28 +411,29 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     constitutive::NullModel * nullConstitutiveModel = nullptr;
     if( targetRegionIndex <= constitutiveNames.size()-1 )
     {
-      constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
+      constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
     }
     else
     {
-      nullConstitutiveModel = elementSubRegion.template registerGroup< constitutive::NullModel >( "nullModelGroup" );
+      nullConstitutiveModel = &elementSubRegion.template registerGroup< constitutive::NullModel >( "nullModelGroup" );
       constitutiveRelation = nullConstitutiveModel;
     }
 
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
-    constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( constitutiveRelation,
+    constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( *constitutiveRelation,
                                                                       [&maxResidualContribution,
                                                                        &nodeManager,
                                                                        &edgeManager,
                                                                        &faceManager,
                                                                        &kernelConstructorParamsTuple,
+                                                                       &targetRegionIndex,
                                                                        &elementSubRegion,
                                                                        &finiteElementName,
                                                                        numElems]
-                                                                        ( auto * const castedConstitutiveRelation )
+                                                                        ( auto & castedConstitutiveRelation )
     {
       // Create an alias for the type of constitutive model.
-      using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
+      using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
 
       string const elementTypeString = elementSubRegion.getElementTypeString();
@@ -446,6 +447,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                   &edgeManager,
                                   &faceManager,
                                   &kernelConstructorParamsTuple,
+                                  &targetRegionIndex,
                                   &elementSubRegion,
                                   &numElems,
                                   &castedConstitutiveRelation] ( auto const finiteElement )
@@ -467,6 +469,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
         auto temp = std::forward_as_tuple( nodeManager,
                                            edgeManager,
                                            faceManager,
+                                           targetRegionIndex,
                                            elementSubRegion,
                                            finiteElement,
                                            castedConstitutiveRelation );
@@ -480,6 +483,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
         auto temp = camp::forward_as_tuple( nodeManager,
                                             edgeManager,
                                             faceManager,
+                                            targetRegionIndex,
                                             elementSubRegion,
                                             finiteElement,
                                             castedConstitutiveRelation );

@@ -57,6 +57,8 @@ class Geosx(CMakePackage, CudaPackage):
 
     version('develop', branch='develop', submodules='True')
 
+    # SPHINX_BEGIN_VARIANTS
+
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
     variant('mkl', default=False, description='Use the Intel MKL library.')
@@ -69,12 +71,16 @@ class Geosx(CMakePackage, CudaPackage):
             values=('trilinos', 'hypre', 'petsc'), multi=False)
     variant('pygeosx', default=False, description='Build the GEOSX python interface.')
 
+    # SPHINX_END_VARIANTS
+
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
     # variant('docs', default=False, description='Build docs')
     # variant('addr2line', default=True,
     #         description='Build support for addr2line.')
+
+    # SPHINX_BEGIN_DEPENDS
 
     depends_on('cmake@3.8:', type='build')
     depends_on('cmake@3.9:', when='+cuda', type='build')
@@ -103,7 +109,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('hdf5@1.10.5: +shared +pic +mpi', when='~vtk')
 
-    depends_on('conduit@0.5: +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
+    depends_on('conduit@0.5.0 +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
 
     depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
 
@@ -130,7 +136,7 @@ class Geosx(CMakePackage, CudaPackage):
     trilinos_build_options = '~fortran +openmp +shared'
     trilinos_tpls = '~boost ~glm ~gtest ~hdf5 ~hypre ~matio ~metis +mpi ~mumps ~netcdf ~suite-sparse'
     trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +teuchos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
-    depends_on('trilinos@12.18.1: ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
+    depends_on('trilinos@12.18.1 ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
     # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
@@ -159,6 +165,8 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('doxygen@1.8.13:', when='+docs', type='build')
     depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
+
+    # SPHINX_END_DEPENDS
 
     #
     # Conflicts
@@ -289,6 +297,15 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_entry('MPI_C_COMPILER', spec['mpi'].mpicc))
             cfg.write(cmake_cache_entry('MPI_CXX_COMPILER', spec['mpi'].mpicxx))
 
+            if sys_type == 'linux-rhel7-ppc64le':
+                cfg.write(cmake_cache_option('ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC', True))
+                if socket.gethostname().rstrip('1234567890') == "lassen":
+                    cfg.write(cmake_cache_entry('MPIEXEC', 'lrun'))
+                    cfg.write(cmake_cache_entry('MPIEXEC_NUMPROC_FLAG', '-n'))
+                else:
+                    cfg.write(cmake_cache_entry('MPIEXEC', 'jsrun'))
+                    cfg.write(cmake_cache_list('MPIEXEC_NUMPROC_FLAG', ['-g1', '--bind', 'rs', '-n']))
+
             cfg.write("#{0}\n".format("-" * 80))
             cfg.write("# OpenMP\n")
             cfg.write("#{0}\n\n".format("-" * 80))
@@ -347,11 +364,12 @@ class Geosx(CMakePackage, CudaPackage):
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
             io_tpls = (('hdf5', 'HDF5', True),
-                    ('conduit', 'CONDUIT', True),
-                    ('silo', 'SILO', True),
-                    ('adiak', 'ADIAK', '+caliper' in spec),
-                    ('caliper', 'CALIPER', '+caliper' in spec),
-                    ('pugixml', 'PUGIXML', True))
+                       ('conduit', 'CONDUIT', True),
+                       ('silo', 'SILO', True),
+                       ('adiak', 'ADIAK', '+caliper' in spec),
+                       ('caliper', 'CALIPER', '+caliper' in spec),
+                       ('pugixml', 'PUGIXML', True),
+                       ('vtk', 'VTK', False))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))

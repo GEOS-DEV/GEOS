@@ -110,19 +110,16 @@ public:
 //START_SPHINX_INCLUDE_01
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString = "phaseMinVolumeFraction";
-    static constexpr auto phaseRelPermExponentString   = "phaseRelPermExponent";
-    static constexpr auto phaseRelPermMaxValueString   = "phaseRelPermMaxValue";
-    static constexpr auto volFracScaleString                = "volFracScale";
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * phaseRelPermExponentString() { return "phaseRelPermExponent"; }
+    static constexpr char const * phaseRelPermMaxValueString() { return "phaseRelPermMaxValue"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
 
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString };
-    ViewKey phaseRelPermExponent   = { phaseRelPermExponentString };
-    ViewKey phaseRelPermMaxValue   = { phaseRelPermMaxValueString };
-
+    dataRepository::ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString() };
+    dataRepository::ViewKey phaseRelPermExponent   = { phaseRelPermExponentString() };
+    dataRepository::ViewKey phaseRelPermMaxValue   = { phaseRelPermMaxValueString() };
   } vieKeysBrooksCoreyRelativePermeability;
+//END_SPHINX_INCLUDE_01
 
 protected:
 
@@ -134,6 +131,7 @@ protected:
   array1d< real64 > m_phaseRelPermMaxValue;
 
   real64 m_volFracScale;
+//END_SPHINX_INCLUDE_02
 };
 
 GEOSX_HOST_DEVICE

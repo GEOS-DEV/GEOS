@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
 
 namespace geosx
@@ -208,18 +208,17 @@ public:
 
   struct viewKeyStruct : public ParticleFluidBase::viewKeyStruct
   {
-    static constexpr auto fluidViscosityString    = "fluidViscosity";
-    static constexpr auto proppantDiameterString    = "proppantDiameter";
-    static constexpr auto proppantDensityString    = "proppantDensity";
-    static constexpr auto hinderedSettlingCoefficientString    = "hinderedSettlingCoefficient";
-    static constexpr auto collisionAlphaString    = "collisionAlpha";
-    static constexpr auto slipConcentrationString    = "slipConcentration";
-    static constexpr auto collisionBetaString    = "collisionBeta";
-    static constexpr auto bridgingFactorString    = "bridgingFactor";
-    static constexpr auto sphericityString    = "sphericity";
-    static constexpr auto particleSettlingModelString    = "particleSettlingModel";
-
-  } viewKeysParticleFluid;
+    static constexpr char const * fluidViscosityString() { return "fluidViscosity"; }
+    static constexpr char const * proppantDiameterString() { return "proppantDiameter"; }
+    static constexpr char const * proppantDensityString() { return "proppantDensity"; }
+    static constexpr char const * hinderedSettlingCoefficientString() { return "hinderedSettlingCoefficient"; }
+    static constexpr char const * collisionAlphaString() { return "collisionAlpha"; }
+    static constexpr char const * slipConcentrationString() { return "slipConcentration"; }
+    static constexpr char const * collisionBetaString() { return "collisionBeta"; }
+    static constexpr char const * bridgingFactorString() { return "bridgingFactor"; }
+    static constexpr char const * sphericityString() { return "sphericity"; }
+    static constexpr char const * particleSettlingModelString() { return "particleSettlingModel"; }
+  };
 
 protected:
 

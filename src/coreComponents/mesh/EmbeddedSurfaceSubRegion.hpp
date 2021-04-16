@@ -24,7 +24,7 @@
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
 #include "CellElementSubRegion.hpp"
-#include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
+#include "simpleGeometricObjects/BoundedPlane.hpp"
 
 namespace geosx
 {
@@ -143,45 +143,47 @@ public:
    */
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// Embedded surface element normal vector string
-    static constexpr auto normalVectorString        = "normalVector";
+    /// @return Embedded surface element normal vector string
+    static constexpr char const * normalVectorString()      { return "normalVector"; }
 
-    /// Tangent vector 1 string
-    static constexpr auto t1VectorString            = "tangentVector1";
+    /// @return Tangent vector 1 string
+    static constexpr char const * t1VectorString()          { return "tangentVector1"; }
 
-    /// Tangent vector 2 string
-    static constexpr auto t2VectorString            = "tangentVector2";
+    /// @return Tangent vector 2 string
+    static constexpr char const * t2VectorString()          { return "tangentVector2"; }
 
-    /// Connectivity index string
-    static constexpr auto connectivityIndexString   = "connectivityIndex";
+    /// @return Connectivity index string
+    static constexpr char const * connectivityIndexString() { return "connectivityIndex"; }
 
-    /// Displacement jump string
-    static constexpr auto dispJumpString            = "displacementJump";
+    /// @return Displacement jump string
+    static constexpr char const * dispJumpString()          { return "displacementJump"; }
 
-    /// Delta displacement jump string
-    static constexpr auto deltaDispJumpString       = "deltaDisplacementJump";
+    /// @return Delta displacement jump string
+    static constexpr char const * deltaDispJumpString()     { return "deltaDisplacementJump"; }
 
-    static constexpr auto fractureTractionString    = "fractureTraction";
+    /// @return Fracture traction string
+    static constexpr char const * fractureTractionString()  { return "fractureTraction"; }
 
-    static constexpr auto dTraction_dJumpString     = "dTraction_dJump";
+    /// @return Fracture traction derivative w.r.t. jump string
+    static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
 
     /// Displacement jump key
-    dataRepository::ViewKey dispJump                = {dispJumpString};
+    dataRepository::ViewKey dispJump        = { dispJumpString() };
 
     /// Delta displacement jump key
-    dataRepository::ViewKey deltaDispJump           = {deltaDispJumpString};
+    dataRepository::ViewKey deltaDispJump   = { deltaDispJumpString() };
 
     /// traction vector key
-    dataRepository::ViewKey tractionVector          = {fractureTractionString};
+    dataRepository::ViewKey tractionVector  = { fractureTractionString() };
 
     /// dTraction_dJump key
-    dataRepository::ViewKey dTraction_dJump         = {dTraction_dJumpString};
+    dataRepository::ViewKey dTraction_dJump = { dTraction_dJumpString() };
 
   }
   /// viewKey struct for the EmbeddedSurfaceSubRegion class
   viewKeys;
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
   virtual string getElementTypeString() const override final { return "Embedded"; }
 

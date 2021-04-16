@@ -21,8 +21,8 @@
 #include "MeshLevel.hpp"
 
 #include "NodeManager.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "utilities/ComputationalGeometry.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -35,9 +35,9 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   m_toFacesRelation(),
   m_externalPropertyNames()
 {
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation );
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
-  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
+  registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
+  registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
 }
 
 CellBlock::~CellBlock()
@@ -302,15 +302,15 @@ void CellBlock::setElementType( string const & elementType )
 
 }
 
-void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+void CellBlock::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {
-  this->m_toNodesRelation.setRelatedObject( mesh->getNodeManager() );
-  this->m_toEdgesRelation.setRelatedObject( mesh->getEdgeManager() );
-  this->m_toFacesRelation.setRelatedObject( mesh->getFaceManager() );
+  this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
+  this->m_toEdgesRelation.setRelatedObject( mesh.getEdgeManager() );
+  this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
 }
 
 void CellBlock::calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
+                                                     FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
@@ -319,7 +319,6 @@ void CellBlock::calculateElementGeometricQuantities( NodeManager const & nodeMan
     calculateCellVolumesKernel( k, X );
   } );
 }
-
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, string const &, Group * const )
 

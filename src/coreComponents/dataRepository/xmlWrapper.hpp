@@ -21,8 +21,8 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "dataRepository/DefaultValue.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "DefaultValue.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/input.hpp"
 
@@ -257,7 +257,7 @@ public:
   static std::enable_if_t< !canParseVariable< T >, bool >
   readAttributeAsType( T &, string const &, xmlNode const &, U const & )
   {
-    GEOSX_ERROR( "Cannot parse the given type " << LvArray::system::demangleType< T >() );
+    GEOSX_THROW( "Cannot parse the given type " << LvArray::system::demangleType< T >(), InputError );
     return false;
   }
 

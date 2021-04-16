@@ -8,8 +8,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
-     fluidFlow/CompositionalMultiphaseFlow.hpp
-     fluidFlow/CompositionalMultiphaseFlowKernels.hpp
+     fluidFlow/HybridFVMHelperKernels.hpp          
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
@@ -25,8 +24,6 @@ set( physicsSolvers_headers
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/SinglePhaseWell.hpp
      fluidFlow/wells/SinglePhaseWellKernels.hpp     
-     fluidFlow/wells/CompositionalMultiphaseWell.hpp
-     fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/WellControls.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
@@ -36,9 +33,10 @@ set( physicsSolvers_headers
      multiphysics/PoroelasticSolverEmbeddedFractures.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
-     multiphysics/CompositionalMultiphaseReservoir.hpp
+     multiphysics/SinglePhasePoroelasticKernel.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
+     simplePDE/LaplaceVEM.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
@@ -52,6 +50,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
+     wavePropagation/AcousticWaveEquationSEM.hpp
      )
 
 #
@@ -62,8 +61,6 @@ set( physicsSolvers_sources
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
      SolverBase.cpp
-     fluidFlow/CompositionalMultiphaseFlow.cpp
-     fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/ProppantTransport.cpp
      fluidFlow/ProppantTransportKernels.cpp
@@ -75,7 +72,6 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/wells/WellSolverBase.cpp
      fluidFlow/wells/SinglePhaseWell.cpp          
-     fluidFlow/wells/CompositionalMultiphaseWell.cpp     
      fluidFlow/wells/WellControls.cpp     
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
@@ -85,21 +81,18 @@ set( physicsSolvers_sources
      multiphysics/PoroelasticSolverEmbeddedFractures.cpp
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
-     multiphysics/CompositionalMultiphaseReservoir.cpp
      simplePDE/LaplaceFEM.cpp
+     simplePDE/LaplaceVEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
+     wavePropagation/AcousticWaveEquationSEM.cpp
      )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList common constitutive dataRepository linearAlgebra )
-else()
-  set( dependencyList common linearAlgebra )
-endif()
+set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 
 
 set( externalComponentDeps "" )
@@ -116,11 +109,39 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if( ENABLE_PVTPackage )
+    list( APPEND physicsSolvers_headers
+         fluidFlow/CompositionalMultiphaseBase.hpp
+         fluidFlow/CompositionalMultiphaseFVM.hpp
+         fluidFlow/CompositionalMultiphaseHybridFVM.hpp
+         fluidFlow/CompositionalMultiphaseBaseKernels.hpp
+         fluidFlow/CompositionalMultiphaseFVMKernels.hpp
+         fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
+         fluidFlow/wells/CompositionalMultiphaseWell.hpp
+         fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
+         multiphysics/MultiphasePoroelasticSolver.hpp
+         multiphysics/CompositionalMultiphaseReservoir.hpp
+         multiphysics/MultiphasePoroelasticKernel.hpp
+         )
+
+    list( APPEND physicsSolvers_sources
+         fluidFlow/CompositionalMultiphaseBase.cpp
+         fluidFlow/CompositionalMultiphaseFVM.cpp
+         fluidFlow/CompositionalMultiphaseHybridFVM.cpp
+         fluidFlow/CompositionalMultiphaseBaseKernels.cpp
+         fluidFlow/CompositionalMultiphaseFVMKernels.cpp
+         fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
+         multiphysics/CompositionalMultiphaseReservoir.cpp
+         multiphysics/MultiphasePoroelasticSolver.cpp
+         fluidFlow/wells/CompositionalMultiphaseWell.cpp
+         )
+endif()
+
 blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
                  DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
@@ -130,6 +151,3 @@ endif()
 
 
 geosx_add_code_checks( PREFIX physicsSolvers )
-
-add_subdirectory( fluidFlow/unitTests )
-add_subdirectory( fluidFlow/wells/unitTests )

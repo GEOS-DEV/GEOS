@@ -17,10 +17,10 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
@@ -42,7 +42,7 @@ public:
     return "PhaseFieldFracture";
   }
 
-  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   virtual void
   implicitStepSetup( real64 const & time_n,
@@ -78,21 +78,20 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto couplingTypeOptionString = "couplingTypeOption";
+    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOption"; }
 
-    constexpr static auto totalMeanStressString = "totalMeanStress";
-    constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
+    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
+    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
 
-    constexpr static auto solidSolverNameString = "solidSolverName";
-    constexpr static auto damageSolverNameString = "damageSolverName";
-    constexpr static auto subcyclingOptionString = "subcycling";
-
-  } PhaseFieldFractureSolverViewKeys;
+    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
+    constexpr static char const * damageSolverNameString() { return "damageSolverName"; }
+    constexpr static char const * subcyclingOptionString() { return "subcycling"; }
+  };
 
 protected:
   virtual void postProcessInput() override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
 private:
 
@@ -107,4 +106,4 @@ ENUM_STRINGS( PhaseFieldFractureSolver::CouplingTypeOption, "FixedStress", "Tigh
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldFractureSOLVER_HPP_ */

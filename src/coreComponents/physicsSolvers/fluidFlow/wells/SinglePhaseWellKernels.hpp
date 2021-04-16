@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
 #include "common/DataTypes.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
@@ -283,16 +283,16 @@ struct PressureRelationKernel
 
     // dynamic well control data
     real64 const & currentBHP =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
     real64 const & dCurrentBHP_dPres =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
 
     real64 const & currentVolRate =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
     real64 const & dCurrentVolRate_dPres =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString() );
     real64 const & dCurrentVolRate_dRate =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString );
+      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString() );
 
     RAJA::ReduceMax< REDUCE_POLICY, localIndex > switchControl( 0 );
 

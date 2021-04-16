@@ -21,7 +21,7 @@
 
 
 #include <map>
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 
 namespace geosx
 {
@@ -64,8 +64,8 @@ public:
    * @brief Set the related object.
    * @param relatedObject The related object to use for mapping.
    */
-  void setRelatedObject( ObjectManagerBase const * const relatedObject )
-  { m_relatedObject = relatedObject; }
+  void setRelatedObject( ObjectManagerBase const & relatedObject )
+  { m_relatedObject = &relatedObject; }
 
   /**
    * @brief Get the related object.
