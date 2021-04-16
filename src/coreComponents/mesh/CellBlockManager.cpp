@@ -217,7 +217,12 @@ void populateFaceToNodesMap( ArrayOfArraysView< NodesOfFace const > const & face
   } );
 }
 
-// We can get rid of all the Region stuff if `NodesOfFace` holds its nodes.
+/**
+ * @brief Resize the face to node map.
+ * @param [in] facesByLowestNode and array of size numNodes of arrays of FaceBuilders associated with each node.
+ * @param [in] uniqueFaceOffsets an containing the unique face IDs for each node in facesByLowestNode.
+ * @param [out] faceToNodeMap the map from faces to nodes. This function resizes the array appropriately.
+ */
 void resizeFaceToNodesMap( ArrayOfArraysView< NodesOfFace const > const & facesByLowestNode,
                           arrayView1d< localIndex const > const & uniqueFaceOffsets,
                           ArrayOfArrays< localIndex > & faceToNodeMap )
