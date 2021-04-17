@@ -166,9 +166,9 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
   HYPRE_Real * const local_data = extractLocalVector();
 
   forAll< hypre::execPolicy >( localValues.size(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
-    {
-      local_data[i] = localValues[i];
-    } );
+  {
+    local_data[i] = localValues[i];
+  } );
 
 }
 
@@ -288,9 +288,9 @@ void HypreVector::reciprocal()
   GEOSX_LAI_ASSERT( ready() );
   real64 * const values = extractLocalVector();
   forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
-    {
-      values[i] = 1.0 / values[i];
-    } );
+  {
+    values[i] = 1.0 / values[i];
+  } );
 }
 
 real64 HypreVector::dot( HypreVector const & vec ) const
@@ -361,9 +361,9 @@ void HypreVector::pointwiseProduct( HypreVector const & x,
   real64 const * const x_data = x.extractLocalVector();
   real64 * const y_data = y.extractLocalVector();
   forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
-    {
-      y_data[i] = data[i] * x_data[i];
-    } );
+  {
+    y_data[i] = data[i] * x_data[i];
+  } );
 }
 
 real64 HypreVector::norm1() const
@@ -373,9 +373,9 @@ real64 HypreVector::norm1() const
   real64 const * const values = extractLocalVector();
   RAJA::ReduceSum< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
   forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
-    {
-      localNorm += fabs( values[i] );
-    } );
+  {
+    localNorm += fabs( values[i] );
+  } );
   return MpiWrapper::sum( localNorm.get(), getComm() );
 }
 
@@ -392,9 +392,9 @@ real64 HypreVector::normInf() const
   real64 const * const values = extractLocalVector();
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
   forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
-    {
-      localNorm.max( fabs( values[i] ) );
-    } );
+  {
+    localNorm.max( fabs( values[i] ) );
+  } );
   return MpiWrapper::max( localNorm.get(), getComm() );
 }
 
@@ -585,9 +585,9 @@ void HypreVector::extract( arrayView1d< real64 > const & localVector ) const
   GEOSX_LAI_ASSERT_EQ( localSize(), localVector.size() );
   real64 const * const data = extractLocalVector();
   forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
-    {
-      localVector[i] = data[i];
-    } );
+  {
+    localVector[i] = data[i];
+  } );
 }
 
 globalIndex HypreVector::ilower() const
