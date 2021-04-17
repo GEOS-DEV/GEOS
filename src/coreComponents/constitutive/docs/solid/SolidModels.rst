@@ -14,6 +14,7 @@ known models.
    Plasticity
    TriaxialDriver
    ElasticIsotropic
+   ElasticIsotropicPressureDependent
    ElasticTransverseIsotropic
    DruckerPrager
    DruckerPragerExtended
