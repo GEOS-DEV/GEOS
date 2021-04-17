@@ -86,7 +86,7 @@ public:
    * @note This function exists to enable holding KernelWrapper objects in an ArrayView
    *       and have their contents properly moved between memory spaces.
    */
-  void move( LvArray::MemorySpace const space, bool const touch = false )
+  void move( LvArray::MemorySpace const space, bool const touch )
   {
     m_CO2SolubilityTable.move( space, touch );
   }
