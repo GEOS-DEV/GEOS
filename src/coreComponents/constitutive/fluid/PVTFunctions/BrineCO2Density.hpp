@@ -37,13 +37,11 @@ class BrineCO2DensityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  BrineCO2DensityUpdate( arrayView1d< string const > const & componentNames,
-                         arrayView1d< real64 const > const & componentMolarWeight,
+  BrineCO2DensityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                          TableFunction * brineDensityTable,
                          localIndex const CO2Index,
                          localIndex const waterIndex )
-    : PVTFunctionBaseUpdate( componentNames,
-                             componentMolarWeight ),
+    : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_brineDensityTable( brineDensityTable->createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex )
@@ -73,17 +71,11 @@ public:
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
                         arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass = 0 ) const override;
+                        bool useMass ) const override;
 
-  /**
-   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
-   * @param space the space to move the KernelWrapper to
-   * @param touch whether the KernelWrapper should be touched in the new space or not
-   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
-   *       and have their contents properly moved between memory spaces.
-   */
-  void move( LvArray::MemorySpace const space, bool const touch )
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
+    PVTFunctionBaseUpdate::move( space, touch );
     m_brineDensityTable.move( space, touch );
   }
 

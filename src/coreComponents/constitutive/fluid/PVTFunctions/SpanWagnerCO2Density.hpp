@@ -37,12 +37,10 @@ class SpanWagnerCO2DensityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  SpanWagnerCO2DensityUpdate( arrayView1d< string const > const & componentNames,
-                              arrayView1d< real64 const > const & componentMolarWeight,
+  SpanWagnerCO2DensityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                               TableFunction * CO2DensityTable,
                               localIndex const CO2Index )
-    : PVTFunctionBaseUpdate( componentNames,
-                             componentMolarWeight ),
+    : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_CO2DensityTable( CO2DensityTable->createKernelWrapper() ),
     m_CO2Index( CO2Index )
   {}
@@ -71,17 +69,11 @@ public:
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
                         arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass = 0 ) const override;
+                        bool useMass ) const override;
 
-  /**
-   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
-   * @param space the space to move the KernelWrapper to
-   * @param touch whether the KernelWrapper should be touched in the new space or not
-   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
-   *       and have their contents properly moved between memory spaces.
-   */
-  void move( LvArray::MemorySpace const space, bool const touch )
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
+    PVTFunctionBaseUpdate::move( space, touch );
     m_CO2DensityTable.move( space, touch );
   }
 

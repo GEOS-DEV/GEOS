@@ -37,11 +37,9 @@ class FenghourCO2ViscosityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  FenghourCO2ViscosityUpdate( arrayView1d< string const > const & componentNames,
-                              arrayView1d< real64 const > const & componentMolarWeight,
+  FenghourCO2ViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                               TableFunction * CO2ViscosityTable )
-    : PVTFunctionBaseUpdate( componentNames,
-                             componentMolarWeight ),
+    : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_CO2ViscosityTable( CO2ViscosityTable->createKernelWrapper() )
   {}
 
@@ -69,17 +67,11 @@ public:
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
                         arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass = 0 ) const override;
+                        bool useMass ) const override;
 
-  /**
-   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
-   * @param space the space to move the KernelWrapper to
-   * @param touch whether the KernelWrapper should be touched in the new space or not
-   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
-   *       and have their contents properly moved between memory spaces.
-   */
-  void move( LvArray::MemorySpace const space, bool const touch )
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
+    PVTFunctionBaseUpdate::move( space, touch );
     m_CO2ViscosityTable.move( space, touch );
   }
 

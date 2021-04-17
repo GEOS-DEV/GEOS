@@ -77,17 +77,11 @@ public:
                         arraySlice2d< real64 > const & phaseCompFraction,
                         arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
                         arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
-                        arraySlice3d< real64 > const & dPhaseCompFraction_dCompFraction ) const;
+                        arraySlice3d< real64 > const & dPhaseCompFraction_dCompFraction ) const override;
 
-  /**
-   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
-   * @param space the space to move the KernelWrapper to
-   * @param touch whether the KernelWrapper should be touched in the new space or not
-   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
-   *       and have their contents properly moved between memory spaces.
-   */
-  void move( LvArray::MemorySpace const space, bool const touch )
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
+    FlashModelBaseUpdate::move( space, touch );
     m_CO2SolubilityTable.move( space, touch );
   }
 
