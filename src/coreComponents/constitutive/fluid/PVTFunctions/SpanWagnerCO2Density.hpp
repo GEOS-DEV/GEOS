@@ -74,12 +74,12 @@ public:
                         bool useMass = 0 ) const override;
 
   /**
-     * @brief Move the KernelWrapper to the given execution space, optionally touching it.
-     * @param space the space to move the KernelWrapper to
-     * @param touch whether the KernelWrapper should be touched in the new space or not
-     * @note This function exists to enable holding KernelWrapper objects in an ArrayView
-     *       and have their contents properly moved between memory spaces.
-     */
+   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
+   * @param space the space to move the KernelWrapper to
+   * @param touch whether the KernelWrapper should be touched in the new space or not
+   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
+   *       and have their contents properly moved between memory spaces.
+   */
   void move( LvArray::MemorySpace const space, bool const touch = false )
   {
     m_CO2DensityTable.move( space, touch );
