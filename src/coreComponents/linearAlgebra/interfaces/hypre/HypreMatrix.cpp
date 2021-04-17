@@ -788,18 +788,18 @@ void HypreMatrix::scale( real64 const scalingFactor )
   HYPRE_Real * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
 
   forAll< hypre::execPolicy >( diag_nnz, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
-  {
-    ptr_diag_data[i] *= scalingFactor;
-  } );
+    {
+      ptr_diag_data[i] *= scalingFactor;
+    } );
 
   hypre_CSRMatrix const * const prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
   HYPRE_Int const offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
   HYPRE_Real * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
   forAll< hypre::execPolicy >( offdiag_nnz, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
-  {
-    ptr_offdiag_data[i] *= scalingFactor;
-  } );
+    {
+      ptr_offdiag_data[i] *= scalingFactor;
+    } );
 }
 
 void HypreMatrix::leftScale( HypreVector const & vec )
@@ -820,16 +820,16 @@ void HypreMatrix::leftScale( HypreVector const & vec )
   HYPRE_Real * const va_offdiag = hypre_CSRMatrixData( csr_offdiag );
 
   forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
-  {
-    for( HYPRE_Int j = ia_diag[i]; j < ia_diag[i + 1]; ++j )
     {
-      va_diag[j] *= vec_data[i];
-    }
-    for( HYPRE_Int j = ia_offdiag[i]; j < ia_offdiag[i + 1]; ++j )
-    {
-      va_offdiag[j] *= vec_data[i];
-    }
-  } );
+      for( HYPRE_Int j = ia_diag[i]; j < ia_diag[i + 1]; ++j )
+      {
+        va_diag[j] *= vec_data[i];
+      }
+      for( HYPRE_Int j = ia_offdiag[i]; j < ia_offdiag[i + 1]; ++j )
+      {
+        va_offdiag[j] *= vec_data[i];
+      }
+    } );
 }
 
 void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale, bool samePattern )
@@ -972,15 +972,15 @@ void HypreMatrix::extractDiagonal( HypreVector & dst ) const
   HYPRE_Real const * const va       = hypre_CSRMatrixData( csr );
 
   forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const localRow )
-  {
-    for( HYPRE_Int j = ia[localRow]; j < ia[localRow + 1]; ++j )
     {
-      if( ja[j] == localRow )
+      for( HYPRE_Int j = ia[localRow]; j < ia[localRow + 1]; ++j )
       {
-        values[localRow] = va[j];
+        if( ja[j] == localRow )
+        {
+          values[localRow] = va[j];
+        }
       }
-    }
-  } );
+    } );
 }
 
 real64 HypreMatrix::clearRow( globalIndex const globalRow,
@@ -1302,18 +1302,18 @@ real64 HypreMatrix::normInf() const
 
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, HYPRE_Real > maxRowAbsSum( 0.0 );
   forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
-  {
-    HYPRE_Real rowAbsSum = 0.0;
-    for( HYPRE_Int j = ia_diag[i]; j < ia_diag[i + 1]; ++j )
     {
-      rowAbsSum += fabs( va_diag[j] );
-    }
-    for( HYPRE_Int j = ia_offdiag[i]; j < ia_offdiag[i + 1]; ++j )
-    {
-      rowAbsSum += fabs( va_offdiag[j] );
-    }
-    maxRowAbsSum.max( rowAbsSum );
-  } );
+      HYPRE_Real rowAbsSum = 0.0;
+      for( HYPRE_Int j = ia_diag[i]; j < ia_diag[i + 1]; ++j )
+      {
+        rowAbsSum += fabs( va_diag[j] );
+      }
+      for( HYPRE_Int j = ia_offdiag[i]; j < ia_offdiag[i + 1]; ++j )
+      {
+        rowAbsSum += fabs( va_offdiag[j] );
+      }
+      maxRowAbsSum.max( rowAbsSum );
+    } );
 
   return MpiWrapper::max( maxRowAbsSum.get(), getComm() );
 
