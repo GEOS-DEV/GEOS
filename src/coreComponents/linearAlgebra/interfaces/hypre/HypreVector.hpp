@@ -258,14 +258,6 @@ public:
 
 private:
 
-#ifdef GEOSX_USE_HYPRE_CUDA
-  /// Execution policy for operations on hypre data
-  using execPolicy = parallelDevicePolicy<>;
-#else
-  /// Execution policy for operations on hypre data
-  using execPolicy = parallelHostPolicy;
-#endif
-
   /**
    * Pointer to underlying HYPRE_IJVector type.
    */
