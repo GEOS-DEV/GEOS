@@ -1,8 +1,40 @@
 import segyio
 import os
 
+def create_segy(shot_list, nsamples, tracePath):
+   
+    if os.path.exists(tracePath):
+        pass
+    else:
+        os.mkdir(tracePath)
 
-def export_to_segy(pressure, srcCoord, rcvCoord, ishot, dt_cycle, tracePath):
+    for ishot in range(len(shot_list)):
+        rcvCoord = shot_list[ishot].getReceiverSet().getSetCoord()
+        srcCoord = shot_list[ishot].getSource().getCoord()
+        spec = segyio.spec()
+        ilines  = [x[0] for x in rcvCoord]
+        xlines  = [x[1] for x in rcvCoord]
+        spec.ilines = list(set(ilines))
+        spec.xlines = list(set(xlines))
+        spec.samples = list(range(nsamples))
+        spec.sorting = 2
+        spec.format  = 1
+
+        with segyio.create(tracePath + "/sismoTraceShot"+str(ishot)+".sgy", spec) as f:
+            for i in range(len(rcvCoord)):
+                f.header[i] = {segyio.su.scalco : -100,
+                               segyio.su.scalel : -100,
+                               segyio.su.sx : int(srcCoord[0]*100),
+                               segyio.su.sy : int(srcCoord[1]*100),
+                               segyio.su.sdepth : int(srcCoord[2]*100),
+                               segyio.su.gx : int(rcvCoord[i][0]*100),
+                               segyio.su.gy : int(rcvCoord[i][1]*100),
+                               segyio.su.gelev : int(rcvCoord[i][2]*100)}
+                f.trace[i] = [0.0] * nsamples
+            f.bin.update(tsort = segyio.TraceSortingFormat.INLINE_SORTING)
+
+
+def export_to_segy(pressure, rcvCoord, ishot, tracePath):
     """Export the pressure value calculated by GEOSX to a segy file
 
     Parameters
@@ -19,32 +51,11 @@ def export_to_segy(pressure, srcCoord, rcvCoord, ishot, dt_cycle, tracePath):
     dt_cycle :
         Frequency of value export
     """
-    if os.path.exists(tracePath):
-        pass
-    else:
-        os.mkdir(tracePath)
-
-    spec = segyio.spec()
-    ilines  = [x[0] for x in rcvCoord]
-    xlines  = [x[1] for x in rcvCoord]
-    spec.ilines = list(set(ilines))
-    spec.xlines = list(set(xlines))
-    spec.samples = list(range(int(pressure[:,0].size/dt_cycle)))
-    spec.sorting = 2
-    spec.format  = 1
-
-    with segyio.create(tracePath + "/sismoTraceShot"+str(ishot)+".sgy", spec) as f:
+    
+    with segyio.open(tracePath + "/sismoTraceShot"+str(ishot)+".sgy", 'r+', ignore_geometry=True) as f:
         for i in range(len(rcvCoord)):
-            f.header[i] = {segyio.su.scalco : -100,
-                           segyio.su.scalel : -100,
-                           segyio.su.sx : int(srcCoord[0]*100),
-                           segyio.su.sy : int(srcCoord[1]*100),
-                           segyio.su.sdepth : int(srcCoord[2]*100),
-                           segyio.su.gx : int(rcvCoord[i][0]*100),
-                           segyio.su.gy : int(rcvCoord[i][1]*100),
-                           segyio.su.gelev : int(rcvCoord[i][2]*100)}
-            f.trace[i]  = pressure[::dt_cycle, i]
-        f.bin.update(tsort = segyio.TraceSortingFormat.INLINE_SORTING)
+            if any(pressure[:,i])==True:
+                f.trace[i] = pressure[:, i]
 
 
 def export_for_acquisition(shot_list, acq_path, acq_name):

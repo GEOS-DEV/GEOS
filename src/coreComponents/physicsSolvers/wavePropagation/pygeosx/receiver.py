@@ -71,7 +71,7 @@ class ReceiverSet:
         Number of Receiver
     """
 
-    def __init__(self,receiver_list=None):
+    def __init__(self, receiver_list=None):
         """Constructor for the point source
 
         Parameters
@@ -112,6 +112,11 @@ class ReceiverSet:
         for i in range(self.n):
             listRcv.append(np.array([self.receiver_list[i].coords[0], self.receiver_list[i].coords[1], self.receiver_list[i].coords[2]]))
         return listRcv
+
+    def append(self, ReceiverSet):
+        for i in range(ReceiverSet.getNumberOfReceivers()):
+            self.receiver_list.append(ReceiverSet.getList()[i])
+        self.n += ReceiverSet.getNumberOfReceivers()
 
 
     #Transpose all receivers position

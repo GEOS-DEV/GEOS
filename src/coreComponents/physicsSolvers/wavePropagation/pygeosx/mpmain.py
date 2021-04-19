@@ -12,7 +12,7 @@ from mesh import *
 from acquisition import *
 from shotFileManager import *
 
-basePath = "/home/m3d/codes/"
+basePath = "/beegfs/jbesset/codes/"
 
 wavePropagationPath = basePath + "/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/"
 pygeosxPath = wavePropagationPath + "/pygeosx/"
@@ -60,7 +60,7 @@ def mainProcess(shot_file):
         os.mkdir(tracePath)
 
 
-    cmd = "mpirun -np 2 python " + pygeosxPath + "/main.py -i " + xmlPath + " -x 2 " + shot_file + " " + tracePath
+    cmd = "mpirun -np 32 python " + pygeosxPath + "/main.py -i " + xmlPath + " -x 8 -y 4 " + shot_file + " " + tracePath
 
     os.system(cmd)
 
@@ -68,26 +68,38 @@ def mainProcess(shot_file):
 
 def main():
 
-    os.system("python firstInit.py " + str(sys.argv[1]) + " " + str(sys.argv[2]))
+    os.system("mpirun -np 32 python firstInit.py " + str(sys.argv[1]) + " " + str(sys.argv[2]) +" -x 8 -y 4" )
 
-    maxT, dt, boundary_box = readInitVariable("init_variable.txt")
+    maxT, dt, boundary_box = readInitVariable()
 
-    frequency = 10.0
+    frequency = 5.0
     wavelet   = ricker(maxT, dt, frequency)
 
-
+    """
     shot_list = equispaced_acquisition(boundary_box,
                                        wavelet,
                                        dt,
                                        [1001, 11001, 4],
                                        [6751, 6751, 1],
-                                       13481,
-                                       [21, 13481, 5],
+                                       209,
                                        [6751, 6751, 1],
-                                       13491,
+                                       [21, 13481, 675],
+                                       189,
                                        export = 1
                                        )
-
+   
+    """
+    shot_list = cross_acquisition(boundary_box,
+                                  wavelet,
+                                  dt,
+                                  [1001, 11001, 4],
+                                  [6751, 6751, 1],
+                                  209,
+                                  [[21, 13481, 675],[6751, 6751, 1]],
+                                  [[6751, 6751, 1],[21, 13481, 675]],
+                                  189,
+                                  export = 1
+                                  )
 
     """
     shot_list = moving_acquisition(boundary_box,
@@ -105,9 +117,7 @@ def main():
 
     #shot_list = segy_acquisition(segyPath + acqName, wavelet, dt)
 
-    #multiProcessing(shot_list)
-
-
+    multiProcessing(shot_list)
 
 if __name__ == "__main__":
     main()

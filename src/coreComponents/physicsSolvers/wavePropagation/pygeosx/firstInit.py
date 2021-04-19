@@ -10,13 +10,15 @@ rank = comm.Get_rank()
 
 def main():
 
-    problem = pygeosx.initialize(0, sys.argv)
+    problem = pygeosx.initialize(rank, sys.argv)
     pygeosx.apply_initial_conditions()
-    maxT = problem.get_wrapper("Events/maxTime").value()[0]
-    dt = calculDt(problem)
-    boundary_box  = domainBoundary(problem)
+    
+    if rank==0:
+        maxT = problem.get_wrapper("Events/maxTime").value()[0]
+        dt = calculDt(problem)
+        boundary_box  = domainBoundary(problem)
 
-    exportInitVariable(maxT, dt, boundary_box)
+        exportInitVariable(maxT, dt, boundary_box)
 
 
 if __name__ == "__main__":

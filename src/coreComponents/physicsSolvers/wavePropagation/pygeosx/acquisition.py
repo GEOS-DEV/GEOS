@@ -271,3 +271,44 @@ def equispaced_acquisition(box,
         export_for_acquisition(shots, segyPath, acq_name)
 
     return shots
+
+
+def cross_acquisition(box,
+                      wavelet,
+                      dt,
+                      sourcex,
+                      sourcey,
+                      depthSource,
+                      receiversx,
+                      receiversy,
+                      depthReceivers,
+                      export = 0):
+
+    
+    xr1 = np.linspace(receiversx[0][0], receiversx[0][1], receiversx[0][2])
+    yr1 = np.linspace(receiversy[0][0], receiversy[0][1], receiversy[0][2])
+
+    xr2 = np.linspace(receiversx[1][0], receiversx[1][1], receiversx[1][2])
+    yr2 = np.linspace(receiversy[1][0], receiversy[1][1], receiversy[1][2])
+
+    xs = np.linspace(sourcex[0], sourcex[1], sourcex[2])
+    ys = np.linspace(sourcey[0], sourcey[1], sourcey[2])
+
+    receivers = ReceiverSet([Receiver([x, y, depthReceivers]) for x in xr1 for y in yr1])
+    receivers2 = ReceiverSet([Receiver([x, y, depthReceivers]) for x in xr2 for y in yr2])
+
+    receivers.append(receivers2)
+
+   # receivers = receivers.getInsideDomain(box)                                                                                                                         
+    shots = []
+
+    for i in range(len(ys)):
+        for j in range(len(xs)):
+
+            srcpos = [xs[j], ys[i], depthSource]
+            source = Source(srcpos, wavelet, dt)
+
+            shot = Shot(source, receivers)
+            shots.append(shot)
+
+    return shots

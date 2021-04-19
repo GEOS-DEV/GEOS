@@ -110,9 +110,12 @@ def do_shots(rank, problem, shot_list, tracePath):
     pressure_at_receivers = np.zeros((maxCycle+1, shot_list[0].getReceiverSet().getNumberOfReceivers()))
     nb_shot = len(shot_list)
 
+    if rank==0:
+        create_segy(shot_list, maxCycle+1, tracePath)
+
     ishot = 0
-    if rank:
-        print_shot_config(shot_list, ishot)
+    #if rank==0:
+    #    print_shot_config(shot_list, ishot)
 
     #Set first source and receivers positions in GEOSX
     src_pos          = shot_list[ishot].getSource().getCoord()
@@ -124,33 +127,31 @@ def do_shots(rank, problem, shot_list, tracePath):
 
     #Update shot flag
     shot_list[ishot].flagUpdate("In Progress")
-    if rank:
+    if rank==0:
         print_flag(shot_list)
 
     while (np.array([shot.getFlag() for shot in shot_list]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
         #Save pressure
         if cycle[0] < (ishot+1) * maxCycle:
             pressure_at_receivers[cycle[0] - ishot * maxCycle, :] = pressure_geosx.to_numpy()[:]
-
+            
+           # print("rank = " + str(rank) + "   pressure = " +str(pressure_geosx.to_numpy()[100]))
         else:
             pressure_at_receivers[maxCycle, :] = pressure_geosx.to_numpy()[:]
-            if rank:
-                print_pressure(pressure_at_receivers, ishot)
+            #if rank==0:
+            #    print_pressure(pressure_at_receivers, ishot)
 
             #Segy export and flag update
-            if rank:
-                if outputSismoTrace == 0 :
-                    export_to_segy(pressure_at_receivers,
-                                   shot_list[ishot].getSource().getCoord(),
-                                   shot_list[ishot].getReceiverSet().getSetCoord(),
-                                   ishot,
-                                   dt_cycle,
-                                   tracePath)
+            if outputSismoTrace == 1 :
+                export_to_segy(pressure_at_receivers,
+                               shot_list[ishot].getReceiverSet().getSetCoord(),
+                               ishot,
+                               tracePath)
 
             shot_list[ishot].flagUpdate("Done")
 
             #Reset time/pressure to 0
-            curr_time[0]    = 0.0
+            curr_time[0]               = -dt
             pressure_nm1.to_numpy()[:] = 0.0
             pressure_n.to_numpy()[:]   = 0.0
             pressure_np1.to_numpy()[:] = 0.0
@@ -158,19 +159,19 @@ def do_shots(rank, problem, shot_list, tracePath):
             #Increment shot
             ishot += 1
             if ishot < nb_shot:
-                if rank:
-                    print_shot_config(shot_list, ishot)
+               # if rank==0:
+               #     print_shot_config(shot_list, ishot)
 
                 #Set new receivers and source positions in GEOSX
                 src_pos          = shot_list[ishot].getSource().getCoord()
                 rcv_pos_list     = shot_list[ishot].getReceiverSet().getSetCoord()
-
+                
                 src_pos_geosx.to_numpy()[0] = src_pos
                 rcv_pos_geosx.resize(len(rcv_pos_list))
                 rcv_pos_geosx.to_numpy()[:] = rcv_pos_list[:]
-
+                
                 #Update shot flag
                 shot_list[ishot].flagUpdate("In Progress")
 
-            if rank:
+            if rank==0:
                 print_flag(shot_list)

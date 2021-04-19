@@ -43,28 +43,26 @@ def readShotList(shot_file):
         shot_list.append(Shot(Source(src, wavelet, dt), ReceiverSet([Receiver(rcv) for rcv in(rcvs)])))
 
     f.close()
-    #os.remove(shot_file)
-    #os.rmdir(path)
     return shot_list
 
 def exportInitVariable(maxT, dt, boundary_box):
     path = os.path.abspath(os.getcwd())
 
-    f = open(path + "init_variable.txt", 'w+')
+    f = open(path + "/init_variable.txt", 'w+')
     f.write(str(maxT) + "\n")
     f.write(str(dt) + "\n")
     f.write(str(boundary_box) + "\n")
 
     f.close()
 
-def readInitVariable(initVariableFile):
+def readInitVariable():
     path = os.path.abspath(os.getcwd())
 
-    f = open(path + initVariableFile, 'r')
+    f = open(path + "/init_variable.txt", 'r')
     maxT = float(f.readline())
     dt = float(f.readline())
     boundary_box = ast.literal_eval(f.readline())
 
     f.close()
-    #os.remove(initVariableFile)
+    os.remove(path + initVariableFile)
     return maxT, dt, boundary_box
