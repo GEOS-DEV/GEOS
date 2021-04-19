@@ -274,7 +274,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                 /// coordsOnRefElem = invJ*(coords-coordsNode_0)
                 real64 coordsOnRefElem[3];
                 localIndex q=0;
-                real64 gradN[ numNodesPerElem ][ 3 ];
+                //real64 gradN[ numNodesPerElem ][ 3 ];
                 real64 invJ[3][3]={{0}};
                 FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
 
@@ -320,12 +320,12 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 
                      localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
-                      real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, nodeIndex, xLocal, gradN );
+                      //real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, nodeIndex, xLocal, gradN );
 
                      sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
-                     sourceConstants_x[isrc][nodeIndex] =  detJ*(Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2]);
-                     sourceConstants_y[isrc][nodeIndex] = detJ*(Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2]);
-                     sourceConstants_z[isrc][nodeIndex] = detJ*(Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2]);
+                     sourceConstants_x[isrc][nodeIndex] =  (Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2]);
+                     sourceConstants_y[isrc][nodeIndex] = (Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2]);
+                     sourceConstants_z[isrc][nodeIndex] = (Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2]);
 
                    }
                  }
