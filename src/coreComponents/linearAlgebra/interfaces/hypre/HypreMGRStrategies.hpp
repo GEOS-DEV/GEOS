@@ -233,7 +233,6 @@ public:
 
   /**
    * @brief Setup the MGR strategy.
-   * @param params MGR parameters
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
