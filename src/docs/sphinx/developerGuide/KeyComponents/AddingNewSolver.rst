@@ -30,28 +30,33 @@ before diving into specifying a new solver class that meets our needs.
 
 Declaration file (reference)
 ----------------------------
-The four included headers are:
+The two included headers are:
+
+ - ``physicsSolver/simplePDE/LaplaceBase.hpp`` which declares the base class ``LaplaceBase``, shared by all
+   Laplace solvers;
+ - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to
+   access and to set field on the discretized domain.
+
+Moreover, ``physicsSolver/simplePDE/LaplaceBase.hpp`` includes the following headers:
 
  - ``common/EnumStrings.hpp`` which includes facilities for enum-string conversion (useful for reading enum values from input);
- - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers;
- - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to access and to set field on the discretized domain;
- - ``linearAlgebra/interfaces/InterfaceTypes.hpp`` which declares an interface to linear solvers and linear algebra libraries.
+ - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers.
 
 Let us jump forward to the class enum and variable as they contain the data used
 specifically in the implementation of *LaplaceFEM*.
 
 class enums and variables (reference)
 `````````````````````````````````````
-The class exhibits three member variables:
+The class exhibits two member variables:
 
  - ``m_fieldName`` which stores the name of the diffused variable (*e.g.* the temperature) as a `string`;
  - ``m_timeIntegrationOption`` an `enum` value allowing to dispatch with respect to the transient treatment.
 
-``TimeIntegrationOption`` is an `enum` specifying the transient treatment which can be chosen respectively
-between *SteadyState*, *ImplicitTransient* and *ExplicitTransient* depending on whether we are interested
-in the transient state and whether we want it to be discretized as a backward or a forward Euler scheme.
+``TimeIntegrationOption`` is an `enum` specifying the transient treatment which can be chosen
+respectively between *SteadyState* and *ImplicitTransient* depending on whether we are interested in
+the transient state.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
@@ -59,9 +64,9 @@ in the transient state and whether we want it to be discretized as a backward or
 In order to register an enumeration type with the Data Repository and have its value read from input,
 we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
 a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
-at the namespace scope (in this case, right after the ``LaplaceFEM`` class definition is complete):
+at the namespace scope (in this case, right after the ``LaplaceBase`` class definition is complete):
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_05
    :end-before: //END_SPHINX_INCLUDE_05
@@ -79,7 +84,7 @@ to build the global file-system like structure of GEOSX (see :ref:`GroupPar` for
 It can also be noted that the nullary constructor is deleted on purpose to avoid compiler
 automatic generation and user misuse.
 
-The next method ``CatalogName()`` is static and return the key to be added to the *Catalog* for this type of solver
+The next method ``catalogName()`` is static and return the key to be added to the *Catalog* for this type of solver
 (see :ref:`ObjectCatalogPar` for details). It has to be paired with the following macro in the implementation file.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
@@ -87,7 +92,14 @@ The next method ``CatalogName()`` is static and return the key to be added to th
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
 
-The following member function ``RegisterDataOnMesh()`` is used to assign fields onto the discretized mesh object and
+Finally, the member function ``registerDataOnMesh()`` is declared in the ``LaplaceBase`` class as
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_02
+   :end-before: //END_SPHINX_INCLUDE_02
+
+It is used to assign fields onto the discretized mesh object and
 will be further discussed in the :ref:`Implementation` section.
 
 The next block consists in solver interface functions. These member functions set up
@@ -98,17 +110,23 @@ and specialize every time step from the system matrix assembly to the solver sta
    :start-after: //START_SPHINX_INCLUDE_03
    :end-before: //END_SPHINX_INCLUDE_03
 
+Furthermore, the following functions are inherited from the base class.
 
-Eventually, ``ApplyDirichletBC_implicit()`` is the working specialized member functions called
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_03
+   :end-before: //END_SPHINX_INCLUDE_03
+
+Eventually, ``applyDirichletBCImplicit()`` is the working specialized member functions called
 when ``applyBoundaryConditions()`` is called in this particular class override.
 
 Browsing the base class ``SolverBase``, it can be noted that most of the solver interface functions are called during
-either ``SolverBase::LinearImplicitStep()`` or ``SolverBase::NonLinearImplicitStep()`` depending on the solver strategy chosen.
+either ``SolverBase::linearImplicitStep()`` or ``SolverBase::nonlinearImplicitStep()`` depending on the solver strategy chosen.
 
 Switching to protected members, ``postProcessInput()`` is a central member function and
 will be called by ``Group`` object after input is read from XML entry file.
-It will set and dispatch solver variables from the base class ``BaseSolver`` to the most derived class.
-For *LaplaceFEM*, it will allow us to set the right time integration scheme based on the XML value
+It will set and dispatch solver variables from the base class ``SolverBase`` to the most derived class.
+For ``LaplaceFEM``, it will allow us to set the right time integration scheme based on the XML value
 as will be further explored in the next :ref:`Implementation` section.
 
 Let us focus on a ``struct`` that plays an important role: the *viewKeyStruct* structure.
@@ -120,7 +138,7 @@ This embedded instantiated structure is a common pattern shared by all solvers.
 It stores ``dataRepository::ViewKey`` type objects that are used as binding data
 between the input XML file and the source code.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_04
    :end-before: //END_SPHINX_INCLUDE_04
@@ -139,9 +157,16 @@ In the following section, we will see where this binding takes place.
 Implementation File (reference)
 -------------------------------
 Switching to implementation, we will focus on few implementations, leaving details
-to other tutorials.
+to other tutorials. The ``LaplaceFEM`` constructor is implemented as follows.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_01
+   :end-before: //END_SPHINX_INCLUDE_01
+
+As we see, it calls the ``LaplaceBase`` constructor, that is implemented as follows.
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
@@ -154,12 +179,12 @@ allow us to register the key value from the `enum` ``viewKeyStruct`` defining th
 
 and their associated descriptions for auto-generated docs.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
    :end-before: //END_SPHINX_INCLUDE_02
 
-``RegisterDataOnMesh()`` is browsing all subgroups in the mesh ``Group`` object and
+``registerDataOnMesh()`` is browsing all subgroups in the mesh ``Group`` object and
 for all nodes in the sub group:
 
  - register the observed field under the chosen ``m_fieldName`` key;
@@ -172,7 +197,7 @@ for all nodes in the sub group:
    :start-after: //START_SPHINX_INCLUDE_04
    :end-before: //END_SPHINX_INCLUDE_04
 
-``AssembleSystem()`` will be our core focus as we want to change the diffusion coefficient from its
+``assembleSystem()`` will be our core focus as we want to change the diffusion coefficient from its
 hard coded value to a XML read user-defined value. One can see that this method is in charge of constructing
 in a parallel fashion the FEM system matrix. Bringing ``nodeManager`` and ``ElementRegionManager`` from domain local
 ``MeshLevel`` object together with ``FiniteElementDiscretizationManager`` from the ``NumericalMethodManager``, it uses
@@ -216,7 +241,7 @@ commented afterwards.
     static string catalogName() { return "LaplaceDiffFEM"; }
 
     virtual void
-    AssembleSystem( real64 const time,
+    assembleSystem( real64 const time,
                     real64 const dt,
                     DomainPartition * const domain,
                     DofManager const & dofManager,
@@ -246,7 +271,7 @@ forwarding to `Group` master class. Another mandatory step is to override the st
 register any data from the new solver class.
 
 Then as mentioned in :ref:`Implementation`, the diffusion coefficient is used when assembling the matrix coefficient. Hence
-we will have to override the ``AssembleSystem()`` function as detailed below.
+we will have to override the ``assembleSystem()`` function as detailed below.
 
 Moreover, if we want to introduce a new binding between the input XML and the code we will have to work on the three
 ``struct viewKeyStruct`` , ``postProcessInput()`` and the constructor.
@@ -287,7 +312,7 @@ Another important spot for binding the value of the XML read parameter to our ``
   }
 
 Now that we have required, read and bind the user-defined diffusion value to a variable, we can use it in the construction of our
-matrix into the overridden ``AssembleSystem()``.
+matrix into the overridden ``assembleSystem()``.
 
 .. code-block:: c++
   :emphasize-lines: 16-18

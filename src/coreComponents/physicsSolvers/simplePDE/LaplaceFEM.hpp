@@ -15,10 +15,8 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 
-// #include "common/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
-#include "physicsSolvers/simplePDE/LaplaceBase.hpp"  // an abstraction class shared by all Laplace solvers
+#include "physicsSolvers/simplePDE/LaplaceBase.hpp"  // a base class shared by all Laplace solvers
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
-// #include "linearAlgebra/interfaces/InterfaceTypes.hpp"  // interface to linear solvers and linear algebra libraries
 
 namespace geosx
 {
@@ -46,9 +44,6 @@ public:
   // It ties the XML tag with this C++ classes. This is important.
   static string catalogName() { return "LaplaceFEM"; }
 
-  // This method ties properties with their supporting mesh
-  // virtual void registerDataOnMesh( Group & meshBodies ) override final;
-
 //END_SPHINX_INCLUDE_02
 // /**
 //  * @defgroup Solver Interface Functions
@@ -57,21 +52,7 @@ public:
 //  */
 // /**@{*/
 
-//   //START_SPHINX_INCLUDE_03
-//   virtual real64 solverStep( real64 const & time_n,
-//                              real64 const & dt,
-//                              integer const cycleNumber,
-//                              DomainPartition & domain ) override;
-
-  // virtual void
-  // implicitStepSetup( real64 const & time_n,
-  //                    real64 const & dt,
-  //                    DomainPartition & domain ) override;
-
-  // virtual void
-  // setupDofs( DomainPartition const & domain,
-  //            DofManager & dofManager ) const override;
-
+//START_SPHINX_INCLUDE_03
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
@@ -88,35 +69,6 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
-  // virtual void
-  // applyBoundaryConditions( real64 const time,
-  //                          real64 const dt,
-  //                          DomainPartition & domain,
-  //                          DofManager const & dofManager,
-  //                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-  //                          arrayView1d< real64 > const & localRhs ) override;
-
-  // virtual void
-  // solveSystem( DofManager const & dofManager,
-  //              ParallelMatrix & matrix,
-  //              ParallelVector & rhs,
-  //              ParallelVector & solution ) override;
-
-  // virtual void
-  // applySystemSolution( DofManager const & dofManager,
-  //                      arrayView1d< real64 const > const & localSolution,
-  //                      real64 const scalingFactor,
-  //                      DomainPartition & domain ) override;
-
-  // virtual void
-  //   resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
-
-  // virtual void
-  // implicitStepComplete( real64 const & time,
-  //                       real64 const & dt,
-  //                       DomainPartition & domain ) override;
-
-  //END_SPHINX_INCLUDE_03
   /**@}*/
 
   // This method is specific to this Laplace solver
@@ -128,48 +80,8 @@ public:
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs ) override;
 
-  // Choice of transient treatment options (steady, backward, forward Euler scheme):
-  //START_SPHINX_INCLUDE_01
-  // enum class TimeIntegrationOption : integer
-  // {
-  //   SteadyState,
-  //   ImplicitTransient,
-  //   ExplicitTransient
-  // };
-  //END_SPHINX_INCLUDE_01
-
-
-  // This structure stores ``dataRepository::ViewKey`` objects
-  // used as binding between the input XML tags and source
-  // code variables (here, timeIntegrationOption and fieldVarName)
-  //START_SPHINX_INCLUDE_04
-  // struct viewKeyStruct : public SolverBase::viewKeyStruct
-  // {
-  //   dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-  //   dataRepository::ViewKey fieldVarName = { "fieldName" };
-  // } laplaceFEMViewKeys;
-  //END_SPHINX_INCLUDE_04
-
-// private:
-
-//   // These two classes are specific to the Laplace solver:
-//   string m_fieldName;  // User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
-//   TimeIntegrationOption m_timeIntegrationOption;  // Choice of transient treatment (SteadyState, ImplicitTransient or ExplicitTransient)
-
+//END_SPHINX_INCLUDE_03
 };
-
-
-/* REGISTERING NEW ENUMS:
-   --------------------------
-   In order to register an enumeration type with the Data Repository and have its value read from input,
-   we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
-   a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
-   at the namespace scope (in this case, right after the ``LaplaceFEM`` class definition is complete):
- */
-//START_SPHINX_INCLUDE_05
-// ENUM_STRINGS( LaplaceFEM::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient" )
-//END_SPHINX_INCLUDE_05
-
 } /* namespace geosx */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_ */

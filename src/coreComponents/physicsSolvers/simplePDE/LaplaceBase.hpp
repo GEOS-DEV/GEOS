@@ -26,7 +26,6 @@ namespace geosx
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
-//START_SPHINX_INCLUDE_02
 class LaplaceBase : public SolverBase
 {
 public:
@@ -39,6 +38,8 @@ public:
 
   // Destructor
   virtual ~LaplaceBase() override;
+
+//START_SPHINX_INCLUDE_02
 
   // This method ties properties with their supporting mesh
   virtual void registerDataOnMesh( Group & meshBodies ) override final;

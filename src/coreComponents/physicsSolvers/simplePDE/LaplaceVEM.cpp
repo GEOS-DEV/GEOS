@@ -18,14 +18,7 @@
 
 // Source includes
 #include "LaplaceVEM.hpp"
-
-// #include "mpiCommunications/CommunicationTools.hpp"
-// #include "common/TimingMacros.hpp"
-// #include "common/DataTypes.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
-// #include "managers/DomainPartition.hpp"
-// #include "managers/NumericalMethodsManager.hpp"
-// #include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -80,23 +73,11 @@ using namespace dataRepository;
    The description that is set is used in auto-generated documentation and console error messages.
  */
 
-//START_SPHINX_INCLUDE_01
 LaplaceVEM::LaplaceVEM( const string & name,
                         Group * const parent ):
-  LaplaceBase( name, parent )// ,
-  // m_fieldName( "primaryField" ),
-  // m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
+  LaplaceBase( name, parent )
 {
-  // registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
-  //   setInputFlag( InputFlags::REQUIRED ).
-  //   setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
-
-  // registerWrapper( laplaceFEMViewKeys.fieldVarName.key(), &m_fieldName ).
-  //   setInputFlag( InputFlags::REQUIRED ).
-  //   setDescription( "Name of field variable" );
 }
-//END_SPHINX_INCLUDE_01
-
 
 // Destructor
 LaplaceVEM::~LaplaceVEM()
@@ -104,99 +85,9 @@ LaplaceVEM::~LaplaceVEM()
   // TODO Auto-generated destructor stub
 }
 
-/* REGISTER THE PDE SOLUTION DATA ON THE MESH
-   In the LaplaceVEM solver, we compute the solution of the partial differential equation "numerically".
-   This means that we are not solving this PDE everywhere,
-   we are computing the solution at specific locations in space.
-   To do that, we have to register the Laplace solver so that it works on nodes of a mesh.
-   This registration process is done here, in three steps:
-   1 - for each mesh body (if the mesh is split), we collect he "nodes" (nodes carry their location information),
-   2 - On nodes, we register a new property called m_fieldName and give it a type (here, the type is an array of real64)
-   3 - We set some information for this property on the nodes: what is their "PlotLevel"? how can they be described?
-     The PlotLevel is a flag that instructs GEOSX to export values of this property for instance so that they can be plotted.
-     All properties mounted on nodes carry a certain PlotLevel value. This way, every time GEOSX triggers an
-     output event (a request to "print out" data), all properties at or above a certain PlotLevel are automatically exported.
-     The description here is simply an additional metadata for the newly mounted property.
- */
-//START_SPHINX_INCLUDE_02
-// void LaplaceVEM::registerDataOnMesh( Group & meshBodies )
-// {
-//   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
-//   {
-//     NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
-
-//     nodes.registerWrapper< real64_array >( m_fieldName ).
-//       setApplyDefaultValue( 0.0 ).
-//       setPlotLevel( PlotLevel::LEVEL_0 ).
-//       setDescription( "Primary field variable" );
-//   } );
-// }
-//END_SPHINX_INCLUDE_02
-
-
-/* STEPPING IN TIME
-   Here, we decide how we march in time in the resolutions based on the possible
-   three options set in the XML file (Steady state, Implicit transient, or Explicit transient).
-   Based on these options, we can either perform an Explicit Step (forward Euler),
-   or an Implicit Step (backward Euler).
-   The implementation of the Explicit or Implicit Steps are found in the SolverBase.
-   From now on, we oscillate between specific Laplace solver operations if implemented and more generic SolverBase operations.
-   The initial values of the solver step are all at time_n, and the solver attempts to advance by a time step of dt.
-   This dt time step size is specified initially by the user; and unfortunately, it can sometimes be too large for convergence.
-   The SolverStep method thus returns the time step value that is was actually capable of solving for with good convergence.
- */
-
-// real64 LaplaceVEM::solverStep( real64 const & time_n,
-//                                real64 const & dt,
-//                                const int cycleNumber,
-//                                DomainPartition & domain )
-// {
-//   real64 dtReturn = dt;
-//   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
-//   {
-//     dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
-//   }
-//   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
-//            m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
-//   {
-//     dtReturn = this->linearImplicitStep( time_n, dt, cycleNumber, domain );
-//   }
-//   return dtReturn;
-// }
-
-/*
-   IMPLICIT STEP SETUP
-   This method uses the system setup from LaplaceVEM (see below).
-   It "deactivates" the time variables (with the GEOSX_UNUSED_PARAM macro) and does a steady state system set-up.
- */
-// void LaplaceVEM::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-//                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-//                                     DomainPartition & domain )
-// {
-//   // Computation of the sparsity pattern
-//   setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
-// }
-
-// void LaplaceVEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-//                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
-//                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-// {}
-
-// void LaplaceVEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-//                             DofManager & dofManager ) const
-// {
-//   dofManager.addField( m_fieldName,
-//                        DofManager::Location::Node );
-
-//   dofManager.addCoupling( m_fieldName,
-//                           m_fieldName,
-//                           DofManager::Connector::Elem );
-// }
-
 /* SETUP SYSTEM
    Setting up the system using the base class method
  */
-
 void LaplaceVEM::setupSystem( DomainPartition & domain,
                               DofManager & dofManager,
                               CRSMatrix< real64, globalIndex > & localMatrix,
@@ -245,7 +136,6 @@ void LaplaceVEM::setupSystem( DomainPartition & domain,
    The call to the kernel is a templated call designed for performance (we will not explain the kernel here).
    See the implementation in LaplaceFEMKernel.cpp.
  */
-//START_SPHINX_INCLUDE_04
 void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  DomainPartition & domain,
@@ -338,58 +228,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
     } );
   } );
 
-  //END_SPHINX_INCLUDE_04
 }
-
-// void LaplaceVEM::applySystemSolution( DofManager const & dofManager,
-//                                       arrayView1d< real64 const > const & localSolution,
-//                                       real64 const scalingFactor,
-//                                       DomainPartition & domain )
-// {
-//   dofManager.addVectorToField( localSolution,
-//                                m_fieldName,
-//                                m_fieldName,
-//                                scalingFactor );
-
-//   // Synchronize ghost nodes
-//   std::map< string, string_array > fieldNames;
-//   fieldNames["node"].emplace_back( m_fieldName );
-
-//   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-//                                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-//                                                               domain.getNeighbors(),
-//                                                               true );
-// }
-
-/*
-   APPLY BOUNDARY CONDITIONS
-   Here, this call is the generic call from SolverBase.
-   All it does is to call a specific Dirichlet boundary condition implemented for this solver
- */
-// void LaplaceVEM::applyBoundaryConditions( real64 const time_n,
-//                                           real64 const dt,
-//                                           DomainPartition & domain,
-//                                           DofManager const & dofManager,
-//                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-//                                           arrayView1d< real64 > const & localRhs )
-// {
-//   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
-// }
-
-/*
-   SOLVE SYSTEM
-   This method is simply initiating the solution and right-hand side
-   and pass is to the base class solver.
- */
-// void LaplaceVEM::solveSystem( DofManager const & dofManager,
-//                               ParallelMatrix & matrix,
-//                               ParallelVector & rhs,
-//                               ParallelVector & solution )
-// {
-//   rhs.scale( -1.0 ); // TODO decide if we want this here
-//   solution.zero();
-//   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
-// }
 
 /*
    DIRICHLET BOUNDARY CONDITIONS
@@ -425,10 +264,6 @@ void LaplaceVEM::applyDirichletBCImplicit( real64 const time,
   } );
 }
 
-// void LaplaceVEM::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-// {}
-
-//START_SPHINX_INCLUDE_00
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceVEM, string const &, Group * const )
-//END_SPHINX_INCLUDE_00
+
 } /* namespace geosx */

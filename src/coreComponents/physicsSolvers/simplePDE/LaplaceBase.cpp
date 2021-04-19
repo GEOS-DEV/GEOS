@@ -108,17 +108,6 @@ real64 LaplaceBase::solverStep( real64 const & time_n,
                                 const int cycleNumber,
                                 DomainPartition & domain )
 {
-  // real64 dtReturn = dt;
-  // if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
-  // {
-  //   dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
-  // }
-  // else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
-  //          m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
-  // {
-  //   dtReturn = this->linearImplicitStep( time_n, dt, cycleNumber, domain );
-  // }
-  // return dtReturn;
   return this->linearImplicitStep( time_n, dt, cycleNumber, domain );
 }
 
