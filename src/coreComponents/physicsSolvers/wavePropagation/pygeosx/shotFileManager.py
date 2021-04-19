@@ -6,13 +6,16 @@ from receiver import *
 
 import os
 
+rootPath = os.path.abspath(os.getcwd())
+
+
 def exportShotList(proc, shot_list):
-    path = os.path.abspath(os.getcwd()) + "/shots_lists/"
+    path = os.path.join(rootPath, "shots_lists")
     if os.path.exists(path):
         pass
     else:
         os.mkdir(path)
-    shot_file = path + "shot_list" + str(proc) + ".txt"
+    shot_file = os.path.join(path, "shot_list" + str(proc) + ".txt")
     f = open(shot_file, 'w+')
     dt = shot_list[0].getSource().getTimeStep()
     wavelet = shot_list[0].getSource().getFunction()
@@ -32,7 +35,6 @@ def exportShotList(proc, shot_list):
     return shot_file
 
 def readShotList(shot_file):
-    path = os.path.abspath(os.getcwd()) + "/shots_lists/"
     f = open(shot_file, 'r')
     dt = float(f.readline())
     wavelet = ast.literal_eval(f.readline())
@@ -46,9 +48,7 @@ def readShotList(shot_file):
     return shot_list
 
 def exportInitVariable(maxT, dt, boundary_box):
-    path = os.path.abspath(os.getcwd())
-
-    f = open(path + "/init_variable.txt", 'w+')
+    f = open(rootPath + "/init_variable.txt", 'w+')
     f.write(str(maxT) + "\n")
     f.write(str(dt) + "\n")
     f.write(str(boundary_box) + "\n")
@@ -56,13 +56,11 @@ def exportInitVariable(maxT, dt, boundary_box):
     f.close()
 
 def readInitVariable():
-    path = os.path.abspath(os.getcwd())
-
-    f = open(path + "/init_variable.txt", 'r')
+    f = open(rootPath + "/init_variable.txt", 'r')
     maxT = float(f.readline())
     dt = float(f.readline())
     boundary_box = ast.literal_eval(f.readline())
 
     f.close()
-    os.remove(path + initVariableFile)
+    os.remove(os.path.join(rootPath, "init_variable.txt"))
     return maxT, dt, boundary_box

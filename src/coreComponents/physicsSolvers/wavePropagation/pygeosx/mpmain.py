@@ -12,11 +12,12 @@ from mesh import *
 from acquisition import *
 from shotFileManager import *
 
-basePath = "/beegfs/jbesset/codes/"
+basePath = sys.argv[3] #Absolute path where the GEOSX folder is located
 
-wavePropagationPath = basePath + "/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/"
-pygeosxPath = wavePropagationPath + "/pygeosx/"
-segyPath = pygeosxPath + "/segyAcquisition/"
+wavePropagationPath = os.path.join(basePath, "GEOSX/src/coreComponents/physicsSolvers/wavePropagation/")
+pygeosxPath = os.path.join(wavePropagationPath, "pygeosx/")
+segyPath = os.path.join(pygeosxPath, "segyAcquisition/")
+
 xmlPath = sys.argv[2]
 
 
@@ -47,20 +48,20 @@ def multiProcessing(shot_list, nb_proc = 1):
 
 def mainProcess(shot_file):
 
-    tracePath = os.path.abspath(os.getcwd()) + "/outputSismoTrace/"
+    tracePath = os.path.join(rootPath, "outputSismoTrace/")
     if os.path.exists(tracePath):
         pass
     else:
         os.mkdir(tracePath)
 
-    tracePath = tracePath + "/traceProc" + str(mp.current_process()._identity)[1] + "/"
-    if os.path.exists(tracePath):
+    traceProcPath = os.path.join(tracePath, "traceProc" + str(mp.current_process()._identity)[1] + "/")
+    if os.path.exists(traceProcPath):
         pass
     else:
-        os.mkdir(tracePath)
+        os.mkdir(traceProcPath)
 
 
-    cmd = "mpirun -np 32 python " + pygeosxPath + "/main.py -i " + xmlPath + " -x 8 -y 4 " + shot_file + " " + tracePath
+    cmd = "mpirun -np 2 python " + pygeosxPath + "/main.py -i " + xmlPath + " -x 2 " + shot_file + " " + traceProcPath
 
     os.system(cmd)
 
@@ -68,27 +69,27 @@ def mainProcess(shot_file):
 
 def main():
 
-    os.system("mpirun -np 32 python firstInit.py " + str(sys.argv[1]) + " " + str(sys.argv[2]) +" -x 8 -y 4" )
+    os.system("mpirun -np 2 python firstInit.py " + str(sys.argv[1]) + " " + str(sys.argv[2]) +" -x 2" )
 
     maxT, dt, boundary_box = readInitVariable()
 
     frequency = 5.0
     wavelet   = ricker(maxT, dt, frequency)
 
-    """
+
     shot_list = equispaced_acquisition(boundary_box,
                                        wavelet,
                                        dt,
-                                       [1001, 11001, 4],
-                                       [6751, 6751, 1],
-                                       209,
-                                       [6751, 6751, 1],
-                                       [21, 13481, 675],
-                                       189,
-                                       export = 1
+                                       [101, 1901, 4],
+                                       [1751, 1751, 1],
+                                       1951,
+                                       [1751, 1751, 1],
+                                       [21, 1981, 10],
+                                       1981,
+                                       export = 0
                                        )
-   
     """
+
     shot_list = cross_acquisition(boundary_box,
                                   wavelet,
                                   dt,
@@ -101,7 +102,7 @@ def main():
                                   export = 1
                                   )
 
-    """
+
     shot_list = moving_acquisition(boundary_box,
                                    wavelet,
                                    dt,
@@ -111,13 +112,20 @@ def main():
                                    nbreceiversy = 1,
                                    lenRx = 50,
                                    lenRy = 0,
-                                   export = 1)
-
+                                   export = 1
+                                   )
     """
 
     #shot_list = segy_acquisition(segyPath + acqName, wavelet, dt)
 
     multiProcessing(shot_list)
+
+    for root, dir, files in os.walk(os.path.join(rootPath, "shots_lists")):
+        for file in files:
+            os.remove(os.path.join(root, file))
+
+    os.rmdir(os.path.join(rootPath, "shots_lists"))
+
 
 if __name__ == "__main__":
     main()

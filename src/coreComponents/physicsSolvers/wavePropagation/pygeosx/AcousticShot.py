@@ -11,45 +11,7 @@ from segyManager import *
 from print import *
 
 
-def shot_simul(rank, xml, shot_list, tracePath):
-    """
-    Parameters
-    ----------
-
-    shot_list : list
-        A list containing sets of Source and ReceiverSet objects
-
-    dt : float
-        Time step for the solver
-    """
-
-    problem = initialize(rank, xml)
-    do_shots(rank, problem, shot_list, tracePath)
-
-
-
-def initialize(rank, xml):
-    """ Grouping of pygeox initializations
-
-    Return
-    ------
-    problem :
-        The pygeosx ProblemManager
-
-    Notes
-    -----
-    Need to give MPI rank at this point for initialization.
-    Conflict with first initialization to get the list of shots
-    """
-
-    problem = pygeosx.initialize(rank, xml)
-    pygeosx.apply_initial_conditions()
-
-    return problem
-
-
-
-def do_shots(rank, problem, shot_list, tracePath):
+def acoustic_shots(rank, problem, shot_list, tracePath):
     """ Given a GEOSX problem, a list of shots, and a time step,
         solve wave eqn with different configurations
 
@@ -134,7 +96,7 @@ def do_shots(rank, problem, shot_list, tracePath):
         #Save pressure
         if cycle[0] < (ishot+1) * maxCycle:
             pressure_at_receivers[cycle[0] - ishot * maxCycle, :] = pressure_geosx.to_numpy()[:]
-            
+
            # print("rank = " + str(rank) + "   pressure = " +str(pressure_geosx.to_numpy()[100]))
         else:
             pressure_at_receivers[maxCycle, :] = pressure_geosx.to_numpy()[:]
@@ -165,11 +127,11 @@ def do_shots(rank, problem, shot_list, tracePath):
                 #Set new receivers and source positions in GEOSX
                 src_pos          = shot_list[ishot].getSource().getCoord()
                 rcv_pos_list     = shot_list[ishot].getReceiverSet().getSetCoord()
-                
+
                 src_pos_geosx.to_numpy()[0] = src_pos
                 rcv_pos_geosx.resize(len(rcv_pos_list))
                 rcv_pos_geosx.to_numpy()[:] = rcv_pos_list[:]
-                
+
                 #Update shot flag
                 shot_list[ishot].flagUpdate("In Progress")
 
