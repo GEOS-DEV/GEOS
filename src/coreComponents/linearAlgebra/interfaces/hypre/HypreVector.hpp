@@ -32,14 +32,8 @@
 /// IJVector struct forward declaration
 extern "C" struct hypre_IJVector_struct;
 
-/// IJVector pointer alias
-using HYPRE_IJVector = hypre_IJVector_struct *;
-
 /// ParVector struct forward definition
 extern "C" struct hypre_ParVector_struct;
-
-/// ParVector pointer alias
-using HYPRE_ParVector = hypre_ParVector_struct *;
 
 ///@}
 
@@ -55,6 +49,12 @@ namespace geosx
 class HypreVector final : private VectorBase< HypreVector >
 {
 public:
+
+  /// IJVector pointer alias
+  using HYPRE_IJVector = hypre_IJVector_struct *;
+
+  /// ParVector pointer alias
+  using HYPRE_ParVector = hypre_ParVector_struct *;
 
   /**
    * @name Constructor/Destructor Methods
@@ -252,6 +252,14 @@ public:
   HYPRE_IJVector const & unwrappedIJ() const;
 
 private:
+
+#ifdef GEOSX_USE_HYPRE_CUDA
+  /// Execution policy for operations on hypre data
+  using execPolicy = parallelDevicePolicy<>;
+#else
+  /// Execution policy for operations on hypre data
+  using execPolicy = parallelHostPolicy;
+#endif
 
   /**
    * Pointer to underlying HYPRE_IJVector type.

@@ -15,7 +15,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
 
-#include "common/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
+#include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
 
 namespace geosx

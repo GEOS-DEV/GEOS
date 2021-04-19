@@ -16,7 +16,7 @@
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_VEM_HPP_
 
 #include "physicsSolvers/simplePDE/LaplaceBase.hpp"  // a base class shared by all Laplace solvers
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
+#include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
 namespace geosx
 {

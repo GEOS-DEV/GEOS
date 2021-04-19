@@ -19,8 +19,8 @@
 #include "LaplaceBase.hpp"
 
 #include "dataRepository/InputFlags.hpp"
-#include "managers/GeosxState.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {

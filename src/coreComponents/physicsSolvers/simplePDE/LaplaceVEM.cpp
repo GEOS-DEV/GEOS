@@ -241,7 +241,7 @@ void LaplaceVEM::applyDirichletBCImplicit( real64 const time,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs )
 {
-  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply( time,
                    domain,

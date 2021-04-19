@@ -16,16 +16,16 @@
  * @file TimeHistHDF.hpp
  */
 
-#ifndef GEOSX_HDFFILE_HPP_
-#define GEOSX_HDFFILE_HPP_
+#ifndef GEOSX_FILEIO_TIMEHISTORY_HDFFILE_HPP_
+#define GEOSX_FILEIO_TIMEHISTORY_HDFFILE_HPP_
 
 #include "LvArray/src/Array.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
-#include "managers/TimeHistory/HistoryDataSpec.hpp"
-#include "managers/TimeHistory/HistoryIO.hpp"
+#include "dataRepository/HistoryDataSpec.hpp"
+#include "HistoryIO.hpp"
 #include <hdf5.h>
 
 
