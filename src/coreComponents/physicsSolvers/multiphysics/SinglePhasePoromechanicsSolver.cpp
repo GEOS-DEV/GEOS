@@ -45,7 +45,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
-                                      Group * const parent ):
+                                                                Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
@@ -87,7 +87,7 @@ void SinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
 }
 
 void SinglePhasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
-                                   DofManager & dofManager ) const
+                                                DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
   m_solidSolver->setupDofs( domain, dofManager );
@@ -99,11 +99,11 @@ void SinglePhasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
 }
 
 void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
-                                     DofManager & dofManager,
-                                     CRSMatrix< real64, globalIndex > & localMatrix,
-                                     array1d< real64 > & localRhs,
-                                     array1d< real64 > & localSolution,
-                                     bool const setSparsity )
+                                                  DofManager & dofManager,
+                                                  CRSMatrix< real64, globalIndex > & localMatrix,
+                                                  array1d< real64 > & localRhs,
+                                                  array1d< real64 > & localSolution,
+                                                  bool const setSparsity )
 {
   if( m_precond )
   {
@@ -120,8 +120,8 @@ void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
 }
 
 void SinglePhasePoromechanicsSolver::implicitStepSetup( real64 const & time_n,
-                                           real64 const & dt,
-                                           DomainPartition & domain )
+                                                        real64 const & dt,
+                                                        DomainPartition & domain )
 {
   m_flowSolver->implicitStepSetup( time_n, dt, domain );
   m_solidSolver->implicitStepSetup( time_n, dt, domain );
@@ -146,8 +146,8 @@ void SinglePhasePoromechanicsSolver::implicitStepSetup( real64 const & time_n,
 }
 
 void SinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & time_n,
-                                              real64 const & dt,
-                                              DomainPartition & domain )
+                                                           real64 const & dt,
+                                                           DomainPartition & domain )
 {
   m_solidSolver->implicitStepComplete( time_n, dt, domain );
   m_flowSolver->implicitStepComplete( time_n, dt, domain );
@@ -213,9 +213,9 @@ void SinglePhasePoromechanicsSolver::resetStateToBeginningOfStep( DomainPartitio
 }
 
 real64 SinglePhasePoromechanicsSolver::solverStep( real64 const & time_n,
-                                      real64 const & dt,
-                                      int const cycleNumber,
-                                      DomainPartition & domain )
+                                                   real64 const & dt,
+                                                   int const cycleNumber,
+                                                   DomainPartition & domain )
 {
   real64 dt_return = dt;
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
@@ -323,11 +323,11 @@ void SinglePhasePoromechanicsSolver::updateDeformationForCoupling( DomainPartiti
 }
 
 void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
-                                        real64 const dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs )
+                                                     real64 const dt,
+                                                     DomainPartition & domain,
+                                                     DofManager const & dofManager,
+                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     arrayView1d< real64 > const & localRhs )
 {
 
   GEOSX_MARK_FUNCTION;
@@ -351,16 +351,16 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                     constitutive::PoroElasticBase,
                                     CellElementSubRegion,
                                     PoromechanicsKernels::SinglePhase >( mesh,
-                                                                       targetRegionNames(),
-                                                                       this->getDiscretizationName(),
-                                                                       m_solidSolver->solidMaterialNames(),
-                                                                       dispDofNumber,
-                                                                       pDofKey,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs,
-                                                                       gravityVectorData,
-                                                                       m_flowSolver->fluidModelNames() );
+                                                                         targetRegionNames(),
+                                                                         this->getDiscretizationName(),
+                                                                         m_solidSolver->solidMaterialNames(),
+                                                                         dispDofNumber,
+                                                                         pDofKey,
+                                                                         dofManager.rankOffset(),
+                                                                         localMatrix,
+                                                                         localRhs,
+                                                                         gravityVectorData,
+                                                                         m_flowSolver->fluidModelNames() );
 
   // Face-based contributions
   m_flowSolver->assembleFluxTerms( time_n, dt,
@@ -372,9 +372,9 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 }
 
 void SinglePhasePoromechanicsSolver::assembleCouplingTerms( DomainPartition const & domain,
-                                               DofManager const & dofManager,
-                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                               arrayView1d< real64 > const & localRhs )
+                                                            DofManager const & dofManager,
+                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                            arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -499,11 +499,11 @@ void SinglePhasePoromechanicsSolver::assembleCouplingTerms( DomainPartition cons
 }
 
 void SinglePhasePoromechanicsSolver::applyBoundaryConditions( real64 const time_n,
-                                                 real64 const dt,
-                                                 DomainPartition & domain,
-                                                 DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs )
+                                                              real64 const dt,
+                                                              DomainPartition & domain,
+                                                              DofManager const & dofManager,
+                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                              arrayView1d< real64 > const & localRhs )
 {
   m_solidSolver->applyBoundaryConditions( time_n, dt,
                                           domain,
@@ -519,8 +519,8 @@ void SinglePhasePoromechanicsSolver::applyBoundaryConditions( real64 const time_
 }
 
 real64 SinglePhasePoromechanicsSolver::calculateResidualNorm( DomainPartition const & domain,
-                                                 DofManager const & dofManager,
-                                                 arrayView1d< real64 const > const & localRhs )
+                                                              DofManager const & dofManager,
+                                                              arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of momentum balance residual equations
   real64 const momementumResidualNorm = m_solidSolver->calculateResidualNorm( domain, dofManager, localRhs );
@@ -566,18 +566,18 @@ void SinglePhasePoromechanicsSolver::createPreconditioner()
 }
 
 void SinglePhasePoromechanicsSolver::solveSystem( DofManager const & dofManager,
-                                     ParallelMatrix & matrix,
-                                     ParallelVector & rhs,
-                                     ParallelVector & solution )
+                                                  ParallelMatrix & matrix,
+                                                  ParallelVector & rhs,
+                                                  ParallelVector & solution )
 {
   solution.zero();
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 }
 
 void SinglePhasePoromechanicsSolver::applySystemSolution( DofManager const & dofManager,
-                                             arrayView1d< real64 const > const & localSolution,
-                                             real64 const scalingFactor,
-                                             DomainPartition & domain )
+                                                          arrayView1d< real64 const > const & localSolution,
+                                                          real64 const scalingFactor,
+                                                          DomainPartition & domain )
 {
   // update displacement field
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
@@ -586,9 +586,9 @@ void SinglePhasePoromechanicsSolver::applySystemSolution( DofManager const & dof
 }
 
 real64 SinglePhasePoromechanicsSolver::splitOperatorStep( real64 const & time_n,
-                                             real64 const & dt,
-                                             integer const cycleNumber,
-                                             DomainPartition & domain )
+                                                          real64 const & dt,
+                                                          integer const cycleNumber,
+                                                          DomainPartition & domain )
 {
   real64 dtReturn = dt;
   real64 dtReturnTemporary;

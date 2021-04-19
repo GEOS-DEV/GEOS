@@ -34,7 +34,7 @@ class MultiphasePoromechanicsSolver : public SolverBase
 {
 public:
   MultiphasePoromechanicsSolver( const string & name,
-                               Group * const parent );
+                                 Group * const parent );
   ~MultiphasePoromechanicsSolver() override;
 
   /**
