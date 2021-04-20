@@ -117,14 +117,15 @@ public:
    * @brief Returns the node to elements mappings.
    * @return A one to many relationship.
    */
-  std::map< localIndex, std::vector< localIndex > > getNodeToElem() const;
-
+  std::map< localIndex, std::vector< localIndex > > getNodeToElements() const;
 
   /**
    * @brief Returns the face to elements mappings.
    * @return A one to many relationship.
+   *
+   * In case the face only belongs to one single element, the second value of the table is -1.
    */
-  ArrayOfArrays< localIndex > getFaceToElem() const;
+  array2d< localIndex > getFaceToElements() const;
 
   /**
    * @brief Returns the face to nodes mappings.
@@ -173,9 +174,9 @@ private:
 
   localIndex numCellBlocks() const;
 
-  private:
+private:
   ArrayOfArrays< localIndex >  m_faceToNodes;
-  ArrayOfArrays< localIndex >  m_faceToElems;
+  array2d< localIndex >  m_faceToElements;
 };
 }
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

@@ -168,7 +168,7 @@ void NodeManager::setFaceMaps( FaceManager const & faceManager )
 
 void NodeManager::setElementMaps( CellBlockManager const & cellBlockManager, ElementRegionManager const & elementRegionManager )
 {
-  const std::map< localIndex, std::vector< localIndex > > nodeToElem = cellBlockManager.getNodeToElem();
+  const std::map< localIndex, std::vector< localIndex > > nodeToElem = cellBlockManager.getNodeToElements();
   const localIndex totalNodeElems = cellBlockManager.numNodes();
 
   GEOSX_MARK_FUNCTION;

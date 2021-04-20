@@ -43,6 +43,7 @@ FaceManager::FaceManager( string const &, Group * const parent ):
   this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &m_toElements.m_toElementSubRegion ).
     setApplyDefaultValue( -1 );
 
+  // Do we really want this to be resized and accessed by anyone?
   this->registerWrapper( viewKeyStruct::elementListString(), &m_toElements.m_toElementIndex ).
     setApplyDefaultValue( -1 );
 
@@ -304,8 +305,7 @@ void addInteriorFace( ElementRegionManager & elementManager,
                       FaceBuilder const & fb0,
                       FaceBuilder const & fb1,
                       arrayView2d< localIndex > const & elemRegionList,
-                      arrayView2d< localIndex > const & elemSubRegionList,
-                      arrayView2d< localIndex > const & elemList )
+                      arrayView2d< localIndex > const & elemSubRegionList )
 {
   // Handle the first element.
   {
@@ -323,7 +323,6 @@ void addInteriorFace( ElementRegionManager & elementManager,
     // Populate the face to element maps.
     elemRegionList( faceID, 0 ) = er;
     elemSubRegionList( faceID, 0 ) = esr;
-    elemList( faceID, 0 ) = k;
   }
 
   // Handle the second element.
@@ -338,7 +337,6 @@ void addInteriorFace( ElementRegionManager & elementManager,
 
     elemRegionList( faceID, 1 ) = er;
     elemSubRegionList( faceID, 1 ) = esr;
-    elemList( faceID, 1 ) = k;
   }
 }
 
@@ -356,8 +354,7 @@ void addBoundaryFace( ElementRegionManager & elementManager,
                       localIndex const faceID,
                       FaceBuilder const & fb,
                       arrayView2d< localIndex > const & elemRegionList,
-                      arrayView2d< localIndex > const & elemSubRegionList,
-                      arrayView2d< localIndex > const & elemList )
+                      arrayView2d< localIndex > const & elemSubRegionList )
 {
   localIndex const er = fb.er;
   localIndex const esr = fb.esr;
@@ -373,11 +370,9 @@ void addBoundaryFace( ElementRegionManager & elementManager,
   // Populate the face to element maps.
   elemRegionList( faceID, 0 ) = er;
   elemSubRegionList( faceID, 0 ) = esr;
-  elemList( faceID, 0 ) = k;
 
   elemRegionList( faceID, 1 ) = -1;
   elemSubRegionList( faceID, 1 ) = -1;
-  elemList( faceID, 1 ) = -1;
 }
 
 /**
@@ -394,8 +389,7 @@ void populateMaps( ElementRegionManager & elementManager,
                    ArrayOfArraysView< FaceBuilder const > const & facesByLowestNode,
                    arrayView1d< localIndex const > const & uniqueFaceOffsets,
                    arrayView2d< localIndex > const & elemRegionList,
-                   arrayView2d< localIndex > const & elemSubRegionList,
-                   arrayView2d< localIndex > const & elemList )
+                   arrayView2d< localIndex > const & elemSubRegionList )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -404,7 +398,6 @@ void populateMaps( ElementRegionManager & elementManager,
   GEOSX_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
   GEOSX_ERROR_IF_NE( numUniqueFaces, elemRegionList.size( 0 ) );
   GEOSX_ERROR_IF_NE( numUniqueFaces, elemSubRegionList.size( 0 ) );
-  GEOSX_ERROR_IF_NE( numUniqueFaces, elemList.size( 0 ) );
 
   // loop over all the nodes.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
@@ -419,14 +412,13 @@ void populateMaps( ElementRegionManager & elementManager,
       // If two subsequent FaceBuilders compare equal then they describe an interior face.
       if( facesByLowestNode( nodeID, j ) == facesByLowestNode( nodeID, j + 1 ) )
       {
-        addInteriorFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), facesByLowestNode( nodeID, j + 1 ), elemRegionList, elemSubRegionList,
-                         elemList );
+        addInteriorFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), facesByLowestNode( nodeID, j + 1 ), elemRegionList, elemSubRegionList);
         ++j;
       }
       // Otherwise it's a boundary face.
       else
       {
-        addBoundaryFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), elemRegionList, elemSubRegionList, elemList );
+        addBoundaryFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), elemRegionList, elemSubRegionList );
       }
 
       ++curFaceID;
@@ -434,7 +426,7 @@ void populateMaps( ElementRegionManager & elementManager,
 
     if( j == numFaces - 1 )
     {
-      addBoundaryFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), elemRegionList, elemSubRegionList, elemList );
+      addBoundaryFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), elemRegionList, elemSubRegionList );
     }
   } );
 }
@@ -446,6 +438,7 @@ void FaceManager::buildFaces( NodeManager & nodeManager, ElementRegionManager & 
 
   m_toElements.setElementRegionManager( elementManager );
 
+  // TODO numNodes and numFaces shall be provided by CellBlockManager
   localIndex const numNodes = nodeManager.size();
 
   ArrayOfArrays< FaceBuilder > facesByLowestNode( numNodes, 2 * maxFacesPerNode() );
@@ -460,9 +453,9 @@ void FaceManager::buildFaces( NodeManager & nodeManager, ElementRegionManager & 
                 facesByLowestNode.toViewConst(),
                 uniqueFaceOffsets,
                 m_toElements.m_toElementRegion,
-                m_toElements.m_toElementSubRegion,
-                m_toElements.m_toElementIndex );
+                m_toElements.m_toElementSubRegion );
 
+  m_toElements.m_toElementIndex = cellBlockManager.getFaceToElements(); // TODO do better
   nodeList().base() = cellBlockManager.getFaceToNodes(); // TODO
 
   // First create the sets
