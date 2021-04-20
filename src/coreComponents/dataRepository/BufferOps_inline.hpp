@@ -790,7 +790,6 @@ localIndex Pack( buffer_unit_type * & buffer,
                  arrayView1d< localIndex const > const & packList,
                  arraySlice1d< globalIndex const > const & localToGlobal )
 {
-
   localIndex length = 0;
   for( auto a : packList )
   {
@@ -799,7 +798,7 @@ localIndex Pack( buffer_unit_type * & buffer,
 
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( localIndex a=0; a<length; ++a )
+  for( localIndex a=0; a< packList.size(); ++a )
   {
     if( var.count( packList[ a ] ) )
     {

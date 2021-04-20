@@ -87,7 +87,7 @@ void EmbeddedSurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     EmbeddedSurfaceNodeManager & nodeManager = meshLevel.getEmbSurfNodeManager();
 
-    nodeManager.registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    nodeManager.registerExtrinsicData< extrinsicMeshData::ParentEdgeIndex >( this->getName() );
   } );
 }
 
@@ -253,8 +253,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
                                                                           domain.getNeighbors(),
                                                                           this->m_fractureRegionName );
 
-
-
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
   // Populate EdgeManager for embedded surfaces.
@@ -341,7 +339,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
 
   arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
 
-  forAll< serialPolicy >( embeddedSurfaceSubRegion.size(), [=, &embeddedSurfaceSubRegion, &globalIndexOffset, &elemManager] ( localIndex const ei )
+  forAll< serialPolicy >( embeddedSurfaceSubRegion.size(), [&, elemLocalToGlobal] ( localIndex const ei )
   {
     elemLocalToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex() + 1;
     embeddedSurfaceSubRegion.updateGlobalToLocalMap( ei );
@@ -390,22 +388,22 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
 
     ArrayOfArraysView< localIndex const > const cellToEmbSurf = subRegion.embeddedSurfacesList().toViewConst();
 
-    forAll<serialPolicy>( fracturedElements.size(), [&,
-                                                     fracturedElements,
-                                                     cellToEmbSurf ] (localIndex const ei)
+    forAll< serialPolicy >( fracturedElements.size(), [&,
+                                                       fracturedElements,
+                                                       cellToEmbSurf ] ( localIndex const ei )
     {
       localIndex const cellIndex    = fracturedElements[ei];
       localIndex const embSurfIndex = cellToEmbSurf[cellIndex][0];
       setGroupCell.forWrappers< SortedArray< localIndex > >( [&]( auto const & wrapper )
       {
         SortedArrayView< const localIndex > const & targetSetCell = wrapper.reference();
-        targetSetCell.move(LvArray::MemorySpace::CPU);
+        targetSetCell.move( LvArray::MemorySpace::CPU );
 
         SortedArray< localIndex > & targetSetEmbSurf =
-        setGroupEmbSurf.getWrapper< SortedArray< localIndex > >( wrapper.getName() ).reference();
+          setGroupEmbSurf.getWrapper< SortedArray< localIndex > >( wrapper.getName() ).reference();
         if( targetSetCell.contains( cellIndex ) )
         {
-                targetSetEmbSurf.insert( embSurfIndex );
+          targetSetEmbSurf.insert( embSurfIndex );
         }
       } );
     } );
