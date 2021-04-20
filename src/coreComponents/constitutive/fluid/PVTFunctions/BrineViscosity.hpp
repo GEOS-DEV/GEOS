@@ -34,12 +34,10 @@ class BrineViscosityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  BrineViscosityUpdate( arrayView1d< string const > const & componentNames,
-                        arrayView1d< real64 const > const & componentMolarWeight,
+  BrineViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                         real64 const & coef0,
                         real64 const & coef1 )
-    : PVTFunctionBaseUpdate( componentNames,
-                             componentMolarWeight ),
+    : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_coef0( coef0 ),
     m_coef1( coef1 )
   {}
@@ -68,7 +66,7 @@ public:
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
                         arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass = 0 ) const override;
+                        bool useMass ) const override;
 
 protected:
 
