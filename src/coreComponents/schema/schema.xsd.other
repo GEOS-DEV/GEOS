@@ -1344,6 +1344,7 @@
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="edgeManager" type="edgeManagerType" />
 			<xsd:element name="embeddedSurfacesEdgeManager" type="embeddedSurfacesEdgeManagerType" />
+			<xsd:element name="embeddedSurfacesNodeManager" type="embeddedSurfacesNodeManagerType" />
 			<xsd:element name="FaceManager" type="FaceManagerType" />
 			<xsd:element name="finiteVolumeStencils" type="finiteVolumeStencilsType" />
 			<xsd:element name="nodeManager" type="nodeManagerType" />
@@ -1439,6 +1440,36 @@
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_ChaiBuffer&gt; &gt;" />
 	</xsd:complexType>
+	<xsd:complexType name="embeddedSurfacesNodeManagerType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--edgeList => (no description available)-->
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<!--elemList => (no description available)-->
+		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<!--elemRegionList => (no description available)-->
+		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<!--elemSubRegionList => (no description available)-->
+		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--parentEdgeGlobalIndex => (no description available)-->
+		<xsd:attribute name="parentEdgeGlobalIndex" type="globalIndex_array" />
+		<!--parentIndex => Index of parent within the mesh object it is registered on. => EmbeddedSurfaceGenerator-->
+		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<!--referencePosition => (no description available)-->
+		<xsd:attribute name="referencePosition" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="FaceManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
@@ -1516,8 +1547,6 @@
 		</xsd:choice>
 		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Acceleration" type="real64_array2d" />
-		<!--EmbSurfNodesPosition => (no description available)-->
-		<xsd:attribute name="EmbSurfNodesPosition" type="real64_array2d" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="IncrementalDisplacement" type="real64_array2d" />
 		<!--Mass => An array that holds the mass on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
