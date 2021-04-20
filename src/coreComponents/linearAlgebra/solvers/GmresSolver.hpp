@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CGsolver.hpp
+ * @file GmresSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_
+#ifndef GEOSX_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
+#define GEOSX_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
@@ -25,8 +25,8 @@ namespace geosx
 {
 
 /**
- * @brief This class implements Conjugate Gradient method
- *        for monolithic and block linear operators
+ * @brief This class implements Generalized Minimized RESidual method
+ *        (right-preconditioned) for monolithic and block linear operators.
  * @tparam VECTOR type of vectors this solver operates on.
  * @note  The notation is consistent with "Iterative Methods for
  *        Linear and Non-Linear Equations" from C.T. Kelley (1995)
@@ -34,14 +34,14 @@ namespace geosx
  *        from Y. Saad (2003).
  */
 template< typename VECTOR >
-class CGsolver : public KrylovSolver< VECTOR >
+class GmresSolver : public KrylovSolver< VECTOR >
 {
 public:
 
-  /// Alias for base type
+  /// Alias for the base type
   using Base = KrylovSolver< VECTOR >;
 
-  /// Alias for template parameter
+  /// Alias for the vector type
   using Vector = typename Base::Vector;
 
   /**
@@ -50,23 +50,19 @@ public:
   ///@{
 
   /**
-   * @brief Constructor.
-   * @param [in] A reference to the system matrix.
-   * @param [in] M reference to the preconditioning operator.
-   * @param [in] tolerance relative residual norm reduction tolerance.
-   * @param [in] maxIterations maximum number of Krylov iterations.
-   * @param [in] verbosity solver verbosity level.
+   * @brief Solver object constructor.
+   * @param[in] params  parameters for the solver
+   * @param[in] matrix  reference to the system matrix
+   * @param[in] precond reference to the preconditioning operator
    */
-  CGsolver( LinearOperator< Vector > const & A,
-            LinearOperator< Vector > const & M,
-            real64 const tolerance,
-            localIndex const maxIterations,
-            integer const verbosity = 0 );
+  GmresSolver( LinearSolverParameters params,
+               LinearOperator< Vector > const & matrix,
+               LinearOperator< Vector > const & precond );
 
   /**
    * @brief Virtual destructor.
    */
-  virtual ~CGsolver() override;
+  virtual ~GmresSolver() override;
 
   ///@}
 
@@ -84,7 +80,7 @@ public:
 
   virtual string methodName() const override final
   {
-    return "CG";
+    return "GMRES";
   };
 
   ///@}
@@ -94,19 +90,22 @@ protected:
   /// Alias for vector type that can be used for temporaries
   using VectorTemp = typename KrylovSolver< VECTOR >::VectorTemp;
 
+  using Base::m_params;
   using Base::m_operator;
   using Base::m_precond;
-  using Base::m_tolerance;
-  using Base::m_maxIterations;
-  using Base::m_logLevel;
-  using Base::m_result;
   using Base::m_residualNorms;
+  using Base::m_result;
   using Base::createTempVector;
   using Base::logProgress;
   using Base::logResult;
 
+  /// Storage for Krylov subspace vectors
+  array1d< VectorTemp > m_kspace;
+
+  /// Flag indicating whether kspace vectors have been created
+  bool m_kspaceInitialized;
 };
 
-} // namespace GEOSX
+} // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_SOLVERS_CGSOLVER_HPP_*/
+#endif //GEOSX_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_

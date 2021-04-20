@@ -90,7 +90,7 @@
 /// CMake option CMAKE_BUILD_TYPE
 #cmakedefine GEOSX_CMAKE_BUILD_TYPE @GEOSX_CMAKE_BUILD_TYPE@
 
-/// The type that localIndex will be alaised to.
+/// The type that localIndex will be aliased to.
 #define GEOSX_LOCALINDEX_TYPE @GEOSX_LOCALINDEX_TYPE@
 
 /// An integer flag representing the type that localIndex will be aliased to.

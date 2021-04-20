@@ -1163,12 +1163,12 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
                          { { viewKeyStruct::tractionString(), 0, 3 } },
                          std::move( tracPrecond ) );
 
-    if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
+    if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
     {
       if( m_solidSolver->getRigidBodyModes().empty() )
       {
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-        LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+        LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
                                                    m_solidSolver->getRigidBodyModes() );

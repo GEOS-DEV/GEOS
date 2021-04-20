@@ -17,23 +17,26 @@
  */
 
 #include "HypreInterface.hpp"
+
+#include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
+#include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
+
 #include "HYPRE_utilities.h"
 #include "_hypre_utilities.h"
 #include "_hypre_utilities.hpp"
 
-#include "HypreMatrix.hpp"
-
 namespace geosx
 {
 
-void HypreInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ),
-                                 char * * & GEOSX_UNUSED_PARAM( argv ) )
+void HypreInterface::initialize()
 {
   HYPRE_Init();
 #if defined(GEOSX_USE_HYPRE_CUDA)
-  hypre_HandleDefaultExecPolicy( hypre_handle()) = HYPRE_EXEC_DEVICE;
-  hypre_HandleSpgemmUseCusparse( hypre_handle()) = 0;
+  hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
+  hypre_HandleSpgemmUseCusparse( hypre_handle() ) = 0;
 #endif
 }
 
@@ -42,17 +45,37 @@ void HypreInterface::finalize()
   HYPRE_Finalize();
 }
 
+std::unique_ptr< LinearSolverBase< HypreInterface > >
+HypreInterface::createSolver( LinearSolverParameters params )
+{
+  if( params.solverType == LinearSolverParameters::SolverType::direct )
+  {
+    if( params.direct.parallel )
+    {
+      return std::make_unique< SuperLUDist< HypreInterface > >( std::move( params ) );
+    }
+    else
+    {
+      return std::make_unique< SuiteSparse< HypreInterface > >( std::move( params ) );
+    }
+  }
+  else
+  {
+    return std::make_unique< HypreSolver >( std::move( params ) );
+  }
+}
+
 std::unique_ptr< PreconditionerBase< HypreInterface > >
 geosx::HypreInterface::createPreconditioner( LinearSolverParameters params )
 {
-  return std::make_unique< HyprePreconditioner >( params );
+  return std::make_unique< HyprePreconditioner >( std::move( params ) );
 }
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
 geosx::HypreInterface::createPreconditioner( LinearSolverParameters params,
                                              array1d< HypreVector > const & nearNullKernel )
 {
-  return std::make_unique< HyprePreconditioner >( params, nearNullKernel );
+  return std::make_unique< HyprePreconditioner >( std::move( params ), nearNullKernel );
 }
 
 }

@@ -16,8 +16,11 @@
  * @file testDofManagerUtils.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP
-#define GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP
+#ifndef GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_
+#define GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_
+
+#include "common/DataTypes.hpp"
+#include "mesh/MeshLevel.hpp"
 
 #include <gtest/gtest.h>
 
@@ -492,8 +495,7 @@ void makeSparsityFlux( MeshLevel const * const mesh,
   } );
 }
 
-}
+} // namespace testing
+} // namespace geosx
 
-}
-
-#endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP
+#endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_

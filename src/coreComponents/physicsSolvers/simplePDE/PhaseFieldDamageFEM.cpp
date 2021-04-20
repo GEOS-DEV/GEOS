@@ -229,7 +229,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
   localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
 
   finiteElement::
-    regionBasedKernelApplication< serialPolicy,
+    regionBasedKernelApplication< parallelDevicePolicy<>,
                                   constitutive::DamageBase,
                                   CellElementSubRegion,
                                   PhaseFieldDamageKernel >( mesh,

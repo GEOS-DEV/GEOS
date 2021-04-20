@@ -3,7 +3,6 @@
 #
 
 set( gtest_geosx_tests
-     testStencilCollection.cpp
      testMimeticInnerProducts.cpp
    )
 
