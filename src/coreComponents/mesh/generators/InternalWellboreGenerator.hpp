@@ -51,14 +51,11 @@ public:
 
 protected:
 
-  virtual void reduceNumNodesForPeriodicBoundary( integer ( &numNodes )[3] ) override final;
+  virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+                                                  integer ( &numNodes )[3] ) override final;
 
-  virtual void setNodeGlobalIndicesOnPeriodicBoundary( int ( & index )[3],
-                                                       real64 ( &minExtent )[3],
-                                                       real64 ( &maxExtent )[3],
-                                                       arraySlice1d< real64 const,
-                                                                     nodes::REFERENCE_POSITION_USD-1 > const & X,
-                                                       real64 const tol ) override final;
+  virtual void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+                                                       int ( & index )[3] ) override final;
 
   virtual void setConnectivityForPeriodicBoundaries( integer const i,
                                                      integer const j,

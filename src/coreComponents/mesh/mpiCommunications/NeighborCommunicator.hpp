@@ -109,6 +109,23 @@ public:
 
 
   template< typename T >
+  void mpiISendReceiveSizes( array1d< T > const & sendBuffer,
+                             MPI_Request & sendReq,
+                             MPI_Request & recvReq,
+                             int const commID,
+                             MPI_Comm mpiComm );
+
+  template< typename T >
+  void mpiISendReceiveData( array1d< T > const & sendBuffer,
+                            MPI_Request & sendReq,
+                            array1d< T > & recvBuffer,
+                            MPI_Request & recvReq,
+                            int const commID,
+                            MPI_Comm mpiComm );
+
+
+
+  template< typename T >
   void mpiISendReceive( array1d< T > const & sendBuffer,
                         array1d< T > & recvBuffer,
                         int const commID,
@@ -383,6 +400,44 @@ void NeighborCommunicator::mpiISendReceive( array1d< T > const & sendBuffer,
                    mpiComm );
 }
 
+template< typename T >
+void NeighborCommunicator::mpiISendReceiveSizes( array1d< T > const & sendBuffer,
+                                            MPI_Request & sendReq,
+                                            MPI_Request & recvReq,
+                                            int const commID,
+                                            MPI_Comm mpiComm )
+{
+  m_sendBufferSize[commID] = LvArray::integerConversion< int >( sendBuffer.size());
+
+  mpiISendReceive( &m_sendBufferSize[commID],
+                   1,
+                   sendReq,
+                   &m_receiveBufferSize[commID],
+                   1,
+                   recvReq,
+                   commID,
+                   mpiComm );
+}
+
+template< typename T >
+void NeighborCommunicator::mpiISendReceiveData( array1d< T > const & sendBuffer,
+                                            MPI_Request & sendReq,
+                                            array1d< T > & recvBuffer,
+                                            MPI_Request & recvReq,
+                                            int const commID,
+                                            MPI_Comm mpiComm )
+{
+  recvBuffer.resize( m_receiveBufferSize[commID] );
+
+  mpiISendReceive( sendBuffer.data(),
+                   m_sendBufferSize[commID],
+                   sendReq,
+                   recvBuffer.data(),
+                   m_receiveBufferSize[commID],
+                   recvReq,
+                   commID,
+                   mpiComm );
+}
 
 } /* namespace geosx */
 

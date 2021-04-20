@@ -30,10 +30,10 @@
       name="mesh1"
       elementTypes="{ C3D8, C3D8, C3D8 }"
       radius="{ 0.1, 0.11, 0.15, 2.0 }"
-      theta="{ 0, 90 }"
+      theta="{ 0, 360 }"
       zCoords="{ 0, 1 }"
       nr="{ 2, 2, 5 }"
-      nt="{ 4 }"
+      nt="{ 16 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 1.0 } }"
@@ -45,7 +45,7 @@
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
-    maxTime="5.0">
+    maxTime="4.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <!-- SPHINX_Execution -->
@@ -64,11 +64,11 @@
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e99"
+      timeFrequency="2"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -131,7 +131,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ tpos, xpos }"/>
+      setNames="{ xpos, xpos }"/>
 
     <FieldSpecification
       name="yConstraint"
@@ -139,7 +139,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ tneg, ypos }"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -176,7 +176,7 @@
       plotFileRoot="plot"
       childDirectory="sub"/>
 
-    <!--Restart
-      name="restartOutput"/-->
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>

@@ -273,7 +273,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   CellBlockManager & elementManager = domain.getGroup< CellBlockManager >( keys::cellManager );
   Group & nodeSets = nodeManager.sets();
 
-  PartitionBase & partition = domain.getReference< PartitionBase >( keys::partitionManager );
+  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -451,7 +451,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   {
     numNodesInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 2;
   }
-  reduceNumNodesForPeriodicBoundary( numNodesInDir );
+  reduceNumNodesForPeriodicBoundary( partition, numNodesInDir );
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   nodeManager.resize( numNodes );
@@ -467,23 +467,20 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       {
         for( int k = 0; k < numNodesInDir[2]; ++k )
         {
-          int index[3] = { i, j, k };
+          int globalIJK[3] = { i, j, k };
 
           for( int a = 0; a < m_dim; ++a )
           {
-            index[a] += firstElemIndexInPartition[a];
+            globalIJK[a] += firstElemIndexInPartition[a];
           }
 
-          getNodePosition( index, m_trianglePattern, X[localNodeIndex] );
+          getNodePosition( globalIJK, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          setNodeGlobalIndicesOnPeriodicBoundary( index,
-                                                  m_min,
-                                                  m_max,
-                                                  X[localNodeIndex],
-                                                  m_coordinatePrecision );
+          setNodeGlobalIndicesOnPeriodicBoundary( partition,
+                                                  globalIJK );
 
-          nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( index );
+          nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( globalIJK );
 
           // Cartesian-specific nodesets
           if( isCartesian() )
@@ -555,7 +552,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
         {
           CellBlock & elemRegion =  elementManager.getRegion( m_regionNames[ regionOffset ] );
           int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion.numNodesPerElement());
-          array1d< integer > nodeIDInBox( 8 );
+          integer nodeIDInBox[ 8 ];
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion.nodeList();
           arrayView1d< globalIndex > const & elemLocalToGlobal = elemRegion.localToGlobalMap();
@@ -571,14 +568,14 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
             {
               for( int k = 0; k < numElemsInDirForBlock[2]; ++k )
               {
-                int index[3] =
+                int globalIJK[3] =
                 { i + firstElemIndexForBlockInPartition[0][iblock],
                   j + firstElemIndexForBlockInPartition[1][jblock],
                   k + firstElemIndexForBlockInPartition[2][kblock] };
 
-                const localIndex firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( index[0] - firstElemIndexInPartition[0] )
-                                                  + numNodesInDir[2] * ( index[1] - firstElemIndexInPartition[1] )
-                                                  + ( index[2] - firstElemIndexInPartition[2] );
+                const localIndex firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( globalIJK[0] - firstElemIndexInPartition[0] )
+                                                  + numNodesInDir[2] * ( globalIJK[1] - firstElemIndexInPartition[1] )
+                                                  + ( globalIJK[2] - firstElemIndexInPartition[2] );
                 localIndex nodeOfBox[8];
 
                 if( m_elementType[iR] == "CPE4" || m_elementType[iR] == "STRI" )
@@ -602,7 +599,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
                   //               7___________________ 6
                   //               /                   /|
-                  //              /                   / |f
+                  //              /                   / |
                   //             /                   /  |
                   //           4/__________________5/   |
                   //            |                   |   |
@@ -621,20 +618,23 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
                 // Fix local connectivity for single theta (y) partition (radial meshes only)
 
-                setConnectivityForPeriodicBoundaries( i, j, k,
-                                                      iblock, jblock, kblock,
-                                                      index,
-                                                      numElemsInDirForBlock,
-                                                      numNodesInDir,
-                                                      firstElemIndexInPartition,
-                                                      nodeOfBox );
+//                setConnectivityForPeriodicBoundaries( i, j, k,
+//                                                      iblock, jblock, kblock,
+//                                                      globalIJK,
+//                                                      numElemsInDirForBlock,
+//                                                      numNodesInDir,
+//                                                      firstElemIndexInPartition,
+//                                                      nodeOfBox );
 
                 for( int iEle = 0; iEle < m_numElePerBox[iR]; ++iEle )
                 {
                   localIndex & localElemIndex = localElemIndexInRegion[ m_regionNames[ regionOffset ] ];
-                  elemLocalToGlobal[localElemIndex] = elemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
+                  elemLocalToGlobal[localElemIndex] = elemGlobalIndex( globalIJK ) * m_numElePerBox[iR] + iEle;
 
-                  getElemToNodesRelationInBox( m_elementType[iR], index, iEle, nodeIDInBox.data(),
+                  getElemToNodesRelationInBox( m_elementType[iR],
+                                               globalIJK,
+                                               iEle,
+                                               nodeIDInBox,
                                                numNodesPerElem );
 
                   for( localIndex iN = 0; iN < numNodesPerElem; ++iN )
@@ -691,9 +691,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
  * @param node_size
  */
 void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementType,
-                                                         const int index[],
+                                                         const int (&index)[3],
                                                          const int & iEle,
-                                                         int nodeIDInBox[],
+                                                         int (&nodeIDInBox)[8],
                                                          const int node_size )
 
 {
@@ -980,7 +980,7 @@ InternalMeshGenerator::
   setConnectivityForPeriodicBoundary( int const component,
                                       integer const index,
                                       integer const blockIndex,
-                                      int (& globalIJK)[3],
+                                      int const (& globalIJK)[3],
                                       int const (&numElemsInDirForBlock)[3],
                                       integer const (&numNodesInDir)[3],
                                       int const (&firstElemIndexInPartition)[3],
@@ -989,14 +989,27 @@ InternalMeshGenerator::
   if( index == numElemsInDirForBlock[component] - 1 && blockIndex == m_nElems[component].size() - 1 )
   {
     // Last set of elements
-    globalIJK[component] = -1;
-    localIndex const firstNodeIndexR = numNodesInDir[1] * numNodesInDir[2] * ( globalIJK[0] - firstElemIndexInPartition[0] ) +
-                                       numNodesInDir[2] * ( globalIJK[1] - firstElemIndexInPartition[1] ) +
-                                       ( globalIJK[2] - firstElemIndexInPartition[2] );
-    nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR;
-    nodeOfBox[3] = numNodesInDir[2] + firstNodeIndexR;
-    nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR + 1;
-    nodeOfBox[7] = numNodesInDir[2] + firstNodeIndexR + 1;
+//    globalIJK[component] = -1;
+//    localIndex const firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( globalIJK[0] - firstElemIndexInPartition[0] ) +
+//                                       numNodesInDir[2] * ( globalIJK[1] - firstElemIndexInPartition[1] ) +
+//                                       ( globalIJK[2] - firstElemIndexInPartition[2] );
+//
+//    nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndex;
+//    nodeOfBox[3] = numNodesInDir[2] + firstNodeIndex;
+//    nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndex + 1;
+//    nodeOfBox[7] = numNodesInDir[2] + firstNodeIndex + 1;
+    int modGlobalIJK[3] = { globalIJK[0], globalIJK[1], globalIJK[2] };
+    int modFirstElemIndexInPartition[3] = { firstElemIndexInPartition[0], firstElemIndexInPartition[1], firstElemIndexInPartition[3] };
+    modGlobalIJK[component] = 0;
+    modFirstElemIndexInPartition[component] = 0;
+    const localIndex firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( modGlobalIJK[0] - firstElemIndexInPartition[0] )
+                                    + numNodesInDir[2] * ( modGlobalIJK[1] - 0 )
+                                    + ( modGlobalIJK[2] - firstElemIndexInPartition[2] );
+
+    nodeOfBox[3] = firstNodeIndex;
+    nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex;
+    nodeOfBox[7] = firstNodeIndex + 1;
+    nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex + 1;
   }
 }
 

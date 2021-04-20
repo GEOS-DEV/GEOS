@@ -31,10 +31,10 @@
       elementTypes="{ C3D8 }"
       radius="{ 0.1, 2 }"
       theta="{ 0, 180 }"
-      zCoords="{ 0, 1 }"
+      zCoords="{ 0, 3 }"
       nr="{ 5 }"
       nt="{ 8 }"
-      nz="{ 1 }"
+      nz="{ 3 }"
       trajectory="{ { -0.1, 0.0, 0.0 },
                     {  0.1, 0.0, 1.0 } }"
       autoSpaceRadialElems="{ 1 }"
@@ -44,7 +44,7 @@
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
-    maxTime="5.0">
+    maxTime="3.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <!-- SPHINX_Execution -->
@@ -63,11 +63,11 @@
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e99"
+      timeFrequency="1"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -155,7 +155,7 @@
       plotFileRoot="plot"
       childDirectory="sub"/>
 
-    <!--Restart
-      name="restartOutput"/-->
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>

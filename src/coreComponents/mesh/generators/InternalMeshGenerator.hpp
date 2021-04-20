@@ -27,6 +27,7 @@ namespace geosx
 {
 
 class NodeManager;
+class SpatialPartition;
 
 /**
  * @class InternalMeshGenerator
@@ -73,7 +74,8 @@ public:
    * @brief Reduce the number of nodes in a block coordinate direction for
    * @param numNodes The number of nodes in each coordinate direction.
    */
-  virtual void reduceNumNodesForPeriodicBoundary( integer (& numNodes) [3] )
+  virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+                                                  integer (& numNodes) [3] )
   {
     GEOSX_UNUSED_VAR( numNodes );
   };
@@ -90,14 +92,10 @@ public:
    *   merging.
    */
   virtual void
-  setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3],
-                                          real64 (& minExtent)[3],
-                                          real64 (& maxExtent)[3],
-                                          arraySlice1d< real64 const,
-                                                        nodes::REFERENCE_POSITION_USD-1 > const & X,
-                                          real64 const tol )
+  setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+                                          int (& index)[3] )
   {
-    GEOSX_UNUSED_VAR( index, minExtent, maxExtent, X, tol );
+    GEOSX_UNUSED_VAR( partition, index );
   }
 
   /**
@@ -144,7 +142,7 @@ public:
   void setConnectivityForPeriodicBoundary( int const component,
                                            integer const index,
                                            integer const blockIndex,
-                                           int (& globalIJK)[3],
+                                           int const (& globalIJK)[3],
                                            int const (&numElemsInDirForBlock)[3],
                                            integer const (&numNodesInDir)[3],
                                            int const (&firstElemIndexInPartition)[3],
@@ -194,9 +192,9 @@ protected:
    *
    */
   void getElemToNodesRelationInBox( const string & elementType,
-                                    const int index[],
+                                    const int (&index)[3],
                                     const int & iEle,
-                                    int nodeIDInBox[],
+                                    int (&nodeIDInBox)[8],
                                     const int size );
 
   /// Mesh number of dimension

@@ -19,7 +19,7 @@
 #include "InternalWellboreGenerator.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/PartitionBase.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geosx
 {
@@ -244,27 +244,31 @@ void InternalWellboreGenerator::postProcessInput()
   InternalMeshGenerator::postProcessInput();
 }
 
-void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( integer ( & numNodesInDir )[3] )
+void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+                                                                   integer ( & numNodesInDir )[3] )
 {
   GEOSX_UNUSED_VAR( numNodesInDir );
   if( m_isFullAnnulus )
   {
-    numNodesInDir[1] -= 1;
+    if( partition.m_Partitions[1]==0 )
+    {
+      numNodesInDir[1] -= 1;
+    }
+    else if( partition.m_Partitions[1]>2 )
+    {
+      partition.m_Periodic[1] = 1;
+    }
   }
+
 }
 
 void InternalWellboreGenerator::
-  setNodeGlobalIndicesOnPeriodicBoundary( int ( & index )[3],
-                                          real64 ( & minExtent )[3],
-                                          real64 ( & maxExtent )[3],
-                                          arraySlice1d< real64 const,
-                                                        nodes::REFERENCE_POSITION_USD-1 > const & X,
-                                          real64 const tol )
+  setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+                                          int ( & index )[3] )
 {
-  GEOSX_UNUSED_VAR( minExtent );
   if( m_isFullAnnulus )
   {
-    if( isEqual( X[ 1 ], maxExtent[1], tol ) )
+    if( index[1] == m_nElems[1].back() )
     {
       index[1] = 0;
     }
