@@ -402,10 +402,10 @@ void NeighborCommunicator::mpiISendReceive( array1d< T > const & sendBuffer,
 
 template< typename T >
 void NeighborCommunicator::mpiISendReceiveSizes( array1d< T > const & sendBuffer,
-                                            MPI_Request & sendReq,
-                                            MPI_Request & recvReq,
-                                            int const commID,
-                                            MPI_Comm mpiComm )
+                                                 MPI_Request & sendReq,
+                                                 MPI_Request & recvReq,
+                                                 int const commID,
+                                                 MPI_Comm mpiComm )
 {
   m_sendBufferSize[commID] = LvArray::integerConversion< int >( sendBuffer.size());
 
@@ -421,11 +421,11 @@ void NeighborCommunicator::mpiISendReceiveSizes( array1d< T > const & sendBuffer
 
 template< typename T >
 void NeighborCommunicator::mpiISendReceiveData( array1d< T > const & sendBuffer,
-                                            MPI_Request & sendReq,
-                                            array1d< T > & recvBuffer,
-                                            MPI_Request & recvReq,
-                                            int const commID,
-                                            MPI_Comm mpiComm )
+                                                MPI_Request & sendReq,
+                                                array1d< T > & recvBuffer,
+                                                MPI_Request & recvReq,
+                                                int const commID,
+                                                MPI_Comm mpiComm )
 {
   recvBuffer.resize( m_receiveBufferSize[commID] );
 

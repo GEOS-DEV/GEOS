@@ -247,7 +247,6 @@ void InternalWellboreGenerator::postProcessInput()
 void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                                    integer ( & numNodesInDir )[3] )
 {
-  GEOSX_UNUSED_VAR( numNodesInDir );
   if( m_isFullAnnulus )
   {
     if( partition.m_Partitions[1]==0 )
@@ -266,6 +265,8 @@ void InternalWellboreGenerator::
   setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                           int ( & index )[3] )
 {
+
+  GEOSX_UNUSED_VAR( partition );
   if( m_isFullAnnulus )
   {
     if( index[1] == m_nElems[1].back() )

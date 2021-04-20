@@ -273,7 +273,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   CellBlockManager & elementManager = domain.getGroup< CellBlockManager >( keys::cellManager );
   Group & nodeSets = nodeManager.sets();
 
-  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -691,9 +691,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
  * @param node_size
  */
 void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementType,
-                                                         const int (&index)[3],
+                                                         const int (& index)[3],
                                                          const int & iEle,
-                                                         int (&nodeIDInBox)[8],
+                                                         int (& nodeIDInBox)[8],
                                                          const int node_size )
 
 {
@@ -980,7 +980,7 @@ InternalMeshGenerator::
   setConnectivityForPeriodicBoundary( int const component,
                                       integer const index,
                                       integer const blockIndex,
-                                      int const (& globalIJK)[3],
+                                      int const (&globalIJK)[3],
                                       int const (&numElemsInDirForBlock)[3],
                                       integer const (&numNodesInDir)[3],
                                       int const (&firstElemIndexInPartition)[3],
@@ -1003,8 +1003,8 @@ InternalMeshGenerator::
     modGlobalIJK[component] = 0;
     modFirstElemIndexInPartition[component] = 0;
     const localIndex firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( modGlobalIJK[0] - firstElemIndexInPartition[0] )
-                                    + numNodesInDir[2] * ( modGlobalIJK[1] - 0 )
-                                    + ( modGlobalIJK[2] - firstElemIndexInPartition[2] );
+                                      + numNodesInDir[2] * ( modGlobalIJK[1] - 0 )
+                                      + ( modGlobalIJK[2] - firstElemIndexInPartition[2] );
 
     nodeOfBox[3] = firstNodeIndex;
     nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex;

@@ -15,7 +15,7 @@
       solidMaterialNames="{ casing, cement, rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-8"
         newtonMaxIter="8"/>
       <LinearSolverParameters
         solverType="direct"
@@ -31,10 +31,10 @@
       elementTypes="{ C3D8, C3D8, C3D8 }"
       radius="{ 0.1, 0.11, 0.15, 2.0 }"
       theta="{ 0, 360 }"
-      zCoords="{ 0, 1 }"
+      zCoords="{ 0, 4 }"
       nr="{ 2, 2, 5 }"
       nt="{ 16 }"
-      nz="{ 1 }"
+      nz="{ 4 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 1.0 } }"
       autoSpaceRadialElems="{ 0, 0, 1 }"

@@ -72,23 +72,21 @@ public:
 
   /**
    * @brief Reduce the number of nodes in a block coordinate direction for
+   * @param partition The partitioning object
    * @param numNodes The number of nodes in each coordinate direction.
    */
   virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                   integer (& numNodes) [3] )
   {
-    GEOSX_UNUSED_VAR( numNodes );
+    GEOSX_UNUSED_VAR( partition, numNodes );
   };
 
   /**
    * @brief Alter the directional indices for when the ending index should be
    *   set to the beginning of the index as is the case with periodic
    *   boundaries.
+   * @param partition The partitioning object
    * @param index The indices to be evaluated for periodic indexing.
-   * @param minExtent The minimum extent of the problem domain
-   * @param maxExtent The maximum extent of the problem domain
-   * @param X The coordinates of the node.
-   * @param tol A tolerance for comparing coordinates of co-incident nodes for
    *   merging.
    */
   virtual void
@@ -142,7 +140,7 @@ public:
   void setConnectivityForPeriodicBoundary( int const component,
                                            integer const index,
                                            integer const blockIndex,
-                                           int const (& globalIJK)[3],
+                                           int const (&globalIJK)[3],
                                            int const (&numElemsInDirForBlock)[3],
                                            integer const (&numNodesInDir)[3],
                                            int const (&firstElemIndexInPartition)[3],
@@ -192,9 +190,9 @@ protected:
    *
    */
   void getElemToNodesRelationInBox( const string & elementType,
-                                    const int (&index)[3],
+                                    const int (& index)[3],
                                     const int & iEle,
-                                    int (&nodeIDInBox)[8],
+                                    int (& nodeIDInBox)[8],
                                     const int size );
 
   /// Mesh number of dimension
