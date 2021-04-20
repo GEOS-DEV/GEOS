@@ -160,25 +160,31 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   ///Write properties
   vtkCellData * cellData = m_vtkMesh->GetCellData();
-  std::vector< vtkAbstractArray * > arrayToBeImported;
+  std::vector< vtkDataArray * > arrayToBeImported;
+  std::cout << "number of array " << cellData->GetNumberOfArrays() << std::endl;
   for( int i = 0; i < cellData->GetNumberOfArrays(); i++)
   {
     vtkAbstractArray * curArray = cellData->GetAbstractArray(i);
-    int dataType = curArray->GetDataType();
     // We support only float and double type. Good assumption?
-    if( dataType != VTK_FLOAT || dataType != VTK_DOUBLE )
+    int dataType = curArray->GetDataType();
+    if( !curArray->IsNumeric() ) continue;
+    std::cout << "name : " << curArray->GetName() << std::endl;
+    std::cout << VTK_DOUBLE << " vs "  << dataType << std::endl;
+    if( dataType != VTK_FLOAT && dataType != VTK_DOUBLE )
     {
-      GEOSX_LOG_RANK_0( "Underlying ata Type " << curArray->GetDataTypeAsString() << " for array "
+      GEOSX_LOG_RANK_0( "Underlying data Type " << curArray->GetDataTypeAsString() << " for array "
                         << curArray->GetName() << " is not supported by GEOSX and will be ignored "
                         << "(Only double and float are supported)");
       continue;
     }
-    arrayToBeImported.push_back( curArray );
+    GEOSX_LOG_RANK_0("Importing array " << curArray->GetName() );
+    arrayToBeImported.push_back( vtkDataArray::SafeDownCast(curArray) );
   }
   WriteCellBlock( "hexahedron", nbHex, VTK_HEXAHEDRON, cellBlockManager, arrayToBeImported );
   WriteCellBlock( "tetrahedron", nbTet, VTK_TETRA, cellBlockManager, arrayToBeImported );
   WriteCellBlock( "wedges", nbWedge, VTK_WEDGE, cellBlockManager, arrayToBeImported );
   WriteCellBlock( "pyramids",nbPyr , VTK_PYRAMID, cellBlockManager, arrayToBeImported );
+  std::cout << "C FINI" << std::endl;
 }
 
 
@@ -228,9 +234,27 @@ void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToV
     }
   }
 }
+
+void VTKMeshGenerator::WritePyramidVertices( CellBlock::NodeMapType & cellToVertex )
+{
+  localIndex cellCount = 0;
+  for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
+  {
+    vtkCell * currentCell = m_vtkMesh->GetCell(c);
+    if( currentCell->GetCellType() == VTK_PYRAMID )
+    {
+		  cellToVertex[cellCount][0] = currentCell->GetPointId(0);
+		  cellToVertex[cellCount][1] = currentCell->GetPointId(1);
+		  cellToVertex[cellCount][2] = currentCell->GetPointId(2);
+		  cellToVertex[cellCount][3] = currentCell->GetPointId(3);
+		  cellToVertex[cellCount][4] = currentCell->GetPointId(4);
+      cellCount++;
+    }
+  }
+}
 void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, int cellType,
                                        CellBlockManager & cellBlockManager,
-                                       std::vector< vtkAbstractArray * > const & arraysTobeImported )
+                                       std::vector< vtkDataArray * > const & arraysTobeImported )
 {
   if( nbCells > 0)
   {
@@ -240,26 +264,63 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
     cellBlock.setElementType( "C3D" + std::to_string(nbPointsPerCell));
     CellBlock::NodeMapType & cellToVertex = cellBlock.nodeList();
     cellBlock.resize( nbCells );
-    for( vtkAbstractArray * array : arraysTobeImported )
+        std::cout << "oui 1" << std::endl;
+
+    /// Writing properties
+    for( vtkDataArray * array : arraysTobeImported )
     {
-      int dimension = array->GetNumberOfTuples();
+      int dimension = array->GetNumberOfComponents();
+        std::cout << "oui and " << dimension << std::endl;
       if( dimension == 1 )
       {
+        std::cout << "oui 3" << std::endl;
         real64_array & property = cellBlock.addProperty< real64_array >( array->GetName() );
+        localIndex cellCount = 0;
+        for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
+        {
+          vtkCell * currentCell = m_vtkMesh->GetCell(c);
+          if( currentCell->GetCellType() == cellType )
+          {
+            property[cellCount++] = array->GetTuple1(c);
+          }
+        }
       }
       else
       {
+        std::cout << "oui 4" << std::endl;
         array2d< real64 > & property = cellBlock.addProperty< array2d< real64 > >( array->GetName() );
         property.resizeDimension< 1 >( dimension );
+        for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
+        {
+          vtkCell * currentCell = m_vtkMesh->GetCell(c);
+          localIndex cellCount = 0;
+          if( currentCell->GetCellType() == cellType )
+          {
+            double * tuple = array->GetTuple(c);
+            for(int i = 0; i < dimension; i++ )
+            {
+              property(cellCount,i) = tuple[i];
+            }
+          }
+        }
       }
     }
+
+    /// Writing connectivity
     cellToVertex.resize( nbCells, nbPointsPerCell );
+    std::cout << "writing connectovity" << std::endl;
     if( cellType == VTK_HEXAHEDRON ) // Special case for hexahedron because of the ordering
     {
       WriteHexahedronVertices( cellToVertex );
       return;
     }
+    if( cellType == VTK_PYRAMID ) // Special case for pyramid because of the ordering
+    {
+      WritePyramidVertices( cellToVertex );
+      return;
+    }
     localIndex cellCount = 0;
+    std::cout << "allo" << std::endl;
     for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
     {
       vtkCell * currentCell = m_vtkMesh->GetCell(c);

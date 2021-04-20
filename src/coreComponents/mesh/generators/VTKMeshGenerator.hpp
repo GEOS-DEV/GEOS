@@ -99,7 +99,7 @@ private:
    */
   void WriteCellBlock( string const & name, localIndex nbCells, int cellType,
                        CellBlockManager & cellBlockManager,
-                       std::vector< vtkAbstractArray * > const & arraysTobeImported ); 
+                       std::vector< vtkDataArray * > const & arraysTobeImported ); 
 
   /**
    * @brief Write the hexahedron vertices
@@ -107,6 +107,13 @@ private:
    * @param[in,out] cellToVertex list of nodes organized per cells
    */
   void WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex );
+
+  /**
+   * @brief Write the pyramid vertices
+   * @details The node ordering from VTK differs from the node ordering in GEOSX
+   * @param[in,out] cellToVertex list of nodes organized per cells
+   */
+  void WritePyramidVertices( CellBlock::NodeMapType & cellToVertex );
 
 private:
 
