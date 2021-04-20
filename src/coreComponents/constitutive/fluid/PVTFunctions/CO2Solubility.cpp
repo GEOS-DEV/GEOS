@@ -291,8 +291,7 @@ void CO2Solubility::CO2SolubilityFunction( real64 const & tolerance,
 
 CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper()
 {
-  return KernelWrapper( m_componentNames,
-                        m_componentMolarWeight,
+  return KernelWrapper( m_componentMolarWeight,
                         m_CO2SolubilityTable,
                         m_CO2Index,
                         m_waterIndex,

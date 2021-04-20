@@ -386,14 +386,6 @@ public:
 
 private:
 
-#ifdef GEOSX_USE_HYPRE_CUDA
-  /// Execution policy for operations on hypre data
-  using execPolicy = parallelDevicePolicy<>;
-#else
-  /// Execution policy for operations on hypre data
-  using execPolicy = parallelHostPolicy;
-#endif
-
   /**
    * @brief Perform a matrix matrix product with Parallel Matrix
    */

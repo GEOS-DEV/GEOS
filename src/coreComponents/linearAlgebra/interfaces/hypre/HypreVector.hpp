@@ -228,6 +228,11 @@ public:
   virtual real64 * extractLocalVector() override;
 
   /**
+   * @copydoc VectorBase<HypreVector>::extract
+   */
+  virtual void extract( arrayView1d< real64 > const & localVector ) const override;
+
+  /**
    * @copydoc VectorBase<HypreVector>::getComm
    */
   virtual MPI_Comm getComm() const override;
@@ -252,14 +257,6 @@ public:
   HYPRE_IJVector const & unwrappedIJ() const;
 
 private:
-
-#ifdef GEOSX_USE_HYPRE_CUDA
-  /// Execution policy for operations on hypre data
-  using execPolicy = parallelDevicePolicy<>;
-#else
-  /// Execution policy for operations on hypre data
-  using execPolicy = parallelHostPolicy;
-#endif
 
   /**
    * Pointer to underlying HYPRE_IJVector type.

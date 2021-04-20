@@ -20,10 +20,17 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 #include <_hypre_parcsr_ls.h>
+
+#ifdef GEOSX_USE_HYPRE_CUDA
+#define GEOSX_HYPRE_HOST_DEVICE GEOSX_HOST_DEVICE
+#else
+#define GEOSX_HYPRE_HOST_DEVICE
+#endif
 
 namespace geosx
 {
@@ -56,6 +63,14 @@ struct HyprePrecWrapper
  */
 namespace hypre
 {
+
+#ifdef GEOSX_USE_HYPRE_CUDA
+/// Execution policy for operations on hypre data
+using execPolicy = parallelDevicePolicy<>;
+#else
+/// Execution policy for operations on hypre data
+using execPolicy = parallelHostPolicy;
+#endif
 
 // Check matching requirements on index/value types between GEOSX and Hypre
 

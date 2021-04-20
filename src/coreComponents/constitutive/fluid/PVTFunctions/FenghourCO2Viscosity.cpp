@@ -131,8 +131,7 @@ void FenghourCO2Viscosity::calculateCO2Viscosity( PTTableCoordinates const & tab
 
 FenghourCO2Viscosity::KernelWrapper FenghourCO2Viscosity::createKernelWrapper()
 {
-  return KernelWrapper( m_componentNames,
-                        m_componentMolarWeight,
+  return KernelWrapper( m_componentMolarWeight,
                         m_CO2ViscosityTable );
 }
 

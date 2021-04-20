@@ -123,8 +123,7 @@ void BrineCO2Density::calculateBrineDensity( PTTableCoordinates const & tableCoo
 
 BrineCO2Density::KernelWrapper BrineCO2Density::createKernelWrapper()
 {
-  return KernelWrapper( m_componentNames,
-                        m_componentMolarWeight,
+  return KernelWrapper( m_componentMolarWeight,
                         m_brineDensityTable,
                         m_CO2Index,
                         m_waterIndex );
