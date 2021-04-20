@@ -77,8 +77,7 @@ using namespace dataRepository;
 LaplaceFEM::LaplaceFEM( const string & name,
                         Group * const parent ):
   LaplaceBase( name, parent )
-{
-}
+{}
 //END_SPHINX_INCLUDE_01
 
 
