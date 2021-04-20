@@ -81,6 +81,13 @@ public:
   virtual
   real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
 
+  /**
+   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
+   * @param time_n the time of evaluation of the source
+   * @param rhs the right hand side vector to be computed
+   */
+  void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs );
+
   /**@}*/
 
 
@@ -140,13 +147,6 @@ private:
    * @param mesh mesh of the computational domain
    */
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
-
-  /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param time_n the time of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   */
-  void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs );
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml

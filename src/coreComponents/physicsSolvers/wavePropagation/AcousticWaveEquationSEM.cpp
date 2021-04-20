@@ -625,6 +625,56 @@ real64 AcousticWaveEquationSEM::evaluateRicker( real64 const & time_n, real64 co
   return pulse;
 }
 
+template< typename FE_TYPE >
+struct StiffnessVectorKernel
+{
+public:
+  StiffnessVectorKernel( FE_TYPE const & finiteElementSpace )
+    :
+    m_finiteElementSpace( finiteElementSpace )
+  {}
+
+  FE_TYPE const & m_finiteElementSpace;
+
+  template< typename POLICY>
+  void compute( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+		arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+		arrayView1d< real64 const > const p_n,
+		arrayView1d< real64 > const stiffnessVector )
+  {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+    constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+    forAll< POLICY >( elemsToNodes.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      real64 xLocal[numNodesPerElem][3];
+
+      for( localIndex a=0; a< numNodesPerElem; ++a )
+      {
+	for( localIndex i=0; i<3; ++i )
+	{
+	  xLocal[a][i] = X( elemsToNodes( k, a ), i );
+	}
+      }
+
+      real64 gradN[ numNodesPerElem ][ 3 ];
+      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+	real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+	
+	for( localIndex i=0; i<numNodesPerElem; ++i )
+	{
+	  for( localIndex j=0; j<numNodesPerElem; ++j )
+	  {
+	    real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
+
+	    stiffnessVector[elemsToNodes[k][i]] += Rh_ij*p_n[elemsToNodes[k][j]];
+	  }
+	}
+      }
+    } );
+  }
+};
 
 
 real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
@@ -673,38 +723,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        forAll< EXEC_POLICY >( elemsToNodes.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-        {
-          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+	StiffnessVectorKernel<FE_TYPE> kernel( finiteElement );
+	kernel.template compute< EXEC_POLICY >( elemsToNodes,
+						X,
+						p_n,
+						stiffnessVector );
 
-          real64 xLocal[numNodesPerElem][3];
-
-          for( localIndex a=0; a< numNodesPerElem; ++a )
-          {
-            for( localIndex i=0; i<3; ++i )
-            {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
-            }
-          }
-
-          real64 gradN[ numNodesPerElem ][ 3 ];
-          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-          {
-
-            real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
-            for( localIndex i=0; i<numNodesPerElem; ++i )
-            {
-              for( localIndex j=0; j<numNodesPerElem; ++j )
-              {
-                real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
-
-                stiffnessVector[elemsToNodes[k][i]] += Rh_ij*p_n[elemsToNodes[k][j]];
-              }
-            }
-          }
-        } );
       } );
     } );
   } );
@@ -749,6 +773,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   return dt;
 }
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
 
