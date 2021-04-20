@@ -278,8 +278,7 @@ void SpanWagnerCO2Density::spanWagnerCO2DensityFunction( real64 const & toleranc
 
 SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper()
 {
-  return KernelWrapper( m_componentNames,
-                        m_componentMolarWeight,
+  return KernelWrapper( m_componentMolarWeight,
                         m_CO2DensityTable,
                         m_CO2Index );
 }
