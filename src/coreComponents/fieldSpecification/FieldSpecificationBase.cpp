@@ -96,8 +96,7 @@ FieldSpecificationBase::getCatalog()
 
 
 void FieldSpecificationBase::postProcessInput()
-{
-}
+{}
 
 
 
