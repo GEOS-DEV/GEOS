@@ -29,19 +29,31 @@
 
 namespace geosx
 {
-
+/**
+ * @brief Struct defining an embedded element which has at least on node which is a ghost on this rank
+ * @struct viewKeyStruct
+ */
 struct surfaceWithGhostNodes
 {
+  /// local index of the surface element
   localIndex surfaceIndex;
+  /// index of the parent edge of each node
   std::vector< globalIndex > parentEdgeIndex;
+  ///number of nodes of the element
   localIndex numOfNodes;
 
+  /**
+   * @brief Constructor
+   */
   surfaceWithGhostNodes():
     surfaceIndex(),
     parentEdgeIndex(),
     numOfNodes( 0 ){}
-
-  void insert ( localIndex const & surfIndex, globalIndex const & edgeIndex );
+  /**
+   * @brief insert a new node
+   * @param edgeIndex global index of the parent edge
+   */
+  void insert ( globalIndex const & edgeIndex );
 };
 
 /**
@@ -120,6 +132,7 @@ public:
    * @param regionIndex cell element region index
    * @param subRegionIndex cell element subregion index
    * @param nodeManager the nodemanager group
+   * @param embSurfNodeManager the embSurfNodeManager group
    * @param edgeManager the edgemanager group
    * @param cellToEdges cellElement to edges map
    * @param fracture pointer to the bounded plane which is defining the embedded surface element
@@ -194,6 +207,7 @@ public:
     /// @return Fracture traction derivative w.r.t. jump string
     static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
 
+    /// @return surfaces with ghost nodes list string
     static constexpr char const * surfaceWithGhostNodesString() { return "surfaceWithGhostNodes"; }
 
     /// Displacement jump key

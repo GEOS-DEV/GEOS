@@ -31,9 +31,8 @@ namespace geosx
 using namespace dataRepository;
 
 
-void surfaceWithGhostNodes::insert( localIndex const & surfIndex, globalIndex const & edgeIndex )
+void surfaceWithGhostNodes::insert( globalIndex const & edgeIndex )
 {
-  surfaceIndex = surfIndex;
   parentEdgeIndex.push_back( edgeIndex );
   numOfNodes += 1;
 }
@@ -252,12 +251,11 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
     {
       localIndex surfWithGhostsIndex = m_surfaceWithGhostNodes.size();
       m_surfaceWithGhostNodes.resize( surfWithGhostsIndex + 1 );
-
+      m_surfaceWithGhostNodes[ surfWithGhostsIndex ].surfaceIndex = surfaceIndex;
       for( int ii = 0; ii < elemNodes.size(); ii++ )
       {
         globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ ii ] ] ];
-        m_surfaceWithGhostNodes[ surfWithGhostsIndex ].insert( surfaceIndex,
-                                                               parentEdgeID );
+        m_surfaceWithGhostNodes[ surfWithGhostsIndex ].insert( parentEdgeID );
       }
     }
 
