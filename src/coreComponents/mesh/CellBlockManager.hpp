@@ -86,10 +86,6 @@ public:
                string_array const & regionNames,
                string_array const & elementTypes );
 
-//  CellBlock & CreateRegion( string const & regionName,
-//                               string const & elementType,
-//                               integer const & numElements );
-
   /**
    * @brief Get element sub-region.
    * @param regionName name of the element sub-region
@@ -99,7 +95,6 @@ public:
   {
     return this->getGroup( dataRepository::keys::cellBlocks ).getGroup< CellBlock >( regionName );
   }
-
 
   /**
    * @brief Launch kernel function over all the sub-regions
@@ -146,12 +141,10 @@ public:
   localIndex numNodes() const;
 
   /**
-   * @brief Total number of unique nodes across all the cell blocks.
-   * TODO : cache the value once computed
-   * TODO : delete this as we can have this information using the NodeManade
+   * @brief Total number of faces across all the cell blocks.
    * @return
    */
-  localIndex numUniqueNodes() const;
+  localIndex numFaces() const; // TODO Improve doc
 
 private:
 
@@ -172,11 +165,18 @@ private:
    */
   const Group & getCellBlocks() const;
 
+  /**
+   * @brief Returns a group containing the cell blocks as CellBlockABC instances
+   * @return
+   */
+  Group & getCellBlocks();
+
   localIndex numCellBlocks() const;
 
 private:
   ArrayOfArrays< localIndex >  m_faceToNodes;
   array2d< localIndex >  m_faceToElements;
+  localIndex m_numFaces;
 };
 }
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */
