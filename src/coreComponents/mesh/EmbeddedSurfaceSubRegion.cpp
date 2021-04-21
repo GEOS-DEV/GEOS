@@ -195,7 +195,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
     this->resize( surfaceIndex + 1 );
 
     // Reorder the points CCW and then add the point to the list in the nodeManager if it is a new one.
-    std::vector< int > originalIndices = computationalGeometry::orderPointsCCW( intersectionPoints, normalVector );
+    array1d< int > originalIndices = computationalGeometry::orderPointsCCW( intersectionPoints, normalVector );
 
     // Get location of embedded surfaces nodes.
     array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos =
