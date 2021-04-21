@@ -300,8 +300,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > c
  * @param [inout] elemSubRegionList the face to element subregion map.
  * @param [inout] elemList the face to element map.
  */
-void addInteriorFace( ElementRegionManager & elementManager,
-                      localIndex const faceID,
+void addInteriorFace( localIndex const faceID,
                       FaceBuilder const & fb0,
                       FaceBuilder const & fb1,
                       arrayView2d< localIndex > const & elemRegionList,
@@ -311,14 +310,6 @@ void addInteriorFace( ElementRegionManager & elementManager,
   {
     localIndex const er = fb0.er;
     localIndex const esr = fb0.esr;
-    localIndex const k = fb0.k;
-    localIndex const elementLocalFaceIndex = fb0.elementLocalFaceIndex;
-
-    // Get the subRegion associated with the element.
-    CellElementSubRegion & subRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
-
-    // Add the face to the element to face map.
-    subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
 
     // Populate the face to element maps.
     elemRegionList( faceID, 0 ) = er;
@@ -329,11 +320,6 @@ void addInteriorFace( ElementRegionManager & elementManager,
   {
     localIndex const er = fb1.er;
     localIndex const esr = fb1.esr;
-    localIndex const k = fb1.k;
-    localIndex const elementLocalFaceIndex = fb1.elementLocalFaceIndex;
-
-    CellElementSubRegion & subRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
-    subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
 
     elemRegionList( faceID, 1 ) = er;
     elemSubRegionList( faceID, 1 ) = esr;
@@ -350,22 +336,13 @@ void addInteriorFace( ElementRegionManager & elementManager,
  * @param [inout] elemList the face to element map.
  * @param [inout] nodeList the face to node map.
  */
-void addBoundaryFace( ElementRegionManager & elementManager,
-                      localIndex const faceID,
+void addBoundaryFace( localIndex const faceID,
                       FaceBuilder const & fb,
                       arrayView2d< localIndex > const & elemRegionList,
                       arrayView2d< localIndex > const & elemSubRegionList )
 {
   localIndex const er = fb.er;
   localIndex const esr = fb.esr;
-  localIndex const k = fb.k;
-  localIndex const elementLocalFaceIndex = fb.elementLocalFaceIndex;
-
-  // Get the subRegion associated with the element.
-  CellElementSubRegion & subRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
-
-  // Add the face to the element to face map.
-  subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
 
   // Populate the face to element maps.
   elemRegionList( faceID, 0 ) = er;
@@ -385,8 +362,7 @@ void addBoundaryFace( ElementRegionManager & elementManager,
  * @param [inout] elemList the face to element map.
  * @param [inout] nodeList the face to node map.
  */
-void populateMaps( ElementRegionManager & elementManager,
-                   ArrayOfArraysView< FaceBuilder const > const & facesByLowestNode,
+void populateMaps( ArrayOfArraysView< FaceBuilder const > const & facesByLowestNode,
                    arrayView1d< localIndex const > const & uniqueFaceOffsets,
                    arrayView2d< localIndex > const & elemRegionList,
                    arrayView2d< localIndex > const & elemSubRegionList )
@@ -412,13 +388,13 @@ void populateMaps( ElementRegionManager & elementManager,
       // If two subsequent FaceBuilders compare equal then they describe an interior face.
       if( facesByLowestNode( nodeID, j ) == facesByLowestNode( nodeID, j + 1 ) )
       {
-        addInteriorFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), facesByLowestNode( nodeID, j + 1 ), elemRegionList, elemSubRegionList);
+        addInteriorFace( curFaceID, facesByLowestNode( nodeID, j ), facesByLowestNode( nodeID, j + 1 ), elemRegionList, elemSubRegionList);
         ++j;
       }
       // Otherwise it's a boundary face.
       else
       {
-        addBoundaryFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), elemRegionList, elemSubRegionList );
+        addBoundaryFace( curFaceID, facesByLowestNode( nodeID, j ), elemRegionList, elemSubRegionList );
       }
 
       ++curFaceID;
@@ -426,7 +402,7 @@ void populateMaps( ElementRegionManager & elementManager,
 
     if( j == numFaces - 1 )
     {
-      addBoundaryFace( elementManager, curFaceID, facesByLowestNode( nodeID, j ), elemRegionList, elemSubRegionList );
+      addBoundaryFace( curFaceID, facesByLowestNode( nodeID, j ), elemRegionList, elemSubRegionList );
     }
   } );
 }
@@ -449,8 +425,7 @@ void FaceManager::buildFaces( NodeManager & nodeManager, ElementRegionManager & 
 
   resize( numFaces );
 
-  populateMaps( elementManager,
-                facesByLowestNode.toViewConst(),
+  populateMaps( facesByLowestNode.toViewConst(),
                 uniqueFaceOffsets,
                 m_toElements.m_toElementRegion,
                 m_toElements.m_toElementSubRegion );

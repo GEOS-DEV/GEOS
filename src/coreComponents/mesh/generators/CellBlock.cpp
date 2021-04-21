@@ -60,6 +60,7 @@ void CellBlock::setElementType( string const & elementType )
   }
 
   m_toNodesRelation.resize( 0, m_numNodesPerElement );
+  m_toFacesRelation.resize( 0, m_numFacesPerElement );
 }
 
 void CellBlock::resize( dataRepository::indexType const newSize )
@@ -70,6 +71,7 @@ void CellBlock::resize( dataRepository::indexType const newSize )
   // to be exposed though the `Group` public interface.
   m_localToGlobalMap.resize( newSize );
   m_toNodesRelation.resize( newSize );
+  m_toFacesRelation.resize( newSize );
 }
 
 std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
@@ -260,6 +262,13 @@ std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
 
   GEOSX_ERROR( "Error. Don't know what kind of element this is and cannot build faces." );
   return {};
+}
+
+void CellBlock::setElementToFaces( localIndex iFace,
+                                   localIndex j,
+                                   localIndex curFaceID )
+{
+  m_toFacesRelation( iFace, j ) = curFaceID;
 }
 
 }

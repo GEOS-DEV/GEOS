@@ -100,6 +100,10 @@ public:
 
   NodeMapType const & getElemToNode() const override { return m_toNodesRelation; }
 
+  array2d< localIndex > const & getElemToFaces() const override { return m_toFacesRelation; }
+
+  void setElementToFaces( localIndex iFace, localIndex j, localIndex curFaceID );
+
   /**
    * @brief Get local to global map, non-const version.
    * @return The mapping relationship as a array.
@@ -147,6 +151,9 @@ private:
 
   /// Element-to-node relation
   NodeMapType m_toNodesRelation;
+
+  /// Element-to-node relation
+  array2d< localIndex > m_toFacesRelation;
 
   /// Contains the global index of each object.
   array1d< globalIndex > m_localToGlobalMap;

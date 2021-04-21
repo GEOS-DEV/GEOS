@@ -72,6 +72,8 @@ public:
    */
   virtual NodeMapType const & getElemToNode() const = 0;
 
+  virtual array2d< localIndex > const & getElemToFaces() const = 0; // FIXME FaceMapType of raw vector?
+
   /**
    * @brief Get local to global map.
    * @return The mapping relationship as a array.

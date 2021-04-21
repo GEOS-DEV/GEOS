@@ -87,9 +87,11 @@ std::map< localIndex, std::vector< localIndex > > CellBlockManager::getNodeToEle
  */
 struct NodesAndElementOfFace
 {
-  NodesAndElementOfFace( std::vector< localIndex > nodes_, localIndex element_ ):
+  NodesAndElementOfFace( std::vector< localIndex > nodes_, localIndex element_, localIndex iCellBlock_, localIndex iFace_ ):
     nodes( nodes_ ),
     element( element_ ),
+    iCellBlock( iCellBlock_ ),
+    iFace( iFace_ ),
     sortedNodes( nodes_ )
   {
     std::sort( sortedNodes.begin(), sortedNodes.end() );
@@ -127,6 +129,8 @@ struct NodesAndElementOfFace
    * The we'll be able to identify the duplicated faces because we also have the nodes.
    */
   localIndex element;
+  localIndex iCellBlock;
+  localIndex iFace;
 
 private:
   /// Sorted nodes describing the face; mainly for comparison reasons.
@@ -334,7 +338,9 @@ void CellBlockManager::buildMaps( localIndex numNodes )
   // The function is a bit simplified and is not run in parallel anymore.
   // Can be improved.
   const Group & cellBlocks = this->getCellBlocks();
-  cellBlocks.forSubGroups< const CellBlockABC >( [&]( const CellBlockABC & cb ) {
+  for( localIndex iCellBlock = 0; iCellBlock < cellBlocks.numSubGroups(); ++iCellBlock )
+  {
+    const CellBlockABC & cb = cellBlocks.getGroup< CellBlockABC >( iCellBlock );
     localIndex const numFacesPerElement = cb.numFacesPerElement();
     localIndex const numElements = cb.numElements();
 
@@ -344,12 +350,12 @@ void CellBlockManager::buildMaps( localIndex numNodes )
       for( localIndex iFace = 0; iFace < numFacesPerElement; ++iFace )
       {
         // Get all the nodes of the cell
-        std::vector< localIndex > nodesInFace = cb.getFaceNodes( iElement, iFace );
+        std::vector< localIndex > const nodesInFace = cb.getFaceNodes( iElement, iFace );
         localIndex const & lowestNode = *std::min_element( nodesInFace.cbegin(), nodesInFace.cend() );
-        facesByLowestNode.emplaceBack( lowestNode, nodesInFace, iElement );
+        facesByLowestNode.emplaceBack( lowestNode, nodesInFace, iElement, iCellBlock, iFace );
       }
     }
-  } );
+  }
 
   // Loop over all the nodes and sort the associated faces.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
@@ -374,6 +380,30 @@ void CellBlockManager::buildMaps( localIndex numNodes )
                 m_faceToNodes,
                 m_faceToElements );
 
+  // Filling the elements to faces maps in the cell blocks.
+  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  {
+    localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
+    localIndex curFaceID = uniqueFaceOffsets[nodeID];
+    localIndex j;
+    for( j = 0; j < numFaces - 1; ++j, ++curFaceID )
+    {
+      const NodesAndElementOfFace & f0 = facesByLowestNode( nodeID, j );
+      CellBlock & cb0 = this->getGroup( keys::cellBlocks ).getGroup< CellBlock >( f0.iCellBlock );
+      cb0.setElementToFaces( f0.element, f0.iFace, curFaceID );
+      const NodesAndElementOfFace & f1 = facesByLowestNode( nodeID, j + 1 );
+      CellBlock & cb1 = this->getGroup( keys::cellBlocks ).getGroup< CellBlock >( f1.iCellBlock );
+      cb1.setElementToFaces( f1.element, f1.iFace, curFaceID );
+
+      if( f0 == f1 ) { ++j; }
+    }
+    if( j == numFaces - 1 )
+    {
+      const NodesAndElementOfFace & f0 = facesByLowestNode( nodeID, j );
+      CellBlock & cb0 = this->getGroup( keys::cellBlocks ).getGroup< CellBlock >( f0.iCellBlock );
+      cb0.setElementToFaces( f0.element, f0.iFace, curFaceID );
+    }
+  }
 }
 
 //TODO return views

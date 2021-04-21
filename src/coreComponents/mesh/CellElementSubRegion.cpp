@@ -101,6 +101,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC & source )
   this->setNumFacesPerElement( source.numFacesPerElement() );
   this->resize( source.size());
   this->nodeList() = source.getElemToNode();
+  this->faceList() = source.getElemToFaces();
 
   arrayView1d< globalIndex const > const sourceLocalToGlobal = source.localToGlobalMap();
   this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );

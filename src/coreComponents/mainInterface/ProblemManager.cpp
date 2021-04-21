@@ -507,6 +507,8 @@ void ProblemManager::generateMesh()
       FaceManager & faceManager = meshLevel.getFaceManager();
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 
+      cellBlockManager.buildMaps( nodeManager.size() );
+
       GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
 
       MeshUtilities::generateNodesets( geometricObjects, nodeManager );
@@ -515,7 +517,6 @@ void ProblemManager::generateMesh()
       elemManager.generateMesh( cellBlockManager );
       nodeManager.setElementMaps( cellBlockManager, elemManager );
 
-      cellBlockManager.buildMaps( nodeManager.size() );
       faceManager.buildFaces( nodeManager, elemManager, cellBlockManager );
       nodeManager.setFaceMaps( faceManager );
 
