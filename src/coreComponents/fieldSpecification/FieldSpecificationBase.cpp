@@ -97,7 +97,6 @@ FieldSpecificationBase::getCatalog()
 
 void FieldSpecificationBase::postProcessInput()
 {
-//  LvArray::tensorOps::l2Norm<3>( m_direction );
 }
 
 

@@ -114,10 +114,6 @@ public:
    */
   Group( Group const & ) = delete;
 
-//  /**
-//   * @brief Deleted move constructor.
-//   */
-//  Group( Group const && ) = delete;
 
   /**
    * @brief Deleted copy assignment operator.

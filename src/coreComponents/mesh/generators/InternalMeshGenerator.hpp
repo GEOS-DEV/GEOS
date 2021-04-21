@@ -44,7 +44,7 @@ public:
    */
   InternalMeshGenerator( const string & name, Group * const parent );
 
-  ~InternalMeshGenerator() override = default;
+  virtual ~InternalMeshGenerator() override = default;
 
   /**
    * @brief Return the name of the InternalMeshGenerator in object Catalog.
@@ -58,9 +58,9 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  void generateMesh( DomainPartition & domain ) override;
+  virtual void generateMesh( DomainPartition & domain ) override;
 
   /**
    * @return Whether or not a Cartesian mesh is being generated.
