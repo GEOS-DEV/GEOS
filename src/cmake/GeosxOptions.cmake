@@ -15,7 +15,7 @@ option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 
 option( ENABLE_RAJA "Enables RAJA" ON )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
-option( RAJA_ENABLE_TBB "" OFF)
+option( RAJA_ENABLE_TBB "" OFF )
 option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
@@ -28,7 +28,7 @@ option( ENABLE_UNCRUSTIFY "" ON )
 
 option( ENABLE_XML_UPDATES "" ON )
 
-option( ENABLE_FORTRAN "Enables Fortran support" OFF)
+option( ENABLE_FORTRAN "Enables Fortran support" OFF )
 
 option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
@@ -75,9 +75,9 @@ endif()
 
 ### BUILD & BLT SETUP ###
 
-option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
+option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" ON )
 
-option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
+option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
@@ -116,8 +116,8 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
 endif()
 
 if( CMAKE_HOST_APPLE )
-    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
-    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
+#    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
+#    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
 elseif( CUDA_ENABLED )
     set(GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "")
     set(GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "")
@@ -128,7 +128,7 @@ endif()
 
 
 
-if( ENABLE_HYPRE_CUDA AND ( GEOSX_LA_INTERFACE STREQUAL "Hypre" ) )
+if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA )
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
     set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
 else()

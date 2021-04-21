@@ -22,7 +22,7 @@
 #include "PVTFunctionBase.hpp"
 
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geosx
 {
@@ -37,11 +37,9 @@ class FenghourCO2ViscosityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  FenghourCO2ViscosityUpdate( arrayView1d< string const > const & componentNames,
-                              arrayView1d< real64 const > const & componentMolarWeight,
+  FenghourCO2ViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                               TableFunction * CO2ViscosityTable )
-    : PVTFunctionBaseUpdate( componentNames,
-                             componentMolarWeight ),
+    : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_CO2ViscosityTable( CO2ViscosityTable->createKernelWrapper() )
   {}
 
@@ -69,12 +67,18 @@ public:
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
                         arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass = 0 ) const override;
+                        bool useMass ) const override;
+
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) override
+  {
+    PVTFunctionBaseUpdate::move( space, touch );
+    m_CO2ViscosityTable.move( space, touch );
+  }
 
 protected:
 
   /// Table with viscosity tabulated as a function (P,T)
-  TableFunction::KernelWrapper const m_CO2ViscosityTable;
+  TableFunction::KernelWrapper m_CO2ViscosityTable;
 
 };
 

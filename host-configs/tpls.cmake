@@ -1,6 +1,8 @@
 #
 # Performance portability
 #
+message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
+
 if(EXISTS ${GEOSX_TPL_DIR}/raja)
   set(RAJA_DIR ${GEOSX_TPL_DIR}/raja CACHE PATH "" FORCE)
 endif()

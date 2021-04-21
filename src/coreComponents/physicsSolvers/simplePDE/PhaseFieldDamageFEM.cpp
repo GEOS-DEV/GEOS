@@ -23,8 +23,8 @@
 
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -36,9 +36,9 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "managers/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -229,7 +229,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
   localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
 
   finiteElement::
-    regionBasedKernelApplication< serialPolicy,
+    regionBasedKernelApplication< parallelDevicePolicy<>,
                                   constitutive::DamageBase,
                                   CellElementSubRegion,
                                   PhaseFieldDamageKernel >( mesh,
@@ -427,10 +427,10 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( m_fieldName );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              mesh,
-                                                              domain.getNeighbors(),
-                                                              false );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       mesh,
+                                                       domain.getNeighbors(),
+                                                       false );
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(
@@ -564,7 +564,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     arrayView1d< real64 > const & localRhs )
 
 {
-  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
   fsManager.apply( time,
                    domain,
                    "nodeManager",
