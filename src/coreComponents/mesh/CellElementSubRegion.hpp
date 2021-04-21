@@ -91,13 +91,33 @@ public:
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
+  /**
+   * @brief Computes the pack size of the set of fractured elements and the element-to-embeddedSurfaces map of the elements in the @
+   * packList.
+   * @param packList The element we want packed.
+   * @param  embeddedSurfacesGlobalToLocal LocaltoGlobal map of the embedded surfaces.
+   * @return The packed size.
+   */
   localIndex packFracturedElementsSize( arrayView1d< localIndex const > const & packList,
                                         arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
-
+  /**
+   * @brief Packs the set of fractured elements and the element-to-embeddedSurfaces map of the elements in the @ packList.
+   * @param buffer The buffer that will receive the packed data.
+   * @param packList The element we want packed.
+   * @param embeddedSurfacesGlobalToLocal LocaltoGlobal map of the embedded surfaces.
+   * @return The packed size.
+   */
   localIndex packFracturedElements( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList,
                                     arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 
+  /**
+   * @brief Unpacks the set of fractured elemetn and the element-to-embeddedSurfaces map from @p buffer.
+   * @param buffer The buffer containing the packed data.
+   * @param packList The (un)packed element.
+   * @param embeddedSurfacesGlobalToLocal GlobalToLocal map of the embedded surfaces.
+   * @return The unpacked size.
+   */
   localIndex unpackFracturedElements( buffer_unit_type const * & buffer,
                                       localIndex_array & packList,
                                       unordered_map< globalIndex, localIndex > const & embeddedSurfacesGlobalToLocal );

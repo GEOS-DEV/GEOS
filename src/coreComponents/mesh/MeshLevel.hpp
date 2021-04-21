@@ -165,7 +165,7 @@ public:
   { return m_embSurfNodeManager; }
 
   /**
-   * @copydoc getEmbdSurfNodeManager() const
+   * @copydoc getEmbSurfNodeManager() const
    */
   EmbeddedSurfaceNodeManager & getEmbSurfNodeManager()
   { return m_embSurfNodeManager; }
@@ -178,7 +178,7 @@ public:
   { return m_embSurfEdgeManager; }
 
   /**
-   * @copydoc getEmbdSurfEdgeManager() const
+   * @copydoc getEmbSurfEdgeManager() const
    */
   EdgeManager & getEmbSurfEdgeManager()
   { return m_embSurfEdgeManager; }

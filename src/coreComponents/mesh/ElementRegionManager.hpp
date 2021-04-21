@@ -1010,14 +1010,33 @@ public:
                         ElementReferenceAccessor< localIndex_array > & packList,
                         bool const overwriteMap );
 
-
+  /**
+   * @brief Get the buffer size needed to pack the set of fractured elements and the map toEmbSurfaces.
+   * @param packList list of indices to pack
+   * @param fractureRegionName name of the fracture region
+   * @return the buffer size needed to pack the data
+   */
   int packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
                                  string const fractureRegionName ) const;
 
+  /**
+   * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @param fractureRegionName name of the fracture region
+   * @return the size of the data packed
+   */
   int packFracturedElements( buffer_unit_type * & buffer,
                              ElementViewAccessor< arrayView1d< localIndex > > const & packList,
                              string const fractureRegionName ) const;
 
+  /**
+   * @brief Unpack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @param fractureRegionName name of the fracture region
+   * @return the size of the data unpacked
+   */
   int unpackFracturedElements( buffer_unit_type const * & buffer,
                                ElementReferenceAccessor< localIndex_array > & packList,
                                string const fractureRegionName );
@@ -1067,7 +1086,13 @@ private:
   int unpackPrivate( buffer_unit_type const * & buffer,
                      T & packList );
 
-
+  /**
+   * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @param fractureRegionName name of the fracture region
+   * @return the size of the data packed
+   */
   template< bool DOPACK >
   int
   packFracturedElementsPrivate( buffer_unit_type * & buffer,

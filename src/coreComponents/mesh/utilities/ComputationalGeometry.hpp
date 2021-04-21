@@ -77,6 +77,7 @@ void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
  * @tparam NORMAL_TYPE the type of @p normal
  * @param[in] points coordinates of the points
  * @param[in] normal vector normal to the plane
+ * @return an std::vector containing the original indices of the reordered points.
  */
 template< typename NORMAL_TYPE >
 std::vector< int >  orderPointsCCW( arrayView2d< real64 > const & points,
