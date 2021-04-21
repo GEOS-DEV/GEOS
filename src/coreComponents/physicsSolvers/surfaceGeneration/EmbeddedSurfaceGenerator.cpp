@@ -61,7 +61,10 @@ void NewObjectLists::insert( NewObjectLists const & newObjects )
 
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
-  SolverBase( name, parent )
+  SolverBase( name, parent ),
+  m_solidMaterialNames(),
+  m_fractureRegionName(),
+  m_mpiCommOrder( 0 )
 {
   registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialNames ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -73,6 +76,10 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
+
+  registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to enable MPI consistent communication ordering" );
 
 }
 
@@ -215,7 +222,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   // Synchronize embedded Surfaces
   EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
                                                                     domain.getNeighbors(),
-                                                                    newObjects );
+                                                                    newObjects,
+                                                                    m_mpiCommOrder );
 
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
@@ -247,7 +255,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   // TODO this is kind of brute force to resync everything.
   EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
                                                                     domain.getNeighbors(),
-                                                                    newObjects );
+                                                                    newObjects,
+                                                                    m_mpiCommOrder );
 
   EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( meshLevel,
                                                                           domain.getNeighbors(),

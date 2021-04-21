@@ -114,6 +114,8 @@ private:
   {
     constexpr static char const * solidMaterialNameString() {return "solidMaterialNames"; }
     constexpr static char const * fractureRegionNameString() {return "fractureRegion"; }
+    constexpr static char const * mpiCommOrderString() { return "mpiCommOrder"; }
+
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
     constexpr static char const * rockToughnessString() {return "rockToughness"; }
@@ -123,6 +125,8 @@ private:
   array1d< string > m_solidMaterialNames;
   // fracture region name
   string m_fractureRegionName;
+  // Flag for consistent communication ordering
+  int m_mpiCommOrder;
 };
 
 } /* namespace geosx */
