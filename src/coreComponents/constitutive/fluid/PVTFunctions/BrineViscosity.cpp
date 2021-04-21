@@ -68,8 +68,7 @@ void BrineViscosity::makeCoefficients( string_array const & inputPara )
 
 BrineViscosity::KernelWrapper BrineViscosity::createKernelWrapper()
 {
-  return KernelWrapper( m_componentNames,
-                        m_componentMolarWeight,
+  return KernelWrapper( m_componentMolarWeight,
                         m_coef0,
                         m_coef1 );
 }
