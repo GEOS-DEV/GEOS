@@ -207,7 +207,7 @@ Like any solver, time stepping is driven by events, see :ref:`EventManager`.
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/ProppantTransport.rst
+.. include:: /coreComponents/schema/docs/ProppantTransport.rst
 
 In particular:
 

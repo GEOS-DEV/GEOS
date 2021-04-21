@@ -22,7 +22,7 @@
 #include "PVTFunctionBase.hpp"
 
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geosx
 {
@@ -37,13 +37,11 @@ class BrineCO2DensityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  BrineCO2DensityUpdate( arrayView1d< string const > const & componentNames,
-                         arrayView1d< real64 const > const & componentMolarWeight,
+  BrineCO2DensityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                          TableFunction * brineDensityTable,
                          localIndex const CO2Index,
                          localIndex const waterIndex )
-    : PVTFunctionBaseUpdate( componentNames,
-                             componentMolarWeight ),
+    : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_brineDensityTable( brineDensityTable->createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex )
@@ -73,12 +71,18 @@ public:
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
                         arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass = 0 ) const override;
+                        bool useMass ) const override;
+
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) override
+  {
+    PVTFunctionBaseUpdate::move( space, touch );
+    m_brineDensityTable.move( space, touch );
+  }
 
 protected:
 
   /// Table with brine density tabulated as a function (P,T,sal)
-  TableFunction::KernelWrapper const m_brineDensityTable;
+  TableFunction::KernelWrapper m_brineDensityTable;
 
   /// Index of the CO2 component
   localIndex const m_CO2Index;

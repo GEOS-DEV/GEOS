@@ -18,9 +18,9 @@
 
 #include "MeshLevel.hpp"
 
+#include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "NodeManager.hpp"
-//#include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 
 namespace geosx

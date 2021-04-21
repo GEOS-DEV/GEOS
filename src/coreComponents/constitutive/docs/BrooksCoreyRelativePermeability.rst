@@ -35,7 +35,7 @@ node.
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
+.. include:: /coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 Below are some comments on the model parameters.
 

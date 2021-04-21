@@ -18,8 +18,7 @@
 
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 
-#include "managers/Functions/FunctionManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geosx
 {
@@ -177,7 +176,7 @@ void SpanWagnerCO2Density::makeTable( string_array const & inputPara )
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Density( tolerance, tableCoords, densities );
 
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
   m_CO2DensityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
   m_CO2DensityTable->setTableCoordinates( tableCoords.getCoords() );
   m_CO2DensityTable->setTableValues( densities );
@@ -279,8 +278,7 @@ void SpanWagnerCO2Density::spanWagnerCO2DensityFunction( real64 const & toleranc
 
 SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper()
 {
-  return KernelWrapper( m_componentNames,
-                        m_componentMolarWeight,
+  return KernelWrapper( m_componentMolarWeight,
                         m_CO2DensityTable,
                         m_CO2Index );
 }
