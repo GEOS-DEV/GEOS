@@ -94,12 +94,20 @@ public:
   /**
    * @brief deleted copy constructor
    */
-  EmbeddedSurfaceNodeManager( const EmbeddedSurfaceNodeManager & init ) = delete;
+  EmbeddedSurfaceNodeManager( EmbeddedSurfaceNodeManager const & init ) = delete;
+
+  /**
+   * @brief Default move constructor.
+   */
+  EmbeddedSurfaceNodeManager( EmbeddedSurfaceNodeManager && ) = delete;
 
   /**
    * @brief deleted assignement operator
    */
-  EmbeddedSurfaceNodeManager & operator=( const EmbeddedSurfaceNodeManager & ) = delete;
+  EmbeddedSurfaceNodeManager & operator=( EmbeddedSurfaceNodeManager const & ) = delete;
+
+
+  EmbeddedSurfaceNodeManager & operator=( EmbeddedSurfaceNodeManager && ) = delete;
   /// @endcond
 
   ///@}
