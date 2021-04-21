@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/FaceElementSubRegion.hpp"

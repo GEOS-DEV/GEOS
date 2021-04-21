@@ -19,10 +19,7 @@
 #include "FiniteElementDiscretization.hpp"
 
 #include "mesh/CellElementSubRegion.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 
