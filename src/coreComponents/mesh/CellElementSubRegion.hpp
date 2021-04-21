@@ -92,15 +92,15 @@ public:
                                        bool const overwriteDownMaps ) override;
 
   localIndex packFracturedElementsSize( arrayView1d< localIndex const > const & packList,
-                                        arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const;
+                                        arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 
   localIndex packFracturedElements( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList,
-                                    arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const;
+                                    arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 
   localIndex unpackFracturedElements( buffer_unit_type const * & buffer,
                                       localIndex_array & packList,
-                                      unordered_map< globalIndex, localIndex > embeddedSurfacesGlobalToLocal );
+                                      unordered_map< globalIndex, localIndex > const & embeddedSurfacesGlobalToLocal );
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
 
@@ -270,7 +270,7 @@ private:
   template< bool DOPACK >
   localIndex packFracturedElementsPrivate( buffer_unit_type * & buffer,
                                            arrayView1d< localIndex const > const & packList,
-                                           arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const;
+                                           arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 
 };
 

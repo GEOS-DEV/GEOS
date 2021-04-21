@@ -174,7 +174,7 @@ localIndex CellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
 }
 
 localIndex CellElementSubRegion::packFracturedElementsSize( arrayView1d< localIndex const > const & packList,
-                                                            arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const
+                                                            arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
   buffer_unit_type * junk = nullptr;
   return packFracturedElementsPrivate< false >( junk, packList, embeddedSurfacesLocalToGlobal );
@@ -183,7 +183,7 @@ localIndex CellElementSubRegion::packFracturedElementsSize( arrayView1d< localIn
 
 localIndex CellElementSubRegion::packFracturedElements( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList,
-                                                        arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const
+                                                        arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
   return packFracturedElementsPrivate< true >( buffer, packList, embeddedSurfacesLocalToGlobal );
 }
@@ -191,7 +191,7 @@ localIndex CellElementSubRegion::packFracturedElements( buffer_unit_type * & buf
 template< bool DOPACK >
 localIndex CellElementSubRegion::packFracturedElementsPrivate( buffer_unit_type * & buffer,
                                                                arrayView1d< localIndex const > const & packList,
-                                                               arrayView1d< globalIndex const > embeddedSurfacesLocalToGlobal ) const
+                                                               arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
   localIndex packedSize = 0;
 
@@ -220,7 +220,7 @@ localIndex CellElementSubRegion::packFracturedElementsPrivate( buffer_unit_type 
 
 localIndex CellElementSubRegion::unpackFracturedElements( buffer_unit_type const * & buffer,
                                                           localIndex_array & packList,
-                                                          unordered_map< globalIndex, localIndex > embeddedSurfacesGlobalToLocal )
+                                                          unordered_map< globalIndex, localIndex > const & embeddedSurfacesGlobalToLocal )
 {
   localIndex unPackedSize = 0;
 
