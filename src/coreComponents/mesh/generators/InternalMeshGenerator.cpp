@@ -618,13 +618,13 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
                 // Fix local connectivity for single theta (y) partition (radial meshes only)
 
-//                setConnectivityForPeriodicBoundaries( i, j, k,
-//                                                      iblock, jblock, kblock,
-//                                                      globalIJK,
-//                                                      numElemsInDirForBlock,
-//                                                      numNodesInDir,
-//                                                      firstElemIndexInPartition,
-//                                                      nodeOfBox );
+                setConnectivityForPeriodicBoundaries( i, j, k,
+                                                      iblock, jblock, kblock,
+                                                      globalIJK,
+                                                      numElemsInDirForBlock,
+                                                      numNodesInDir,
+                                                      firstElemIndexInPartition,
+                                                      nodeOfBox );
 
                 for( int iEle = 0; iEle < m_numElePerBox[iR]; ++iEle )
                 {
@@ -986,22 +986,13 @@ InternalMeshGenerator::
                                       int const (&firstElemIndexInPartition)[3],
                                       localIndex (& nodeOfBox)[8] )
 {
-  if( index == numElemsInDirForBlock[component] - 1 && blockIndex == m_nElems[component].size() - 1 )
+  if( ( index == numElemsInDirForBlock[component] - 1 ) &&
+      ( blockIndex == m_nElems[component].size() - 1 ) &&
+      ( firstElemIndexInPartition[component] == 0) )
   {
-    // Last set of elements
-//    globalIJK[component] = -1;
-//    localIndex const firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( globalIJK[0] - firstElemIndexInPartition[0] ) +
-//                                       numNodesInDir[2] * ( globalIJK[1] - firstElemIndexInPartition[1] ) +
-//                                       ( globalIJK[2] - firstElemIndexInPartition[2] );
-//
-//    nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndex;
-//    nodeOfBox[3] = numNodesInDir[2] + firstNodeIndex;
-//    nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndex + 1;
-//    nodeOfBox[7] = numNodesInDir[2] + firstNodeIndex + 1;
+    // Last set of nodes
     int modGlobalIJK[3] = { globalIJK[0], globalIJK[1], globalIJK[2] };
-    int modFirstElemIndexInPartition[3] = { firstElemIndexInPartition[0], firstElemIndexInPartition[1], firstElemIndexInPartition[3] };
     modGlobalIJK[component] = 0;
-    modFirstElemIndexInPartition[component] = 0;
     const localIndex firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( modGlobalIJK[0] - firstElemIndexInPartition[0] )
                                       + numNodesInDir[2] * ( modGlobalIJK[1] - 0 )
                                       + ( modGlobalIJK[2] - firstElemIndexInPartition[2] );
