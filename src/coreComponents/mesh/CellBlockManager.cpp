@@ -143,34 +143,28 @@ localIndex calculateTotalNumberOfFaces2( ArrayOfArraysView< NodesAndElementOfFac
 {
   localIndex const numNodes = facesByLowestNode.size();
   GEOSX_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
-
-  uniqueFaceOffsets[0] = 0;
+  uniqueFaceOffsets.setValues< serialPolicy >( 0. );
 
   // Loop over all the nodes.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
-
-    // If there are no faces associated with this node we can skip it.
-    if( numFaces == 0 )
-      return;
-
-    localIndex & numUniqueFaces = uniqueFaceOffsets[ nodeID + 1 ];
-    numUniqueFaces = 0;
-
-    // Otherwise since facesByLowestNode[ nodeID ] is sorted we can compare subsequent entries
+    // Since facesByLowestNode[ nodeID ] is sorted we can compare subsequent entries
     // count up the unique entries. Since each face can appear at most twice if we find a match we
     // can skip the next entry as well.
-    localIndex j = 0;
-    for(; j < numFaces - 1; ++j )
+    localIndex & numUniqueFaces = uniqueFaceOffsets[ nodeID + 1 ];
+    for( localIndex j = 0; j < numFaces; ++j )
     {
       ++numUniqueFaces;
-      j += facesByLowestNode( nodeID, j ) == facesByLowestNode( nodeID, j + 1 );
+      if ( j < numFaces - 1 )
+      {
+        if( facesByLowestNode( nodeID, j ) == facesByLowestNode( nodeID, j + 1 ) )
+        {
+          ++j;
+        }
+      }
     }
-
-    numUniqueFaces += j == numFaces - 1;
   } );
-
   // At this point uniqueFaceOffsets[ i ] holds the number of unique face associated with node i - 1.
   // Perform an inplace prefix-sum to get the unique face offset.
   RAJA::inclusive_scan_inplace< parallelHostPolicy >( uniqueFaceOffsets.begin(), uniqueFaceOffsets.end() );
@@ -218,34 +212,27 @@ void populateMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & face
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
-    // TODO same loop concern than for resizeFaceToNodesMap below.
-    // loop over all the `NodesAndElementOfFace` associated with the node
-    localIndex j, curFaceID = uniqueFaceOffsets[nodeID];
-    for( j = 0; j < numFaces - 1; ++j, ++curFaceID )
+    // loop over all the `NodesAndElementOfFace` associated with the node.
+    for( localIndex j = 0, curFaceID = uniqueFaceOffsets[nodeID]; j < numFaces ; ++j, ++curFaceID )
     {
-      insertFaceToNodesEntry( curFaceID, facesByLowestNode( nodeID, j ), faceToNodes );
       // If two subsequent `NodesAndElementOfFace` compare equal then they describe an interior face.
       // It must therefore be considered "twice".
       // Otherwise it's a boundary face, and "once" is enough.
       NodesAndElementOfFace const & f0 = facesByLowestNode( nodeID, j );
-      NodesAndElementOfFace const & f1 = facesByLowestNode( nodeID, j + 1 );
+      insertFaceToNodesEntry( curFaceID, f0, faceToNodes );
       faceToElements( curFaceID, 0 ) = f0.element;
-      if( f0 == f1 )
-      {
-        faceToElements( curFaceID, 1 ) = f1.element;
-        ++j;
-      }
-      else
-      {
-        faceToElements( curFaceID, 1 ) = -1;
-      }
-    }
+      faceToElements( curFaceID, 1 ) = -1; // TODO Make a constant
 
-    if( j == numFaces - 1 )
-    {
-      insertFaceToNodesEntry( curFaceID, facesByLowestNode( nodeID, j ), faceToNodes );
-      faceToElements( curFaceID, 0 ) = facesByLowestNode( nodeID, j ).element;
-      faceToElements( curFaceID, 1 ) = -1;
+      // This is where we check for the two subsequent faces (when they exist).
+      if( j < numFaces - 1 )
+      {
+        NodesAndElementOfFace const & f1 = facesByLowestNode( nodeID, j + 1 );
+        if( f0 == f1 )
+        {
+          faceToElements( curFaceID, 1 ) = f1.element;
+          ++j;
+        }
+      }
     }
   } );
 }
@@ -258,9 +245,9 @@ void populateMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & face
  * @param [out] faceToElemMap the map from faces to elements. This function resizes the array appropriately.
  */
 void resizeMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & facesByLowestNode,
-                arrayView1d< localIndex const > const & uniqueFaceOffsets,
-                ArrayOfArrays< localIndex > & faceToNodeMap,
-                array2d< localIndex > & faceToElemMap )
+                 arrayView1d< localIndex const > const & uniqueFaceOffsets,
+                 ArrayOfArrays< localIndex > & faceToNodeMap,
+                 array2d< localIndex > & faceToElemMap )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -272,34 +259,16 @@ void resizeMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & facesB
   // loop over all the nodes.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
-    localIndex curFaceID = uniqueFaceOffsets[ nodeID ];
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
-
-    // If there are no faces associated with this node we can skip it.
-    // TODO The loop should be bullet proof w.r.t. this kind of cases.
-    if( numFaces == 0 )
-      return;
-
-    // TODO This kind of loops with a side effect after (`j == numFaces - 1`) can surely be improved.
     // loop over all the FaceBuilders associated with the node
-    localIndex j;
-    for( j = 0; j < numFaces - 1; ++j, ++curFaceID )
+    for( localIndex j = 0, curFaceID = uniqueFaceOffsets[ nodeID ]; j < numFaces; ++j, ++curFaceID )
     {
       const NodesAndElementOfFace & f0 = facesByLowestNode( nodeID, j );
-      const NodesAndElementOfFace & f1 = facesByLowestNode( nodeID, j + 1 );
-
       numNodesPerFace[curFaceID] = f0.nodes.size();
       totalFaceNodes += numNodesPerFace[curFaceID];
 
-      if( f0 == f1 )
+      if( ( j < numFaces - 1 ) and ( f0 == facesByLowestNode( nodeID, j + 1 ) ) )
       { ++j; }
-    }
-
-    if( j == numFaces - 1 )
-    {
-      const NodesAndElementOfFace & f = facesByLowestNode( nodeID, j );
-      numNodesPerFace[curFaceID] = f.nodes.size();
-      totalFaceNodes += numNodesPerFace[curFaceID];
     }
   } );
 
@@ -384,24 +353,25 @@ void CellBlockManager::buildMaps( localIndex numNodes )
   for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
-    localIndex curFaceID = uniqueFaceOffsets[nodeID];
-    localIndex j;
-    for( j = 0; j < numFaces - 1; ++j, ++curFaceID )
+    for( localIndex j = 0, curFaceID = uniqueFaceOffsets[nodeID]; j < numFaces; ++j, ++curFaceID )
     {
       const NodesAndElementOfFace & f0 = facesByLowestNode( nodeID, j );
       CellBlock & cb0 = this->getGroup( keys::cellBlocks ).getGroup< CellBlock >( f0.iCellBlock );
       cb0.setElementToFaces( f0.element, f0.iFace, curFaceID );
-      const NodesAndElementOfFace & f1 = facesByLowestNode( nodeID, j + 1 );
-      CellBlock & cb1 = this->getGroup( keys::cellBlocks ).getGroup< CellBlock >( f1.iCellBlock );
-      cb1.setElementToFaces( f1.element, f1.iFace, curFaceID );
 
-      if( f0 == f1 ) { ++j; }
-    }
-    if( j == numFaces - 1 )
-    {
-      const NodesAndElementOfFace & f0 = facesByLowestNode( nodeID, j );
-      CellBlock & cb0 = this->getGroup( keys::cellBlocks ).getGroup< CellBlock >( f0.iCellBlock );
-      cb0.setElementToFaces( f0.element, f0.iFace, curFaceID );
+      // If the following face exists and is identical to the current one,
+      // Then we insert the following face with the same face id
+      // and remove it from the next iteration (it's already inserted).
+      if( j < numFaces - 1 )
+      {
+        const NodesAndElementOfFace & f1 = facesByLowestNode( nodeID, j + 1 );
+        if( f0 == f1 )
+        {
+          CellBlock & cb1 = this->getGroup( keys::cellBlocks ).getGroup< CellBlock >( f1.iCellBlock );
+          cb1.setElementToFaces( f1.element, f1.iFace, curFaceID );
+          ++j;
+        }
+      }
     }
   }
 }
