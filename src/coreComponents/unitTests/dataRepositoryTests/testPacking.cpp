@@ -207,7 +207,7 @@ TEST( testPacking, testPackByIndexDevice )
 {
   std::srand( std::time( nullptr ));
   constexpr localIndex size = 10000;
-  localIndex pack_count = std::rand() % size;
+  localIndex pack_count = 5000;
   array1d< R1Tensor > veloc( size );
   array1d< localIndex > indices( pack_count );
   array1d< R1Tensor > unpacked( size );
@@ -219,7 +219,7 @@ TEST( testPacking, testPackByIndexDevice )
   for( localIndex ii = 0; ii < pack_count; ++ii )
     indices[ii] = std::rand() % size;
 
-  // std::sort(indices.begin(),indices.end())
+  std::sort( indices.begin(), indices.end());
 
   buffer_unit_type * null_buf = NULL;
   // [ num_dim, stride_i.. , tensor_0, tensor_1, ..., tensor_n ]
