@@ -129,6 +129,13 @@ public:
    */
   ArrayOfArrays< localIndex > getFaceToNodes() const;
 
+  /**
+   * @brief Returns the face to nodes mappings.
+   * @param numNodes This should not be here, needs to be removed TODO
+   * @return The one to many relationship.
+   */
+  ArrayOfSets< localIndex > getNodeToFaces( localIndex numNodes ) const;
+
   void buildMaps( localIndex numNodes );
 
   /**

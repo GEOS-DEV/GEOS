@@ -60,21 +60,21 @@ public:
    * @brief return default size of the value array in the node-to-edge mapping
    * @return default size of value array in the node-to-edge mapping
    */
-  inline localIndex getEdgeMapOverallocation()
+  inline localIndex getEdgeMapOverallocation() // FIXME forward form CellBlockManager? Remove from here?
   { return 8; }
 
   /**
    * @brief return default size of the value in the node-to-face mapping
    * @return default size of value array in the node-to-face mapping
    */
-  inline localIndex getFaceMapOverallocation()
+  inline localIndex getFaceMapOverallocation() // FIXME forward form CellBlockManager? Remove from here?
   { return 8; }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
-  inline localIndex getElemMapOverAllocation()
+  inline localIndex getElemMapOverAllocation() // FIXME forward form CellBlockManager? Remove from here?
   { return 8; }
 
 /**
@@ -150,9 +150,10 @@ public:
 
   /**
    * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
-   * @param [in] faceManager the faceManager to assign this NodeManager
+   * @param [in] cellBlockManager the cell block manager that will proved the node to faces mapping.
+   * @param [in] faceManager the face manager for inter-object relations.
    */
-  void setFaceMaps( FaceManager const & faceManager );
+  void setFaceMaps( CellBlockManager const & cellBlockManager, FaceManager const & faceManager );
 
   /**
    * @brief Copies the node-to-element mapping from @p cellBlockManager and builds the node to region and node to sub-regions relations.

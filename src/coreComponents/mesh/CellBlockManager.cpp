@@ -422,6 +422,56 @@ ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
   return m_faceToNodes;
 }
 
+ArrayOfSets< localIndex > CellBlockManager::getNodeToFaces(localIndex numNodes) const // TODO remove numNodes
+{
+  localIndex const numFaces = m_faceToNodes.size();
+  const localIndex maxFacesPerNode = 200; // TODO deal with this differently
+  ArrayOfArrays< localIndex > nodeToFacesTemp( numNodes, maxFacesPerNode );
+  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces = 0;
+
+  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
+  {
+    localIndex const numFaceNodes = m_faceToNodes.sizeOfArray( faceID );
+    totalNodeFaces += numFaceNodes;
+    for( localIndex a = 0; a < numFaceNodes; ++a )
+    {
+      nodeToFacesTemp.emplaceBackAtomic< parallelHostAtomic >( m_faceToNodes( faceID, a ), faceID );
+    }
+  } );
+
+  ArrayOfSets< localIndex > result;
+
+  const localIndex faceMapOverallocation = 8; // TODO deal with this differently
+  const localIndex nodeMapExtraSpacePerFace = 4; // TODO deal with this differently
+  // Resize the node to face map.
+  result.resize( 0 );
+
+  // Reserve space for the number of nodes faces plus some extra.
+  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
+  result.reserve( entriesToReserve );
+
+  // Reserve space for the total number of node faces + extra space for existing nodes + even more space for new nodes.
+  localIndex const valuesToReserve = totalNodeFaces.get() + numNodes * nodeMapExtraSpacePerFace * ( 1 + 2 * overAllocationFactor );
+  result.reserveValues( valuesToReserve );
+
+  // Append the individual arrays.
+  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  {
+    result.appendSet( nodeToFacesTemp.sizeOfArray( nodeID ) + faceMapOverallocation );
+  }
+
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
+  {
+    localIndex * const faces = nodeToFacesTemp[ nodeID ];
+    localIndex const numNodeFaces = nodeToFacesTemp.sizeOfArray( nodeID );
+    localIndex const numUniqueFaces = LvArray::sortedArrayManipulation::makeSortedUnique( faces, faces + numNodeFaces );
+    result.insertIntoSet( nodeID, faces, faces + numUniqueFaces );
+  } );
+
+  return result;
+}
+
 // TODO return views
 array2d< localIndex > CellBlockManager::getFaceToElements() const
 {

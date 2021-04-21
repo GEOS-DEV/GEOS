@@ -76,14 +76,14 @@ public:
    * @brief Get the default number of node per face in node list
    * @return the default number of node per face in node list
    */
-  static localIndex nodeMapExtraSpacePerFace()
+  static localIndex nodeMapExtraSpacePerFace() // FIXME forward form CellBlockManager? Remove from here?
   { return 4; }
 
   /**
    * @brief Get the default number of edge per face in edge list
    * @return the default number of edge per face in edge list
    */
-  static localIndex edgeMapExtraSpacePerFace()
+  static localIndex edgeMapExtraSpacePerFace() // FIXME forward form CellBlockManager? Remove from here?
   { return 4; }
 
   /**
