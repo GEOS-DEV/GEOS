@@ -98,6 +98,14 @@ EXTRINSIC_MESH_DATA_TRAIT( ParentIndex,
                            WRITE_AND_READ,
                            "Index of parent within the mesh object it is registered on." );
 
+EXTRINSIC_MESH_DATA_TRAIT( ParentEdgeIndex,
+                           "parentEdgeIndex",
+                           array1d< localIndex >,
+                           -1,
+                           LEVEL_2,
+                           WRITE_AND_READ,
+                           "Index of parent edge within the mesh object it is registered on." );
+
 EXTRINSIC_MESH_DATA_TRAIT( ChildIndex,
                            "childIndex",
                            array1d< localIndex >,
