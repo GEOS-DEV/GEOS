@@ -540,7 +540,7 @@ void HyprePreconditioner::setup( Matrix const & mat )
   // To be able to use Hypre preconditioner (e.g., BoomerAMG) we need to disable floating point exceptions
   {
     LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
-    
+
     // Perform setup of the MGR mechanics F-solver with SDC matrix, if used
     if( m_mgrData && m_mgrData->mechSolver.ptr )
     {
