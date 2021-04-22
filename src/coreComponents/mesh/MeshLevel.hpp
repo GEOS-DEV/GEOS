@@ -20,6 +20,7 @@
 #define GEOSX_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
+#include "EmbeddedSurfaceNodeManager.hpp"
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
@@ -86,12 +87,14 @@ public:
     // This key is defined in problem manager:
     static constexpr auto elemManagerString = "ElementRegions";
 
+    static constexpr auto embSurfNodeManagerString = "embeddedSurfacesNodeManager";
     static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
 
     dataRepository::GroupKey nodeManager = {nodeManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};
     dataRepository::GroupKey faceManager = {faceManagerString};
     dataRepository::GroupKey elemManager = {elemManagerString};
+    dataRepository::GroupKey embSurfNodeManager = {embSurfNodeManagerString};
     dataRepository::GroupKey embSurfEdgeManager = {embSurfEdgeManagerString};
   } groupKeys;
 
@@ -155,16 +158,29 @@ public:
   { return m_elementManager; }
 
   /**
+   * @brief Get the node Manager of the embedded surfaces grid.
+   * @return a pointer to the EmbeddedSurfaceNodeManager
+   */
+  EmbeddedSurfaceNodeManager const & getEmbSurfNodeManager() const
+  { return m_embSurfNodeManager; }
+
+  /**
+   * @copydoc getEmbSurfNodeManager() const
+   */
+  EmbeddedSurfaceNodeManager & getEmbSurfNodeManager()
+  { return m_embSurfNodeManager; }
+
+  /**
    * @brief Get the edge Manager related to the embedded surfaces grid.
    * @return a pointer to the edgeManager related to the embedded surfaces grid
    */
-  EdgeManager const & getEmbdSurfEdgeManager() const
+  EdgeManager const & getEmbSurfEdgeManager() const
   { return m_embSurfEdgeManager; }
 
   /**
-   * @copydoc getEmbdSurfEdgeManager() const
+   * @copydoc getEmbSurfEdgeManager() const
    */
-  EdgeManager & getEmbdSurfEdgeManager()
+  EdgeManager & getEmbSurfEdgeManager()
   { return m_embSurfEdgeManager; }
 
   ///@}
@@ -179,6 +195,9 @@ private:
   FaceManager m_faceManager;
   /// Manager for element data
   ElementRegionManager m_elementManager;
+
+  ///Manager for embedded surfaces nodes
+  EmbeddedSurfaceNodeManager m_embSurfNodeManager;
   /// Manager for embedded surfaces edge data
   EdgeManager m_embSurfEdgeManager;
 

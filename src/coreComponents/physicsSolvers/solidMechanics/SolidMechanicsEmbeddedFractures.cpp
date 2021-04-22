@@ -319,23 +319,21 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 
   elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
+
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
     ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
 
     localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
 
-    arrayView1d< integer const > const & ghostRank = cellElementSubRegion.ghostRank();
-
     for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
     {
       localIndex const cellIndex = fracturedElements[ei];
-      if( ghostRank[cellIndex] )
+
+      localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
+      localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
+      if( localRow >= 0 && localRow < rowLengths.size() )
       {
-        localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
-        localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
-        if( localRow < 0 || localRow >= rowLengths.size() )
-          continue;
         for( localIndex i=0; i<3; ++i )
         {
           rowLengths[localRow + i] += numDispDof;
@@ -346,11 +344,13 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
       {
         const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
         localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
-        if( localDispRow < 0 || localDispRow >= rowLengths.size() )
-          continue;
-        for( int d=0; d<3; ++d )
+
+        if( localDispRow >= 0 && localDispRow < rowLengths.size() )
         {
-          rowLengths[localDispRow + d] += 3;
+          for( int d=0; d<3; ++d )
+          {
+            rowLengths[localDispRow + d] += 3;
+          }
         }
       }
     }
@@ -385,6 +385,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 
   elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
+
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
     ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
@@ -442,6 +443,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
     }
 
   } );
+
 }
 
 void SolidMechanicsEmbeddedFractures::applyBoundaryConditions( real64 const time,

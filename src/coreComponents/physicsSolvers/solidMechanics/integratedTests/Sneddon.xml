@@ -34,7 +34,8 @@
       solidMaterialNames="{ rock }"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
-      logLevel="1"/>
+      logLevel="1"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>
@@ -101,7 +102,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ rock }"
+      materialList="{ }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -172,7 +173,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="Sneddon"
-      plotLevel="3"
+      plotLevel="1"
       writeBinaryData="0"/>
 
     <Restart
