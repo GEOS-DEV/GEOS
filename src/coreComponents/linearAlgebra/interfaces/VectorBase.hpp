@@ -391,6 +391,7 @@ protected:
     GEOSX_LAI_ASSERT_EQ( localSize(), localVector.size() );
     localVector.move( LvArray::MemorySpace::CPU, true );
     real64 const * const data = extractLocalVector();
+    localVector.move( LvArray::MemorySpace::CPU, true );
     std::copy( data, data + localVector.size(), localVector.data() );
   }
 
