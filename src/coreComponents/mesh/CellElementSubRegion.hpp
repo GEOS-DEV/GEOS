@@ -95,7 +95,7 @@ public:
    * @brief Computes the pack size of the set of fractured elements and the element-to-embeddedSurfaces map of the elements in the @
    * packList.
    * @param packList The element we want packed.
-   * @param  embeddedSurfacesGlobalToLocal LocaltoGlobal map of the embedded surfaces.
+   * @param  embeddedSurfacesLocalToGlobal LocaltoGlobal map of the embedded surfaces.
    * @return The packed size.
    */
   localIndex packFracturedElementsSize( arrayView1d< localIndex const > const & packList,
@@ -104,7 +104,7 @@ public:
    * @brief Packs the set of fractured elements and the element-to-embeddedSurfaces map of the elements in the @ packList.
    * @param buffer The buffer that will receive the packed data.
    * @param packList The element we want packed.
-   * @param embeddedSurfacesGlobalToLocal LocaltoGlobal map of the embedded surfaces.
+   * @param embeddedSurfacesLocalToGlobal LocaltoGlobal map of the embedded surfaces.
    * @return The packed size.
    */
   localIndex packFracturedElements( buffer_unit_type * & buffer,

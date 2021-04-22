@@ -1465,8 +1465,8 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--parentEdgeGlobalIndex => (no description available)-->
 		<xsd:attribute name="parentEdgeGlobalIndex" type="globalIndex_array" />
-		<!--parentIndex => Index of parent within the mesh object it is registered on. => EmbeddedSurfaceGenerator-->
-		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<!--parentEdgeIndex => Index of parent edge within the mesh object it is registered on. => EmbeddedSurfaceGenerator-->
+		<xsd:attribute name="parentEdgeIndex" type="localIndex_array" />
 		<!--referencePosition => (no description available)-->
 		<xsd:attribute name="referencePosition" type="real64_array2d" />
 	</xsd:complexType>

@@ -29,9 +29,10 @@
 
 namespace geosx
 {
+
 /**
  * @brief Struct defining an embedded element which has at least on node which is a ghost on this rank
- * @struct viewKeyStruct
+ * @struct surfaceWithGhostNodes
  */
 struct surfaceWithGhostNodes
 {
@@ -394,9 +395,13 @@ public:
   arrayView3d< real64 const > dTraction_dJump() const
   { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
 
-  ///@}
-
+  /**
+   * @brief accessor to the m_surfaceWithGhostNodes list
+   * @return the list of surfaces with at least one ghost node.
+   */
   std::vector< struct surfaceWithGhostNodes > surfaceWithGhostNodes() { return m_surfaceWithGhostNodes; }
+
+  ///@}
 
 private:
 
