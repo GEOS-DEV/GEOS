@@ -7,7 +7,7 @@ set( gtest_geosx_tests
    )
 
 
-set( dependencyList gtest fieldSpecification )
+set( dependencyList gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core conduit)

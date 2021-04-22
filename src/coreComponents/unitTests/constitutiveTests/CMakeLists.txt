@@ -3,6 +3,7 @@
 #
 
 set( gtest_geosx_tests
+     testDamage.cpp
      testRelPerm.cpp
      testCapillaryPressure.cpp
    )
@@ -12,7 +13,13 @@ set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
    )
 
-set( dependencyList gtest geosx_core conduit )
+set( dependencyList gtest )
+
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core )
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)
+endif()
 
 if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )

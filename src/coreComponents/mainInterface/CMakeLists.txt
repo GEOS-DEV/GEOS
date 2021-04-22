@@ -18,7 +18,7 @@ set(mainInterface_sources
     GeosxState.cpp
    )
 
-set( dependencyList events fileIO optionparser RAJA conduit)
+set( dependencyList physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser RAJA conduit)
 
 
 if( ENABLE_MATHPRESSO )
