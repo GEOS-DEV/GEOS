@@ -34,6 +34,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -708,13 +709,9 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
                                                       arrayView1d< real64 > const & localRhs )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
   NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
-
-  arrayView1d< real64 const > const faceArea  = faceManager.getReference< real64_array >( "faceArea" );
-  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -731,56 +728,13 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
                         Group &,
                         string const & )
   {
-    string const & functionName = bc.getFunctionName();
-
-    globalIndex_array nodeDOF;
-    real64_array nodeRHS;
-    integer const component = bc.getComponent();
-
-
-    if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
-    {
-      real64 value = bc.getScale();
-      if( !functionName.empty() )
-      {
-        FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
-        value *= function.evaluate( &time );
-      }
-
-      forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const kf = targetSet[ i ];
-        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a<numNodes; ++a )
-        {
-          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
-          if( dof < 0 || dof >= localRhs.size() )
-            continue;
-          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], value * faceArea[kf] / numNodes );
-        }
-      } );
-    }
-    else
-    {
-      FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
-      array1d< real64 > resultsArray( targetSet.size() );
-      resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
-      function.evaluate( faceManager, time, targetSet, resultsArray );
-      arrayView1d< real64 const > const results = resultsArray;
-
-      forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const kf = targetSet[ i ];
-        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a<numNodes; ++a )
-        {
-          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
-          if( dof < 0 || dof >= localRhs.size() )
-            continue;
-          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], results[ kf ] * faceArea[kf] / numNodes );
-        }
-      } );
-    }
+    TractionBoundaryCondition const & tbc = dynamic_cast< TractionBoundaryCondition const & >(bc);
+    tbc.launch( time,
+                blockLocalDofNumber,
+                dofRankOffset,
+                faceManager,
+                targetSet,
+                localRhs );
   } );
 }
 

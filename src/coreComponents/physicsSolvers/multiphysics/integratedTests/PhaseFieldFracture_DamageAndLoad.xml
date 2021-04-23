@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="0.0, 0.0, 0.0">
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <PhaseFieldFracture name="PhaseFieldSolve"
                  solidSolverName="SolidMechSolve"
                  damageSolverName="DamageSolve"
@@ -191,7 +191,7 @@
   <Geometry>
     <Box
       name="middle"
-      xMin="-0.334, -1.001, -1.001"
-      xMax="+0.334, +0.001, +1.001"/>
+      xMin="{-0.334, -1.001, -1.001}"
+      xMax="{+0.334, +0.001, +1.001}"/>
   </Geometry>
 </Problem>

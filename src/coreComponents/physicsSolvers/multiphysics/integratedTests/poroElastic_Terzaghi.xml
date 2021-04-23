@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0, 0, 0">
+    gravityVector="{0, 0, 0}">
     <!-- SPHINX_POROELASTIC_SOLVER -->
     <Poroelastic
       name="poroSolve"
@@ -71,13 +71,13 @@
   <Geometry>
     <Box
       name="boundaryBot"
-      xMin="-0.1, -0.01, -0.01"
-      xMax="2.1, 1.01, 1.01"/>
+      xMin="{-0.1, -0.01, -0.01}"
+      xMax="{ 2.1, 1.01, 1.01}"/>
 
     <Box
       name="boundaryTop"
-      xMin="39.9, -0.01, -0.01"
-      xMax="42.1, 1.01, 1.01"/>
+      xMin="{39.9, -0.01, -0.01}"
+      xMax="{ 42.1, 1.01, 1.01}"/>
   </Geometry>
 
   <!-- SPHINX_POROELASTIC_MESH_END -->
@@ -227,11 +227,10 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
+    <Traction
       name="xposconstraint"
       objectPath="faceManager"
-      fieldName="Traction"
-      component="0"
+      direction="{1,0,0}"
       scale="-2.125e6"
       setNames="{ xpos }"
       functionName="timeFunction"/>

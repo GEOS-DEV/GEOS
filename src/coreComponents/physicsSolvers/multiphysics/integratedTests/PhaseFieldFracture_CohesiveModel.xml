@@ -1,6 +1,6 @@
 <Problem>
 
-  <Solvers gravityVector = "0.0, 0.0, 0.0">
+  <Solvers gravityVector = "{0.0, 0.0, 0.0}">
     <PhaseFieldFracture name="PhaseFieldSolve"
                  solidSolverName="SolidMechSolve"
                  damageSolverName="DamageSolve"
@@ -189,7 +189,7 @@
   </Outputs>
 
   <Geometry>
-    <Box name="centerLine" xMin="-0.001, -1.001, -1.001" xMax="+0.001, +1.001, +1.001"/>
+    <Box name="centerLine" xMin="{-0.001, -1.001, -1.001}" xMax="{+0.001, +1.001, +1.001}"/>
   </Geometry>
 
 </Problem>
