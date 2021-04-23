@@ -279,6 +279,14 @@ private:
                               real64 time,
                               string const & name ) const;
 
+  /*!
+   * @brief Writes timestamp information required by VisIt
+   * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
+   * @param[in] time the current time-step
+   */
+  void writeTimestamp( vtkSmartPointer< vtkUnstructuredGrid > ug,
+                       real64 time) const;
+
 private:
 
   /// Output directory name
