@@ -56,11 +56,6 @@ FaceManager::FaceManager( string const &, Group * const parent ):
 
   m_toElements.resize( 0, 2 );
 
-  //0-based; note that the following field is ALSO 0
-  //for faces that are not external faces, so check isExternal before using
-//  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
-//
-//  this->AddKeylessDataField<R1Tensor>("FaceCenter",true,true);
 }
 
 FaceManager::~FaceManager()
@@ -602,9 +597,6 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
                                                                       m_faceCenter[ faceID ],
                                                                       m_faceNormal[ faceID ] );
 
-    // This needs to be done somewhere else, also we probably shouldn't be orienting the normals like this.
-    // Set normal orientation according to a global criterion
-    computationalGeometry::FixNormalOrientation_3D( m_faceNormal[ faceID ] );
   } );
 }
 

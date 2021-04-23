@@ -71,7 +71,6 @@ void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
   LvArray::tensorOps::scaledAdd< 3 >( intersectionPoint, lineDir, d );
 }
 
-
 /**
  * @brief Reorder a set of points counter-clockwise.
  * @tparam NORMAL_TYPE the type of @p normal
@@ -550,7 +549,7 @@ real64 PyramidVolume( real64 const X[][3] )
   return TetVolume( tet1 ) + TetVolume( tet2 );
 }
 
-} // namespace computationalGeometry
-} // namespace geosx
+} /* namespace computationalGeometry */
+} /* namespace geosx */
 
 #endif /* GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_ */
