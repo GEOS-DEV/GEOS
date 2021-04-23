@@ -357,7 +357,7 @@ public:
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * m_fluidPhaseCompFrac( k, q, ip, ic )
                                            + phaseAmountNew * m_dFluidPhaseCompFrac_dPressure( k, q, ip, ic );
 
-        componentAmount[ic] = fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
+        componentAmount[ic] += fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
 
         stack.localFlowResidual[ic] += ( phaseCompAmountNew - phaseCompAmountOld ) * detJxW;
         stack.localFlowFlowJacobian[ic][0] += dPhaseCompAmount_dP * detJxW;;
