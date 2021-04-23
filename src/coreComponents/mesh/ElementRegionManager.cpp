@@ -385,7 +385,6 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 }
 
 
-
 int
 ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
                                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList )
@@ -523,6 +522,106 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   return unpackedSize;
 }
+
+int ElementRegionManager::packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                     string const fractureRegionName ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packFracturedElementsPrivate< false >( junk, packList, fractureRegionName );
+}
+
+int ElementRegionManager::packFracturedElements( buffer_unit_type * & buffer,
+                                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                 string const fractureRegionName ) const
+{
+  return packFracturedElementsPrivate< true >( buffer, packList, fractureRegionName );
+}
+template< bool DOPACK >
+int
+ElementRegionManager::packFracturedElementsPrivate( buffer_unit_type * & buffer,
+                                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                    string const fractureRegionName ) const
+{
+  int packedSize = 0;
+
+  SurfaceElementRegion const & embeddedSurfaceRegion =
+    this->getRegion< SurfaceElementRegion >( fractureRegionName );
+  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
+    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  arrayView1d< globalIndex const > const embeddedSurfacesLocalToGlobal =
+    embeddedSurfaceSubRegion.localToGlobalMap();
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const esr, CellElementSubRegion const & subRegion )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
+      if( DOPACK )
+      {
+        packedSize += subRegion.packFracturedElements( buffer, elemList, embeddedSurfacesLocalToGlobal );
+      }
+      else
+      {
+        packedSize += subRegion.packFracturedElementsSize( elemList, embeddedSurfacesLocalToGlobal );
+      }
+    } );
+  }
+
+  return packedSize;
+}
+
+int
+ElementRegionManager::unpackFracturedElements( buffer_unit_type const * & buffer,
+                                               ElementReferenceAccessor< localIndex_array > & packList,
+                                               string const fractureRegionName )
+{
+  int unpackedSize = 0;
+
+  SurfaceElementRegion & embeddedSurfaceRegion =
+    this->getRegion< SurfaceElementRegion >( fractureRegionName );
+  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion =
+    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  unordered_map< globalIndex, localIndex > embeddedSurfacesGlobalToLocal =
+    embeddedSurfaceSubRegion.globalToLocalMap();
+
+  localIndex numRegionsRead;
+  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
+
+  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  {
+    string regionName;
+    unpackedSize += bufferOps::Unpack( buffer, regionName );
+
+    ElementRegionBase & elemRegion = getRegion( regionName );
+
+    localIndex numSubRegionsRead;
+    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const kSubReg, CellElementSubRegion & subRegion )
+    {
+      string subRegionName;
+      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
+
+      /// THIS IS WRONG
+      localIndex_array & elemList = packList[kReg][kSubReg];
+      unpackedSize += subRegion.unpackFracturedElements( buffer, elemList, embeddedSurfacesGlobalToLocal );
+    } );
+  }
+
+  return unpackedSize;
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
 }

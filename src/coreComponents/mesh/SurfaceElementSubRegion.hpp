@@ -217,8 +217,11 @@ public:
 
 protected:
 
-  /// Map between the face elements and the cells
+  /// Map between the surface elements and the cells
   FixedToManyElementRelation m_surfaceElementsToCells;
+
+  /// Unmapped surface elements to nodes map
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
 
   /// list of nodes
   NodeMapType m_toNodesRelation;

@@ -139,36 +139,36 @@ void HypreExport::importVector( real64 const * values,
 
     if( m_subComm != MPI_COMM_NULL )
     {
-      hypre_Vector * localVector = nullptr;
+      HYPRE_Vector localVector = nullptr;
       if( rank == m_targetRank )
       {
         // HACK: create a hypre vector that points to local data; we have to use const_cast,
         //       but this is ok because we don't modify the values, only scatter the vector.
-        localVector = hypre_SeqVectorCreate( LvArray::integerConversion< HYPRE_Int >( vec.globalSize() ) );
-        hypre_VectorOwnsData( localVector ) = false;
-        hypre_VectorData( localVector ) = const_cast< real64 * >( values );
-        hypre_SeqVectorInitialize_v2( localVector, HYPRE_MEMORY_HOST );
+        localVector = HYPRE_VectorCreate( LvArray::integerConversion< HYPRE_Int >( vec.globalSize() ) );
+        hypre_VectorOwnsData( ( hypre_Vector * ) localVector ) = false;
+        hypre_VectorData( ( hypre_Vector * ) localVector ) = const_cast< real64 * >( values );
+        hypre_SeqVectorInitialize_v2( ( hypre_Vector * ) localVector, HYPRE_MEMORY_HOST );
       }
 
-      // allocate separate partitioning array that parVector will take ownership of
-      HYPRE_BigInt * const partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
-      partitioning[0] = hypre_ParVectorPartitioning( vec.unwrapped() )[0];
-      partitioning[1] = hypre_ParVectorPartitioning( vec.unwrapped() )[1];
+      // output vector partitioning array
+      HYPRE_BigInt * const partitioning = hypre_ParVectorPartitioning( vec.unwrapped() );
 
-      // scatter the data and copy local part over to the output vector
+      // scatter the data
       HYPRE_ParVector parVector;
       GEOSX_LAI_CHECK_ERROR( HYPRE_VectorToParVector( m_subComm,
-                                                      ( HYPRE_Vector )localVector, // c-style cast as used in hypre
+                                                      localVector,
                                                       partitioning,
                                                       &parVector ) );
+
+      // remove partinioning ownership for parVector to avoid deallocation errors
+      GEOSX_LAI_CHECK_ERROR( hypre_ParVectorSetPartitioningOwner( parVector, 0 ) );
+
+      // copy parVector local part over to the output vector
       HYPRE_Real * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
       std::copy( parVectorData, parVectorData + vec.localSize(), vec.extractLocalVector() );
-      GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
 
-      if( rank == m_targetRank )
-      {
-        GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
-      }
+      GEOSX_LAI_CHECK_ERROR( HYPRE_ParVectorDestroy( parVector ) );
+      GEOSX_LAI_CHECK_ERROR( HYPRE_VectorDestroy( localVector ) );
     }
   }
   else
@@ -176,6 +176,7 @@ void HypreExport::importVector( real64 const * values,
     real64 * const data = vec.extractLocalVector();
     std::copy( values, values + vec.localSize(), data );
   }
+
 }
 
 /**

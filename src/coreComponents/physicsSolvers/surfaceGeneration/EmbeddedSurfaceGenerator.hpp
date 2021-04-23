@@ -27,14 +27,14 @@
 namespace geosx
 {
 
-//struct ModifiedObjectLists
-//{
-//  std::set<localIndex> newNodes;
-//  std::set<localIndex> newEdges;
-//  std::set<localIndex> newFaces;
-//  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
-//  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
-//};
+struct NewObjectLists
+{
+  std::set< localIndex > newNodes;
+  std::set< localIndex > newEdges;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
+
+  void insert( NewObjectLists const & lists );
+};
 
 
 class SpatialPartition;
@@ -59,6 +59,8 @@ public:
 
 
   static string catalogName() { return "EmbeddedSurfaceGenerator"; }
+
+  virtual void registerDataOnMesh( Group & MeshBody ) override final;
 
   virtual bool execute( real64 const time_n,
                         real64 const dt,
@@ -97,6 +99,7 @@ private:
   void addToFractureStencil( DomainPartition & domain );
 
   void setGlobalIndices( ElementRegionManager & elemManager,
+                         EmbeddedSurfaceNodeManager & embSurfNodeManager,
                          EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
 
   void addEmbeddedElementsToSets( ElementRegionManager const & elemManager,
@@ -109,6 +112,8 @@ private:
   {
     constexpr static char const * solidMaterialNameString() {return "solidMaterialNames"; }
     constexpr static char const * fractureRegionNameString() {return "fractureRegion"; }
+    constexpr static char const * mpiCommOrderString() { return "mpiCommOrder"; }
+
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
     constexpr static char const * rockToughnessString() {return "rockToughness"; }
@@ -118,6 +123,8 @@ private:
   array1d< string > m_solidMaterialNames;
   // fracture region name
   string m_fractureRegionName;
+  // Flag for consistent communication ordering
+  int m_mpiCommOrder;
 };
 
 } /* namespace geosx */

@@ -120,6 +120,37 @@ public:
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
+  /**
+   * @brief Computes the pack size of the set of fractured elements and the element-to-embeddedSurfaces map of the elements in the @
+   * packList.
+   * @param packList The element we want packed.
+   * @param  embeddedSurfacesLocalToGlobal LocaltoGlobal map of the embedded surfaces.
+   * @return The packed size.
+   */
+  localIndex packFracturedElementsSize( arrayView1d< localIndex const > const & packList,
+                                        arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
+  /**
+   * @brief Packs the set of fractured elements and the element-to-embeddedSurfaces map of the elements in the @ packList.
+   * @param buffer The buffer that will receive the packed data.
+   * @param packList The element we want packed.
+   * @param embeddedSurfacesLocalToGlobal LocaltoGlobal map of the embedded surfaces.
+   * @return The packed size.
+   */
+  localIndex packFracturedElements( buffer_unit_type * & buffer,
+                                    arrayView1d< localIndex const > const & packList,
+                                    arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
+
+  /**
+   * @brief Unpacks the set of fractured elemetn and the element-to-embeddedSurfaces map from @p buffer.
+   * @param buffer The buffer containing the packed data.
+   * @param packList The (un)packed element.
+   * @param embeddedSurfacesGlobalToLocal GlobalToLocal map of the embedded surfaces.
+   * @return The unpacked size.
+   */
+  localIndex unpackFracturedElements( buffer_unit_type const * & buffer,
+                                      localIndex_array & packList,
+                                      unordered_map< globalIndex, localIndex > const & embeddedSurfacesGlobalToLocal );
+
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   ///@}
@@ -164,6 +195,9 @@ public:
     static constexpr char const * constitutiveMapString() { return "ConstitutiveMap"; }
     /// @return String key to embSurfMap
     static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
+    /// @return String key to fracturedCells
+    static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
+
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
     /// ViewKey for the constitutive map
@@ -278,13 +312,13 @@ public:
   { return m_detJ; }
 
   /**
-   * @brief @return The sorted array of fractured elements.
+   * @brief @return The sorted array of local fractured elements.
    */
   SortedArray< localIndex > & fracturedElementsList()
   { return m_fracturedCells; }
 
   /**
-   * @brief @return The sorted array view of fractured elements.
+   * @brief @return The sorted array view of local fractured elements.
    */
   SortedArrayView< localIndex const > const fracturedElementsList() const
   { return m_fracturedCells.toViewConst(); }
@@ -401,10 +435,10 @@ private:
   /// Map of unmapped global indices in the element-to-face map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
 
-  /// List of fractured elements
+  /// List of the fractured elements on this rank
   SortedArray< localIndex > m_fracturedCells;
 
-  /// Map from Cell Elements to Embedded Surfaces
+  /// Map from local Cell Elements to Embedded Surfaces
   EmbSurfMapType m_toEmbeddedSurfaces;
 
   /**
@@ -419,6 +453,12 @@ private:
                                     arrayView1d< localIndex const > const & packList ) const;
 
   void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
+
+  template< bool DOPACK >
+  localIndex packFracturedElementsPrivate( buffer_unit_type * & buffer,
+                                           arrayView1d< localIndex const > const & packList,
+                                           arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
+
 };
 
 } /* namespace geosx */

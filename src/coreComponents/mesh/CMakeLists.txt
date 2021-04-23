@@ -21,6 +21,7 @@ set( mesh_headers
      Perforation.hpp
      PerforationData.hpp
      NodeManager.hpp
+     EmbeddedSurfaceNodeManager.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -64,6 +65,7 @@ set(mesh_sources
     MeshLevel.cpp
     MeshManager.cpp
     NodeManager.cpp
+    EmbeddedSurfaceNodeManager.cpp
     ObjectManagerBase.cpp
     PerforationData.cpp
     Perforation.cpp
