@@ -5,7 +5,12 @@
 	</xsd:annotation>
 	<xsd:simpleType name="R1Tensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2SymTensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_dataRepository_PlotLevel">
@@ -95,12 +100,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="r1_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*((\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\},\s*)*\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\})?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r1_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*((\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\},\s*)*\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\})?\s*\},\s*)*\{\s*((\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\},\s*)*\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\})?\s*\}\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -262,11 +267,18 @@
 			<xsd:element name="Dirichlet" type="DirichletType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
+			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType" />
 	<xsd:complexType name="FieldSpecificationType" />
 	<xsd:complexType name="SourceFluxType" />
+	<xsd:complexType name="TractionType">
+		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<xsd:attribute name="component" type="integer" />
+		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" />
+	</xsd:complexType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
@@ -306,6 +318,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -325,6 +338,21 @@
 		<xsd:attribute name="meshLevels" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType" />
+	<xsd:complexType name="InternalWellboreType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Level0" type="Level0Type" />
+		</xsd:choice>
+		<!--nx => Number of elements in the x-direction within each mesh block-->
+		<xsd:attribute name="nx" type="integer_array" />
+		<!--ny => Number of elements in the y-direction within each mesh block-->
+		<xsd:attribute name="ny" type="integer_array" />
+		<!--xCoords => x-coordinates of each mesh block vertex-->
+		<xsd:attribute name="xCoords" type="real64_array" />
+		<!--yCoords => y-coordinates of each mesh block vertex-->
+		<xsd:attribute name="yCoords" type="real64_array" />
+		<!--meshLevels => (no description available)-->
+		<xsd:attribute name="meshLevels" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="PAMELAMeshGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Level0" type="Level0Type" />
@@ -1336,6 +1364,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
