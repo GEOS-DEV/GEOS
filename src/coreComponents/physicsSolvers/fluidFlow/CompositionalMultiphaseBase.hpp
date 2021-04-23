@@ -165,11 +165,14 @@ public:
   virtual void updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models) for a subregion
+   * @param subRegion the subRegion on which to update dependent quantities
+   * @param targetIndex the subRegion index
    */
   template< typename SUBREGIONTYPE >
   void updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const;
+
+  virtual void updateState( DomainPartition & domain ) const override final;
 
   /**
    * @brief Get the number of fluid components (species)
@@ -345,6 +348,7 @@ public:
                           DomainPartition & domain,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
+
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.

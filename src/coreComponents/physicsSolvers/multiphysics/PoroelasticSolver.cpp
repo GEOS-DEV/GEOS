@@ -580,6 +580,25 @@ void PoroelasticSolver::applySystemSolution( DofManager const & dofManager,
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
 }
 
+void PoroelasticSolver::updateState( DomainPartition & domain ) const
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
+                                                                          auto & subRegion )
+  {
+    m_flowSolver->updateFluidModel( subRegion, targetIndex );
+    m_flowSolver->updateMobility( subRegion, targetIndex );
+    updatePermeability( subRegion, targetIndex );
+  } );
+}
+
+void PoroelasticSolver::updatePermeability( CellElementSubRegion & subRegion,
+                                            localIndex const targetIndex ) const
+{
+  //TODO stress-dependent permeability update.
+}
+
 real64 PoroelasticSolver::splitOperatorStep( real64 const & time_n,
                                              real64 const & dt,
                                              integer const cycleNumber,

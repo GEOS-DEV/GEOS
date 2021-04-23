@@ -20,16 +20,12 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/multiphysics/PoroelasticSolver.hpp"
 
 namespace geosx
 {
 
-class FlowSolverBase;
-class SolidMechanicsLagrangianFEM;
-
-class HydrofractureSolver : public SolverBase
+class HydrofractureSolver : public PoroelasticSolver
 {
 public:
   HydrofractureSolver( const string & name,
@@ -65,10 +61,6 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
-  virtual void implicitStepComplete( real64 const & time_n,
-                                     real64 const & dt,
-                                     DomainPartition & domain ) override final;
-
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -82,11 +74,6 @@ public:
                                         DofManager const & dofManager,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs ) override;
-
-  virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
   scalingForSystemSolution( DomainPartition const & domain,
@@ -136,25 +123,12 @@ public:
   void initializeNewFaceElements( DomainPartition const & domain );
 
 
-
-  enum class CouplingTypeOption : integer
-  {
-    FIM,
-    SIM_FixedStress
-  };
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
-    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
-
-    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
-    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
-
-    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
-    constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
-
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+
+    constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
+
     constexpr static char const * maxNumResolvesString() { return "maxNumResolves"; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -192,14 +166,14 @@ protected:
 
 private:
 
-  string m_solidSolverName;
-  string m_flowSolverName;
+  // name of the contact relation
   string m_contactRelationName;
 
-  CouplingTypeOption m_couplingTypeOption;
+  /// name of the surface generator
+  string m_surfaceGeneratorName;
 
-  SolidMechanicsLagrangianFEM * m_solidSolver;
-  FlowSolverBase * m_flowSolver;
+  /// pointer to the surface generator
+  SurfaceGenerator * m_surfaceGenerator;
 
   std::unique_ptr< ParallelMatrix > m_blockDiagUU;
 

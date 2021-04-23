@@ -165,15 +165,6 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( string( BASE::viewKeyStruct::deltaPressureString() ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
-
-  //GEOSX_UNUSED_VAR(mesh)
-  this->template forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
-                                                                                                   auto & subRegion )
-  {
-    //GEOSX_UNUSED_VAR(targetIndex)
-    //GEOSX_UNUSED_VAR(subRegion)
-    BASE::updateState( subRegion, targetIndex );
-  } );
 }
 
 template< typename BASE >

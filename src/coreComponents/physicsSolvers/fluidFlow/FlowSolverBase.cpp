@@ -211,7 +211,6 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh )
 
 FlowSolverBase::~FlowSolverBase() = default;
 
-
 void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion,
                                                 localIndex const targetIndex ) const
 {

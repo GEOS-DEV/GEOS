@@ -208,6 +208,9 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const;
 
+
+  virtual void updateState ( DomainPartition & domain ) const override final;
+
   /**
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields

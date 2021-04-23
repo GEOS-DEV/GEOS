@@ -297,6 +297,25 @@ void MultiphasePoroelasticSolver::applySystemSolution( DofManager const & dofMan
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
 }
 
+void MultiphasePoroelasticSolver::updateState( DomainPartition & domain ) const
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
+                                                                           auto & subRegion )
+   {
+     m_flowSolver->updateFluidModel( subRegion, targetIndex );
+     m_flowSolver->updateMobility( subRegion, targetIndex );
+     updatePermeability( subRegion, targetIndex );
+   } );
+}
+
+void MultiphasePoroelasticSolver::updatePermeability( CellElementSubRegion & subRegion,
+                                                      localIndex const targetIndex ) const
+{
+  //TODO stress-dependent permeability update.
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoroelasticSolver, string const &, Group * const )
 
 } /* namespace geosx */

@@ -101,6 +101,11 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
+  virtual void updateState( DomainPartition & domain ) const override;
+
+  void updatePermeability( CellElementSubRegion & subRegion,
+                           localIndex const targetIndex  ) const;
+
   virtual void
   implicitStepComplete( real64 const & time_n,
                         real64 const & dt,

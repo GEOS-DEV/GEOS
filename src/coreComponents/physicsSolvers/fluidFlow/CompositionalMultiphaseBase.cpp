@@ -1078,6 +1078,14 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNU
   } );
 }
 
+void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
+{
+  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
+  {
+    updateState( subRegion, targetIndex );
+  } );
+}
+
 void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
 {
   FlowSolverBase::resetViews( mesh );

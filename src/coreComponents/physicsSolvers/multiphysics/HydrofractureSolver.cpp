@@ -35,6 +35,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
@@ -46,25 +47,15 @@ using namespace constitutive;
 
 HydrofractureSolver::HydrofractureSolver( const string & name,
                                           Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolverName(),
-  m_flowSolverName(),
-  m_couplingTypeOption( CouplingTypeOption::FIM ),
-  m_solidSolver( nullptr ),
-  m_flowSolver( nullptr ),
+  PoroelasticSolver( name, parent ),
+  m_contactRelationName(),
+  m_surfaceGeneratorName(),
+  m_surfaceGenerator( nullptr ),
   m_maxNumResolves( 10 )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
+  registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver to use in the poroelastic solver" );
-
-  registerWrapper( viewKeyStruct::fluidSolverNameString(), &m_flowSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
-
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
+    setDescription( "Name of the surface generator to use in the hydrofracture solver" );
 
   registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -109,6 +100,11 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group & MeshBodies
 }
 #endif
 
+HydrofractureSolver::~HydrofractureSolver()
+{
+  // TODO Auto-generated destructor stub
+}
+
 void HydrofractureSolver::implicitStepSetup( real64 const & time_n,
                                              real64 const & dt,
                                              DomainPartition & domain )
@@ -138,27 +134,16 @@ void HydrofractureSolver::implicitStepSetup( real64 const & time_n,
 
 }
 
-void HydrofractureSolver::implicitStepComplete( real64 const & time_n,
-                                                real64 const & dt,
-                                                DomainPartition & domain )
-{
-  m_flowSolver->implicitStepComplete( time_n, dt, domain );
-  m_solidSolver->implicitStepComplete( time_n, dt, domain );
-}
-
 void HydrofractureSolver::postProcessInput()
 {
-  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-  m_flowSolver = &this->getParent().getGroup< FlowSolverBase >( m_flowSolverName );
+  PoroelasticSolver::postPorcessInput();
+  m_surfaceGenerator = &this->getParent().getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 }
 
 void HydrofractureSolver::initializePostInitialConditionsPreSubGroups()
 {}
 
-HydrofractureSolver::~HydrofractureSolver()
-{
-  // TODO Auto-generated destructor stub
-}
+
 
 void HydrofractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
@@ -172,8 +157,6 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
                                         DomainPartition & domain )
 {
   real64 dtReturn = dt;
-
-  SolverBase * const surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( "SurfaceGen" );
 
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
@@ -201,9 +184,9 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
       // currently the only method is implicit time integration
       dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-      if( surfaceGenerator!=nullptr )
+      if( m_surfaceGenerator!=nullptr )  // is this check really necessary ?
       {
-        if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+        if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
         }
@@ -463,6 +446,9 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
 
+  // TODO: do we still need to avoid poroelasticity in the rock matrix? If not this can be done by
+  // calling PoroelasticSolver::setupDofs( domain, dofManager );
+
   m_solidSolver->setupDofs( domain, dofManager );
   m_flowSolver->setupDofs( domain, dofManager );
 
@@ -539,9 +525,6 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   localMatrix.setName( this->getName() + "/localMatrix" );
   localRhs.setName( this->getName() + "/localRhs" );
   localSolution.setName( this->getName() + "/localSolution" );
-
-  m_flowSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
-
 }
 
 void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
@@ -728,33 +711,6 @@ void HydrofractureSolver::applyBoundaryConditions( real64 const time,
                                          localMatrix,
                                          localRhs );
 }
-
-real64
-HydrofractureSolver::
-  calculateResidualNorm( DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  real64 const fluidResidual = m_flowSolver->calculateResidualNorm( domain,
-                                                                    dofManager,
-                                                                    localRhs );
-
-  real64 const solidResidual = m_solidSolver->calculateResidualNorm( domain,
-                                                                     dofManager,
-                                                                     localRhs );
-
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    char output[200] = {0};
-    sprintf( output, "    ( Rfluid, Rsolid ) = ( %4.2e, %4.2e )", fluidResidual, solidResidual );
-    std::cout << output << std::endl;
-  }
-
-  return std::sqrt( fluidResidual * fluidResidual + solidResidual * solidResidual );
-}
-
 
 
 void
@@ -993,14 +949,7 @@ HydrofractureSolver::
                        DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->applySystemSolution( dofManager,
-                                      localSolution,
-                                      scalingFactor,
-                                      domain );
-  m_flowSolver->applySystemSolution( dofManager,
-                                     localSolution,
-                                     -scalingFactor,
-                                     domain );
+  PoroelasticSolver::applySystemSolution(dofManager, localSolution, scalingFactor, domain);
 
   updateDeformationForCoupling( domain );
 }

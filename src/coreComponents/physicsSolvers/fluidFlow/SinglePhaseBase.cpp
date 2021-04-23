@@ -636,6 +636,17 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   } );
 }
 
+void SinglePhaseBase::updateState( DomainPartition & domain ) const
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  this->template forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
+                                                                                                    auto & subRegion )
+  {
+     updateState( subRegion, targetIndex );
+  } );
+}
+
 void SinglePhaseBase::solveSystem( DofManager const & dofManager,
                                    ParallelMatrix & matrix,
                                    ParallelVector & rhs,
