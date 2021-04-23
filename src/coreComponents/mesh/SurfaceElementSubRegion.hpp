@@ -218,8 +218,11 @@ public:
     constexpr static char const * elementDefaultConductivityString() { return "elementDefaultConductivity"; };
   };
 
-  /// Map between the face elements and the cells
+  /// Map between the surface elements and the cells
   FixedToManyElementRelation m_surfaceElementsToCells;
+
+  /// Unmapped surface elements to nodes map
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
 
 protected:
 

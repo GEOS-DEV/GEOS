@@ -36,10 +36,8 @@ enum class PVTFunctionType { UNKNOWN, DENSITY, VISCOSITY };
 class PVTFunctionBaseUpdate
 {
 public:
-  PVTFunctionBaseUpdate( arrayView1d< string const > const & componentNames,
-                         arrayView1d< real64 const > const & componentMolarWeight )
+  PVTFunctionBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight )
     :
-    m_componentNames( componentNames ),
     m_componentMolarWeight( componentMolarWeight )
   {}
 
@@ -69,12 +67,21 @@ public:
                         real64 & dValue_dPressure,
                         real64 & dValue_dTemperature,
                         arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass = 0 ) const = 0;
+                        bool useMass ) const = 0;
+
+  /**
+   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
+   * @param space the space to move the KernelWrapper to
+   * @param touch whether the KernelWrapper should be touched in the new space or not
+   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
+   *       and have their contents properly moved between memory spaces.
+   */
+  virtual void move( LvArray::MemorySpace const space, bool const touch )
+  {
+    m_componentMolarWeight.move( space, touch );
+  }
 
 protected:
-
-  /// Array storing the name of the components
-  arrayView1d< string const > m_componentNames;
 
   /// Array storing the component molar weights
   arrayView1d< real64 const > m_componentMolarWeight;

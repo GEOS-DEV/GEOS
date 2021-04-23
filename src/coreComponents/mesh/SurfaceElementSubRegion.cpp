@@ -19,6 +19,7 @@
 
 
 #include "SurfaceElementSubRegion.hpp"
+#include "ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -29,6 +30,7 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
                                                   dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_surfaceElementsToCells(),
+  m_unmappedGlobalIndicesInToNodes(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_elementAperture(),
@@ -75,6 +77,9 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setApplyDefaultValue( -1.0 ).
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
     setDescription( "Scalar value of default conductivity C_{f,0} for a fracturing face." );
+
+  // TODO there has to be a cleaner way than this.
+  m_surfaceElementsToCells.setElementRegionManager( dynamicCast< ElementRegionManager & >( getParent().getParent().getParent().getParent() ) );
 
 }
 
