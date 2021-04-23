@@ -1657,6 +1657,13 @@ Datastructure: embeddedSurfacesEdgeManager
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesEdgeManager_other.rst
 
 
+.. _DATASTRUCTURE_embeddedSurfacesNodeManager:
+
+Datastructure: embeddedSurfacesNodeManager
+==========================================
+.. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
+
+
 .. _DATASTRUCTURE_finiteVolumeStencils:
 
 Datastructure: finiteVolumeStencils
