@@ -137,7 +137,7 @@ def process_xml_files(geosx_root, output_name):
 
   # Parse the schema
   geosx_root = os.path.expanduser(geosx_root)
-  schema = '%s/src/coreComponents/fileIO/schema/schema.xsd' % (geosx_root)
+  schema = '%ssrc/coreComponents/schema/schema.xsd' % (geosx_root)
   xml_types = parse_schema(schema)
 
   # Find all xml files, collect their attributes
