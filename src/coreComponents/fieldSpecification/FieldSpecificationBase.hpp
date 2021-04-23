@@ -462,8 +462,6 @@ public:
 
   /**
    * Accessing the considered component.
-   * The 0, 1 and 2 values are for the traction in the three orthogonal directions in the global cartesian coordinate system.
-   * The -1 value is for the normal traction.
    * @return The component axis or a special value.
    */
   virtual int getComponent() const
@@ -473,7 +471,6 @@ public:
 
   /**
    * Accessor
-   * @param[in] time Time
    * @return const reference to m_direction
    */
   virtual R1Tensor const & getDirection() const

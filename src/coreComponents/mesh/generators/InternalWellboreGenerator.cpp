@@ -263,39 +263,29 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartit
 
 void InternalWellboreGenerator::
   setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
-                                          int ( & index )[3] )
+                                          int ( & globalIJK )[3] )
 {
 
   GEOSX_UNUSED_VAR( partition );
   if( m_isFullAnnulus )
   {
-    if( index[1] == m_nElems[1].back() )
+    // TODO this only works for single theta partition.
+    if( globalIJK[1] == m_nElems[1].back() )
     {
-      index[1] = 0;
+      globalIJK[1] = 0;
     }
   }
 }
 
-void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( integer const i,
-                                                                      integer const j,
-                                                                      integer const k,
-                                                                      integer const iBlock,
-                                                                      integer const jBlock,
-                                                                      integer const kBlock,
-                                                                      int ( & globalIJK )[3],
-                                                                      int const ( &numElemsInDirForBlock )[3],
+void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
                                                                       integer const ( &numNodesInDir )[3],
                                                                       int const ( &firstElemIndexInPartition )[3],
                                                                       localIndex ( & nodeOfBox )[8] )
 {
-  GEOSX_UNUSED_VAR( i, k, iBlock, kBlock );
   if( m_isFullAnnulus )
   {
     setConnectivityForPeriodicBoundary( 1,
-                                        j,
-                                        jBlock,
                                         globalIJK,
-                                        numElemsInDirForBlock,
                                         numNodesInDir,
                                         firstElemIndexInPartition,
                                         nodeOfBox );

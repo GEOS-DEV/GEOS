@@ -36,7 +36,7 @@
       nt="{ 16 }"
       nz="{ 4 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
-                    { 0.0, 0.0, 1.0 } }"
+                    { 0.0, 0.0, 4.0 } }"
       autoSpaceRadialElems="{ 0, 0, 1 }"
       useCartesianOuterBoundary="2"
       cellBlockNames="{ casing, cement, rock }"
@@ -131,7 +131,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xpos, xpos }"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="yConstraint"

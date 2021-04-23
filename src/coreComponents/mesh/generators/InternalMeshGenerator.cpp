@@ -618,10 +618,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
                 // Fix local connectivity for single theta (y) partition (radial meshes only)
 
-                setConnectivityForPeriodicBoundaries( i, j, k,
-                                                      iblock, jblock, kblock,
-                                                      globalIJK,
-                                                      numElemsInDirForBlock,
+                setConnectivityForPeriodicBoundaries( globalIJK,
                                                       numNodesInDir,
                                                       firstElemIndexInPartition,
                                                       nodeOfBox );
@@ -691,10 +688,10 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
  * @param node_size
  */
 void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementType,
-                                                         const int (& index)[3],
-                                                         const int & iEle,
+                                                         int const (&index)[3],
+                                                         int const & iEle,
                                                          int (& nodeIDInBox)[8],
-                                                         const int node_size )
+                                                         int const node_size )
 
 {
   if( elementType == "C3D8" )
@@ -978,16 +975,15 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
 void
 InternalMeshGenerator::
   setConnectivityForPeriodicBoundary( int const component,
-                                      integer const index,
-                                      integer const blockIndex,
                                       int const (&globalIJK)[3],
-                                      int const (&numElemsInDirForBlock)[3],
                                       integer const (&numNodesInDir)[3],
                                       int const (&firstElemIndexInPartition)[3],
                                       localIndex (& nodeOfBox)[8] )
 {
-  if( ( index == numElemsInDirForBlock[component] - 1 ) &&
-      ( blockIndex == m_nElems[component].size() - 1 ) &&
+  // Condition is:
+  // 1) element is last index in component direction
+  // 2) first element in partition is zero
+  if( ( globalIJK[component] == m_numElemsTotal[component]-1 )&&
       ( firstElemIndexInPartition[component] == 0) )
   {
     // Last set of nodes

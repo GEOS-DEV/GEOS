@@ -98,50 +98,29 @@ public:
 
   /**
    * @brief Alter connectivity to adhere to a specific periodic type boundary.
-   * @param i The rank local i-direction index in the block
-   * @param j The rank local j-direction index in the block
-   * @param k The rank local k-direction index in the block
-   * @param iBlock The i-direction block index
-   * @param jBlock The j-direction block index
-   * @param kBlock The k-direction block index
    * @param globalIJK The global ijk indices.
-   * @param numElemsInDirForBlock The number of elements in each direction for the block.
    * @param numNodesInDir The number of elements in each direction globally.
    * @param firstElemIndexInPartition The first index in the partition in each direction.
    * @param nodeOfBox The connectivity.
    */
-  virtual void setConnectivityForPeriodicBoundaries( integer const i,
-                                                     integer const j,
-                                                     integer const k,
-                                                     integer const iBlock,
-                                                     integer const jBlock,
-                                                     integer const kBlock,
-                                                     int (& globalIJK)[3],
-                                                     int const (&numElemsInDirForBlock)[3],
-                                                     integer const (&numNodesInDir)[3],
-                                                     int const (&firstElemIndexInPartition)[3],
-                                                     localIndex (& nodeOfBox)[8] )
+  virtual void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
+                                                     integer const ( &numNodesInDir )[3],
+                                                     int const ( &firstElemIndexInPartition )[3],
+                                                     localIndex ( & nodeOfBox )[8] )
   {
-    GEOSX_UNUSED_VAR( i, j, k, iBlock, jBlock, kBlock,
-                      globalIJK, numElemsInDirForBlock, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
+    GEOSX_UNUSED_VAR( globalIJK, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
   }
 
   /**
    * @brief Alter connectivity to adhere to a periodic type boundary.
    * @param component The direction of the periodicity.
-   * @param index The index in the direction of periodicity.
-   * @param blockIndex The index for the block in the direction of periodicity.
    * @param globalIJK The global ijk indices.
-   * @param numElemsInDirForBlock The number of elements in each direction for the block.
    * @param numNodesInDir The number of elements in each direction globally.
    * @param firstElemIndexInPartition The first index in the partition in each direction.
    * @param nodeOfBox The connectivity.
    */
   void setConnectivityForPeriodicBoundary( int const component,
-                                           integer const index,
-                                           integer const blockIndex,
                                            int const (&globalIJK)[3],
-                                           int const (&numElemsInDirForBlock)[3],
                                            integer const (&numNodesInDir)[3],
                                            int const (&firstElemIndexInPartition)[3],
                                            localIndex ( &nodeOfBox )[8] );
@@ -190,10 +169,10 @@ protected:
    *
    */
   void getElemToNodesRelationInBox( const string & elementType,
-                                    const int (& index)[3],
-                                    const int & iEle,
+                                    int const (&index)[3],
+                                    int const & iEle,
                                     int (& nodeIDInBox)[8],
-                                    const int size );
+                                    int const size );
 
   /// Mesh number of dimension
   int m_dim;
@@ -265,7 +244,7 @@ private:
    * @brief Convert ndim node spatialized index to node global index.
    * @param[in] node ndim spatialized array index
    */
-  inline globalIndex nodeGlobalIndex( const int index[3] )
+  inline globalIndex nodeGlobalIndex( int const index[3] )
   {
     return index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
   }
@@ -274,7 +253,7 @@ private:
    * @brief Convert ndim element spatialized index to element global index.
    * @param[in] element ndim spatialized array index
    */
-  inline globalIndex elemGlobalIndex( const int index[3] )
+  inline globalIndex elemGlobalIndex( int const index[3] )
   {
     return index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
   }
@@ -367,7 +346,7 @@ private:
    * @param[out] X the element center coordinates
    */
   template< typename OUT_VECTOR >
-  inline void getElemCenterPosition( const int k[3], OUT_VECTOR && X )
+  inline void getElemCenterPosition( int const k[3], OUT_VECTOR && X )
   {
     for( int i=0; i<3; ++i )
     {

@@ -57,14 +57,7 @@ protected:
   virtual void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                                        int ( & index )[3] ) override final;
 
-  virtual void setConnectivityForPeriodicBoundaries( integer const i,
-                                                     integer const j,
-                                                     integer const k,
-                                                     integer const iBlock,
-                                                     integer const jBlock,
-                                                     integer const kBlock,
-                                                     int ( & globalIJK )[3],
-                                                     int const ( &numElemsInDirForBlock )[3],
+  virtual void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
                                                      integer const ( &numNodesInDir )[3],
                                                      int const ( &firstElemIndexInPartition )[3],
                                                      localIndex ( &nodeOfBox )[8] ) override final;
