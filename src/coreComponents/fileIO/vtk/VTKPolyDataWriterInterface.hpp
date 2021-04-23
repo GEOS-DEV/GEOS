@@ -285,7 +285,7 @@ private:
    * @param[in] time the current time-step
    */
   void writeTimestamp( vtkSmartPointer< vtkUnstructuredGrid > ug,
-                       real64 time) const;
+                       real64 time ) const;
 
 private:
 

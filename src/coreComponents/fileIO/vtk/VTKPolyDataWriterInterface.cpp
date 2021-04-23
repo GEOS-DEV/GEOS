@@ -360,7 +360,7 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 time,
       ug->SetPoints( VTKPoints );
       auto VTKCells = getVtkCells( er );
       ug->SetCells( VTKCells.first.data(), VTKCells.second );
-      writeTimestamp(ug, time);
+      writeTimestamp( ug, time );
       writeElementFields< CellElementSubRegion >( ug->GetCellData(), er );
       writeNodeFields( ug->GetPointData(), nodeManager );
       writeUnstructuredGrid( ug, time, er.getName() );
@@ -484,14 +484,14 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( vtkSmartPointer< vtkUnst
   vtuWriter->Write();
 }
 
-void VTKPolyDataWriterInterface::writeTimestamp(vtkSmartPointer< vtkUnstructuredGrid > ug,
-                                                real64 const time) const
+void VTKPolyDataWriterInterface::writeTimestamp( vtkSmartPointer< vtkUnstructuredGrid > ug,
+                                                 real64 const time ) const
 {
-    vtkDoubleArray *t = vtkDoubleArray::New();
-    t->SetName("TIME");
-    t->SetNumberOfTuples(1);
-    t->SetTuple1(0, time);
-    ug->GetFieldData()->AddArray(t);
+  vtkDoubleArray *t = vtkDoubleArray::New();
+  t->SetName( "TIME" );
+  t->SetNumberOfTuples( 1 );
+  t->SetTuple1( 0, time );
+  ug->GetFieldData()->AddArray( t );
 }
 
 string VTKPolyDataWriterInterface::getTimeStepSubFolder( real64 const time ) const
