@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <SolidMechanics_LagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
@@ -146,7 +146,7 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-1.0, -1.0e-6, -1.0"
-      xMax="0.041, 1.0e-6, 0.041"/>
+      xMin="{-1.0, -1.0e-6, -1.0}"
+      xMax="{ 0.041, 1.0e-6, 0.041}"/>
   </Geometry>
 </Problem>

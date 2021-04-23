@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <SolidMechanicsLagrangianSSLE
       name="lagSolve"
       timeIntegrationOption="QuasiStatic"
@@ -45,18 +45,18 @@
   <Geometry>
     <Box
       name="fracPlaneX"
-      xMin="-0.1, -1e3, -1e3"
-      xMax="0.1, 1e3, 1e3"/>
+      xMin="{-0.1, -1e3, -1e3}"
+      xMax="{0.1, 1e3, 1e3}"/>
 
     <Box
       name="fracPlaneY"
-      xMin="-1e3, -0.1, -1e3"
-      xMax="1e3, 0.1, 1e3"/>
+      xMin="{-1e3, -0.1, -1e3}"
+      xMax="{1e3, 0.1, 1e3}"/>
 
     <Box
       name="fracPlaneZ"
-      xMin="-1e3, -1e3, -0.1"
-      xMax="1e3, 1e3, 0.1"/>
+      xMin="{-1e3, -1e3, -0.1}"
+      xMax="{1e3, 1e3, 0.1}"/>
   </Geometry>
 
   <Events
