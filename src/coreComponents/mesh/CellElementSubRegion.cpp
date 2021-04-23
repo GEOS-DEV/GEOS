@@ -360,7 +360,7 @@ localIndex CellElementSubRegion::getNumFaceNodes( localIndex const GEOSX_UNUSED_
   return -1;
 }
 
-
+// TODO this should not be there... Use the standard map instead.
 localIndex CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
                                     localIndex const localFaceIndex,
                                     localIndex * const nodeIndicies ) const
