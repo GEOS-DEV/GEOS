@@ -32,6 +32,7 @@ set( mesh_headers
      generators/MeshGeneratorBase.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
+     generators/InternalWellboreGenerator.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/PartitionBase.hpp
@@ -78,6 +79,7 @@ set(mesh_sources
     WellElementSubRegion.cpp
     generators/InternalMeshGenerator.cpp
     generators/InternalWellGenerator.cpp
+    generators/InternalWellboreGenerator.cpp
     generators/MeshGeneratorBase.cpp
     mpiCommunications/CommunicationTools.cpp
     mpiCommunications/NeighborCommunicator.cpp

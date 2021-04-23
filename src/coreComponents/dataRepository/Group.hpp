@@ -97,7 +97,7 @@ public:
    * @brief Move constructor
    * @param[in] source source Group
    */
-  Group( Group && source );
+  Group( Group && source ) = default;
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group
@@ -114,10 +114,6 @@ public:
    */
   Group( Group const & ) = delete;
 
-  /**
-   * @brief Deleted move constructor.
-   */
-  Group( Group const && ) = delete;
 
   /**
    * @brief Deleted copy assignment operator.
