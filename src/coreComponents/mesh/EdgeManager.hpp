@@ -19,6 +19,7 @@
 #ifndef GEOSX_MESH_EDGEMANAGER_HPP_
 #define GEOSX_MESH_EDGEMANAGER_HPP_
 
+#include "CellBlockManager.hpp"
 #include "InterObjectRelation.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
@@ -121,7 +122,7 @@ public:
    * @param[in] nodeManager manager of all nodes in the DomainPartition
    * @param[in] faceManager manager of all faces in the DomainPartition
    */
-  void buildEdges( NodeManager & nodeManager, FaceManager & faceManager );
+  void buildEdges( NodeManager & nodeManager, FaceManager & faceManager, CellBlockManager const & cellBlockManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.

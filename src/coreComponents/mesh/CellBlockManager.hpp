@@ -136,6 +136,12 @@ public:
    */
   ArrayOfSets< localIndex > getNodeToFaces( localIndex numNodes ) const;
 
+  ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const;
+
+  array2d< geosx::localIndex > const & getEdgeToNodes() const;
+
+  ArrayOfArrays< geosx::localIndex > const & getFaceToEdges() const;
+
   void buildMaps( localIndex numNodes );
 
   /**
@@ -152,6 +158,8 @@ public:
    * @return
    */
   localIndex numFaces() const; // TODO Improve doc
+
+  localIndex numEdges() const; // TODO Improve doc
 
 private:
 
@@ -180,10 +188,18 @@ private:
 
   localIndex numCellBlocks() const;
 
+  void buildFaceMaps( localIndex numNodes );
+  void buildEdgeMaps( localIndex numNodes );
+
+
 private:
   ArrayOfArrays< localIndex >  m_faceToNodes;
   array2d< localIndex >  m_faceToElements;
+  ArrayOfSets< localIndex > m_edgeToFaces;
+  array2d< localIndex > m_edgeToNodes;
+  ArrayOfArrays< localIndex > m_faceToEdges;
   localIndex m_numFaces;
+  localIndex m_numEdges;
 };
 }
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

@@ -64,6 +64,8 @@ EdgeManager::~EdgeManager()
 
 void EdgeManager::resize( localIndex const newSize )
 {
+  // FIXME My tests say that this line could be commented out.
+  //       But those tests are not exhaustive.
   m_toFacesRelation.resize( newSize, 2 * faceMapExtraSpacePerEdge() );
   ObjectManagerBase::resize( newSize );
 }
@@ -397,38 +399,49 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   } );
 }
 
-void EdgeManager::buildEdges( NodeManager & nodeManager, FaceManager & faceManager )
+void EdgeManager::buildEdges( NodeManager & nodeManager, FaceManager & faceManager, CellBlockManager const & cellBlockManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  localIndex const numNodes = nodeManager.size();
+//  localIndex const numNodes = nodeManager.size();
 
-  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+//  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   faceManager.edgeList().setRelatedObject( *this );
-  ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
+//  ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
 
   m_toNodesRelation.setRelatedObject( nodeManager );
   m_toFacesRelation.setRelatedObject( faceManager );
 
-  ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
-  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
+//  ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
+//  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
 
-  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
-  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
+//  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
+//  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
 
-  resizeEdgeToFaceMap( edgesByLowestNode.toViewConst(),
-                       uniqueEdgeOffsets,
-                       m_toFacesRelation );
+//  resizeEdgeToFaceMap( edgesByLowestNode.toViewConst(),
+//                       uniqueEdgeOffsets,
+//                       m_toFacesRelation );
 
-  resize( numEdges );
+//  resize( numEdges );
 
-  populateMaps( edgesByLowestNode.toViewConst(),
-                uniqueEdgeOffsets,
-                faceToNodeMap,
-                faceToEdgeMap,
-                m_toFacesRelation,
-                m_toNodesRelation );
+  resize( cellBlockManager.numEdges() );
+
+//  populateMaps( edgesByLowestNode.toViewConst(),
+//                uniqueEdgeOffsets,
+//                faceToNodeMap,
+//                faceToEdgeMap,
+//                m_toFacesRelation,
+//                m_toNodesRelation );
+
+  faceManager.edgeList().base() = cellBlockManager.getFaceToEdges();
+  // FIXME I don't know what I am doing...
+  auto const & edgeToFaces = cellBlockManager.getEdgeToFaces();
+  m_toFacesRelation.base().reserve(edgeToFaces.size());
+  m_toFacesRelation.base().reserveValues(edgeToFaces.valueCapacity());
+  m_toFacesRelation.base() = edgeToFaces;
+
+  m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
 
   // make sets from nodesets
   auto const & nodeSets = nodeManager.sets().wrappers();

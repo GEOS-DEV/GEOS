@@ -520,7 +520,7 @@ void ProblemManager::generateMesh()
       faceManager.buildFaces( nodeManager, elemManager, cellBlockManager );
       nodeManager.setFaceMaps( cellBlockManager, faceManager );
 
-      edgeManager.buildEdges( nodeManager, faceManager );
+      edgeManager.buildEdges( nodeManager, faceManager, cellBlockManager );
       nodeManager.setEdgeMaps( edgeManager );
 
       domain.generateSets();
