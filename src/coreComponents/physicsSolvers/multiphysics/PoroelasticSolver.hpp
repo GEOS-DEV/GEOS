@@ -101,7 +101,7 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
-  virtual void updateState( DomainPartition & domain ) const override;
+  virtual void updateState( DomainPartition & domain ) override;
 
   void updatePermeability( CellElementSubRegion & subRegion,
                            localIndex const targetIndex  ) const;

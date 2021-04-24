@@ -473,7 +473,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual void updateState( DomainPartition & domain ) const;
+  virtual void updateState( DomainPartition & domain );
 
   /**
    * @brief reset state of physics back to the beginning of the step.

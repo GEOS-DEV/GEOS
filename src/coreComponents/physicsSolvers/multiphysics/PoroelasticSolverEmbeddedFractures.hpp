@@ -126,7 +126,7 @@ public:
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
 
-  void updateState( DomainPartition & domain );
+  virtual void updateState( DomainPartition & domain ) override final;
 
 
   void assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,

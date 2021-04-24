@@ -858,7 +858,7 @@ void SolverBase::applySystemSolution( DofManager const & GEOSX_UNUSED_PARAM( dof
   GEOSX_ERROR( "SolverBase::applySystemSolution called!. Should be overridden." );
 }
 
-void SolverBase::updateState( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) const
+void SolverBase::updateState( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::updateState called!. Should be overridden." );
 }

@@ -636,7 +636,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   } );
 }
 
-void SinglePhaseBase::updateState( DomainPartition & domain ) const
+void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 

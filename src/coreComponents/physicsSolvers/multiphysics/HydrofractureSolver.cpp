@@ -33,7 +33,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -136,7 +136,7 @@ void HydrofractureSolver::implicitStepSetup( real64 const & time_n,
 
 void HydrofractureSolver::postProcessInput()
 {
-  PoroelasticSolver::postPorcessInput();
+  PoroelasticSolver::postProcessInput();
   m_surfaceGenerator = &this->getParent().getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 }
 

@@ -25,6 +25,9 @@
 namespace geosx
 {
 
+class SurfaceGenerator;
+
+
 class HydrofractureSolver : public PoroelasticSolver
 {
 public:
@@ -180,8 +183,6 @@ private:
   integer m_maxNumResolves;
   integer m_numResolves[2];
 };
-
-ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
 
 } /* namespace geosx */
 

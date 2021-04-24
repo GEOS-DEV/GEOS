@@ -580,7 +580,7 @@ void PoroelasticSolver::applySystemSolution( DofManager const & dofManager,
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
 }
 
-void PoroelasticSolver::updateState( DomainPartition & domain ) const
+void PoroelasticSolver::updateState( DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 

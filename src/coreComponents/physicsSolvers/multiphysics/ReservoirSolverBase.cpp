@@ -286,7 +286,7 @@ void ReservoirSolverBase::assembleSystem( real64 const time_n,
    * moved to device, the calculation is wrong. the problem should go away when fluid updates
    * are executed on device.
    */
-  m_wellSolver->updateStateAll( domain );
+  m_wellSolver->updateState( domain );
 
   // assemble J_WW (excluding perforation rates)
   m_wellSolver->assembleSystem( time_n, dt,

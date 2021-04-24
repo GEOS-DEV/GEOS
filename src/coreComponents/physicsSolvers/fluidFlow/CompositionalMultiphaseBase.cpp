@@ -1080,6 +1080,8 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNU
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 {
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
   {
     updateState( subRegion, targetIndex );

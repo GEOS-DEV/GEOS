@@ -599,8 +599,6 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        true );
-
-  updateState( domain );
 }
 
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )

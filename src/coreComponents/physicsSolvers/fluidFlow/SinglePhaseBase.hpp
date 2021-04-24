@@ -209,7 +209,7 @@ public:
                      arrayView1d< real64 > const & localRhs ) const;
 
 
-  virtual void updateState ( DomainPartition & domain ) const override final;
+  virtual void updateState ( DomainPartition & domain ) override final;
 
   /**
    * @brief Function to update all constitutive state and dependent variables
@@ -217,6 +217,19 @@ public:
    */
   template< typename SUBREGIONTYPE >
   void updateState( SUBREGIONTYPE & dataGroup, localIndex const targetIndex ) const;
+
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param dataGroup group that contains the fields
+   */
+  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+
+  /**
+   * @brief Function to update fluid mobility
+   * @param dataGroup group that contains the fields
+   */
+  void updateMobility( Group & dataGroup, localIndex const targetIndex ) const;
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -290,24 +303,6 @@ protected:
    * This design should DEFINITELY be revisited.
    */
   virtual arrayView1d< real64 const > getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const;
-
-  /**
-   * @brief Function to update all constitutive models
-   * @param dataGroup group that contains the fields
-   */
-  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
-
-//  /**
-//   * @brief Function to update all constitutive models
-//   * @param dataGroup group that contains the fields
-//   */
-//  void updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
-
-  /**
-   * @brief Function to update fluid mobility
-   * @param dataGroup group that contains the fields
-   */
-  void updateMobility( Group & dataGroup, localIndex const targetIndex ) const;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;

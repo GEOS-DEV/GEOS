@@ -172,7 +172,7 @@ public:
   template< typename SUBREGIONTYPE >
   void updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const;
 
-  virtual void updateState( DomainPartition & domain ) const override final;
+  virtual void updateState( DomainPartition & domain ) override final;
 
   /**
    * @brief Get the number of fluid components (species)
