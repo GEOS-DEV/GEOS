@@ -201,5 +201,26 @@ private:
   localIndex m_numFaces;
   localIndex m_numEdges;
 };
+
+// TODO move away, replace by one single smooth free function.
+struct EdgeBuilder;
+
+void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+                          arrayView1d< localIndex const > const & uniqueEdgeOffsets,
+                          ArrayOfSets< localIndex > & edgeToFaceMap ) ;
+
+ArrayOfArrays< EdgeBuilder > createEdgesByLowestNode( localIndex numNodes,
+                                                      ArrayOfArraysView< localIndex const > const & faceToNodeMap );
+
+localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+                                        arrayView1d< localIndex > const & uniqueEdgeOffsets );
+
+void populateEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+                       arrayView1d< localIndex const > const & uniqueEdgeOffsets,
+                       ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                       ArrayOfArrays< localIndex > & faceToEdgeMap,
+                       ArrayOfSets< localIndex > & edgeToFaceMap,
+                       arrayView2d< localIndex > const & edgeToNodeMap );
+
 }
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

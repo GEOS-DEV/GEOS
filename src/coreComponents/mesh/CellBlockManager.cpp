@@ -234,7 +234,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< NodesAndElementOfFace
  * @param [out] uniqueEdgeOffsets an array of size numNodes + 1. After this function returns node i contains
  * edges with IDs ranging from uniqueEdgeOffsets[ i ] to uniqueEdgeOffsets[ i + 1 ] - 1.
  */
-localIndex calculateTotalNumberOfEdges2( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
                                         arrayView1d< localIndex > const & uniqueEdgeOffsets )
 {
   localIndex const numNodes = edgesByLowestNode.size();
@@ -537,10 +537,9 @@ void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lo
  * @param [in] uniqueEdgeOffsets an containing the unique edge IDs for each node in edgesByLowestNode.
  * param [out] edgeToFaceMap the map from edges to faces. This function resizes the array appropriately.
  */
-void resizeEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
-                           arrayView1d< localIndex const > const & uniqueEdgeOffsets,
-                           array2d< localIndex > & edgeToNodesMap,
-                           ArrayOfSets< localIndex > & edgeToFaceMap )
+void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+                          arrayView1d< localIndex const > const & uniqueEdgeOffsets,
+                          ArrayOfSets< localIndex > & edgeToFaceMap )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -600,9 +599,26 @@ void resizeEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowes
   {
     edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] + faceMapExtraSpacePerEdge );
   }
+}
+
+/**
+ * @brief Resize the edge to face map.
+ * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
+ * @param [in] uniqueEdgeOffsets an containing the unique edge IDs for each node in edgesByLowestNode.
+ * param [out] edgeToFaceMap the map from edges to faces. This function resizes the array appropriately.
+ */
+void resizeEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+                           arrayView1d< localIndex const > const & uniqueEdgeOffsets,
+                           array2d< localIndex > & edgeToNodesMap,
+                           ArrayOfSets< localIndex > & edgeToFaceMap )
+{
+  GEOSX_MARK_FUNCTION;
+
+  resizeEdgeToFaceMap( edgesByLowestNode, uniqueEdgeOffsets, edgeToFaceMap );
 
   // Each face may belong to _maximum_ 2 elements.
   // If it belongs to only one, we put `-1` for the undefined value.
+  localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
   edgeToNodesMap.resize( numUniqueEdges, 2 );
 
 }
@@ -770,7 +786,7 @@ void CellBlockManager::buildEdgeMaps( localIndex numNodes )
   ArrayOfArrays< EdgeBuilder > edgesByLowestNode = createEdgesByLowestNode( numNodes, m_faceToNodes.toViewConst() );
 
   array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
-  m_numEdges = calculateTotalNumberOfEdges2( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
+  m_numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
 
   resizeEdgeMaps( edgesByLowestNode.toViewConst(),
                   uniqueEdgeOffsets,
