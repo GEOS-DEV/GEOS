@@ -23,6 +23,7 @@ set( mesh_headers
      Perforation.hpp
      PerforationData.hpp
      NodeManager.hpp
+     EmbeddedSurfaceNodeManager.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -31,6 +32,7 @@ set( mesh_headers
      generators/MeshGeneratorBase.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
+     generators/InternalWellboreGenerator.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/PartitionBase.hpp
@@ -66,6 +68,7 @@ set(mesh_sources
     MeshLevel.cpp
     MeshManager.cpp
     NodeManager.cpp
+    EmbeddedSurfaceNodeManager.cpp
     ObjectManagerBase.cpp
     PerforationData.cpp
     Perforation.cpp
@@ -76,6 +79,7 @@ set(mesh_sources
     WellElementSubRegion.cpp
     generators/InternalMeshGenerator.cpp
     generators/InternalWellGenerator.cpp
+    generators/InternalWellboreGenerator.cpp
     generators/MeshGeneratorBase.cpp
     mpiCommunications/CommunicationTools.cpp
     mpiCommunications/NeighborCommunicator.cpp

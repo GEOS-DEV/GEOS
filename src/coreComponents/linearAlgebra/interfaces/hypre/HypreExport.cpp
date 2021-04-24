@@ -150,16 +150,20 @@ void HypreExport::importVector( real64 const * values,
         hypre_SeqVectorInitialize_v2( ( hypre_Vector * ) localVector, HYPRE_MEMORY_HOST );
       }
 
-      // partitioning array that parVector will not take ownership of
+      // output vector partitioning array
       HYPRE_BigInt * const partitioning = hypre_ParVectorPartitioning( vec.unwrapped() );
 
-      // scatter the data and copy local part over to the output vector
+      // scatter the data
       HYPRE_ParVector parVector;
       GEOSX_LAI_CHECK_ERROR( HYPRE_VectorToParVector( m_subComm,
                                                       localVector,
                                                       partitioning,
                                                       &parVector ) );
+
+      // remove partinioning ownership for parVector to avoid deallocation errors
       GEOSX_LAI_CHECK_ERROR( hypre_ParVectorSetPartitioningOwner( parVector, 0 ) );
+
+      // copy parVector local part over to the output vector
       HYPRE_Real * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
       std::copy( parVectorData, parVectorData + vec.localSize(), vec.extractLocalVector() );
 

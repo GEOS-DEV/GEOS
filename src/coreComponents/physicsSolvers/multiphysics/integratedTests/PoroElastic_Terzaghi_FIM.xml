@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <!-- SPHINX_POROELASTIC_SOLVER -->
     <SinglePhasePoromechanics
       name="PoroelasticitySolver"

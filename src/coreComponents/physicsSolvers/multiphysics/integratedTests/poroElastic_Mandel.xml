@@ -66,8 +66,8 @@
   <Geometry>
     <Box
       name="rigEle"
-      xMin="18.9, -0.1, -0.1"
-      xMax="21, 1.1, 20.1"/>
+      xMin="{18.9, -0.1, -0.1}"
+      xMax="{ 21, 1.1, 20.1}"/>
   </Geometry>
 
   <Events
