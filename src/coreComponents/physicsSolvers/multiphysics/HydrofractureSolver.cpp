@@ -2224,6 +2224,8 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
                               isCalculateEikonal,
                               isCalculateGeometry);
 
+  arrayView1d< real64 const> const signedNodeDistance = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
+
   //ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
 
   //ContactRelationBase const * const
@@ -2311,8 +2313,20 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
 
       if (partialOpenFaceElmt)
       {
-        aperture[kfe] = partiallyOpenFaceElmtFluidVol[kfe]/partiallyOpenFaceElmtArea[kfe];
-        effectiveAperture[kfe] = aperture[kfe];
+        bool allNodesBehindTip = true;
+        for( localIndex a=0; a<numNodesPerFace; ++a )
+        {
+          if (signedNodeDistance( faceToNodeMap( kf0, a ) ) > 0)
+          {
+            allNodesBehindTip = false;
+            break;
+          }
+        }
+        if (!allNodesBehindTip)
+        {
+          aperture[kfe] = partiallyOpenFaceElmtFluidVol[kfe]/partiallyOpenFaceElmtArea[kfe];
+          effectiveAperture[kfe] = aperture[kfe];
+        }
         //std::cout << partiallyOpenFaceElmtFluidVol.size() <<
         //             partiallyOpenFaceElmtArea.size() << std::endl;
       }

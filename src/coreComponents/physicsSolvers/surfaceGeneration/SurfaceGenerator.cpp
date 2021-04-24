@@ -1134,8 +1134,8 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
           }
 */
 
-          real64 fullOpening;
-          real64 halfOpening;
+          real64 fullOpening = 0.0;
+          real64 halfOpening = 0.0;
           std::cout << "Provide an initial guess for node " << nodeID << " after split." << std::endl;
           if (hydroSolver->getRegimeTypeOption() == HydrofractureSolver::RegimeTypeOption::ToughnessDominated)
           {
