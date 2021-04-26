@@ -25,32 +25,25 @@ namespace geosx
 // The base class is densely Doxygen-commented and worth a look if you have not done so already.
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
-
 class LaplaceBase : public SolverBase
 {
 public:
-  // The default nullary constructor is disabled to avoid compiler auto-generation:
+  /// The default nullary constructor is disabled to avoid compiler auto-generation:
   LaplaceBase() = delete;
 
-  // The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
+  /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
   LaplaceBase( const string & name,
                Group * const parent );
 
-  // Destructor
+  /// Destructor
   virtual ~LaplaceBase() override;
 
 //START_SPHINX_INCLUDE_02
 
-  // This method ties properties with their supporting mesh
+  /// This method ties properties with their supporting mesh
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
 //END_SPHINX_INCLUDE_02
-/**
- * @defgroup Solver Interface Functions
- *
- * These functions provide the primary interface that is required for derived classes
- */
-/**@{*/
 
   //START_SPHINX_INCLUDE_03
   virtual real64 solverStep( real64 const & time_n,
@@ -94,20 +87,18 @@ public:
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
-
   //END_SPHINX_INCLUDE_03
-  /**@}*/
 
-  // This method is specific to this Laplace solver
-  // It is used to apply Dirichlet boundary condition
-  // and called when the base class applyBoundaryConditions() is called
+  /// This method is specific to this Laplace solver.
+  /// It is used to apply Dirichlet boundary condition
+  /// and called when the base class applyBoundaryConditions() is called.
   virtual void applyDirichletBCImplicit( real64 const time,
                                          DofManager const & dofManager,
                                          DomainPartition & domain,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                          arrayView1d< real64 > const & localRhs ) = 0;
 
-  // Choice of transient treatment options (steady, backward, forward Euler scheme):
+  /// Choice of transient treatment options (steady, backward, forward Euler scheme):
   //START_SPHINX_INCLUDE_01
   enum class TimeIntegrationOption : integer
   {
@@ -117,9 +108,8 @@ public:
   //END_SPHINX_INCLUDE_01
 
 
-  // This structure stores ``dataRepository::ViewKey`` objects
-  // used as binding between the input XML tags and source
-  // code variables (here, timeIntegrationOption and fieldVarName)
+  /// This structure stores ``dataRepository::ViewKey`` objects used as binding between the input
+  /// XML tags and source code variables (here, timeIntegrationOption and fieldVarName)
   //START_SPHINX_INCLUDE_04
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
@@ -130,9 +120,11 @@ public:
 
 protected:
 
-  // These two classes are specific to the Laplace solver:
-  string m_fieldName;      // User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
-  TimeIntegrationOption m_timeIntegrationOption;      // Choice of transient treatment (SteadyState, ImplicitTransient)
+  // These two data members are specific to the Laplace solver:
+  /// User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
+  string m_fieldName;
+  /// Choice of transient treatment (SteadyState, ImplicitTransient)
+  TimeIntegrationOption m_timeIntegrationOption;
 
 };
 
