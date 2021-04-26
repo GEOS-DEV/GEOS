@@ -36,7 +36,7 @@ def get_wrapper(problem, target_key, write_flag=False):
         else:
             local_values.set_access_level(pylvarray.CPU)
 
-        if not isinstance(local_values, np.ndarray):
+        if hasattr(local_values, "to_numpy"):
             local_values = local_values.to_numpy()
     return local_values
 
