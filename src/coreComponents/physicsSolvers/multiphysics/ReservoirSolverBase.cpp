@@ -366,6 +366,12 @@ void ReservoirSolverBase::applySystemSolution( DofManager const & dofManager,
   m_wellSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 }
 
+void ReservoirSolverBase::updateState( DomainPartition & domain )
+{
+  m_flowSolver->updateState( domain );
+  m_wellSolver->updateState( domain );
+}
+
 void ReservoirSolverBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   // reset reservoir variables

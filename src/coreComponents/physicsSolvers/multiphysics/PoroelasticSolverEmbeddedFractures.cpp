@@ -788,12 +788,13 @@ void PoroelasticSolverEmbeddedFractures::applySystemSolution( DofManager const &
   m_fracturesSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update pressure field
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
-
-  updateState( domain );
 }
 
 void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
 {
+  m_fracturesSolver->updateState( domain );
+  m_flowSolver->updateState( domain );
+
   // update aperture to be equal to the normal displacement jump and traction on the fracture to include the pressure contribution
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -831,7 +832,7 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
     arrayView1d< real64 const > const & deltaPressure =
       subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
 
-    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const k )
+    forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
     {
       aperture[k] = dispJump[k][0];   // the first component of the jump is the normal one.
 
