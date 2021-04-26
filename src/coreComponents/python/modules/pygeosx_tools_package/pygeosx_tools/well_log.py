@@ -25,7 +25,8 @@ def parse_las(fname, variable_start='~C', body_start='~A'):
     with open(fname) as f:
         file_location = 0
         for line in f:
-            if (line[0] != '#'):
+            line = line.split('#')[0]
+            if line:
                 # Preamble
                 if (file_location == 0):
                     if variable_start in line:
