@@ -93,6 +93,21 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
+
+  /// Deleted copy constructor
+  FieldSpecificationBase( FieldSpecificationBase const & ) = delete;
+
+  /// Defaulted move constructor
+  FieldSpecificationBase( FieldSpecificationBase && ) = default;
+
+  /// deleted copy assignment
+  FieldSpecificationBase & operator=( FieldSpecificationBase const & ) = delete;
+
+  /// deleted move assignement
+  FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
+
+
+
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
    * @param[in] field the field to apply the value to.
@@ -446,8 +461,8 @@ public:
   }
 
   /**
-   * Accessor
-   * @return const m_component
+   * Accessing the considered component.
+   * @return The component axis or a special value.
    */
   virtual int getComponent() const
   {
@@ -456,10 +471,9 @@ public:
 
   /**
    * Accessor
-   * @param[in] time Time
    * @return const reference to m_direction
    */
-  virtual const R1Tensor & getDirection( real64 time )
+  virtual R1Tensor const & getDirection() const
   {
     GEOSX_UNUSED_VAR( time );
     return m_direction;
@@ -557,7 +571,7 @@ public:
 
 
 protected:
-  void postProcessInput() override final;
+  virtual void postProcessInput() override;
 
   /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
   bool m_normalizeBySetSize;
