@@ -164,13 +164,7 @@ public:
    */
   virtual void updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
 
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models) for a subregion
-   * @param subRegion the subRegion on which to update dependent quantities
-   * @param targetIndex the subRegion index
-   */
-  template< typename SUBREGIONTYPE >
-  void updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const;
+  void updateFluidState( Group & dataGroup, localIndex const targetIndex ) const;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -446,20 +440,6 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_phaseMobOld;
 
 };
-
-template< typename SUBREGIONTYPE >
-void CompositionalMultiphaseBase::updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  updateComponentFraction( subRegion );
-  updateFluidModel( subRegion, targetIndex );
-  updatePhaseVolumeFraction( subRegion, targetIndex );
-  updateSolidFlowProperties( subRegion, targetIndex );
-  updateRelPermModel( subRegion, targetIndex );
-  updatePhaseMobility( subRegion, targetIndex );
-  updateCapPressureModel( subRegion, targetIndex );
-}
 
 } // namespace geosx
 

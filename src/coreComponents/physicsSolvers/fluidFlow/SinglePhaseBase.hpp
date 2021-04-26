@@ -215,8 +215,7 @@ public:
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields
    */
-  template< typename SUBREGIONTYPE >
-  void updateState( SUBREGIONTYPE & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidState( Group & subRegion, localIndex const targetIndex ) const;
 
 
   /**
@@ -324,17 +323,6 @@ private:
   virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
 
 };
-
-template< typename SUBREGIONTYPE >
-void SinglePhaseBase::updateState( SUBREGIONTYPE & subRegion, localIndex const targetIndex ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  updateFluidModel( subRegion, targetIndex );
-  updateSolidFlowProperties( subRegion, targetIndex );
-  updateMobility( subRegion, targetIndex );
-}
-
 
 } /* namespace geosx */
 

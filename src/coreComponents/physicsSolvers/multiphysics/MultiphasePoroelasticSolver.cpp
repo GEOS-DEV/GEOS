@@ -297,16 +297,15 @@ void MultiphasePoroelasticSolver::applySystemSolution( DofManager const & dofMan
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
 }
 
-void MultiphasePoroelasticSolver::updateState( DomainPartition & domain ) const
+void MultiphasePoroelasticSolver::updateState( DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                            auto & subRegion )
    {
-     m_flowSolver->updateFluidModel( subRegion, targetIndex );
-     m_flowSolver->updateMobility( subRegion, targetIndex );
-     updatePermeability( subRegion, targetIndex );
+    updatePermeability( subRegion, targetIndex );
+    m_flowSolver->updateFluidState( subRegion, targetIndex );
    } );
 }
 

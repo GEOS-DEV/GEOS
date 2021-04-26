@@ -587,9 +587,8 @@ void PoroelasticSolver::updateState( DomainPartition & domain )
   this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                           auto & subRegion )
   {
-    m_flowSolver->updateFluidModel( subRegion, targetIndex );
-    m_flowSolver->updateMobility( subRegion, targetIndex );
     updatePermeability( subRegion, targetIndex );
+    m_flowSolver->updateFluidState( subRegion, targetIndex );
   } );
 }
 

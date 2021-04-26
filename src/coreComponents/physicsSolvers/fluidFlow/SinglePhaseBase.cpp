@@ -209,7 +209,8 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
     subRegion.template getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).setDefaultValue( defaultDensity );
 
-    updateState( subRegion, targetIndex );
+    updateSolidFlowProperties( subRegion, targetIndex );
+    updateFluidState( subRegion, targetIndex );
 
 //    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
 //    arrayView1d< real64 const > const poroRef = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
@@ -315,7 +316,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     dVol.setValues< parallelDevicePolicy<> >( 0.0 );
 
     // This should fix NaN density in newly created fracture elements
-    updateState( subRegion, targetIndex );
+    updateSolidFlowProperties( subRegion, targetIndex );
+    updateFluidState( subRegion, targetIndex );
   } );
 
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
@@ -326,8 +328,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
 
     aper0.setValues< parallelDevicePolicy<> >( aper );
 
-    // UpdateMobility( &subRegion );
-    updateState( subRegion, targetIndex );
+    updateSolidFlowProperties( subRegion, targetIndex );
+    updateFluidState( subRegion, targetIndex );
   } );
 
   backupFields( mesh );
@@ -636,6 +638,12 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   } );
 }
 
+void SinglePhaseBase::updateFluidState( Group & subRegion, localIndex targetIndex ) const
+{
+  updateFluidModel( subRegion, targetIndex );
+  updateMobility( subRegion, targetIndex );
+}
+
 void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -643,7 +651,8 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
   this->template forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                                                     auto & subRegion )
   {
-     updateState( subRegion, targetIndex );
+    updateSolidFlowProperties( subRegion, targetIndex );
+    updateFluidState( subRegion, targetIndex );
   } );
 }
 
@@ -672,7 +681,8 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 
     dPres.setValues< parallelDevicePolicy<> >( 0.0 );
 
-    updateState( subRegion, targetIndex );
+    updateSolidFlowProperties( subRegion, targetIndex );
+    updateFluidState( subRegion, targetIndex );
   } );
 }
 

@@ -441,6 +441,18 @@ void CompositionalMultiphaseBase::updateCapPressureModel( Group & dataGroup, loc
   }
 }
 
+void CompositionalMultiphaseBase::updateFluidState(Group & subRegion, localIndex targetIndex ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  updateComponentFraction( subRegion );
+  updateFluidModel( subRegion, targetIndex );
+  updatePhaseVolumeFraction( subRegion, targetIndex );
+  updateRelPermModel( subRegion, targetIndex );
+  updatePhaseMobility( subRegion, targetIndex );
+  updateCapPressureModel( subRegion, targetIndex );
+}
+
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -1043,7 +1055,10 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
     dPres.setValues< parallelDevicePolicy<> >( 0.0 );
     dCompDens.setValues< parallelDevicePolicy<> >( 0.0 );
 
-    updateState( subRegion, targetIndex );
+    // update porosity and permeability
+    updateSolidFlowProperties( subRegion, targetIndex );
+    // update all fluid properties
+    updateFluidState( subRegion, targetIndex );
   } );
 }
 
@@ -1084,7 +1099,10 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
   {
-    updateState( subRegion, targetIndex );
+    // update porosity and permeability
+    updateSolidFlowProperties( subRegion, targetIndex );
+    // update all fluid properties
+    updateFluidState( subRegion, targetIndex );
   } );
 }
 
