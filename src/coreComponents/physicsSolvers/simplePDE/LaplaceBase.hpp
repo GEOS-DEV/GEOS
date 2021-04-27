@@ -98,7 +98,7 @@ public:
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                          arrayView1d< real64 > const & localRhs ) = 0;
 
-  /// Choice of transient treatment options (steady, backward, forward Euler scheme):
+  /// Choice of transient treatment options (steady or backward Euler scheme):
   //START_SPHINX_INCLUDE_TIMEINTOPT
   enum class TimeIntegrationOption : integer
   {

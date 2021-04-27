@@ -32,7 +32,7 @@ Declaration file (reference)
 ----------------------------
 The two included headers are:
 
- - ``physicsSolver/simplePDE/LaplaceBase.hpp`` which declares the base class ``LaplaceBase``, shared by all
+ - ``physicsSolvers/simplePDE/LaplaceBase.hpp`` which declares the base class ``LaplaceBase``, shared by all
    Laplace solvers;
  - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to
    access and to set field on the discretized domain.
@@ -84,7 +84,7 @@ to build the global file-system like structure of GEOSX (see :ref:`GroupPar` for
 It can also be noted that the nullary constructor is deleted on purpose to avoid compiler
 automatic generation and user misuse.
 
-The next method ``catalogName()`` is static and return the key to be added to the *Catalog* for this type of solver
+The next method ``catalogName()`` is static and returns the key to be added to the *Catalog* for this type of solver
 (see :ref:`ObjectCatalogPar` for details). It has to be paired with the following macro in the implementation file.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
@@ -172,7 +172,7 @@ As we see, it calls the ``LaplaceBase`` constructor, that is implemented as foll
    :end-before: //END_SPHINX_INCLUDE_CONSTRUCTOR
 
 Checking out the constructor, we can see that the use of a ``registerWrapper<T>(...)``
-allow us to register the key value from the `enum` ``viewKeyStruct`` defining them as:
+allows us to register the key value from the `enum` ``viewKeyStruct`` defining them as:
 
  - ``InputFlags::OPTIONAL`` if they are optional and can be provided;
  - ``InputFlags::REQUIRED`` if they are required and will throw error if not;

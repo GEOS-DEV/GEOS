@@ -57,18 +57,20 @@ LaplaceBase::~LaplaceBase()
 }
 
 /* REGISTER THE PDE SOLUTION DATA ON THE MESH
-   In the LaplaceFEM solver, we compute the solution of the partial differential equation "numerically".
-   This means that we are not solving this PDE everywhere,
-   we are computing the solution at specific locations in space.
-   To do that, we have to register the Laplace solver so that it works on nodes of a mesh.
-   This registration process is done here, in three steps:
-   1 - for each mesh body (if the mesh is split), we collect he "nodes" (nodes carry their location information),
-   2 - On nodes, we register a new property called m_fieldName and give it a type (here, the type is an array of real64)
-   3 - We set some information for this property on the nodes: what is their "PlotLevel"? how can they be described?
-   The PlotLevel is a flag that instructs GEOSX to export values of this property for instance so that they can be plotted.
-   All properties mounted on nodes carry a certain PlotLevel value. This way, every time GEOSX triggers an
-   output event (a request to "print out" data), all properties at or above a certain PlotLevel are automatically exported.
-   The description here is simply an additional metadata for the newly mounted property.
+   In the Laplace solver, we compute the solution of the partial differential equation
+   "numerically".  This means that we are not solving this PDE everywhere, we are computing the
+   solution at specific locations in space.  To do that, we have to register the Laplace solver so
+   that it works on nodes of a mesh.  This registration process is done here, in three steps:
+   1 - for each mesh body (if the mesh is split), we collect the "nodes" (nodes carry their location
+   information);
+   2 - On nodes, we register a new property called m_fieldName and give it a type (here, the type is
+   an array of real64);
+   3 - We set some information for this property on the nodes: what is their "PlotLevel"? how can
+   they be described?  The PlotLevel is a flag that instructs GEOSX to export values of this
+   property for instance so that they can be plotted.  All properties mounted on nodes carry a
+   certain PlotLevel value. This way, every time GEOSX triggers an output event (a request to "print
+   out" data), all properties at or above a certain PlotLevel are automatically exported.  The
+   description here is simply an additional metadata for the newly mounted property.
  */
 //START_SPHINX_INCLUDE_REGISTERDATAONMESH
 void LaplaceBase::registerDataOnMesh( Group & meshBodies )
@@ -87,15 +89,13 @@ void LaplaceBase::registerDataOnMesh( Group & meshBodies )
 
 
 /* STEPPING IN TIME
-   Here, we decide how we march in time in the resolutions based on the possible three options set
-   in the XML file (Steady state or Implicit transient). In the case of Implicit transient, we
-   perform an implicit step (backward Euler). The implementation of the Implicit Step is found in
-   the SolverBase.  From now on, we oscillate between specific Laplace solver operations if
-   implemented and more generic SolverBase operations.  The initial values of the solver step are
-   all at time_n, and the solver attempts to advance by a time step of dt.  This dt time step size
-   is specified initially by the user; and unfortunately, it can sometimes be too large for
-   convergence.  The SolverStep method thus returns the time step value that was actually capable of
-   solving for with good convergence.
+   Here, we decide how we march in time in the resolutions based on the possible two options set in
+   the XML file (Steady state or Implicit transient). In the case of Implicit transient, we perform
+   an implicit step (backward Euler). The implementation of the Implicit Step is found in the
+   SolverBase.  From now on, we oscillate between specific Laplace solver operations if implemented
+   and more generic SolverBase operations.  The initial values of the solver step are all at time_n,
+   and the solver attempts to advance by a time step of dt.  This dt time step size is specified
+   initially by the user and the solverStep method also returns its value.
  */
 
 real64 LaplaceBase::solverStep( real64 const & time_n,
@@ -108,8 +108,9 @@ real64 LaplaceBase::solverStep( real64 const & time_n,
 
 /*
    IMPLICIT STEP SETUP
-   This method uses the system setup from LaplaceFEM (see below).
-   It "deactivates" the time variables (with the GEOSX_UNUSED_PARAM macro) and does a steady state system set-up.
+   This method uses the system setup from SolverBase (see below).
+   It "deactivates" the time variables (with the GEOSX_UNUSED_PARAM macro) and does a steady state
+   system set-up.
  */
 void LaplaceBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
@@ -173,7 +174,7 @@ void LaplaceBase::applyBoundaryConditions( real64 const time_n,
 /*
    SOLVE SYSTEM
    This method is simply initiating the solution and right-hand side
-   and pass is to the base class solver.
+   and pass it to the base class solver.
  */
 void LaplaceBase::solveSystem( DofManager const & dofManager,
                                ParallelMatrix & matrix,
