@@ -73,15 +73,13 @@ using namespace dataRepository;
    The description that is set is used in auto-generated documentation and console error messages.
  */
 
-//START_SPHINX_INCLUDE_01
+//START_SPHINX_INCLUDE_CONSTRUCTOR
 LaplaceFEM::LaplaceFEM( const string & name,
                         Group * const parent ):
   LaplaceBase( name, parent )
 {}
-//END_SPHINX_INCLUDE_01
+//END_SPHINX_INCLUDE_CONSTRUCTOR
 
-
-// Destructor
 LaplaceFEM::~LaplaceFEM()
 {
   // TODO Auto-generated destructor stub
@@ -139,7 +137,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
    The call to the kernel is a templated call designed for performance (we will not explain the kernel here).
    See the implementation in LaplaceFEMKernel.cpp.
  */
-//START_SPHINX_INCLUDE_04
+//START_SPHINX_INCLUDE_ASSEMBLY
 void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  DomainPartition & domain,
@@ -170,7 +168,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                       m_fieldName );
 
 }
-//END_SPHINX_INCLUDE_04
+//END_SPHINX_INCLUDE_ASSEMBLY
 
 /*
    DIRICHLET BOUNDARY CONDITIONS
@@ -206,7 +204,7 @@ void LaplaceFEM::applyDirichletBCImplicit( real64 const time,
   } );
 }
 
-//START_SPHINX_INCLUDE_00
+//START_SPHINX_INCLUDE_REGISTER
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
-//END_SPHINX_INCLUDE_00
+//END_SPHINX_INCLUDE_REGISTER
 } /* namespace geosx */

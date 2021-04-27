@@ -33,10 +33,7 @@ namespace keys
 
 using namespace dataRepository;
 
-/*
- * TODO copy and update guide from LaplaceFEM.cpp
- */
-//START_SPHINX_INCLUDE_01
+//START_SPHINX_INCLUDE_CONSTRUCTOR
 LaplaceBase::LaplaceBase( const string & name,
                           Group * const parent ):
   SolverBase( name, parent ),
@@ -52,10 +49,8 @@ LaplaceBase::LaplaceBase( const string & name,
     setDescription( "Name of field variable" );
 
 }
-//END_SPHINX_INCLUDE_01
+//END_SPHINX_INCLUDE_CONSTRUCTOR
 
-
-// Destructor
 LaplaceBase::~LaplaceBase()
 {
   // TODO Auto-generated destructor stub
@@ -75,7 +70,7 @@ LaplaceBase::~LaplaceBase()
    output event (a request to "print out" data), all properties at or above a certain PlotLevel are automatically exported.
    The description here is simply an additional metadata for the newly mounted property.
  */
-//START_SPHINX_INCLUDE_02
+//START_SPHINX_INCLUDE_REGISTERDATAONMESH
 void LaplaceBase::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
@@ -88,7 +83,7 @@ void LaplaceBase::registerDataOnMesh( Group & meshBodies )
       setDescription( "Primary field variable" );
   } );
 }
-//END_SPHINX_INCLUDE_02
+//END_SPHINX_INCLUDE_REGISTERDATAONMESH
 
 
 /* STEPPING IN TIME

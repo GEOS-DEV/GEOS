@@ -26,25 +26,26 @@ namespace geosx
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
-//START_SPHINX_INCLUDE_02
+//START_SPHINX_INCLUDE_BEGINCLASS
 class LaplaceFEM : public LaplaceBase
 {
 public:
-  // The default nullary constructor is disabled to avoid compiler auto-generation:
+  /// The default nullary constructor is disabled to avoid compiler auto-generation:
   LaplaceFEM() = delete;
 
-  // The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
+  /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the
+  /// tree structure of classes)
   LaplaceFEM( const string & name,
               Group * const parent );
 
-  // Destructor
+  /// Destructor
   virtual ~LaplaceFEM() override;
 
-  // "CatalogName()" return the string used as XML tag in the input file.
-  // It ties the XML tag with this C++ classes. This is important.
+  /// "CatalogName()" return the string used as XML tag in the input file.  It ties the XML tag with
+  /// this C++ classes. This is important.
   static string catalogName() { return "LaplaceFEM"; }
 
-//END_SPHINX_INCLUDE_02
+//END_SPHINX_INCLUDE_BEGINCLASS
 // /**
 //  * @defgroup Solver Interface Functions
 //  *
@@ -52,7 +53,7 @@ public:
 //  */
 // /**@{*/
 
-//START_SPHINX_INCLUDE_03
+//START_SPHINX_INCLUDE_SOLVERINTERFACE
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
@@ -71,16 +72,15 @@ public:
 
   /**@}*/
 
-  // This method is specific to this Laplace solver
-  // It is used to apply Dirichlet boundary condition
-  // and called when the base class applyBoundaryConditions() is called
+  /// This method is specific to this Laplace solver. It is used to apply Dirichlet boundary
+  /// condition and called when the base class applyBoundaryConditions() is called.
   void applyDirichletBCImplicit( real64 const time,
                                  DofManager const & dofManager,
                                  DomainPartition & domain,
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs ) override;
 
-//END_SPHINX_INCLUDE_03
+//END_SPHINX_INCLUDE_SOLVERINTERFACE
 };
 } /* namespace geosx */
 

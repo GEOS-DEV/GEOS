@@ -38,14 +38,14 @@ public:
   /// Destructor
   virtual ~LaplaceBase() override;
 
-//START_SPHINX_INCLUDE_02
+//START_SPHINX_INCLUDE_REGISTERDATAONMESH
 
   /// This method ties properties with their supporting mesh
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
-//END_SPHINX_INCLUDE_02
+//END_SPHINX_INCLUDE_REGISTERDATAONMESH
 
-  //START_SPHINX_INCLUDE_03
+  //START_SPHINX_INCLUDE_SOLVERINTERFACE
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
@@ -87,7 +87,7 @@ public:
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
-  //END_SPHINX_INCLUDE_03
+  //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
   /// This method is specific to this Laplace solver.
   /// It is used to apply Dirichlet boundary condition
@@ -99,24 +99,24 @@ public:
                                          arrayView1d< real64 > const & localRhs ) = 0;
 
   /// Choice of transient treatment options (steady, backward, forward Euler scheme):
-  //START_SPHINX_INCLUDE_01
+  //START_SPHINX_INCLUDE_TIMEINTOPT
   enum class TimeIntegrationOption : integer
   {
     SteadyState,
     ImplicitTransient
   };
-  //END_SPHINX_INCLUDE_01
+  //END_SPHINX_INCLUDE_TIMEINTOPT
 
 
   /// This structure stores ``dataRepository::ViewKey`` objects used as binding between the input
   /// XML tags and source code variables (here, timeIntegrationOption and fieldVarName)
-  //START_SPHINX_INCLUDE_04
+  //START_SPHINX_INCLUDE_VIEWKEY
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
   } laplaceBaseViewKeys;
-  //END_SPHINX_INCLUDE_04
+  //END_SPHINX_INCLUDE_VIEWKEY
 
 protected:
 
@@ -136,9 +136,9 @@ protected:
    a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
    at the namespace scope (in this case, right after the ``LaplaceBase`` class definition is complete):
  */
-//START_SPHINX_INCLUDE_05
+//START_SPHINX_INCLUDE_REGENUM
 ENUM_STRINGS( LaplaceBase::TimeIntegrationOption, "SteadyState", "ImplicitTransient" )
-//END_SPHINX_INCLUDE_05
+//END_SPHINX_INCLUDE_REGENUM
 
 } /* namespace geosx */
 

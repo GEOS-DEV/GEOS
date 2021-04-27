@@ -58,8 +58,8 @@ the transient state.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: //END_SPHINX_INCLUDE_01
+   :start-after: //START_SPHINX_INCLUDE_TIMEINTOPT
+   :end-before: //END_SPHINX_INCLUDE_TIMEINTOPT
 
 In order to register an enumeration type with the Data Repository and have its value read from input,
 we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
@@ -68,15 +68,15 @@ at the namespace scope (in this case, right after the ``LaplaceBase`` class defi
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_05
-   :end-before: //END_SPHINX_INCLUDE_05
+   :start-after: //START_SPHINX_INCLUDE_REGENUM
+   :end-before: //END_SPHINX_INCLUDE_REGENUM
 
 Once explained the main variables and enum, let us start reading through the different member functions:
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_02
-   :end-before: //END_SPHINX_INCLUDE_02
+   :start-after: //START_SPHINX_INCLUDE_BEGINCLASS
+   :end-before: //END_SPHINX_INCLUDE_BEGINCLASS
 
 Start looking at the class *LaplaceFEM* constructor and destructor declarations
 shows the usual `string` ``name`` and `Group*` pointer to ``parent`` that are required
@@ -89,15 +89,15 @@ The next method ``catalogName()`` is static and return the key to be added to th
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_00
-   :end-before: //END_SPHINX_INCLUDE_00
+   :start-after: //START_SPHINX_INCLUDE_REGISTER
+   :end-before: //END_SPHINX_INCLUDE_REGISTER
 
 Finally, the member function ``registerDataOnMesh()`` is declared in the ``LaplaceBase`` class as
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_02
-   :end-before: //END_SPHINX_INCLUDE_02
+   :start-after: //START_SPHINX_INCLUDE_REGISTERDATAONMESH
+   :end-before: //END_SPHINX_INCLUDE_REGISTERDATAONMESH
 
 It is used to assign fields onto the discretized mesh object and
 will be further discussed in the :ref:`Implementation` section.
@@ -107,15 +107,15 @@ and specialize every time step from the system matrix assembly to the solver sta
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_03
-   :end-before: //END_SPHINX_INCLUDE_03
+   :start-after: //START_SPHINX_INCLUDE_SOLVERINTERFACE
+   :end-before: //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
 Furthermore, the following functions are inherited from the base class.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_03
-   :end-before: //END_SPHINX_INCLUDE_03
+   :start-after: //START_SPHINX_INCLUDE_SOLVERINTERFACE
+   :end-before: //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
 Eventually, ``applyDirichletBCImplicit()`` is the working specialized member functions called
 when ``applyBoundaryConditions()`` is called in this particular class override.
@@ -140,8 +140,8 @@ between the input XML file and the source code.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_04
-   :end-before: //END_SPHINX_INCLUDE_04
+   :start-after: //START_SPHINX_INCLUDE_VIEWKEY
+   :end-before: //END_SPHINX_INCLUDE_VIEWKEY
 
 We can check that in the *LaplaceFEM* companion integratedTest
 
@@ -161,15 +161,15 @@ to other tutorials. The ``LaplaceFEM`` constructor is implemented as follows.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: //END_SPHINX_INCLUDE_01
+   :start-after: //START_SPHINX_INCLUDE_CONSTRUCTOR
+   :end-before: //END_SPHINX_INCLUDE_CONSTRUCTOR
 
 As we see, it calls the ``LaplaceBase`` constructor, that is implemented as follows.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.cpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: //END_SPHINX_INCLUDE_01
+   :start-after: //START_SPHINX_INCLUDE_CONSTRUCTOR
+   :end-before: //END_SPHINX_INCLUDE_CONSTRUCTOR
 
 Checking out the constructor, we can see that the use of a ``registerWrapper<T>(...)``
 allow us to register the key value from the `enum` ``viewKeyStruct`` defining them as:
@@ -181,8 +181,8 @@ and their associated descriptions for auto-generated docs.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.cpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_02
-   :end-before: //END_SPHINX_INCLUDE_02
+   :start-after: //START_SPHINX_INCLUDE_REGISTERDATAONMESH
+   :end-before: //END_SPHINX_INCLUDE_REGISTERDATAONMESH
 
 ``registerDataOnMesh()`` is browsing all subgroups in the mesh ``Group`` object and
 for all nodes in the sub group:
@@ -194,8 +194,8 @@ for all nodes in the sub group:
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_04
-   :end-before: //END_SPHINX_INCLUDE_04
+   :start-after: //START_SPHINX_INCLUDE_ASSEMBLY
+   :end-before: //END_SPHINX_INCLUDE_ASSEMBLY
 
 ``assembleSystem()`` will be our core focus as we want to change the diffusion coefficient from its
 hard coded value to a XML read user-defined value. One can see that this method is in charge of constructing
