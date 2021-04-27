@@ -46,6 +46,33 @@ public:
   GEOSX_HOST_DEVICE
   localIndex numGauss() const { return m_permeability.size( 1 ); }
 
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void updatePorosity( localIndex const k,
+                               localIndex const q,
+                               real64 const & porosity )
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( porosity );
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void updatePressureStrain( localIndex const k,
+                                     localIndex const q,
+                                     real64 const pressure,
+                                     real64 const volStrain,
+                                     real64 ( &dPerm_dVolStrain )[3] )
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( pressure );
+    GEOSX_UNUSED_VAR( volStrain );
+    GEOSX_UNUSED_VAR( dPerm_dVolStrain );
+  }
+
 protected:
 
   PermeabilityBaseUpdate( arrayView3d< real64 > const & permeability )
@@ -67,6 +94,7 @@ protected:
   arrayView3d< real64 > m_permeability;
 
   arrayView3d< real64 > m_dPerm_dPressure;
+
 };
 
 

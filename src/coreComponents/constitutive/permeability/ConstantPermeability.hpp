@@ -47,17 +47,6 @@ public:
   /// Deleted move assignment operator
   ConstantPermeabilityUpdate & operator=( ConstantPermeabilityUpdate && ) = delete;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void update( localIndex const k,
-               localIndex const q,
-               real64 const & porosity ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( porosity );
-  }
-
 private:
 
 };

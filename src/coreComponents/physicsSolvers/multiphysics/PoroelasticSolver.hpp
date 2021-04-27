@@ -143,6 +143,7 @@ public:
 
     constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
     constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
+    constexpr static char const * dPerm_dDisplacementString() { return "dPerm_dDisplacement"; }
 
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }

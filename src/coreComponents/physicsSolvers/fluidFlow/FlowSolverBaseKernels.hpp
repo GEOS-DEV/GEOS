@@ -63,14 +63,14 @@ struct PermeabilityKernel< CellElementSubRegion >
   template< typename POLICY, typename PERM_WRAPPER >
   static void
   launch( localIndex const size,
-          PERM_WRAPPER const & permWrapper,
+          PERM_WRAPPER & permWrapper,
           arrayView2d< real64 const > const & porosity )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < permWrapper.numGauss(); ++q )
       {
-        permWrapper.update( k, q, porosity[k][q] );
+        permWrapper.updatePorosity( k, q, porosity[k][q] );
       }
     } );
   }
@@ -78,7 +78,7 @@ struct PermeabilityKernel< CellElementSubRegion >
   template< typename POLICY, typename PERM_WRAPPER >
   static void
   launch( SortedArrayView< localIndex const > const & targetSet,
-          PERM_WRAPPER const & permWrapper,
+          PERM_WRAPPER & permWrapper,
           arrayView2d< real64 const > const & porosity )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -86,7 +86,7 @@ struct PermeabilityKernel< CellElementSubRegion >
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < permWrapper.numGauss(); ++q )
       {
-        permWrapper.update( k, q, porosity[k][q] );
+        permWrapper.updatePorosity( k, q, porosity[k][q] );
       }
     } );
   }
@@ -98,14 +98,14 @@ struct PermeabilityKernel< SurfaceElementSubRegion >
   template< typename POLICY, typename PERM_WRAPPER >
   static void
   launch( localIndex const size,
-          PERM_WRAPPER const & permWrapper,
+          PERM_WRAPPER & permWrapper,
           arrayView1d< real64 const > const & effectiveAperture )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < permWrapper.numGauss(); ++q )
       {
-        permWrapper.update( k, q, effectiveAperture[k] );
+        permWrapper.updateAperture( k, q, effectiveAperture[k] );
       }
     } );
   }
@@ -113,7 +113,7 @@ struct PermeabilityKernel< SurfaceElementSubRegion >
   template< typename POLICY, typename PERM_WRAPPER >
   static void
   launch( SortedArrayView< localIndex const > const & targetSet,
-          PERM_WRAPPER const & permWrapper,
+          PERM_WRAPPER & permWrapper,
           arrayView1d< real64 const > const & effectiveAperture )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -121,7 +121,7 @@ struct PermeabilityKernel< SurfaceElementSubRegion >
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < permWrapper.numGauss(); ++q )
       {
-        permWrapper.update( k, q, effectiveAperture[k] );
+        permWrapper.updateAperture( k, q, effectiveAperture[k] );
       }
     } );
   }

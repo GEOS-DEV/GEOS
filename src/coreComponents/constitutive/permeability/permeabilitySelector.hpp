@@ -23,6 +23,7 @@
 #include "ConstantPermeability.hpp"
 #include "CarmanKozenyPermeability.hpp"
 #include "ParallelPlatesPermeability.hpp"
+#include "StrainDependentPermeability.hpp"
 
 namespace geosx
 {
@@ -44,7 +45,8 @@ void constitutiveUpdatePassThru( PermeabilityBase const & perm,
 {
   ConstitutivePassThruHandler< ConstantPermeability,
                                CarmanKozenyPermeability,
-                               ParallelPlatesPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
+                               ParallelPlatesPermeability,
+                               StrainDependentPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -53,7 +55,8 @@ void constitutiveUpdatePassThru( PermeabilityBase & perm,
 {
   ConstitutivePassThruHandler< ConstantPermeability,
                                CarmanKozenyPermeability,
-                               ParallelPlatesPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
+                               ParallelPlatesPermeability,
+                               StrainDependentPermeability >::execute( perm, std::forward< LAMBDA >( lambda ) );
 }
 
 #undef PASSTHROUGH_HANDLE_CASE

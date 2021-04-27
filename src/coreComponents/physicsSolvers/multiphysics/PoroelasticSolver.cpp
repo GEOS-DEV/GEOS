@@ -25,6 +25,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/permeability/permeabilitySelector.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
@@ -37,13 +38,16 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
+#include "finiteElement/FiniteElementDispatch.hpp"
 #include "SinglePhasePoroelasticKernel.hpp"
+#include "SinglePhasePoroelasticFluxKernels.hpp"
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace SinglePhasePoroelasticFluxKernels;
 
 PoroelasticSolver::PoroelasticSolver( const string & name,
                                       Group * const parent ):
@@ -83,6 +87,8 @@ void PoroelasticSolver::registerDataOnMesh( Group & meshBodies )
         setDescription( "Total Mean Stress" );
       elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() ).
         setDescription( "Total Mean Stress" );
+      elementSubRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dPerm_dDisplacementString() ).
+          setDescription( "Derivative of the permeability w.r.t displacement" );
     } );
   } );
 }
@@ -595,7 +601,30 @@ void PoroelasticSolver::updateState( DomainPartition & domain )
 void PoroelasticSolver::updatePermeability( CellElementSubRegion & subRegion,
                                             localIndex const targetIndex ) const
 {
-  //TODO stress-dependent permeability update.
+  PermeabilityBase & perm =
+     getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+
+  constitutive::constitutiveUpdatePassThru( perm, [&] ( auto & castedPerm )
+  {
+     FiniteElementBase &
+           subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
+
+     finiteElement::dispatch3D( subRegionFE,
+                                [&castedPerm] ( auto const finiteElement )
+     {
+
+     typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
+
+     arrayView3d< real64 > const & dPerm_dDisplacement = subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPerm_dDisplacementString() );
+
+     PermeabilityKernel< CellElementSubRegion >::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                                   finiteElement,
+                                                                                   permWrapper,
+                                                                                   displacement,
+                                                                                   dPerm_dDisplacement );
+     } );
+  } );
+
 }
 
 real64 PoroelasticSolver::splitOperatorStep( real64 const & time_n,

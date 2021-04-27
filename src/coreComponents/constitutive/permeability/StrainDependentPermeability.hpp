@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CarmanKozenyPermeability.hpp
+ * @file StrainDependentPermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
+#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_STRAINDEPENDENTPERMEABILITY_HPP_
+#define GEOSX_CONSTITUTIVE_PERMEABILITY_STRAINDEPENDENTPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
@@ -27,11 +27,11 @@ namespace geosx
 namespace constitutive
 {
 
-class CarmanKozenyPermeabilityUpdate : public PermeabilityBaseUpdate
+class StrainDependentPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  CarmanKozenyPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+  StrainDependentPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                   arrayView3d< real64 > const & dPerm_dPorosity,
                                   real64 const particleDiameter,
                                   real64 const sphericity )
@@ -42,28 +42,24 @@ public:
   {}
 
   /// Default copy constructor
-  CarmanKozenyPermeabilityUpdate( CarmanKozenyPermeabilityUpdate const & ) = default;
+  StrainDependentPermeabilityUpdate( StrainDependentPermeabilityUpdate const & ) = default;
 
   /// Default move constructor
-  CarmanKozenyPermeabilityUpdate( CarmanKozenyPermeabilityUpdate && ) = default;
+  StrainDependentPermeabilityUpdate( StrainDependentPermeabilityUpdate && ) = default;
 
   /// Deleted copy assignment operator
-  CarmanKozenyPermeabilityUpdate & operator=( CarmanKozenyPermeabilityUpdate const & ) = delete;
+  StrainDependentPermeabilityUpdate & operator=( StrainDependentPermeabilityUpdate const & ) = delete;
 
   /// Deleted move assignment operator
-  CarmanKozenyPermeabilityUpdate & operator=( CarmanKozenyPermeabilityUpdate && ) = delete;
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void compute( real64 const & porosity,
-                arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dPorosity ) const;
+  StrainDependentPermeabilityUpdate & operator=( StrainDependentPermeabilityUpdate && ) = delete;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       real64 const & porosity )
+                       real64 const & pressure,
+                       real64 const & volStrain,
+                       real64 ( dPerm_dVolStrain )[3] ) override
   {
     compute( porosity,
              m_permeability[k][q],
@@ -84,12 +80,12 @@ private:
 };
 
 
-class CarmanKozenyPermeability : public PermeabilityBase
+class StrainDependentPermeability : public PermeabilityBase
 {
 public:
-  CarmanKozenyPermeability( string const & name, Group * const parent );
+  StrainDependentPermeability( string const & name, Group * const parent );
 
-  virtual ~CarmanKozenyPermeability() override;
+  virtual ~StrainDependentPermeability() override;
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -97,12 +93,12 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static string catalogName() { return "CarmanKozenyPermeability"; }
+  static string catalogName() { return "StrainDependentPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = CarmanKozenyPermeabilityUpdate;
+  using KernelWrapper = StrainDependentPermeabilityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -138,23 +134,6 @@ private:
   real64 m_sphericity;
 };
 
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
-                                              arraySlice1d< real64 > const & permeability,
-                                              arraySlice1d< real64 > const & dPerm_dPorosity ) const
-{
-  real64 const permValue = pow( m_sphericity*m_particleDiameter, 2 ) * pow( porosity, 3 )
-                           / (150 * pow( (1 - porosity), 2 ) );
-  real64 const dPerm_dPorValue = pow( m_sphericity*m_particleDiameter, 2 ) * pow( porosity, 3 );
-
-  for( localIndex i=0; i < permeability.size(); i++ )
-  {
-    permeability[i] = permValue;
-    dPerm_dPorosity[i] = dPerm_dPorValue;
-  }
-}
 
 
 

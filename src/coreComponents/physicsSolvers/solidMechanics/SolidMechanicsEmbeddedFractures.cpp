@@ -622,7 +622,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
     arrayView3d< real64 > const & dTraction_dJump =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() );
 
-    forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const k )
+    forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
     {
       contactRelation.computeTraction( jump[k], fractureTraction[k] );
 

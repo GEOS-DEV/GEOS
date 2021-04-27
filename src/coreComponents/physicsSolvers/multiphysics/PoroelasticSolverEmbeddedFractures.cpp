@@ -389,6 +389,7 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
 
   updateState( domain );
 
+  // TODO this needs to be a specific porelastic kernel that assembles all mechanics dependencies cell by cell
   // assemble Kuu, Kuw, Kww, Kwu
   m_fracturesSolver->assembleSystem( time_n, dt,
                                      domain,
@@ -396,7 +397,7 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
                                      localMatrix,
                                      localRhs );
 
-  // assemble flow matrices
+  // TODO assemble poroelastic fluxes with embedded fractures.
   m_flowSolver->assembleSystem( time_n, dt,
                                 domain,
                                 dofManager,
@@ -408,7 +409,6 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
                          dofManager,
                          localMatrix,
                          localRhs );
-
 }
 
 void PoroelasticSolverEmbeddedFractures::assembleCouplingTerms( DomainPartition const & domain,

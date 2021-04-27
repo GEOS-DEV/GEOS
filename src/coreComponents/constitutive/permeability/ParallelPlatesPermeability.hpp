@@ -57,9 +57,9 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void update( localIndex const k,
-               localIndex const q,
-               real64 const & effectiveAperture ) const
+  void updateAperture( localIndex const k,
+                       localIndex const q,
+                       real64 const & effectiveAperture )
   {
     compute( effectiveAperture,
              m_permeability[k][q],
