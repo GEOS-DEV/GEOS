@@ -61,9 +61,9 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void update( localIndex const k,
-                       localIndex const q,
-                       real64 const & porosity )
+  virtual void updatePorosity( localIndex const k,
+                               localIndex const q,
+                               real64 const & porosity )
   {
     compute( porosity,
              m_permeability[k][q],

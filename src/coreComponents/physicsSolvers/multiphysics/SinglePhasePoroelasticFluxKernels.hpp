@@ -49,6 +49,7 @@ struct PermeabilityKernel< CellElementSubRegion >
           arrayView2d< real64 const > const & displacement,
           arrayView3d< real64 > const & dPerm_dDisplacement )
   {
+    // TODO: pass also the porosity and chain rule all dependencies.
     static constexpr int numNodesPerElem = FE_TYPE::numNodes;
 
     static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -67,7 +68,7 @@ struct PermeabilityKernel< CellElementSubRegion >
 
         FE_TYPE::symmetricGradient( dNdX, displacementLocal, strainIncrement );
 
-        permWrapper.update( k, q, strainInc[k][q] );
+        permWrapper.updatePressureStrain( k, q, pressure, volStrain, dPerm_dVolStrain );
       }
     } );
   }
@@ -83,7 +84,7 @@ struct PermeabilityKernel< CellElementSubRegion >
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < permWrapper.numGauss(); ++q )
       {
-        permWrapper.update( k, q, porosity[k][q] );
+        permWrapper.updatePressureStrain( k, q, pressure, volStrain, dPerm_dVolStrain );
       }
     } );
   }
