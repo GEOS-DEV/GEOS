@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{0.0, 0.0, -9.81}">
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"

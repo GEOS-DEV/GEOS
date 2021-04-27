@@ -17,8 +17,7 @@
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -0.0">
+  <Solvers>
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -141,16 +140,16 @@
 
   <Geometry>
     <Box name="source"
-         xMin="-0.1, -0.1, -0.1"
-         xMax="2.1, 0.1, 2.1"/>
+         xMin="{-0.1, -0.1, -0.1}"
+         xMax="{2.1, 0.1, 2.1}"/>
 
     <Box name="perf"
-         xMin="-4.1, -0.1, -4.1"
-         xMax="4.1, 0.1, 4.1"/>
+         xMin="{-4.1, -0.1, -4.1}"
+         xMax="{4.1, 0.1, 4.1}"/>
 
     <ThickPlane name="fracturable"
-                normal="0, 1, 0"
-                origin="0, 0, 0"
+                normal="{0, 1, 0}"
+                origin="{0, 0, 0}"
                 thickness="0.1"/>
   </Geometry>
 
