@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"

@@ -7,7 +7,7 @@
     <!-- SPHINX_GravityEnd -->
     
     <!-- SPHINX_PoroelasticSolver -->
-    <Poroelastic
+    <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
@@ -20,7 +20,7 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         logLevel="2"/>
-    </Poroelastic>
+    </SinglePhasePoromechanics>
 
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE
