@@ -78,18 +78,18 @@ public:
   virtual localIndex packSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
-                               bool on_device = false ) const override;
+                               bool onDevice = false ) const override;
 
   virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
-                           bool on_device = false )  const override;
+                           bool onDevice = false )  const override;
 
   virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
-                             bool on_device = false ) override;
+                             bool onDevice = false ) override;
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.

@@ -27,21 +27,21 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
   m_recordCount( 0 ),
   m_io( )
 {
-  registerWrapper( viewKeys::timeHistoryOutputTarget, &m_collectorPaths ).
+  registerWrapper( viewKeys::timeHistoryOutputTargetString(), &m_collectorPaths ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "A list of collectors from which to collect and output time history information." );
 
-  registerWrapper( viewKeys::timeHistoryOutputFilename, &m_filename ).
+  registerWrapper( viewKeys::timeHistoryOutputFilenameString(), &m_filename ).
     setApplyDefaultValue( "TimeHistory" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The filename to which to write time history output." );
 
-  registerWrapper( viewKeys::timeHistoryOutputFormat, &m_format ).
+  registerWrapper( viewKeys::timeHistoryOutputFormatString(), &m_format ).
     setApplyDefaultValue( "hdf" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The output file format for time history output." );
 
-  registerWrapper( viewKeys::timeHistoryRestart, &m_recordCount ).
+  registerWrapper( viewKeys::timeHistoryRestartString(), &m_recordCount ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
@@ -56,20 +56,22 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   string const outputDirectory = getGlobalState().getCommandLineOptions().outputDirectory;
   string const outputFile = joinPath( outputDirectory, m_filename );
 
-  // rank == 0 do time output for the collector
+  localIndex ioCount = 0;
   for( localIndex ii = 0; ii < collector.getCollectionCount( ); ++ii )
   {
     HistoryMetadata metadata = collector.getMetadata( pm, ii );
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
-    collector.registerBufferCall( ii, [this, ii, &pm, &collector]()
+    collector.registerBufferCall( ii, [this, ii, ioCount, &pm, &collector]()
     { 
       collector.updateSetsIndices( pm.getDomainPartition() );
       HistoryMetadata metadata = collector.getMetadata( pm, ii );
-      m_io[ii]->updateCollectingCount( metadata.getDims( )[0] );
-      return m_io[ii]->getBufferHead( ); 
+      m_io[ioCount]->updateCollectingCount( metadata.getDims( )[0] );
+      return m_io[ioCount]->getBufferHead( ); 
     } );
     m_io.back()->init( !freshInit );
+    ++ioCount;
   }
+  localIndex nonMetaCount = ioCount;
 
   // rank == 0 does time output for the collector
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
@@ -79,6 +81,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
     collector.registerTimeBufferCall( [this]() { return m_io.back()->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
   }
+
   if( freshInit )
   {
     // do any 1-time metadata output
@@ -86,22 +89,28 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
     DomainPartition & domainGroup = pm.getDomainPartition();
     for( localIndex metaIdx = 0; metaIdx < metaCollectorCount; ++metaIdx )
     {
-      std::unique_ptr< HistoryCollection > metaCollector = collector.getMetaCollector( pm, metaIdx );
-      std::vector< std::unique_ptr< HDFHistIO > > metaIOs( metaCollector->getCollectionCount( ) );
-      for( localIndex ii = 0; ii < metaCollector->getCollectionCount( ); ++ii )
+      HistoryCollection & metaCollector = collector.getMetaCollector( metaIdx );
+      metaCollector.updateSetsIndices( domainGroup );
+      for( localIndex ii = 0; ii < metaCollector.getCollectionCount( ); ++ii )
       {
-        HistoryMetadata metaMetadata = metaCollector->getMetadata( pm, ii );
+        HistoryMetadata metaMetadata = metaCollector.getMetadata( pm, ii );
         metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName( ) );
-        metaIOs[ii] = std::make_unique< HDFHistIO >( outputFile, metaMetadata, 0, 1 );
-        metaCollector->registerBufferCall( ii, [&metaIOs, ii] () { return metaIOs[ii]->getBufferHead( ); } );
-        metaIOs[ii]->init( false );
+        m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metaMetadata, 0, 1 ) );
+        metaCollector.registerBufferCall( ii, [this, ii, ioCount, &pm, &metaCollector] () 
+        { 
+          metaCollector.updateSetsIndices( pm.getDomainPartition() );
+          HistoryMetadata metaMetadata = metaCollector.getMetadata( pm, ii );
+          m_io[ ioCount ]->updateCollectingCount( metaMetadata.getDims()[0] );
+          return m_io[ ioCount ]->getBufferHead( ); 
+        } );
+        m_io.back()->init( false );
+        ++ioCount;
       }
-
-      metaCollector->execute( 0.0, 0.0, 0, 0, 0, domainGroup );
-      for( localIndex ii = 0; ii < metaCollector->getCollectionCount( ); ++ii )
-      {
-        metaIOs[ii]->write( );
-      }
+      metaCollector.execute( 0.0, 0.0, 0, 0, 0, domainGroup );
+    }
+    for( localIndex ii = nonMetaCount; ii < ioCount; ++ii )
+    {
+      m_io[ii]->write( );
     }
   }
   MpiWrapper::barrier( MPI_COMM_GEOSX );
@@ -122,9 +131,9 @@ void TimeHistoryOutput::initializePostSubGroups()
   }
 
   ProblemManager & pm = getGlobalState().getProblemManager();
-  for( auto collector_path : m_collectorPaths )
+  for( auto collectorPath : m_collectorPaths )
   {
-    HistoryCollection & collector = this->getGroupByPath< HistoryCollection >( collector_path );
+    HistoryCollection & collector = this->getGroupByPath< HistoryCollection >( collectorPath );
     collector.initializePostSubGroups();
     initCollectorParallel( pm, collector );
   }

@@ -279,9 +279,6 @@ void HDFHistIO::write( )
   MpiWrapper::allReduce( &m_sizeChanged, &anyChanged, 1, MPI_LOR, m_comm );
   m_sizeChanged = anyChanged;
 
-  // localIndex maxBuffered = 0;
-  // MpiWrapper::allReduce( &m_bufferedCount, &maxBuffered, 1, MPI_MAX, m_comm );
-  // GEOSX_ERROR_IF( maxBuffered != m_bufferedCount, "Parallel time history collection has become out of sync!");
   // this will set the first dim large enough to hold all the rows we're about to write
   resizeFileIfNeeded( m_bufferedCount );
   if( m_bufferedCount > 0 )
@@ -492,7 +489,7 @@ void HDFSerialHistIO::init( bool existsOkay )
     }
     else if( existsOkay )
     {
-      // todo:
+      // todo ?
       // hid_t dataset = H5Dopen(target, m_name.c_str( ), H5P_DEFAULT);
       // check that the extent of the filespace is compatible with the data
     }

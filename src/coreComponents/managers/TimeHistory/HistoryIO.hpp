@@ -51,7 +51,7 @@ public:
    */
   buffer_unit_type * getBufferHead( )
   {
-    resizeBuffer();
+    resizeBuffer( );
     m_bufferedCount++;
     buffer_unit_type * currentBufferHead = m_bufferHead;
     m_bufferHead += getRowBytes( );
