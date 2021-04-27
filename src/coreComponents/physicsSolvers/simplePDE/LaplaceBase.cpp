@@ -25,12 +25,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{}
-}
-
 using namespace dataRepository;
 
 //START_SPHINX_INCLUDE_CONSTRUCTOR
