@@ -406,21 +406,39 @@ CommunicationTools::
   {
     array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
 
-    CommID commID = getCommID();
-
-    for( std::size_t i=0; i<allNeighbors.size(); ++i )
+    MPI_iCommData commData;
+    int const commID = commData.commID;
+    std::size_t const numNeighbors = allNeighbors.size();
+    commData.resize( numNeighbors );
+    for( std::size_t i=0; i<numNeighbors; ++i )
     {
-      allNeighbors[i].mpiISendReceive( globalPartitionBoundaryObjectsIndices,
-                                       neighborPartitionBoundaryObjects[i],
-                                       commID, MPI_COMM_GEOSX );
+      allNeighbors[i].mpiISendReceiveSizes( globalPartitionBoundaryObjectsIndices,
+                                            commData.mpiSizeSendBufferRequest[i],
+                                            commData.mpiSizeRecvBufferRequest[i],
+                                            commID,
+                                            MPI_COMM_GEOSX );
     }
+
+    MpiWrapper::waitAll( numNeighbors, commData.mpiSizeSendBufferRequest.data(), commData.mpiSizeSendBufferStatus.data() );
+    MpiWrapper::waitAll( numNeighbors, commData.mpiSizeRecvBufferRequest.data(), commData.mpiSizeRecvBufferStatus.data() );
+
+    for( std::size_t i=0; i<numNeighbors; ++i )
+    {
+      allNeighbors[i].mpiISendReceiveData( globalPartitionBoundaryObjectsIndices,
+                                           commData.mpiSendBufferRequest[i],
+                                           neighborPartitionBoundaryObjects[i],
+                                           commData.mpiRecvBufferRequest[i],
+                                           commID,
+                                           MPI_COMM_GEOSX );
+    }
+    MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferRequest.data(), commData.mpiSendBufferStatus.data() );
+    MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferRequest.data(), commData.mpiRecvBufferStatus.data() );
 
     for( std::size_t i=0; i<allNeighbors.size(); ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
       localIndex_array & matchedPartitionBoundaryObjects = objectManager.getNeighborData( neighbor.neighborRank() ).matchedPartitionBoundary();
 
-      neighbor.mpiWaitAll( commID );
       localIndex localCounter = 0;
       localIndex neighborCounter = 0;
       while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&

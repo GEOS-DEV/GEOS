@@ -407,20 +407,6 @@ public:
   //END_SPHINX_REFPOS_ACCESS
 
   /**
-   * @brief Return the reference position array  of the nodes of the embedded surfaces.
-   * @return the location of the nodes of the embedded surfaces
-   */
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosition()
-  { return m_embeddedSurfNodesPosition; }
-
-  /**
-   * @brief Return an immutable arrayView of the position.
-   * @return immutable arrayView of the location of the nodes of the embedded surfaces.
-   */
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > embSurfNodesPosition() const
-  { return m_embeddedSurfNodesPosition; }
-
-  /**
    * @brief Get a mutable total displacement array.
    * @return the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the total displacement does not exist
@@ -506,9 +492,6 @@ private:
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
   //END_SPHINX_REFPOS
-
-  /// reference position of the nodes defining the embedded surfaces
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_embeddedSurfNodesPosition;
 
   /// nodes-to-edges relation
   EdgeMapType m_toEdgesRelation;

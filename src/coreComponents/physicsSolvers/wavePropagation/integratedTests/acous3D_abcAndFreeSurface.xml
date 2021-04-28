@@ -34,8 +34,8 @@
     <!-- tag the free surface boundary using box -->
     <Box
       name="zpos"
-      xMin="-0.01, -0.01, 19.99"
-      xMax=" 20.01, 0.11, 20.01"/>
+      xMin="{ -0.01, -0.01, 19.99 }"
+      xMax="{ 20.01, 0.11, 20.01 }"/>
 
   </Geometry>
    

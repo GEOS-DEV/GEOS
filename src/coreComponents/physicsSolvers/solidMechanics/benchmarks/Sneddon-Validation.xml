@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <!-- SPHINX_SNEDDON_SOLVER -->
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
@@ -59,10 +59,10 @@
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="0, 1, 0"
-      origin="500, 500.5, 50"
-      lengthVector="1, 0, 0"
-      widthVector="0, 0, 1"
+      normal="{0, 1, 0}"
+      origin="{500, 500.5, 50}"
+      lengthVector="{1, 0, 0}"
+      widthVector="{0, 0, 1}"
       dimensions="{ 20, 100 }"/>
   </Geometry>
   <!-- SPHINX_SNEDDON_GEOMETRY_END -->
@@ -125,7 +125,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ rock }"
+      materialList="{}"
       defaultAperture="1e-3"/>
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->
