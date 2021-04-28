@@ -94,10 +94,12 @@ private:
    * @brief Write a CellBlock of a given cell type
    * @param[in] name the name of the cellBlock to be written
    * @param[in] nbcells number of cells the CellBlock will contain
+   * @param[in] region_id the id of the region
    * @param[in] cellType the vtk cell type for cells of the CellBlock being written
    * @param[in] cellBlockManager the CellBlockManager
+   * @param[in] arraysTobeImported the list of arrays to be imported
    */
-  void WriteCellBlock( string const & name, localIndex nbCells, int cellType,
+  void WriteCellBlock( string const & name, localIndex nbCells, int region_id, int cellType,
                        CellBlockManager & cellBlockManager,
                        std::vector< vtkDataArray * > const & arraysTobeImported ); 
 
@@ -106,7 +108,7 @@ private:
    * @details The node ordering from VTK differs from the node ordering in GEOSX
    * @param[in,out] cellToVertex list of nodes organized per cells
    */
-  void WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex );
+  void WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id );
 
   /**
    * @brief Write the pyramid vertices
