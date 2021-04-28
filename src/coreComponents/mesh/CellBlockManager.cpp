@@ -781,31 +781,40 @@ void CellBlockManager::buildFaceMaps( localIndex numNodes )
   fillElementToFacesOfCellBlocks( lowestNodeToFaces, uniqueFaceOffsets, this->getCellBlocks() );
 }
 
-void CellBlockManager::buildEdgeMaps( localIndex numNodes )
+localIndex buildEdgeMaps( localIndex numNodes,
+                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                          ArrayOfArrays< localIndex > & faceToEdgeMap,
+                          ArrayOfSets< localIndex > & edgeToFaceMap,
+                          array2d< localIndex > & edgeToNodeMap )
 {
-  ArrayOfArrays< EdgeBuilder > edgesByLowestNode = createEdgesByLowestNode( numNodes, m_faceToNodes.toViewConst() );
+  ArrayOfArrays< EdgeBuilder > edgesByLowestNode = createEdgesByLowestNode( numNodes, faceToNodeMap );
 
   array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
-  m_numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
+  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
 
   resizeEdgeMaps( edgesByLowestNode.toViewConst(),
                   uniqueEdgeOffsets,
-                  m_edgeToNodes,
-                  m_edgeToFaces );
+                  edgeToNodeMap,
+                  edgeToFaceMap );
 
   populateEdgeMaps( edgesByLowestNode.toViewConst(),
                     uniqueEdgeOffsets,
-                    m_faceToNodes.toViewConst(),
-                    m_faceToEdges,
-                    m_edgeToFaces,
-                    m_edgeToNodes );
+                    faceToNodeMap,
+                    faceToEdgeMap,
+                    edgeToFaceMap,
+                    edgeToNodeMap );
 
+  return numEdges;
 }
 
 void CellBlockManager::buildMaps( localIndex numNodes )
 {
   buildFaceMaps( numNodes );
-  buildEdgeMaps( numNodes );
+  m_numEdges = buildEdgeMaps( numNodes,
+                              m_faceToNodes.toViewConst(),
+                              m_faceToEdges,
+                              m_edgeToFaces,
+                              m_edgeToNodes );
 }
 
 //TODO return views

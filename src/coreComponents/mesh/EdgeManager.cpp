@@ -70,57 +70,6 @@ void EdgeManager::resize( localIndex const newSize )
   ObjectManagerBase::resize( newSize );
 }
 
-/**
- * @class EdgeBuilder
- * @brief This class stores the data necessary to construct the various edge maps.
- */
-struct EdgeBuilder
-{
-
-  /**
-   * @brief Constructor.
-   * @param [in] n1_ the greater of the two node indices that comprise the edge.
-   * @param [in] faceID_ the ID of the face this edge came from.
-   * @param [in] faceLocalEdgeIndex_ the face local index of this edge.
-   */
-  EdgeBuilder( localIndex const n1_,
-               localIndex const faceID_,
-               localIndex const faceLocalEdgeIndex_ ):
-    n1( int32_t( n1_ ) ),
-    faceID( int32_t( faceID_ ) ),
-    faceLocalEdgeIndex( int32_t( faceLocalEdgeIndex_ ) )
-  {}
-
-  /**
-   * @brief Imposes an ordering on EdgeBuilders. First compares n1 and then the faceID.
-   * @param [in] rhs the EdgeBuilder to compare against.
-   */
-  bool operator<( EdgeBuilder const & rhs ) const
-  {
-    if( n1 < rhs.n1 ) return true;
-    if( n1 > rhs.n1 ) return false;
-    return faceID < rhs.faceID;
-  }
-
-  /**
-   * @brief Return true if the two EdgeBuilders share the same greatest node index.
-   * @param [in] rhs the EdgeBuilder to compare against.
-   */
-  bool operator==( EdgeBuilder const & rhs ) const
-  { return n1 == rhs.n1; }
-
-  /**
-   * @brief Return true if the two EdgeBuilders don't share the same greatest node index.
-   * @param [in] rhs the EdgeBuilder to compare against.
-   */
-  bool operator!=( EdgeBuilder const & rhs ) const
-  { return n1 != rhs.n1; }
-
-  int32_t n1;                  // The larger of the two node indices that comprise the edge.
-  int32_t faceID;              // The face the edge came from.
-  int32_t faceLocalEdgeIndex;  // The face local index of the edge.
-};
-
 void EdgeManager::buildEdges( NodeManager & nodeManager, FaceManager & faceManager, CellBlockManager const & cellBlockManager )
 {
   GEOSX_MARK_FUNCTION;
@@ -166,27 +115,15 @@ void EdgeManager::buildEdges( localIndex const numNodes,
                               ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                               ArrayOfArrays< localIndex > & faceToEdgeMap )
 {
-//  ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
-//  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
-  ArrayOfArrays< EdgeBuilder > edgesByLowestNode = createEdgesByLowestNode( numNodes, faceToNodeMap );
-
-  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
-  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
-
-  resizeEdgeToFaceMap( edgesByLowestNode.toViewConst(),
-                       uniqueEdgeOffsets,
-                       m_toFacesRelation );
-
-  // TODO move this after the populate if `resizeEdgeToFaceMap` does the resize for `m_toNodesRelation` too.
-  // maybe call directly ObjectManager::resize?
-  resize( numEdges );
-
-  populateEdgeMaps( edgesByLowestNode.toViewConst(),
-                    uniqueEdgeOffsets,
-                    faceToNodeMap,
-                    faceToEdgeMap,
-                    m_toFacesRelation,
-                    m_toNodesRelation );
+  localIndex const numEdges = buildEdgeMaps( numNodes, faceToNodeMap,
+                                             faceToEdgeMap,
+                                             m_toFacesRelation,
+                                             m_toNodesRelation );
+  // FIXME I've no idea of what I am doing
+  m_toNodesRelation.resize( numEdges );
+//  m_edgesToFractureConnectorsEdges.resize( numEdges );
+  m_fractureConnectorsEdgesToEdges.resize( numEdges );
+  m_fractureConnectorEdgesToFaceElements.resize( numEdges );
 }
 
 

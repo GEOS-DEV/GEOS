@@ -189,8 +189,6 @@ private:
   localIndex numCellBlocks() const;
 
   void buildFaceMaps( localIndex numNodes );
-  void buildEdgeMaps( localIndex numNodes );
-
 
 private:
   ArrayOfArrays< localIndex >  m_faceToNodes;
@@ -202,25 +200,20 @@ private:
   localIndex m_numEdges;
 };
 
-// TODO move away, replace by one single smooth free function.
-struct EdgeBuilder;
-
-void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
-                          arrayView1d< localIndex const > const & uniqueEdgeOffsets,
-                          ArrayOfSets< localIndex > & edgeToFaceMap ) ;
-
-ArrayOfArrays< EdgeBuilder > createEdgesByLowestNode( localIndex numNodes,
-                                                      ArrayOfArraysView< localIndex const > const & faceToNodeMap );
-
-localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
-                                        arrayView1d< localIndex > const & uniqueEdgeOffsets );
-
-void populateEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
-                       arrayView1d< localIndex const > const & uniqueEdgeOffsets,
-                       ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                       ArrayOfArrays< localIndex > & faceToEdgeMap,
-                       ArrayOfSets< localIndex > & edgeToFaceMap,
-                       arrayView2d< localIndex > const & edgeToNodeMap );
+/**
+ * @brief Free function that generates face to edges, edge to faces and edge to nodes mappings.
+ * @param[in] numNodes The number of nodes.
+ * @param[in] faceToNodeMap Face to node mappings as an input.
+ * @param[out] faceToEdgeMap Face to edges will be resized and filled.
+ * @param[out] edgeToFaceMap Ege to faces will be resized and filled.
+ * @param[out] edgeToNodeMap Edge to nodes will be resized and filled.
+ * @return The number of edges.
+ */
+localIndex buildEdgeMaps( localIndex numNodes,
+                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                          ArrayOfArrays< localIndex > & faceToEdgeMap,
+                          ArrayOfSets< localIndex > & edgeToFaceMap,
+                          array2d< localIndex > & edgeToNodeMap );
 
 }
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */
