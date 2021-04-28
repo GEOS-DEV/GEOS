@@ -722,7 +722,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                    ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-
+	GEOSX_MARK_SCOPE (stiffness);
 	StiffnessVectorKernel<FE_TYPE> kernel( finiteElement );
 	kernel.template compute< EXEC_POLICY >( elemsToNodes,
 						X,
@@ -737,6 +737,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   /// Calculate your time integrators
   real64 const dt2 = dt*dt;
+  {
+  GEOSX_MARK_SCOPE (updateP);
   forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
@@ -748,7 +750,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       p_np1[a] /= mass[a]+0.5*dt*damping[a];
     }
   } );
-
+  }
   /// Synchronize pressure fields
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( "pressure_np1" );
