@@ -75,8 +75,10 @@ public:
 
 protected:
 
-  PermeabilityBaseUpdate( arrayView3d< real64 > const & permeability )
-    : m_permeability( permeability )
+  PermeabilityBaseUpdate( arrayView3d< real64 > const & permeability,
+                          arrayView3d< real64 > const & dPerm_dPressure )
+    : m_permeability( permeability ),
+      m_dPerm_dPressure( dPerm_dPressure )
   {}
 
   /// Default copy constructor
@@ -94,7 +96,6 @@ protected:
   arrayView3d< real64 > m_permeability;
 
   arrayView3d< real64 > m_dPerm_dPressure;
-
 };
 
 
@@ -115,14 +116,15 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  arrayView3d< real64 const > const permeability() const { return m_permeability;}
+  arrayView3d< real64 const > const permeability() const { return m_permeability; }
 
-  arrayView3d< real64 const > const dPerm_dPressure() const { return m_dPerm_dPressure;}
+  arrayView3d< real64 const > const dPerm_dPressure() const { return m_dPerm_dPressure; }
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * permeabilityString() { return "permeability"; }
-    static constexpr char const * dPerm_dPressureString() {return "dPerm_dPressure";}
+    static constexpr char const * dPerm_dPressureString() { return "dPerm_dPressure"; }
+    static constexpr char const * dPerm_dApertureString() { return "dPerm_dAperture"; }
   } viewKeys;
 
 protected:
@@ -131,7 +133,6 @@ protected:
   array3d< real64 > m_permeability;
 
   array3d< real64 > m_dPerm_dPressure;
-
 };
 
 }/* namespace constitutive */

@@ -296,22 +296,6 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
   m_gravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::gravityCoefString() );
   m_gravCoef.setName( getName() + "/accessors/" + viewKeyStruct::gravityCoefString() );
 
-  m_elementArea.clear();
-  m_elementArea = elemManager.constructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::elementAreaString() );
-  m_elementArea.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::elementAreaString() );
-
-  m_elementAperture.clear();
-  m_elementAperture = elemManager.constructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::elementApertureString() );
-  m_elementAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::elementApertureString() );
-
-  m_elementAperture0.clear();
-  m_elementAperture0 = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::aperture0String() );
-  m_elementAperture0.setName( getName() + "/accessors/" + viewKeyStruct::aperture0String() );
-
-  m_effectiveAperture.clear();
-  m_effectiveAperture = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::effectiveApertureString() );
-  m_effectiveAperture.setName( getName() + "/accessors/" + viewKeyStruct::effectiveApertureString() );
-
   using keys = PermeabilityBase::viewKeyStruct;
 
   m_permeability.clear();
@@ -348,13 +332,6 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
   std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
-}
-
-void FlowSolverBase::setUpDflux_dApertureMatrix( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                                 DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                                 CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ) )
-{
-  GEOSX_ERROR( "FlowSolverBase::setUpDfluxDapertureMatrix. Should be overridden." );
 }
 
 

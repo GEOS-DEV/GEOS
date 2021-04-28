@@ -32,10 +32,11 @@ class CarmanKozenyPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   CarmanKozenyPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+                                  arrayView3d< real64 > const & dPerm_dPressure,
                                   arrayView3d< real64 > const & dPerm_dPorosity,
                                   real64 const particleDiameter,
                                   real64 const sphericity )
-    : PermeabilityBaseUpdate( permeability ),
+    : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dPorosity( dPerm_dPorosity ),
     m_particleDiameter( particleDiameter ),
     m_sphericity( sphericity )
@@ -111,6 +112,7 @@ public:
   KernelWrapper createKernelWrapper()
   {
     return KernelWrapper( m_permeability,
+                          m_dPerm_dPressure,
                           m_dPerm_dPorosity,
                           m_particleDiameter,
                           m_sphericity );

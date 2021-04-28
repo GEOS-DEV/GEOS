@@ -30,6 +30,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoroelasticFluxKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -41,6 +42,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace SinglePhaseBaseKernels;
 using namespace SinglePhaseFVMKernels;
+using namespace SinglePhasePoroelasticFluxKernels;
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
@@ -235,13 +237,108 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-
-  // TODO need to add derivatives w.r.t. to displacement and aperture.
-  fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+  fluxApprox.forAllStencils< cellElementStencilTPFA, surfaceElementStencil, embeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
-    PoroelasticFluxKernel::launch( stencilWrapper,
+    EmbeddedSurfaceFluxKernel::launch( stencilWrapper,
+                                       dt,
+                                       dofManager.rankOffset(),
+                                       elemDofNumber.toNestedViewConst(),
+                                       m_elemGhostRank.toNestedViewConst(),
+                                       m_pressure.toNestedViewConst(),
+                                       m_deltaPressure.toNestedViewConst(),
+                                       m_gravCoef.toNestedViewConst(),
+                                       m_density.toNestedViewConst(),
+                                       m_dDens_dPres.toNestedViewConst(),
+                                       m_mobility.toNestedViewConst(),
+                                       m_dMobility_dPres.toNestedViewConst(),
+                                       m_permeability.toNestedViewConst(),
+                                       m_dPerm_dPressure.toNestedViewConst(),
+                                       m_transTMultiplier.toNestedViewConst(),
+                                       this->gravityVector(),
+                                       localMatrix,
+                                       localRhs );
+  } );
+}
+
+template< typename BASE >
+void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+                                                           real64 const dt,
+                                                           DomainPartition & domain,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+  elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+  elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
+      mesh.getElemManager().constructMaterialViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString() );
+
+  fluxApprox.forAllStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
+  {
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
+    EmbeddedSurfaceFluxKernel::launch( stencilWrapper,
+                                       dt,
+                                       dofManager.rankOffset(),
+                                       elemDofNumber.toNestedViewConst(),
+                                       m_elemGhostRank.toNestedViewConst(),
+                                       m_pressure.toNestedViewConst(),
+                                       m_deltaPressure.toNestedViewConst(),
+                                       m_gravCoef.toNestedViewConst(),
+                                       m_density.toNestedViewConst(),
+                                       m_dDens_dPres.toNestedViewConst(),
+                                       m_mobility.toNestedViewConst(),
+                                       m_dMobility_dPres.toNestedViewConst(),
+                                       m_permeability.toNestedViewConst(),
+                                       m_dPerm_dPressure.toNestedViewConst(),
+                                       dPerm_dAper.toNestedViewConst(),
+                                       m_transTMultiplier.toNestedViewConst(),
+                                       this->gravityVector(),
+                                       localMatrix,
+                                       localRhs );
+  } );
+}
+
+template< typename BASE >
+void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const time_n,
+                                                           real64 const dt,
+                                                           DomainPartition & domain,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs,
+                                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+  elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+  elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+
+  fluxApprox.forAllStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+  {
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
+    FaceElementFluxKernel::launch( stencilWrapper,
                                    dt,
                                    dofManager.rankOffset(),
                                    elemDofNumber.toNestedViewConst(),
@@ -258,8 +355,9 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                    m_transTMultiplier.toNestedViewConst(),
                                    this->gravityVector(),
                                    localMatrix,
-                                   localRhs );
-  } );
+                                   localRhs,
+                                   dR_dAper );
+   } );
 }
 
 template< typename BASE >
@@ -374,65 +472,6 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                      localMatrix,
                                      localRhs );
     } );
-  } );
-}
-
-template< typename BASE >
-void SinglePhaseFVM< BASE >::setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                                         DofManager const & dofManager,
-                                                         CRSMatrix< real64, globalIndex > & localMatrix )
-{
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  std::unique_ptr< CRSMatrix< real64, localIndex > > &
-  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
-
-  {
-    localIndex numRows = 0;
-    this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
-                                                                                                     auto const & elementSubRegion )
-    {
-      numRows += elementSubRegion.size();
-    } );
-
-    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
-    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-
-    derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
-    localIndex maxRowSize = -1;
-    for( localIndex row = 0; row < localMatrix.numRows(); ++row )
-    {
-      localIndex const rowSize = localMatrix.numNonZeros( row );
-      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
-    }
-    // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
-    for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
-    {
-      derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
-    }
-  }
-
-  string const presDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
-
-  fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-  {
-    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-    {
-      localIndex const numFluxElems = stencil.stencilSize( iconn );
-      typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-
-      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-      {
-        for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
-        {
-          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
-        }
-      }
-    }
   } );
 }
 

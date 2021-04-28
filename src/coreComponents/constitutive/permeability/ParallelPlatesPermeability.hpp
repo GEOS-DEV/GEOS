@@ -32,8 +32,9 @@ class ParallelPlatesPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+                                    arrayView3d< real64 > const & dPerm_dPressure,
                                     arrayView3d< real64 > const & dPerm_dAperture )
-    : PermeabilityBaseUpdate( permeability ),
+    : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dAperture( dPerm_dAperture )
   {}
 
@@ -98,13 +99,14 @@ public:
   KernelWrapper createKernelWrapper()
   {
     return KernelWrapper( m_permeability,
+                          m_dPerm_dPressure,
                           m_dPerm_dAperture );
   }
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
-    static constexpr char const * dPerm_dApertureString() { return "dPerm_dAperture"; }
+
   } viewKeys;
 
 private:

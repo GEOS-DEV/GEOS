@@ -126,6 +126,22 @@ public:
   void initializeNewFaceElements( DomainPartition const & domain );
 
 
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
+  {
+      return m_derivativeFluxResidual_dAperture;
+  }
+
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
+  {
+      return m_derivativeFluxResidual_dAperture->toViewConstSizes();
+  }
+
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
+  {
+      return m_derivativeFluxResidual_dAperture->toViewConst();
+  }
+
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
@@ -167,6 +183,14 @@ protected:
                                                DofManager & dofManager,
                                                SparsityPatternView< globalIndex > const & pattern ) const;
 
+
+  void setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                   DofManager const & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix );
+
+
+
+
 private:
 
   // name of the contact relation
@@ -179,6 +203,9 @@ private:
   SurfaceGenerator * m_surfaceGenerator;
 
   std::unique_ptr< ParallelMatrix > m_blockDiagUU;
+
+  // it is only important for this case.
+  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   integer m_maxNumResolves;
   integer m_numResolves[2];

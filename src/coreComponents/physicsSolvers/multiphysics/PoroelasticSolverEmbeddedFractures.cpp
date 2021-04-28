@@ -37,7 +37,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
+#include "SinglePhasePoroelasticKernel.hpp"
+#include "SinglePhasePoroelasticEFEMKernel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -173,9 +174,6 @@ void PoroelasticSolverEmbeddedFractures::setupSystem( DomainPartition & domain,
   localMatrix.setName( this->getName() + "/localMatrix" );
   localRhs.setName( this->getName() + "/localRhs" );
   localSolution.setName( this->getName() + "/localSolution" );
-
-  // sets up the object that contains the deravative of the fluxes w.r.t. the aperture ( i.e., the normal jump )
-  m_flowSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }
 
 void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -387,28 +385,71 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
                                                          arrayView1d< real64 > const & localRhs )
 {
 
-  updateState( domain );
+  GEOSX_MARK_FUNCTION;
 
-  // TODO this needs to be a specific porelastic kernel that assembles all mechanics dependencies cell by cell
-  // assemble Kuu, Kuw, Kww, Kwu
-  m_fracturesSolver->assembleSystem( time_n, dt,
-                                     domain,
-                                     dofManager,
-                                     localMatrix,
-                                     localRhs );
+  //updateState( domain );
 
-  // TODO assemble poroelastic fluxes with embedded fractures.
+  MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
+  EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
+
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
+
+  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  // 1. Cell-based contributions of standard poroelasticity
+  m_solidSolver->getMaxForce() =
+      finiteElement::
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+      constitutive::SolidBase,
+      CellElementSubRegion,
+      PoroelasticKernels::SinglePhase >( mesh,
+                                         targetRegionNames(),
+                                         this->getDiscretizationName(),
+                                         m_solidSolver->solidMaterialNames(),
+                                         dispDofNumber,
+                                         pDofKey,
+                                         dofManager.rankOffset(),
+                                         localMatrix,
+                                         localRhs,
+                                         gravityVectorData,
+                                         m_flowSolver->fluidModelNames() );
+
+  // 2.  Add EFEM poroelastic contribution
+   m_solidSolver->getMaxForce() =
+       finiteElement::
+       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+       constitutive::SolidBase,
+       CellElementSubRegion,
+       PoroelasticEFEMKernels::SinglePhase >( mesh,
+                                              targetRegionNames(),
+                                              this->getDiscretizationName(),
+                                              m_solidSolver->solidMaterialNames(),
+                                              dispDofNumber,
+                                              pDofKey,
+                                              dofManager.rankOffset(),
+                                              localMatrix,
+                                              localRhs,
+                                              gravityVectorData,
+                                              m_flowSolver->fluidModelNames() );
+
+
+  // 3. TODO assemble poroelastic fluxes and all derivatives
   m_flowSolver->assembleSystem( time_n, dt,
                                 domain,
                                 dofManager,
                                 localMatrix,
                                 localRhs );
 
-  // assemble mechanics-flow coupling blocks
-  assembleCouplingTerms( domain,
-                         dofManager,
-                         localMatrix,
-                         localRhs );
 }
 
 void PoroelasticSolverEmbeddedFractures::assembleCouplingTerms( DomainPartition const & domain,
@@ -417,9 +458,6 @@ void PoroelasticSolverEmbeddedFractures::assembleCouplingTerms( DomainPartition 
                                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  // Rock matrix poroelatic coupling
-  PoroelasticSolver::assembleCouplingTerms( domain, dofManager, localMatrix, localRhs );
 
   assembleFractureFlowResidualWrtJump( domain, dofManager, localMatrix, localRhs );
 

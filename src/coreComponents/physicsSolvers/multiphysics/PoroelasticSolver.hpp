@@ -103,7 +103,8 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
-  void updatePermeability( CellElementSubRegion & subRegion,
+  void updatePermeability( NodeManager const & nodeManger,
+                           CellElementSubRegion & subRegion,
                            localIndex const targetIndex  ) const;
 
   virtual void

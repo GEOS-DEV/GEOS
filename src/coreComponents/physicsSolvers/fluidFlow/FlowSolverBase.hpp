@@ -116,25 +116,6 @@ public:
    */
   virtual void resetViews( MeshLevel & mesh );
 
-  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrix< real64, globalIndex > & localMatrix );
-
-
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
-  {
-    return m_derivativeFluxResidual_dAperture;
-  }
-
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
-  }
-
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConst();
-  }
 
 private:
 
@@ -172,8 +153,6 @@ protected:
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
-
   real64 m_fluxEstimate;
 
   /// views into constant data fields
@@ -183,11 +162,6 @@ protected:
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_permeability;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_dPerm_dPressure;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementArea;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementAperture0;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementAperture;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_effectiveAperture;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;

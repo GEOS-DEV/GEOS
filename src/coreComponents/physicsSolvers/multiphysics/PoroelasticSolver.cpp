@@ -589,16 +589,18 @@ void PoroelasticSolver::applySystemSolution( DofManager const & dofManager,
 void PoroelasticSolver::updateState( DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                           auto & subRegion )
   {
-    updatePermeability( subRegion, targetIndex );
+    updatePermeability( nodeManger, subRegion, targetIndex );
     m_flowSolver->updateFluidState( subRegion, targetIndex );
   } );
 }
 
-void PoroelasticSolver::updatePermeability( CellElementSubRegion & subRegion,
+void PoroelasticSolver::updatePermeability( NodeManager const & nodeManger,
+                                            CellElementSubRegion & subRegion,
                                             localIndex const targetIndex ) const
 {
   PermeabilityBase & perm =
@@ -610,16 +612,21 @@ void PoroelasticSolver::updatePermeability( CellElementSubRegion & subRegion,
            subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
      finiteElement::dispatch3D( subRegionFE,
-                                [&castedPerm] ( auto const finiteElement )
+                                [&castedPerm,
+                                 &nodeManger] ( auto const finiteElement )
      {
 
      typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
 
-     arrayView3d< real64 > const & dPerm_dDisplacement = subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPerm_dDisplacementString() );
+     arrayView3d< real64 > const & dPerm_dDisplacement =
+         subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPerm_dDisplacementString() );
 
      PermeabilityKernel< CellElementSubRegion >::launch< parallelDevicePolicy<> >( subRegion.size(),
                                                                                    finiteElement,
                                                                                    permWrapper,
+                                                                                   pressure,
+                                                                                   porosity,
+                                                                                   dPorosity_dVolStrain,
                                                                                    displacement,
                                                                                    dPerm_dDisplacement );
      } );

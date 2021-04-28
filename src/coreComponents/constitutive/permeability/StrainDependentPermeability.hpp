@@ -32,13 +32,8 @@ class StrainDependentPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   StrainDependentPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                                  arrayView3d< real64 > const & dPerm_dPorosity,
-                                  real64 const particleDiameter,
-                                  real64 const sphericity )
-    : PermeabilityBaseUpdate( permeability ),
-    m_dPerm_dPorosity( dPerm_dPorosity ),
-    m_particleDiameter( particleDiameter ),
-    m_sphericity( sphericity )
+                                     arrayView3d< real64 > const & dPerm_dPressure )
+    : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 
   /// Default copy constructor
@@ -55,27 +50,20 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void update( localIndex const k,
-                       localIndex const q,
-                       real64 const & pressure,
-                       real64 const & volStrain,
-                       real64 ( dPerm_dVolStrain )[3] ) override
+  virtual void updatePressureStrain( localIndex const k,
+                                     localIndex const q,
+                                     real64 const & pressure,
+                                     real64 const & volStrain,
+                                     real64 ( dPerm_dVolStrain )[3] ) override
   {
-    compute( porosity,
-             m_permeability[k][q],
-             m_dPerm_dPorosity[k][q] );
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( pressure );
+    GEOSX_UNUSED_VAR( volStrain );
+    GEOSX_UNUSED_VAR( dPerm_dVolStrain );
   }
 
 private:
-
-  /// dPermeability_dPorosity
-  arrayView3d< real64 > m_dPerm_dPorosity;
-
-  /// Particle diameter
-  real64 m_particleDiameter;
-
-  /// Sphericity of the particles
-  real64 m_sphericity;
 
 };
 
@@ -107,31 +95,16 @@ public:
   KernelWrapper createKernelWrapper()
   {
     return KernelWrapper( m_permeability,
-                          m_dPerm_dPorosity,
-                          m_particleDiameter,
-                          m_sphericity );
+                          m_dPerm_dPressure );
   }
 
 
-  struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
-  {
-    static constexpr char const * dPerm_dPorosityString() { return "dPerm_dPorosity"; }
-    static constexpr char const * particleDiameterString() { return "particleDiameter"; }
-    static constexpr char const * sphericityString() { return "sphericity"; }
-  } viewKeys;
 
 protected:
   virtual void postProcessInput() override;
 
 private:
-  /// dPermeability_dPorosity
-  array3d< real64 > m_dPerm_dPorosity;
 
-  /// Particle diameter
-  real64 m_particleDiameter;
-
-  /// Sphericity of the particles
-  real64 m_sphericity;
 };
 
 

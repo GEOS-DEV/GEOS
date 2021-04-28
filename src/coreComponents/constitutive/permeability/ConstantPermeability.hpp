@@ -31,8 +31,9 @@ class ConstantPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  ConstantPermeabilityUpdate( arrayView3d< real64 > const & permeability )
-    : PermeabilityBaseUpdate( permeability )
+  ConstantPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+                              arrayView3d< real64 > const & dPerm_dPressure )
+    : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 
   /// Default copy constructor
@@ -78,7 +79,8 @@ public:
    */
   KernelWrapper createKernelWrapper()
   {
-    return KernelWrapper( m_permeability );
+    return KernelWrapper( m_permeability,
+                          m_dPerm_dPressure );
   }
 
 
