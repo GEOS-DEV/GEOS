@@ -19,16 +19,16 @@
 #ifndef SRC_CORECOMPONENTS_TASKS_TRIAXIALDRIVER_HPP_
 #define SRC_CORECOMPONENTS_TASKS_TRIAXIALDRIVER_HPP_
 
+#include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/Functions/FunctionManager.hpp"
-#include "managers/Functions/TableFunction.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/Tasks/TaskBase.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "events/tasks/TaskBase.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {

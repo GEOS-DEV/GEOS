@@ -29,9 +29,10 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
-#include "managers/DomainPartition.hpp"
+#include "constitutive/NullModel.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <iostream>
 
@@ -1303,8 +1304,9 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
                                     false,
                                     [&]( auto array, auto GEOSX_UNUSED_PARAM( scalar ) )
     {
-      typedef decltype( array ) arrayType;
-      Wrapper< arrayType > & wrapperT = dynamicCast< Wrapper< arrayType > & >( *wrapper );
+      using arrayType =  decltype( array );
+      using WrapperType = Wrapper< arrayType >;
+      WrapperType & wrapperT = dynamicCast< Wrapper< arrayType > & >( *wrapper );
       arrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
@@ -1314,8 +1316,8 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
         // check if the field actually exists / plotted on the current subregion
         if( viewPointers[esr].count( fieldName ) > 0 )
         {
-          Wrapper< arrayType > const & sourceWrapper = dynamicCast< Wrapper< arrayType > const & >( *(viewPointers[esr][fieldName]));
-          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference().toViewConst();
+          WrapperType const & sourceWrapper = dynamic_cast< WrapperType const & >( *(viewPointers[esr].at( fieldName )) );
+          auto const sourceArray = sourceWrapper.reference().toViewConst();
 
           localIndex const offset = counter * targetArray.strides()[ 0 ];
           GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
@@ -1488,7 +1490,12 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
     localIndex const numContacts = fractureContactMaterialList.size();
 
-    if( numSolids + numFluids + numContacts > 0 )
+    string_array
+      nullModelMaterialList = elementRegion.getConstitutiveNames< constitutive::NullModel >();
+
+    localIndex const numNullModels = nullModelMaterialList.size();
+
+    if( numSolids + numFluids + numContacts + numNullModels > 0 )
     {
       writeMeshObject( meshName,
                        numNodes,

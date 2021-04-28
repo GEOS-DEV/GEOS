@@ -20,7 +20,7 @@
 #define GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

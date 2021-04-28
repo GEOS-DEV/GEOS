@@ -19,10 +19,8 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -62,7 +60,7 @@ FluxApproximationBase::getCatalog()
 
 void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
 {
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
     meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
@@ -108,8 +106,8 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {

@@ -22,21 +22,15 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
-#include "constitutive/solid/ElasticIsotropic.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/ProblemManager.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -111,7 +105,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  updateState( getGlobalState().getProblemManager().getDomainPartition() );
+  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
 
@@ -325,23 +319,21 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 
   elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
+
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
     ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
 
     localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
 
-    arrayView1d< integer const > const & ghostRank = cellElementSubRegion.ghostRank();
-
     for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
     {
       localIndex const cellIndex = fracturedElements[ei];
-      if( ghostRank[cellIndex] )
+
+      localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
+      localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
+      if( localRow >= 0 && localRow < rowLengths.size() )
       {
-        localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
-        localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
-        if( localRow < 0 || localRow >= rowLengths.size() )
-          continue;
         for( localIndex i=0; i<3; ++i )
         {
           rowLengths[localRow + i] += numDispDof;
@@ -352,11 +344,13 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
       {
         const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
         localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
-        if( localDispRow < 0 || localDispRow >= rowLengths.size() )
-          continue;
-        for( int d=0; d<3; ++d )
+
+        if( localDispRow >= 0 && localDispRow < rowLengths.size() )
         {
-          rowLengths[localDispRow + d] += 3;
+          for( int d=0; d<3; ++d )
+          {
+            rowLengths[localDispRow + d] += 3;
+          }
         }
       }
     }
@@ -391,6 +385,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 
   elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
+
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
     ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
@@ -448,6 +443,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
     }
 
   } );
+
 }
 
 void SolidMechanicsEmbeddedFractures::applyBoundaryConditions( real64 const time,
@@ -473,7 +469,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                        real64 const dt,
                                                        DomainPartition & domain )
 {
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply( time_n+ dt,
                    domain,
@@ -599,10 +595,10 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 
   updateState( domain );
 }

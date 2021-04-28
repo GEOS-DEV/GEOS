@@ -214,7 +214,7 @@ public:
 
   ///@}
 
-  /// @copydoc geosx::WrapperBase::getHistoryMetadata
+  /// @copydoc WrapperBase::getHistoryMetadata
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
@@ -227,7 +227,7 @@ public:
   ///@{
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::isPackable
+  /// @copydoc WrapperBase::isPackable
   virtual
   bool isPackable( bool onDevice ) const override
   {
@@ -243,7 +243,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::pack
+  /// @copydoc WrapperBase::pack
   virtual
   localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
@@ -268,7 +268,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packByIndex
+  /// @copydoc WrapperBase::packByIndex
   virtual
   localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
@@ -296,7 +296,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packSize
+  /// @copydoc WrapperBase::packSize
   virtual
   localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
@@ -322,7 +322,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packByIndexSize
+  /// @copydoc WrapperBase::packByIndexSize
   virtual
   localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
@@ -351,7 +351,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::unpack
+  /// @copydoc WrapperBase::unpack
   virtual
   localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
@@ -381,7 +381,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::unpackByIndex
+  /// @copydoc WrapperBase::unpackByIndex
   virtual
   localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
@@ -670,7 +670,8 @@ public:
     {
       value_dim = 2;
     }
-    else if( wrapper_type.find( "array" ) != string::npos )
+    else if( ( wrapper_type.find( "array" ) != string::npos ) ||
+             ( wrapper_type.find( "Tensor" ) != string::npos ) )
     {
       value_dim = 1;
     }
@@ -700,11 +701,11 @@ public:
     {
       if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
       {
-        bool const readSuccess = xmlWrapper::readAttributeAsType( reference(),
-                                                                  getName(),
-                                                                  targetNode,
-                                                                  inputFlag == InputFlags::REQUIRED );
-        GEOSX_THROW_IF( !readSuccess,
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     inputFlag == InputFlags::REQUIRED );
+        GEOSX_THROW_IF( !m_successfulReadFromInput,
                         "Input variable " << getName() << " is required in " << targetNode.path() <<
                         ". Available options are: \n" << dumpInputOptions( true ) <<
                         "\nFor more details, please refer to documentation at: \n" <<
@@ -713,7 +714,10 @@ public:
       }
       else
       {
-        xmlWrapper::readAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     getDefaultValueStruct() );
       }
 
       return true;

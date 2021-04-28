@@ -23,7 +23,7 @@
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FaceElementStencil.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -631,9 +631,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
                                                             string const & embeddedSurfaceRegionName ) const
 {
-  EdgeManager const & embSurfEdgeManager = mesh.getEmbdSurfEdgeManager();
+  EdgeManager const & embSurfEdgeManager = mesh.getEmbSurfEdgeManager();
   ElementRegionManager & elemManager = mesh.getElemManager();
-  NodeManager & nodeManager = mesh.getNodeManager();
+  EmbeddedSurfaceNodeManager & nodeManager = mesh.getEmbSurfNodeManager();
 
   // Get the stencils
   FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
@@ -647,7 +647,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
   // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion.getElementArea();
   arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.embSurfNodesPosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
 

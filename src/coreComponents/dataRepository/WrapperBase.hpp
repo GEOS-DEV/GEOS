@@ -21,8 +21,8 @@
 #include "InputFlags.hpp"
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "managers/TimeHistory/HistoryDataSpec.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "HistoryDataSpec.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
@@ -448,6 +448,16 @@ public:
   }
 
   /**
+   * @brief Returns flag that indicates whether the contents of the wrapper
+   *   have been successfully read from the input file.
+   * @return true if the contents of the wrapper have been read from input.
+   */
+  bool getSuccessfulReadFromInput() const
+  {
+    return m_successfulReadFromInput;
+  }
+
+  /**
    * @brief Set the description string of the wrapper.
    * @param description the description
    * @return a pointer to this wrapper
@@ -594,6 +604,9 @@ protected:
 
   /// Flag to store if this wrapped object should be read from input
   InputFlags m_inputFlag;
+
+  /// Flag to indicate if wrapped object was successfully read from input
+  bool m_successfulReadFromInput;
 
   /// A string description of the wrapped object
   string m_description;

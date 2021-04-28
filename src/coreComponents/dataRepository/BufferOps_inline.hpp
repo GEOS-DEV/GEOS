@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
-#define DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#ifndef GEOSX_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#define GEOSX_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -21,7 +21,7 @@
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include <type_traits>
 
@@ -782,6 +782,31 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   }
 
   return sizeOfUnpackedChars;
+}
+
+template< bool DO_PACKING >
+localIndex Pack( buffer_unit_type * & buffer,
+                 SortedArrayView< localIndex const > const & var,
+                 arrayView1d< localIndex const > const & packList,
+                 arraySlice1d< globalIndex const > const & localToGlobal )
+{
+  localIndex length = 0;
+  for( auto a : packList )
+  {
+    length += var.count( a );
+  }
+
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+
+  for( localIndex a=0; a< packList.size(); ++a )
+  {
+    if( var.count( packList[ a ] ) )
+    {
+      sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[packList[a]] );
+    }
+  }
+
+  return sizeOfPackedChars;
 }
 
 template< bool DO_PACKING >

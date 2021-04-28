@@ -23,7 +23,7 @@
 #include "FaceManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -397,7 +397,7 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   } );
 }
 
-void EdgeManager::buildEdges( FaceManager & faceManager, NodeManager & nodeManager )
+void EdgeManager::buildEdges( NodeManager & nodeManager, FaceManager & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
