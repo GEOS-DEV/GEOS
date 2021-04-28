@@ -65,50 +65,11 @@ void NodeManager::resize( localIndex const newSize )
 }
 
 
-void NodeManager::setEdgeMaps( EdgeManager const & edgeManager )
+void NodeManager::setEdgeMaps( CellBlockManager const & cellBlockManager, EdgeManager const & edgeManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList();
-  localIndex const numEdges = edgeToNodeMap.size( 0 );
-  localIndex const numNodes = size();
-
-  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager.maxEdgesPerNode() );
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
-
-  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
-  {
-    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 0 ), edgeID );
-    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 1 ), edgeID );
-    totalNodeEdges += 2;
-  } );
-
-  // Resize the node to edge map.
-  m_toEdgesRelation.resize( 0 );
-
-  // Reserve space for the number of current nodes plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
-  m_toEdgesRelation.reserve( entriesToReserve );
-
-  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeEdges.get() + numNodes * getEdgeMapOverallocation() * ( 1 + 2 * overAllocationFactor );
-  m_toEdgesRelation.reserveValues( valuesToReserve );
-
-  // Append the individual sets.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
-  {
-    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + getEdgeMapOverallocation() );
-  }
-
-  ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation.toView();
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    localIndex * const edges = toEdgesTemp[ nodeID ];
-    localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
-    localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
-    toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges );
-  } );
+  m_toEdgesRelation.base() = cellBlockManager.getNodeToEdges();
 
   m_toEdgesRelation.setRelatedObject( edgeManager );
 }
@@ -184,7 +145,7 @@ void NodeManager::setElementMaps( CellBlockManager const & cellBlockManager, Ele
   // FIXME This could be delayed until all the standard mappings (i.e. not with regions) are properly assigned
   // FIXME Also, only this part requires the elementRegionManager, so this may be split, yes...
   elementRegionManager.forElementSubRegionsComplete< CellElementSubRegion >(
-    [&toElementRegionList, &toElementSubRegionList/*, &toElementList*/]
+    [&toElementRegionList, &toElementSubRegionList]
       ( localIndex const er,
         localIndex const esr,
         ElementRegionBase const &,
@@ -199,7 +160,6 @@ void NodeManager::setElementMaps( CellBlockManager const & cellBlockManager, Ele
           localIndex const nodeIndex = elemToNodeMap( k, a );
           toElementRegionList.emplaceBack( nodeIndex, er );
           toElementSubRegionList.emplaceBack( nodeIndex, esr );
-//          toElementList.emplaceBack( nodeIndex, k );
         }
       }
     } );

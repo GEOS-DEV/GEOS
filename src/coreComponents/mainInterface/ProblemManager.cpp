@@ -521,7 +521,7 @@ void ProblemManager::generateMesh()
       nodeManager.setFaceMaps( cellBlockManager, faceManager );
 
       edgeManager.buildEdges( nodeManager, faceManager, cellBlockManager );
-      nodeManager.setEdgeMaps( edgeManager );
+      nodeManager.setEdgeMaps( cellBlockManager, edgeManager );
 
       domain.generateSets();
 

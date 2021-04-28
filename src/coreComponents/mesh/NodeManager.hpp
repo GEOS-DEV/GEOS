@@ -146,7 +146,7 @@ public:
    * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager
    */
-  void setEdgeMaps( EdgeManager const & edgeManager );
+  void setEdgeMaps( CellBlockManager const & cellBlockManager, EdgeManager const & edgeManager );
 
   /**
    * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.

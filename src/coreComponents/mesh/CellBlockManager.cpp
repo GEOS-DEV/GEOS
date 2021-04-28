@@ -12,10 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file ElementManagerT.cpp
- */
-
 #include "CellBlockManager.hpp"
 #include "NodeManager.hpp"
 
@@ -24,6 +20,8 @@
 namespace geosx
 {
 using namespace dataRepository;
+
+const int maxEdgesPerNode = 200;// TODO deal with this.
 
 CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
@@ -686,7 +684,6 @@ ArrayOfArrays< EdgeBuilder > createEdgesByLowestNode( localIndex numNodes,
 {
   GEOSX_MARK_FUNCTION;
 
-  const int maxEdgesPerNode = 200;// TODO deal with this.
   ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode );
 
 //  localIndex const numNodes = edgesByLowestNode.size();
@@ -807,6 +804,47 @@ localIndex buildEdgeMaps( localIndex numNodes,
   return numEdges;
 }
 
+void CellBlockManager::buildNodeToEdges( localIndex numNodes )
+{
+  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, maxEdgesPerNode );
+  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
+
+  forAll< parallelHostPolicy >( m_numEdges, [&]( localIndex const edgeID )
+  {
+    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 0 ), edgeID );
+    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 1 ), edgeID );
+    totalNodeEdges += 2;
+  } );
+
+  // Resize the node to edge map.
+  m_nodeToEdges.resize( 0 );
+
+  // Reserve space for the number of current nodes plus some extra.
+  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
+  m_nodeToEdges.reserve( entriesToReserve );
+
+  localIndex getEdgeMapOverallocation = 8; // TODO deal with this.
+  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
+  localIndex const valuesToReserve = totalNodeEdges.get() + numNodes * getEdgeMapOverallocation * ( 1 + 2 * overAllocationFactor );
+  m_nodeToEdges.reserveValues( valuesToReserve );
+
+  // Append the individual sets.
+  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  {
+    m_nodeToEdges.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + getEdgeMapOverallocation );
+  }
+
+  ArrayOfSetsView< localIndex > const & toEdgesView = m_nodeToEdges.toView(); // FIXME why a view here?
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
+  {
+    localIndex * const edges = toEdgesTemp[ nodeID ];
+    localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
+    localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
+    toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges );
+  } );
+}
+
 void CellBlockManager::buildMaps( localIndex numNodes )
 {
   buildFaceMaps( numNodes );
@@ -815,6 +853,7 @@ void CellBlockManager::buildMaps( localIndex numNodes )
                               m_faceToEdges,
                               m_edgeToFaces,
                               m_edgeToNodes );
+  buildNodeToEdges( numNodes );
 }
 
 //TODO return views
@@ -922,6 +961,11 @@ array2d< geosx::localIndex > const & CellBlockManager::getEdgeToNodes() const
 ArrayOfArrays< geosx::localIndex > const & CellBlockManager::getFaceToEdges() const
 {
   return m_faceToEdges;
+}
+
+ArrayOfSets< localIndex > CellBlockManager::getNodeToEdges() const
+{
+  return m_nodeToEdges;
 }
 
 localIndex CellBlockManager::numEdges() const

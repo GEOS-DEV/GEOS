@@ -35,7 +35,7 @@ namespace dataRepository
 namespace keys
 {
 /// String for cellBlocks
-string const cellBlocks = "cellBlocks";
+string const cellBlocks = "cellBlocks"; // TODO Hide this.
 }
 }
 
@@ -136,6 +136,8 @@ public:
    */
   ArrayOfSets< localIndex > getNodeToFaces( localIndex numNodes ) const;
 
+  ArrayOfSets< localIndex > getNodeToEdges() const;
+
   ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const;
 
   array2d< geosx::localIndex > const & getEdgeToNodes() const;
@@ -188,6 +190,7 @@ private:
 
   localIndex numCellBlocks() const;
 
+  void buildNodeToEdges( localIndex numNodes );
   void buildFaceMaps( localIndex numNodes );
 
 private:
@@ -195,6 +198,7 @@ private:
   array2d< localIndex >  m_faceToElements;
   ArrayOfSets< localIndex > m_edgeToFaces;
   array2d< localIndex > m_edgeToNodes;
+  ArrayOfSets< localIndex > m_nodeToEdges;
   ArrayOfArrays< localIndex > m_faceToEdges;
   localIndex m_numFaces;
   localIndex m_numEdges;
