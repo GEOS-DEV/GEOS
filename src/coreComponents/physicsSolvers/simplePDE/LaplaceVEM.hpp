@@ -15,7 +15,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_VEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_VEM_HPP_
 
-#include "physicsSolvers/simplePDE/LaplaceBase.hpp"  // a base class shared by all Laplace solvers
+#include "physicsSolvers/simplePDE/LaplaceBaseH1.hpp"  // a base class shared by all Laplace solvers
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
 namespace geosx
@@ -26,7 +26,7 @@ namespace geosx
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
-class LaplaceVEM : public LaplaceBase
+class LaplaceVEM : public LaplaceBaseH1
 {
 public:
   // The default nullary constructor is disabled to avoid compiler auto-generation:

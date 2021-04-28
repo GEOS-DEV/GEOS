@@ -75,7 +75,7 @@ using namespace dataRepository;
 
 LaplaceVEM::LaplaceVEM( const string & name,
                         Group * const parent ):
-  LaplaceBase( name, parent )
+  LaplaceBaseH1( name, parent )
 {}
 
 // Destructor

@@ -13,10 +13,10 @@
  */
 
 /**
- * @file LaplaceBase.cpp
+ * @file LaplaceBaseH1.cpp
  */
 
-#include "LaplaceBase.hpp"
+#include "LaplaceBaseH1.hpp"
 
 #include "dataRepository/InputFlags.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 //START_SPHINX_INCLUDE_CONSTRUCTOR
-LaplaceBase::LaplaceBase( const string & name,
+LaplaceBaseH1::LaplaceBaseH1( const string & name,
                           Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),
@@ -45,7 +45,7 @@ LaplaceBase::LaplaceBase( const string & name,
 }
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
-LaplaceBase::~LaplaceBase()
+LaplaceBaseH1::~LaplaceBaseH1()
 {
   // TODO Auto-generated destructor stub
 }
@@ -67,7 +67,7 @@ LaplaceBase::~LaplaceBase()
    description here is simply an additional metadata for the newly mounted property.
  */
 //START_SPHINX_INCLUDE_REGISTERDATAONMESH
-void LaplaceBase::registerDataOnMesh( Group & meshBodies )
+void LaplaceBaseH1::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
@@ -92,7 +92,7 @@ void LaplaceBase::registerDataOnMesh( Group & meshBodies )
    initially by the user and the solverStep method also returns its value.
  */
 
-real64 LaplaceBase::solverStep( real64 const & time_n,
+real64 LaplaceBaseH1::solverStep( real64 const & time_n,
                                 real64 const & dt,
                                 const int cycleNumber,
                                 DomainPartition & domain )
@@ -106,7 +106,7 @@ real64 LaplaceBase::solverStep( real64 const & time_n,
    It "deactivates" the time variables (with the GEOSX_UNUSED_PARAM macro) and does a steady state
    system set-up.
  */
-void LaplaceBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
                                      DomainPartition & domain )
 {
@@ -114,12 +114,12 @@ void LaplaceBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n )
   setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 }
 
-void LaplaceBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+void LaplaceBaseH1::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
                                         DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void LaplaceBase::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                              DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
@@ -130,7 +130,7 @@ void LaplaceBase::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain 
                           DofManager::Connector::Elem );
 }
 
-void LaplaceBase::applySystemSolution( DofManager const & dofManager,
+void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                        arrayView1d< real64 const > const & localSolution,
                                        real64 const scalingFactor,
                                        DomainPartition & domain )
@@ -155,7 +155,7 @@ void LaplaceBase::applySystemSolution( DofManager const & dofManager,
    Here, this call is the generic call from SolverBase.
    All it does is to call a specific Dirichlet boundary condition implemented for this solver
  */
-void LaplaceBase::applyBoundaryConditions( real64 const time_n,
+void LaplaceBaseH1::applyBoundaryConditions( real64 const time_n,
                                            real64 const dt,
                                            DomainPartition & domain,
                                            DofManager const & dofManager,
@@ -170,7 +170,7 @@ void LaplaceBase::applyBoundaryConditions( real64 const time_n,
    This method is simply initiating the solution and right-hand side
    and pass it to the base class solver.
  */
-void LaplaceBase::solveSystem( DofManager const & dofManager,
+void LaplaceBaseH1::solveSystem( DofManager const & dofManager,
                                ParallelMatrix & matrix,
                                ParallelVector & rhs,
                                ParallelVector & solution )
@@ -180,7 +180,7 @@ void LaplaceBase::solveSystem( DofManager const & dofManager,
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 }
 
-void LaplaceBase::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 } // namespace geosx

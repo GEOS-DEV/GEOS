@@ -25,18 +25,18 @@ namespace geosx
 // The base class is densely Doxygen-commented and worth a look if you have not done so already.
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
-class LaplaceBase : public SolverBase
+class LaplaceBaseH1 : public SolverBase
 {
 public:
   /// The default nullary constructor is disabled to avoid compiler auto-generation:
-  LaplaceBase() = delete;
+  LaplaceBaseH1() = delete;
 
   /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
-  LaplaceBase( const string & name,
+  LaplaceBaseH1( const string & name,
                Group * const parent );
 
   /// Destructor
-  virtual ~LaplaceBase() override;
+  virtual ~LaplaceBaseH1() override;
 
 //START_SPHINX_INCLUDE_REGISTERDATAONMESH
 
@@ -134,10 +134,10 @@ protected:
    In order to register an enumeration type with the Data Repository and have its value read from input,
    we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
    a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
-   at the namespace scope (in this case, right after the ``LaplaceBase`` class definition is complete):
+   at the namespace scope (in this case, right after the ``LaplaceBaseH1`` class definition is complete):
  */
 //START_SPHINX_INCLUDE_REGENUM
-ENUM_STRINGS( LaplaceBase::TimeIntegrationOption, "SteadyState", "ImplicitTransient" )
+ENUM_STRINGS( LaplaceBaseH1::TimeIntegrationOption, "SteadyState", "ImplicitTransient" )
 //END_SPHINX_INCLUDE_REGENUM
 
 } /* namespace geosx */

@@ -15,7 +15,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 
-#include "physicsSolvers/simplePDE/LaplaceBase.hpp"  // a base class shared by all Laplace solvers
+#include "physicsSolvers/simplePDE/LaplaceBaseH1.hpp"  // a base class shared by all Laplace solvers
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
 namespace geosx
@@ -27,7 +27,7 @@ namespace geosx
 // are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
 //START_SPHINX_INCLUDE_BEGINCLASS
-class LaplaceFEM : public LaplaceBase
+class LaplaceFEM : public LaplaceBaseH1
 {
 public:
   /// The default nullary constructor is disabled to avoid compiler auto-generation:
