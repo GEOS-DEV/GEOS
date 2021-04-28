@@ -85,6 +85,10 @@ public:
 
 protected:
   void buildMetaCollectors( );
+  void disableCoordCollection( )
+  {
+    m_disableCoordCollection = true;
+  }
 
   /// @copydoc geosx::HistoryCollection::collect
   virtual void collect( DomainPartition & domain,
@@ -108,6 +112,8 @@ private:
   bool m_setChanged;
   /// Whether to only pack when the collected set(s) change size (mostly used for collecting metadata)
   localIndex m_onlyOnSetChange;
+  /// Whether to create coordinate meta-collectors if collected objects are mesh objects (set to true for coordinate meta-collectors to avoid init recursion)
+  bool m_disableCoordCollection;
 };
 
 }

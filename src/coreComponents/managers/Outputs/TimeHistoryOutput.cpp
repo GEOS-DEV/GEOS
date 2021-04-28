@@ -73,46 +73,51 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   }
   localIndex nonMetaCount = ioCount;
 
+  localIndex metaCollectorCount = collector.getNumMetaCollectors( );
+  DomainPartition & domainGroup = pm.getDomainPartition();
+  for( localIndex metaIdx = 0; metaIdx < metaCollectorCount; ++metaIdx )
+  {
+    HistoryCollection & metaCollector = collector.getMetaCollector( metaIdx );
+    for( localIndex ii = 0; ii < metaCollector.getCollectionCount( ); ++ii )
+    {
+      HistoryMetadata metaMetadata = metaCollector.getMetadata( pm, ii );
+      metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName( ) );
+      m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metaMetadata, m_recordCount ) );
+      metaCollector.registerBufferCall( ii, [this, ii, ioCount, &pm, &metaCollector] () 
+      { 
+        metaCollector.updateSetsIndices( pm.getDomainPartition() );
+        HistoryMetadata metaMetadata = metaCollector.getMetadata( pm, ii );
+        m_io[ ioCount ]->updateCollectingCount( metaMetadata.getDims()[0] );
+        return m_io[ ioCount ]->getBufferHead( ); 
+      } );
+      m_io.back()->init( !freshInit );
+      ++ioCount;
+    }
+
+    // invoke metadata collectors and write data from them during first-time init (not on restart)
+    if ( freshInit )
+    {
+      metaCollector.execute( 0.0, 0.0, 0, 0, 0, domainGroup );
+      for( localIndex ii = nonMetaCount; ii < ioCount; ++ii )
+      {
+        m_io[ii]->write( );
+      }
+    }
+  }
+  
+  // do the time output last so its at the end of the m_io list, since writes are parallel we need
+  //  the rest of the collectors to share position in the list across the world comm
+
   // rank == 0 does time output for the collector
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  if( MpiWrapper::commRank( ) == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetadata( );
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 2, 2, MPI_COMM_SELF ) );
     collector.registerTimeBufferCall( [this]() { return m_io.back()->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
+    ioCount++;
   }
 
-  if( freshInit )
-  {
-    // do any 1-time metadata output
-    localIndex metaCollectorCount = collector.getNumMetaCollectors( );
-    DomainPartition & domainGroup = pm.getDomainPartition();
-    for( localIndex metaIdx = 0; metaIdx < metaCollectorCount; ++metaIdx )
-    {
-      HistoryCollection & metaCollector = collector.getMetaCollector( metaIdx );
-      metaCollector.updateSetsIndices( domainGroup );
-      for( localIndex ii = 0; ii < metaCollector.getCollectionCount( ); ++ii )
-      {
-        HistoryMetadata metaMetadata = metaCollector.getMetadata( pm, ii );
-        metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName( ) );
-        m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metaMetadata, 0, 1 ) );
-        metaCollector.registerBufferCall( ii, [this, ii, ioCount, &pm, &metaCollector] () 
-        { 
-          metaCollector.updateSetsIndices( pm.getDomainPartition() );
-          HistoryMetadata metaMetadata = metaCollector.getMetadata( pm, ii );
-          m_io[ ioCount ]->updateCollectingCount( metaMetadata.getDims()[0] );
-          return m_io[ ioCount ]->getBufferHead( ); 
-        } );
-        m_io.back()->init( false );
-        ++ioCount;
-      }
-      metaCollector.execute( 0.0, 0.0, 0, 0, 0, domainGroup );
-    }
-    for( localIndex ii = nonMetaCount; ii < ioCount; ++ii )
-    {
-      m_io[ii]->write( );
-    }
-  }
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
@@ -150,7 +155,6 @@ bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   localIndex newBuffered = m_io.front()->getBufferedCount( );
   for( auto & th_io : m_io )
   {
-    GEOSX_ERROR_IF( newBuffered != th_io->getBufferedCount( ), "Inconsistent buffered time history count from single collector." );
     th_io->write( );
   }
   m_recordCount += newBuffered;

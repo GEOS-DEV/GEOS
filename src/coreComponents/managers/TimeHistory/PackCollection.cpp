@@ -11,6 +11,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
   , m_setNames( )
   , m_setChanged( false )
   , m_onlyOnSetChange( 0 )
+  , m_disableCoordCollection( false )
 {
   registerWrapper( PackCollection::viewKeysStruct::objectPathString(), &m_objectPath ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -30,20 +31,31 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setDescription( "Whether or not to only collect when the collected sets of indices change in any way." );
 }
 
-void PackCollection::initializePostSubGroups()
+void PackCollection::initializePostSubGroups( )
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  localIndex numSets = m_setNames.size( );
-  m_collectionCount = numSets == 0 ? 1 : numSets;
-  // determine whether we're collecting from a mesh object manager
-  Group const * targetObject = this->getTargetObject( domain, m_objectPath );
-  ObjectManagerBase const * objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
-  m_targetIsMeshObject = objectManagerTarget != nullptr;
-  // update sets after we know whether to filter ghost indices ( m_targetIsMeshObject )
-  updateSetsIndices( domain );
-  HistoryCollection::initializePostSubGroups();
-  // build any persistent meta collectors that are required
-  buildMetaCollectors( );
+  static bool called = false;
+  if( !called )
+  {
+    DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+    localIndex numSets = m_setNames.size( );
+    m_collectionCount = numSets == 0 ? 1 : numSets;
+    // determine whether we're collecting from a mesh object manager
+    Group const * targetObject = this->getTargetObject( domain, m_objectPath );
+    ObjectManagerBase const * objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
+    m_targetIsMeshObject = objectManagerTarget != nullptr;
+    // update sets after we know whether to filter ghost indices ( m_targetIsMeshObject )
+    updateSetsIndices( domain );
+    HistoryCollection::initializePostSubGroups( );
+    // build any persistent meta collectors that are required
+    buildMetaCollectors( );
+    for ( auto & metaCollector : m_metaCollectors )
+    {
+      // coord meta collectors should have m_disableCoordCollection == true to avoid
+      //  infinite recursive init calls here
+      metaCollector->initializePostSubGroups();
+    }
+    called = true;
+  }
 }
 
 HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex collectionIdx )
@@ -90,7 +102,7 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
       {
         SortedArrayView< localIndex const > const & set = setGroup.getReference< SortedArray< localIndex > >( setName );
         oldSetSizes[ setIdx ] = m_setsIndices.size( );
-        m_setsIndices[ setIdx ].resize( 0 );
+        m_setsIndices[ setIdx ].resize( oldSetSizes[ setIdx ] );
         if( set.size() > 0 )
         {
           m_setsIndices[ setIdx ].insert( 0, set.begin(), set.end() );
@@ -144,42 +156,47 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
       }
       m_setsIndices[ setIdx ].insert( 0, ownedIndices.begin( ), ownedIndices.end( ) );
       m_setsIndices[ setIdx ].resize( newSetSize );
-      
     }
   }
 }
 
 localIndex PackCollection::getNumMetaCollectors( ) const
 {
-  return m_targetIsMeshObject ? 1 : 0;
+  return m_targetIsMeshObject && !m_disableCoordCollection ? 1 : 0;
 }
 
 void PackCollection::buildMetaCollectors( )
 {
-  char const * coordField = nullptr;
-  if ( m_objectPath.find( "nodeManager" ) != string::npos )
+  if ( !m_disableCoordCollection )
   {
-    coordField = NodeManager::viewKeyStruct::referencePositionString();
+    char const * coordField = nullptr;
+    if ( m_objectPath.find( "nodeManager" ) != string::npos )
+    {
+      coordField = NodeManager::viewKeyStruct::referencePositionString();
+    }
+    else if ( m_objectPath.find( "edgeManager" ) != string::npos )
+    {
+      GEOSX_ERROR( "Edge coordinate data collection is unimplemented." );
+    }
+    else if ( m_objectPath.find( "faceManager" ) != string::npos )
+    {
+      coordField = FaceManager::viewKeyStruct::faceCenterString();
+    }
+    else if ( m_objectPath.find( "ElementRegions" ) != string::npos)
+    {
+      coordField = ElementSubRegionBase::viewKeyStruct::elementCenterString();
+    }
+    string metaName( "coordinates" );
+    std::unique_ptr< PackCollection > coordCollector = std::make_unique< PackCollection >( metaName, this );
+    coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::objectPathString() ).reference() = m_objectPath;
+    coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::fieldNameString() ).reference() = string(coordField);
+    coordCollector->getWrapper< string_array >( PackCollection::viewKeysStruct::setNamesString() ).reference() = m_setNames;
+    coordCollector->getWrapper< localIndex >( PackCollection::viewKeysStruct::onlyOnSetChangeString() ).reference() = 1;
+    // don't recursively keep creating coordinate metacollectors
+    coordCollector->disableCoordCollection( );
+    m_metaCollectors.push_back( std::move( coordCollector ) );
   }
-  else if ( m_objectPath.find( "edgeManager" ) != string::npos )
-  {
-    GEOSX_ERROR( "Edge coordinate data collection is unimplemented." );
-  }
-  else if ( m_objectPath.find( "faceManager" ) != string::npos )
-  {
-    coordField = FaceManager::viewKeyStruct::faceCenterString();
-  }
-  if ( m_objectPath.find( "ElementRegions" ) != string::npos)
-  {
-    coordField = ElementSubRegionBase::viewKeyStruct::elementCenterString();
-  }
-  string metaName( "coordinates" );
-  m_metaCollectors.emplace_back( std::make_unique< PackCollection >( metaName, this ) );
-  m_metaCollectors.back()->getWrapper< string >( PackCollection::viewKeysStruct::objectPathString() ).reference() = m_objectPath;
-  m_metaCollectors.back()->getWrapper< string >( PackCollection::viewKeysStruct::fieldNameString() ).reference() = string(coordField);
-  m_metaCollectors.back()->getWrapper< string_array >( PackCollection::viewKeysStruct::setNamesString() ).reference() = m_setNames;
-  m_metaCollectors.back()->getWrapper< bool >( PackCollection::viewKeysStruct::onlyOnSetChangeString() ).reference() = true;
-}
+} 
 
 void PackCollection::collect( DomainPartition & domain,
                               real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -192,9 +209,12 @@ void PackCollection::collect( DomainPartition & domain,
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & target = targetObject->getWrapperBase( m_fieldName );
   // if we have any indices to collect, and we're either collecting every time or we're only collecting when the set changes and the set has changed
-  if ( m_setsIndices[ collectionIdx ].size() > 0 && ( ( ( m_onlyOnSetChange != 0 ) && m_setChanged ) || ( m_onlyOnSetChange == 0 )  ) )
+  if ( m_setsIndices[ collectionIdx ].size() > 0 )
   {
-    target.packByIndex( buffer, m_setsIndices[ collectionIdx ], false, true );
+    if( ( (m_onlyOnSetChange != 0) && m_setChanged ) || (m_onlyOnSetChange == 0) )
+    {
+      target.packByIndex( buffer, m_setsIndices[ collectionIdx ], false, true );
+    }
   }
   else // we only hit this when we're packing non-mesh related data
   {
