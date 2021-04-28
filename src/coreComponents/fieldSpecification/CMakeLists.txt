@@ -6,6 +6,7 @@ set(fieldSpecification_headers
     FieldSpecificationManager.hpp
     DirichletBoundaryCondition.hpp
     SourceFluxBoundaryCondition.hpp
+    TractionBoundaryCondition.hpp
    )
 
 
@@ -18,6 +19,7 @@ set(fieldSpecification_sources
     FieldSpecificationManager.cpp
     DirichletBoundaryCondition.cpp
     SourceFluxBoundaryCondition.cpp
+    TractionBoundaryCondition.cpp
    )
 
 

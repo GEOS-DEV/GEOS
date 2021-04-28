@@ -23,11 +23,39 @@
 #include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
+#include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
 #include "simpleGeometricObjects/BoundedPlane.hpp"
 
 namespace geosx
 {
+
+/**
+ * @brief Struct defining an embedded element which has at least on node which is a ghost on this rank
+ * @struct surfaceWithGhostNodes
+ */
+struct surfaceWithGhostNodes
+{
+  /// local index of the surface element
+  localIndex surfaceIndex;
+  /// index of the parent edge of each node
+  std::vector< globalIndex > parentEdgeIndex;
+  ///number of nodes of the element
+  localIndex numOfNodes;
+
+  /**
+   * @brief Constructor
+   */
+  surfaceWithGhostNodes():
+    surfaceIndex(),
+    parentEdgeIndex(),
+    numOfNodes( 0 ){}
+  /**
+   * @brief insert a new node
+   * @param edgeIndex global index of the parent edge
+   */
+  void insert ( globalIndex const & edgeIndex );
+};
 
 /**
  * @class EmbeddedSurfaceSubRegion
@@ -105,6 +133,7 @@ public:
    * @param regionIndex cell element region index
    * @param subRegionIndex cell element subregion index
    * @param nodeManager the nodemanager group
+   * @param embSurfNodeManager the embSurfNodeManager group
    * @param edgeManager the edgemanager group
    * @param cellToEdges cellElement to edges map
    * @param fracture pointer to the bounded plane which is defining the embedded surface element
@@ -113,7 +142,8 @@ public:
   bool addNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
-                              NodeManager & nodeManager,
+                              NodeManager const & nodeManager,
+                              EmbeddedSurfaceNodeManager & embSurfNodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
                               BoundedPlane const * fracture );
@@ -134,6 +164,17 @@ public:
                                    localIndex const k ) const;
 
 
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
+                                     arrayView1d< localIndex const > const & packList ) const override;
+
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
+                                       array1d< localIndex > & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
   ///@}
 
@@ -166,6 +207,9 @@ public:
 
     /// @return Fracture traction derivative w.r.t. jump string
     static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
+
+    /// @return surfaces with ghost nodes list string
+    static constexpr char const * surfaceWithGhostNodesString() { return "surfaceWithGhostNodes"; }
 
     /// Displacement jump key
     dataRepository::ViewKey dispJump        = { dispJumpString() };
@@ -351,9 +395,26 @@ public:
   arrayView3d< real64 const > dTraction_dJump() const
   { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
 
+  /**
+   * @brief accessor to the m_surfaceWithGhostNodes list
+   * @return the list of surfaces with at least one ghost node.
+   */
+  std::vector< struct surfaceWithGhostNodes > surfaceWithGhostNodes() { return m_surfaceWithGhostNodes; }
+
   ///@}
 
 private:
+
+  /**
+   * @brief Pack element-to-node and element-to-face maps
+   * @tparam the flag for the bufferOps::Pack function
+   * @param buffer the buffer used in the bufferOps::Pack function
+   * @param packList the packList used in the bufferOps::Pack function
+   * @return the pack size
+   */
+  template< bool DOPACK >
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                    arrayView1d< localIndex const > const & packList ) const;
 
   /// normal vector to the embedded surface element
   array2d< real64 > m_normalVector;
@@ -369,6 +430,9 @@ private:
 
   /// The CI of the cells
   array1d< real64 > m_connectivityIndex;
+
+  /// Surfaces with ghost nodes
+  std::vector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;
 };
 
 
