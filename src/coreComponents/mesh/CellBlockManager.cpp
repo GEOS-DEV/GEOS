@@ -303,7 +303,7 @@ void insertFaceToNodesEntry( localIndex const faceID,
  * @param [in] firstMatch the index of the first EdgeBuilder that describes this edge in edgesByLowestNode[ firstNodeID ].
  * @param [in] numMatches the number of EdgeBuilders that describe this edge in edgesByLowestNode[ firstNodeID ].
  */
-void addEdge2( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
               ArrayOfArraysView< localIndex > const & faceToEdgeMap,
               ArrayOfSetsView< localIndex > const & edgeToFaceMap,
               arrayView2d< localIndex > const & edgeToNodeMap,
@@ -451,14 +451,14 @@ void populateEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLow
           break;
       }
       // Then add the edge.
-      addEdge2( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, numMatches );
+      addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, numMatches );
       ++curEdgeID;
       j += numMatches;
     }
 
     if( j == numEdges - 1 )
     {
-      addEdge2( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, 1 );
+      addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, 1 );
     }
   } );
 }
