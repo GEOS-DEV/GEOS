@@ -103,8 +103,8 @@ real64 LaplaceBaseH1::solverStep( real64 const & time_n,
 /*
    IMPLICIT STEP SETUP
    This method uses the system setup from SolverBase (see below).
-   It "deactivates" the time variables (with the GEOSX_UNUSED_PARAM macro) and does a steady state
-   system set-up.
+   The current system of this class does not use the time variable. The macro GEOSX_UNUSED_PARAM is
+   therefore used here to avoid a compilation error.
  */
 void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
