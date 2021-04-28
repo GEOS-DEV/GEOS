@@ -29,16 +29,16 @@ using namespace dataRepository;
 
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 LaplaceBaseH1::LaplaceBaseH1( const string & name,
-                          Group * const parent ):
+                              Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),
   m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
 {
-  registerWrapper( laplaceBaseViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
+  this->registerWrapper( viewKeyStruct::timeIntegrationOption(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
-  registerWrapper( laplaceBaseViewKeys.fieldVarName.key(), &m_fieldName ).
+  this->registerWrapper( viewKeyStruct::fieldVarName(), &m_fieldName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of field variable" );
 
@@ -93,9 +93,9 @@ void LaplaceBaseH1::registerDataOnMesh( Group & meshBodies )
  */
 
 real64 LaplaceBaseH1::solverStep( real64 const & time_n,
-                                real64 const & dt,
-                                const int cycleNumber,
-                                DomainPartition & domain )
+                                  real64 const & dt,
+                                  const int cycleNumber,
+                                  DomainPartition & domain )
 {
   return this->linearImplicitStep( time_n, dt, cycleNumber, domain );
 }
@@ -107,20 +107,20 @@ real64 LaplaceBaseH1::solverStep( real64 const & time_n,
    therefore used here to avoid a compilation error.
  */
 void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                     DomainPartition & domain )
+                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                       DomainPartition & domain )
 {
   // Computation of the sparsity pattern
   setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 }
 
 void LaplaceBaseH1::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                          DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-                             DofManager & dofManager ) const
+                               DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
                        DofManager::Location::Node );
@@ -131,9 +131,9 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
 }
 
 void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
-                                       arrayView1d< real64 const > const & localSolution,
-                                       real64 const scalingFactor,
-                                       DomainPartition & domain )
+                                         arrayView1d< real64 const > const & localSolution,
+                                         real64 const scalingFactor,
+                                         DomainPartition & domain )
 {
   dofManager.addVectorToField( localSolution,
                                m_fieldName,
@@ -156,11 +156,11 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
    All it does is to call a specific Dirichlet boundary condition implemented for this solver
  */
 void LaplaceBaseH1::applyBoundaryConditions( real64 const time_n,
-                                           real64 const dt,
-                                           DomainPartition & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs )
+                                             real64 const dt,
+                                             DomainPartition & domain,
+                                             DofManager const & dofManager,
+                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             arrayView1d< real64 > const & localRhs )
 {
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 }
@@ -171,9 +171,9 @@ void LaplaceBaseH1::applyBoundaryConditions( real64 const time_n,
    and pass it to the base class solver.
  */
 void LaplaceBaseH1::solveSystem( DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs,
-                               ParallelVector & solution )
+                                 ParallelMatrix & matrix,
+                                 ParallelVector & rhs,
+                                 ParallelVector & solution )
 {
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();

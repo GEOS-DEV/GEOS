@@ -33,7 +33,7 @@ public:
 
   /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
   LaplaceBaseH1( const string & name,
-               Group * const parent );
+                 Group * const parent );
 
   /// Destructor
   virtual ~LaplaceBaseH1() override;
@@ -113,9 +113,9 @@ public:
   //START_SPHINX_INCLUDE_VIEWKEY
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
-  } laplaceBaseViewKeys;
+    static constexpr char const * timeIntegrationOption() { return "timeIntegrationOption"; }
+    static constexpr char const * fieldVarName() { return "fieldName"; }
+  };
   //END_SPHINX_INCLUDE_VIEWKEY
 
 protected:

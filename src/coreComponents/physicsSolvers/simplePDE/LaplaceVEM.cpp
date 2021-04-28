@@ -158,8 +158,9 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
   arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
   arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
+  string const dofKey = dofManager.getKey( m_fieldName );
   arrayView1d< globalIndex const > const & dofIndex =
-    nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
   real64 const diffusion = 1.0;
   globalIndex const rankOffset = dofManager.rankOffset();

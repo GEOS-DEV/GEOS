@@ -100,8 +100,9 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager const & nodeManager = mesh.getNodeManager();
+  string const dofKey = dofManager.getKey( m_fieldName );
   arrayView1d< globalIndex const > const &
-  dofIndex = nodeManager.getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
+  dofIndex = nodeManager.getReference< globalIndex_array >( dofKey );
 
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
                                                   dofManager.numGlobalDofs(),
@@ -148,9 +149,9 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager & nodeManager = mesh.getNodeManager();
-
+  string const dofKey = dofManager.getKey( m_fieldName );
   arrayView1d< globalIndex const > const &
-  dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+  dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
 
   finiteElement::
