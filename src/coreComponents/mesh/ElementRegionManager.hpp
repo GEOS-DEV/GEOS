@@ -151,12 +151,6 @@ public:
   void generateMesh( CellBlockManager & cellBlockManager );
 
   /**
-   * @brief Generate the cell-to-edge map
-   * @param [in] faceManager pointer to the FaceManager
-   */
-  void generateCellToEdgeMaps( FaceManager const & faceManager );
-
-  /**
    * @brief Generate the wells.
    * @param [in] meshManager pointer to meshManager
    * @param [in] meshLevel pointer to meshLevel

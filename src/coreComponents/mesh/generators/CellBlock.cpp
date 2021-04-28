@@ -60,6 +60,7 @@ void CellBlock::setElementType( string const & elementType )
   }
 
   m_toNodesRelation.resize( 0, m_numNodesPerElement );
+  m_toEdgesRelation.resize( 0, m_numEdgesPerElement );
   m_toFacesRelation.resize( 0, m_numFacesPerElement );
 }
 
@@ -71,6 +72,7 @@ void CellBlock::resize( dataRepository::indexType const newSize )
   // to be exposed though the `Group` public interface.
   m_localToGlobalMap.resize( newSize );
   m_toNodesRelation.resize( newSize );
+  m_toEdgesRelation.resize( newSize );
   m_toFacesRelation.resize( newSize );
 }
 
@@ -264,11 +266,26 @@ std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
   return {};
 }
 
-void CellBlock::setElementToFaces( localIndex iFace,
-                                   localIndex j,
-                                   localIndex curFaceID )
+void CellBlock::setElementToFaces( localIndex iElement,
+                                   localIndex iFace,
+                                   localIndex faceIndex )
 {
-  m_toFacesRelation( iFace, j ) = curFaceID;
+  m_toFacesRelation( iElement, iFace ) = faceIndex;
 }
+
+void CellBlock::setElementToEdges( localIndex iElement,
+                                   localIndex iEdge,
+                                   localIndex edgeIndex )
+{
+  m_toEdgesRelation( iElement, iEdge ) = edgeIndex;
+}
+
+bool CellBlock::hasElementToEdges( localIndex iElement,
+                                   localIndex iEdge,
+                                   localIndex edgeIndex ) const
+{
+  return m_toEdgesRelation( iElement, iEdge ) == edgeIndex;
+}
+
 
 }

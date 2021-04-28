@@ -535,8 +535,6 @@ void ProblemManager::generateMesh()
 
       elemManager.setMaxGlobalIndex();
 
-      elemManager.generateCellToEdgeMaps( faceManager );
-
       elemManager.generateWells( meshManager, meshLevel );
     }
   }

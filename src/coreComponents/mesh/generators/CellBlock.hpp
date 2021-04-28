@@ -100,13 +100,43 @@ public:
 
   NodeMapType const & getElemToNode() const override { return m_toNodesRelation; }
 
+  array2d< localIndex > const & getElemToEdges() const override { return m_toEdgesRelation; }
+
   array2d< localIndex > const & getElemToFaces() const override { return m_toFacesRelation; }
 
-  void setElementToFaces( localIndex iFace, localIndex j, localIndex curFaceID );
+  /**
+   * @brief Sets an entry in the element to faces mapping.
+   * @param iElement Index of the element
+   * @param iFace Index of the face of the element @p iElement (typically from 0 to 5 for an hexahedron).
+   * @param faceIndex The face index.
+   */
+  void setElementToFaces( localIndex iElement, localIndex iFace, localIndex faceIndex );
+
+  /**
+   * @brief Sets an entry in the element to edges mapping.
+   * @param iElement Index of the element
+   * @param iEdge Index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
+   * @param edgeIndex The edge index.
+   *
+   * In the element to edges mapping, element @p iElement has a given number of edges (typically 12 for a hexahedron).
+   * Then edge @p iEdge of this local indexing (typically 0 to 11) is meant to have global indexing of @p edgeIndex.
+   */
+  void setElementToEdges( localIndex iElement, localIndex iEdge, localIndex edgeIndex );
+
+  /**
+   * @brief Checks if edge @p iEdge of element @p iElement has been defined.
+   * @param iElement Index of the element
+   * @param iEdge Index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
+   * @param edgeIndex The edge index.
+   * @return True if the entry is already there in the mapping. False otherwise.
+   */
+  bool hasElementToEdges( localIndex iElement, localIndex iEdge, localIndex edgeIndex ) const;
 
   /**
    * @brief Get local to global map, non-const version.
    * @return The mapping relationship as a array.
+   *
+   * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute... Use a real setter instead.
    */
   arrayView1d< globalIndex > localToGlobalMap()
   { return m_localToGlobalMap; }
@@ -114,6 +144,7 @@ public:
   arrayView1d< globalIndex const > localToGlobalMap() const override
   { return m_localToGlobalMap; }
 
+  // FIXME What is this newSize.
   void resize( dataRepository::indexType const newSize ) final;
 
   ///@}
@@ -151,6 +182,9 @@ private:
 
   /// Element-to-node relation
   NodeMapType m_toNodesRelation;
+
+  /// Element-to-edges relation
+  array2d< localIndex > m_toEdgesRelation;
 
   /// Element-to-node relation
   array2d< localIndex > m_toFacesRelation;

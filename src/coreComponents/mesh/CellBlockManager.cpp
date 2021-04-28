@@ -757,6 +757,59 @@ void fillElementToFacesOfCellBlocks( ArrayOfArrays< NodesAndElementOfFace > cons
   }
 }
 
+/**
+ * @brief Fills the element to edges mappings of all the cells provided through @p cellBlocks.
+ * @param faceToEdges We need the face to edges mapping to get some edge index.
+ * @param cellBlocks The cell blocks for which the mappings will be constructed.
+ */
+void fillElementToEdgesOfCellBlocks( ArrayOfArrays< localIndex > const & faceToEdges,
+                                     Group & cellBlocks )
+{
+  for( localIndex iCellBlock = 0; iCellBlock < cellBlocks.numSubGroups(); ++iCellBlock )
+  {
+    CellBlock & cellBlock = cellBlocks.getGroup< CellBlock >( iCellBlock );
+    array2d< localIndex > const & cellToFaces = cellBlock.getElemToFaces();
+
+    // We build the edges of each face of each cell,
+    // so we can construct the cell to edges mapping.
+    // Some specific care is required not to insert edges twice (faces share edges).
+    // Another implementation (used in other contexts) would use some edge signature
+    // to remove the duplicates.
+
+    // Loop over the cells
+    for( localIndex kc = 0; kc < cellBlock.size(); kc++ )
+    {
+      int count = 0;
+      for( localIndex kf = 0; kf < cellBlock.numFacesPerElement(); kf++ )
+      {
+        // Loop over edges of each face
+        localIndex faceIndex = cellToFaces[kc][kf];
+        for( localIndex ke = 0; ke < faceToEdges.sizeOfArray( faceIndex ); ke++ )
+        {
+          bool isUnique = true;
+          localIndex edgeIndex = faceToEdges[faceIndex][ke];
+
+          // Loop over edges that have already been added to the element.
+          for( localIndex kec = 0; kec < count + 1; kec++ )
+          {
+            // make sure that the edge has not been counted yet
+            if( cellBlock.hasElementToEdges( kc, kec, edgeIndex ) )
+            {
+              isUnique = false;
+              break;
+            }
+          }
+          if( isUnique )
+          {
+            cellBlock.setElementToEdges( kc, count, edgeIndex );
+            count++;
+          }
+        } // end edge loop
+      } // end face loop
+    } // end cell loop
+  }
+}
+
 void CellBlockManager::buildFaceMaps( localIndex numNodes )
 {
   const ArrayOfArrays< NodesAndElementOfFace > lowestNodeToFaces = createLowestNodeToFaces( numNodes, this->getCellBlocks() );
@@ -854,6 +907,8 @@ void CellBlockManager::buildMaps( localIndex numNodes )
                               m_edgeToFaces,
                               m_edgeToNodes );
   buildNodeToEdges( numNodes );
+
+  fillElementToEdgesOfCellBlocks( m_faceToEdges, this->getCellBlocks() );
 }
 
 //TODO return views
