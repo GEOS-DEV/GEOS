@@ -17,17 +17,17 @@
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/initialization.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowUpwindHelperKernels.hpp"
-#include "testCompFlowUtils.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
-#include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
+#include "unitTests/fluidFlowTests/testFlowKernelHelpers.hpp"
 // TPL includes
 #include <gtest/gtest.h>
 
@@ -195,6 +195,139 @@ char const * xmlInput =
   "  </Functions>"
   "</Problem>";
 
+
+// Useful macro
+#ifndef DEFINE_CAPB_FIELDS
+#define DEFINE_CAP_FIELDS(active) \
+int const capPressureFlag = active; \
+auto phaseCapPressureView = getElementAccessor< true, 3, real64 >( &cap, \
+                                                                   CapillaryPressureBase::viewKeyStruct::phaseCapPressureString(), \
+                                                                   MAX_STENCIL, \
+                                                                   seri[iconn], \
+                                                                   sesri[iconn], \
+                                                                   sei[iconn], \
+                                                                   1, \
+                                                                   NP ); \
+auto dPhaseCapPressure_dPhaseVolFracView = getElementAccessor< true, 4, real64 >( &cap, \
+                                                                                  CapillaryPressureBase::viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(), \
+                                                                                  MAX_STENCIL, \
+                                                                                  seri[iconn], \
+                                                                                  sesri[iconn], \
+                                                                                  sei[iconn], \
+                                                                                  1, \
+                                                                                  NP, \
+                                                                                  NP );
+#endif
+
+
+#ifndef DEFINE_FLUID_FIELDS
+#define DEFINE_FLUID_FIELDS() \
+auto phaseMassDensView = getElementAccessor< true, 3, real64 >( &fluid, \
+                                                                MultiFluidBase::viewKeyStruct::phaseMassDensityString(), \
+                                                                MAX_STENCIL, \
+                                                                seri[iconn], \
+                                                                sesri[iconn], \
+                                                                sei[iconn], 1, \
+                                                                NP ); \
+auto dPhaseMassDens_dPView = getElementAccessor< true, 3, real64 >( &fluid, \
+                                                                    MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dPressureString(), \
+                                                                    MAX_STENCIL, \
+                                                                    seri[iconn], \
+                                                                    sesri[iconn], \
+                                                                    sei[iconn], \
+                                                                    1, \
+                                                                    NP ); \
+auto dPhaseMassDens_dCView = getElementAccessor< true, 4, real64 >( &fluid, \
+                                                                    MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dGlobalCompFractionString(), \
+                                                                    MAX_STENCIL, \
+                                                                    seri[iconn], \
+                                                                    sesri[iconn], \
+                                                                    sei[iconn], \
+                                                                    1, NP, \
+                                                                    NC );
+#endif
+
+#ifndef DEFINE_SUBR_FIELDS
+#define DEFINE_SUBR_FIELDS(A) \
+auto presView = getElementAccessor< true, 1, real64 >( &subRegion, \
+                                                       CompositionalMultiphaseFVM::viewKeyStruct::pressureString(), \
+                                                       MAX_STENCIL, \
+                                                       seri[iconn], \
+                                                       sesri[iconn], \
+                                                       sei[iconn] ); \
+auto dPresView = getElementAccessor< true, 1, real64 >( &subRegion, \
+                                                        CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString(), \
+                                                        MAX_STENCIL, \
+                                                        seri[iconn], \
+                                                        sesri[iconn], \
+                                                        sei[iconn] ); \
+Array< Array< Array< double, 1 >, 1 >, 1 > gravCoefView; \
+if( A ) \
+{ \
+  gravCoefView = getElementAccessor< true, 1, real64 >( &subRegion, \
+  CompositionalMultiphaseFVM::viewKeyStruct::gravityCoefString(), \
+  MAX_STENCIL, \
+  seri[iconn], \
+  sesri[iconn], \
+  sei[iconn] ); \
+} \
+else \
+{ \
+  real64 const temp[1] = {0.0} ; \
+  gravCoefView = AccessorHelper< true >::template makeElementAccessor< 1 >( &(temp[0]), \
+  MAX_STENCIL, \
+  seri[iconn], \
+  sesri[iconn], \
+  sei[iconn] ); \
+} \
+auto phaseMobView = getElementAccessor< true, 2, real64 >( &subRegion, \
+                                                           CompositionalMultiphaseFVM::viewKeyStruct::phaseMobilityString(), \
+                                                           MAX_STENCIL, \
+                                                           seri[iconn], \
+                                                           sesri[iconn], \
+                                                           sei[iconn], NP ); \
+auto dPhaseMob_dPView = getElementAccessor< true, 2, real64 >( &subRegion, \
+                                                               CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dPressureString(), \
+                                                               MAX_STENCIL, \
+                                                               seri[iconn], \
+                                                               sesri[iconn], \
+                                                               sei[iconn], \
+                                                               NP ); \
+auto dPhaseMob_dCView = getElementAccessor< true, 3, real64 >( &subRegion, \
+                                                               CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString(), \
+                                                               MAX_STENCIL, \
+                                                               seri[iconn], \
+                                                               sesri[iconn], \
+                                                               sei[iconn], NP, \
+                                                               NC ); \
+auto \
+  dCompFrac_dCompDensView = getElementAccessor< true, 3, real64 >( &subRegion, \
+                                                                   CompositionalMultiphaseFVM::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(), \
+                                                                   MAX_STENCIL, \
+                                                                   seri[iconn], \
+                                                                   sesri[iconn], \
+                                                                   sei[iconn], \
+                                                                   NC, \
+                                                                   NC ); \
+auto dPhaseVolFrac_dPView = getElementAccessor< true, 2, real64 >( &subRegion, \
+                                                                   CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dPressureString(), \
+                                                                   MAX_STENCIL, \
+                                                                   seri[iconn], \
+                                                                   sesri[iconn], \
+                                                                   sei[iconn], \
+                                                                   NP ); \
+auto dPhaseVolFrac_dCView = getElementAccessor< true, 3, real64 >( &subRegion, \
+                                                                   CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(), \
+                                                                   MAX_STENCIL, \
+                                                                   seri[iconn], \
+                                                                   sesri[iconn], \
+                                                                   sei[iconn], \
+                                                                   NP, \
+                                                                   NC );
+#endif
+
+
+
 //// Sphinx end before input XML
 
 template< bool FULL, localIndex N, typename T, typename ... DIMS >
@@ -215,6 +348,10 @@ auto getElementAccessor( Group const * const group,
   else if( MultiFluidBase const * const fluid = dynamicCast< MultiFluidBase const * const >( group ) )
   {
     data = fluid->getReference< Array< T, N > >( key );
+  }
+  else if( CapillaryPressureBase const * const cap = dynamicCast< CapillaryPressureBase const * const >( group ) )
+  {
+    data = cap->getReference< Array< T, N > >( key );
   }
 
   data.move( LvArray::MemorySpace::CPU, false );
@@ -240,9 +377,11 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
     SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
+    string const & capName = solver.capPresModelNames()[targetIndex];
     string const & discretizationName = solver.getDiscretization();
 
     MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+    CapillaryPressureBase & cap = subRegion.getConstitutiveModel< CapillaryPressureBase >( capName );
 
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
@@ -262,121 +401,11 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
       for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
       {
-        auto presView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                               CompositionalMultiphaseFVM::viewKeyStruct::pressureString(),
-                                                               MAX_STENCIL,
-                                                               seri[iconn],
-                                                               sesri[iconn],
-                                                               sei[iconn] );
-
-        auto dPresView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                                CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString(),
-                                                                MAX_STENCIL,
-                                                                seri[iconn],
-                                                                sesri[iconn],
-                                                                sei[iconn] );
-
-        auto gravCoefView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                                   CompositionalMultiphaseFVM::viewKeyStruct::gravityCoefString(),
-                                                                   MAX_STENCIL,
-                                                                   seri[iconn],
-                                                                   sesri[iconn],
-                                                                   sei[iconn] );
-
-        auto phaseMobView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                   CompositionalMultiphaseFVM::viewKeyStruct::phaseMobilityString(),
-                                                                   MAX_STENCIL,
-                                                                   seri[iconn],
-                                                                   sesri[iconn],
-                                                                   sei[iconn], NP );
-
-        auto dPhaseMob_dPView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                       CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dPressureString(),
-                                                                       MAX_STENCIL,
-                                                                       seri[iconn],
-                                                                       sesri[iconn],
-                                                                       sei[iconn],
-                                                                       NP );
-
-        auto dPhaseMob_dCView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                       CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString(),
-                                                                       MAX_STENCIL,
-                                                                       seri[iconn],
-                                                                       sesri[iconn],
-                                                                       sei[iconn], NP,
-                                                                       NC );
-
-        auto
-        dCompFrac_dCompDensView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                         CompositionalMultiphaseFVM::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(),
-                                                                         MAX_STENCIL,
-                                                                         seri[iconn],
-                                                                         sesri[iconn],
-                                                                         sei[iconn],
-                                                                         NC,
-                                                                         NC );
-
-        auto dPhaseVolFrac_dPView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                           CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dPressureString(),
-                                                                           MAX_STENCIL,
-                                                                           seri[iconn],
-                                                                           sesri[iconn],
-                                                                           sei[iconn],
-                                                                           NP );
-
-        auto dPhaseVolFrac_dCView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                           CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(),
-                                                                           MAX_STENCIL,
-                                                                           seri[iconn],
-                                                                           sesri[iconn],
-                                                                           sei[iconn],
-                                                                           NP,
-                                                                           NC );
-
-        //do not include cap pressure
-        int const capPressureFlag = 0;                                  //solver.capPresModelNames().size();
-        Array< Array< Array< double, 3 >, 1 >, 1 > phaseCapPressureView;
-        Array< Array< Array< double, 4 >, 1 >, 1 >
-        dPhaseCapPressure_dPhaseVolFracView;
-
-//      if(capPressureFlag)
-//      {
-//         auto phaseCapPressureView = getElementAccessor< true, 3, real64 >( subRegion,
-//                                                                           CapillaryPressureBase::viewKeyStruct::phaseCapPressureString(),
-//                                                                           MAX_STENCIL, seri[0], sesri[0], sei[0], 0,
-//                                                                           NP );
-//
-//         auto dPhaseCapPressure_dPhaseVolFracView = getElementAccessor< true, 4, real64 >( subRegion,
-//                                                                                          CapillaryPressureBase::viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(),
-//                                                                                          MAX_STENCIL, seri[0],
-//                                                                                          sesri[0], sei[0], 0, NP, NP );
-//      }
+        DEFINE_SUBR_FIELDS(1)
+        //include cap pressure
+        DEFINE_CAP_FIELDS(1);
         // -- fluid fetched fields
-        auto phaseMassDensView = getElementAccessor< true, 3, real64 >( &fluid,
-                                                                        MultiFluidBase::viewKeyStruct::phaseMassDensityString(),
-                                                                        MAX_STENCIL,
-                                                                        seri[iconn],
-                                                                        sesri[iconn],
-                                                                        sei[iconn], 1,
-                                                                        NP );
-
-        auto dPhaseMassDens_dPView = getElementAccessor< true, 3, real64 >( &fluid,
-                                                                            MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dPressureString(),
-                                                                            MAX_STENCIL,
-                                                                            seri[iconn],
-                                                                            sesri[iconn],
-                                                                            sei[iconn],
-                                                                            1,
-                                                                            NP );
-
-        auto dPhaseMassDens_dCView = getElementAccessor< true, 4, real64 >( &fluid,
-                                                                            MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dGlobalCompFractionString(),
-                                                                            MAX_STENCIL,
-                                                                            seri[iconn],
-                                                                            sesri[iconn],
-                                                                            sei[iconn],
-                                                                            1, NP,
-                                                                            NC );
+        DEFINE_FLUID_FIELDS()
 
         real64 totFlux = 0;
 
@@ -389,6 +418,10 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
         real64 dGravHead_dP[NP][NUM_ELEMS]{};
         real64 dGravHead_dC[NP][NUM_ELEMS][NC]{};
         real64 dProp_dC[NP][NC]{};
+
+        real64 capHead[NP]{};
+        real64 dCapHead_dP[NP][MAX_STENCIL]{};
+        real64 dCapHead_dC[NP][MAX_STENCIL][NC]{};
 
         for( localIndex ip = 0; ip < NP; ++ip )
         {
@@ -440,6 +473,22 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
                                   dProp_dC[ip] );
 
 
+          UHelpers::formCapHead(  NP,
+                                  ip,
+                                  MAX_STENCIL,
+                                  seri[iconn],
+                                  sesri[iconn],
+                                  sei[iconn],
+                                  weights[iconn],
+                                  dPhaseVolFrac_dPView.toNestedViewConst(),
+                                  dPhaseVolFrac_dCView.toNestedViewConst(),
+                                  phaseCapPressureView.toNestedViewConst(),
+                                  dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                  capHead[ip],
+                                  dCapHead_dP[ip],
+                                  dCapHead_dC[ip] );
+
+
         }                                  //standar loop
 
         localIndex k_up_scheme[NP]{};
@@ -470,6 +519,11 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
                                                                                                           phaseMobView.toNestedViewConst(),
                                                                                                           dPhaseMob_dPView.toNestedViewConst(),
                                                                                                           dPhaseMob_dCView.toNestedViewConst(),
+                                                                                                          dPhaseVolFrac_dPView.toNestedViewConst(),
+                                                                                                          dPhaseVolFrac_dCView.toNestedViewConst(),
+                                                                                                          phaseCapPressureView.toNestedViewConst(),
+                                                                                                          dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                                                                                          capPressureFlag,
                                                                                                           k_up_scheme[ip],
                                                                                                           fflow[ip],
                                                                                                           dFflow_dP[ip],
@@ -490,14 +544,16 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
             {
               phaseFluxScheme -=
                 fflow[ip] * phaseMobView[seri[iconn][0]][sesri[iconn][0]][sei[iconn][k_up_scheme[jp]]][jp]
-                * ( gravHead[ip] - gravHead[jp] );
+                * ( (gravHead[ip] + capHead[ip] ) - (gravHead[jp] + capHead[jp]) );
 
             }
           }
 
-          EXPECT_DOUBLE_EQ( phaseFlux[ip], phaseFluxScheme );
+           real64 const relTol = 1e-12;
+           real64 const absTol = 1e-18;
+          checkRelativeError( phaseFlux[ip], phaseFluxScheme, relTol, absTol );
 
-        }                                  //compare flux construction
+        }//compare flux construction
 
 
       }//inner most loop on connexion
@@ -520,9 +576,10 @@ void testCompositionalUpwindHUPUViscous( CompositionalMultiphaseFVM & solver,
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     string const & discretizationName = solver.getDiscretization();
+    string const & capName = solver.capPresModelNames()[targetIndex];
 
     MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-
+    CapillaryPressureBase & cap = subRegion.getConstitutiveModel< CapillaryPressureBase >( capName );
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
 
@@ -541,122 +598,11 @@ void testCompositionalUpwindHUPUViscous( CompositionalMultiphaseFVM & solver,
       for( auto iconn = 0; iconn < stencil.size(); ++iconn )
       {
 
-        auto presView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                               CompositionalMultiphaseFVM::viewKeyStruct::pressureString(),
-                                                               MAX_STENCIL,
-                                                               seri[iconn],
-                                                               sesri[iconn],
-                                                               sei[iconn] );
-
-        auto dPresView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                                CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString(),
-                                                                MAX_STENCIL,
-                                                                seri[iconn],
-                                                                sesri[iconn],
-                                                                sei[iconn] );
-
-        auto gravCoefView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                                   CompositionalMultiphaseFVM::viewKeyStruct::gravityCoefString(),
-                                                                   MAX_STENCIL,
-                                                                   seri[iconn],
-                                                                   sesri[iconn],
-                                                                   sei[iconn] );
-
-        auto phaseMobView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                   CompositionalMultiphaseFVM::viewKeyStruct::phaseMobilityString(),
-                                                                   MAX_STENCIL,
-                                                                   seri[iconn],
-                                                                   sesri[iconn],
-                                                                   sei[iconn], NP );
-
-        auto dPhaseMob_dPView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                       CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dPressureString(),
-                                                                       MAX_STENCIL,
-                                                                       seri[iconn],
-                                                                       sesri[iconn],
-                                                                       sei[iconn],
-                                                                       NP );
-
-        auto dPhaseMob_dCView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                       CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString(),
-                                                                       MAX_STENCIL,
-                                                                       seri[iconn],
-                                                                       sesri[iconn],
-                                                                       sei[iconn], NP,
-                                                                       NC );
-
-        auto
-        dCompFrac_dCompDensView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                         CompositionalMultiphaseFVM::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(),
-                                                                         MAX_STENCIL,
-                                                                         seri[iconn],
-                                                                         sesri[iconn],
-                                                                         sei[iconn],
-                                                                         NC,
-                                                                         NC );
-
-        auto dPhaseVolFrac_dPView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                           CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dPressureString(),
-                                                                           MAX_STENCIL,
-                                                                           seri[iconn],
-                                                                           sesri[iconn],
-                                                                           sei[iconn],
-                                                                           NP );
-
-        auto dPhaseVolFrac_dCView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                           CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(),
-                                                                           MAX_STENCIL,
-                                                                           seri[iconn],
-                                                                           sesri[iconn],
-                                                                           sei[iconn],
-                                                                           NP,
-                                                                           NC );
-
+        DEFINE_SUBR_FIELDS(0)
         //do not include cap pressure
-        int const capPressureFlag = 0;                                  //solver.capPresModelNames().size();
-        Array< Array< Array< double, 3 >, 1 >, 1 > phaseCapPressureView;
-        Array< Array< Array< double, 4 >, 1 >, 1 > dPhaseCapPressure_dPhaseVolFracView;
-
-//      if(capPressureFlag)
-//      {
-//         auto phaseCapPressureView = getElementAccessor< true, 3, real64 >( subRegion,
-//                                                                           CapillaryPressureBase::viewKeyStruct::phaseCapPressureString(),
-//                                                                           MAX_STENCIL, seri[0], sesri[0], sei[0], 0,
-//                                                                           NP );
-//
-//         auto dPhaseCapPressure_dPhaseVolFracView = getElementAccessor< true, 4, real64 >( subRegion,
-//                                                                                          CapillaryPressureBase::viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(),
-//                                                                                          MAX_STENCIL, seri[0],
-//                                                                                          sesri[0], sei[0], 0, NP, NP );
-//      }
-
+        DEFINE_CAP_FIELDS(0);
+        DEFINE_FLUID_FIELDS()
         // -- fluid fetched fields
-        auto phaseMassDensView = getElementAccessor< true, 3, real64 >( &fluid,
-                                                                        MultiFluidBase::viewKeyStruct::phaseMassDensityString(),
-                                                                        MAX_STENCIL,
-                                                                        seri[iconn],
-                                                                        sesri[iconn],
-                                                                        sei[iconn], 1,
-                                                                        NP );
-
-        auto dPhaseMassDens_dPView = getElementAccessor< true, 3, real64 >( &fluid,
-                                                                            MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dPressureString(),
-                                                                            MAX_STENCIL,
-                                                                            seri[iconn],
-                                                                            sesri[iconn],
-                                                                            sei[iconn],
-                                                                            1,
-                                                                            NP );
-
-        auto dPhaseMassDens_dCView = getElementAccessor< true, 4, real64 >( &fluid,
-                                                                            MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dGlobalCompFractionString(),
-                                                                            MAX_STENCIL,
-                                                                            seri[iconn],
-                                                                            sesri[iconn],
-                                                                            sei[iconn],
-                                                                            1, NP,
-                                                                            NC );
-
         real64 totFlux = 0;
 
         localIndex k_up{};
@@ -700,7 +646,7 @@ void testCompositionalUpwindHUPUViscous( CompositionalMultiphaseFVM & solver,
 
         localIndex k_up_hu{};
         localIndex k_up_pu{};
-        real64 fflow[2]{};
+        real64 fflow[2]{};//as 2 schemes compared
         real64 dFflow_dP[2][MAX_STENCIL]{};
         real64 dFflow_dC[2][MAX_STENCIL][NC]{};
 
@@ -709,52 +655,62 @@ void testCompositionalUpwindHUPUViscous( CompositionalMultiphaseFVM & solver,
           UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
                                   term::Viscous,
                                   HybridUpwind >( NP,
-                                                  ip,
-                                                  MAX_STENCIL,
-                                                  seri[iconn],
-                                                  sesri[iconn],
-                                                  sei[iconn],
-                                                  weights[iconn],
-                                                  totFlux,
-                                                  presView.toNestedViewConst(),
-                                                  dPresView.toNestedViewConst(),
-                                                  gravCoefView.toNestedViewConst(),
-                                                  dCompFrac_dCompDensView.toNestedViewConst(),
-                                                  phaseMassDensView.toNestedViewConst(),
-                                                  dPhaseMassDens_dPView.toNestedViewConst(),
-                                                  dPhaseMassDens_dCView.toNestedViewConst(),
-                                                  phaseMobView.toNestedViewConst(),
-                                                  dPhaseMob_dPView.toNestedViewConst(),
-                                                  dPhaseMob_dCView.toNestedViewConst(),
-                                                  k_up_hu,
-                                                  fflow[0],
-                                                  dFflow_dP[0],
-                                                  dFflow_dC[0] );
+                                    ip,
+                                    MAX_STENCIL,
+                                    seri[iconn],
+                                    sesri[iconn],
+                                    sei[iconn],
+                                    weights[iconn],
+                                    totFlux,
+                                    presView.toNestedViewConst(),
+                                    dPresView.toNestedViewConst(),
+                                    gravCoefView.toNestedViewConst(),
+                                    dCompFrac_dCompDensView.toNestedViewConst(),
+                                    phaseMassDensView.toNestedViewConst(),
+                                    dPhaseMassDens_dPView.toNestedViewConst(),
+                                    dPhaseMassDens_dCView.toNestedViewConst(),
+                                    phaseMobView.toNestedViewConst(),
+                                    dPhaseMob_dPView.toNestedViewConst(),
+                                    dPhaseMob_dCView.toNestedViewConst(),
+                                    dPhaseVolFrac_dPView.toNestedViewConst(),
+                                    dPhaseVolFrac_dCView.toNestedViewConst(),
+                                    phaseCapPressureView.toNestedViewConst(),
+                                    dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                    capPressureFlag,
+                                    k_up_hu,
+                                    fflow[0],
+                                    dFflow_dP[0],
+                                    dFflow_dC[0] );
 
           UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
                                   term::Viscous,
                                   PhaseUpwind >( NP,
-                                                 ip,
-                                                 MAX_STENCIL,
-                                                 seri[iconn],
-                                                 sesri[iconn],
-                                                 sei[iconn],
-                                                 weights[iconn],
-                                                 totFlux,
-                                                 presView.toNestedViewConst(),
-                                                 dPresView.toNestedViewConst(),
-                                                 gravCoefView.toNestedViewConst(),
-                                                 dCompFrac_dCompDensView.toNestedViewConst(),
-                                                 phaseMassDensView.toNestedViewConst(),
-                                                 dPhaseMassDens_dPView.toNestedViewConst(),
-                                                 dPhaseMassDens_dCView.toNestedViewConst(),
-                                                 phaseMobView.toNestedViewConst(),
-                                                 dPhaseMob_dPView.toNestedViewConst(),
-                                                 dPhaseMob_dCView.toNestedViewConst(),
-                                                 k_up_pu,
-                                                 fflow[1],
-                                                 dFflow_dP[1],
-                                                 dFflow_dC[1] );
+                                   ip,
+                                   MAX_STENCIL,
+                                   seri[iconn],
+                                   sesri[iconn],
+                                   sei[iconn],
+                                   weights[iconn],
+                                   totFlux,
+                                   presView.toNestedViewConst(),
+                                   dPresView.toNestedViewConst(),
+                                   gravCoefView.toNestedViewConst(),
+                                   dCompFrac_dCompDensView.toNestedViewConst(),
+                                   phaseMassDensView.toNestedViewConst(),
+                                   dPhaseMassDens_dPView.toNestedViewConst(),
+                                   dPhaseMassDens_dCView.toNestedViewConst(),
+                                   phaseMobView.toNestedViewConst(),
+                                   dPhaseMob_dPView.toNestedViewConst(),
+                                   dPhaseMob_dCView.toNestedViewConst(),
+                                   dPhaseVolFrac_dPView.toNestedViewConst(),
+                                   dPhaseVolFrac_dCView.toNestedViewConst(),
+                                   phaseCapPressureView.toNestedViewConst(),
+                                   dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                   capPressureFlag,
+                                   k_up_pu,
+                                   fflow[1],
+                                   dFflow_dP[1],
+                                   dFflow_dC[1] );
 
           EXPECT_EQ( k_up_hu, k_up_pu );
           EXPECT_EQ( fflow[0], fflow[1] );
@@ -780,9 +736,10 @@ void testCompositionalUpwindHUPUGravity( CompositionalMultiphaseFVM & solver,
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     string const & discretizationName = solver.getDiscretization();
+    string const & capName = solver.capPresModelNames()[targetIndex];
 
     MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-
+    CapillaryPressureBase & cap = subRegion.getConstitutiveModel< CapillaryPressureBase >( capName );
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
 
@@ -800,104 +757,11 @@ void testCompositionalUpwindHUPUGravity( CompositionalMultiphaseFVM & solver,
 
       for( auto iconn = 0; iconn < stencil.size(); ++iconn )
       {
-        auto presView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                               CompositionalMultiphaseFVM::viewKeyStruct::pressureString(),
-                                                               MAX_STENCIL,
-                                                               seri[iconn],
-                                                               sesri[iconn],
-                                                               sei[iconn] );
-
-        auto dPresView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                                CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString(),
-                                                                MAX_STENCIL,
-                                                                seri[iconn],
-                                                                sesri[iconn],
-                                                                sei[iconn] );
-
-        auto gravCoefView = getElementAccessor< true, 1, real64 >( &subRegion,
-                                                                   CompositionalMultiphaseFVM::viewKeyStruct::gravityCoefString(),
-                                                                   MAX_STENCIL,
-                                                                   seri[iconn],
-                                                                   sesri[iconn],
-                                                                   sei[iconn] );
-
-        auto phaseMobView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                   CompositionalMultiphaseFVM::viewKeyStruct::phaseMobilityString(),
-                                                                   MAX_STENCIL,
-                                                                   seri[iconn],
-                                                                   sesri[iconn],
-                                                                   sei[iconn], NP );
-
-        auto dPhaseMob_dPView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                       CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dPressureString(),
-                                                                       MAX_STENCIL,
-                                                                       seri[iconn],
-                                                                       sesri[iconn],
-                                                                       sei[iconn],
-                                                                       NP );
-
-        auto dPhaseMob_dCView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                       CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString(),
-                                                                       MAX_STENCIL,
-                                                                       seri[iconn],
-                                                                       sesri[iconn],
-                                                                       sei[iconn], NP,
-                                                                       NC );
-
-        auto
-        dCompFrac_dCompDensView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                         CompositionalMultiphaseFVM::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(),
-                                                                         MAX_STENCIL,
-                                                                         seri[iconn],
-                                                                         sesri[iconn],
-                                                                         sei[iconn],
-                                                                         NC,
-                                                                         NC );
-
-        auto dPhaseVolFrac_dPView = getElementAccessor< true, 2, real64 >( &subRegion,
-                                                                           CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dPressureString(),
-                                                                           MAX_STENCIL,
-                                                                           seri[iconn],
-                                                                           sesri[iconn],
-                                                                           sei[iconn],
-                                                                           NP );
-
-        auto dPhaseVolFrac_dCView = getElementAccessor< true, 3, real64 >( &subRegion,
-                                                                           CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(),
-                                                                           MAX_STENCIL,
-                                                                           seri[iconn],
-                                                                           sesri[iconn],
-                                                                           sei[iconn],
-                                                                           NP,
-                                                                           NC );
-
-
+        DEFINE_SUBR_FIELDS(1)
+        DEFINE_CAP_FIELDS(0)
         // -- fluid fetched fields
-        auto phaseMassDensView = getElementAccessor< true, 3, real64 >( &fluid,
-                                                                        MultiFluidBase::viewKeyStruct::phaseMassDensityString(),
-                                                                        MAX_STENCIL,
-                                                                        seri[iconn],
-                                                                        sesri[iconn],
-                                                                        sei[iconn], 1,
-                                                                        NP );
+        DEFINE_FLUID_FIELDS()
 
-        auto dPhaseMassDens_dPView = getElementAccessor< true, 3, real64 >( &fluid,
-                                                                            MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dPressureString(),
-                                                                            MAX_STENCIL,
-                                                                            seri[iconn],
-                                                                            sesri[iconn],
-                                                                            sei[iconn],
-                                                                            1,
-                                                                            NP );
-
-        auto dPhaseMassDens_dCView = getElementAccessor< true, 4, real64 >( &fluid,
-                                                                            MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dGlobalCompFractionString(),
-                                                                            MAX_STENCIL,
-                                                                            seri[iconn],
-                                                                            sesri[iconn],
-                                                                            sei[iconn],
-                                                                            1, NP,
-                                                                            NC );
 
         real64 totFlux = 0;
         localIndex k_up_hu{};
@@ -928,6 +792,11 @@ void testCompositionalUpwindHUPUGravity( CompositionalMultiphaseFVM & solver,
                                                   phaseMobView.toNestedViewConst(),
                                                   dPhaseMob_dPView.toNestedViewConst(),
                                                   dPhaseMob_dCView.toNestedViewConst(),
+                                                  dPhaseVolFrac_dPView.toNestedViewConst(),
+                                                  dPhaseVolFrac_dCView.toNestedViewConst(),
+                                                  phaseCapPressureView.toNestedViewConst(),
+                                                  dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                                  capPressureFlag,
                                                   k_up_hu,
                                                   fflow[0],
                                                   dFflow_dP[0],
@@ -953,6 +822,11 @@ void testCompositionalUpwindHUPUGravity( CompositionalMultiphaseFVM & solver,
                                                  phaseMobView.toNestedViewConst(),
                                                  dPhaseMob_dPView.toNestedViewConst(),
                                                  dPhaseMob_dCView.toNestedViewConst(),
+                                                 dPhaseVolFrac_dPView.toNestedViewConst(),
+                                                 dPhaseVolFrac_dCView.toNestedViewConst(),
+                                                 phaseCapPressureView.toNestedViewConst(),
+                                                 dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                                 capPressureFlag,
                                                  k_up_pu,
                                                  fflow[1],
                                                  dFflow_dP[1],
@@ -967,6 +841,123 @@ void testCompositionalUpwindHUPUGravity( CompositionalMultiphaseFVM & solver,
   } );
 }
 
+
+template< localIndex NC, localIndex NP >
+void testCompositionalUpwindHUPUCapillary( CompositionalMultiphaseFVM & solver,
+                                         DomainPartition & domain )
+{
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                         ElementSubRegionBase & subRegion )
+  {
+    SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
+
+    string const & fluidName = solver.fluidModelNames()[targetIndex];
+    string const & discretizationName = solver.getDiscretization();
+    string const & capName = solver.capPresModelNames()[targetIndex];
+
+    MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+    CapillaryPressureBase & cap = subRegion.getConstitutiveModel< CapillaryPressureBase >( capName );
+    // reset the solver state to zero out variable updates
+    solver.resetStateToBeginningOfStep( domain );
+
+    FluxApproximationBase const & fluxApprox =
+      domain.getNumericalMethodManager().getFiniteVolumeManager().getFluxApproximation( discretizationName );
+    fluxApprox.forStencils< CellElementStencilTPFA >( mesh, [&]( auto const & stencil )
+    {
+
+      auto const & weights = stencil.getWeights();
+      auto const & seri = stencil.getElementRegionIndices();
+      auto const & sesri = stencil.getElementSubRegionIndices();
+      auto const & sei = stencil.getElementIndices();
+      localIndex constexpr NUM_ELEMS = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+      localIndex constexpr MAX_STENCIL = CellElementStencilTPFA::MAX_STENCIL_SIZE;
+
+      for( auto iconn = 0; iconn < stencil.size(); ++iconn )
+      {
+        DEFINE_SUBR_FIELDS(0)
+        DEFINE_CAP_FIELDS(1);
+        // -- fluid fetched fields
+        DEFINE_FLUID_FIELDS()
+        real64 totFlux = 0;
+        localIndex k_up_hu{};
+        localIndex k_up_pu{};
+        real64 fflow[2]{};
+        real64 dFflow_dP[2][MAX_STENCIL]{};
+        real64 dFflow_dC[2][MAX_STENCIL][NC]{};
+
+        for( localIndex ip = 0; ip < NP; ++ip )
+        {
+          UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
+                                  term::Capillary,
+                                  HybridUpwind >( NP,
+                                                  ip,
+                                                  MAX_STENCIL,
+                                                  seri[iconn],
+                                                  sesri[iconn],
+                                                  sei[iconn],
+                                                  weights[iconn],
+                                                  totFlux,
+                                                  presView.toNestedViewConst(),
+                                                  dPresView.toNestedViewConst(),
+                                                  gravCoefView.toNestedViewConst(),
+                                                  dCompFrac_dCompDensView.toNestedViewConst(),
+                                                  phaseMassDensView.toNestedViewConst(),
+                                                  dPhaseMassDens_dPView.toNestedViewConst(),
+                                                  dPhaseMassDens_dCView.toNestedViewConst(),
+                                                  phaseMobView.toNestedViewConst(),
+                                                  dPhaseMob_dPView.toNestedViewConst(),
+                                                  dPhaseMob_dCView.toNestedViewConst(),
+                                                  dPhaseVolFrac_dPView.toNestedViewConst(),
+                                                  dPhaseVolFrac_dCView.toNestedViewConst(),
+                                                  phaseCapPressureView.toNestedViewConst(),
+                                                  dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                                  capPressureFlag,
+                                                  k_up_hu,
+                                                  fflow[0],
+                                                  dFflow_dP[0],
+                                                  dFflow_dC[0] );
+
+          UHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
+                                  term::Capillary,
+                                  PhaseUpwind >( NP,
+                                                 ip,
+                                                 MAX_STENCIL,
+                                                 seri[iconn],
+                                                 sesri[iconn],
+                                                 sei[iconn],
+                                                 weights[iconn],
+                                                 totFlux,
+                                                 presView.toNestedViewConst(),
+                                                 dPresView.toNestedViewConst(),
+                                                 gravCoefView.toNestedViewConst(),
+                                                 dCompFrac_dCompDensView.toNestedViewConst(),
+                                                 phaseMassDensView.toNestedViewConst(),
+                                                 dPhaseMassDens_dPView.toNestedViewConst(),
+                                                 dPhaseMassDens_dCView.toNestedViewConst(),
+                                                 phaseMobView.toNestedViewConst(),
+                                                 dPhaseMob_dPView.toNestedViewConst(),
+                                                 dPhaseMob_dCView.toNestedViewConst(),
+                                                 dPhaseVolFrac_dPView.toNestedViewConst(),
+                                                 dPhaseVolFrac_dCView.toNestedViewConst(),
+                                                 phaseCapPressureView.toNestedViewConst(),
+                                                 dPhaseCapPressure_dPhaseVolFracView.toNestedViewConst(),
+                                                 capPressureFlag,
+                                                 k_up_pu,
+                                                 fflow[1],
+                                                 dFflow_dP[1],
+                                                 dFflow_dC[1] );
+
+          EXPECT_EQ( k_up_hu, k_up_pu );
+          EXPECT_EQ( fflow[0], fflow[1] );
+        }
+
+      }
+    } );
+  } );
+}
 
 class CompositionalMultiphaseFlowUpwindHelperKernelsTest : public ::testing::Test
 {
@@ -1012,7 +1003,7 @@ TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_standardPPU )
   localIndex constexpr NP = 2;
   localIndex constexpr NC = 4;
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  testCompositionalStandardUpwind< NP, NC >( *solver, domain );
+  testCompositionalStandardUpwind< NC, NP >( *solver, domain );
 }
 
 TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUViscous )
@@ -1020,7 +1011,7 @@ TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUViscous )
   localIndex constexpr NP = 2;
   localIndex constexpr NC = 4;
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  testCompositionalUpwindHUPUViscous< NP, NC >( *solver, domain );
+  testCompositionalUpwindHUPUViscous< NC, NP >( *solver, domain );
 }
 
 TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUGravity )
@@ -1028,9 +1019,16 @@ TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUGravity )
   localIndex constexpr NP = 2;
   localIndex constexpr NC = 4;
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  testCompositionalUpwindHUPUGravity< NP, NC >( *solver, domain );
+  testCompositionalUpwindHUPUGravity< NC, NP >( *solver, domain );
 }
 
+TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HUPUCapillary )
+{
+  localIndex constexpr NP = 2;
+  localIndex constexpr NC = 4;
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+  testCompositionalUpwindHUPUCapillary< NC, NP >( *solver, domain );
+}
 
 int main( int argc,
           char * * argv )
@@ -1041,3 +1039,5 @@ int main( int argc,
   geosx::basicCleanup();
   return result;
 }
+
+

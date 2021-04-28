@@ -17,17 +17,17 @@
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/initialization.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowUpwindHelperKernels.hpp"
-#include "testCompFlowUtils.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
-#include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
+#include "unitTests/fluidFlowTests/testFlowKernelHelpers.hpp"
 // TPL includes
 #include <gtest/gtest.h>
 
@@ -38,7 +38,7 @@ using UHelpers = geosx::CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHe
 CommandLineOptions g_commandLineOptions;
 
 // Sphinx start after input XML
-template< localIndex NP, localIndex NC, localIndex MAX_STENCIL >
+template< localIndex NC, localIndex NP, localIndex MAX_STENCIL >
 void mdensMultiplyTest( localIndex const ip,
                         localIndex const k_up,
                         localIndex const stencilSize,
@@ -73,7 +73,7 @@ void mdensMultiplyTest( localIndex const ip,
   field = field * ( *phaseDens )[k_up][0][ip];
 }
 
-template< localIndex NP, localIndex NC, localIndex MAX_STENCIL >
+template< localIndex NC, localIndex NP, localIndex MAX_STENCIL >
 void formPhaseCompTest( localIndex const ip,
                         localIndex const k_up,
                         localIndex const stencilSize,
@@ -122,7 +122,7 @@ void formPhaseCompTest( localIndex const ip,
 }
 
 
-template< localIndex NP, localIndex NC, localIndex MAX_STENCIL, localIndex NUM_ELEMS >
+template< localIndex NC, localIndex NP, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
 void formGravHeadTest( localIndex const ip,
                        localIndex const stencilSize,
                        real64 const (*weights),
@@ -193,7 +193,7 @@ void formGravHeadTest( localIndex const ip,
   }
 }
 
-template< localIndex NC, localIndex MAX_STENCIL, localIndex NUM_ELEMS, localIndex NDOF >
+template< localIndex NC,  localIndex NUM_ELEMS, localIndex MAX_STENCIL, localIndex NDOF >
 void fillLocalJacobiTest( real64 const (&compFlux)[NC],
                           real64 const (&dCompFlux_dP)[MAX_STENCIL][NC],
                           real64 const (&dCompFlux_dC)[MAX_STENCIL][NC][NC],
@@ -226,7 +226,7 @@ void fillLocalJacobiTest( real64 const (&compFlux)[NC],
 }
 // comparators
 
-template< localIndex NP, localIndex NC, localIndex MAX_STENCIL, bool FULL >
+template< localIndex NC, localIndex NP, localIndex MAX_STENCIL, bool FULL >
 void testCompositionalUpwindDensMult( CellElementStencilTPFA const & stencil,
                                       real64 const (*dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
                                       real64 const (*phaseDens)[MAX_STENCIL][1][NP],
@@ -319,7 +319,7 @@ void testCompositionalUpwindDensMult( CellElementStencilTPFA const & stencil,
 
 }
 
-template< localIndex NP, localIndex NC, localIndex MAX_STENCIL, bool FULL >
+template< localIndex NC, localIndex NP, localIndex MAX_STENCIL, bool FULL >
 void testCompositionalUpwindFormPhaseComp( CellElementStencilTPFA const & stencil,
                                            real64 const (*dCompFrac_dCompDens )[MAX_STENCIL][NC][NC],
                                            real64 const (*phaseCompFrac )[MAX_STENCIL][1][NP][NC],
@@ -430,7 +430,7 @@ void testCompositionalUpwindFormPhaseComp( CellElementStencilTPFA const & stenci
 
 }
 
-template< localIndex NP, localIndex NC, localIndex MAX_STENCIL, bool FULL >
+template< localIndex NC, localIndex NP, localIndex MAX_STENCIL, bool FULL >
 void testCompositionalUpwindFormGravHead( CellElementStencilTPFA const & stencil,
                                           real64 const (*gravCoef)[MAX_STENCIL],
                                           real64 const (*dCompFrac_dCompDens)[MAX_STENCIL][NC][NC],
@@ -537,7 +537,7 @@ void testCompositionalUpwindFormGravHead( CellElementStencilTPFA const & stencil
 }
 
 
-template< localIndex NC, localIndex MAX_STENCIL, localIndex NUM_ELEMS, localIndex NDOF >
+template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, localIndex NDOF >
 void testCompositionalUpwindFillLocalJacobi( real64 const (*compFlux)[NC],
                                              real64 const (*dCompFlux_dP)[MAX_STENCIL][NC],
                                              real64 const (*dCompFlux_dC)[MAX_STENCIL][NC][NC],
@@ -660,7 +660,7 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_mDens )
   for( int i = 0; i < NTEST; ++i )
   {
     SCOPED_TRACE( "Input # " + std::to_string( i ) );
-    testCompositionalUpwindDensMult< NP, NC, MAX_STENCIL, true >( stencil,
+    testCompositionalUpwindDensMult< NC, NP, MAX_STENCIL, true >( stencil,
                                                                   &dCompFracData_dCompDens[i],
                                                                   &densData[i],
                                                                   &dDensData_dP[i],
@@ -772,7 +772,7 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_formPhaseComp )
   for( int i = 0; i < NTEST; ++i )
   {
     SCOPED_TRACE( "Input # " + std::to_string( i ) );
-    testCompositionalUpwindFormPhaseComp< NP, NC, MAX_STENCIL, true >( stencil,
+    testCompositionalUpwindFormPhaseComp< NC, NP, MAX_STENCIL, true >( stencil,
                                                                        &dCompFracData_dCompDens[i],
                                                                        &phaseCompFrac[i],
                                                                        &dPhaseCompFrac_dPres[i],
@@ -841,7 +841,7 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_formGravHead )
   for( int i = 0; i < NTEST; ++i )
   {
     SCOPED_TRACE( "Input # " + std::to_string( i ) );
-    testCompositionalUpwindFormGravHead< NP, NC, MAX_STENCIL, true >( stencil,
+    testCompositionalUpwindFormGravHead< NC, NP, MAX_STENCIL, true >( stencil,
                                                                       &gravCoef[i],
                                                                       &dCompFracData_dCompDens[i],
                                                                       &phaseMassDensData[i],
@@ -892,7 +892,7 @@ TEST( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_fillLocalJacobi )
   for( int i = 0; i < NTEST; ++i )
   {
     SCOPED_TRACE( "Input # " + std::to_string( i ) );
-    testCompositionalUpwindFillLocalJacobi< NC, MAX_STENCIL, NUM_ELEMS, NDOF >( &compFlux[i],
+    testCompositionalUpwindFillLocalJacobi< NC, NUM_ELEMS, MAX_STENCIL, NDOF >( &compFlux[i],
                                                                                 &dCompFlux_dP[i],
                                                                                 &dCompFlux_dC[i],
                                                                                 MAX_STENCIL,

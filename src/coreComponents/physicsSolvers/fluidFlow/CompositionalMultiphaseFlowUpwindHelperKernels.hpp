@@ -708,8 +708,8 @@ struct UpwindHelpers
                 ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
                 ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
                 ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-                                               ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                               ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
+                ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
+                ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
                 ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
                 ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
                 integer const capPressureFlag,
@@ -907,7 +907,7 @@ public:
                                                           source,
                                                           pot );
 
-    //treat orientation reversalfor HybridUpwind gravitational
+    //all definition has been changed to fit pot>0 => first cell is upstream
     upwindDir = ( pot > 0 ) ? source : ( ( source == 0 ) ? 1 : 0 );
   }
 };
@@ -993,6 +993,7 @@ public:
                                  dGravHead_dC,
                                  dProp_dC );
 
+    // presGrad and gravHead are including (-K) byt weithing , will then fit pot>0 => first-cell upwind
     pot = presGrad - gravHead;
   }
 
@@ -1165,6 +1166,7 @@ public:
           gravHeadOther += capHeadOther;
         }
 
+        //Bernier potential definiton is reverse to fir pot>0 => first cell upstream
         pot += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHeadOther - gravHead ) :
                  mob_up * ( gravHeadOther - gravHead );
 
@@ -1213,7 +1215,7 @@ public:
                       real64 & pot
                       )
   {
-    //Form total velocity
+    //Form total velocity // obviously fit pot>0 => first cell upwind
     pot = totFlux;
   }
 
@@ -1428,6 +1430,7 @@ public:
 
 
 
+        // Moncorge et al. definition is used and reverse to fit pot>0 => first cell upstream
         pot += ( capHead - capHeadOther >= 0 ) ? mob_dw * ( capHeadOther - capHead ) :
                mob_up * ( capHeadOther - capHead );
 
