@@ -268,7 +268,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   // Make sure that the node manager fields are initialized
 
-  CellBlockManager & elementManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
   Group & nodeSets = nodeManager.sets();
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
@@ -279,7 +279,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock & cellBlock = elementManager.getCellBlocks().registerGroup< CellBlock >( cellBlockName );
+    CellBlock & cellBlock = cellBlockManager.getCellBlocks().registerGroup< CellBlock >( cellBlockName );
     string elementType = m_elementType[aa++];
     cellBlock.setElementType( elementType );
   }
@@ -453,7 +453,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   nodeManager.resize( numNodes );
-  elementManager.setNumNodes( numNodes );
+  cellBlockManager.setNumNodes( numNodes );
 
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
@@ -537,7 +537,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       localElemIndexInRegion[iterNumElemsInRegion->first] = 0;
     }
 
-    elementManager.resize( numElements, elementRegionNames, elementTypes );
+    cellBlockManager.resize( numElements, elementRegionNames, elementTypes );
 
     // Assign global numbers to elements
     regionOffset = 0;
@@ -550,12 +550,12 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       {
         for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
         {
-          CellBlock & elemRegion =  elementManager.getRegion( m_regionNames[ regionOffset ] );
-          int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion.numNodesPerElement());
+          CellBlock & cellBlock = cellBlockManager.getCellBlock( m_regionNames[regionOffset] );
+          int const numNodesPerElem = LvArray::integerConversion< int >( cellBlock.numNodesPerElement());
           integer nodeIDInBox[ 8 ];
 
-          arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion.getElemToNode();
-          arrayView1d< globalIndex > const & elemLocalToGlobal = elemRegion.localToGlobalMap();
+          arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = cellBlock.getElemToNode();
+          arrayView1d< globalIndex > const & elemLocalToGlobal = cellBlock.localToGlobalMap();
 
           int numElemsInDirForBlock[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,

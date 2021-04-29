@@ -97,13 +97,13 @@ public:
                string_array const & elementTypes );
 
   /**
-   * @brief Get element sub-region.
-   * @param regionName name of the element sub-region
-   * @return pointer to the element sub-region
+   * @brief Get cell block by name.
+   * @param name Name of the cell block.
+   * @return Reference to the cell block instance.
    */
-  CellBlock & getRegion( string const & regionName )
+  CellBlock & getCellBlock( string const & name )
   {
-    return this->getGroup( cellBlocksKey ).getGroup< CellBlock >( regionName );
+    return this->getGroup( cellBlocksKey ).getGroup< CellBlock >( name );
   }
 
   /**
