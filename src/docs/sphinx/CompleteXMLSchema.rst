@@ -740,7 +740,7 @@ Element: Traction
 
 Element: TriaxialDriver
 =======================
-.. include:: ../../coreComponents/fileIO/schema/docs/TriaxialDriver.rst
+.. include:: ../../coreComponents/schema/docs/TriaxialDriver.rst
 
 
 .. _XML_TwoPointFluxApproximation:
@@ -1563,7 +1563,7 @@ Datastructure: Traction
 
 Datastructure: TriaxialDriver
 =============================
-.. include:: ../../coreComponents/fileIO/schema/docs/TriaxialDriver_other.rst
+.. include:: ../../coreComponents/schema/docs/TriaxialDriver_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:

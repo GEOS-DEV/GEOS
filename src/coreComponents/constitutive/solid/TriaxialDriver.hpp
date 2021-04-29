@@ -26,8 +26,8 @@
 #include "events/tasks/TaskBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/ProblemManager.hpp"
+//#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geosx

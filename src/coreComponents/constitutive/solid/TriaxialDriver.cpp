@@ -75,7 +75,7 @@ void TriaxialDriver::postProcessInput()
 
   // initialize table functions
 
-  FunctionManager & functionManager = getGlobalState().getFunctionManager();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   TableFunction & strainFunction = functionManager.getGroup< TableFunction >( m_strainFunctionName );
   TableFunction & stressFunction = functionManager.getGroup< TableFunction >( m_stressFunctionName );
@@ -144,10 +144,7 @@ bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   // get the solid out of the constitutive manager.
   // for the moment it is of type SolidBase.
 
-  ConstitutiveManager & constitutiveManager = getGlobalState()
-                                                .getProblemManager()
-                                                .getDomainPartition()
-                                                .getConstitutiveManager();
+  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
 
   SolidBase & baseSolid = constitutiveManager.getGroup< SolidBase >( m_solidMaterialName );
 

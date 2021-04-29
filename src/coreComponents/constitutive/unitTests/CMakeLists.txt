@@ -10,10 +10,6 @@ set( gtest_geosx_tests
      testPropertyConversions.cpp
    )
 
-set( gtest_triaxial_xmls
-     testTriaxial_elasticIsotropic.xml
-     testTriaxial_druckerPragerExtended.xml
-   )
 
 set( dependencyList gtest constitutive conduit )
 
@@ -47,20 +43,4 @@ foreach(test ${gtest_geosx_tests})
 
 endforeach()
 
-#
-# Add triaxial xml based tests
-#
-
-blt_add_executable( NAME testTriaxial
-                    SOURCES testTriaxial.cpp
-                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                    DEPENDS_ON ${dependencyList} "-lz"
-                  )
-
-foreach(test ${gtest_triaxial_xmls})
-    get_filename_component( test_name ${test} NAME_WE )
-    blt_add_test( NAME ${test_name} 
-                  COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test}
-                  )
-endforeach()
 

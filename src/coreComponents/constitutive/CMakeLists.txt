@@ -110,7 +110,7 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
    )
 
-set( dependencyList dataRepository functions)
+set( dependencyList events dataRepository functions)
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
