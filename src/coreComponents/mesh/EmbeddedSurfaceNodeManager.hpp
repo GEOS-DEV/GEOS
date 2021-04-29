@@ -55,9 +55,11 @@ public:
   /**
    * @brief return default size of the value array in the node-to-edge mapping
    * @return default size of value array in the node-to-edge mapping
+   *
+   * @note Value forwarding is due to refactoring.
    */
   inline localIndex getEdgeMapOverallocation()
-  { return 8; }
+  { return CellBlockManager::getEdgeMapOverallocation(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping

@@ -59,16 +59,20 @@ public:
   /**
    * @brief return default size of the value array in the node-to-edge mapping
    * @return default size of value array in the node-to-edge mapping
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  inline localIndex getEdgeMapOverallocation() // FIXME forward form CellBlockManager? Remove from here?
-  { return 8; }
+  static constexpr inline localIndex getEdgeMapOverallocation()
+  { return CellBlockManager::getEdgeMapOverallocation(); }
 
   /**
    * @brief return default size of the value in the node-to-face mapping
    * @return default size of value array in the node-to-face mapping
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  inline localIndex getFaceMapOverallocation() // FIXME forward form CellBlockManager? Remove from here?
-  { return 8; }
+  static constexpr inline localIndex getFaceMapOverallocation()
+  { return CellBlockManager::getEdgeMapOverallocation(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping

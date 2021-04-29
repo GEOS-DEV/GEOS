@@ -65,6 +65,27 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
+  static constexpr int maxEdgesPerNode()
+  { return 200; }
+
+  static constexpr int maxFacesPerNode()
+  { return 200; }
+
+  static constexpr localIndex getEdgeMapOverallocation()
+  { return 8; }
+
+  static constexpr localIndex getFaceMapOverallocation()
+  { return 8; }
+
+  static constexpr localIndex nodeMapExtraSpacePerFace()
+  { return 4; }
+
+  static constexpr localIndex edgeMapExtraSpacePerFace()
+  { return 4; }
+
+  static constexpr localIndex faceMapExtraSpacePerEdge()
+  { return 4; }
+
   using Group::resize;
 
   /**

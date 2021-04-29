@@ -75,16 +75,20 @@ public:
   /**
    * @brief Get the default number of node per face in node list
    * @return the default number of node per face in node list
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  static localIndex nodeMapExtraSpacePerFace() // FIXME forward form CellBlockManager? Remove from here?
-  { return 4; }
+  static constexpr localIndex nodeMapExtraSpacePerFace()
+  { return CellBlockManager::nodeMapExtraSpacePerFace(); }
 
   /**
    * @brief Get the default number of edge per face in edge list
    * @return the default number of edge per face in edge list
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  static localIndex edgeMapExtraSpacePerFace() // FIXME forward form CellBlockManager? Remove from here?
-  { return 4; }
+  static constexpr localIndex edgeMapExtraSpacePerFace()
+  { return CellBlockManager::edgeMapExtraSpacePerFace(); }
 
   /**
    * @name Constructors/destructor
@@ -305,12 +309,6 @@ public:
    * @name Accessors for FaceManager fixed data
    */
   ///@{
-
-  /**
-   * @brief Get the constant upper limit for number of faces per Node.
-   * @return constant expression of the max number of faces per node
-   */
-  constexpr int maxFacesPerNode() const { return 200; }
 
   /**
    * @brief Get a mutable accessor to a table containing all the face area.

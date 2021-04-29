@@ -72,9 +72,11 @@ public:
   /**
    * @brief Oversize the Face mapping by this amount for each edge (hardcoded)
    * @return extra space for each edge of the EdgetoFace map
+   *
+   * @note Value forwarding is due to refactoring.
    */
   static localIndex faceMapExtraSpacePerEdge()
-  { return 4; }
+  { return CellBlockManager::faceMapExtraSpacePerEdge(); }
 
   /**
    * @name Constructors/destructors
@@ -291,8 +293,11 @@ public:
   /**
    * @brief Return the  maximum number of edges per node.
    * @return Maximum allowable number of edges connected to one node (hardcoded for now)
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  constexpr int maxEdgesPerNode() const { return 200; }
+  static constexpr int maxEdgesPerNode()
+  { return CellBlockManager::maxEdgesPerNode(); }
 
   /**
    * @name Getters for stored value.
