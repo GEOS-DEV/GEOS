@@ -1271,15 +1271,14 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
 * SteadyState
-* ImplicitTransient
-* ExplicitTransient-->
-		<xsd:attribute name="timeIntegrationOption" type="geosx_LaplaceFEM_TimeIntegrationOption" use="required" />
+* ImplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_LaplaceBaseH1_TimeIntegrationOption" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_LaplaceFEM_TimeIntegrationOption">
+	<xsd:simpleType name="geosx_LaplaceBaseH1_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient" />
+			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="LaplaceVEMType">
@@ -1301,17 +1300,11 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
 * SteadyState
-* ImplicitTransient
-* ExplicitTransient-->
-		<xsd:attribute name="timeIntegrationOption" type="geosx_LaplaceVEM_TimeIntegrationOption" use="required" />
+* ImplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_LaplaceBaseH1_TimeIntegrationOption" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geosx_LaplaceVEM_TimeIntegrationOption">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="MultiphasePoroelasticType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
