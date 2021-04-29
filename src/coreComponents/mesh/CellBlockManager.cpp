@@ -31,11 +31,6 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   this->registerGroup< Group >( cellBlocksKey );
 }
 
-CellBlockManager::~CellBlockManager()
-{
-  // TODO Auto-generated destructor stub
-}
-
 void CellBlockManager::resize( integer_array const & numElements,
                                string_array const & regionNames,
                                string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
@@ -143,7 +138,6 @@ private:
  */
 struct EdgeBuilder
 {
-
   /**
    * @brief Constructor.
    * @param [in] n1_ the greater of the two node indices that comprise the edge.
@@ -159,17 +153,6 @@ struct EdgeBuilder
   {}
 
   /**
-   * @brief Imposes an ordering on EdgeBuilders. First compares n1 and then the faceID.
-   * @param [in] rhs the EdgeBuilder to compare against.
-   */
-  bool operator<( EdgeBuilder const & rhs ) const
-  {
-    if( n1 < rhs.n1 ) return true;
-    if( n1 > rhs.n1 ) return false;
-    return faceID < rhs.faceID;
-  }
-
-  /**
    * @brief Return true if the two EdgeBuilders share the same greatest node index.
    * @param [in] rhs the EdgeBuilder to compare against.
    */
@@ -181,11 +164,14 @@ struct EdgeBuilder
    * @param [in] rhs the EdgeBuilder to compare against.
    */
   bool operator!=( EdgeBuilder const & rhs ) const
-  { return n1 != rhs.n1; }
+  { return  !this->operator==( rhs ); }
 
-  int32_t n1;                  // The larger of the two node indices that comprise the edge.
-  int32_t faceID;              // The face the edge came from.
-  int32_t faceLocalEdgeIndex;  // The face local index of the edge.
+  /// The larger of the two node indices that comprise the edge.
+  int32_t n1;
+  /// The face the edge came from.
+  int32_t faceID;
+  /// The face local index of the edge.
+  int32_t faceLocalEdgeIndex;
 };
 
 /**
@@ -710,11 +696,19 @@ ArrayOfArrays< EdgeBuilder > createEdgesByLowestNode( localIndex numNodes,
     }
   } );
 
+  // This comparator is not attached to EdgeBuilder because of potential inconsistencies with operator==
+  auto const comp = []( EdgeBuilder const & e0, EdgeBuilder const & e1 ) -> bool
+  {
+    if( e0.n1 < e1.n1 ) { return true; }
+    if( e0.n1 > e1.n1 ) { return false; }
+    return e0.faceID < e1.faceID;
+  };
+
   // Loop over all the nodes and sort the associated edges.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
-    EdgeBuilder * const edges = edgesByLowestNode[ nodeID ];
-    std::sort( edges, edges + edgesByLowestNode.sizeOfArray( nodeID ) );
+    EdgeBuilder * const edges = edgesByLowestNode[nodeID];
+    std::sort( edges, edges + edgesByLowestNode.sizeOfArray( nodeID ), comp );
   } );
 
   return edgesByLowestNode;

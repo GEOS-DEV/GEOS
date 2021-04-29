@@ -61,7 +61,7 @@ public:
   /**
    * @brief Destructor
    */
-  virtual ~CellBlockManager() override;
+  ~CellBlockManager() override = default;
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
@@ -170,13 +170,13 @@ private:
   /**
    * @brief Copy constructor.
    */
-  CellBlockManager( const CellBlockManager & );
+  CellBlockManager( const CellBlockManager & ) = delete;
 
   /**
    * @brief Copy assignment operator.
    * @return reference to this object
    */
-  CellBlockManager & operator=( const CellBlockManager & );
+  CellBlockManager & operator=( const CellBlockManager & ) = delete;
 
   /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
