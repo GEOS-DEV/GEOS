@@ -112,10 +112,9 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   if( MpiWrapper::commRank( ) == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetadata( );
-    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 2, 2, MPI_COMM_SELF ) );
+    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
     collector.registerTimeBufferCall( [this]() { return m_io.back()->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
-    ioCount++;
   }
 
   MpiWrapper::barrier( MPI_COMM_GEOSX );
@@ -158,7 +157,6 @@ bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
     th_io->write( );
   }
   m_recordCount += newBuffered;
-
   return false;
 }
 
