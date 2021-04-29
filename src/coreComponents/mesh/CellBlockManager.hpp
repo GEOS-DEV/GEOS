@@ -28,8 +28,6 @@
 namespace geosx
 {
 
-class CellBlock; // TODO
-
 /**
  * @class CellBlockManager
  * @brief The CellBlockManager class provides an interface to ObjectManagerBase in order to manage CellBlock data.

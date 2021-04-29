@@ -15,7 +15,6 @@
 #ifndef GEOSX_CELLBLOCKABC_HPP
 #define GEOSX_CELLBLOCKABC_HPP
 
-#include "mesh/InterObjectRelation.hpp"
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 
@@ -30,7 +29,7 @@ class CellBlockABC : public dataRepository::Group
 {
 public:
   /// Alias for the type of the element-to-node map
-  using NodeMapType = InterObjectRelation <array2d< localIndex, cells::NODE_MAP_PERMUTATION >>;
+  using NodeMapType = array2d< localIndex, cells::NODE_MAP_PERMUTATION >;
 
   CellBlockABC( string const & name,
                 Group * const parent )
