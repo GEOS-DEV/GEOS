@@ -63,6 +63,11 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
+
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
+  m_linearSolverParameters.get().mgr.separateComponents = true;
+  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
 void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )

@@ -214,8 +214,9 @@ struct LinearSolverParameters
       hydrofracture,                    ///< hydrofracture
       lagrangianContactMechanics,       ///< Lagrangian contact mechanics
       singlePhaseHybridFVM,             ///< hybrid finite volume single-phase flow
-      singlePhasePoromechanics,         ///< single phase poroelastic with finite volume single phase flow
-      hybridSinglePhasePoromechanics    ///< single phase poroelastic with hybrid finite volume single phase flow
+      singlePhasePoromechanics,         ///< single phase poromechanics with finite volume single phase flow
+      hybridSinglePhasePoromechanics,   ///< single phase poromechanics with hybrid finite volume single phase flow
+      multiphasePoromechanics           ///< multiphase poromechanics with finite volume compositional multiphase flow
     };
 
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
@@ -286,7 +287,8 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "lagrangianContactMechanics",
               "singlePhaseHybridFVM",
               "singlePhasePoromechanics",
-              "hybridSinglePhasePoromechanics" )
+              "hybridSinglePhasePoromechanics,"
+              "multiphasePoromechanics" )
 
 ENUM_STRINGS( LinearSolverParameters::AMG::CycleType,
               "V",
