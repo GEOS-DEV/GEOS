@@ -35,6 +35,7 @@
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkUnstructuredGridReader.h>
 #include <vtkCellData.h>
+#include <vtkRedistributeDataSetFilter.h>
 namespace geosx
 {
 using namespace dataRepository;
