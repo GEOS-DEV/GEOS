@@ -101,11 +101,15 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
       if( setGroup.hasWrapper( setName ) )
       {
         SortedArrayView< localIndex const > const & set = setGroup.getReference< SortedArray< localIndex > >( setName );
-        oldSetSizes[ setIdx ] = m_setsIndices.size( );
-        m_setsIndices[ setIdx ].resize( oldSetSizes[ setIdx ] );
-        if( set.size() > 0 )
+        oldSetSizes[ setIdx ] = m_setsIndices[ setIdx ].size( );
+        localIndex setSize = set.size( );
+        m_setsIndices[ setIdx ].resize( setSize );
+        if( setSize > 0 )
         {
-          m_setsIndices[ setIdx ].insert( 0, set.begin(), set.end() );
+          for( localIndex idx = 0; idx < setSize; ++idx )
+          {
+            m_setsIndices[ setIdx ][ idx ] = set[ idx ];
+          }
         }
       }
       setIdx++;
@@ -154,8 +158,14 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
           }
         }
       }
-      m_setsIndices[ setIdx ].insert( 0, ownedIndices.begin( ), ownedIndices.end( ) );
-      m_setsIndices[ setIdx ].resize( newSetSize );
+      m_setsIndices[ setIdx ].reserve( newSetSize );
+      if( newSetSize > 0 )
+      {
+        for( localIndex idx = 0; idx < newSetSize; ++idx )
+        {
+          m_setsIndices[ setIdx ][ idx ] = ownedIndices[ idx ];
+        }
+      }
     }
   }
 }
@@ -216,7 +226,11 @@ void PackCollection::collect( DomainPartition & domain,
       target.packByIndex( buffer, m_setsIndices[ collectionIdx ], false, true );
     }
   }
-  else // we only hit this when we're packing non-mesh related data
+   // if we're not collecting from a set of indices, we're collecting the entire object
+   //  this will only happen when we're not targeting a mesh object since in that case while setnames size is 0,
+   //  setsIndices[0] is the entire non-ghost index set, so all mesh object collection goes to packbyindex and any 
+   //  non-mesh objects (that don't somehow have index sets) are packed in their entirety
+  else if ( m_setNames.size() == 0 )
   {
     target.pack( buffer, false, true );
   }
