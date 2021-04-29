@@ -796,11 +796,11 @@ void fillElementToEdgesOfCellBlocks( ArrayOfArrays< localIndex > const & faceToE
   }
 }
 
-void CellBlockManager::buildFaceMaps( localIndex numNodes )
+void CellBlockManager::buildFaceMaps()
 {
-  const ArrayOfArrays< NodesAndElementOfFace > lowestNodeToFaces = createLowestNodeToFaces( numNodes, this->getCellBlocks() );
+  const ArrayOfArrays< NodesAndElementOfFace > lowestNodeToFaces = createLowestNodeToFaces( m_numNodes, this->getCellBlocks() );
 
-  array1d< localIndex > uniqueFaceOffsets( numNodes + 1 );
+  array1d< localIndex > uniqueFaceOffsets( m_numNodes + 1 );
   m_numFaces = calculateTotalNumberOfFaces( lowestNodeToFaces.toViewConst(), uniqueFaceOffsets );
 
   resizeFaceMaps( lowestNodeToFaces.toViewConst(),
@@ -843,9 +843,9 @@ localIndex buildEdgeMaps( localIndex numNodes,
   return numEdges;
 }
 
-void CellBlockManager::buildNodeToEdges( localIndex numNodes )
+void CellBlockManager::buildNodeToEdges()
 {
-  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, maxEdgesPerNode() );
+  ArrayOfArrays< localIndex > toEdgesTemp( m_numNodes, maxEdgesPerNode() );
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
 
   forAll< parallelHostPolicy >( m_numEdges, [&]( localIndex const edgeID )
@@ -860,21 +860,21 @@ void CellBlockManager::buildNodeToEdges( localIndex numNodes )
 
   // Reserve space for the number of current nodes plus some extra.
   double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * m_numNodes;
   m_nodeToEdges.reserve( entriesToReserve );
 
   // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeEdges.get() + numNodes * getEdgeMapOverallocation() * ( 1 + 2 * overAllocationFactor );
+  localIndex const valuesToReserve = totalNodeEdges.get() + m_numNodes * getEdgeMapOverallocation() * ( 1 + 2 * overAllocationFactor );
   m_nodeToEdges.reserveValues( valuesToReserve );
 
   // Append the individual sets.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  for( localIndex nodeID = 0; nodeID < m_numNodes; ++nodeID )
   {
     m_nodeToEdges.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + getEdgeMapOverallocation() );
   }
 
   ArrayOfSetsView< localIndex > const & toEdgesView = m_nodeToEdges.toView(); // FIXME why a view here?
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( m_numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const edges = toEdgesTemp[ nodeID ];
     localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
@@ -883,15 +883,15 @@ void CellBlockManager::buildNodeToEdges( localIndex numNodes )
   } );
 }
 
-void CellBlockManager::buildMaps( localIndex numNodes )
+void CellBlockManager::buildMaps()
 {
-  buildFaceMaps( numNodes );
-  m_numEdges = buildEdgeMaps( numNodes,
+  buildFaceMaps();
+  m_numEdges = buildEdgeMaps( m_numNodes,
                               m_faceToNodes.toViewConst(),
                               m_faceToEdges,
                               m_edgeToFaces,
                               m_edgeToNodes );
-  buildNodeToEdges( numNodes );
+  buildNodeToEdges();
 
   fillElementToEdgesOfCellBlocks( m_faceToEdges, this->getCellBlocks() );
 }
@@ -902,10 +902,10 @@ ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
   return m_faceToNodes;
 }
 
-ArrayOfSets< localIndex > CellBlockManager::getNodeToFaces(localIndex numNodes) const // TODO remove numNodes
+ArrayOfSets< localIndex > CellBlockManager::getNodeToFaces() const
 {
   localIndex const numFaces = m_faceToNodes.size();
-  ArrayOfArrays< localIndex > nodeToFacesTemp( numNodes, maxFacesPerNode() );
+  ArrayOfArrays< localIndex > nodeToFacesTemp( m_numNodes, maxFacesPerNode() );
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces = 0;
 
   forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
@@ -925,20 +925,20 @@ ArrayOfSets< localIndex > CellBlockManager::getNodeToFaces(localIndex numNodes) 
 
   // Reserve space for the number of nodes faces plus some extra.
   double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * m_numNodes;
   result.reserve( entriesToReserve );
 
   // Reserve space for the total number of node faces + extra space for existing nodes + even more space for new nodes.
-  localIndex const valuesToReserve = totalNodeFaces.get() + numNodes * nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
+  localIndex const valuesToReserve = totalNodeFaces.get() + m_numNodes * nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
   result.reserveValues( valuesToReserve );
 
   // Append the individual arrays.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  for( localIndex nodeID = 0; nodeID < m_numNodes; ++nodeID )
   {
     result.appendSet( nodeToFacesTemp.sizeOfArray( nodeID ) + getFaceMapOverallocation() );
   }
 
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( m_numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const faces = nodeToFacesTemp[ nodeID ];
     localIndex const numNodeFaces = nodeToFacesTemp.sizeOfArray( nodeID );
@@ -967,12 +967,7 @@ Group & CellBlockManager::getCellBlocks()
 
 localIndex CellBlockManager::numNodes() const
 {
-  localIndex numNodes = 0;
-  const Group & cellBlocks = this->getCellBlocks();
-  cellBlocks.forSubGroups< const CellBlockABC >([&](const CellBlockABC & cb ){
-    numNodes += cb.numNodesPerElement() * cb.numElements();
-  } );
-  return numNodes;
+  return m_numNodes;
 }
 
 localIndex CellBlockManager::numCellBlocks() const

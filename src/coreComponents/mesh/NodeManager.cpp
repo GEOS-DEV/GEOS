@@ -79,9 +79,7 @@ void NodeManager::setFaceMaps( CellBlockManager const & cellBlockManager, FaceMa
 {
   GEOSX_MARK_FUNCTION;
 
-  // TODO numNodes should be provided by the cell block manager.
-  localIndex const numNodes = size();
-  m_toFacesRelation = cellBlockManager.getNodeToFaces( numNodes );
+  m_toFacesRelation = cellBlockManager.getNodeToFaces();
 
   m_toFacesRelation.setRelatedObject( faceManager );
 }

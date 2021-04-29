@@ -141,10 +141,9 @@ public:
 
   /**
    * @brief Returns the face to nodes mappings.
-   * @param numNodes This should not be here, needs to be removed TODO
    * @return The one to many relationship.
    */
-  ArrayOfSets< localIndex > getNodeToFaces( localIndex numNodes ) const;
+  ArrayOfSets< localIndex > getNodeToFaces() const;
 
   ArrayOfSets< localIndex > getNodeToEdges() const;
 
@@ -154,16 +153,23 @@ public:
 
   ArrayOfArrays< geosx::localIndex > const & getFaceToEdges() const;
 
-  void buildMaps( localIndex numNodes );
+  void buildMaps();
 
   /**
    * @brief Total number of nodes across all the cell blocks.
    * @return
-   *
-   * It's actually more than the total number of nodes
-   * because we have nodes belonging to multiple cell blocks and cells
    */
-  localIndex numNodes() const;
+  localIndex numNodes() const; // TODO Improve doc
+
+  /**
+   * @brief Defines the number of nodes.
+   * @param numNodes The number of nodes.
+   *
+   * @note This has to be defined consistent w.r.t. the points positions defined in the node manager.
+   * @deprecated To be more consistent, define the points positions instead and fill the node manager with it.
+   */
+  void setNumNodes( localIndex numNodes ) // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
+  { m_numNodes = numNodes; }
 
   /**
    * @brief Total number of faces across all the cell blocks.
@@ -205,8 +211,8 @@ private:
 
   localIndex numCellBlocks() const;
 
-  void buildNodeToEdges( localIndex numNodes );
-  void buildFaceMaps( localIndex numNodes );
+  void buildNodeToEdges();
+  void buildFaceMaps();
 
   ArrayOfArrays< localIndex >  m_faceToNodes;
   array2d< localIndex >  m_faceToElements;
@@ -214,6 +220,7 @@ private:
   array2d< localIndex > m_edgeToNodes;
   ArrayOfSets< localIndex > m_nodeToEdges;
   ArrayOfArrays< localIndex > m_faceToEdges;
+  localIndex m_numNodes;
   localIndex m_numFaces;
   localIndex m_numEdges;
 };

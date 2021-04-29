@@ -453,6 +453,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   nodeManager.resize( numNodes );
+  elementManager.setNumNodes( numNodes );
+
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();

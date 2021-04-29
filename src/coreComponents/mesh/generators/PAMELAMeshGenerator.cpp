@@ -100,7 +100,9 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
 
   // Vertices are written first
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-  nodeManager.resize( m_pamelaMesh->get_PointCollection()->size_all());
+  localIndex const numNodes = m_pamelaMesh->get_PointCollection()->size_all();
+  nodeManager.resize( numNodes );
+  cellBlockManager.setNumNodes( numNodes );
 
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
