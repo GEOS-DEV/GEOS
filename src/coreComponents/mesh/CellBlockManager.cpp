@@ -21,12 +21,14 @@ namespace geosx
 {
 using namespace dataRepository;
 
+string const CellBlockManager::cellBlocksKey = "cellBlocks";
+
 const int maxEdgesPerNode = 200;// TODO deal with this.
 
 CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
 {
-  this->registerGroup< Group >( keys::cellBlocks );
+  this->registerGroup< Group >( cellBlocksKey );
 }
 
 CellBlockManager::~CellBlockManager()
@@ -975,12 +977,12 @@ array2d< localIndex > CellBlockManager::getFaceToElements() const
 
 const Group & CellBlockManager::getCellBlocks() const
 {
-  return this->getGroup( keys::cellBlocks );
+  return this->getGroup( cellBlocksKey );
 }
 
 Group & CellBlockManager::getCellBlocks()
 {
-  return this->getGroup( keys::cellBlocks );
+  return this->getGroup( cellBlocksKey );
 }
 
 localIndex CellBlockManager::numNodes() const

@@ -94,15 +94,18 @@ public:
                                           localIndex iFace ) const override;
 
   /**
-   * @copydoc nodeList()
-   */
-  NodeMapType & getElemToNode() { return m_toNodesRelation; }
+  * @brief Get the element to nodes mapping, non-const version.
+  * @return The mapping relationship as a array.
+  *
+  * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute... Use a real setter instead.
+  */
+  NodeMapType & getElemToNode() { return m_elementsToNodes; }
 
-  NodeMapType const & getElemToNode() const override { return m_toNodesRelation; }
+  NodeMapType const & getElemToNode() const override { return m_elementsToNodes; }
 
-  array2d< localIndex > const & getElemToEdges() const override { return m_toEdgesRelation; }
+  array2d< localIndex > const & getElemToEdges() const override { return m_elementsToEdges; }
 
-  array2d< localIndex > const & getElemToFaces() const override { return m_toFacesRelation; }
+  array2d< localIndex > const & getElemToFaces() const override { return m_elementsToFaces; }
 
   /**
    * @brief Sets an entry in the element to faces mapping.
@@ -144,8 +147,11 @@ public:
   arrayView1d< globalIndex const > localToGlobalMap() const override
   { return m_localToGlobalMap; }
 
-  // FIXME What is this newSize.
-  void resize( dataRepository::indexType const newSize ) final;
+  /**
+   * @brief Resize the cell block to hold @p numCells
+   * @param numCells The new number of cells.
+   */
+  void resize( dataRepository::indexType const numCells ) final;
 
   ///@}
 
@@ -181,13 +187,13 @@ private:
   localIndex m_numFacesPerElement;
 
   /// Element-to-node relation
-  NodeMapType m_toNodesRelation;
+  NodeMapType m_elementsToNodes;
 
   /// Element-to-edges relation
-  array2d< localIndex > m_toEdgesRelation;
+  array2d< localIndex > m_elementsToEdges;
 
   /// Element-to-node relation
-  array2d< localIndex > m_toFacesRelation;
+  array2d< localIndex > m_elementsToFaces;
 
   /// Contains the global index of each object.
   array1d< globalIndex > m_localToGlobalMap;

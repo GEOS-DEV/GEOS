@@ -59,21 +59,21 @@ void CellBlock::setElementType( string const & elementType )
     GEOSX_ERROR( "Error.  Don't know what kind of element this is." );
   }
 
-  m_toNodesRelation.resize( 0, m_numNodesPerElement );
-  m_toEdgesRelation.resize( 0, m_numEdgesPerElement );
-  m_toFacesRelation.resize( 0, m_numFacesPerElement );
+  m_elementsToNodes.resize( 0, m_numNodesPerElement );
+  m_elementsToEdges.resize( 0, m_numEdgesPerElement );
+  m_elementsToFaces.resize( 0, m_numFacesPerElement );
 }
 
-void CellBlock::resize( dataRepository::indexType const newSize )
+void CellBlock::resize( dataRepository::indexType const numCells )
 {
-  Group::resize( newSize );
+  Group::resize( numCells );
 
   // Those members are not registered as wrappers because I do not want them
   // to be exposed though the `Group` public interface.
-  m_localToGlobalMap.resize( newSize );
-  m_toNodesRelation.resize( newSize );
-  m_toEdgesRelation.resize( newSize );
-  m_toFacesRelation.resize( newSize );
+  m_localToGlobalMap.resize( numCells );
+  m_elementsToNodes.resize( numCells );
+  m_elementsToEdges.resize( numCells );
+  m_elementsToFaces.resize( numCells );
 }
 
 std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
@@ -84,55 +84,55 @@ std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
     if( iFace == 0 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][5],
-        m_toNodesRelation[iElement][4]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][5],
+        m_elementsToNodes[iElement][4]
       };
     }
     else if( iFace == 1 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][1]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][1]
       };
     }
     else if( iFace == 2 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][4],
-        m_toNodesRelation[iElement][6],
-        m_toNodesRelation[iElement][2]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][4],
+        m_elementsToNodes[iElement][6],
+        m_elementsToNodes[iElement][2]
       };
     }
     else if( iFace == 3 )
     {
       return {
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][7],
-        m_toNodesRelation[iElement][5]
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][7],
+        m_elementsToNodes[iElement][5]
       };
     }
     else if( iFace == 4 )
     {
       return {
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][6],
-        m_toNodesRelation[iElement][7]
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][6],
+        m_elementsToNodes[iElement][7]
       };
     }
     else if( iFace == 5 )
     {
       return {
-        m_toNodesRelation[iElement][4],
-        m_toNodesRelation[iElement][5],
-        m_toNodesRelation[iElement][7],
-        m_toNodesRelation[iElement][6]
+        m_elementsToNodes[iElement][4],
+        m_elementsToNodes[iElement][5],
+        m_elementsToNodes[iElement][7],
+        m_elementsToNodes[iElement][6]
       };
     }
   }
@@ -141,44 +141,44 @@ std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
     if( iFace == 0 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][5],
-        m_toNodesRelation[iElement][4]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][5],
+        m_elementsToNodes[iElement][4]
       };
     }
     else if( iFace == 1 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][1]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][1]
       };
     }
     else if( iFace == 2 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][4]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][4]
       };
     }
     else if( iFace == 3 )
     {
       return {
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][5]
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][5]
       };
     }
     else if( iFace == 4 )
     {
       return {
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][5],
-        m_toNodesRelation[iElement][4]
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][5],
+        m_elementsToNodes[iElement][4]
       };
     }
   }
@@ -187,33 +187,33 @@ std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
     if( iFace == 0 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][1]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][1]
       };
     }
     else if( iFace == 1 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][3]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][3]
       };
     }
     else if( iFace == 2 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][2]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][2]
       };
     }
     else if( iFace == 3 )
     {
       return {
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][3]
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][3]
       };
     }
   }
@@ -222,42 +222,42 @@ std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
     if( iFace == 0 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][3]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][3]
       };
     }
     else if( iFace == 1 )
     {
       return {
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][4]
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][4]
       };
     }
     else if( iFace == 2 )
     {
       return {
-        m_toNodesRelation[iElement][1],
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][4]
+        m_elementsToNodes[iElement][1],
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][4]
       };
     }
     else if( iFace == 3 )
     {
       return {
-        m_toNodesRelation[iElement][2],
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][4]
+        m_elementsToNodes[iElement][2],
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][4]
       };
     }
     else if( iFace == 4 )
     {
       return {
-        m_toNodesRelation[iElement][3],
-        m_toNodesRelation[iElement][0],
-        m_toNodesRelation[iElement][4]
+        m_elementsToNodes[iElement][3],
+        m_elementsToNodes[iElement][0],
+        m_elementsToNodes[iElement][4]
       };
     }
   }
@@ -270,21 +270,21 @@ void CellBlock::setElementToFaces( localIndex iElement,
                                    localIndex iFace,
                                    localIndex faceIndex )
 {
-  m_toFacesRelation( iElement, iFace ) = faceIndex;
+  m_elementsToFaces( iElement, iFace ) = faceIndex;
 }
 
 void CellBlock::setElementToEdges( localIndex iElement,
                                    localIndex iEdge,
                                    localIndex edgeIndex )
 {
-  m_toEdgesRelation( iElement, iEdge ) = edgeIndex;
+  m_elementsToEdges( iElement, iEdge ) = edgeIndex;
 }
 
 bool CellBlock::hasElementToEdges( localIndex iElement,
                                    localIndex iEdge,
                                    localIndex edgeIndex ) const
 {
-  return m_toEdgesRelation( iElement, iEdge ) == edgeIndex;
+  return m_elementsToEdges( iElement, iEdge ) == edgeIndex;
 }
 
 

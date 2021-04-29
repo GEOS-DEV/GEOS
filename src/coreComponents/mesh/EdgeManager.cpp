@@ -70,7 +70,9 @@ void EdgeManager::resize( localIndex const newSize )
   ObjectManagerBase::resize( newSize );
 }
 
-void EdgeManager::buildEdges( NodeManager & nodeManager, FaceManager & faceManager, CellBlockManager const & cellBlockManager )
+void EdgeManager::buildEdges( CellBlockManager const & cellBlockManager,
+                              NodeManager & nodeManager,
+                              FaceManager & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 

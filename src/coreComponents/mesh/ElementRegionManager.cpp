@@ -125,7 +125,7 @@ void ElementRegionManager::generateMesh( CellBlockManager & cellBlockManager )
 {
   this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {
-    elemRegion.generateMesh( cellBlockManager.getGroup( keys::cellBlocks ) );
+    elemRegion.generateMesh( cellBlockManager.getCellBlocks() );
   } );
 }
 

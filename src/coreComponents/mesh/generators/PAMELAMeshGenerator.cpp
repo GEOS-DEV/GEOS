@@ -159,7 +159,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
-          &cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
+          &cellBlockManager.getCellBlocks().registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
         cellBlock->setElementType( "C3D8" );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
@@ -200,7 +200,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
-          &cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
+          &cellBlockManager.getCellBlocks().registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
         cellBlock->setElementType( "C3D4" );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
@@ -233,7 +233,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
-          &cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
+          &cellBlockManager.getCellBlocks().registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
         cellBlock->setElementType( "C3D6" );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
@@ -270,7 +270,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
-          &cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
+          &cellBlockManager.getCellBlocks().registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
         cellBlock->setElementType( "C3D5" );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );

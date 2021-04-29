@@ -517,10 +517,10 @@ void ProblemManager::generateMesh()
       elemManager.generateMesh( cellBlockManager );
       nodeManager.setElementMaps( cellBlockManager, elemManager );
 
-      faceManager.buildFaces( nodeManager, elemManager, cellBlockManager );
+      faceManager.buildFaces( cellBlockManager, nodeManager, elemManager );
       nodeManager.setFaceMaps( cellBlockManager, faceManager );
 
-      edgeManager.buildEdges( nodeManager, faceManager, cellBlockManager );
+      edgeManager.buildEdges( cellBlockManager, nodeManager, faceManager );
       nodeManager.setEdgeMaps( cellBlockManager, edgeManager );
 
       domain.generateSets();

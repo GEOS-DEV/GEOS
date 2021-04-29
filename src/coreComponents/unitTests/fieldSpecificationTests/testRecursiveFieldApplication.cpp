@@ -72,25 +72,25 @@ TEST( FieldSpecification, Recursive )
 
   CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
 
-  CellBlock & reg0Hex = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg0hex" );
+  CellBlock & reg0Hex = cellBlockManager.getCellBlocks().registerGroup< CellBlock >( "reg0hex" );
   reg0Hex.setElementType( "C3D8" );
   reg0Hex.resize( nbHexReg0 );
   auto & cellToVertexreg0Hex = reg0Hex.getElemToNode();
   cellToVertexreg0Hex.resize( nbHexReg0, 8 );
 
-  CellBlock & reg0Tet= cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg0tet" );
+  CellBlock & reg0Tet= cellBlockManager.getCellBlocks().registerGroup< CellBlock >( "reg0tet" );
   reg0Tet.setElementType( "C3D4" );
   reg0Tet.resize( nbTetReg0 );
   auto & cellToVertexreg0Tet = reg0Tet.getElemToNode();
   cellToVertexreg0Tet.resize( nbTetReg0, 4 );
 
-  CellBlock & reg1Hex = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg1hex" );
+  CellBlock & reg1Hex = cellBlockManager.getCellBlocks().registerGroup< CellBlock >( "reg1hex" );
   reg1Hex.setElementType( "C3D8" );
   reg1Hex.resize( nbHexReg1 );
   auto & cellToVertexreg1Hex = reg1Hex.getElemToNode();
   cellToVertexreg1Hex.resize( nbHexReg1, 8 );
 
-  CellBlock & reg1Tet = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg1tet" );
+  CellBlock & reg1Tet = cellBlockManager.getCellBlocks().registerGroup< CellBlock >( "reg1tet" );
   reg1Tet.setElementType( "C3D4" );
   reg1Tet.resize( nbTetReg1 );
   auto & cellToVertexreg1Tet = reg1Tet.getElemToNode();
@@ -103,8 +103,8 @@ TEST( FieldSpecification, Recursive )
   CellElementRegion & reg1 = dynamicCast< CellElementRegion & >( *elemManager.createChild( "CellElementRegion", "reg1" ) );
   reg1.addCellBlockName( reg1Hex.getName());
   reg1.addCellBlockName( reg1Tet.getName());
-  reg0.generateMesh( cellBlockManager.getGroup( keys::cellBlocks ) );
-  reg1.generateMesh( cellBlockManager.getGroup( keys::cellBlocks ) );
+  reg0.generateMesh( cellBlockManager.getCellBlocks() );
+  reg1.generateMesh( cellBlockManager.getCellBlocks() );
 
 
   /// Field Definition

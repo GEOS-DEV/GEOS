@@ -279,7 +279,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock & cellBlock = elementManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
+    CellBlock & cellBlock = elementManager.getCellBlocks().registerGroup< CellBlock >( cellBlockName );
     string elementType = m_elementType[aa++];
     cellBlock.setElementType( elementType );
   }

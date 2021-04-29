@@ -30,15 +30,6 @@ namespace geosx
 
 class CellBlock; // TODO
 
-namespace dataRepository
-{
-namespace keys
-{
-/// String for cellBlocks
-string const cellBlocks = "cellBlocks"; // TODO Hide this.
-}
-}
-
 /**
  * @class CellBlockManager
  * @brief The CellBlockManager class provides an interface to ObjectManagerBase in order to manage CellBlock data.
@@ -93,7 +84,7 @@ public:
    */
   CellBlock & getRegion( string const & regionName )
   {
-    return this->getGroup( dataRepository::keys::cellBlocks ).getGroup< CellBlock >( regionName );
+    return this->getGroup( cellBlocksKey ).getGroup< CellBlock >( regionName );
   }
 
   /**
@@ -104,7 +95,7 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    this->getGroup( dataRepository::keys::cellBlocks ).forSubGroups< CellBlock >( lambda );
+    this->getGroup( cellBlocksKey ).forSubGroups< CellBlock >( lambda );
   }
 
   /**
@@ -163,7 +154,18 @@ public:
 
   localIndex numEdges() const; // TODO Improve doc
 
+  /**
+   * @brief Returns a group containing the cell blocks as CellBlockABC instances
+   * @return
+   */
+  Group & getCellBlocks();
+
 private:
+
+  /**
+   * @brief Cell key
+   */
+  static string const cellBlocksKey;
 
   /**
    * @brief Copy constructor.
@@ -182,18 +184,11 @@ private:
    */
   const Group & getCellBlocks() const;
 
-  /**
-   * @brief Returns a group containing the cell blocks as CellBlockABC instances
-   * @return
-   */
-  Group & getCellBlocks();
-
   localIndex numCellBlocks() const;
 
   void buildNodeToEdges( localIndex numNodes );
   void buildFaceMaps( localIndex numNodes );
 
-private:
   ArrayOfArrays< localIndex >  m_faceToNodes;
   array2d< localIndex >  m_faceToElements;
   ArrayOfSets< localIndex > m_edgeToFaces;

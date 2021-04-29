@@ -124,7 +124,9 @@ void populateRegions( ElementRegionManager const & elementManager,
   }
 }
 
-void FaceManager::buildFaces( NodeManager & nodeManager, ElementRegionManager & elementManager, CellBlockManager const & cellBlockManager )
+void FaceManager::buildFaces( CellBlockManager const & cellBlockManager,
+                              NodeManager & nodeManager,
+                              ElementRegionManager & elementManager )
 {
   GEOSX_MARK_FUNCTION;
 
