@@ -62,8 +62,8 @@ public:
   GEOSX_FORCE_INLINE
   virtual void updatePressureStrain( localIndex const k,
                                      localIndex const q,
-                                     real64 const pressure,
-                                     real64 const volStrain,
+                                     real64 const & pressure,
+                                     real64 const & volStrain,
                                      real64 ( &dPerm_dVolStrain )[3] )
   {
     GEOSX_UNUSED_VAR( k );

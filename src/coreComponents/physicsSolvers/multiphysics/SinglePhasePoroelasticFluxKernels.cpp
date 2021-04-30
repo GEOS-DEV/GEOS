@@ -116,19 +116,19 @@ launch< SurfaceElementStencilWrapper >( SurfaceElementStencilWrapper const & ste
     stackArray2d< real64, maxNumFluxElems * maxStencilSize > localFluxJacobian( numFluxElems, numDofs );
 
     // compute transmissibility
-    real64 transmissiblity[2], dTrans_dPres[2]; dTrans_dAper[2];
+    real64 transmissibility[2], dTrans_dPres[2]; dTrans_dAper[2];
     stencilWrapper.computeTransmissibility( iconn,
                                                 permeability,
                                                 dPerm_dPres,
                                                 dPerm_dAper,
-                                                transmissiblity,
+                                                transmissibility,
                                                 dTrans_dPres,
                                                 dTrans_dAper );
     compute( stencilSize,
              seri[iconn],
              sesri[iconn],
              sei[iconn],
-             transmissiblity,
+             transmissibility,
              dTrans_dPres,
              dTrans_dAper,
              pres,

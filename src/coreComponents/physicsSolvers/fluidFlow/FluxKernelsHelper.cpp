@@ -24,19 +24,22 @@ namespace geosx
 namespace FluxKernelsHelper
 {
 GEOSX_HOST_DEVICE
-void FluxKernelsHelper::computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
-                                                arraySlice1d< localIndex const > const & sesri,
-                                                arraySlice1d< localIndex const > const & sei,
-                                                ElementViewConst< arrayView1d< real64 const > > const & pres,
-                                                ElementViewConst< arrayView1d< real64 const > > const & dPres,
-                                                ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                                                ElementViewConst< arrayView2d< real64 const > > const & dens,
-                                                ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                                                ElementViewConst< arrayView1d< real64 const > > const & mob,
-                                                ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-                                                real64 & fluxVal,
-                                                real64 (&dFlux_dP)[2],
-                                                real64 (&dFlux_dTrans)[2] )
+void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
+                             arraySlice1d< localIndex const > const & sesri,
+                             arraySlice1d< localIndex const > const & sei,
+                             real64 const ( &transmissibility )[2],
+                             real64 const ( &dTrans_dPres )[2],
+                             real64 const ( &dTrans_dAper )[2],
+                             ElementViewConst< arrayView1d< real64 const > > const & pres,
+                             ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                             ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                             ElementViewConst< arrayView2d< real64 const > > const & dens,
+                             ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                             ElementViewConst< arrayView1d< real64 const > > const & mob,
+                             ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+                             real64 & fluxVal,
+                             real64 (&dFlux_dP)[2],
+                             real64 (&dFlux_dTrans)[2] )
 {
   // average density
   real64 densMean = 0.0;

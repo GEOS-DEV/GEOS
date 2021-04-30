@@ -72,14 +72,10 @@ public:
   using BASE::m_poroElasticFlag;
   using BASE::m_coupledWellsFlag;
   using BASE::m_numDofPerCell;
-  using BASE::m_derivativeFluxResidual_dAperture;
   using BASE::m_fluxEstimate;
   using BASE::m_elemGhostRank;
   using BASE::m_volume;
   using BASE::m_gravCoef;
-  using BASE::m_elementArea;
-  using BASE::m_elementAperture0;
-  using BASE::m_elementAperture;
   using BASE::m_effectiveAperture;
 
 

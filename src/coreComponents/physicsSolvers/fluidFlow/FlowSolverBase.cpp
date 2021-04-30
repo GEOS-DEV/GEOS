@@ -44,14 +44,10 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_poroElasticFlag( 0 ),
   m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
-  m_derivativeFluxResidual_dAperture(),
   m_fluxEstimate(),
   m_elemGhostRank(),
   m_volume(),
-  m_gravCoef(),
-  m_elementArea(),
-  m_elementAperture0(),
-  m_elementAperture()
+  m_gravCoef()
 {
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
     setInputFlag( InputFlags::REQUIRED ).

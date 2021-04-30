@@ -54,7 +54,7 @@ public:
                                      localIndex const q,
                                      real64 const & pressure,
                                      real64 const & volStrain,
-                                     real64 ( dPerm_dVolStrain )[3] ) override
+                                     real64 ( &dPerm_dVolStrain )[3] ) override
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );

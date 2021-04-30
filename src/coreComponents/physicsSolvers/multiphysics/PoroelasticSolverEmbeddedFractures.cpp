@@ -38,7 +38,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "SinglePhasePoroelasticKernel.hpp"
-#include "SinglePhasePoroelasticEFEMKernel.hpp"
+//#include "SinglePhasePoroelasticEFEMKernel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -444,11 +444,11 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
 
 
   // 3. TODO assemble poroelastic fluxes and all derivatives
-  m_flowSolver->assembleSystem( time_n, dt,
-                                domain,
-                                dofManager,
-                                localMatrix,
-                                localRhs );
+  m_flowSolver->assemblePoroelasticFluxTerm( time_n, dt,
+                                             domain,
+                                             dofManager,
+                                             localMatrix,
+                                             localRhs );
 
 }
 
