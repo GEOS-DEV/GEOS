@@ -66,10 +66,10 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
 //    setApplyDefaultValue( -1 ).
 //    setInputFlag( InputFlags::OPTIONAL ).
 //    setDescription( "Poisson's ratio" );
-    registerWrapper( viewKeyStruct::elasticityString(), &m_useLinear ).
-      setInputFlag( InputFlags::OPTIONAL ).
-      setApplyDefaultValue( 0 ).
-      setDescription( "Flag to use linear elasticity" );
+  registerWrapper( viewKeyStruct::elasticityString(), &m_useLinear ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to use linear elasticity" );
 
   registerWrapper( viewKeyStruct::refPressureString(), &m_refPressure ).
     setApplyDefaultValue( -1 ).
@@ -190,7 +190,7 @@ void ElasticIsotropicPressureDependent::postProcessInput()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
     setApplyDefaultValue( m_defaultShearModulus );
-    
+
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropicPressureDependent, string const &, Group * const )

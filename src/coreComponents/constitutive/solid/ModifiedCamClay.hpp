@@ -215,8 +215,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 trialP;
   real64 trialQ;
-    real64 eps_v_trial;
-    real64 eps_s_trial;
+  real64 eps_v_trial;
+  real64 eps_s_trial;
   real64 deviator[6];
 
   twoInvariant::stressDecomposition( stress,
@@ -239,14 +239,16 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 // std::cout << "plastic " <<  "\n " << std::endl;
 
   //  real64 eps_s_trial = trialQ/3.0/mu;
-    if( m_useLinear )
-    {
-        eps_v_trial = trialP/bulkModulus;
-        
-    }else{
-        eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
-    }
-    
+  if( m_useLinear )
+  {
+    eps_v_trial = trialP/bulkModulus;
+
+  }
+  else
+  {
+    eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
+  }
+
   //   eps_v_trial = trialP/bulkModulus; //Linear elasticity version
   eps_s_trial = trialQ/3.0/mu;
 
@@ -263,19 +265,21 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-      
-      if( m_useLinear )
-      {
-          trialP = solution[0] * bulkModulus;
-          
-      }else{
-          trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
-          bulkModulus = -trialP/Cr;
-      }
-      
+
+    if( m_useLinear )
+    {
+      trialP = solution[0] * bulkModulus;
+
+    }
+    else
+    {
+      trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
+      bulkModulus = -trialP/Cr;
+    }
+
     //trialP = solution[0] * bulkModulus; //Linear elasticity version
     trialQ = 3. * mu * solution[1];
-   
+
     // real64 h = 1.0 / (Cc-Cr); //Linear hardening version
     pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
     // pc = oldPc + h *(eps_v_trial-solution[0]); //Linear hardening version
@@ -362,14 +366,16 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 a1= 1. + solution[2]*df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
 
-    if( m_useLinear )
-    {
-        bulkModulus = -p0/Cr;
-        
-    }else{
-        bulkModulus = -trialP/Cr;
-    }
-    
+  if( m_useLinear )
+  {
+    bulkModulus = -p0/Cr;
+
+  }
+  else
+  {
+    bulkModulus = -trialP/Cr;
+  }
+
   BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
   BB[0][1] =bulkModulus*jacobianInv[0][1];
   BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
