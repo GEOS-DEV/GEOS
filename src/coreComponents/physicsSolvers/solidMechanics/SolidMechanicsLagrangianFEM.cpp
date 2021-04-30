@@ -301,7 +301,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   ElementRegionManager const & elementRegionManager = mesh.getElemManager();
 
   arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
-  mass.setValues< serialPolicy >( 0.0 );
+  mass.zero();
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
@@ -978,8 +978,8 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
-  localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
-  localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
+  localMatrix.zero();
+  localRhs.zero();
 
   if( m_effectiveStress==1 )
   {
@@ -1245,7 +1245,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager.totalDisplacement();
     arrayView2d< real64 > const fc = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::contactForceString() );
-    fc.setValues< serialPolicy >( 0 );
+    fc.zero();
 
     arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
