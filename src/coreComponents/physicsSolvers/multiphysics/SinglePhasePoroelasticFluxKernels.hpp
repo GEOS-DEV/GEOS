@@ -77,11 +77,16 @@ struct PermeabilityKernel
     } );
   }
 
-  template< typename POLICY, typename PERM_WRAPPER >
+  template< typename POLICY, typename PERM_WRAPPER, typename FE_TYPE >
   static void
   launch( SortedArrayView< localIndex const > const & targetSet,
+          FE_TYPE finiteElementSpace,
           PERM_WRAPPER const & permWrapper,
-          arrayView2d< real64 const > const & displacement )
+          arrayView1d< real64 const > const & pressure,
+          arrayView2d< real64 const > const & porosity,
+          arrayView1d< real64 const > const & dPorosity_dVolStrain,
+          arrayView2d< real64 const > const & displacement,
+          arrayView3d< real64 > const & dPerm_dDisplacement )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -134,7 +139,8 @@ struct EmbeddedSurfaceFluxKernel
   launch( STENCIL_WRAPPER_TYPE const & stencilWrapper,
           real64 const dt,
           globalIndex const rankOffset,
-          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< globalIndex const > > const & pressureDofNumber,
+          ElementViewConst< arrayView1d< globalIndex const > > const & jumpDofNumber,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
@@ -145,6 +151,7 @@ struct EmbeddedSurfaceFluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
           ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
           R1Tensor const &  gravityVector,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -163,6 +170,7 @@ struct EmbeddedSurfaceFluxKernel
            arraySlice1d< localIndex const > const & sei,
            real64 const (&transmissibility)[2],
            real64 const (&dTrans_dPres)[2],
+           real64 const (&dTrans_dAper)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -215,7 +223,8 @@ struct FaceElementFluxKernel
   launch( STENCIL_WRAPPER_TYPE const & stencilWrapper,
           real64 const dt,
           globalIndex const rankOffset,
-          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< globalIndex const > > const & pressureDofNumber,
+          ElementViewConst< arrayView1d< globalIndex const > > const & jumpDofNumber,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
@@ -226,10 +235,12 @@ struct FaceElementFluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
           ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
           R1Tensor const &  gravityVector,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs );
+          arrayView1d< real64 > const & localRhs,
+          CRSMatrixView< real64, localIndex const > const & dR_dAper );
 
   /**
    * @brief Compute flux and its derivatives for a given tpfa connector.
@@ -244,6 +255,7 @@ struct FaceElementFluxKernel
            arraySlice1d< localIndex const > const & sei,
            real64 const (&transmissibility)[2],
            real64 const (&dTrans_dPres)[2],
+           real64 const (&dTrans_dAper)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -253,7 +265,8 @@ struct FaceElementFluxKernel
            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
            real64 const dt,
            arraySlice1d< real64 > const & flux,
-           arraySlice2d< real64 > const & fluxJacobian );
+           arraySlice2d< real64 > const & fluxJacobian,
+           arraySlice2d< real64 > const & dFlux_dAperture );
 };
 
 

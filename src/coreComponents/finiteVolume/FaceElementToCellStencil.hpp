@@ -120,14 +120,20 @@ public:
   }
 
   template< typename PERMTYPE >
-  void computeTransmissibility( localIndex iconn,
-                                PERMTYPE permeability,
-                                real64 ( &transmissibility )[2] ) const;
+    void computeTransmissibility( localIndex iconn,
+                                  PERMTYPE permeability,
+                                  PERMTYPE dPerm_dPressure,
+                                  real64 (& transmissibility)[2],
+                                  real64 (& dTrans_dPressure )[2] ) const;
 
-  template< typename PERMTYPE >
-  void dTrans_dPressure( localIndex iconn,
-                         PERMTYPE dPerm_dPressure,
-                         real64 ( &dTrans_dPressure )[2] ) const;
+ template< typename PERMTYPE >
+    void computeTransmissibility( localIndex iconn,
+                                  PERMTYPE permeability,
+                                  PERMTYPE dPerm_dPressure,
+                                  PERMTYPE dPerm_dAperture,
+                                  real64 (& transmissibility)[2],
+                                  real64 (& dTrans_dPressure )[2],
+                                  real64 (& dTrans_dAperture )[2] ) const;
 
 private:
 
@@ -213,7 +219,9 @@ private:
 template< typename PERMTYPE >
 void FaceElementToCellStencilWrapper::computeTransmissibility( localIndex iconn,
                                                                PERMTYPE permeability,
-                                                               real64 (& transmissibility)[2] ) const
+                                                               PERMTYPE dPerm_dPressure,
+                                                               real64 (& transmissibility)[2],
+                                                               real64 (& dTrans_dPressure )[2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
@@ -231,20 +239,35 @@ void FaceElementToCellStencilWrapper::computeTransmissibility( localIndex iconn,
 }
 
 template< typename PERMTYPE >
-void FaceElementToCellStencilWrapper::dTrans_dPressure( localIndex iconn,
-                                                        PERMTYPE dPerm_dPressure,
-                                                        real64 (& dTrans_dPressure )[2] ) const
+void FaceElementToCellStencilWrapper::computeTransmissibility( localIndex iconn,
+                                                               PERMTYPE permeability,
+                                                               PERMTYPE dPerm_dPressure,
+                                                               PERMTYPE dPerm_dAperture,
+                                                               real64 (& transmissibility)[2],
+                                                               real64 (& dTrans_dPressure )[2],
+                                                               real64 (& dTrans_dAperture )[2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  // TODO fix this with proper derivative calculation.
-  real64 const dhalfTrans = m_weights[iconn][0] * dPerm_dPressure[er0][esr0][ei0][0][0];
+  real64 halfTrans = m_weights[iconn][0];
 
-  dTrans_dPressure[0] = dhalfTrans;
-  dTrans_dPressure[1] = dhalfTrans;
+  real64 faceConormal[3];
+
+  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  halfTrans *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal ) * m_transMultiplier[iconn];
+
+  transmissibility[0] = halfTrans;
+  transmissibility[1] = -halfTrans;
+
+  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
+  dTrans_dPressure[1] = 0.0;
+
+  dTrans_dAperture[0] = 0.0 * dPerm_dAperture[er0][esr0][ei0][0][0];
+  dTrans_dAperture[1] = 0.0;
 }
+
 
 } /* namespace geosx */
 

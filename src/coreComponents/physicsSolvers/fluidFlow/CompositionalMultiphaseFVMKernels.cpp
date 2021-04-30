@@ -564,8 +564,12 @@ FluxKernel::
 
     // compute transmissibility
     real64 transmissiblity[2], dTrans_dPres[2];
-    stencilWrapper.computeTransmissibility( iconn, permeability, transmissiblity );
-    stencilWrapper.dTrans_dPressure( iconn, dPerm_dPres, dTrans_dPres );
+    stencilWrapper.computeTransmissibility( iconn,
+                                            permeability,
+                                            dPerm_dPres,
+                                            transmissiblity,
+                                            dTrans_dPres );
+
 
     FluxKernel::compute< NC, MAX_NUM_ELEMS, MAX_STENCIL_SIZE >( numPhases,
                                                                 stencilSize,

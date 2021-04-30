@@ -425,22 +425,22 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
                                          m_flowSolver->fluidModelNames() );
 
   // 2.  Add EFEM poroelastic contribution
-   m_solidSolver->getMaxForce() =
-       finiteElement::
-       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-       constitutive::SolidBase,
-       CellElementSubRegion,
-       PoroelasticEFEMKernels::SinglePhase >( mesh,
-                                              targetRegionNames(),
-                                              this->getDiscretizationName(),
-                                              m_solidSolver->solidMaterialNames(),
-                                              dispDofNumber,
-                                              pDofKey,
-                                              dofManager.rankOffset(),
-                                              localMatrix,
-                                              localRhs,
-                                              gravityVectorData,
-                                              m_flowSolver->fluidModelNames() );
+//   m_solidSolver->getMaxForce() =
+//       finiteElement::
+//       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+//       constitutive::SolidBase,
+//       CellElementSubRegion,
+//       PoroelasticEFEMKernels::SinglePhase >( mesh,
+//                                              targetRegionNames(),
+//                                              this->getDiscretizationName(),
+//                                              m_solidSolver->solidMaterialNames(),
+//                                              dispDofNumber,
+//                                              pDofKey,
+//                                              dofManager.rankOffset(),
+//                                              localMatrix,
+//                                              localRhs,
+//                                              gravityVectorData,
+//                                              m_flowSolver->fluidModelNames() );
 
 
   // 3. TODO assemble poroelastic fluxes and all derivatives
@@ -458,8 +458,6 @@ void PoroelasticSolverEmbeddedFractures::assembleCouplingTerms( DomainPartition 
                                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  assembleFractureFlowResidualWrtJump( domain, dofManager, localMatrix, localRhs );
 
   assembleTractionBalanceResidualWrtPressure( domain, dofManager, localMatrix, localRhs );
 }
@@ -625,85 +623,6 @@ void PoroelasticSolverEmbeddedFractures::
   } );
 }
 
-void PoroelasticSolverEmbeddedFractures::
-  assembleFractureFlowResidualWrtJump( DomainPartition const & domain,
-                                       DofManager const & dofManager,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                       arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  GEOSX_UNUSED_VAR( localRhs );
-
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString ());
-  string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
-
-  globalIndex const rankOffset = dofManager.rankOffset();
-
-  CRSMatrixView< real64 const, localIndex const > const &
-  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
-
-  forTargetSubRegionsComplete< EmbeddedSurfaceSubRegion >( mesh,
-                                                           [&]( localIndex const,
-                                                                localIndex const,
-                                                                localIndex const,
-                                                                ElementRegionBase const & region,
-                                                                EmbeddedSurfaceSubRegion const & subRegion )
-  {
-    string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
-    SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
-
-    arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
-    arrayView1d< globalIndex const > const jumpDofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
-
-    arrayView2d< real64 const > const dens = fluid.density();
-
-    arrayView1d< real64 const > const area = subRegion.getElementArea();
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex ei )
-    {
-      globalIndex const elemDOF = presDofNumber[ei];
-      // row number associated to the pressure dof
-      globalIndex rowNumber = elemDOF - rankOffset;
-
-      real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
-      globalIndex const jumpDOF = jumpDofNumber[ei];
-
-      if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
-      {
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                          &jumpDOF,
-                                                                          &dAccumulationResidualdAperture,
-                                                                          1 );
-      }
-
-      // flux derivative
-      localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
-
-      for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
-      {
-        real64 dRdAper = values[kfe2];
-        localIndex const ei2 = columns[kfe2];
-
-        globalIndex const jumpDOF2 = jumpDofNumber[ei2];
-
-        if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
-        {
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                            &jumpDOF2,
-                                                                            &dRdAper,
-                                                                            1 );
-        }
-      }
-    } );
-  } );
-
-}
-
 void PoroelasticSolverEmbeddedFractures::applyBoundaryConditions( real64 const time_n,
                                                                   real64 const dt,
                                                                   DomainPartition & domain,
@@ -830,10 +749,11 @@ void PoroelasticSolverEmbeddedFractures::applySystemSolution( DofManager const &
 
 void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
 {
-  m_fracturesSolver->updateState( domain );
-  m_flowSolver->updateState( domain );
+  /// 1. update the reservoir
+  PoroelasticSolver::updateState( domain );
 
-  // update aperture to be equal to the normal displacement jump and traction on the fracture to include the pressure contribution
+  /// 2. update the fractures
+
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -842,7 +762,8 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
   ContactRelationBase const &
   contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
 
-  elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
+  this->template forTargetSubRegions< EmbeddedSurfaceSubRegion >( mesh, [&] ( localIndex const targetIndex,
+                                                                              auto & subRegion )
   {
     arrayView2d< real64 const > const dispJump =
       subRegion.getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
@@ -872,17 +793,25 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
 
     forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
     {
+      // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0];   // the first component of the jump is the normal one.
 
       effectiveAperture[k] = contactRelation.effectiveAperture( aperture[k] );
 
       deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
 
+      // traction on the fracture to include the pressure contribution
       contactRelation.addPressureToTraction( pressure[k] + deltaPressure[k], fractureTraction[k] );
 
       bool open = aperture[k] >= 0 ? true : false;
       contactRelation.dTraction_dPressure( dTdpf[k], open );
     } );
+
+    // update fracture's permeability and porosity
+    m_flowSolver->updateSolidFlowProperties( subRegion, targetIndex );
+    // update fluid model
+    m_flowSolver->updateFluidState(subRegion, targetIndex);
+
   } );
 }
 
