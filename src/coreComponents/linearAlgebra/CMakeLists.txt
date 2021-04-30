@@ -91,7 +91,7 @@ if( ENABLE_HYPRE )
 
     list( APPEND linearAlgebra_headers
           interfaces/hypre/HypreExport.hpp
-          interfaces/hypre/HypreMGRStrategies.hpp
+          interfaces/hypre/HypreMGR.hpp
           interfaces/hypre/HypreMatrix.hpp
           interfaces/hypre/HypreVector.hpp
           interfaces/hypre/HyprePreconditioner.hpp
@@ -108,6 +108,7 @@ if( ENABLE_HYPRE )
 
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
+          interfaces/hypre/HypreMGR.cpp
           interfaces/hypre/HypreMatrix.cpp
           interfaces/hypre/HypreVector.cpp
           interfaces/hypre/HyprePreconditioner.cpp

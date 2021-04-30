@@ -13,13 +13,16 @@
  */
 
 /**
- * @file HypreMGRStrategies.hpp
+ * @file HypreMGR.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSTRATEGIES_HPP_
 
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+
 
 #include <_hypre_utilities.h>
 
@@ -114,6 +117,11 @@ protected:
     }
   }
 };
+
+void createMGR( LinearSolverParameters const & params,
+                DofManager const * const dofManager,
+                HyprePrecWrapper & precond,
+                HypreMGRData & mgrData );
 
 } // namespace mgr
 

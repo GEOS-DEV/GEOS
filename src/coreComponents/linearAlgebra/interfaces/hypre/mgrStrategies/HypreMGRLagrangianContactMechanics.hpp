@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRLAGRANGIACONTACTMECHANICS_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRLAGRANGIACONTACTMECHANICS_HPP_
 
-#include "linearAlgebra/interfaces/hypre/HypreMGRStrategies.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
 namespace geosx
 {

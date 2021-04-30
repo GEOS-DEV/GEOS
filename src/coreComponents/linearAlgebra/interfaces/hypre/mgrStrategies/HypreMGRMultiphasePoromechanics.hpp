@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICS_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICS_HPP_
 
-#include "linearAlgebra/interfaces/hypre/HypreMGRStrategies.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
 namespace geosx
 {
