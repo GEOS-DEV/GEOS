@@ -58,56 +58,53 @@ void RegisterAndApplyField( DomainPartition & domain,
 
 TEST( FieldSpecification, Recursive )
 {
-
   // Mesh Definitions
-  localIndex nbTetReg0 = 30;
-  localIndex nbHexReg0 = 60;
-  localIndex nbTetReg1 = 40;
-  localIndex nbHexReg1 = 50;
+  localIndex const nbTetReg0 = 30;
+  localIndex const nbHexReg0 = 60;
+  localIndex const nbTetReg1 = 40;
+  localIndex const nbHexReg1 = 50;
 
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( "body" );
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
 
-  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
-
-  CellBlock & reg0Hex = cellBlockManager.registerCellBlock( "reg0hex" );
-  reg0Hex.setElementType( "C3D8" );
-  reg0Hex.resize( nbHexReg0 );
-  auto & cellToVertexreg0Hex = reg0Hex.getElemToNode();
-  cellToVertexreg0Hex.resize( nbHexReg0, 8 );
-
-  CellBlock & reg0Tet= cellBlockManager.registerCellBlock( "reg0tet" );
-  reg0Tet.setElementType( "C3D4" );
-  reg0Tet.resize( nbTetReg0 );
-  auto & cellToVertexreg0Tet = reg0Tet.getElemToNode();
-  cellToVertexreg0Tet.resize( nbTetReg0, 4 );
-
-  CellBlock & reg1Hex = cellBlockManager.registerCellBlock( "reg1hex" );
-  reg1Hex.setElementType( "C3D8" );
-  reg1Hex.resize( nbHexReg1 );
-  auto & cellToVertexreg1Hex = reg1Hex.getElemToNode();
-  cellToVertexreg1Hex.resize( nbHexReg1, 8 );
-
-  CellBlock & reg1Tet = cellBlockManager.registerCellBlock( "reg1tet" );
-  reg1Tet.setElementType( "C3D4" );
-  reg1Tet.resize( nbTetReg1 );
-  auto & cellToVertexreg1Tet = reg1Tet.getElemToNode();
-  cellToVertexreg1Tet.resize( nbTetReg1, 4 );
-
   ElementRegionManager & elemManager = meshLevel0.getElemManager();
   CellElementRegion & reg0 = dynamicCast< CellElementRegion & >( *elemManager.createChild( "CellElementRegion", "reg0" ) );
-  reg0.addCellBlockName( reg0Hex.getName());
-  reg0.addCellBlockName( reg0Tet.getName());
   CellElementRegion & reg1 = dynamicCast< CellElementRegion & >( *elemManager.createChild( "CellElementRegion", "reg1" ) );
-  reg1.addCellBlockName( reg1Hex.getName());
-  reg1.addCellBlockName( reg1Tet.getName());
-  reg0.generateMesh( cellBlockManager.getCellBlocks() );
-  reg1.generateMesh( cellBlockManager.getCellBlocks() );
 
-  // The cell block manager should not be used anymore.
-  domain.deregisterGroup( keys::cellManager );
+  // Cell blocks should only be used to define the sub regions.
+  // This scope protection is there to make them disappear from the rest of the test.
+  {
+    CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+
+    CellBlock & reg0Hex = cellBlockManager.registerCellBlock( "reg0hex" );
+    reg0Hex.setElementType( "C3D8" );
+    reg0Hex.resize( nbHexReg0 );
+
+    CellBlock & reg0Tet = cellBlockManager.registerCellBlock( "reg0tet" );
+    reg0Tet.setElementType( "C3D4" );
+    reg0Tet.resize( nbTetReg0 );
+
+    CellBlock & reg1Hex = cellBlockManager.registerCellBlock( "reg1hex" );
+    reg1Hex.setElementType( "C3D8" );
+    reg1Hex.resize( nbHexReg1 );
+
+    CellBlock & reg1Tet = cellBlockManager.registerCellBlock( "reg1tet" );
+    reg1Tet.setElementType( "C3D4" );
+    reg1Tet.resize( nbTetReg1 );
+
+    reg0.addCellBlockName( reg0Hex.getName() );
+    reg0.addCellBlockName( reg0Tet.getName() );
+    reg0.generateMesh( cellBlockManager.getCellBlocks() );
+
+    reg1.addCellBlockName( reg1Hex.getName() );
+    reg1.addCellBlockName( reg1Tet.getName() );
+    reg1.generateMesh( cellBlockManager.getCellBlocks() );
+
+    // The cell block manager should not be used anymore.
+    domain.deregisterGroup( keys::cellManager );
+  }
 
   /// Field Definition
   reg0.getSubRegion( "reg0hex" ).registerWrapper< array1d< real64 > >( "field0" );
@@ -174,7 +171,10 @@ TEST( FieldSpecification, Recursive )
   {
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      GEOSX_ERROR_IF( field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set" );
+      real64 const & value = field0[er][esr][ei];
+      // This `value < x || value > x` is there because of compiler warning (converted to error)
+      // making floating points comparisons using `==` impossible even for integers...
+      GEOSX_ERROR_IF( value < 1. || value > 1., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
     } );
   } );
 
@@ -183,23 +183,23 @@ TEST( FieldSpecification, Recursive )
   {
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      GEOSX_ERROR_IF( field1[0][esr][ei] < 2. || field1[0][esr][ei] > 2., "Recursive fields are not set" );
+      real64 const & value = field1[0][esr][ei];
+      GEOSX_ERROR_IF( value < 2. || value > 2., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
     } );
   } );
 
-  forAll< serialPolicy >( reg0Hex.size(), [=] ( localIndex const ei )
+  forAll< serialPolicy >( nbHexReg0, [=] ( localIndex const ei )
   {
-    GEOSX_ERROR_IF( field2[0][0][ei] < 1. || field2[0][0][ei] > 3., "Recursive fields are not set" );
+    real64 const & value = field2[0][0][ei];
+    GEOSX_ERROR_IF( value < 3. || value > 3., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
   } );
 
-  forAll< serialPolicy >( reg1Tet.size(), [=] ( localIndex const ei )
+  forAll< serialPolicy >( nbTetReg1, [=] ( localIndex const ei )
   {
-    GEOSX_ERROR_IF( field3[1][1][ei] < 4. || field3[1][1][ei] > 4., "Recursive fields are not set" );
+    real64 const & value = field3[1][1][ei];
+    GEOSX_ERROR_IF( value < 4. || value > 4., "Recursive fields are not set, value is " + std::to_string( value ) + "." );
   } );
-
-
 }
-
 
 int main( int argc, char * * argv )
 {

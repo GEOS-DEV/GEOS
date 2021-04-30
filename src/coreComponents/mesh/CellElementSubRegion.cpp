@@ -89,19 +89,19 @@ void CellElementSubRegion::setElementType( string const & elementType )
     GEOSX_ERROR( "Error.  Don't know what kind of element this is." );
   }
 
-  m_toNodesRelation.resize( 0, m_numNodesPerElement );
-  m_toEdgesRelation.resize( 0, m_numEdgesPerElement );
-  m_toFacesRelation.resize( 0, m_numFacesPerElement );
-
+  // If `setElementType` is called after the resize, the first dimension would be removed.
+  // We do not want that so we try to keep it.
+  m_toNodesRelation.resize( this->size(), m_numNodesPerElement );
+  m_toEdgesRelation.resize( this->size(), m_numEdgesPerElement );
+  m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
 }
-
 
 void CellElementSubRegion::copyFromCellBlock( CellBlockABC & source )
 {
-  this->setElementType( source.getElementTypeString());
+  this->setElementType( source.getElementTypeString() );
   this->setNumNodesPerElement( source.numNodesPerElement() );
   this->setNumFacesPerElement( source.numFacesPerElement() );
-  this->resize( source.size());
+  this->resize( source.size() );
   this->nodeList() = source.getElemToNode();
   this->edgeList() = source.getElemToEdges();
   this->faceList() = source.getElemToFaces();

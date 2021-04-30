@@ -59,9 +59,11 @@ void CellBlock::setElementType( string const & elementType )
     GEOSX_ERROR( "Error.  Don't know what kind of element this is." );
   }
 
-  m_elementsToNodes.resize( 0, m_numNodesPerElement );
-  m_elementsToEdges.resize( 0, m_numEdgesPerElement );
-  m_elementsToFaces.resize( 0, m_numFacesPerElement );
+  // If `setElementType` is called after the resize, the first dimension would be removed.
+  // We do not want that so we try to keep it.
+  m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement );
+  m_elementsToEdges.resize( this->numElements(), m_numEdgesPerElement );
+  m_elementsToFaces.resize( this->numElements(), m_numFacesPerElement );
 }
 
 void CellBlock::resize( dataRepository::indexType const numCells )
