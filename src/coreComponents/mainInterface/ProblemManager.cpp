@@ -539,6 +539,9 @@ void ProblemManager::generateMesh()
     }
   }
 
+  // The cell block manager is not meant to be used anymore, let's free space.
+  domain.deregisterGroup( keys::cellManager );
+
   GEOSX_THROW_IF_NE( meshBodies.numSubGroups(), 1, InputError );
   MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
 

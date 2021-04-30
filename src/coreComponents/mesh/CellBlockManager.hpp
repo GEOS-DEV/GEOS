@@ -22,9 +22,6 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/generators/CellBlock.hpp"
 
-#include <map>
-#include <vector>
-
 namespace geosx
 {
 

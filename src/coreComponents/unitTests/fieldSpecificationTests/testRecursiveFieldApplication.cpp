@@ -106,6 +106,8 @@ TEST( FieldSpecification, Recursive )
   reg0.generateMesh( cellBlockManager.getCellBlocks() );
   reg1.generateMesh( cellBlockManager.getCellBlocks() );
 
+  // The cell block manager should not be used anymore.
+  domain.deregisterGroup( keys::cellManager );
 
   /// Field Definition
   reg0.getSubRegion( "reg0hex" ).registerWrapper< array1d< real64 > >( "field0" );

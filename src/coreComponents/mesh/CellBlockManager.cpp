@@ -14,6 +14,8 @@
 
 #include "CellBlockManager.hpp"
 
+#include <vector>
+
 namespace geosx
 {
 using namespace dataRepository;
