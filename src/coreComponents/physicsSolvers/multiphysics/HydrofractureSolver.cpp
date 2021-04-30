@@ -531,7 +531,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
               real64 opening[3] = {0.0, 0.0, 0.0};
               LvArray::tensorOps::add< 3 >( opening, totalDisplacement[parentNode] );
               LvArray::tensorOps::subtract< 3 >( opening, totalDisplacement[childNode] );
-              real64 const openingMag = -LvArray::tensorOps::AiBi< 3 >( opening, faceNormal[parentFace] );
+              real64 openingMag = -LvArray::tensorOps::AiBi< 3 >( opening, faceNormal[parentFace] );
 
               if (m_regimeTypeOption == RegimeTypeOption::ToughnessDominated)
               {
@@ -540,13 +540,17 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
               else if (m_regimeTypeOption == RegimeTypeOption::ViscosityDominated)
               {
                 real64 const betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
-                real64 b = Eprime/mup * dt * pow(openingMag/betam, 3.0);
-                //GEOSX_ERROR_IF_LE(b, 0.0);
-                if (b <= 0.0)
+                if (openingMag < 0)
                 {
-                  std::cout << "Warning: negative opening = " << openingMag << std::endl;
-                  b = -b;
+                  openingMag = 1.0e-5;
                 }
+                real64 b = Eprime/mup * dt * pow(openingMag/betam, 3.0);
+                GEOSX_ERROR_IF_LE(b, 0.0);
+                //if (b <= 0.0)
+                //{
+                //  std::cout << "Warning: negative opening = " << openingMag << std::endl;
+                //  b = -b;
+                //}
 
                 // the location of the node that is under split
                 real64 const nodeLoc[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[parentNode] );
@@ -600,11 +604,11 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
 
                 GEOSX_ERROR_IF_GE(nodeF, 0.0);
                 GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b )/b, 1.0e-4);
-                if (std::abs(nodeF) < 1.0e-3)
-                {
-                  std::cout << "Warning: node " << parentNode << "signed distance is tiny: " << nodeF << std::endl;
-                  nodeF = -1.0e-3;
-                }
+                //if (std::abs(nodeF) < 1.0e-3)
+                //{
+                //  std::cout << "Warning: node " << parentNode << "signed distance is tiny: " << nodeF << std::endl;
+                //  nodeF = -1.0e-3;
+                //}
 
                 signedNodeDistance[parentNode] = nodeF;
               }

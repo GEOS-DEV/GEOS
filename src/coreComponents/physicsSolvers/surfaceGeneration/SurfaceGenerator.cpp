@@ -1176,7 +1176,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
           {
             GEOSX_ERROR("Unknown propagation regime.");
           }
-
+/*
           if (halfOpening < 1.0e-4)
           {
             GEOSX_LOG_RANK("");
@@ -1195,7 +1195,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
             halfOpening = 1.0e-2;
             std::cout << "Decrease it to " << halfOpening << std::endl;
           }
-
+*/
           for (localIndex iFace : nodesToRupturedFaces[nodeID])
           {
             //iFace is the parent face
