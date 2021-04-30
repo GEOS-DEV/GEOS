@@ -93,8 +93,17 @@ public:
   localIndex numElements() const override
   { return size(); }
 
+  /**
+   * @brief Returns the nodes of face @p iFace of element @p iElement.
+   * @param iElement The element index.
+   * @param iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
+   * @return Sorted list of indices.
+   *
+   * The result is sorted from lower to larger node indices values.
+   * The result is exactly the size of the number of nodes.
+   */
   std::vector< localIndex > getFaceNodes( localIndex iElement,
-                                          localIndex iFace ) const override;
+                                          localIndex iFace ) const;
 
   /**
   * @brief Get the element to nodes mapping, non-const version.

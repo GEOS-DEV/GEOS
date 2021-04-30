@@ -86,18 +86,6 @@ public:
   virtual arrayView1d< globalIndex const > localToGlobalMap() const = 0;
 
   /**
-   * @brief Returns the nodes of face @p iFace of element @p iElement.
-   * @param iElement The element index.
-   * @param iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
-   * @return Sorted list of indices.
-   *
-   * The result is sorted from lower to larger node indices values.
-   * The result is exactly the size of the number of nodes.
-   */
-  virtual std::vector< localIndex > getFaceNodes( localIndex iElement,
-                                                  localIndex iFace ) const = 0;
-
-  /**
    * @brief Helper function to apply a lambda function over all the external properties of the subregion
    * @tparam LAMBDA the type of the lambda function
    * @param lambda lambda function that is applied to the wrappers of external properties

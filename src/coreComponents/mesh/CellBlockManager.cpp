@@ -660,7 +660,7 @@ ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNo
   // Can be improved.
   for( localIndex iCellBlock = 0; iCellBlock < cellBlocks.numSubGroups(); ++iCellBlock )
   {
-    const CellBlockABC & cb = cellBlocks.getGroup< CellBlockABC >( iCellBlock );
+    const CellBlock & cb = cellBlocks.getGroup< CellBlock >( iCellBlock );
     localIndex const numFacesPerElement = cb.numFacesPerElement();
     localIndex const numElements = cb.numElements();
 
