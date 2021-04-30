@@ -11,10 +11,10 @@ The `Delft-Egg  <https://link.springer.com/chapter/10.1007%2F978-94-011-1046-4_1
 .. math::
   f = q^2 - M^2 \, p \left(\frac{2 \alpha}{\alpha+1} p_c -p \right) = 0 \quad (\text{for } p_c \leq \frac{\alpha}{\alpha+1} )
 
-where :math:`\alpha \geq 1` is the shape parameter. For :math:`\alpha = 1` leads to a MCC model with an ellipsoidal yield surface. For :math:`\alpha > 1`, the Delft-Egg model with an egg-shaped yield surface will result. 
+where :math:`\alpha \geq 1` is the shape parameter. For :math:`\alpha = 1`, this model leads to a Modified Cam-Clay (MCC) model with an ellipsoidal yield surface. For :math:`\alpha > 1`, the Delft-Egg model with an egg-shaped yield surface is obtained. 
 The rest of the implementation follows the same procedure as the Modified Cam-Clay model. 
 
-In GEOSX we use a single implementation which is called Modified Cam-Clay and can accommodate both MCC and Delft-Egg models. 
+In GEOSX, we use a single implementation which is called Modified Cam-Clay and can accommodate both MCC and Delft-Egg models. To obtain the MCC, simply set :math:`\alpha = 1`, which is called the shape parameter. 
 
 Parameters
 ~~~~~~~~~~~~~~~~~~~~
