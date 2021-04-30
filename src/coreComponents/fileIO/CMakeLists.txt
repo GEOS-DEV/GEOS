@@ -63,19 +63,9 @@ if( ENABLE_VTK )
   list( APPEND dependencyList VTK::CommonCore VTK::CommonSystem VTK::CommonMisc VTK::IOCore VTK::IOXML VTK::expat VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::loguru )
 endif()
 
-if( ENABLE_OPENMP )
-  list( APPEND dependencyList openmp )
-endif()
-
 if ( ENABLE_CUDA )
   list( APPEND dependencyList  cuda )
 endif()
-
-if( ENABLE_CALIPER )
-  list( APPEND dependencyList  caliper adiak )
-endif()
-
-
 
 blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}

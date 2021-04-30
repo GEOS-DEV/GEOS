@@ -18,11 +18,7 @@ set( dependencyList gtest )
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
 else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)
-endif()
-
-if( ENABLE_MPI )
-    set( dependencyList ${dependencyList} mpi )
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
 endif()
 
 if( ENABLE_PVTPackage )
@@ -31,10 +27,6 @@ if( ENABLE_PVTPackage )
           testCO2BrinePVTModels.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if( ENABLE_CUDA )
