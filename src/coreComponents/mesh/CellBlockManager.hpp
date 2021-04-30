@@ -189,6 +189,13 @@ public:
    */
   Group & getCellBlocks();
 
+  /**
+   * @brief Registers and returns a cell block of name @p name.
+   * @param name The name of the created cell block.
+   * @return A reference to the new cell block. CellBlockManager owns this new instance.
+   */
+  CellBlock & registerCellBlock( string name );
+
 private:
 
   /**

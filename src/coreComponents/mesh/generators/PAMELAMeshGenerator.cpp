@@ -160,8 +160,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       if( cellBlockName == "HEX" )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        cellBlock =
-          &cellBlockManager.getCellBlocks().registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
+        cellBlock = &cellBlockManager.registerCellBlock( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
         cellBlock->setElementType( "C3D8" );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
@@ -201,8 +200,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       else if( cellBlockName == "TETRA" )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        cellBlock =
-          &cellBlockManager.getCellBlocks().registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
+        cellBlock = &cellBlockManager.registerCellBlock( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
         cellBlock->setElementType( "C3D4" );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
@@ -234,8 +232,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       else if( cellBlockName == "WEDGE" )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        cellBlock =
-          &cellBlockManager.getCellBlocks().registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
+        cellBlock = &cellBlockManager.registerCellBlock( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
         cellBlock->setElementType( "C3D6" );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
@@ -271,8 +268,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       else if( cellBlockName == "PYRAMID" )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        cellBlock =
-          &cellBlockManager.getCellBlocks().registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
+        cellBlock = &cellBlockManager.registerCellBlock( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
         cellBlock->setElementType( "C3D5" );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
