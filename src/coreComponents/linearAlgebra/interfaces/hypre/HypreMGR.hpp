@@ -118,6 +118,13 @@ protected:
   }
 };
 
+/**
+ * @brief Create the MGR preconditioner object.
+ * @param params preconditioner parameters
+ * @param dofManager pointer to DofManager for the linear system
+ * @param precond the preconditioner
+ * @param mgrData auxiliary data for MGR
+ */
 void createMGR( LinearSolverParameters const & params,
                 DofManager const * const dofManager,
                 HyprePrecWrapper & precond,
