@@ -102,8 +102,8 @@ public:
    * The result is sorted from lower to larger node indices values.
    * The result is exactly the size of the number of nodes.
    */
-  std::vector< localIndex > getFaceNodes( localIndex iElement,
-                                          localIndex iFace ) const;
+  array1d< localIndex > getFaceNodes( localIndex iElement,
+                                      localIndex iFace ) const;
 
   /**
   * @brief Get the element to nodes mapping, non-const version.

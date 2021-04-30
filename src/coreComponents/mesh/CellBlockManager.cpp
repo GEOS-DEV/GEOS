@@ -117,7 +117,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
  */
 struct NodesAndElementOfFace
 {
-  NodesAndElementOfFace( std::vector< localIndex > nodes_, localIndex element_, localIndex iCellBlock_, localIndex iFace_ ):
+  NodesAndElementOfFace( array1d< localIndex > nodes_, localIndex element_, localIndex iCellBlock_, localIndex iFace_ ):
     nodes( nodes_ ),
     element( element_ ),
     iCellBlock( iCellBlock_ ),
@@ -134,7 +134,11 @@ struct NodesAndElementOfFace
    */
   bool operator<( NodesAndElementOfFace const & rhs ) const
   {
-    return sortedNodes < rhs.sortedNodes;
+    // Using some standard comparison like vector::operator<.
+    // Two subsequent NodesAndElementOfFace may still be equal
+    // We are consistent with operator==, which is what we require.
+    return std::lexicographical_compare( sortedNodes.begin(), sortedNodes.end(),
+                                         rhs.sortedNodes.begin(), rhs.sortedNodes.end() );
   }
 
   /**
@@ -144,11 +148,12 @@ struct NodesAndElementOfFace
    */
   bool operator==( NodesAndElementOfFace const & rhs ) const
   {
-    return sortedNodes == rhs.sortedNodes;
+    // Comparing term by term like STL does.
+    return ( sortedNodes.size() == rhs.sortedNodes.size() && std::equal( sortedNodes.begin(), sortedNodes.end(), rhs.sortedNodes.begin() ) );
   }
 
   /// The list of nodes describing the face.
-  std::vector< localIndex > nodes;
+  array1d< localIndex > nodes;
 
   /**
    * @brief The element to which this face belongs.
@@ -164,7 +169,7 @@ struct NodesAndElementOfFace
 
 private:
   /// Sorted nodes describing the face; mainly for comparison reasons.
-  std::vector< localIndex > sortedNodes;
+  array1d< localIndex > sortedNodes;
 };
 
 /**
@@ -670,8 +675,8 @@ ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNo
       for( localIndex iFace = 0; iFace < numFacesPerElement; ++iFace )
       {
         // Get all the nodes of the cell
-        std::vector< localIndex > const nodesInFace = cb.getFaceNodes( iElement, iFace );
-        localIndex const & lowestNode = *std::min_element( nodesInFace.cbegin(), nodesInFace.cend() );
+        array1d< localIndex > const nodesInFace = cb.getFaceNodes( iElement, iFace );
+        localIndex const & lowestNode = *std::min_element( nodesInFace.begin(), nodesInFace.end() );
         lowestNodeToFaces.emplaceBack( lowestNode, nodesInFace, iElement, iCellBlock, iFace );
       }
     }
