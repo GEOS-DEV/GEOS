@@ -50,6 +50,7 @@ public:
    */
   ElasticIsotropicPressureDependentUpdates( real64 const & refPressure,
                                             real64 const & refStrainVol,
+                                            int const & useLinear,
                                             arrayView1d< real64 const > const & recompressionIndex,
                                             arrayView1d< real64 const > const & shearModulus,
                                             arrayView3d< real64, solid::STRESS_USD > const & newStress,
@@ -57,6 +58,7 @@ public:
     SolidBaseUpdates( newStress, oldStress ),
     m_refPressure( refPressure ),
     m_refStrainVol( refStrainVol ),
+    m_useLinear( useLinear),
     m_recompressionIndex( recompressionIndex ),
     m_shearModulus( shearModulus )
   {}
@@ -112,6 +114,9 @@ protected:
 
   /// A reference to the ArrayView holding the reference volumetric strain for each element.
   real64 const m_refStrainVol;
+    
+    /// flag to use linear elasticity
+    int const m_useLinear;
 
   /// A reference to the ArrayView holding the recompression index for each element.
   arrayView1d< real64 const > const m_recompressionIndex;
@@ -129,25 +134,36 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex c
 {
   real64 const mu     = m_shearModulus[k];
   real64 const Cr     = m_recompressionIndex[k];
+ //   int m_useLinear = 1;
 
-  real64 deviator[6];
-  real64 stress[6];
-  real64 P;
-  real64 Q;
+  real64 bulkModulus;
 
+  if( m_useLinear )
+  {
+      bulkModulus = -m_refPressure/Cr;
+      
+  }else{
+      real64 deviator[6];
+      real64 stress[6];
+      real64 P;
+      real64 Q;
+      
+      for( localIndex i=0; i<6; ++i )
+      {
+        stress[i] = m_newStress[k][q][i];
+      }
+
+      twoInvariant::stressDecomposition( stress,
+                                         P,
+                                         Q,
+                                         deviator );
+
+      bulkModulus = -P/Cr;
+  }
+    
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
-  for( localIndex i=0; i<6; ++i )
-  {
-    stress[i] = m_newStress[k][q][i];
-  }
 
-  twoInvariant::stressDecomposition( stress,
-                                     P,
-                                     Q,
-                                     deviator );
-
-  real64 bulkModulus = -P/Cr;
 
   real64 const lambda = bulkModulus - 2./3. * mu;
 
@@ -183,7 +199,10 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
   real64 stress[6];
   real64 P;
   real64 Q;
-
+  real64 elasticStrainVol;
+  real64 elasticStrainDev;
+ //   int m_useLinear=1;
+    
   for( localIndex i=0; i<6; ++i )
   {
     stress[i] = m_newStress[k][q][i];
@@ -195,9 +214,16 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
                                      deviator );
 
 
-
-  real64 elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
-  real64 elasticStrainDev = Q/3./mu;
+    if( m_useLinear )
+    {
+        real64 bulkModulus = -p0/Cr;
+        elasticStrainVol = P/bulkModulus;
+        
+    }else{
+        elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
+    }
+  
+  elasticStrainDev = Q/3./mu;
 
   twoInvariant::strainRecomposition( elasticStrainVol,
                                      elasticStrainDev,
@@ -228,12 +254,20 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   real64 oldP;
   real64 oldQ;
+  real64 P;
+  real64 Q;
   real64 oldDeviator[6];
   real64 deviator[6];
   real64 oldStrainElastic[6];
   real64 strainElasticTotal[6];
   real64 eps_s_elastic;
   real64 eps_v_elastic;
+  real64 oldElasticStrainVol;
+  real64 oldElasticStrainDev;
+    
+    real64 bulkModulus = -p0/Cr;
+  //  int m_useLinear =1;
+    
 
   for( localIndex i=0; i<6; ++i )
   {
@@ -247,9 +281,16 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
+    if( m_useLinear )
+    {
+        oldElasticStrainVol = oldP/bulkModulus;
+        
+    }else{
+        oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+    }
 
-  real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-  real64 oldElasticStrainDev = oldQ/3./mu;
+  
+  oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.
   // Note that we need the deviatoric direction (n-hat) from the previous step.
@@ -273,9 +314,16 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
                                      deviator );
 
   // Calculate trial mean and deviatoric stress
-
-  real64 P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
-  real64 Q = 3. * mu * eps_s_elastic;
+    
+    if( m_useLinear )
+    {
+        P = bulkModulus * eps_v_elastic;
+        
+    }else{
+        P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
+    }
+    
+  Q = 3. * mu * eps_s_elastic;
 
   twoInvariant::stressRecomposition( P,
                                      Q,
@@ -304,14 +352,21 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
-  real64 oldP;
-  real64 oldQ;
-  real64 oldDeviator[6];
-  real64 deviator[6];
-  real64 oldStrainElastic[6];
-  real64 strainElasticTotal[6];
-  real64 eps_s_elastic;
-  real64 eps_v_elastic;
+    real64 oldP;
+    real64 oldQ;
+    real64 P;
+    real64 Q;
+    real64 oldDeviator[6];
+    real64 deviator[6];
+    real64 oldStrainElastic[6];
+    real64 strainElasticTotal[6];
+    real64 eps_s_elastic;
+    real64 eps_v_elastic;
+    real64 oldElasticStrainVol;
+    real64 oldElasticStrainDev;
+      
+      real64 bulkModulus = -p0/Cr;
+   //   int m_useLinear =1;
 
   for( localIndex i=0; i<6; ++i )
   {
@@ -326,8 +381,15 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-  real64 oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-  real64 oldElasticStrainDev = oldQ/3./mu;
+    if( m_useLinear )
+    {
+        oldElasticStrainVol = oldP/bulkModulus;
+        
+    }else{
+        oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+    }
+    
+  oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.
   // Note that we need the deviatoric direction (n-hat) from the previous step.
@@ -352,14 +414,27 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // Calculate mean and deviatoric stress
 
-  real64 P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
-  real64 Q = 3. * mu * eps_s_elastic;
+    if( m_useLinear )
+    {
+        P = bulkModulus * eps_v_elastic;
+        
+    }else{
+        P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
+    }
+    
+  Q = 3. * mu * eps_s_elastic;
 
   twoInvariant::stressRecomposition( P,
                                      Q,
                                      deviator,
                                      stress );
-  real64 bulkModulus = -P/Cr;
+    if( m_useLinear )
+    {
+        bulkModulus = -p0/Cr;
+        
+    }else{
+        bulkModulus = -P/Cr;
+    }
 
   saveStress( k, q, stress );
   stiffness.m_bulkModulus = bulkModulus;
@@ -435,6 +510,9 @@ public:
     /// string/key for default recompression index
     static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
 
+      /// Flag for using linear elasticity
+      static constexpr char const * elasticityString() { return "useLinear"; }
+      
     /// string/key for reference pressure
     static constexpr char const * refPressureString() { return "refPressure"; }
 
@@ -488,6 +566,7 @@ public:
     {
       return ElasticIsotropicPressureDependentUpdates( m_refPressure,
                                                        m_refStrainVol,
+                                                       m_useLinear,
                                                        m_recompressionIndex,
                                                        m_shearModulus,
                                                        m_newStress,
@@ -497,6 +576,7 @@ public:
     {
       return ElasticIsotropicPressureDependentUpdates( m_refPressure,
                                                        m_refStrainVol,
+                                                       m_useLinear,
                                                        m_recompressionIndex,
                                                        m_shearModulus,
                                                        arrayView3d< real64, solid::STRESS_USD >(),
@@ -518,6 +598,7 @@ public:
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_refPressure,
                           m_refStrainVol,
+                          m_useLinear,
                           m_recompressionIndex,
                           m_shearModulus,
                           m_newStress,
@@ -542,6 +623,9 @@ protected:
   /// The default value of the shear modulus for any new allocations.
   real64 m_defaultShearModulus;
 
+    /// flag for using linear elasticity
+    int m_useLinear;
+    
   /// The bulk modulus for each upper level dimension (i.e. cell) of *this
   real64 m_refPressure;
 

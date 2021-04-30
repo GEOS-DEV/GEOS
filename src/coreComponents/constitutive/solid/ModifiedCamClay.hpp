@@ -49,6 +49,7 @@ public:
    */
   ModifiedCamClayUpdates( real64 const & refPressure,
                           real64 const & refStrainVol,
+                          int const & useLinear,
                           arrayView1d< real64 const > const & recompressionIndex,
                           arrayView1d< real64 const > const & virginCompressionIndex,
                           arrayView1d< real64 const > const & cslSlope,
@@ -58,7 +59,7 @@ public:
                           arrayView1d< real64 const > const & shearModulus,
                           arrayView3d< real64, solid::STRESS_USD > const & newStress,
                           arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, newStress, oldStress ),
+    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, useLinear, recompressionIndex, shearModulus, newStress, oldStress ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_shapeParameter( shapeParameter ),
@@ -205,6 +206,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 pc    = oldPc;
   real64 bulkModulus  = -p0/Cr;
+  //  int m_useLinear =1;
   //real64 bulkModulus  = m_bulkModulus[k]; //Linear elasticity version
 
   // elastic predictor (assume strainIncrement is all elastic)
@@ -213,6 +215,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 trialP;
   real64 trialQ;
+    real64 eps_v_trial;
+    real64 eps_s_trial;
   real64 deviator[6];
 
   twoInvariant::stressDecomposition( stress,
@@ -235,9 +239,16 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 // std::cout << "plastic " <<  "\n " << std::endl;
 
   //  real64 eps_s_trial = trialQ/3.0/mu;
-  real64 eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
+    if( m_useLinear )
+    {
+        eps_v_trial = trialP/bulkModulus;
+        
+    }else{
+        eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
+    }
+    
   //   eps_v_trial = trialP/bulkModulus; //Linear elasticity version
-  real64 eps_s_trial = trialQ/3.0/mu;
+  eps_s_trial = trialQ/3.0/mu;
 
   real64 solution[3], residual[3], delta[3];
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
@@ -252,10 +263,19 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-    trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
+      
+      if( m_useLinear )
+      {
+          trialP = solution[0] * bulkModulus;
+          
+      }else{
+          trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
+          bulkModulus = -trialP/Cr;
+      }
+      
     //trialP = solution[0] * bulkModulus; //Linear elasticity version
     trialQ = 3. * mu * solution[1];
-    bulkModulus = -trialP/Cr;
+   
     // real64 h = 1.0 / (Cc-Cr); //Linear hardening version
     pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
     // pc = oldPc + h *(eps_v_trial-solution[0]); //Linear hardening version
@@ -342,8 +362,14 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 a1= 1. + solution[2]*df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
 
-  bulkModulus = -trialP/Cr;
-
+    if( m_useLinear )
+    {
+        bulkModulus = -p0/Cr;
+        
+    }else{
+        bulkModulus = -trialP/Cr;
+    }
+    
   BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
   BB[0][1] =bulkModulus*jacobianInv[0][1];
   BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
@@ -504,6 +530,7 @@ public:
   {
     return ModifiedCamClayUpdates( m_refPressure,
                                    m_refStrainVol,
+                                   m_useLinear,
                                    m_recompressionIndex,
                                    m_virginCompressionIndex,
                                    m_cslSlope,
@@ -528,6 +555,7 @@ public:
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_refPressure,
                           m_refStrainVol,
+                          m_useLinear,
                           m_recompressionIndex,
                           m_virginCompressionIndex,
                           m_cslSlope,

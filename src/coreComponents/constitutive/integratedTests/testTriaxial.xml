@@ -49,6 +49,7 @@
 
     <ModifiedCamClay
       name="modifiedCamclay"
+      useLinear="1"
       defaultDensity="2700"
       defaultRefPressure="-1.0"
       defaultRefStrainVol="0"
