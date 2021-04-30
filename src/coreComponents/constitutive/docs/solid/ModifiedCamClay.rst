@@ -7,14 +7,14 @@ Model: Modified Cam-Clay
 This model may be used to represent a solid material with plastic response to loading according to the `Modified Cam-Clay  (MCC) <https://en.wikipedia.org/wiki/Critical_state_soil_mechanics>`__ critical state model.  The MCC yield function is defined as:
 
 .. math::
-  f = q^2 - M^2 \left[ p(p - p_c) \right] = 0 , 
+  f = q^2 + M^2 \left[ p(p - p_c) \right] = 0 , 
 
 where :math:`p_c` is the preconsolidation pressure, and :math:`M` is the slope of the critical state line (CSL).  :math:`M` can be related to the critical state friction angle :math:`\phi_{cs}` as
 
 .. math::
    M = \frac{6 \sin \phi_{cs}}{3-\sin \phi_{cs}}.
     
-Here :math:`f` represents the yield surface, as shown in Figure 4.
+Here :math:`f` represents the yield surface, as shown in Figure 6.
 
 .. _CamClaypq:
 .. figure:: ModifiedCamClayPQ.png
@@ -34,7 +34,7 @@ where :math:`c_r > 0` is the elastic compressibility index. The tangential elast
 .. math::
   p = p_0 \exp \left( \frac{\epsilon_{v0} - \epsilon_v^e}{c_r}\right) , \quad q = 3 \mu \epsilon_s^e,
   
-where :math:`p_0` is the reference pressure and :math:`\epsilon_{v0}` is the reference volumetric strain. The hardening law is derived from the linear relationship between logarithm of specific volume and logarithm of preconsolidation pressure, as show in Figure 5. 
+where :math:`p_0` is the reference pressure and :math:`\epsilon_{v0}` is the reference volumetric strain. The hardening law is derived from the linear relationship between logarithm of specific volume and logarithm of preconsolidation pressure, as show in Figure 7. 
 
 .. _CamClayHardening:
 .. figure:: ModifiedCamClayHardening.png
