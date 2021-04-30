@@ -86,7 +86,6 @@ void NodeManager::setFaceMaps( CellBlockManager const & cellBlockManager, FaceMa
 
 void NodeManager::setElementMaps( CellBlockManager const & cellBlockManager, ElementRegionManager const & elementRegionManager )
 {
-  const std::map< localIndex, std::vector< localIndex > > nodeToElem = cellBlockManager.getNodeToElements();
   const localIndex totalNodeElems = cellBlockManager.numNodes();
 
   GEOSX_MARK_FUNCTION;
@@ -96,52 +95,36 @@ void NodeManager::setElementMaps( CellBlockManager const & cellBlockManager, Ele
   ArrayOfArrays< localIndex > & toElementList = m_toElements.m_toElementIndex;
   localIndex const numNodes = size();
 
+  toElementList = cellBlockManager.getNodeToElements();
+
   // Resize the node to elem map.
   toElementRegionList.resize( 0 );
   toElementSubRegionList.resize( 0 );
-  toElementList.resize( 0 );
 
   // Reserve space for the number of current faces plus some extra.
   double const overAllocationFactor = 0.3;
   localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
   toElementRegionList.reserve( entriesToReserve );
   toElementSubRegionList.reserve( entriesToReserve );
-  toElementList.reserve( entriesToReserve );
 
+  // FIXME I'm not sure that there is a strong needs that `toElementRegionList` and `toElementSubRegionList`
+  //       get the same capacities as `toElementList`.
   // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
   localIndex const valuesToReserve = totalNodeElems + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
-  // FIXME I'm not sure that there is a strong needs that these arrays share the same capacities.
-  //       If so they may be allocated in another member function with the elementRegionManager part.
   toElementRegionList.reserveValues( valuesToReserve );
   toElementSubRegionList.reserveValues( valuesToReserve );
-  toElementList.reserveValues( valuesToReserve );
 
   // Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
   for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
     toElementRegionList.appendArray( 0 );
     toElementSubRegionList.appendArray( 0 );
-    toElementList.appendArray( 0 );
 
-    const localIndex numElementsPerNode = nodeToElem.at( nodeID ).size() + getElemMapOverAllocation() ;
+    const localIndex numElementsPerNode = toElementList[ nodeID ].size() + getElemMapOverAllocation() ;
     toElementRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
     toElementSubRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
-    toElementList.setCapacityOfArray( nodeID, numElementsPerNode );
   }
 
-  // Copy the mapping from cell blocks to the node manager.
-  for( const auto & nes: nodeToElem )
-  {
-    const localIndex & n = nes.first;
-    const std::vector< localIndex > & es = nes.second;
-    for( const localIndex & e: es )
-    {
-      toElementList.emplaceBack( n, e );
-    }
-  }
-
-  // FIXME This could be delayed until all the standard mappings (i.e. not with regions) are properly assigned
-  // FIXME Also, only this part requires the elementRegionManager, so this may be split, yes...
   elementRegionManager.forElementSubRegionsComplete< CellElementSubRegion >(
     [&toElementRegionList, &toElementSubRegionList]
       ( localIndex const er,
@@ -152,7 +135,6 @@ void NodeManager::setElementMaps( CellBlockManager const & cellBlockManager, Ele
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
-        // TODO This following subRegion.numNodesPerElement() is not flexible enough, use subRegion.numNodesPerElement( k )?
         for( localIndex a = 0; a < subRegion.numNodesPerElement(); ++a )
         {
           localIndex const nodeIndex = elemToNodeMap( k, a );

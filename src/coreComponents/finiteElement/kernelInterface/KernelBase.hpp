@@ -435,9 +435,6 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       // Create an alias for the type of constitutive model.
       using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
-
-      string const elementTypeString = elementSubRegion.getElementTypeString();
-
       FiniteElementBase &
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 

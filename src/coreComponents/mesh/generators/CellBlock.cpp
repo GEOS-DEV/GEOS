@@ -266,26 +266,4 @@ std::vector< localIndex > CellBlock::getFaceNodes( localIndex iElement,
   return {};
 }
 
-void CellBlock::setElementToFaces( localIndex iElement,
-                                   localIndex iFace,
-                                   localIndex faceIndex )
-{
-  m_elementsToFaces( iElement, iFace ) = faceIndex;
-}
-
-void CellBlock::setElementToEdges( localIndex iElement,
-                                   localIndex iEdge,
-                                   localIndex edgeIndex )
-{
-  m_elementsToEdges( iElement, iEdge ) = edgeIndex;
-}
-
-bool CellBlock::hasElementToEdges( localIndex iElement,
-                                   localIndex iEdge,
-                                   localIndex edgeIndex ) const
-{
-  return m_elementsToEdges( iElement, iEdge ) == edgeIndex;
-}
-
-
 }

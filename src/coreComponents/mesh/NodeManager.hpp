@@ -78,8 +78,8 @@ public:
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
-  inline localIndex getElemMapOverAllocation() // FIXME forward form CellBlockManager? Remove from here?
-  { return 8; }
+  static constexpr inline localIndex getElemMapOverAllocation()
+  { return CellBlockManager::getElemMapOverAllocation(); }
 
 /**
  * @name Constructors/destructor

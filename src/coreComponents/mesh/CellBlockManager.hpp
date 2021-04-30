@@ -75,6 +75,9 @@ public:
   static constexpr localIndex getFaceMapOverallocation()
   { return 8; }
 
+  static constexpr localIndex getElemMapOverAllocation()
+  { return 8; }
+
   static constexpr localIndex nodeMapExtraSpacePerFace()
   { return 4; }
 
@@ -118,11 +121,12 @@ public:
   }
 
   /**
-   * TODO store the map once it's computed
    * @brief Returns the node to elements mappings.
    * @return A one to many relationship.
+   *
+   * @note The mapping is computed on the fly and returned. It is not stored in the instance.
    */
-  std::map< localIndex, std::vector< localIndex > > getNodeToElements() const;
+  ArrayOfArrays< localIndex > getNodeToElements() const;
 
   /**
    * @brief Returns the face to elements mappings.
@@ -205,9 +209,18 @@ private:
 
   /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
-   * @return
+   * @return Reference to the Group instance.
    */
   const Group & getCellBlocks() const;
+
+  /**
+   * @brief Get cell block at index @p iCellBlock.
+   * @param iCellBlock The cell block index.
+   * @return Const reference to the instance.
+   *
+   * @note Mainly useful for iteration purposes.
+   */
+  const CellBlockABC & getCellBlock( localIndex iCellBlock ) const;
 
   localIndex numCellBlocks() const;
 

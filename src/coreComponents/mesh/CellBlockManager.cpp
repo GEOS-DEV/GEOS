@@ -42,23 +42,61 @@ Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childK
   return nullptr;
 }
 
-std::map< localIndex, std::vector< localIndex > > CellBlockManager::getNodeToElements() const
+ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
 {
-  // TODO check that we can use the [0, nNodes[ size for first dimension (mainly parallel issues),
-  // and use a std::vector< std::vector< localIndex > > instead;
-  std::map< localIndex, std::vector< localIndex > > result;
+  // The functions works in three steps.
+  // First finds the number of elements attached to each node.
+  // Ths second then allocates the vectors.
+  // Last, the output vector is filled.
 
-  // This is a dummy non parallel implementation...
+  // First step: how many elements for each node, stored in the elemsPerNode array.
+  array1d< localIndex > elemsPerNode( m_numNodes );
+  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
+
+  for( localIndex iCellBlock = 0; iCellBlock < numCellBlocks(); ++iCellBlock )
+  {
+    const CellBlockABC & cb = this->getCellBlock( iCellBlock );
+    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elemToNode = cb.getElemToNode();
+    forAll< parallelHostPolicy >( cb.numElements(), [&elemsPerNode, totalNodeElems, &elemToNode, &cb] ( localIndex const k )
+    {
+      localIndex const numNodesPerElement = cb.numNodesPerElement();
+      totalNodeElems += numNodesPerElement;
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
+      {
+        localIndex const nodeIndex = elemToNode( k, a );
+        RAJA::atomicInc< parallelHostAtomic >( &elemsPerNode[ nodeIndex ] );
+      }
+    } );
+  }
+
+  // Second, allocation.
+  ArrayOfArrays< localIndex > result;
+
+  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * m_numNodes;
+  result.reserve( entriesToReserve );
+
+  localIndex const valuesToReserve = totalNodeElems.get() + m_numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
+  result.reserveValues( valuesToReserve );
+
+  // Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
+  for( localIndex nodeID = 0; nodeID < m_numNodes; ++nodeID )
+  {
+    result.appendArray( 0 );
+    result.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
+  }
+
+  // Third, filling the result.
   for( localIndex iCellBlock = 0; iCellBlock < numCellBlocks(); ++iCellBlock)// Do not need index
   {
-    const CellBlockABC & cb = this->getCellBlocks().getGroup< const CellBlockABC >( iCellBlock );
-    CellBlockABC::NodeMapType const elemToNode = cb.getElemToNode();
+    const CellBlockABC & cb = this->getCellBlock( iCellBlock );
+    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const elemToNode = cb.getElemToNode();
     for( localIndex iElem = 0; iElem < cb.numElements(); ++iElem )
     {
-      for( localIndex a = 0; a <  cb.numNodesPerElement(); ++a )
+      for( localIndex iNode = 0; iNode < cb.numNodesPerElement(); ++iNode )
       {
-        localIndex const nodeIndex = elemToNode( iElem, a );
-        result[nodeIndex].push_back( iElem );
+        localIndex const nodeIndex = elemToNode( iElem, iNode );
+        result.emplaceBack( nodeIndex, iElem );
       }
     }
   }
@@ -973,6 +1011,11 @@ localIndex CellBlockManager::numNodes() const
 localIndex CellBlockManager::numCellBlocks() const
 {
   return this->getCellBlocks().numSubGroups();
+}
+
+const CellBlockABC & CellBlockManager::getCellBlock( localIndex iCellBlock ) const
+{
+  return this->getCellBlocks().getGroup< const CellBlockABC >( iCellBlock );
 }
 
 localIndex CellBlockManager::numFaces() const

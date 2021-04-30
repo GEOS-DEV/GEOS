@@ -28,16 +28,12 @@ namespace geosx
 class CellBlockABC : public dataRepository::Group
 {
 public:
-  /// Alias for the type of the element-to-node map
-  using NodeMapType = array2d< localIndex, cells::NODE_MAP_PERMUTATION >;
 
   CellBlockABC( string const & name,
                 Group * const parent )
     :
     Group( name, parent )
   { }
-
-  // TODO change size to more business term
 
   /**
    * @brief Get the type of element in this subregion.
@@ -69,7 +65,7 @@ public:
    * @brief Get the element-to-node map.
    * @return a reference to the element-to-node map
    */
-  virtual NodeMapType const & getElemToNode() const = 0;
+  virtual array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & getElemToNode() const = 0;
 
   /**
    * @brief Get the element-to-edges map.

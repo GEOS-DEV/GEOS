@@ -111,8 +111,6 @@ FiniteElementDiscretization::
   array2d< real64 > & detJ = elementSubRegion->detJ();
   auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
-  string const elementTypeString = elementSubRegion->getElementTypeString();
-
   constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
   constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );

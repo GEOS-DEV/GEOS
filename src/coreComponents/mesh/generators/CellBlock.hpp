@@ -84,11 +84,14 @@ public:
   string getElementTypeString() const override
   { return m_elementTypeString; }
 
-  localIndex numNodesPerElement() const override { return m_numNodesPerElement; }
+  localIndex numNodesPerElement() const override
+  { return m_numNodesPerElement; }
 
-  localIndex numFacesPerElement() const override { return m_numFacesPerElement; }
+  localIndex numFacesPerElement() const override
+  { return m_numFacesPerElement; }
 
-  localIndex numElements() const override { return size(); }
+  localIndex numElements() const override
+  { return size(); }
 
   std::vector< localIndex > getFaceNodes( localIndex iElement,
                                           localIndex iFace ) const override;
@@ -99,13 +102,17 @@ public:
   *
   * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute... Use a real setter instead.
   */
-  NodeMapType & getElemToNode() { return m_elementsToNodes; }
+  array2d< localIndex, cells::NODE_MAP_PERMUTATION > & getElemToNode()
+  { return m_elementsToNodes; }
 
-  NodeMapType const & getElemToNode() const override { return m_elementsToNodes; }
+  array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & getElemToNode() const override
+  { return m_elementsToNodes; }
 
-  array2d< localIndex > const & getElemToEdges() const override { return m_elementsToEdges; }
+  array2d< localIndex > const & getElemToEdges() const override
+  { return m_elementsToEdges; }
 
-  array2d< localIndex > const & getElemToFaces() const override { return m_elementsToFaces; }
+  array2d< localIndex > const & getElemToFaces() const override
+  { return m_elementsToFaces; }
 
   /**
    * @brief Sets an entry in the element to faces mapping.
@@ -113,7 +120,12 @@ public:
    * @param iFace Index of the face of the element @p iElement (typically from 0 to 5 for an hexahedron).
    * @param faceIndex The face index.
    */
-  void setElementToFaces( localIndex iElement, localIndex iFace, localIndex faceIndex );
+  void setElementToFaces( localIndex iElement,
+                          localIndex iFace,
+                          localIndex faceIndex )
+  {
+    m_elementsToFaces( iElement, iFace ) = faceIndex;
+  }
 
   /**
    * @brief Sets an entry in the element to edges mapping.
@@ -124,7 +136,12 @@ public:
    * In the element to edges mapping, element @p iElement has a given number of edges (typically 12 for a hexahedron).
    * Then edge @p iEdge of this local indexing (typically 0 to 11) is meant to have global indexing of @p edgeIndex.
    */
-  void setElementToEdges( localIndex iElement, localIndex iEdge, localIndex edgeIndex );
+  void setElementToEdges( localIndex iElement,
+                          localIndex iEdge,
+                          localIndex edgeIndex )
+  {
+    m_elementsToEdges( iElement, iEdge ) = edgeIndex;
+  }
 
   /**
    * @brief Checks if edge @p iEdge of element @p iElement has been defined.
@@ -133,7 +150,12 @@ public:
    * @param edgeIndex The edge index.
    * @return True if the entry is already there in the mapping. False otherwise.
    */
-  bool hasElementToEdges( localIndex iElement, localIndex iEdge, localIndex edgeIndex ) const;
+  bool hasElementToEdges( localIndex iElement,
+                          localIndex iEdge,
+                          localIndex edgeIndex ) const
+  {
+    return m_elementsToEdges( iElement, iEdge ) == edgeIndex;
+  }
 
   /**
    * @brief Get local to global map, non-const version.
@@ -187,7 +209,7 @@ private:
   localIndex m_numFacesPerElement;
 
   /// Element-to-node relation
-  NodeMapType m_elementsToNodes;
+  array2d< localIndex, cells::NODE_MAP_PERMUTATION > m_elementsToNodes;
 
   /// Element-to-edges relation
   array2d< localIndex > m_elementsToEdges;
