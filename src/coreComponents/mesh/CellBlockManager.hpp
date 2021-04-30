@@ -45,13 +45,23 @@ public:
   virtual const string getCatalogName() const override final
   { return CellBlockManager::catalogName(); }
 
-
   /**
    * @brief Constructor for CellBlockManager object.
    * @param name name of this instantiation of CellBlockManager
    * @param parent pointer to the parent Group of this instantiation of CellBlockManager
    */
   CellBlockManager( string const & name, Group * const parent );
+
+  /**
+   * @brief Copy constructor.
+   */
+  CellBlockManager( const CellBlockManager & ) = delete;
+
+  /**
+   * @brief Copy assignment operator.
+   * @return reference to this object
+   */
+  CellBlockManager & operator=( const CellBlockManager & ) = delete;
 
   /**
    * @brief Destructor
@@ -84,38 +94,13 @@ public:
   static constexpr localIndex faceMapExtraSpacePerEdge()
   { return 4; }
 
-  using Group::resize;
+  ArrayOfSets< localIndex > getNodeToEdges() const;
 
   /**
-   * @brief Set the number of elements for a set of element regions.
-   * @param numElements list of the new element numbers
-   * @param regionNames list of the element region names
-   * @param elementTypes list of the element types
+   * @brief Returns the face to nodes mappings.
+   * @return The one to many relationship.
    */
-  void resize( integer_array const & numElements,
-               string_array const & regionNames,
-               string_array const & elementTypes );
-
-  /**
-   * @brief Get cell block by name.
-   * @param name Name of the cell block.
-   * @return Reference to the cell block instance.
-   */
-  CellBlock & getCellBlock( string const & name )
-  {
-    return this->getGroup( cellBlocksKey ).getGroup< CellBlock >( name );
-  }
-
-  /**
-   * @brief Launch kernel function over all the sub-regions
-   * @tparam LAMBDA type of the user-provided function
-   * @param lambda kernel function
-   */
-  template< typename LAMBDA >
-  void forElementSubRegions( LAMBDA lambda )
-  {
-    this->getGroup( cellBlocksKey ).forSubGroups< CellBlock >( lambda );
-  }
+  ArrayOfSets< localIndex > getNodeToFaces() const;
 
   /**
    * @brief Returns the node to elements mappings.
@@ -125,13 +110,9 @@ public:
    */
   ArrayOfArrays< localIndex > getNodeToElements() const;
 
-  /**
-   * @brief Returns the face to elements mappings.
-   * @return A one to many relationship.
-   *
-   * In case the face only belongs to one single element, the second value of the table is -1.
-   */
-  array2d< localIndex > getFaceToElements() const;
+  array2d< geosx::localIndex > const & getEdgeToNodes() const;
+
+  ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const;
 
   /**
    * @brief Returns the face to nodes mappings.
@@ -140,21 +121,15 @@ public:
    */
   ArrayOfArrays< localIndex > getFaceToNodes() const;
 
-  /**
-   * @brief Returns the face to nodes mappings.
-   * @return The one to many relationship.
-   */
-  ArrayOfSets< localIndex > getNodeToFaces() const;
-
-  ArrayOfSets< localIndex > getNodeToEdges() const;
-
-  ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const;
-
-  array2d< geosx::localIndex > const & getEdgeToNodes() const;
-
   ArrayOfArrays< geosx::localIndex > const & getFaceToEdges() const;
 
-  void buildMaps();
+  /**
+   * @brief Returns the face to elements mappings.
+   * @return A one to many relationship.
+   *
+   * In case the face only belongs to one single element, the second value of the table is -1.
+   */
+  array2d< localIndex > getFaceToElements() const;
 
   /**
    * @brief Total number of nodes across all the cell blocks.
@@ -172,13 +147,37 @@ public:
   void setNumNodes( localIndex numNodes ) // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
   { m_numNodes = numNodes; }
 
+  localIndex numEdges() const; // TODO Improve doc
+
   /**
    * @brief Total number of faces across all the cell blocks.
    * @return
    */
   localIndex numFaces() const; // TODO Improve doc
 
-  localIndex numEdges() const; // TODO Improve doc
+  using Group::resize;
+
+  /**
+   * @brief Set the number of elements for a set of element regions.
+   * @param numElements list of the new element numbers
+   * @param regionNames list of the element region names
+   * @param elementTypes list of the element types
+   */
+  void resize( integer_array const & numElements,
+               string_array const & regionNames,
+               string_array const & elementTypes );
+
+  void buildMaps();
+
+  /**
+   * @brief Get cell block by name.
+   * @param name Name of the cell block.
+   * @return Reference to the cell block instance.
+   */
+  CellBlock & getCellBlock( string const & name )
+  {
+    return this->getGroup( cellBlocksKey ).getGroup< CellBlock >( name );
+  }
 
   /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
@@ -193,23 +192,23 @@ public:
    */
   CellBlock & registerCellBlock( string name );
 
+  /**
+   * @brief Launch kernel function over all the sub-regions
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename LAMBDA >
+  void forElementSubRegions( LAMBDA lambda )
+  {
+    this->getGroup( cellBlocksKey ).forSubGroups< CellBlock >( lambda );
+  }
+
 private:
 
   /**
    * @brief Cell key
    */
   static string const cellBlocksKey;
-
-  /**
-   * @brief Copy constructor.
-   */
-  CellBlockManager( const CellBlockManager & ) = delete;
-
-  /**
-   * @brief Copy assignment operator.
-   * @return reference to this object
-   */
-  CellBlockManager & operator=( const CellBlockManager & ) = delete;
 
   /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
@@ -231,12 +230,13 @@ private:
   void buildNodeToEdges();
   void buildFaceMaps();
 
-  ArrayOfArrays< localIndex >  m_faceToNodes;
-  array2d< localIndex >  m_faceToElements;
+  ArrayOfSets< localIndex > m_nodeToEdges;
   ArrayOfSets< localIndex > m_edgeToFaces;
   array2d< localIndex > m_edgeToNodes;
-  ArrayOfSets< localIndex > m_nodeToEdges;
+  ArrayOfArrays< localIndex >  m_faceToNodes;
   ArrayOfArrays< localIndex > m_faceToEdges;
+  array2d< localIndex >  m_faceToElements;
+
   localIndex m_numNodes;
   localIndex m_numFaces;
   localIndex m_numEdges;

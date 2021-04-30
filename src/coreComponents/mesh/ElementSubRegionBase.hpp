@@ -249,9 +249,9 @@ protected:
   string m_elementTypeString;
 
   /**
- * @brief Set the number of edges per element.
- * @param[in] numEdges the number of edges per element
- */
+   * @brief Set the number of edges per element.
+   * @param[in] numEdges the number of edges per element
+   */
   void setNumEdgesPerElement( localIndex const numEdges )
   {
     m_numEdgesPerElement = numEdges;
