@@ -100,7 +100,8 @@ public:
       GEOSX_ERROR_IF( m_bufferCalls[collectionIdx] == nullptr,
                       "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
       // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
-      // we don't explicitly update the index sets here as they are updated in the buffer callback (see TimeHistoryOutput.cpp::initCollectorParallel( ) )
+      // we don't explicitly update the index sets here as they are updated in the buffer callback (see
+      // TimeHistoryOutput.cpp::initCollectorParallel( ) )
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]( );
       collect( domain, time_n, dt, collectionIdx, buffer );
     }
@@ -180,10 +181,19 @@ public:
 
 protected:
 
+  /**
+   * @brief Retrieve the target object from the data repository.
+   * @param domain The DomainParition of the problem.
+   * @param objectPath The data repo path of the target object.
+   * @return The target object as a Group
+   * @note If the object path is absolute this returns the target object by calling getGroupByPath. If the 
+   *        object path is relative, it searches relative to the mesh in the same way the fieldSpecification does,
+   *        so any objectPath that works in field specification will also work here.
+   */
   inline dataRepository::Group const * getTargetObject( DomainPartition & domain, string const & objectPath )
   {
     // absolute objectPaths can be used to target anything in the data repo that is packable
-    if ( objectPath[0] == '/' )
+    if( objectPath[0] == '/' )
     {
       return &Group::getGroupByPath( objectPath );
     }
@@ -235,7 +245,8 @@ protected:
   std::function< buffer_unit_type *() > m_timeBufferCall;
   /// Callbacks to get the current buffer head to write history data into
   std::vector< std::function< buffer_unit_type *() > > m_bufferCalls;
-  ///
+  /// The set of metadata collectors for this collector ( currently only used to collect coordinates of mesh 
+  ///   objects when collecting field data )
   std::vector< std::unique_ptr< HistoryCollection > > m_metaCollectors;
 };
 

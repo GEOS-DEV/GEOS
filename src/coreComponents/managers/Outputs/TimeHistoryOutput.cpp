@@ -62,11 +62,11 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
     HistoryMetadata metadata = collector.getMetadata( pm, ii );
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
     collector.registerBufferCall( ii, [this, ii, ioCount, &pm, &collector]()
-    { 
+    {
       collector.updateSetsIndices( pm.getDomainPartition() );
       HistoryMetadata metadata = collector.getMetadata( pm, ii );
       m_io[ioCount]->updateCollectingCount( metadata.getDims( )[0] );
-      return m_io[ioCount]->getBufferHead( ); 
+      return m_io[ioCount]->getBufferHead( );
     } );
     m_io.back()->init( !freshInit );
     ++ioCount;
@@ -83,19 +83,19 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
       HistoryMetadata metaMetadata = metaCollector.getMetadata( pm, ii );
       metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName( ) );
       m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metaMetadata, m_recordCount ) );
-      metaCollector.registerBufferCall( ii, [this, ii, ioCount, &pm, &metaCollector] () 
-      { 
+      metaCollector.registerBufferCall( ii, [this, ii, ioCount, &pm, &metaCollector] ()
+      {
         metaCollector.updateSetsIndices( pm.getDomainPartition() );
         HistoryMetadata metaMetadata = metaCollector.getMetadata( pm, ii );
         m_io[ ioCount ]->updateCollectingCount( metaMetadata.getDims()[0] );
-        return m_io[ ioCount ]->getBufferHead( ); 
+        return m_io[ ioCount ]->getBufferHead( );
       } );
       m_io.back()->init( !freshInit );
       ++ioCount;
     }
 
     // invoke metadata collectors and write data from them during first-time init (not on restart)
-    if ( freshInit )
+    if( freshInit )
     {
       metaCollector.execute( 0.0, 0.0, 0, 0, 0, domainGroup );
       for( localIndex ii = nonMetaCount; ii < ioCount; ++ii )
@@ -104,7 +104,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
       }
     }
   }
-  
+
   // do the time output last so its at the end of the m_io list, since writes are parallel we need
   //  the rest of the collectors to share position in the list across the world comm
 

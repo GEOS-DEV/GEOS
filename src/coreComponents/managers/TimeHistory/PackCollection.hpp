@@ -84,7 +84,11 @@ public:
   /// @endcond
 
 protected:
+  /// Construct the metadata collectors for this collector.
   void buildMetaCollectors( );
+
+  /// Do not construct metadata collectors to collect coordinate information.
+  ///   ( Prevents reccuring initialization of coordinate collection for coordinate collectors ).
   void disableCoordCollection( )
   {
     m_disableCoordCollection = true;
@@ -112,7 +116,8 @@ private:
   bool m_setChanged;
   /// Whether to only pack when the collected set(s) change size (mostly used for collecting metadata)
   localIndex m_onlyOnSetChange;
-  /// Whether to create coordinate meta-collectors if collected objects are mesh objects (set to true for coordinate meta-collectors to avoid init recursion)
+  /// Whether to create coordinate meta-collectors if collected objects are mesh objects (set to true for coordinate meta-collectors to
+  /// avoid init recursion)
   bool m_disableCoordCollection;
 };
 

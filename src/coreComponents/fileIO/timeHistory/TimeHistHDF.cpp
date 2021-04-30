@@ -212,16 +212,16 @@ void HDFHistIO::setupPartition( globalIndex localIdxCount )
       m_chunkSize = LvArray::integerConversion< hsize_t >( counts[ii] );
     }
   }
-  if ( globalIdxCount > m_globalIdxHighwater )
+  if( globalIdxCount > m_globalIdxHighwater )
   {
     m_globalIdxHighwater = globalIdxCount;
   }
   m_globalIdxCount = globalIdxCount;
 
   // free the previous partition comm
-  if ( m_subcomm != MPI_COMM_NULL )
+  if( m_subcomm != MPI_COMM_NULL )
   {
-    MpiWrapper::commFree( m_subcomm ); 
+    MpiWrapper::commFree( m_subcomm );
   }
   m_subcomm = MpiWrapper::commSplit( m_comm, color, key );
 }
@@ -244,7 +244,8 @@ void HDFHistIO::init( bool existsOkay )
       dimChunks[dd] = m_dims[dd-1];
       historyFileDims[dd] = m_dims[dd-1];
     }
-    // TODO : figure out how to deal with min size potentially changing w.r.t. chunking, (maybe chunk = 1? but that would have poor performance prolly)
+    // TODO : figure out how to deal with min size potentially changing w.r.t. chunking, (maybe chunk = 1? but that would have poor
+    // performance prolly)
     dimChunks[1] = m_chunkSize;
     historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
 
@@ -292,7 +293,7 @@ void HDFHistIO::write( )
     {
       // if the size changed at all, update the partitioning and dataset extent before each row is to be written
       //  to ensure the correct mpi ranks participate and that there is enough room to write the largest row during execution
-      if ( m_sizeChanged )
+      if( m_sizeChanged )
       {
         // since the highwater might change (the max # of indices / 2nd dimension) when updating the partitioning
         setupPartition( m_localIdxCounts_buffered[ row ] );
@@ -327,7 +328,7 @@ void HDFHistIO::write( )
         H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, H5P_DEFAULT, dataBuffer );
 
         // forward the data buffer pointer to the start of the next row
-        if ( dataBuffer ) 
+        if( dataBuffer )
         {
           dataBuffer += m_localIdxCounts_buffered[ row ] * m_typeSize;
         }
@@ -390,12 +391,12 @@ size_t HDFHistIO::getRowBytes( )
 
 void HDFHistIO::resizeBuffer( )
 {
-  // need to store the count every time we collect (which calls this) 
+  // need to store the count every time we collect (which calls this)
   //  regardless of whether the size changes
   m_localIdxCounts_buffered.emplace_back( m_dims[0] );
 
   size_t capacity = m_dataBuffer.size();
-  size_t inUse = m_bufferHead - &m_dataBuffer[0]; 
+  size_t inUse = m_bufferHead - &m_dataBuffer[0];
   size_t nextRow = getRowBytes( );
   // if needed, resize the buffer
   if( inUse + nextRow > capacity )
@@ -409,7 +410,7 @@ void HDFHistIO::resizeBuffer( )
 
 void HDFHistIO::updateCollectingCount( localIndex count )
 {
-  if ( LvArray::integerConversion< hsize_t >( count ) != m_dims[0] )
+  if( LvArray::integerConversion< hsize_t >( count ) != m_dims[0] )
   {
     m_sizeChanged = true;
     m_dims[0] = count;

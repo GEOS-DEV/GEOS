@@ -48,7 +48,7 @@ void PackCollection::initializePostSubGroups( )
     HistoryCollection::initializePostSubGroups( );
     // build any persistent meta collectors that are required
     buildMetaCollectors( );
-    for ( auto & metaCollector : m_metaCollectors )
+    for( auto & metaCollector : m_metaCollectors )
     {
       // coord meta collectors should have m_disableCoordCollection == true to avoid
       //  infinite recursive init calls here
@@ -81,7 +81,7 @@ HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex col
   }
 }
 
-// if we add a check for the setsizes changing we can use that data to determine whether the metadata collector 
+// if we add a check for the setsizes changing we can use that data to determine whether the metadata collector
 //  should only collect on size changes, otherwise not collect anything
 void PackCollection::updateSetsIndices( DomainPartition & domain )
 {
@@ -126,11 +126,11 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
     }
   }
   // filter out the ghost indices immediately when we update the index sets
-  if ( m_targetIsMeshObject )
+  if( m_targetIsMeshObject )
   {
     ObjectManagerBase const * objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
     arrayView1d< integer const > const ghostRank = objectManagerTarget->ghostRank( );
-    for ( localIndex setIdx = 0; setIdx < numSets; ++setIdx )
+    for( localIndex setIdx = 0; setIdx < numSets; ++setIdx )
     {
       array1d< localIndex > ownedIndices( m_setsIndices[ setIdx ].size() );
       localIndex ownIdx = 0;
@@ -147,11 +147,11 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
       {
         m_setChanged = true;
       }
-      if ( !m_setChanged ) // if the size hasn't changed check the individual values
+      if( !m_setChanged )  // if the size hasn't changed check the individual values
       {
         for( localIndex idx = 0; idx < ownedIndices.size(); ++idx )
         {
-          if ( m_setsIndices[ setIdx ][ idx ] != ownedIndices[ idx ] )
+          if( m_setsIndices[ setIdx ][ idx ] != ownedIndices[ idx ] )
           {
             m_setChanged = true;
             break;
@@ -177,36 +177,36 @@ localIndex PackCollection::getNumMetaCollectors( ) const
 
 void PackCollection::buildMetaCollectors( )
 {
-  if ( !m_disableCoordCollection )
+  if( !m_disableCoordCollection )
   {
     char const * coordField = nullptr;
-    if ( m_objectPath.find( "nodeManager" ) != string::npos )
+    if( m_objectPath.find( "nodeManager" ) != string::npos )
     {
       coordField = NodeManager::viewKeyStruct::referencePositionString();
     }
-    else if ( m_objectPath.find( "edgeManager" ) != string::npos )
+    else if( m_objectPath.find( "edgeManager" ) != string::npos )
     {
       GEOSX_ERROR( "Edge coordinate data collection is unimplemented." );
     }
-    else if ( m_objectPath.find( "faceManager" ) != string::npos )
+    else if( m_objectPath.find( "faceManager" ) != string::npos )
     {
       coordField = FaceManager::viewKeyStruct::faceCenterString();
     }
-    else if ( m_objectPath.find( "ElementRegions" ) != string::npos)
+    else if( m_objectPath.find( "ElementRegions" ) != string::npos )
     {
       coordField = ElementSubRegionBase::viewKeyStruct::elementCenterString();
     }
     string metaName( "coordinates" );
     std::unique_ptr< PackCollection > coordCollector = std::make_unique< PackCollection >( metaName, this );
     coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::objectPathString() ).reference() = m_objectPath;
-    coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::fieldNameString() ).reference() = string(coordField);
+    coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::fieldNameString() ).reference() = string( coordField );
     coordCollector->getWrapper< string_array >( PackCollection::viewKeysStruct::setNamesString() ).reference() = m_setNames;
     coordCollector->getWrapper< localIndex >( PackCollection::viewKeysStruct::onlyOnSetChangeString() ).reference() = 1;
     // don't recursively keep creating coordinate metacollectors
     coordCollector->disableCoordCollection( );
     m_metaCollectors.push_back( std::move( coordCollector ) );
   }
-} 
+}
 
 void PackCollection::collect( DomainPartition & domain,
                               real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -218,19 +218,20 @@ void PackCollection::collect( DomainPartition & domain,
   GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= getCollectionCount( ), "Attempting to collection from an invalid collection index!" );
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & target = targetObject->getWrapperBase( m_fieldName );
-  // if we have any indices to collect, and we're either collecting every time or we're only collecting when the set changes and the set has changed
-  if ( m_setsIndices[ collectionIdx ].size() > 0 )
+  // if we have any indices to collect, and we're either collecting every time or we're only collecting when the set changes and the set has
+  // changed
+  if( m_setsIndices[ collectionIdx ].size() > 0 )
   {
     if( ( (m_onlyOnSetChange != 0) && m_setChanged ) || (m_onlyOnSetChange == 0) )
     {
       target.packByIndex( buffer, m_setsIndices[ collectionIdx ], false, true );
     }
   }
-   // if we're not collecting from a set of indices, we're collecting the entire object
-   //  this will only happen when we're not targeting a mesh object since in that case while setnames size is 0,
-   //  setsIndices[0] is the entire non-ghost index set, so all mesh object collection goes to packbyindex and any 
-   //  non-mesh objects (that don't somehow have index sets) are packed in their entirety
-  else if ( m_setNames.size() == 0 )
+  // if we're not collecting from a set of indices, we're collecting the entire object
+  //  this will only happen when we're not targeting a mesh object since in that case while setnames size is 0,
+  //  setsIndices[0] is the entire non-ghost index set, so all mesh object collection goes to packbyindex and any
+  //  non-mesh objects (that don't somehow have index sets) are packed in their entirety
+  else if( m_setNames.size() == 0 )
   {
     target.pack( buffer, false, true );
   }

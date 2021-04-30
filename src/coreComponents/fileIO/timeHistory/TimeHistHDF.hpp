@@ -175,8 +175,19 @@ public:
 
 protected:
 
+  /**
+   * @brief Setup the parallel 'partitioning' of the data to allow dynamically sized output over time
+   * @param localIdxCount The number of pieces of data associated with the local rank
+   * @note This is collective over the communicator provided in the constructor
+   */
   void setupPartition( globalIndex localIdxCount );
 
+  /**
+   * @brief Update the extent of the dataset in the target file.
+   * @param rowLimit The new discrete 'row' count (the first output dim) to extend the extent to.
+   * @note The second dimension is set to the global index highwater ( the largest number of output 
+   *        pieces of data encountered during execution ).
+   */
   void updateDatasetExtent( hsize_t rowLimit );
 
   /**
@@ -197,12 +208,11 @@ private:
   globalIndex m_globalIdxOffset;
   /// The global index count for this mpi rank for this data set
   globalIndex m_globalIdxCount;
-  ///
+  /// The largest index count encountered (globally) during execution (this determines the 2nd dimension of 
+  ///   the output data array)
   globalIndex m_globalIdxHighwater;
-  /// TODO: figure chunking issue out
-  /// Chunk size is equal to the smallest index count for a participating rank
-  ///  this might be a problem with changing sizes... since the min won't always stay min, 
-  ///   and a larger chunk size than the min idx count is an error according to hdf5
+  /// The current chunk size for writing to file. This is the smallest (necessarily nonzero) local index 
+  ///   count from the last partition setup.
   hsize_t m_chunkSize;
   /// The current limit in discrete history counts for this data set in the file
   localIndex m_writeLimit;
