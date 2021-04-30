@@ -118,17 +118,17 @@ public:
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
                                 PERMTYPE dPerm_dPressure,
-                                real64 (& transmissibility)[2],
-                                real64 (& dTrans_dPressure )[2] ) const;
+                                real64 ( &transmissibility )[2],
+                                real64 ( &dTrans_dPressure )[2] ) const;
 
   template< typename PERMTYPE >
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
                                 PERMTYPE dPerm_dPressure,
                                 PERMTYPE dPerm_dAperture,
-                                real64 (& transmissibility)[2],
-                                real64 (& dTrans_dPressure )[2],
-                                real64 (& dTrans_dAperture )[2] ) const;
+                                real64 ( &transmissibility )[2],
+                                real64 ( &dTrans_dPressure )[2],
+                                real64 ( &dTrans_dAperture )[2] ) const;
 
 private:
 
@@ -235,12 +235,12 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
 
 template< typename PERMTYPE >
 void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex iconn,
-                                                               PERMTYPE permeability,
-                                                               PERMTYPE dPerm_dPressure,
-                                                               PERMTYPE dPerm_dAperture,
-                                                               real64 (& transmissibility)[2],
-                                                               real64 (& dTrans_dPressure )[2],
-                                                               real64 (& dTrans_dAperture )[2] ) const
+                                                                   PERMTYPE permeability,
+                                                                   PERMTYPE dPerm_dPressure,
+                                                                   PERMTYPE dPerm_dAperture,
+                                                                   real64 (& transmissibility)[2],
+                                                                   real64 (& dTrans_dPressure )[2],
+                                                                   real64 (& dTrans_dAperture )[2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];

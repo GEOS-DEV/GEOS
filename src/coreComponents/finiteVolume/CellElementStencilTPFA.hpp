@@ -96,8 +96,8 @@ public:
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
                                 PERMTYPE dPerm_dPressure,
-                                real64 (& transmissibility)[2],
-                                real64 (& dTrans_dPressure )[2] ) const;
+                                real64 ( &transmissibility )[2],
+                                real64 ( &dTrans_dPressure )[2] ) const;
 
   /**
    * @brief Give the number of stencil entries.

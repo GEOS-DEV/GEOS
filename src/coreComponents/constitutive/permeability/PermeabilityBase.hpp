@@ -51,7 +51,7 @@ public:
   GEOSX_FORCE_INLINE
   virtual void updatePorosity( localIndex const k,
                                localIndex const q,
-                               real64 const & porosity )
+                               real64 const & porosity ) const
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );
@@ -64,7 +64,7 @@ public:
                                      localIndex const q,
                                      real64 const & pressure,
                                      real64 const & volStrain,
-                                     real64 ( &dPerm_dVolStrain )[3] )
+                                     real64 ( & dPerm_dVolStrain )[3] ) const
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );
@@ -73,12 +73,23 @@ public:
     GEOSX_UNUSED_VAR( dPerm_dVolStrain );
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void updateAperture( localIndex const k,
+                               localIndex const q,
+                               real64 const & aperture ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( aperture );
+  }
+
 protected:
 
   PermeabilityBaseUpdate( arrayView3d< real64 > const & permeability,
                           arrayView3d< real64 > const & dPerm_dPressure )
     : m_permeability( permeability ),
-      m_dPerm_dPressure( dPerm_dPressure )
+    m_dPerm_dPressure( dPerm_dPressure )
   {}
 
   /// Default copy constructor

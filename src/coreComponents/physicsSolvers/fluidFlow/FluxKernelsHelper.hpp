@@ -31,7 +31,7 @@ namespace FluxKernelsHelper
 {
 
 template< typename VIEWTYPE >
- using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
 GEOSX_HOST_DEVICE
 void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
@@ -39,7 +39,6 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
                              arraySlice1d< localIndex const > const & sei,
                              real64 const ( &transmissibility )[2],
                              real64 const ( &dTrans_dPres )[2],
-                             real64 const ( &dTrans_dAper )[2],
                              ElementViewConst< arrayView1d< real64 const > > const & pres,
                              ElementViewConst< arrayView1d< real64 const > > const & dPres,
                              ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -48,8 +47,8 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
                              ElementViewConst< arrayView1d< real64 const > > const & mob,
                              ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                              real64 & fluxVal,
-                             real64 (&dFlux_dP)[2],
-                             real64 (&dFlux_dTrans)[2] );
+                             real64 ( &dFlux_dP )[2],
+                             real64 ( &dFlux_dTrans )[2] );
 
 
 } // namespace FluxKernelsHelper

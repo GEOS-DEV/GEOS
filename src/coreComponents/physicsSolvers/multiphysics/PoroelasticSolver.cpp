@@ -88,7 +88,7 @@ void PoroelasticSolver::registerDataOnMesh( Group & meshBodies )
       elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() ).
         setDescription( "Total Mean Stress" );
       elementSubRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dPerm_dDisplacementString() ).
-          setDescription( "Derivative of the permeability w.r.t displacement" );
+        setDescription( "Derivative of the permeability w.r.t displacement" );
     } );
   } );
 }
@@ -594,42 +594,63 @@ void PoroelasticSolver::updateState( DomainPartition & domain )
   this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                           auto & subRegion )
   {
-    updatePermeability( nodeManger, subRegion, targetIndex );
+    updatePermeability( nodeManager, subRegion, targetIndex );
     m_flowSolver->updateFluidState( subRegion, targetIndex );
   } );
 }
 
-void PoroelasticSolver::updatePermeability( NodeManager const & nodeManger,
+void PoroelasticSolver::updatePermeability( NodeManager const & nodeManager,
                                             CellElementSubRegion & subRegion,
                                             localIndex const targetIndex ) const
 {
   PermeabilityBase & perm =
-     getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+    getConstitutiveModel< PermeabilityBase >( subRegion, m_flowSolver->permeabilityModelNames()[targetIndex] );
+
+  string const & solidName = m_solidSolver->solidMaterialNames()[targetIndex];
 
   constitutive::constitutiveUpdatePassThru( perm, [&] ( auto & castedPerm )
   {
-     FiniteElementBase &
-           subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
+    finiteElement::FiniteElementBase &
+    subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName() );
 
-     finiteElement::dispatch3D( subRegionFE,
-                                [&castedPerm,
-                                 &nodeManger] ( auto const finiteElement )
-     {
+    finiteElement::dispatch3D( subRegionFE,
+                               [&solidName,
+                                &subRegion,
+                                &castedPerm,
+                                &nodeManager] ( auto const finiteElement )
+    {
 
-     typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
+      typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
 
-     arrayView3d< real64 > const & dPerm_dDisplacement =
-         subRegion.getReference< array3d< real64 > >( viewKeyStruct::dPerm_dDisplacementString() );
+      arrayView3d< real64 > const & dPerm_dDisplacement =
+        subRegion.template getReference< array3d< real64 > >( viewKeyStruct::dPerm_dDisplacementString() );
 
-     PermeabilityKernel< CellElementSubRegion >::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                                   finiteElement,
-                                                                                   permWrapper,
-                                                                                   pressure,
-                                                                                   porosity,
-                                                                                   dPorosity_dVolStrain,
-                                                                                   displacement,
-                                                                                   dPerm_dDisplacement );
-     } );
+      arrayView1d< real64 const > const & pressure =
+        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
+
+      arrayView1d< real64 const > const & deltaPressure =
+        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
+
+      SolidBase & solidModel =
+        getConstitutiveModel< SolidBase >( subRegion,
+                                           solidName );
+
+      arrayView2d< real64 const > const & porosity = solidModel.getPorosity();
+      array2d< real64 > dPorosity_dVolStrain;
+      dPorosity_dVolStrain.setValues< serialPolicy >( 0.0 );
+
+      PermeabilityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                            finiteElement,
+                                                            permWrapper,
+                                                            pressure,
+                                                            deltaPressure,
+                                                            porosity,
+                                                            dPorosity_dVolStrain.toViewConst(),
+                                                            nodeManager.referencePosition(),
+                                                            nodeManager.totalDisplacement(),
+                                                            subRegion.nodeList().toViewConst(),
+                                                            dPerm_dDisplacement );
+    } );
   } );
 
 }

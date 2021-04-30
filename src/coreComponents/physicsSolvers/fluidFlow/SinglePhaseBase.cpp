@@ -649,7 +649,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   this->template forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
-                                                                                                    auto & subRegion )
+                                                                                                   auto & subRegion )
   {
     updateSolidFlowProperties( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );

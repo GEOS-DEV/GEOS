@@ -62,14 +62,9 @@ FluxKernel::compute( localIndex const numFluxElems,
                           dDens_dPres,
                           mob,
                           dMob_dPres,
-                          fluxVal ,
+                          fluxVal,
                           dFlux_dP,
                           dFlux_dTrans );
-
-  for( localIndex ke = 0; ke < 2; ++ke )
-  {
-    dFlux_dAper[ke] = dFlux_dTrans[ke] * dTrans_dAper[ke];
-  }
 
   // populate local flux vector and derivatives
   flux[0] =  dt * fluxVal;

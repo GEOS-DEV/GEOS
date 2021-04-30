@@ -76,7 +76,6 @@ public:
   using BASE::m_elemGhostRank;
   using BASE::m_volume;
   using BASE::m_gravCoef;
-  using BASE::m_effectiveAperture;
 
 
   // Aliasing public/protected members/methods of SinglePhaseBase so we don't
@@ -222,11 +221,6 @@ public:
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs,
                                      CRSMatrixView< real64, localIndex const > const & dR_dAper );
-
-
-  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrix< real64, globalIndex > & localMatrix ) override final;
 
   /**@}*/
 

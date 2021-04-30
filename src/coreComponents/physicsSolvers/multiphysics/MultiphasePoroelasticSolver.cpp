@@ -302,11 +302,11 @@ void MultiphasePoroelasticSolver::updateState( DomainPartition & domain )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
-                                                                           auto & subRegion )
-   {
+                                                                          auto & subRegion )
+  {
     updatePermeability( subRegion, targetIndex );
     m_flowSolver->updateFluidState( subRegion, targetIndex );
-   } );
+  } );
 }
 
 void MultiphasePoroelasticSolver::updatePermeability( CellElementSubRegion & subRegion,

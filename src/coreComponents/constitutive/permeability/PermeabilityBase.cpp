@@ -38,9 +38,9 @@ PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
     setApplyDefaultValue( -1.0 );   // will be overwritten
 
   registerWrapper( viewKeyStruct::dPerm_dPressureString(), &m_dPerm_dPressure ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setDescription( " dPerm_dPressure of the rock." ).
-      setApplyDefaultValue( 0.0 );   // will be overwritten
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( " dPerm_dPressure of the rock." ).
+    setApplyDefaultValue( 0.0 );     // will be overwritten
 }
 
 PermeabilityBase::~PermeabilityBase() = default;

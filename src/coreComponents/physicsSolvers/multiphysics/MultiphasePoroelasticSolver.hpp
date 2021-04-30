@@ -112,7 +112,7 @@ public:
   virtual void updateState( DomainPartition & domain ) override;
 
   void updatePermeability ( CellElementSubRegion & subRegion,
-                            localIndex const targetIndex  ) const;
+                            localIndex const targetIndex ) const;
 
 
   enum class CouplingTypeOption : integer

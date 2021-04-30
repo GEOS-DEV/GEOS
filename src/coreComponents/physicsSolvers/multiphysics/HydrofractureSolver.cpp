@@ -677,10 +677,10 @@ void HydrofractureSolver::assembleSystem( real64 const time,
 
   m_flowSolver->resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
-  m_flowSolver->assembleAccumulationTerms( domain,
-                                           dofManager,
-                                           localMatrix,
-                                           localRhs );
+  m_flowSolver->assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
+                                                                     dofManager,
+                                                                     localMatrix,
+                                                                     localRhs );
   m_flowSolver->assembleFluxTerms( time,
                                    dt,
                                    domain,
@@ -840,7 +840,7 @@ HydrofractureSolver::
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
   CRSMatrixView< real64 const, localIndex const > const
-  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
+  dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
 
   ContactRelationBase const &
   contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
@@ -955,7 +955,7 @@ HydrofractureSolver::
                        DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  PoroelasticSolver::applySystemSolution(dofManager, localSolution, scalingFactor, domain);
+  PoroelasticSolver::applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 
   updateDeformationForCoupling( domain );
 }
@@ -994,8 +994,8 @@ void HydrofractureSolver::initializeNewFaceElements( DomainPartition const & )
 }
 
 void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                                         DofManager const & dofManager,
-                                                         CRSMatrix< real64, globalIndex > & localMatrix )
+                                                      DofManager const & dofManager,
+                                                      CRSMatrix< real64, globalIndex > & localMatrix )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 

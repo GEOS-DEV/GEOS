@@ -441,7 +441,7 @@ void CompositionalMultiphaseBase::updateCapPressureModel( Group & dataGroup, loc
   }
 }
 
-void CompositionalMultiphaseBase::updateFluidState(Group & subRegion, localIndex targetIndex ) const
+void CompositionalMultiphaseBase::updateFluidState( Group & subRegion, localIndex targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 

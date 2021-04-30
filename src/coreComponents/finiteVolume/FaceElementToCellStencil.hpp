@@ -120,20 +120,20 @@ public:
   }
 
   template< typename PERMTYPE >
-    void computeTransmissibility( localIndex iconn,
-                                  PERMTYPE permeability,
-                                  PERMTYPE dPerm_dPressure,
-                                  real64 (& transmissibility)[2],
-                                  real64 (& dTrans_dPressure )[2] ) const;
+  void computeTransmissibility( localIndex iconn,
+                                PERMTYPE permeability,
+                                PERMTYPE dPerm_dPressure,
+                                real64 ( &transmissibility )[2],
+                                real64 ( &dTrans_dPressure )[2] ) const;
 
- template< typename PERMTYPE >
-    void computeTransmissibility( localIndex iconn,
-                                  PERMTYPE permeability,
-                                  PERMTYPE dPerm_dPressure,
-                                  PERMTYPE dPerm_dAperture,
-                                  real64 (& transmissibility)[2],
-                                  real64 (& dTrans_dPressure )[2],
-                                  real64 (& dTrans_dAperture )[2] ) const;
+  template< typename PERMTYPE >
+  void computeTransmissibility( localIndex iconn,
+                                PERMTYPE permeability,
+                                PERMTYPE dPerm_dPressure,
+                                PERMTYPE dPerm_dAperture,
+                                real64 ( &transmissibility )[2],
+                                real64 ( &dTrans_dPressure )[2],
+                                real64 ( &dTrans_dAperture )[2] ) const;
 
 private:
 

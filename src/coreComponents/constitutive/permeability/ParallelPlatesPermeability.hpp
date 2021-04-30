@@ -60,7 +60,7 @@ public:
   GEOSX_FORCE_INLINE
   void updateAperture( localIndex const k,
                        localIndex const q,
-                       real64 const & effectiveAperture )
+                       real64 const & effectiveAperture ) const override
   {
     compute( effectiveAperture,
              m_permeability[k][q],
@@ -105,9 +105,7 @@ public:
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
-  {
-
-  } viewKeys;
+  {} viewKeys;
 
 private:
   array3d< real64 > m_dPerm_dAperture;

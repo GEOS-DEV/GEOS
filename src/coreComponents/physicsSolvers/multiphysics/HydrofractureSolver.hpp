@@ -128,17 +128,17 @@ public:
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
-      return m_derivativeFluxResidual_dAperture;
+    return m_derivativeFluxResidual_dAperture;
   }
 
   CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
   {
-      return m_derivativeFluxResidual_dAperture->toViewConstSizes();
+    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
   CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
   {
-      return m_derivativeFluxResidual_dAperture->toViewConst();
+    return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
 
@@ -187,7 +187,6 @@ protected:
   void setUpDflux_dApertureMatrix( DomainPartition & domain,
                                    DofManager const & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix );
-
 
 
 

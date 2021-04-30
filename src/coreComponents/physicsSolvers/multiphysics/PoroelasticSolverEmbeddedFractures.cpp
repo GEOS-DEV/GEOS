@@ -408,21 +408,21 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
 
   // 1. Cell-based contributions of standard poroelasticity
   m_solidSolver->getMaxForce() =
-      finiteElement::
+    finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-      constitutive::SolidBase,
-      CellElementSubRegion,
-      PoroelasticKernels::SinglePhase >( mesh,
-                                         targetRegionNames(),
-                                         this->getDiscretizationName(),
-                                         m_solidSolver->solidMaterialNames(),
-                                         dispDofNumber,
-                                         pDofKey,
-                                         dofManager.rankOffset(),
-                                         localMatrix,
-                                         localRhs,
-                                         gravityVectorData,
-                                         m_flowSolver->fluidModelNames() );
+                                    constitutive::SolidBase,
+                                    CellElementSubRegion,
+                                    PoroelasticKernels::SinglePhase >( mesh,
+                                                                       targetRegionNames(),
+                                                                       this->getDiscretizationName(),
+                                                                       m_solidSolver->solidMaterialNames(),
+                                                                       dispDofNumber,
+                                                                       pDofKey,
+                                                                       dofManager.rankOffset(),
+                                                                       localMatrix,
+                                                                       localRhs,
+                                                                       gravityVectorData,
+                                                                       m_flowSolver->fluidModelNames() );
 
   // 2.  Add EFEM poroelastic contribution
 //   m_solidSolver->getMaxForce() =
@@ -444,11 +444,11 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
 
 
   // 3. TODO assemble poroelastic fluxes and all derivatives
-  m_flowSolver->assemblePoroelasticFluxTerm( time_n, dt,
-                                             domain,
-                                             dofManager,
-                                             localMatrix,
-                                             localRhs );
+  m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
+                                              domain,
+                                              dofManager,
+                                              localMatrix,
+                                              localRhs );
 
 }
 
@@ -762,34 +762,34 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
   ContactRelationBase const &
   contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
 
-  this->template forTargetSubRegions< EmbeddedSurfaceSubRegion >( mesh, [&] ( localIndex const targetIndex,
-                                                                              auto & subRegion )
+  this->template forTargetSubRegions< EmbeddedSurfaceSubRegion >( meshLevel, [&] ( localIndex const targetIndex,
+                                                                                   auto & subRegion )
   {
     arrayView2d< real64 const > const dispJump =
-      subRegion.getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
+      subRegion.template getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
 
     arrayView1d< real64 > const effectiveAperture =
-      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
+      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
 
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
     arrayView1d< real64 > const deltaVolume =
-      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
+      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
     arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
     arrayView2d< real64 > const & fractureTraction =
-      subRegion.getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::fractureTractionString() );
+      subRegion.template getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::fractureTractionString() );
 
     arrayView1d< real64 >  const & dTdpf =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString() );
+      subRegion.template getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString() );
 
     arrayView1d< real64 const > const & pressure =
-      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
+      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
 
     arrayView1d< real64 const > const & deltaPressure =
-      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
+      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
 
     forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
     {
@@ -810,7 +810,7 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
     // update fracture's permeability and porosity
     m_flowSolver->updateSolidFlowProperties( subRegion, targetIndex );
     // update fluid model
-    m_flowSolver->updateFluidState(subRegion, targetIndex);
+    m_flowSolver->updateFluidState( subRegion, targetIndex );
 
   } );
 }

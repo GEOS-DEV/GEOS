@@ -92,7 +92,7 @@ public:
                                 ArrayOfArrays< R1Tensor > & cellCenterToEdgeCenters )
 
     : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
-      m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() )
+    m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() )
   {}
 
   /// Default copy constructor
@@ -138,20 +138,20 @@ public:
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
                                 PERMTYPE dPerm_dPressure,
-                                real64 (& transmissibility)[2],
-                                real64 (& dTrans_dPressure )[2] ) const;
+                                real64 ( &transmissibility )[2],
+                                real64 ( &dTrans_dPressure )[2] ) const;
 
   template< typename PERMTYPE >
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
                                 PERMTYPE dPerm_dPressure,
                                 PERMTYPE dPerm_dAperture,
-                                real64 (& transmissibility)[2],
-                                real64 (& dTrans_dPressure )[2],
-                                real64 (& dTrans_dAperture )[2] ) const;
+                                real64 ( &transmissibility )[2],
+                                real64 ( &dTrans_dPressure )[2],
+                                real64 ( &dTrans_dAperture )[2] ) const;
 
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
-    { return m_cellCenterToEdgeCenters.toViewConst(); }
+  { return m_cellCenterToEdgeCenters.toViewConst(); }
 
 private:
   ArrayOfArraysView< R1Tensor > m_cellCenterToEdgeCenters;
@@ -277,7 +277,7 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic[1] = dt1 / 2;
 
   dTrans_dPressure[0] = meanPermCoeff * dHarmonic[0] + (1 - meanPermCoeff) * dArithmetic[0];
-  dTrans_dPressure[1] = - ( meanPermCoeff * dHarmonic[1] + (1 - meanPermCoeff) * dArithmetic[1] );
+  dTrans_dPressure[1] = -( meanPermCoeff * dHarmonic[1] + (1 - meanPermCoeff) * dArithmetic[1] );
 }
 
 
@@ -288,7 +288,7 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
                                                             PERMTYPE dPerm_dAperture,
                                                             real64 (& transmissibility)[2],
                                                             real64 (& dTrans_dPressure )[2],
-                                                            real64 (& dTrans_dAperture )[2]) const
+                                                            real64 (& dTrans_dAperture )[2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
@@ -323,7 +323,7 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic_dpres[1] = dt1_dp / 2;
 
   dTrans_dPressure[0] = meanPermCoeff * dHarmonic_dpres[0] + (1 - meanPermCoeff) * dArithmetic_dpres[0];
-  dTrans_dPressure[1] = - ( meanPermCoeff * dHarmonic_dpres[1] + (1 - meanPermCoeff) * dArithmetic_dpres[1] );
+  dTrans_dPressure[1] = -( meanPermCoeff * dHarmonic_dpres[1] + (1 - meanPermCoeff) * dArithmetic_dpres[1] );
 
   real64 const dt0_da = m_weights[iconn][0] * dPerm_dAperture[er0][esr0][ei0][0][0];
   real64 const dt1_da = m_weights[iconn][1] * dPerm_dAperture[er1][esr1][ei1][0][0];
@@ -337,7 +337,7 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic_dAper[1] = dt1_da / 2;
 
   dTrans_dAperture[0] = meanPermCoeff * dHarmonic_dAper[0] + (1 - meanPermCoeff) * dArithmetic_dAper[0];
-  dTrans_dAperture[1] = - ( meanPermCoeff * dHarmonic_dAper[1] + (1 - meanPermCoeff) * dArithmetic_dAper[1] );
+  dTrans_dAperture[1] = -( meanPermCoeff * dHarmonic_dAper[1] + (1 - meanPermCoeff) * dArithmetic_dAper[1] );
 }
 
 

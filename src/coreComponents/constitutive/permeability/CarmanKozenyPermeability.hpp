@@ -64,7 +64,7 @@ public:
   GEOSX_FORCE_INLINE
   virtual void updatePorosity( localIndex const k,
                                localIndex const q,
-                               real64 const & porosity )
+                               real64 const & porosity ) const override
   {
     compute( porosity,
              m_permeability[k][q],

@@ -105,7 +105,7 @@ public:
 
   void updatePermeability( NodeManager const & nodeManger,
                            CellElementSubRegion & subRegion,
-                           localIndex const targetIndex  ) const;
+                           localIndex const targetIndex ) const;
 
   virtual void
   implicitStepComplete( real64 const & time_n,

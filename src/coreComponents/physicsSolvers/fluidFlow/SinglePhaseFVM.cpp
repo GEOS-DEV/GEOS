@@ -22,6 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/solid/RockBase.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
@@ -31,6 +32,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoroelasticFluxKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -97,8 +99,6 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
                      localRhs,
                      localSolution,
                      setSparsity );
-
-  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
 }
 
@@ -216,51 +216,6 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
   } );
 }
 
-template< typename BASE >
-void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
-                                                           real64 const dt,
-                                                           DomainPartition & domain,
-                                                           DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-  elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-  elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
-
-  fluxApprox.forAllStencils< cellElementStencilTPFA, surfaceElementStencil, embeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
-  {
-    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
-
-    EmbeddedSurfaceFluxKernel::launch( stencilWrapper,
-                                       dt,
-                                       dofManager.rankOffset(),
-                                       elemDofNumber.toNestedViewConst(),
-                                       m_elemGhostRank.toNestedViewConst(),
-                                       m_pressure.toNestedViewConst(),
-                                       m_deltaPressure.toNestedViewConst(),
-                                       m_gravCoef.toNestedViewConst(),
-                                       m_density.toNestedViewConst(),
-                                       m_dDens_dPres.toNestedViewConst(),
-                                       m_mobility.toNestedViewConst(),
-                                       m_dMobility_dPres.toNestedViewConst(),
-                                       m_permeability.toNestedViewConst(),
-                                       m_dPerm_dPressure.toNestedViewConst(),
-                                       m_transTMultiplier.toNestedViewConst(),
-                                       this->gravityVector(),
-                                       localMatrix,
-                                       localRhs );
-  } );
-}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
@@ -278,22 +233,30 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  string const & pressureDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-  elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-  elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+  pressureDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
+  pressureDofNumber.setName( this->getName() + "/accessors/" + pressureDofKey );
+
+  string const & jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+  jumpDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( jumpDofKey );
+  jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-      mesh.getElemManager().constructMaterialViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString() );
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+                                                                           targetRegionNames(),
+                                                                           m_permeabilityModelNames );
 
-  fluxApprox.forAllStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
+  fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
     EmbeddedSurfaceFluxKernel::launch( stencilWrapper,
                                        dt,
                                        dofManager.rankOffset(),
-                                       elemDofNumber.toNestedViewConst(),
+                                       pressureDofNumber.toNestedViewConst(),
+                                       jumpDofNumber.toNestedViewConst(),
                                        m_elemGhostRank.toNestedViewConst(),
                                        m_pressure.toNestedViewConst(),
                                        m_deltaPressure.toNestedViewConst(),
@@ -334,7 +297,12 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const time_n,
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-  fluxApprox.forAllStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+                                                                           targetRegionNames(),
+                                                                           m_permeabilityModelNames );
+
+  fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
@@ -352,12 +320,13 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const time_n,
                                    m_dMobility_dPres.toNestedViewConst(),
                                    m_permeability.toNestedViewConst(),
                                    m_dPerm_dPressure.toNestedViewConst(),
+                                   dPerm_dAper.toNestedViewConst(),
                                    m_transTMultiplier.toNestedViewConst(),
                                    this->gravityVector(),
                                    localMatrix,
                                    localRhs,
                                    dR_dAper );
-   } );
+  } );
 }
 
 template< typename BASE >

@@ -129,7 +129,7 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      dispEqnRowIndices{ 0 },
+            dispEqnRowIndices{ 0 },
       dispColIndices{ 0 },
       jumpEqnRowIndices{ 0 },
       jumpColIndices{ 0 },
@@ -192,37 +192,37 @@ public:
   //*****************************************************************************
 
   //START_kernelLauncher
-    template< typename POLICY,
-              typename KERNEL_TYPE >
-    static
-    real64
-    kernelLaunch( localIndex const numElems,
-                  KERNEL_TYPE const & kernelComponent )
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    GEOSX_UNUSED_VAR( numElems );
+
+    // Define a RAJA reduction variable to get the maximum residual contribution.
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+
+    forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
+                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
-      GEOSX_MARK_FUNCTION;
+      localIndex k = kernelComponent.m_fracturedElems[i];
+      typename KERNEL_TYPE::StackVariables stack;
 
-      GEOSX_UNUSED_VAR( numElems );
-
-      // Define a RAJA reduction variable to get the maximum residual contribution.
-      RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
-
-      forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                        [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      kernelComponent.setup( k, stack );
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
-        localIndex k = kernelComponent.m_fracturedElems[i];
-        typename KERNEL_TYPE::StackVariables stack;
+        kernelComponent.quadraturePointKernel( k, q, stack );
+      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
+    } );
 
-        kernelComponent.setup( k, stack );
-        for( integer q=0; q<numQuadraturePointsPerElem; ++q )
-        {
-          kernelComponent.quadraturePointKernel( k, q, stack );
-        }
-        maxResidual.max( kernelComponent.complete( k, stack ) );
-      } );
-
-      return maxResidual.get();
-    }
-    //END_kernelLauncher
+    return maxResidual.get();
+  }
+  //END_kernelLauncher
 
 
   /**

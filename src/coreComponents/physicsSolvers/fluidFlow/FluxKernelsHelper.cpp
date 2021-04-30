@@ -29,7 +29,6 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
                              arraySlice1d< localIndex const > const & sei,
                              real64 const ( &transmissibility )[2],
                              real64 const ( &dTrans_dPres )[2],
-                             real64 const ( &dTrans_dAper )[2],
                              ElementViewConst< arrayView1d< real64 const > > const & pres,
                              ElementViewConst< arrayView1d< real64 const > > const & dPres,
                              ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -38,8 +37,8 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
                              ElementViewConst< arrayView1d< real64 const > > const & mob,
                              ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                              real64 & fluxVal,
-                             real64 (&dFlux_dP)[2],
-                             real64 (&dFlux_dTrans)[2] )
+                             real64 (& dFlux_dP)[2],
+                             real64 (& dFlux_dTrans)[2] )
 {
   // average density
   real64 densMean = 0.0;
@@ -53,8 +52,8 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
 
   // compute potential difference
   real64 potDif = 0.0;
-  real64 dPotDif_dTrans[2] = {0.0,0.0};
-  real64 dPotDif_dP[2] = {0.0,0.0};
+  real64 dPotDif_dTrans[2] = {0.0, 0.0};
+  real64 dPotDif_dP[2] = {0.0, 0.0};
   real64 sumWeightGrav = 0.0;
   real64 potScale = 0.0;
 
@@ -110,7 +109,7 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
     dFlux_dTrans[ke] = mobility * dPotDif_dTrans[ke];
 
     dFlux_dP[ke] = mobility * dPotDif_dP[ke] + dMobility_dP[ke] * potDif +
-        dFlux_dTrans[ke] * dTrans_dPres[ke];
+                   dFlux_dTrans[ke] * dTrans_dPres[ke];
   }
 }
 

@@ -24,7 +24,6 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "SinglePhaseFVMKernels.hpp"
 
 namespace geosx
 {
@@ -36,30 +35,50 @@ namespace SinglePhasePoroelasticFluxKernels
 
 struct PermeabilityKernel
 {
-  template< typename POLICY, typename PERM_WRAPPER, typename FE_TYPE >
+  template< typename POLICY,
+            typename PERM_WRAPPER,
+            typename FE_TYPE >
   static void
   launch( localIndex const size,
           FE_TYPE finiteElementSpace,
           PERM_WRAPPER const & permWrapper,
           arrayView1d< real64 const > const & pressure,
+          arrayView1d< real64 const > const & deltaPressure,
           arrayView2d< real64 const > const & porosity,
-          arrayView1d< real64 const > const & dPorosity_dVolStrain,
-          arrayView2d< real64 const > const & displacement,
+          arrayView2d< real64 const > const & dPorosity_dVolStrain,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeLocation,
+          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const displacement,
+          arrayView2d< localIndex const > const & elemsToNodes,
           arrayView3d< real64 > const & dPerm_dDisplacement )
   {
+
+    GEOSX_UNUSED_VAR( dPorosity_dVolStrain );
     static constexpr int numNodesPerElem = FE_TYPE::numNodes;
 
     static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      real64 displacementLocal = LV_ARRAY_INIT( displacement[k] );
+      real64 displacementLocal[numNodesPerElem][3];
+      real64 xLocal[numNodesPerElem][3];
+
+      for( localIndex a=0; a<numNodesPerElem; ++a )
+      {
+        localIndex const localNodeIndex = elemsToNodes( k, a );
+
+        for( int i=0; i<3; ++i )
+        {
+          xLocal[a][i] = nodeLocation[localNodeIndex][i];
+          displacementLocal[a][i] = displacement[localNodeIndex][i];
+        }
+      }
+
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real64 N[numNodesPerElem];
         real64 dNdX[numNodesPerElem][3];
         FE_TYPE::calcN( q, N );
-        real64 const detJxW = finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+        finiteElementSpace.template getGradN< FE_TYPE >( k, q, xLocal, dNdX );
 
         real64 strainIncrement[6] = {0};
         real64 dPerm_dVolStrain[3] = {0};
@@ -68,32 +87,11 @@ struct PermeabilityKernel
 
         real64 const volStrain =   strainIncrement[0] + strainIncrement[1] + strainIncrement[2];
 
-        permWrapper.updatePorosity( k, q, porosity );
+        permWrapper.updatePorosity( k, q, porosity[k][q] );
 
-        permWrapper.updatePressureStrain( k, q, pressure, volStrain, dPerm_dVolStrain );
+        permWrapper.updatePressureStrain( k, q, pressure[k] + deltaPressure[k], volStrain, dPerm_dVolStrain );
 
         // TODO: chain rule all dependencies to get to dPerm_dDisplacement
-      }
-    } );
-  }
-
-  template< typename POLICY, typename PERM_WRAPPER, typename FE_TYPE >
-  static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          FE_TYPE finiteElementSpace,
-          PERM_WRAPPER const & permWrapper,
-          arrayView1d< real64 const > const & pressure,
-          arrayView2d< real64 const > const & porosity,
-          arrayView1d< real64 const > const & dPorosity_dVolStrain,
-          arrayView2d< real64 const > const & displacement,
-          arrayView3d< real64 > const & dPerm_dDisplacement )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      localIndex const k = targetSet[a];
-      for( localIndex q = 0; q < permWrapper.numGauss(); ++q )
-      {
-        permWrapper.updatePressureStrain( k, q, pressure, volStrain, dPerm_dVolStrain );
       }
     } );
   }
@@ -134,7 +132,7 @@ struct EmbeddedSurfaceFluxKernel
    * @param[out] localMatrix The linear system matrix
    * @param[out] localRhs The linear system residual
    */
-  template< typename STENCIL_WRAPPER_TYPE>
+  template< typename STENCIL_WRAPPER_TYPE >
   static void
   launch( STENCIL_WRAPPER_TYPE const & stencilWrapper,
           real64 const dt,
@@ -153,7 +151,7 @@ struct EmbeddedSurfaceFluxKernel
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
           ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
-          R1Tensor const &  gravityVector,
+          R1Tensor const & gravityVector,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -218,13 +216,12 @@ struct FaceElementFluxKernel
    * @param[out] localMatrix The linear system matrix
    * @param[out] localRhs The linear system residual
    */
-  template< typename STENCIL_WRAPPER_TYPE>
+  template< typename STENCIL_WRAPPER_TYPE >
   static void
   launch( STENCIL_WRAPPER_TYPE const & stencilWrapper,
           real64 const dt,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & pressureDofNumber,
-          ElementViewConst< arrayView1d< globalIndex const > > const & jumpDofNumber,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
@@ -237,7 +234,7 @@ struct FaceElementFluxKernel
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
           ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
-          R1Tensor const &  gravityVector,
+          R1Tensor const & gravityVector,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs,
           CRSMatrixView< real64, localIndex const > const & dR_dAper );

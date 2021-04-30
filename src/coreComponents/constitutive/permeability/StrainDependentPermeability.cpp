@@ -29,14 +29,13 @@ namespace constitutive
 
 StrainDependentPermeability::StrainDependentPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
-{
-}
+{}
 
 StrainDependentPermeability::~StrainDependentPermeability() = default;
 
 std::unique_ptr< ConstitutiveBase >
 StrainDependentPermeability::deliverClone( string const & name,
-                                        Group * const parent ) const
+                                           Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
@@ -44,7 +43,7 @@ StrainDependentPermeability::deliverClone( string const & name,
 }
 
 void StrainDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                         localIndex const numConstitutivePointsPerParentIndex )
+                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
