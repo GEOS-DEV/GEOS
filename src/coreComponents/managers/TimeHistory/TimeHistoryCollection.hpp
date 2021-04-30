@@ -168,8 +168,7 @@ public:
    */
   virtual HistoryCollection & getMetaCollector( localIndex metaIdx )
   {
-    localIndex numMetaCollectors = getNumMetaCollectors( );
-    GEOSX_ASSERT_MSG( metaIdx >= 0 && metaIdx < numMetaCollectors, "Requesting nonexistent meta collector index." );
+    GEOSX_ASSERT_MSG( metaIdx >= 0 && metaIdx < getNumMetaCollectors( ), "Requesting nonexistent meta collector index." );
     return *m_metaCollectors[ metaIdx ].get( );
   }
 
