@@ -36,6 +36,12 @@
 #include <vtkUnstructuredGridReader.h>
 #include <vtkCellData.h>
 #include <vtkRedistributeDataSetFilter.h>
+#ifdef GEOSX_USE_MPI
+#include <vtkMPIController.h>
+#include <vtkMPI.h>
+#else
+#include <vtkDummyController.h>
+#endif
 namespace geosx
 {
 using namespace dataRepository;
@@ -58,27 +64,6 @@ VTKMeshGenerator::~VTKMeshGenerator()
 void VTKMeshGenerator::postProcessInput()
 {
   GEOSX_LOG_RANK_0("debut");
-  string_array filePathTokenized = stringutilities::tokenize( m_filePath, "."); //TODO maybe code a method in Path to get the file extension?
-  string extension = filePathTokenized[filePathTokenized.size() - 1];
-  if( extension == "vtk")
-  {
-    vtkSmartPointer<vtkUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkUnstructuredGridReader>::New();
-	vtkUgReader->SetFileName( m_filePath.c_str() );
-    vtkUgReader->Update();
-	m_vtkMesh = vtkUgReader->GetOutput();
-  }
-  else if( extension == "vtu")
-  {
-    vtkSmartPointer<vtkXMLUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-    GEOSX_LOG_RANK_0(m_filePath);
-	vtkUgReader->SetFileName( m_filePath.c_str() );
-    vtkUgReader->Update();
-	m_vtkMesh = vtkUgReader->GetOutput();
-  }
-  else
-  {
-    GEOSX_ERROR( extension << " is not a recognized extension for using the VTK reader with GEOSX. Please use .vtk or .vtu" );
-  }
 }
 
 Group * VTKMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
@@ -88,6 +73,44 @@ Group * VTKMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childK
 
 void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 {
+
+  #ifdef GEOSX_USE_MPI
+    vtkNew<vtkMPIController> controller;
+    vtkMPICommunicatorOpaqueComm vtkGeosxComm(&MPI_COMM_GEOSX);
+    vtkNew<vtkMPICommunicator> communicator;
+    communicator->InitializeExternal( &vtkGeosxComm);
+    controller->SetCommunicator(communicator);
+    
+  #else
+    vtkNew<vtkDummyController> controller;
+  #endif
+  vtkMultiProcessController::SetGlobalController(controller);
+
+  string_array filePathTokenized = stringutilities::tokenize( m_filePath, "."); //TODO maybe code a method in Path to get the file extension?
+  string extension = filePathTokenized[filePathTokenized.size() - 1];
+  if( controller->GetLocalProcessId() == 0)
+  {
+  if( extension == "vtk")
+  {
+    vtkSmartPointer<vtkUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkUnstructuredGridReader>::New();
+	  vtkUgReader->SetFileName( m_filePath.c_str() );
+    vtkUgReader->Update();
+	  m_vtkMesh = vtkUgReader->GetOutput();
+  }
+  else if( extension == "vtu")
+  {
+    vtkSmartPointer<vtkXMLUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+    GEOSX_LOG_RANK_0(m_filePath);
+	  vtkUgReader->SetFileName( m_filePath.c_str() );
+    vtkUgReader->Update();
+	  m_vtkMesh = vtkUgReader->GetOutput();
+  }
+  else
+  {
+    GEOSX_ERROR( extension << " is not a recognized extension for using the VTK reader with GEOSX. Please use .vtk or .vtu" );
+  }
+} 
+  std::cout <<"number of cells : "<< m_vtkMesh->GetNumberOfCells() << std::endl;
   Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
 

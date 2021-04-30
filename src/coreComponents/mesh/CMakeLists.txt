@@ -114,7 +114,10 @@ if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
     set( mesh_headers ${meshUtilities_headers} generators/VTKMeshGenerator.hpp )
     set( mesh_headers ${meshUtilities_sources} generators/VTKMeshGenerator.cpp)
-    set( dependencyList ${dependencyList} VTK::CommonCore VTK::CommonSystem VTK::CommonMisc VTK::IOCore VTK::IOLegacy VTK::IOXML VTK::expat VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::loguru )
+    set( dependencyList ${dependencyList} VTK::CommonCore VTK::CommonSystem VTK::CommonMisc VTK::IOCore VTK::IOLegacy VTK::IOXML VTK::expat VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::loguru VTK::FiltersParallelDIY2 )
+    if( ENABLE_MPI )
+      set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
+    endif()
 endif()
 
 blt_add_library( NAME                  mesh
