@@ -1,13 +1,9 @@
 import sys
 import numpy as np
-from mpi4py import MPI
 import matplotlib.pyplot as plt
 import pylvarray
 import pygeosx
-
-# Get the MPI rank
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
+from pygeosx_tools import parallel_io
 
 
 def get_wrapper(problem, target_key, write_flag=False):
@@ -52,7 +48,7 @@ def get_wrapper_par(problem, target_key, allgather=False, ghost_key=''):
     Returns:
         np.ndarray: The wrapper as a numpy ndarray
     """
-    if (comm.size == 1):
+    if (parallel_io.comm.size == 1):
         # This is a serial problem
         return get_wrapper(problem, target_key)
 
@@ -66,45 +62,8 @@ def get_wrapper_par(problem, target_key, allgather=False, ghost_key=''):
             ghost_values = get_wrapper(problem, ghost_key)
             local_values = local_values[ghost_values < -0.5]
 
-        # Find buffer size
-        N = np.shape(local_values)
-        M = np.prod(N)
-        all_M = []
-        max_M = 0
-        if allgather:
-            all_M = comm.allgather(M)
-            max_M = np.amax(all_M)
-        else:
-            all_M = comm.gather(M, root=0)
-            if (rank == 0):
-                max_M = np.amax(all_M)
-            max_M = comm.bcast(max_M, root=0)
-
-        # Pack the array into a buffer
-        send_buff = np.zeros(max_M)
-        send_buff[:M] = np.reshape(local_values, (-1))
-        receive_buff = np.zeros((comm.size, max_M))
-
-        # Gather the buffers
-        if allgather:
-            comm.Allgather([send_buff, MPI.DOUBLE], [receive_buff, MPI.DOUBLE])
-        else:
-            comm.Gather([send_buff, MPI.DOUBLE], [receive_buff, MPI.DOUBLE], root=0)
-
-        # Unpack the buffers
-        all_values = []
-        R = list(N)
-        R[0] = -1
-        if ((rank == 0) | allgather):
-            # Reshape each rank's contribution
-            for ii in range(comm.size):
-                if (all_M[ii] > 0):
-                    tmp = np.reshape(receive_buff[ii, :all_M[ii]], R)
-                    all_values.append(tmp)
-
-            # Concatenate into a single array
-            all_values = np.concatenate(all_values, axis=0)
-        return all_values
+        return parallel_io.gather_array(local_values,
+                                        allgather=allgather)
 
 
 def gather_wrapper(problem, key, ghost_key=''):
@@ -147,34 +106,7 @@ def get_global_value_range(problem, key):
         tuple: The global min/max of the target
     """
     local_values = get_wrapper(problem, key)
-
-    # 1D arrays will return a scalar, ND arrays an array
-    N = np.shape(local_values)
-    local_min = 1e100
-    local_max = -1e100
-    if (len(N) > 1):
-        local_min = np.zeros(N[1]) + 1e100
-        local_max = np.zeros(N[1]) - 1e100
-
-    # For >1D arrays, keep the last dimension
-    query_axis = 0
-    if (len(N) > 2):
-        query_axis = tuple([ii for ii in range(0, len(N) - 1)])
-
-    # Ignore zero-length results
-    if len(local_values):
-        local_min = np.amin(local_values, axis=query_axis)
-        local_max = np.amax(local_values, axis=query_axis)
-
-    # Gather the results onto rank 0
-    all_min = comm.gather(local_min, root=0)
-    all_max = comm.gather(local_max, root=0)
-    global_min = 1e100
-    global_max = -1e100
-    if (rank == 0):
-        global_min = np.amin(np.array(all_min), axis=0)
-        global_max = np.amax(np.array(all_max), axis=0)
-    return global_min, global_max
+    return parallel_io.get_global_array_range(local_values)
 
 
 def print_global_value_range(problem, key, header, scale=1.0, precision='%1.4f'):
@@ -195,7 +127,7 @@ def print_global_value_range(problem, key, header, scale=1.0, precision='%1.4f')
     global_min *= scale
     global_max *= scale
 
-    if (rank == 0):
+    if (parallel_io.rank == 0):
         if isinstance(global_min, np.ndarray):
             min_str = ', '.join([precision % (x) for x in global_min])
             max_str = ', '.join([precision % (x) for x in global_max])
@@ -313,12 +245,12 @@ def get_matching_wrapper_path(problem, filters):
     search_datastructure_wrappers_recursive(problem, filters, matching_paths)
 
     if (len(matching_paths) == 1):
-        if (rank == 0):
+        if (parallel_io.rank == 0):
             print('Found matching wrapper: %s' % (matching_paths[0]))
         return matching_paths[0]
 
     else:
-        if (rank == 0):
+        if (parallel_io.rank == 0):
             print('Error occured while looking for wrappers:')
             print('Filters: [%s]' % (', '.join(filters)))
             print('Matching wrappers: [%s]' % (', '.join(matching_paths)))
@@ -360,7 +292,7 @@ def plot_history(records, output_root='.', save_figures=True, show_figures=True)
         save_figures (bool): Flag to indicate whether figures should be saved (default = True)
         show_figures (bool): Flag to indicate whether figures should be drawn (default = False)
     """
-    if (rank == 0):
+    if (parallel_io.rank == 0):
         for k in records.keys():
             if (k != 'time'):
                 # Set the active figure
