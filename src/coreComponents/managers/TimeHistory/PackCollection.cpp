@@ -12,6 +12,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
   , m_setChanged( false )
   , m_onlyOnSetChange( 0 )
   , m_disableCoordCollection( false )
+  , m_initialized( false )
 {
   registerWrapper( PackCollection::viewKeysStruct::objectPathString(), &m_objectPath ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -33,8 +34,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
 
 void PackCollection::initializePostSubGroups( )
 {
-  static bool called = false;
-  if( !called )
+  if( !m_initialized )
   {
     DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
     localIndex numSets = m_setNames.size( );
@@ -54,7 +54,7 @@ void PackCollection::initializePostSubGroups( )
       //  infinite recursive init calls here
       metaCollector->initializePostSubGroups();
     }
-    called = true;
+    m_initialized = true;
   }
 }
 
@@ -89,8 +89,9 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
   WrapperBase const & target = targetObject->getWrapperBase( m_fieldName );
   GEOSX_ERROR_IF( !target.isPackable( false ), "The object targeted for collection must be packable!" );
   localIndex numSets = m_setNames.size( );
-  std::vector< localIndex > oldSetSizes( numSets );
-  if( numSets > 0 )
+  std::vector< localIndex > oldSetSizes( numSets == 0 ? 1 : numSets );
+  bool collectAll = (numSets == 0);
+  if( !collectAll )
   {
     // if sets are specified we retrieve the field only from those sets
     Group const & setGroup = targetObject->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
@@ -98,6 +99,11 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
     localIndex setIdx = 0;
     for( auto & setName : m_setNames )
     {
+      if( setName == "all" )
+      {
+        collectAll = true;
+        break;
+      }
       if( setGroup.hasWrapper( setName ) )
       {
         SortedArrayView< localIndex const > const & set = setGroup.getReference< SortedArray< localIndex > >( setName );
@@ -115,15 +121,18 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
       setIdx++;
     }
   }
-  else
+  if( collectAll )
   {
-    // if no set is specified we retrieve the entire field
+    // if no set or "all" is specified we retrieve the entire field
     m_setsIndices.resize( 1 );
     m_setsIndices[0].resize( targetObject->size() );
     for( localIndex ii = 0; ii < targetObject->size(); ++ii )
     {
       m_setsIndices[0][ii] = ii;
     }
+    // this causes the ghost nodes to be filtered when collecting all
+    numSets = 1;
+    oldSetSizes[ 0 ] = m_setsIndices[ 0 ].size( );
   }
   // filter out the ghost indices immediately when we update the index sets
   if( m_targetIsMeshObject )

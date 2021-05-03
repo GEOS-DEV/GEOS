@@ -185,7 +185,7 @@ protected:
   /**
    * @brief Update the extent of the dataset in the target file.
    * @param rowLimit The new discrete 'row' count (the first output dim) to extend the extent to.
-   * @note The second dimension is set to the global index highwater ( the largest number of output 
+   * @note The second dimension is set to the global index highwater ( the largest number of output
    *        pieces of data encountered during execution ).
    */
   void updateDatasetExtent( hsize_t rowLimit );
@@ -208,10 +208,10 @@ private:
   globalIndex m_globalIdxOffset;
   /// The global index count for this mpi rank for this data set
   globalIndex m_globalIdxCount;
-  /// The largest index count encountered (globally) during execution (this determines the 2nd dimension of 
+  /// The largest index count encountered (globally) during execution (this determines the 2nd dimension of
   ///   the output data array)
   globalIndex m_globalIdxHighwater;
-  /// The current chunk size for writing to file. This is the smallest (necessarily nonzero) local index 
+  /// The current chunk size for writing to file. This is the smallest (necessarily nonzero) local index
   ///   count from the last partition setup.
   hsize_t m_chunkSize;
   /// The current limit in discrete history counts for this data set in the file
