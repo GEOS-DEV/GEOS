@@ -672,7 +672,7 @@ void waitOrderedOrWaitAll( int const n, std::vector< std::function< MPI_Request 
   }
 }
 
-void CommunicationTools::findGhosts( MeshLevel & meshLevel,
+void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      bool const unorderedComms )
 {

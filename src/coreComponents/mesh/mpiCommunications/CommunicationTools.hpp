@@ -98,7 +98,7 @@ public:
   void assignNewGlobalIndices( ElementRegionManager & elementManager,
                                std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
-  void findGhosts( MeshLevel & meshLevel,
+  void setupGhosts( MeshLevel & meshLevel,
                    std::vector< NeighborCommunicator > & neighbors,
                    bool use_nonblocking );
 
