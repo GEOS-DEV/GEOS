@@ -113,18 +113,20 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
           reference().resizeDimension< 1, 2 >( 3, 3 );
 
         subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString() ).
+          reference().resizeDimension< 1 >( 3 );
+        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString() ).
           setApplyDefaultValue( 0.0 ).
           setPlotLevel( PlotLevel::LEVEL_0 ).
           setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the tractions on the fracture." ).
-          reference().resizeDimension< 1 >( 3 );
+          setDescription( "An array that holds the tractions on the fracture." );
 
+        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaTractionString() ).
+          reference().resizeDimension< 1 >( 3 );
         subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaTractionString() ).
           setApplyDefaultValue( 0.0 ).
           setPlotLevel( PlotLevel::NOPLOT ).
           setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the traction increments on the fracture." ).
-          reference().resizeDimension< 1 >( 3 );
+          setDescription( "An array that holds the traction increments on the fracture." );
 
         subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
           setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -146,11 +148,12 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
           reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::previousLocalJumpString() ).
+          reference().resizeDimension< 1 >( 3 );
+        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::previousLocalJumpString() ).
           setApplyDefaultValue( 0.0 ).
           setPlotLevel( PlotLevel::NOPLOT ).
           setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the local jump on the fracture at the previous time step." ).
-          reference().resizeDimension< 1 >( 3 );
+          setDescription( "An array that holds the local jump on the fracture at the previous time step." );
 
         subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
           setPlotLevel( PlotLevel::NOPLOT ).
