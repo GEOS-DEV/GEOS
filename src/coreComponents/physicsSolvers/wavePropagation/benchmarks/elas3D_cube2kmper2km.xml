@@ -11,9 +11,9 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
-      sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
-      timeSourceFrequency="2.0"
-      receiverCoordinates="{ { 1105,1005, 1005 } }"
+      sourceCoordinates="{ { 1050.0, 1050.0, 1050.0 } }"
+      timeSourceFrequency="5"
+      receiverCoordinates="{ { 1150,1050, 1050 } }"
       rickerOrder="2"
       outputSismoTrace="1"/>
   </Solvers>
@@ -42,7 +42,7 @@
 
 
   <Events
-    maxTime="1.0">
+    maxTime="0.8">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
@@ -52,9 +52,10 @@
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.1"
+      timeFrequency="0.05"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
+
 
     <!-- two events to output displacement in an hdf5 file -->
 
@@ -172,7 +173,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Region/elementSubRegions/cb"
       fieldName="mediumVelocityVp"
-      scale="1500"
+      scale="2000"
       setNames="{ all }"/>
 
     <FieldSpecification
@@ -180,7 +181,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Region/elementSubRegions/cb"
       fieldName="mediumVelocityVs"
-      scale="855"
+    scale="1555"
       setNames="{ all }"/>
 
     <FieldSpecification
@@ -241,6 +242,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="3"/>
+
 
     <TimeHistory
       name="timeHistoryOutputx"
