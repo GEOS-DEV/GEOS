@@ -10,7 +10,7 @@ rank = comm.Get_rank()
 
 
 def main():
-
+    print("coucou")
     if len(sys.argv) == 5:
         shot_file = sys.argv[3]
         tracePath = sys.argv[4]

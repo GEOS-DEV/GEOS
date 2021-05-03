@@ -61,7 +61,7 @@ def mainProcess(shot_file):
         os.mkdir(traceProcPath)
 
 
-    cmd = "mpirun -np 2 python " + pygeosxPath + "/main.py -i " + xmlPath + " -x 2 " + shot_file + " " + traceProcPath
+    cmd = "mpirun -np 32 python " + pygeosxPath + "/main.py -i " + xmlPath + " -x 8 -y 4 " + shot_file + " " + traceProcPath
 
     os.system(cmd)
 
@@ -69,7 +69,7 @@ def mainProcess(shot_file):
 
 def main():
 
-    os.system("mpirun -np 2 python firstInit.py " + str(sys.argv[1]) + " " + str(sys.argv[2]) +" -x 2" )
+    os.system("mpirun -np 32 python firstInit.py " + str(sys.argv[1]) + " " + str(sys.argv[2]) +" -x 8 -y 4" )
 
     maxT, dt, boundary_box = readInitVariable()
 
@@ -80,12 +80,12 @@ def main():
     shot_list = equispaced_acquisition(boundary_box,
                                        wavelet,
                                        dt,
-                                       [101, 1901, 4],
-                                       [1751, 1751, 1],
-                                       1951,
-                                       [1751, 1751, 1],
-                                       [21, 1981, 10],
-                                       1981,
+                                       [1001, 11001, 4],
+                                       [6751, 6751, 1],
+                                       151,
+                                       [21, 13981, 675],
+                                       [6751, 6751, 1],
+                                       101,
                                        export = 0
                                        )
     """
@@ -129,3 +129,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

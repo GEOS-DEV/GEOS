@@ -9,7 +9,6 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 def main():
-
     problem = pygeosx.initialize(rank, sys.argv)
     pygeosx.apply_initial_conditions()
     
@@ -19,7 +18,7 @@ def main():
         boundary_box  = domainBoundary(problem)
 
         exportInitVariable(maxT, dt, boundary_box)
-
+        
 
 if __name__ == "__main__":
     main()
