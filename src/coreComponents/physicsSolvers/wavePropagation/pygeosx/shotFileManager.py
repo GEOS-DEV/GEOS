@@ -47,11 +47,10 @@ def readShotList(shot_file):
     f.close()
     return shot_list
 
-def exportInitVariable(maxT, dt, boundary_box):
+def exportInitVariable(maxT, dt):
     f = open(rootPath + "/init_variable.txt", 'w+')
     f.write(str(maxT) + "\n")
     f.write(str(dt) + "\n")
-    f.write(str(boundary_box) + "\n")
 
     f.close()
 
@@ -59,8 +58,7 @@ def readInitVariable():
     f = open(rootPath + "/init_variable.txt", 'r')
     maxT = float(f.readline())
     dt = float(f.readline())
-    boundary_box = ast.literal_eval(f.readline())
 
     f.close()
     os.remove(os.path.join(rootPath, "init_variable.txt"))
-    return maxT, dt, boundary_box
+    return maxT, dt

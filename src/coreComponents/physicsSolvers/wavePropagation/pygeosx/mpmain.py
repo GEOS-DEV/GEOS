@@ -60,16 +60,37 @@ def mainProcess(shot_file):
     else:
         os.mkdir(traceProcPath)
 
+    fsh = open("bash.sh", 'w+')
+    fsh.write("#!/bin/bash \n")
+    fsh.write("SBATCH --job-name=test_pygeosx \n")
+    fsh.write("SBATCH -n 8 \n")
+    fsh.write("SBATCH -N 1 \n")
+    fsh.write("SBATCH -C bora \n")
+    fsh.write("cd /beegfs/jbesset/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/pygeosx/ \n")
+    fsh.write("mpirun </dev/null --map-by node python" + pygeosxPath + "/main.py -i " + xmlPath + " -x 4 -y 2 " + shot_file + " " + traceProcPath)
+    fsh.close()
 
-    cmd = "mpirun -np 32 python " + pygeosxPath + "/main.py -i " + xmlPath + " -x 8 -y 4 " + shot_file + " " + traceProcPath
+    os.system("bash bash.sh")
 
-    os.system(cmd)
+    #cmd = "mpirun -np 32 python " + pygeosxPath + "/main.py -i " + xmlPath + " -x 8 -y 4 " + shot_file + " " + traceProcPath
+
+    #os.system(cmd)
+
+
+
+
+def remove_tmp_files():
+    for root, dir, files in os.walk(os.path.join(rootPath, "shots_lists")):
+        for file in files:
+            os.remove(os.path.join(root, file))
+
+    os.rmdir(os.path.join(rootPath, "shots_lists"))
 
 
 
 def main():
 
-    os.system("mpirun -np 32 python firstInit.py " + str(sys.argv[1]) + " " + str(sys.argv[2]) +" -x 8 -y 4" )
+    os.system("mpirun -np 8 python firstInit.py " + str(sys.argv[1]) + " " + str(sys.argv[2]) +" -x 4 -y 2" )
 
     maxT, dt, boundary_box = readInitVariable()
 
@@ -80,14 +101,14 @@ def main():
     shot_list = equispaced_acquisition(boundary_box,
                                        wavelet,
                                        dt,
-                                       [1001, 11001, 4],
-                                       [6751, 6751, 1],
-                                       151,
-                                       [21, 13981, 675],
-                                       [6751, 6751, 1],
-                                       101,
-                                       export = 0
-                                       )
+                                       [101, 1901],
+                                       [1001, 1001],
+                                       [21, 1981],
+                                       [1001, 1001],
+                                       4,
+                                       1,
+                                       20,
+                                       1)
     """
 
     shot_list = cross_acquisition(boundary_box,
@@ -120,13 +141,7 @@ def main():
 
     multiProcessing(shot_list)
 
-    for root, dir, files in os.walk(os.path.join(rootPath, "shots_lists")):
-        for file in files:
-            os.remove(os.path.join(root, file))
-
-    os.rmdir(os.path.join(rootPath, "shots_lists"))
-
+    remove_tmp_files()
 
 if __name__ == "__main__":
     main()
-
