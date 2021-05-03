@@ -591,6 +591,13 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                   // the arange of atan is [-pi/2, pi/2]
                   // theta is from 0 to pi
                   real64 theta;
+
+                  if (std::abs(c) < 1.0e-15 )
+                  {
+                    std::cout << "Warning: c = " << c << std::endl;
+                    std::cout << "d = " << d << std::endl;
+                  }
+
                   if (c < 0.0)
                   {
                     theta = atan(-sqrt(-d)/c);
@@ -603,7 +610,7 @@ void HydrofractureSolver::FractureTipVolumeEnrichment( DomainPartition & domain,
                 }
 
                 GEOSX_ERROR_IF_GE(nodeF, 0.0);
-                GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b )/b, 1.0e-4);
+                GEOSX_ERROR_IF_GT(std::abs( pow(nodeF, 3) - nodeF0*pow(nodeF, 2) + b ), 1.0e-4*b);
                 //if (std::abs(nodeF) < 1.0e-3)
                 //{
                 //  std::cout << "Warning: node " << parentNode << "signed distance is tiny: " << nodeF << std::endl;
@@ -1230,7 +1237,7 @@ real64 CalculatePartiallyOpenElmtArea(real64 const cornerNodeSignedDistance,
                                       real64 const deltaY)
 {
   real64 const PI = 2 * acos(0.0);
-  real64 const tol = 1.0e-9;
+  real64 const tol = 0.017444444; //about 1.0 degree
 
   real64 const maxLength = deltaX*cos(alpha) + deltaY*sin(alpha);
   real64 dist = std::abs(cornerNodeSignedDistance);
@@ -1318,7 +1325,7 @@ real64 CalculatePartiallyOpenElmtFuildVolToughnessDominated(real64 const cornerN
                                                             real64 const Kprime)
 {
   real64 const PI = 2 * acos(0.0);
-  real64 const tol = 1.0e-9;
+  real64 const tol = 0.017444444; // about 1.0 degree
 
   real64 const maxLength = deltaX*cos(alpha) + deltaY*sin(alpha);
   real64 const dist = std::abs(cornerNodeSignedDistance);
@@ -1410,7 +1417,7 @@ real64 CalculatePartiallyOpenElmtFuildVolViscosityDominated(real64 const cornerN
                                                             real64 const velocity)
 {
   real64 const PI = 2 * acos(0.0);
-  real64 const tol = 1.0e-9;
+  real64 const tol = 0.017444444; //about 1.0 degree
   real64 const betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 
   real64 const maxLength = deltaX*cos(alpha) + deltaY*sin(alpha);
@@ -1519,7 +1526,7 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
   array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
 
   real64 const PI = 2 * acos(0.0);
-  real64 const tol = 1.0e-9;
+  real64 const tol = 1.0e-3;
 
   ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
 
@@ -1635,11 +1642,11 @@ void HydrofractureSolver::CalculatePartiallyOpenElmtQuantities(DomainPartition &
     real64 const theta = atan(delta1/delta0);
     real64 const diag = sqrt( delta0*delta0 + delta1*delta1 );
 
-    if (std::abs(cornerNodeSignedDistance - dist0) < tol)
+    if (std::abs(cornerNodeSignedDistance - dist0) < tol * diag)
     {
       alpha = PI/2.0;
     }
-    else if (std::abs(cornerNodeSignedDistance - dist1) < tol)
+    else if (std::abs(cornerNodeSignedDistance - dist1) < tol * diag)
     {
       alpha = 0.0;
     }
