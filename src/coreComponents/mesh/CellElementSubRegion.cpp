@@ -59,30 +59,31 @@ void CellElementSubRegion::setElementType( string const & elementType )
   if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
   {
     // Hexahedron
-    this->setNumNodesPerElement( 8 );
-    this->setNumEdgesPerElement( 12 );
-    this->setNumFacesPerElement( 6 );
+    m_numNodesPerElement = 8;
+    m_numEdgesPerElement = 12;
+    m_numFacesPerElement = 6;
   }
   else if( !m_elementTypeString.compare( 0, 4, "C3D4" ))
   {
     // Tetrahedron
-    this->setNumNodesPerElement( 4 );
-    this->setNumEdgesPerElement( 6 );
-    this->setNumFacesPerElement( 4 );
+    m_numNodesPerElement = 4;
+    m_numEdgesPerElement = 6;
+    m_numFacesPerElement = 4;
+
   }
   else if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
   {
     // Triangular prism
-    this->setNumNodesPerElement( 6 );
-    this->setNumEdgesPerElement( 9 );
-    this->setNumFacesPerElement( 5 );
+    m_numNodesPerElement = 6;
+    m_numEdgesPerElement = 9;
+    m_numFacesPerElement = 5;
   }
   else if( !m_elementTypeString.compare( 0, 4, "C3D5" ))
   {
     // Pyramid
-    this->setNumNodesPerElement( 5 );
-    this->setNumEdgesPerElement( 8 );
-    this->setNumFacesPerElement( 5 );
+    m_numNodesPerElement = 5;
+    m_numEdgesPerElement = 8;
+    m_numFacesPerElement = 5;
   }
   else
   {
@@ -99,8 +100,8 @@ void CellElementSubRegion::setElementType( string const & elementType )
 void CellElementSubRegion::copyFromCellBlock( CellBlockABC & source )
 {
   this->setElementType( source.getElementTypeString() );
-  this->setNumNodesPerElement( source.numNodesPerElement() );
-  this->setNumFacesPerElement( source.numFacesPerElement() );
+  m_numNodesPerElement = source.numNodesPerElement();
+  m_numFacesPerElement = source.numFacesPerElement();
   this->resize( source.size() );
   this->nodeList() = source.getElemToNode();
   this->edgeList() = source.getElemToEdges();

@@ -247,31 +247,6 @@ protected:
 
   /// Type of element in this subregion.
   string m_elementTypeString;
-
-  /**
-   * @brief Set the number of edges per element.
-   * @param[in] numEdges the number of edges per element
-   */
-  void setNumEdgesPerElement( localIndex const numEdges )
-  {
-    m_numEdgesPerElement = numEdges;
-  }
-
-  /**
-   * @brief Set the number of nodes per element.
-   * @param[in] numNodes the number of nodes per element
-   */
-  void setNumNodesPerElement( localIndex numNodes )
-  {
-    m_numNodesPerElement = numNodes;
-  }
-
-  /**
-   * @brief Set the number of faces per element.
-   * @param[in] numFaces the number of faces per element
-   */
-  void setNumFacesPerElement( localIndex const numFaces )
-  { m_numFacesPerElement = numFaces; }
 };
 
 } /* namespace geosx */

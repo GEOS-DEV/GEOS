@@ -44,8 +44,8 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
-  this->setNumNodesPerElement( 2 );
-  this->setNumFacesPerElement( 0 );
+  m_numNodesPerElement = 2;
+  m_numFacesPerElement = 0;
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
   m_elementTypeString = "BEAM";
 }
