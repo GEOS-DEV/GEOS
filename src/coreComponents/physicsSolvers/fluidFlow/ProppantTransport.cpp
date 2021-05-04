@@ -132,6 +132,7 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::LEVEL_0 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString() );
+
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString() ).
         setPlotLevel( PlotLevel::LEVEL_0 );
 
@@ -156,10 +157,9 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultiplierString() ).
         setDefaultValue( 1.0 );
 
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultiplierString() ).
-        reference().resizeDimension< 1 >( 3 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultiplierString() ).
-        setDefaultValue( 1.0 );
+      auto & rwTransTMultiplier = subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultiplierString() );
+      rwTransTMultiplier.reference().resizeDimension< 1 >( 3 );
+      rwTransTMultiplier.setDefaultValue( 1.0 );
 
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString() ).
         setDefaultValue( 0.0 );
