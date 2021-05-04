@@ -22,7 +22,6 @@
 #include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "CellBlockManager.hpp"
 #include "mesh/MeshManager.hpp"
 #include "schema/schemaUtilities.hpp"
 
@@ -121,7 +120,7 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-void ElementRegionManager::generateMesh( CellBlockManager & cellBlockManager )
+void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager )
 {
   this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {

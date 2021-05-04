@@ -25,6 +25,8 @@
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
+#include "mesh/generators/CellBlockUtilities.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -70,7 +72,7 @@ void EdgeManager::resize( localIndex const newSize )
   ObjectManagerBase::resize( newSize );
 }
 
-void EdgeManager::buildEdges( CellBlockManager const & cellBlockManager,
+void EdgeManager::buildEdges( CellBlockManagerABC const & cellBlockManager,
                               NodeManager & nodeManager,
                               FaceManager & faceManager )
 {

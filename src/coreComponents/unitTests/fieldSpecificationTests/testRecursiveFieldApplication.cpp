@@ -76,7 +76,7 @@ TEST( FieldSpecification, Recursive )
   // Cell blocks should only be used to define the sub regions.
   // This scope protection is there to make them disappear from the rest of the test.
   {
-    CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+    CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
 
     CellBlock & reg0Hex = cellBlockManager.registerCellBlock( "reg0hex" );
     reg0Hex.setElementType( "C3D8" );

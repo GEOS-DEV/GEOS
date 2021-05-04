@@ -19,20 +19,15 @@
 #ifndef GEOSX_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
 #define GEOSX_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
 
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include <string.h>
-#include "CellBlockManager.hpp"
 #include "ToElementRelation.hpp"
-
-class SiloFile;
 
 namespace geosx
 {
 
-class CellBlock;
 class EdgeManager;
 class ElementRegionManager;
-
 
 /**
  * @class EmbeddedSurfaceNodeManager
@@ -59,7 +54,7 @@ public:
    * @note Value forwarding is due to refactoring.
    */
   inline localIndex getEdgeMapOverallocation()
-  { return CellBlockManager::getEdgeMapOverallocation(); }
+  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping

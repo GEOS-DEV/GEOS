@@ -19,9 +19,9 @@
 #ifndef GEOSX_MESH_FACEMANAGER_HPP_
 #define GEOSX_MESH_FACEMANAGER_HPP_
 
-#include "mesh/CellBlockManager.hpp"
-#include "ToElementRelation.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "ToElementRelation.hpp"
 
 namespace geosx
 {
@@ -78,7 +78,7 @@ public:
    * @note Value forwarding is due to refactoring.
    */
   static constexpr localIndex nodeMapExtraSpacePerFace()
-  { return CellBlockManager::nodeMapExtraSpacePerFace(); }
+  { return CellBlockManagerABC::nodeMapExtraSpacePerFace(); }
 
   /**
    * @brief Get the default number of edge per face in edge list
@@ -87,7 +87,7 @@ public:
    * @note Value forwarding is due to refactoring.
    */
   static constexpr localIndex edgeMapExtraSpacePerFace()
-  { return CellBlockManager::edgeMapExtraSpacePerFace(); }
+  { return CellBlockManagerABC::edgeMapExtraSpacePerFace(); }
 
   /**
    * @name Constructors/destructor
@@ -137,7 +137,7 @@ public:
    * @param[in] nodeManager mesh node manager
    * @param[in] elementManager element manager
    */
-  void buildFaces( CellBlockManager const & cellBlockManager,
+  void buildFaces( CellBlockManagerABC const & cellBlockManager,
                    NodeManager & nodeManager,
                    ElementRegionManager & elementManager );
 

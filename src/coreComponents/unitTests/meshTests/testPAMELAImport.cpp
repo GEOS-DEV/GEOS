@@ -18,6 +18,7 @@
 #include "dataRepository/xmlWrapper.hpp"
 #include "tests/meshFileNames.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/CellBlockManager.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -59,7 +60,7 @@ void TestMeshImport( string const & inputStringMesh,
   elemManager.processInputFileRecursive( xmlRegionNode );
   elemManager.postProcessInputRecursive();
 
-  CellBlockManager & cellBlockManager = domain->getGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManager & cellBlockManager = domain->registerGroup< CellBlockManager >( keys::cellManager );
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
   elemManager.generateMesh( cellBlockManager );

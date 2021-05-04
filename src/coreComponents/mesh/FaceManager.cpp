@@ -124,7 +124,7 @@ void populateRegions( ElementRegionManager const & elementManager,
   }
 }
 
-void FaceManager::buildFaces( CellBlockManager const & cellBlockManager,
+void FaceManager::buildFaces( CellBlockManagerABC const & cellBlockManager,
                               NodeManager & nodeManager,
                               ElementRegionManager & elementManager )
 {

@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_EDGEMANAGER_HPP_
 #define GEOSX_MESH_EDGEMANAGER_HPP_
 
-#include "CellBlockManager.hpp"
+#include "generators/CellBlockManagerABC.hpp"
 #include "InterObjectRelation.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
@@ -76,7 +76,7 @@ public:
    * @note Value forwarding is due to refactoring.
    */
   static localIndex faceMapExtraSpacePerEdge()
-  { return CellBlockManager::faceMapExtraSpacePerEdge(); }
+  { return CellBlockManagerABC::faceMapExtraSpacePerEdge(); }
 
   /**
    * @name Constructors/destructors
@@ -127,7 +127,7 @@ public:
    *
    * @p nodeManager and @p faceManager are given for inter-managers relations.
    */
-  void buildEdges( CellBlockManager const & cellBlockManager,
+  void buildEdges( CellBlockManagerABC const & cellBlockManager,
                    NodeManager & nodeManager,
                    FaceManager & faceManager );
 
@@ -299,7 +299,7 @@ public:
    * @note Value forwarding is due to refactoring.
    */
   static constexpr int maxEdgesPerNode()
-  { return CellBlockManager::maxEdgesPerNode(); }
+  { return CellBlockManagerABC::maxEdgesPerNode(); }
 
   /**
    * @name Getters for stored value.

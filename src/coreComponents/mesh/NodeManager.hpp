@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_NODEMANAGER_HPP_
 #define GEOSX_MESH_NODEMANAGER_HPP_
 
-#include "mesh/CellBlockManager.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
 
@@ -63,7 +63,7 @@ public:
    * @note Value forwarding is due to refactoring.
    */
   static constexpr inline localIndex getEdgeMapOverallocation()
-  { return CellBlockManager::getEdgeMapOverallocation(); }
+  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
 
   /**
    * @brief return default size of the value in the node-to-face mapping
@@ -72,14 +72,14 @@ public:
    * @note Value forwarding is due to refactoring.
    */
   static constexpr inline localIndex getFaceMapOverallocation()
-  { return CellBlockManager::getEdgeMapOverallocation(); }
+  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
   static constexpr inline localIndex getElemMapOverAllocation()
-  { return CellBlockManager::getElemMapOverAllocation(); }
+  { return CellBlockManagerABC::getElemMapOverAllocation(); }
 
 /**
  * @name Constructors/destructor
@@ -150,14 +150,14 @@ public:
    * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager
    */
-  void setEdgeMaps( CellBlockManager const & cellBlockManager, EdgeManager const & edgeManager );
+  void setEdgeMaps( CellBlockManagerABC const & cellBlockManager, EdgeManager const & edgeManager );
 
   /**
    * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
    * @param [in] cellBlockManager the cell block manager that will proved the node to faces mapping.
    * @param [in] faceManager the face manager for inter-object relations.
    */
-  void setFaceMaps( CellBlockManager const & cellBlockManager, FaceManager const & faceManager );
+  void setFaceMaps( CellBlockManagerABC const & cellBlockManager, FaceManager const & faceManager );
 
   /**
    * @brief Copies the node-to-element mapping from @p cellBlockManager and builds the node to region and node to sub-regions relations.
@@ -166,7 +166,7 @@ public:
    *
    * @note maybe split into two parts: the @p cellBlockManager part and the @p elementRegionManager part.
    */
-  void setElementMaps( CellBlockManager const & cellBlockManager, ElementRegionManager const & elementRegionManager );
+  void setElementMaps( CellBlockManagerABC const & cellBlockManager, ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.

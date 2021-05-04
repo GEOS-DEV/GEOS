@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
 #define GEOSX_MESH_CELLBLOCKMANAGER_H_
 
-#include "mesh/ObjectManagerBase.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
 
 namespace geosx
@@ -29,7 +29,7 @@ namespace geosx
  * @class CellBlockManager
  * @brief The CellBlockManager class provides an interface to ObjectManagerBase in order to manage CellBlock data.
  */
-class CellBlockManager : public ObjectManagerBase
+class CellBlockManager : public CellBlockManagerABC
 {
 public:
 
@@ -60,85 +60,27 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  static constexpr int maxEdgesPerNode()
-  { return 200; }
-
   static constexpr int maxFacesPerNode()
   { return 200; }
-
-  static constexpr localIndex getEdgeMapOverallocation()
-  { return 8; }
 
   static constexpr localIndex getFaceMapOverallocation()
   { return 8; }
 
-  static constexpr localIndex getElemMapOverAllocation()
-  { return 8; }
+  ArrayOfSets< localIndex > getNodeToEdges() const override;
 
-  static constexpr localIndex nodeMapExtraSpacePerFace()
-  { return 4; }
+  ArrayOfSets< localIndex > getNodeToFaces() const override;
 
-  static constexpr localIndex edgeMapExtraSpacePerFace()
-  { return 4; }
+  ArrayOfArrays< localIndex > getNodeToElements() const override;
 
-  static constexpr localIndex faceMapExtraSpacePerEdge()
-  { return 4; }
+  array2d< geosx::localIndex > const & getEdgeToNodes() const override;
 
-  ArrayOfSets< localIndex > getNodeToEdges() const;
+  ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const override;
 
-  /**
-   * @brief Returns the face to nodes mappings.
-   * @return The one to many relationship.
-   */
-  ArrayOfSets< localIndex > getNodeToFaces() const;
+  ArrayOfArrays< localIndex > getFaceToNodes() const override;
 
-  /**
-   * @brief Returns the node to elements mapping.
-   * @return A one to many relationship.
-   *
-   * @note The mapping is computed on the fly and returned. It is not stored in the instance.
-   */
-  ArrayOfArrays< localIndex > getNodeToElements() const;
+  ArrayOfArrays< geosx::localIndex > const & getFaceToEdges() const override;
 
-  /**
-   * @brief Returns the edge to nodes mapping.
-   * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
-   */
-  array2d< geosx::localIndex > const & getEdgeToNodes() const;
-
-  /**
-   * @brief Returns the edge to faces mapping.
-   * @return A one to many relationship.
-   */
-  ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const;
-
-  /**
-   * @brief Returns the face to nodes mapping.
-   * @return The one to many relationship.
-   */
-  ArrayOfArrays< localIndex > getFaceToNodes() const;
-
-  /**
-   * @brief Returns the face to edges mapping.
-   * @return A one to many relationship.
-   */
-  ArrayOfArrays< geosx::localIndex > const & getFaceToEdges() const;
-
-  /**
-   * @brief Returns the face to elements mappings.
-   * @return A one to many relationship.
-   *
-   * In case the face only belongs to one single element, the second value of the table is -1.
-   */
-  array2d< localIndex > getFaceToElements() const;
-
-  /**
-   * @brief Total number of nodes across all the cell blocks.
-   * @return The total number of nodes.
-   *
-   * Nodes shared by multiple cell blocks are counted only once.
-   */
-  localIndex numNodes() const;
+  array2d< localIndex > getFaceToElements() const override;
 
   /**
    * @brief Defines the number of nodes.
@@ -150,17 +92,11 @@ public:
   void setNumNodes( localIndex numNodes ) // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
   { m_numNodes = numNodes; }
 
-  /**
-   * @brief Total number of edges across all the cell blocks.
-   * @return The total number of edges.
-   */
-  localIndex numEdges() const; // TODO Improve doc
+  localIndex numNodes() const override;
 
-  /**
-   * @brief Total number of faces across all the cell blocks.
-   * @return The total number of faces.
-   */
-  localIndex numFaces() const; // TODO Improve doc
+  localIndex numEdges() const override;
+
+  localIndex numFaces() const override;
 
   using Group::resize;
 
@@ -174,14 +110,7 @@ public:
                string_array const & regionNames,
                string_array const & elementTypes );
 
-  /**
-   * @brief Trigger the computation of all the mappings.
-   *
-   * Call this member function to compute all the mappings.
-   * Computations could be done lazily when calling getters.
-   * But this is not yet implemented.
-   */
-  void buildMaps();
+  void buildMaps() override;
 
   /**
    * @brief Get cell block by name.
@@ -193,13 +122,7 @@ public:
     return this->getGroup( viewKeyStruct::cellBlocks() ).getGroup< CellBlock >( name );
   }
 
-  /**
-   * @brief Returns a group containing the cell blocks as CellBlockABC instances
-   * @return Mutable reference to the cell blocks group.
-   *
-   * @note It should probably be better not to expose a non-const accessor here.
-   */
-  Group & getCellBlocks();
+  Group & getCellBlocks() override;
 
   /**
    * @brief Registers and returns a cell block of name @p name.
@@ -269,21 +192,6 @@ private:
   localIndex m_numFaces;
   localIndex m_numEdges;
 };
-
-/**
- * @brief Free function that generates face to edges, edge to faces and edge to nodes mappings.
- * @param[in] numNodes The number of nodes.
- * @param[in] faceToNodeMap Face to node mappings as an input.
- * @param[out] faceToEdgeMap Face to edges will be resized and filled.
- * @param[out] edgeToFaceMap Ege to faces will be resized and filled.
- * @param[out] edgeToNodeMap Edge to nodes will be resized and filled.
- * @return The number of edges.
- */
-localIndex buildEdgeMaps( localIndex numNodes,
-                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                          ArrayOfArrays< localIndex > & faceToEdgeMap,
-                          ArrayOfSets< localIndex > & edgeToFaceMap,
-                          array2d< localIndex > & edgeToNodeMap );
 
 }
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

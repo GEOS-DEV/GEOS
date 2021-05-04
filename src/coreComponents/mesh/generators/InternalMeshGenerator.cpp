@@ -268,7 +268,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   // Make sure that the node manager fields are initialized
 
-  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
   Group & nodeSets = nodeManager.sets();
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );

@@ -33,6 +33,8 @@ set( mesh_headers
      generators/InternalWellboreGenerator.hpp
      generators/CellBlock.hpp
      generators/CellBlockABC.hpp
+     generators/CellBlockManagerABC.hpp
+     generators/CellBlockUtilities.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/PartitionBase.hpp
@@ -81,6 +83,7 @@ set(mesh_sources
     generators/MeshGeneratorBase.cpp
     generators/CellBlock.cpp
     generators/CellBlockABC.cpp
+    generators/CellBlockUtilities.cpp
     mpiCommunications/CommunicationTools.cpp
     mpiCommunications/NeighborCommunicator.cpp
     mpiCommunications/PartitionBase.cpp

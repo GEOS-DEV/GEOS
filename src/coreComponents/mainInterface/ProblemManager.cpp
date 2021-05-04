@@ -491,7 +491,7 @@ void ProblemManager::generateMesh()
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.generateMeshes( domain );
-  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManagerABC & cellBlockManager = domain.getGroup< CellBlockManagerABC >( keys::cellManager );
 
   Group & meshBodies = domain.getMeshBodies();
 

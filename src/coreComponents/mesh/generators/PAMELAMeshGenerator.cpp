@@ -92,7 +92,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   //TODO for the moment we only consider on mesh level "Level0"
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
   NodeManager & nodeManager = meshLevel0.getNodeManager();
-  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
 
 
   // Use the PartMap of PAMELA to get the mesh

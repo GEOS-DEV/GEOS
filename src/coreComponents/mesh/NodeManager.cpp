@@ -65,7 +65,7 @@ void NodeManager::resize( localIndex const newSize )
 }
 
 
-void NodeManager::setEdgeMaps( CellBlockManager const & cellBlockManager, EdgeManager const & edgeManager )
+void NodeManager::setEdgeMaps( CellBlockManagerABC const & cellBlockManager, EdgeManager const & edgeManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -75,7 +75,7 @@ void NodeManager::setEdgeMaps( CellBlockManager const & cellBlockManager, EdgeMa
 }
 
 
-void NodeManager::setFaceMaps( CellBlockManager const & cellBlockManager, FaceManager const & faceManager )
+void NodeManager::setFaceMaps( CellBlockManagerABC const & cellBlockManager, FaceManager const & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -84,7 +84,7 @@ void NodeManager::setFaceMaps( CellBlockManager const & cellBlockManager, FaceMa
   m_toFacesRelation.setRelatedObject( faceManager );
 }
 
-void NodeManager::setElementMaps( CellBlockManager const & cellBlockManager, ElementRegionManager const & elementRegionManager )
+void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager, ElementRegionManager const & elementRegionManager )
 {
   const localIndex totalNodeElems = cellBlockManager.numNodes();
 

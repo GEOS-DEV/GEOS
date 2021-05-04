@@ -22,7 +22,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
-#include "mesh/CellBlockManager.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "SurfaceElementRegion.hpp"
@@ -146,9 +146,9 @@ public:
 
   /**
    * @brief Generate the mesh.
-   * @param [in] cellBlockManager pointer to the CellBlockManager
+   * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
-  void generateMesh( CellBlockManager & cellBlockManager );
+  void generateMesh( CellBlockManagerABC & cellBlockManager );
 
   /**
    * @brief Generate the wells.
