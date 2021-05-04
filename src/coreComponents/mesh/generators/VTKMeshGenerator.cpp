@@ -26,6 +26,7 @@
 
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "common/MpiWrapper.hpp"
 #include "Mesh/MeshFactory.hpp"
 
 #include "MeshDataWriters/MeshParts.hpp"
@@ -35,7 +36,9 @@
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkUnstructuredGridReader.h>
 #include <vtkCellData.h>
+#include <vtkPointData.h>
 #include <vtkRedistributeDataSetFilter.h>
+#include <vtkGenerateGlobalIds.h>
 #ifdef GEOSX_USE_MPI
 #include <vtkMPIController.h>
 #include <vtkMPI.h>
@@ -88,47 +91,94 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   string_array filePathTokenized = stringutilities::tokenize( m_filePath, "."); //TODO maybe code a method in Path to get the file extension?
   string extension = filePathTokenized[filePathTokenized.size() - 1];
+  vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
   if( controller->GetLocalProcessId() == 0)
   {
   if( extension == "vtk")
-  {
-    vtkSmartPointer<vtkUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkUnstructuredGridReader>::New();
-	  vtkUgReader->SetFileName( m_filePath.c_str() );
-    vtkUgReader->Update();
-	  m_vtkMesh = vtkUgReader->GetOutput();
-  }
-  else if( extension == "vtu")
-  {
-    vtkSmartPointer<vtkXMLUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-    GEOSX_LOG_RANK_0(m_filePath);
-	  vtkUgReader->SetFileName( m_filePath.c_str() );
-    vtkUgReader->Update();
-	  m_vtkMesh = vtkUgReader->GetOutput();
-  }
+    {
+      vtkSmartPointer<vtkUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkUnstructuredGridReader>::New();
+	    vtkUgReader->SetFileName( m_filePath.c_str() );
+      vtkUgReader->Update();
+	    loadedMesh = vtkUgReader->GetOutput();
+    }
+    else if( extension == "vtu")
+    {
+      vtkSmartPointer<vtkXMLUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+      GEOSX_LOG_RANK_0(m_filePath);
+	    vtkUgReader->SetFileName( m_filePath.c_str() );
+      vtkUgReader->Update();
+	    loadedMesh = vtkUgReader->GetOutput();
+    }
+    else
+    {
+      GEOSX_ERROR( extension << " is not a recognized extension for using the VTK reader with GEOSX. Please use .vtk or .vtu" );
+    }
+  } 
   else
   {
-    GEOSX_ERROR( extension << " is not a recognized extension for using the VTK reader with GEOSX. Please use .vtk or .vtu" );
+    loadedMesh = vtkSmartPointer<vtkUnstructuredGrid>::New();
   }
-} 
-  std::cout <<"number of cells : "<< m_vtkMesh->GetNumberOfCells() << std::endl;
+  MpiWrapper::barrier();
+  std::cout <<"number of cells : "<< loadedMesh->GetNumberOfCells() << std::endl;
+  std::cout <<"number of points : "<< loadedMesh->GetNumberOfPoints() << std::endl;
+
+  // Redistribute data all over the available ranks
+  vtkNew<vtkRedistributeDataSetFilter> rdsf;
+  rdsf->SetInputDataObject( loadedMesh );
+  rdsf->SetNumberOfPartitions( controller->GetNumberOfProcesses() );
+  rdsf->GenerateGlobalCellIdsOn();
+  rdsf->Update();
+  m_vtkMesh = vtkUnstructuredGrid::SafeDownCast( rdsf->GetOutputDataObject(0));
+  MpiWrapper::barrier();
+  std::cout <<"number of cells after : "<< m_vtkMesh->GetNumberOfCells() << std::endl;
+  std::cout <<"number of points after : "<< m_vtkMesh->GetNumberOfPoints() << std::endl;
+
+  vtkNew<vtkGenerateGlobalIds> generator;
+  generator->SetInputDataObject(m_vtkMesh);
+  generator->Update();
+  m_vtkMesh = vtkUnstructuredGrid::SafeDownCast( generator->GetOutputDataObject(0));
+  
+  GEOSX_LOG_RANK_0(" Successfully redistributed the mesh on the " << controller->GetNumberOfProcesses() << " MPI processes");
+
   Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
   NodeManager & nodeManager = meshLevel0.getNodeManager();
+  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
+  // Writing the points
   GEOSX_ERROR_IF( m_vtkMesh->GetNumberOfPoints() == 0, "Mesh is empty, aborting");
   GEOSX_LOG_RANK_0("Writing " << m_vtkMesh->GetNumberOfPoints() << " vertices");
+
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   nodeManager.resize( m_vtkMesh->GetNumberOfPoints() );
   Group & nodeSets = nodeManager.sets();
   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
   real64 xMax[3] = { std::numeric_limits< real64 >::min() };
   real64 xMin[3] = { std::numeric_limits< real64 >::max() };
+
+std::cout << 1 << std::endl;
+  vtkPointData * pointData = m_vtkMesh->GetPointData();
+  int globalPointIdIndex = -1;
+  vtkAbstractArray * globalPointIdArray = pointData->GetAbstractArray("GlobalPointIds", globalPointIdIndex);
+  GEOSX_ERROR_IF(globalPointIdIndex >=0 && globalPointIdArray->GetDataType() != VTK_ID_TYPE, "Array name \"vtkGlobalPointIds\" is not present or do not have " 
+                  << "the underlying type has to be an id type");
+  vtkIdTypeArray * globalPointIdDataArray =  nullptr;
+  if( globalPointIdIndex >= 0)
+  {
+    globalPointIdDataArray = vtkIdTypeArray::SafeDownCast( globalPointIdArray );
+  }
+std::cout << 2 << std::endl;
+std::cout << globalPointIdDataArray << std::endl;
+std::cout << globalPointIdDataArray->GetNumberOfValues() << " vs " << nodeLocalToGlobal.size()<< std::endl;
   for( vtkIdType v = 0; v < m_vtkMesh->GetNumberOfPoints(); v++)
   {
     double * point = m_vtkMesh->GetPoint( v );
+    std::cout << "allo" << std::endl;
+    nodeLocalToGlobal[v] = globalPointIdDataArray->GetValue( v );
+    std::cout << "oui" << std::endl;
     for( integer i = 0; i < 3; i++)
     {
       X(v,i) = point[i];
@@ -145,9 +195,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   }
   LvArray::tensorOps::subtract< 3 >( xMax, xMin );
   meshBody.setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( xMax ) );
-  //TODO For the moment, we only consider ONE element region
-  //TODO For the moment, we only deal with classical elements (tetra, hexa, wedges and pyramids)
-  
+std::cout << 3 << std::endl;
+
+  // TODO For the moment, we only deal with classical elements (tetra, hexa, wedges and pyramids)
   /// First pass to count the cells, and the regions
   localIndex nbHex =0;
   localIndex nbTet = 0;
