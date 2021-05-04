@@ -674,8 +674,10 @@ ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNo
       // Looping on the faces of the cell
       for( localIndex iFace = 0; iFace < numFacesPerElement; ++iFace )
       {
-        // Get all the nodes of the cell
-        array1d< localIndex > const nodesInFace = cb.getFaceNodes( iElement, iFace );
+        // Get all the nodes of the face
+        array1d< localIndex > nodesInFace;
+        cb.getFaceNodes( iElement, iFace, nodesInFace );
+        // Fill the result with the collected data.
         localIndex const & lowestNode = *std::min_element( nodesInFace.begin(), nodesInFace.end() );
         lowestNodeToFaces.emplaceBack( lowestNode, nodesInFace, iElement, iCellBlock, iFace );
       }

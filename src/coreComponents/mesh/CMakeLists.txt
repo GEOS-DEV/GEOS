@@ -80,6 +80,7 @@ set(mesh_sources
     generators/InternalWellboreGenerator.cpp
     generators/MeshGeneratorBase.cpp
     generators/CellBlock.cpp
+    generators/CellBlockABC.cpp
     mpiCommunications/CommunicationTools.cpp
     mpiCommunications/NeighborCommunicator.cpp
     mpiCommunications/PartitionBase.cpp

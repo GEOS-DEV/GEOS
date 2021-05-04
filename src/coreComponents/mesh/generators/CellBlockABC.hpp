@@ -112,6 +112,19 @@ private:
   virtual std::list< dataRepository::WrapperBase * > getExternalProperties() = 0;
 };
 
+/**
+ * @brief Get the local indices of the nodes in a face of the element.
+ * @param[in] elementType Type of the element (like C3D8, etc...)
+ * @param[in] iElement the local index of the target element
+ * @param[in] iFace the local index of the target face in the element  (this will be 0-numFacesInElement)
+ * @param[in] elementToNodes Element to nodes mapping.
+ * @param[out] nodeIndices A reference to the array of node indices of the face. Gets resized at the proper size.
+ */
+void getFaceNodes( string const & elementType,
+                   localIndex const iElement,
+                   localIndex const iFace,
+                   array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elementToNodes,
+                   array1d <localIndex> & nodeIndices );
 }
 
 #endif //GEOSX_CELLBLOCKABC_HPP

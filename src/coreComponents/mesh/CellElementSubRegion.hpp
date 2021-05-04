@@ -217,7 +217,7 @@ public:
    */
   void getFaceNodes( localIndex const elementIndex,
                      localIndex const localFaceIndex,
-                     localIndex_array & nodeIndices ) const; // TODO This should probably be replaced by work on standard mappings.
+                     array1d< localIndex > & nodeIndices ) const;
 
   /**
    * @brief Get the element-to-node map.
@@ -418,26 +418,6 @@ private:
 
   /// Map from local Cell Elements to Embedded Surfaces
   EmbSurfMapType m_toEmbeddedSurfaces;
-
-  /**
-   * @brief Get the number of the nodes in a face of the element.
-   * @param elementIndex the local index of the target element
-   * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
-   * @return the number of nodes of this face
-   */
-  localIndex getNumFaceNodes( localIndex const elementIndex,
-                              localIndex const localFaceIndex ) const;
-
-  /**
-   * @brief Get the local indices of the nodes in a face of the element.
-   * @param elementIndex the local index of the target element
-   * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
-   * @param nodeIndices a pointer to the node indices of the face
-   * @return the number of nodes in the face
-   */
-  localIndex getFaceNodes( localIndex const elementIndex,
-                           localIndex const localFaceIndex,
-                           localIndex * const nodeIndices ) const;
 
   void setElementType( string const & elementType ) final;
 

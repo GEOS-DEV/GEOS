@@ -94,16 +94,17 @@ public:
   { return size(); }
 
   /**
-   * @brief Returns the nodes of face @p iFace of element @p iElement.
+   * @brief Puts the nodes of face @p iFace of element @p iElement inside vector @p nodesInFaces.
    * @param iElement The element index.
-   * @param iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
-   * @return Sorted list of indices.
+   * @parm iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
+   * @param nodesInFaces The result vector gets resized to the appropriate dimensions before getting filled.
    *
-   * The result is sorted from lower to larger node indices values.
-   * The result is exactly the size of the number of nodes.
+   * @p nodesInFaces is sorted from lower to larger node indices values.
+   * @p nodesInFaces is exactly the size of the number of nodes.
    */
-  array1d< localIndex > getFaceNodes( localIndex iElement,
-                                      localIndex iFace ) const;
+  void getFaceNodes( localIndex iElement,
+                     localIndex iFace,
+                     array1d< localIndex > & nodesInFaces ) const;
 
   /**
   * @brief Get the element to nodes mapping, non-const version.
