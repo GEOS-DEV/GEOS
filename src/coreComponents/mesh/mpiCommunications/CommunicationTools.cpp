@@ -20,6 +20,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -137,7 +138,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
     }
   }
 
-  MPI_iCommData commData;
+  MPI_iCommData commData( getInstance().getCommID(), getInstance().getCommID() );
   commData.resize( neighbors.size() );
 
   array1d< int >  receiveBufferSizes( neighbors.size());
@@ -406,7 +407,8 @@ CommunicationTools::
   {
     array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
 
-    MPI_iCommData commData;
+    MPI_iCommData commData( this->getCommID(),
+                            this->getCommID() );
     int const commID = commData.commID;
     std::size_t const numNeighbors = allNeighbors.size();
     commData.resize( numNeighbors );
@@ -922,7 +924,7 @@ void CommunicationTools::synchronizeFields( const std::map< string, string_array
                                             std::vector< NeighborCommunicator > & neighbors,
                                             bool onDevice )
 {
-  MPI_iCommData icomm;
+  MPI_iCommData icomm( getCommID(), getCommID() );
   synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm, onDevice );
   synchronizePackSendRecv( fieldNames, mesh, neighbors, icomm, onDevice );
   synchronizeUnpack( mesh, neighbors, icomm, onDevice );
