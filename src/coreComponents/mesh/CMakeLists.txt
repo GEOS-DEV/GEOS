@@ -1,7 +1,6 @@
 # Specify all headers
 set( mesh_headers
      BufferOps.hpp
-     CellBlockManager.hpp
      CellElementRegion.hpp
      CellElementSubRegion.hpp
      DomainPartition.hpp
@@ -27,14 +26,15 @@ set( mesh_headers
      ToElementRelation.hpp
      WellElementSubRegion.hpp
      WellElementRegion.hpp
-     generators/MeshGeneratorBase.hpp
+     generators/CellBlock.hpp
+     generators/CellBlockABC.hpp
+     generators/CellBlockManager.hpp
+     generators/CellBlockManagerABC.hpp
+     generators/CellBlockUtilities.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
-     generators/CellBlock.hpp
-     generators/CellBlockABC.hpp
-     generators/CellBlockManagerABC.hpp
-     generators/CellBlockUtilities.hpp
+     generators/MeshGeneratorBase.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/PartitionBase.hpp
@@ -53,7 +53,6 @@ set( mesh_headers
 # Specify all sources
 set(mesh_sources
     BufferOps.cpp
-    CellBlockManager.cpp
     CellElementRegion.cpp
     CellElementSubRegion.cpp
     DomainPartition.cpp
@@ -77,13 +76,13 @@ set(mesh_sources
     ToElementRelation.cpp
     WellElementRegion.cpp
     WellElementSubRegion.cpp
+    generators/CellBlock.cpp
+    generators/CellBlockManager.cpp
+    generators/CellBlockUtilities.cpp
     generators/InternalMeshGenerator.cpp
     generators/InternalWellGenerator.cpp
     generators/InternalWellboreGenerator.cpp
     generators/MeshGeneratorBase.cpp
-    generators/CellBlock.cpp
-    generators/CellBlockABC.cpp
-    generators/CellBlockUtilities.cpp
     mpiCommunications/CommunicationTools.cpp
     mpiCommunications/NeighborCommunicator.cpp
     mpiCommunications/PartitionBase.cpp

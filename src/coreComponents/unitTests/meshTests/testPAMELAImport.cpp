@@ -18,7 +18,7 @@
 #include "dataRepository/xmlWrapper.hpp"
 #include "tests/meshFileNames.hpp"
 #include "mesh/MeshManager.hpp"
-#include "mesh/CellBlockManager.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

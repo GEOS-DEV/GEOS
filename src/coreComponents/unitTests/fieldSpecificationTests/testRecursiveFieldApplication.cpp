@@ -18,7 +18,7 @@
 #include "mainInterface/initialization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/CellBlockManager.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"

@@ -14,7 +14,7 @@
 
 #include "CellBlockManager.hpp"
 
-#include "generators/CellBlockUtilities.hpp"
+#include "CellBlockUtilities.hpp"
 
 #include <algorithm>
 

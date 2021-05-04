@@ -29,7 +29,7 @@
 
 #include "mesh/MeshBody.hpp"
 
-#include "mesh/CellBlockManager.hpp"
+#include "CellBlockManager.hpp"
 
 namespace geosx
 {

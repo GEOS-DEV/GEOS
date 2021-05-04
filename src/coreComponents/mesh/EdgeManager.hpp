@@ -19,9 +19,9 @@
 #ifndef GEOSX_MESH_EDGEMANAGER_HPP_
 #define GEOSX_MESH_EDGEMANAGER_HPP_
 
-#include "generators/CellBlockManagerABC.hpp"
-#include "InterObjectRelation.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
+#include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 

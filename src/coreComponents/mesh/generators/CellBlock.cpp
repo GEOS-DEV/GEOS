@@ -14,6 +14,8 @@
 
 #include "CellBlock.hpp"
 
+#include "mesh/generators/CellBlockUtilities.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
