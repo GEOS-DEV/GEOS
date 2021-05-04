@@ -114,91 +114,10 @@ private:
   static localIndex const m_numColumns = 9; ///< Number of columns in data table
   enum columnKeys { TIME, EPS0, EPS1, EPS2, SIG0, SIG1, SIG2, ITER, NORM }; ///< Enumeration of column keys
 
-  static constexpr localIndex m_maxIter = 25;
-  static constexpr real64 m_newtonTol = 1e-6;
-  static constexpr real64 m_baselineTol = 1e-3;
+  static constexpr localIndex m_maxIter = 25;   ///< Max Newton iterations for mixed-control tests
+  static constexpr real64 m_newtonTol = 1e-6;   ///< Newton tolerance for mixed-control tests
+  static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };
-
-
-template< typename SOLID_TYPE >
-void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table )
-{
-  typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
-
-  forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
-  {
-    real64 stress[6] = {};
-    real64 strainIncrement[6] = {};
-    real64 stiffness[6][6] = {{}};
-
-    for( localIndex n=1; n<=m_numSteps; ++n )
-    {
-      strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
-      strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
-      strainIncrement[2] = table( n, EPS2 )-table( n-1, EPS2 );
-
-      updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
-      updates.saveConvergedState ( ei, 0 );
-
-      table( n, SIG0 ) = stress[0];
-      table( n, SIG1 ) = stress[1];
-      table( n, SIG2 ) = stress[2];
-
-      table( n, ITER ) = 1;
-    }
-  } );
-}
-
-
-template< typename SOLID_TYPE >
-void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table )
-{
-  typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
-
-  forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( localIndex const ei )
-  {
-    real64 stress[6] = {};
-    real64 strainIncrement[6] = {};
-    real64 stiffness[6][6] = {{}};
-
-    for( localIndex n=1; n<=m_numSteps; ++n )
-    {
-      strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
-      strainIncrement[1] = 0;
-      strainIncrement[2] = 0;
-
-      real64 norm;
-      localIndex k = 0;
-
-      for(; k<m_maxIter; ++k )
-      {
-        updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
-
-        norm = fabs( stress[1]-table( n, SIG1 ) )/(fabs( table( n, SIG1 ) )+1);
-
-        if( norm < m_newtonTol )
-        {
-          break;
-        }
-        else
-        {
-          strainIncrement[1] -= (stress[1]-table( n, SIG1 )) / (stiffness[1][1]+stiffness[1][2]);
-          strainIncrement[2] = strainIncrement[1];
-        }
-      }
-
-      updates.saveConvergedState ( ei, 0 );
-
-      table( n, SIG0 ) = stress[0];
-      table( n, EPS1 ) = table( n-1, EPS1 )+strainIncrement[1];
-      table( n, EPS2 ) = table( n, EPS1 );
-
-      table( n, ITER ) = k+1;
-      table( n, NORM ) = norm;
-    }
-  } );
-}
-
 
 } /* namespace geosx */
 
