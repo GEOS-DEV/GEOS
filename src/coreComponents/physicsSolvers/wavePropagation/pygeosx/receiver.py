@@ -14,7 +14,7 @@ class Receiver:
         Coordinates of the source
     """
 
-    def __init__(self,pos):
+    def __init__(self, pos):
         """Constructor for the receiver
 
         Parameters
@@ -71,7 +71,7 @@ class ReceiverSet:
         Number of Receiver
     """
 
-    def __init__(self, receiver_list=None):
+    def __init__(self, receiver_list = None):
         """Constructor for the point source
 
         Parameters

@@ -62,3 +62,23 @@ def readInitVariable():
     f.close()
     os.remove(os.path.join(rootPath, "init_variable.txt"))
     return maxT, dt
+
+
+def remove_shots_files():
+    for root, dir, files in os.walk(os.path.join(rootPath, "shots_lists")):
+        for file in files:
+            os.remove(os.path.join(root, file))
+
+    os.rmdir(os.path.join(rootPath, "shots_lists"))
+
+def remove_bash_files():
+    bashFiles = glob.glob(os.path.join(rootPath, "bash*"))
+    for file in bashFiles:
+        os.remove(file)
+
+def remove_dask_files():
+    for root, dir, files in os.walk(os.path.join(rootPath, "dask-worker-space")):
+        for file in files:
+            os.remove(os.path.join(root, file))
+
+    os.rmdir(os.path.join(rootPath, "dask-worker-space"))

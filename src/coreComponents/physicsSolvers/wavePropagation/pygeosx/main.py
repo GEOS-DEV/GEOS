@@ -1,85 +1,37 @@
+'''
+Created on 9/02/2021
+
+@author: macpro
+'''
+
 import pygeosx
-from mpi4py import MPI
 import sys
-
-from AcousticShot import *
-from shotFileManager import *
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-
+from processSpawn import firstInit, multiProcessing, daskProcessing
+from seismicAcquisition import equispaced_acquisition
+from source import ricker
 
 def main():
-    if len(sys.argv) == 5:
-        shot_file = sys.argv[3]
-        tracePath = sys.argv[4]
 
-        shot_list = readShotList(shot_file)
+    maxT, dt = firstInit(sys.argv[3], sys.argv[2], mpiranks = 2, x = 2)
 
-        shot_simul(rank, sys.argv[0:3], shot_list, tracePath)
-
-    elif len(sys.argv) == 7:
-        shot_file = sys.argv[5]
-        tracePath = sys.argv[6]
-
-        shot_list = readShotList(shot_file)
-
-        shot_simul(rank, sys.argv[0:5], shot_list, tracePath)
-
-    elif len(sys.argv) == 9:
-        shot_file = sys.argv[7]
-        tracePath = sys.argv[8]
-
-        shot_list = readShotList(shot_file)
-
-        shot_simul(rank, sys.argv[0:7], shot_list, tracePath)
-
-    elif len(sys.argv) == 11:
-        shot_file = sys.argv[9]
-        tracePath = sys.argv[10]
-
-        shot_list = readShotList(shot_file)
-
-        shot_simul(rank, sys.argv[0:9], shot_list, tracePath)
+    frequency = 5.0
+    wavelet   = ricker(maxT, dt, frequency)
 
 
-
-def shot_simul(rank, xml, shot_list, tracePath):
-    """
-    Parameters
-    ----------
-
-    shot_list : list
-        A list containing sets of Source and ReceiverSet objects
-
-    dt : float
-        Time step for the solver
-    """
-
-    problem = initialize(rank, xml)
-    acoustic_shots(rank, problem, shot_list, tracePath)
+    shot_list = equispaced_acquisition([[0,2000],[0,2000],[0,2000]],
+                                       wavelet,
+                                       dt,
+                                       [101, 1001],
+                                       [1901, 1001],
+                                       [[21, 1001],[1001, 21]],
+                                       [[1981, 1001],[1001, 1981]],
+                                       number_of_sources = 1,
+                                       number_of_receivers = [10]
+                                       )
 
 
-
-def initialize(rank, xml):
-    """ Grouping of pygeox initializations
-
-    Return
-    ------
-    problem :
-        The pygeosx ProblemManager
-
-    Notes
-    -----
-    Need to give MPI rank at this point for initialization.
-    Conflict with first initialization to get the list of shots
-    """
-
-    problem = pygeosx.initialize(rank, xml)
-    pygeosx.apply_initial_conditions()
-
-    return problem
-
+    #multiProcessing(shot_list, sys.argv[3], sys.argv[2])
+    daskProcessing(shot_list, sys.argv[3], sys.argv[2])
 
 if __name__ == "__main__":
     main()

@@ -14,10 +14,8 @@ from receiver import *
 from source import *
 from segyManager import export_for_acquisition
 
-from mpmain import segyPath
 
-
-def segy_acquisition(folder_path, wavelet, dt):
+def segy_acquisition(segyPath, wavelet, dt):
 
     shot_list = []
 
@@ -155,7 +153,7 @@ def moving_acquisition(boundaries,
 
     if export:
         acq_name = "/moving_SxSy=" + str(number_of_sources_x) + "x" + str(number_of_sources_y) + "_RxRy=" + str(number_of_receivers_x) + "x" + str(number_of_receivers_y) + "_zoneR=" + str(2*zone_receiver_x) + "x" + str(2*zone_receiver_y) + "/"
-        export_for_acquisition(shots, segyPath, acq_name)
+        export_for_acquisition(shots, acq_name)
 
     return shots
 
@@ -231,92 +229,49 @@ def random_acquisition(boundaries,
 
 
 
-'''Create equiscaped acquisition (copy from Pysit)'''
 def equispaced_acquisition(boundaries,
-                           wavelet,
-                           dt,
-                           source_boundaries_pos_x,
-                           source_boundaries_pos_y,
-                           receivers_boundaries_pos_x,
-                           receivers_boundaries_pos_y,
-                           number_of_sources_x,
-                           number_of_sources_y,
-                           number_of_receivers_x,
-                           number_of_receivers_y,
-                           source_depth = 1,
-                           receivers_depth = 1,
-                           export = 0
-                           ):
-
-    xr = np.linspace(receivers_boundaries_pos_x[0], receivers_boundaries_pos_x[1], number_of_receivers_x)
-    yr = np.linspace(receivers_boundaries_pos_y[0], receivers_boundaries_pos_y[1], number_of_receivers_y)
-
-    xs = np.linspace(source_boundaries_pos_x[0], source_boundaries_pos_x[1], number_of_sources_x)
-    ys = np.linspace(source_boundaries_pos_y[0], source_boundaries_pos_y[1], number_of_sources_y)
-
-    receivers = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xr for y in yr])
-
-   # receivers = receivers.getInsideDomain(box)
-
-    shots = []
-
-    for i in range(len(ys)):
-        for j in range(len(xs)):
-
-            srcpos = [xs[j], ys[i], source_depth]
-            source = Source(srcpos, wavelet, dt)
-
-            shot = Shot(source, receivers)
-            shots.append(shot)
-
-    if export:
-        acq_name = "/equispaced_SxSy=" + str(len(xs)) +"x" + str(len(ys)) + "_RxRy=" + str(len(xr)) + "x" + str(len(yr)) + "/"
-        export_for_acquisition(shots, segyPath, acq_name)
-
-    return shots
-
-
-def cross_acquisition(box,
                       wavelet,
                       dt,
-                      source_boundaries_pos_x,
-                      source_boundaries_pos_y,
-                      receivers_boundaries_pos_x,
-                      receivers_boundaries_pos_y,
-                      number_of_sources_x = 1,
-                      number_of_sources_y = 1,
+                      start_source_pos,
+                      end_source_pos,
+                      start_receivers_pos,
+                      end_receivers_pos,
+                      number_of_sources = 2,
+                      number_of_receivers = [2],
                       source_depth = 1,
-                      number_of_receivers_x = 1,
-                      number_of_receivers_y = 1,
                       receivers_depth = 1,
                       export = 0
                       ):
 
 
-    xr1 = np.linspace(receivers_boundaries_pos_x[0][0], receivers_boundaries_pos_x[0][1], number_of_receivers_x)
-    yr1 = np.linspace(receivers_boundaries_pos_y[0][0], receivers_boundaries_pos_y[0][1], number_of_receivers_y)
+    xr = []
+    yr = []
+    receivers = ReceiverSet()
 
-    xs = np.linspace(source_boundaries_pos_x[0], source_boundaries_pos_x[1], number_of_sources_x)
-    ys = np.linspace(source_boundaries_pos_y[0], source_boundaries_pos_y[1], number_of_sources_y)
+    for i in range(len(start_receivers_pos)):
+        if len(number_of_receivers) == 1:
+            xr.append( np.linspace(start_receivers_pos[i][0], end_receivers_pos[i][0], number_of_receivers[0]) )
+            yr.append( np.linspace(start_receivers_pos[i][1], end_receivers_pos[i][1], number_of_receivers[0]) )
+        else:
+            xr.append( np.linspace(start_receivers_pos[i][0], end_receivers_pos[i][0], number_of_receivers[i]) )
+            yr.append( np.linspace(start_receivers_pos[i][1], end_receivers_pos[i][1], number_of_receivers[i]) )
 
-    xr2 = np.linspace(receivers_boundaries_pos_x[1][0], receivers_boundaries_pos_x[1][1], number_of_receivers_x)
-    yr2 = np.linspace(receivers_boundaries_pos_y[1][0], receivers_boundaries_pos_y[1][1], number_of_receivers_y)
+        receivers_temp = ReceiverSet([Receiver([x, y, receivers_depth]) for x, y in zip(xr[i], yr[i])])
+        receivers.append(copy.deepcopy(receivers_temp))
 
-    receivers = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xr1 for y in yr1])
-    receivers2 = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xr2 for y in yr2])
 
-    receivers.append(receivers2)
+    xs = np.linspace(start_source_pos[0], end_source_pos[1], number_of_sources)
+    ys = np.linspace(start_source_pos[0], end_source_pos[1], number_of_sources)
 
    # receivers = receivers.getInsideDomain(box)
     shots = []
 
-    for i in range(len(ys)):
-        for j in range(len(xs)):
+    for i in range(len(xs)):
 
-            srcpos = [xs[j], ys[i], source_depth]
-            source = Source(srcpos, wavelet, dt)
+        srcpos = [xs[i], ys[i], source_depth]
+        source = Source(srcpos, wavelet, dt)
 
-            shot = Shot(source, receivers)
-            shots.append(shot)
+        shot = Shot(source, receivers)
+        shots.append(shot)
 
     return shots

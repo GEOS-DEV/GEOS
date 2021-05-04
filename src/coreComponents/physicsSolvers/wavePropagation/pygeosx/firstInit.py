@@ -3,7 +3,7 @@ from mpi4py import MPI
 import sys
 
 from mesh import calculDt, domainBoundary
-from shotFileManager import exportInitVariable
+from fileManager import exportInitVariable
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()

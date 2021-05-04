@@ -2,7 +2,7 @@ import segyio
 import os
 
 def create_segy(shot_list, nsamples, tracePath):
-   
+
     if os.path.exists(tracePath):
         pass
     else:
@@ -51,23 +51,24 @@ def export_to_segy(pressure, rcvCoord, ishot, tracePath):
     dt_cycle :
         Frequency of value export
     """
-    
+
     with segyio.open(tracePath + "/sismoTraceShot"+str(ishot)+".sgy", 'r+', ignore_geometry=True) as f:
         for i in range(len(rcvCoord)):
             if any(pressure[:,i])==True:
                 f.trace[i] = pressure[:, i]
 
 
-def export_for_acquisition(shot_list, acq_path, acq_name):
-    if os.path.exists(acq_path):
+def export_for_acquisition(shot_list, acq_name):
+    segyPath = os.path.join(os.path.abspath(os.getcwd()),"segyAcquisition/")
+    if os.path.exists(segyPath):
         pass
     else:
-        os.mkdir(acq_path)
+        os.mkdir(segyPath)
 
-    if os.path.exists(acq_path + acq_name):
+    if os.path.exists(os.path.join(segyPath, acq_name)):
         pass
     else:
-        os.mkdir(acq_path + acq_name)
+        os.mkdir(os.path.join(segyath, acq_name))
 
     for j in range(len(shot_list)):
         srcCoord = shot_list[j].getSource().getCoord()
@@ -82,7 +83,7 @@ def export_for_acquisition(shot_list, acq_path, acq_name):
         spec.sorting = 2
         spec.format  = 1
 
-        with segyio.create(acq_path + acq_name + "/acquisition_" + str(j) + ".sgy", spec) as f:
+        with segyio.create(os.path.join(segyPath, acq_name) + "/acquisition_" + str(j) + ".sgy", spec) as f:
             for i in range(len(rcvCoord)):
                 f.header[i] = {segyio.su.scalco : -100,
                                segyio.su.scalel : -100,
