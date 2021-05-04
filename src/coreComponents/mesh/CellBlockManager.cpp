@@ -20,12 +20,10 @@ namespace geosx
 {
 using namespace dataRepository;
 
-string const CellBlockManager::cellBlocksKey = "cellBlocks";
-
 CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
 {
-  this->registerGroup< Group >( cellBlocksKey );
+  this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
@@ -59,7 +57,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
   {
     const CellBlockABC & cb = this->getCellBlock( iCellBlock );
     array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elemToNode = cb.getElemToNode();
-    forAll< parallelHostPolicy >( cb.numElements(), [&elemsPerNode, totalNodeElems, &elemToNode, &cb] ( localIndex const k )
+    forAll< parallelHostPolicy >( cb.numCells(), [&elemsPerNode, totalNodeElems, &elemToNode, &cb] ( localIndex const k )
     {
       localIndex const numNodesPerElement = cb.numNodesPerElement();
       totalNodeElems += numNodesPerElement;
@@ -93,7 +91,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
   {
     const CellBlockABC & cb = this->getCellBlock( iCellBlock );
     array2d< localIndex, cells::NODE_MAP_PERMUTATION > const elemToNode = cb.getElemToNode();
-    for( localIndex iElem = 0; iElem < cb.numElements(); ++iElem )
+    for( localIndex iElem = 0; iElem < cb.numCells(); ++iElem )
     {
       for( localIndex iNode = 0; iNode < cb.numNodesPerElement(); ++iNode )
       {
@@ -164,11 +162,23 @@ struct NodesAndElementOfFace
    * The we'll be able to identify the duplicated faces because we also have the nodes.
    */
   localIndex element;
+
+  /**
+   * @brief Cell block index
+   *
+   * During the process, we need to know form which cell block the instance was created.
+   */
   localIndex iCellBlock;
+
+  /**
+   * @brief Face index
+   *
+   * During the process, we need to know what was the face index when this instance was created.
+   */
   localIndex iFace;
 
 private:
-  /// Sorted nodes describing the face; mainly for comparison reasons.
+  /// Sorted nodes describing the face; only for comparison/sorting reasons.
   array1d< localIndex > sortedNodes;
 };
 
@@ -667,7 +677,7 @@ ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNo
   {
     const CellBlock & cb = cellBlocks.getGroup< CellBlock >( iCellBlock );
     localIndex const numFacesPerElement = cb.numFacesPerElement();
-    localIndex const numElements = cb.numElements();
+    localIndex const numElements = cb.numCells();
 
     for( localIndex iElement = 0; iElement < numElements; ++iElement )
     {
@@ -711,7 +721,6 @@ ArrayOfArrays< EdgeBuilder > createEdgesByLowestNode( localIndex numNodes,
 
   ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * CellBlockManager::maxEdgesPerNode() );
 
-//  localIndex const numNodes = edgesByLowestNode.size();
   localIndex const numFaces = faceToNodeMap.size();
 
   // loop over all the faces.
@@ -1004,12 +1013,12 @@ array2d< localIndex > CellBlockManager::getFaceToElements() const
 
 const Group & CellBlockManager::getCellBlocks() const
 {
-  return this->getGroup( cellBlocksKey );
+  return this->getGroup( viewKeyStruct::cellBlocks() );
 }
 
 Group & CellBlockManager::getCellBlocks()
 {
-  return this->getGroup( cellBlocksKey );
+  return this->getGroup( viewKeyStruct::cellBlocks() );
 }
 
 localIndex CellBlockManager::numNodes() const

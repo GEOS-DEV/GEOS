@@ -14,7 +14,6 @@
 
 /**
  * @file CellElementRegion.hpp
- *
  */
 
 #ifndef GEOSX_MESH_CELLELEMENTREGION_HPP_
@@ -24,15 +23,12 @@
 
 namespace geosx
 {
-class EmbeddedSurfaceGenerator;
 
 /**
  * @class CellElementRegion
  *
  * The CellElementRegion class contains the functionality to support the concept of a CellElementRegion in the element
  * hierarchy. CellElementRegion derives from ElementRegionBase and has an entry in the ObjectManagerBase catalog.
- *
- *
  */
 class CellElementRegion : public ElementRegionBase
 {

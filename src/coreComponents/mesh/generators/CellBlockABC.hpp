@@ -23,8 +23,17 @@
 namespace geosx
 {
 
-//TODO : as the contract of this class has changed, is it still a cellblock per se ? It can
-// be because cell = elements + faces + edges ? maybe we have to work on the naming
+/**
+ * Abstract base class defining the information provided by any cell block implementation.
+ * Mainly element type related information (number of faces per element...),
+ * some element to nodes, faces and edges mappings, a local to global mapping and
+ * some kind of accessors to external properties.
+ *
+ * The cells of CellBlockABC are all of the same kind.
+ *
+ * It's noteworthy that the CellBlockABC is immutable oriented.
+ * The derived implementations need to have the modification/creation capabilities.
+ */
 class CellBlockABC : public dataRepository::Group
 {
 public:
@@ -56,10 +65,10 @@ public:
   virtual localIndex numFacesPerElement() const = 0;
 
   /**
-   * @brief Get the number of elements.
-   * @return number of elements in the cell block
+   * @brief Get the number of cells.
+   * @return number of cells in the cell block
    */
-  virtual localIndex numElements() const = 0;
+  virtual localIndex numCells() const = 0;
 
   /**
    * @brief Get the element-to-node map.

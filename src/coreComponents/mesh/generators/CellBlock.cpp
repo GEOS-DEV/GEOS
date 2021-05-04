@@ -61,9 +61,9 @@ void CellBlock::setElementType( string const & elementType )
 
   // If `setElementType` is called after the resize, the first dimension would be removed.
   // We do not want that so we try to keep it.
-  m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement );
-  m_elementsToEdges.resize( this->numElements(), m_numEdgesPerElement );
-  m_elementsToFaces.resize( this->numElements(), m_numFacesPerElement );
+  m_elementsToNodes.resize( this->numCells(), m_numNodesPerElement );
+  m_elementsToEdges.resize( this->numCells(), m_numEdgesPerElement );
+  m_elementsToFaces.resize( this->numCells(), m_numFacesPerElement );
 }
 
 void CellBlock::resize( dataRepository::indexType const numCells )

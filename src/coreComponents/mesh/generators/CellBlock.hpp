@@ -12,10 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file CellBlock.hpp
- */
-
 #ifndef GEOSX_MESH_CELLBLOCK_HPP_
 #define GEOSX_MESH_CELLBLOCK_HPP_
 
@@ -28,11 +24,8 @@ namespace geosx
 {
 
 /**
- * @class CellBlock
- * Class deriving from ElementSubRegionBase specializing the element subregion
- * for a cell element. In particular, this class adds connectivity maps (namely,
- * element-to-node map, element-to-face map, and element-to-edge map) and
- * and methods to compute the geometry of an element (cell center and volume)
+ * This implementation of CellBlockABC mainly use the cell patterns/shapes
+ * to build all the element to nodes, faces and edges mappings.
  */
 class CellBlock : public CellBlockABC
 {
@@ -43,9 +36,6 @@ public:
    */
   ///@{
 
-  /**
-   * @brief Deleted default constructor.
-   */
   CellBlock() = delete;
 
   /**
@@ -61,9 +51,6 @@ public:
    */
   CellBlock( const CellBlock & init ) = delete;
 
-  /**
-   * @brief Destructor.
-   */
   ~CellBlock() override = default;
 
   ///@}
@@ -90,7 +77,7 @@ public:
   localIndex numFacesPerElement() const override
   { return m_numFacesPerElement; }
 
-  localIndex numElements() const override
+  localIndex numCells() const override
   { return size(); }
 
   /**

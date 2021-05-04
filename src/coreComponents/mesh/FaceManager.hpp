@@ -29,7 +29,6 @@ namespace geosx
 class NodeManager;
 class ElementRegionManager;
 class CellElementSubRegion;
-class CellBlockManager; //TODO
 
 /**
  * @class FaceManager

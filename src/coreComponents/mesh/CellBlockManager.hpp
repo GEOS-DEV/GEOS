@@ -42,7 +42,7 @@ public:
     return "CellBlockManager";
   }
 
-  virtual const string getCatalogName() const override final
+  const string getCatalogName() const final
   { return CellBlockManager::catalogName(); }
 
   /**
@@ -52,20 +52,10 @@ public:
    */
   CellBlockManager( string const & name, Group * const parent );
 
-  /**
-   * @brief Copy constructor.
-   */
   CellBlockManager( const CellBlockManager & ) = delete;
 
-  /**
-   * @brief Copy assignment operator.
-   * @return reference to this object
-   */
   CellBlockManager & operator=( const CellBlockManager & ) = delete;
 
-  /**
-   * @brief Destructor
-   */
   ~CellBlockManager() override = default;
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
@@ -103,24 +93,35 @@ public:
   ArrayOfSets< localIndex > getNodeToFaces() const;
 
   /**
-   * @brief Returns the node to elements mappings.
+   * @brief Returns the node to elements mapping.
    * @return A one to many relationship.
    *
    * @note The mapping is computed on the fly and returned. It is not stored in the instance.
    */
   ArrayOfArrays< localIndex > getNodeToElements() const;
 
+  /**
+   * @brief Returns the edge to nodes mapping.
+   * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
+   */
   array2d< geosx::localIndex > const & getEdgeToNodes() const;
 
+  /**
+   * @brief Returns the edge to faces mapping.
+   * @return A one to many relationship.
+   */
   ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const;
 
   /**
-   * @brief Returns the face to nodes mappings.
-   * @param numNodes This should not be here, needs to be removed TODO
+   * @brief Returns the face to nodes mapping.
    * @return The one to many relationship.
    */
   ArrayOfArrays< localIndex > getFaceToNodes() const;
 
+  /**
+   * @brief Returns the face to edges mapping.
+   * @return A one to many relationship.
+   */
   ArrayOfArrays< geosx::localIndex > const & getFaceToEdges() const;
 
   /**
@@ -133,9 +134,11 @@ public:
 
   /**
    * @brief Total number of nodes across all the cell blocks.
-   * @return
+   * @return The total number of nodes.
+   *
+   * Nodes shared by multiple cell blocks are counted only once.
    */
-  localIndex numNodes() const; // TODO Improve doc
+  localIndex numNodes() const;
 
   /**
    * @brief Defines the number of nodes.
@@ -147,11 +150,15 @@ public:
   void setNumNodes( localIndex numNodes ) // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
   { m_numNodes = numNodes; }
 
+  /**
+   * @brief Total number of edges across all the cell blocks.
+   * @return The total number of edges.
+   */
   localIndex numEdges() const; // TODO Improve doc
 
   /**
    * @brief Total number of faces across all the cell blocks.
-   * @return
+   * @return The total number of faces.
    */
   localIndex numFaces() const; // TODO Improve doc
 
@@ -167,6 +174,13 @@ public:
                string_array const & regionNames,
                string_array const & elementTypes );
 
+  /**
+   * @brief Trigger the computation of all the mappings.
+   *
+   * Call this member function to compute all the mappings.
+   * Computations could be done lazily when calling getters.
+   * But this is not yet implemented.
+   */
   void buildMaps();
 
   /**
@@ -176,19 +190,21 @@ public:
    */
   CellBlock & getCellBlock( string const & name )
   {
-    return this->getGroup( cellBlocksKey ).getGroup< CellBlock >( name );
+    return this->getGroup( viewKeyStruct::cellBlocks() ).getGroup< CellBlock >( name );
   }
 
   /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
-   * @return
+   * @return Mutable reference to the cell blocks group.
+   *
+   * @note It should probably be better not to expose a non-const accessor here.
    */
   Group & getCellBlocks();
 
   /**
    * @brief Registers and returns a cell block of name @p name.
    * @param name The name of the created cell block.
-   * @return A reference to the new cell block. CellBlockManager owns this new instance.
+   * @return A reference to the new cell block. The CellBlockManager owns this new instance.
    */
   CellBlock & registerCellBlock( string name );
 
@@ -200,15 +216,16 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    this->getGroup( cellBlocksKey ).forSubGroups< CellBlock >( lambda );
+    this->getGroup( viewKeyStruct::cellBlocks() ).forSubGroups< CellBlock >( lambda );
   }
 
 private:
 
-  /**
-   * @brief Cell key
-   */
-  static string const cellBlocksKey;
+  struct viewKeyStruct
+  {
+    /// Cell blocks key
+    static constexpr char const * cellBlocks() { return "cellBlocks"; }
+  };
 
   /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
@@ -225,9 +242,20 @@ private:
    */
   const CellBlockABC & getCellBlock( localIndex iCellBlock ) const;
 
+  /**
+   * @brief Returns the number of cells blocks
+   * @return Number of cell blocks
+   */
   localIndex numCellBlocks() const;
 
+  /**
+   * @brief Trigger the node to edges mapping computation.
+   */
   void buildNodeToEdges();
+
+  /**
+   * @brief Trigger the face to nodes, edges and elements mappings.
+   */
   void buildFaceMaps();
 
   ArrayOfSets< localIndex > m_nodeToEdges;

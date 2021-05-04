@@ -66,7 +66,8 @@ private:
    *
    * @note Rough copy/paste of DomainPartition::AddNeighbors
    */
-  void addNeighbors( const unsigned int idim, MPI_Comm & cartcomm,
+  void addNeighbors( const unsigned int idim,
+                     MPI_Comm & cartcomm,
                      int * ncoords );
 
   /**

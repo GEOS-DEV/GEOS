@@ -56,14 +56,14 @@ void CellElementSubRegion::setElementType( string const & elementType )
 {
   m_elementTypeString = elementType;
 
-  if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
+  if( m_elementTypeString == "C3D8" )
   {
     // Hexahedron
     m_numNodesPerElement = 8;
     m_numEdgesPerElement = 12;
     m_numFacesPerElement = 6;
   }
-  else if( !m_elementTypeString.compare( 0, 4, "C3D4" ))
+  else if( m_elementTypeString =="C3D4" )
   {
     // Tetrahedron
     m_numNodesPerElement = 4;
@@ -71,14 +71,14 @@ void CellElementSubRegion::setElementType( string const & elementType )
     m_numFacesPerElement = 4;
 
   }
-  else if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
+  else if( m_elementTypeString =="C3D6" )
   {
     // Triangular prism
     m_numNodesPerElement = 6;
     m_numEdgesPerElement = 9;
     m_numFacesPerElement = 5;
   }
-  else if( !m_elementTypeString.compare( 0, 4, "C3D5" ))
+  else if( m_elementTypeString =="C3D5" )
   {
     // Pyramid
     m_numNodesPerElement = 5;

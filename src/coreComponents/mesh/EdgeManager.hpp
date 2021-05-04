@@ -120,10 +120,12 @@ public:
   void setIsExternal( FaceManager const & faceManager );
 
   /**
-   * @brief Build faces-to-edges and nodes-to-edges relation maps.
+   * @brief Copies faces-to-edges and nodes-to-edges relation maps from @p cellBlockManger.
    * @param[in] cellBlockManager cell block manager.
    * @param[in] nodeManager manager of all nodes in the DomainPartition
    * @param[in] faceManager manager of all faces in the DomainPartition
+   *
+   * @p nodeManager and @p faceManager are given for inter-managers relations.
    */
   void buildEdges( CellBlockManager const & cellBlockManager,
                    NodeManager & nodeManager,

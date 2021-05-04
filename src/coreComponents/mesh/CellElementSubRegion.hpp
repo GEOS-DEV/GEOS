@@ -343,7 +343,6 @@ private:
   /// Array of constitutive point volume fraction
   array3d< real64 > m_constitutivePointVolumeFraction;
 
-  // FROM CellBlock
   /// Element-to-node relation
   NodeMapType m_toNodesRelation;
 
@@ -396,7 +395,6 @@ private:
       GEOSX_ERROR( "GEOX does not support cells with " << m_numNodesPerElement << " nodes" );
     }
   }
-  // END FROM CellBlock
 
   /// The array of shape function derivaties.
   array4d< real64 > m_dNdX;
@@ -419,6 +417,10 @@ private:
   /// Map from local Cell Elements to Embedded Surfaces
   EmbSurfMapType m_toEmbeddedSurfaces;
 
+  /**
+   * @brief Defines the (unique) element type of this cell element region.
+   * @param elementType The string defining the element type (like C3D8...)
+   */
   void setElementType( string const & elementType ) final;
 
   /**
@@ -432,13 +434,18 @@ private:
   localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
+  /**
+   * @brief Links the managers to their mappings.
+   * @param mesh Holds the node/edge/face managers.
+   *
+   * Defines links the element to nodes, edges and faces to their respective node/edge/face managers.
+   */
   void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
   template< bool DOPACK >
   localIndex packFracturedElementsPrivate( buffer_unit_type * & buffer,
                                            arrayView1d< localIndex const > const & packList,
                                            arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
-
 };
 
 } /* namespace geosx */
