@@ -679,7 +679,7 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
                                      bool const unorderedComms )
 {
   GEOSX_MARK_FUNCTION;
-  CommID commID = CommunicationTools::getCommID();
+  MPI_iCommData commData( getCommID(), getCommID() );
 
   NodeManager & nodeManager = meshLevel.getNodeManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
@@ -688,17 +688,23 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
 
   auto sendGhosts = [&] ( int idx )
   {
-    neighbors[idx].prepareAndSendGhosts( false, 1, meshLevel, commID );
-    return neighbors[idx].getSizeRecvRequest( commID );
+    neighbors[idx].prepareAndSendGhosts( false,
+                                         1,
+                                         meshLevel,
+                                         commData,
+                                         idx);
+
+    return commData.mpiSizeRecvBufferRequest[idx];
   };
   auto postRecv = [&] ( int idx )
   {
-    neighbors[idx].postRecv( commID );
-    return neighbors[idx].getRecvRequest( commID );
+    neighbors[idx].postRecv( commData.commID,
+                             commData.mpiRecvBufferRequest[idx] );
+    return commData.mpiRecvBufferRequest[idx];
   };
   auto unpackGhosts = [&] ( int idx )
   {
-    neighbors[idx].unpackGhosts( meshLevel, commID );
+    neighbors[idx].unpackGhosts( meshLevel, commData.commID );
     return MPI_REQUEST_NULL;
   };
 
@@ -722,12 +728,21 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
 
   auto sendSyncLists = [&] ( int idx )
   {
-    neighbors[idx].prepareAndSendSyncLists( meshLevel, commID );
-    return neighbors[idx].getSizeRecvRequest( commID );
+    MPI_Request & mpiSizeRecvRequest = commData.mpiSizeRecvBufferRequest[idx];
+    MPI_Request & mpiSizeSendRequest = commData.mpiSizeSendBufferRequest[idx];
+    MPI_Request & mpiSendRequest = commData.mpiSendBufferRequest[idx];
+    neighbors[idx].prepareAndSendSyncLists( meshLevel,
+                                            commData.sizeCommID,
+                                            commData.commID,
+                                            mpiSizeRecvRequest,
+                                            mpiSizeSendRequest,
+                                            mpiSendRequest );
+    return mpiSizeRecvRequest;
   };
   auto rebuildSyncLists = [&] ( int idx )
   {
-    neighbors[idx].unpackAndRebuildSyncLists( meshLevel, commID );
+    neighbors[idx].unpackAndRebuildSyncLists( meshLevel,
+                                              commData.commID );
     return MPI_REQUEST_NULL;
   };
 

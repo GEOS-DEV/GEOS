@@ -18,6 +18,7 @@
  */
 
 #include "NeighborCommunicator.hpp"
+#include "MPI_iCommData.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -33,11 +34,11 @@ NeighborCommunicator::NeighborCommunicator( int rank ):
   m_sendBufferSize(),
   m_receiveBufferSize(),
   m_sendBuffer{ maxComm },
-  m_receiveBuffer{ maxComm },
-  m_mpiSendBufferRequest(),
-  m_mpiRecvBufferRequest(),
-  m_mpiSendBufferStatus(),
-  m_mpiRecvBufferStatus()
+  m_receiveBuffer{ maxComm }//,
+//  m_mpiSendBufferRequest(),
+//  m_mpiRecvBufferRequest(),
+//  m_mpiSendBufferStatus(),
+//  m_mpiRecvBufferStatus()
 { }
 
 void NeighborCommunicator::mpiISendReceive( buffer_unit_type const * const sendBuffer,
@@ -82,14 +83,14 @@ void NeighborCommunicator::mpiISendReceiveBufferSizes( int const commID,
                    mpiComm );
 }
 
-void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
-                                                   MPI_Comm mpiComm )
-{
-  mpiISendReceiveBuffers( commID,
-                          m_mpiSendBufferRequest[commID],
-                          m_mpiRecvBufferRequest[commID],
-                          mpiComm );
-}
+//void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
+//                                                   MPI_Comm mpiComm )
+//{
+//  mpiISendReceiveBuffers( commID,
+//                          m_mpiSendBufferRequest[commID],
+//                          m_mpiRecvBufferRequest[commID],
+//                          mpiComm );
+//}
 
 void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
                                                    MPI_Request & mpiSendRequest,
@@ -121,11 +122,11 @@ void NeighborCommunicator::mpiWaitAll( int const GEOSX_UNUSED_PARAM( commID ),
   MpiWrapper::waitAll( 1, &mpiSendRequest, &mpiSendStatus );
 }
 
-void NeighborCommunicator::mpiWaitAll( int const commID )
-{
-  MpiWrapper::waitAll( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::waitAll( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
-}
+//void NeighborCommunicator::mpiWaitAll( int const commID )
+//{
+//  MpiWrapper::waitAll( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
+//  MpiWrapper::waitAll( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+//}
 
 void NeighborCommunicator::clear()
 {
@@ -148,7 +149,8 @@ void NeighborCommunicator::addNeighborGroupToMesh( MeshLevel & mesh ) const
   } );
 }
 
-int NeighborCommunicator::postSizeRecv( int const commID )
+int NeighborCommunicator::postSizeRecv( int const commID,
+                                        MPI_Request & mpiSizeRecvRequest )
 {
   int const recvTag = 101; //CommTag( m_neighborRank, MpiWrapper::commRank(), commID );
   return MpiWrapper::iRecv( &m_receiveBufferSize[commID],
@@ -156,15 +158,16 @@ int NeighborCommunicator::postSizeRecv( int const commID )
                             m_neighborRank,
                             recvTag,
                             MPI_COMM_GEOSX,
-                            &m_mpiRecvSizeRequest[commID] );
+                            &mpiSizeRecvRequest );
 }
 
-MPI_Request NeighborCommunicator::getSizeRecvRequest( int const commID )
-{
-  return m_mpiRecvSizeRequest[commID];
-}
+//MPI_Request NeighborCommunicator::getSizeRecvRequest( int const commID )
+//{
+//  return m_mpiRecvSizeRequest[commID];
+//}
 
-int NeighborCommunicator::postSizeSend( int const commID )
+int NeighborCommunicator::postSizeSend( int const commID,
+                                        MPI_Request & mpiSizeSendRequest )
 {
   int const sendTag = 101; //CommTag( m_neighborRank, MpiWrapper::commRank(), commID );
   return MpiWrapper::iSend( &m_sendBufferSize[commID],
@@ -172,10 +175,11 @@ int NeighborCommunicator::postSizeSend( int const commID )
                             m_neighborRank,
                             sendTag,
                             MPI_COMM_GEOSX,
-                            &m_mpiSendSizeRequest[commID] );
+                            &mpiSizeSendRequest );
 }
 
-int NeighborCommunicator::postRecv( int const commID )
+int NeighborCommunicator::postRecv( int const commID,
+                                    MPI_Request & mpRecvRequest )
 {
   int const recvTag = 102; //CommTag( m_neighborRank, MpiWrapper::commRank(), commID );
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
@@ -184,15 +188,16 @@ int NeighborCommunicator::postRecv( int const commID )
                             m_neighborRank,
                             recvTag,
                             MPI_COMM_GEOSX,
-                            &m_mpiRecvBufferRequest[commID] );
+                            &mpRecvRequest );
 }
 
-MPI_Request NeighborCommunicator::getRecvRequest( int const commID )
-{
-  return m_mpiRecvBufferRequest[commID];
-}
+//MPI_Request NeighborCommunicator::getRecvRequest( int const commID )
+//{
+//  return m_mpiRecvBufferRequest[commID];
+//}
 
-int NeighborCommunicator::postSend( int const commID )
+int NeighborCommunicator::postSend( int const commID,
+                                    MPI_Request & mpiSendRequest )
 {
   int const sendTag = 102; //CommTag( m_neighborRank, MpiWrapper::commRank(), commID );
   return MpiWrapper::iSend( m_sendBuffer[commID].data(),
@@ -200,7 +205,7 @@ int NeighborCommunicator::postSend( int const commID )
                             m_neighborRank,
                             sendTag,
                             MPI_COMM_GEOSX,
-                            &m_mpiSendBufferRequest[commID] );
+                            &mpiSendRequest );
 }
 
 using ElemAdjListViewType = ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > >;
@@ -257,11 +262,13 @@ inline int PackGhosts( buffer_unit_type * sendBufferPtr,
 void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( contactActive ),
                                                  integer const depth,
                                                  MeshLevel & mesh,
-                                                 int const commID )
+                                                 MPI_iCommData const & commData,
+                                                 int const index )
 {
   GEOSX_MARK_FUNCTION;
 
-  this->postSizeRecv( commID ); // post recv for buffer size from neighbor.
+  this->postSizeRecv( commData.sizeCommID,
+                      commData.mpiSizeRecvBufferRequest[index] ); // post recv for buffer size from neighbor.
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
@@ -294,10 +301,11 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
                                     faceManager, faceAdjacencyList,
                                     elemManager, elemAdjacencyList );
 
-  this->resizeSendBuffer( commID, bufferSize );
-  this->postSizeSend( commID );
+  this->resizeSendBuffer( commData.commID, bufferSize );
+  this->postSizeSend( commData.commID,
+                      commData.mpiSendBufferRequest[index] );
 
-  buffer_type & sendBuff = sendBuffer( commID );
+  buffer_type & sendBuff = sendBuffer( commData.commID );
   buffer_unit_type * sendBufferPtr = sendBuff.data();
 
   int const packedSize = PackGhosts( sendBufferPtr,
@@ -308,7 +316,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
 
   GEOSX_ERROR_IF_NE( bufferSize, packedSize );
 
-  this->postSend( commID );
+  this->postSend( commData.commID, commData.mpiSendBufferRequest[index] );
 }
 
 void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
@@ -359,11 +367,17 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
 }
 
 void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
-                                                    int const commID )
+                                                    int const sizeCommID,
+                                                    int const commID,
+                                                    MPI_Request & mpiSizeRecvRequest,
+                                                    MPI_Request & mpiSizeSendRequest,
+                                                    MPI_Request & mpiSendRequest
+                                                    )
 {
   GEOSX_MARK_FUNCTION;
 
-  this->postSizeRecv( commID );
+  this->postSizeRecv( sizeCommID,
+                      mpiSizeRecvRequest );
 
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -412,7 +426,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
   } );
 
   this->resizeSendBuffer( commID, bufferSize );
-  this->postSizeSend( commID );
+  this->postSizeSend( sizeCommID, mpiSizeSendRequest );
 
   int packedSize = 0;
   packedSize += bufferOps::Pack< true >( sendBufferPtr,
@@ -446,7 +460,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
 
   GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
-  this->postSend( commID );
+  this->postSend( commID, mpiSendRequest );
 }
 
 void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
