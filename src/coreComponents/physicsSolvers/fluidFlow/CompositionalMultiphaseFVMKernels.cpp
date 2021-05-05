@@ -227,8 +227,8 @@ INST_PhaseMobilityKernel( 5, 3 );
 
 /******************************** FluxKernel ********************************/
 
-template<CompositionalMultiphaseFlowUpwindHelperKernels::term T>
-using UpwindSchemeType = CompositionalMultiphaseFlowUpwindHelperKernels::HybridUpwind<T>;
+template< CompositionalMultiphaseFlowUpwindHelperKernels::term T >
+using UpwindSchemeType = CompositionalMultiphaseFlowUpwindHelperKernels::HybridUpwind< T >;
 
 template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, bool IS_UT_FORM >
 GEOSX_HOST_DEVICE
@@ -317,7 +317,7 @@ FluxKernel::
       phaseFlux,
       dPhaseFlux_dP,
       dPhaseFlux_dC
-    );
+      );
 
     // updateing phase Flux
     totFlux_unw += phaseFlux;
@@ -390,61 +390,39 @@ FluxKernel::
       real64 dFflow_dP[MAX_STENCIL]{};
       real64 dFflow_dC[MAX_STENCIL][NC]{};
 
-      real64 gravHead{};
-      real64 dGravHead_dP[NUM_ELEMS]{};
-      real64 dGravHead_dC[NUM_ELEMS][NC]{};
-
-      real64 dProp_dC[NC]{};
-
-      //Fetch gravHead for phase i defined as \rho_i g dz/dx
-      UpwindHelpers::formGravHead( ip,
-                                   stencilSize,
-                                   seri,
-                                   sesri,
-                                   sei,
-                                   stencilWeights,
-                                   gravCoef,
-                                   dCompFrac_dCompDens,
-                                   phaseMassDens,
-                                   dPhaseMassDens_dPres,
-                                   dPhaseMassDens_dComp,
-                                   gravHead,
-                                   dGravHead_dP,
-                                   dGravHead_dC,
-                                   dProp_dC );
 
       // and the fractional flow for viscous part as \lambda_i^{up}/\sum_{NP}(\lambda_j^{up}) with up decided upon
       // the Upwind strategy
       localIndex k_up = -1;
       UpwindHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
-        CompositionalMultiphaseFlowUpwindHelperKernels::term::Viscous,
-        UpwindSchemeType >( NP,
-                                                                       ip,
-                                                                       stencilSize,
-                                                                       seri,
-                                                                       sesri,
-                                                                       sei,
-                                                                       stencilWeights,
-                                                                       totFlux_unw,
-                                                                       pres,
-                                                                       dPres,
-                                                                       gravCoef,
-                                                                       dCompFrac_dCompDens,
-                                                                       phaseMassDens,
-                                                                       dPhaseMassDens_dPres,
-                                                                       dPhaseMassDens_dComp,
-                                                                       phaseMob,
-                                                                       dPhaseMob_dPres,
-                                                                       dPhaseMob_dComp,
-                                                                       dPhaseVolFrac_dPres,
-                                                                       dPhaseVolFrac_dComp,
-                                                                       phaseCapPressure,
-                                                                       dPhaseCapPressure_dPhaseVolFrac,
-                                                                       capPressureFlag,
-                                                                       k_up,
-                                                                       fflow,
-                                                                       dFflow_dP,
-                                                                       dFflow_dC );
+                                   CompositionalMultiphaseFlowUpwindHelperKernels::term::Viscous,
+                                   UpwindSchemeType >( NP,
+                                                       ip,
+                                                       stencilSize,
+                                                       seri,
+                                                       sesri,
+                                                       sei,
+                                                       stencilWeights,
+                                                       totFlux_unw,
+                                                       pres,
+                                                       dPres,
+                                                       gravCoef,
+                                                       dCompFrac_dCompDens,
+                                                       phaseMassDens,
+                                                       dPhaseMassDens_dPres,
+                                                       dPhaseMassDens_dComp,
+                                                       phaseMob,
+                                                       dPhaseMob_dPres,
+                                                       dPhaseMob_dComp,
+                                                       dPhaseVolFrac_dPres,
+                                                       dPhaseVolFrac_dComp,
+                                                       phaseCapPressure,
+                                                       dPhaseCapPressure_dPhaseVolFrac,
+                                                       capPressureFlag,
+                                                       k_up,
+                                                       fflow,
+                                                       dFflow_dP,
+                                                       dFflow_dC );
 
       //mdensmultiply
       UpwindHelpers::mdensMultiply(
@@ -462,6 +440,7 @@ FluxKernel::
         dFflow_dP,
         dFflow_dC );
 
+//      std::cout << k_up << " | ";
       // Assembling the viscous flux (and derivatives) from fractional flow and total velocity as \phi_{\mu} = f_i^{up,\mu} uT
       phaseFluxV = fflow * totFlux_unw;
       for( localIndex ke = 0; ke < stencilSize; ++ke )
@@ -485,6 +464,7 @@ FluxKernel::
         }
       }
 
+      // accumulate in the flux and its derivatives
       phaseFlux += phaseFluxV;
       for( localIndex ke = 0; ke < stencilSize; ++ke )
       {
@@ -510,161 +490,50 @@ FluxKernel::
                                     compFlux,
                                     dCompFlux_dP,
                                     dCompFlux_dC );
+
       /***           GRAVITY TERM                ***/
       localIndex k_up_g = -1;
       localIndex k_up_og = -1;
-
-      // and the fractional flow for gravitational part as \lambda_i^{up}/\sum_{NP}(\lambda_k^{up}) with up decided upon
-      // the Upwind strategy
-      UpwindHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
-        CompositionalMultiphaseFlowUpwindHelperKernels::term::Gravity,
-        UpwindSchemeType >( NP,
-                                                                       ip,
-                                                                       stencilSize,
-                                                                       seri,
-                                                                       sesri,
-                                                                       sei,
-                                                                       stencilWeights,
-                                                                       totFlux_unw,
-                                                                       pres,
-                                                                       dPres,
-                                                                       gravCoef,
-                                                                       dCompFrac_dCompDens,
-                                                                       phaseMassDens,
-                                                                       dPhaseMassDens_dPres,
-                                                                       dPhaseMassDens_dComp,
-                                                                       phaseMob,
-                                                                       dPhaseMob_dPres,
-                                                                       dPhaseMob_dComp,
-                                                                       dPhaseVolFrac_dPres,
-                                                                       dPhaseVolFrac_dComp,
-                                                                       phaseCapPressure,
-                                                                       dPhaseCapPressure_dPhaseVolFrac,
-                                                                       capPressureFlag,
-                                                                       k_up_g,
-                                                                       fflow,
-                                                                       dFflow_dP,
-                                                                       dFflow_dC );
-
-      //mdensmultiply
-      UpwindHelpers::mdensMultiply(
-        ip,
-        k_up_g,
-        stencilSize,
-        seri,
-        sesri,
-        sei,
-        dCompFrac_dCompDens,
-        phaseDens,
-        dPhaseDens_dPres,
-        dPhaseDens_dComp,
-        fflow,
-        dFflow_dP,
-        dFflow_dC
-      );
 
       real64 phaseFluxG{};
       real64 dPhaseFluxG_dP[MAX_STENCIL]{};
       real64 dPhaseFluxG_dC[MAX_STENCIL][NC]{};
 
-
-      for( localIndex jp = 0; jp < NP; ++jp )
-      {
-        if( ip != jp )
-        {
-
-          real64 gravHeadOther{};
-          real64 dGravHeadOther_dP[NUM_ELEMS]{};
-          real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
-          real64 dPropOther_dC[NC]{};
-
-          //Fetch gravHead for phase j!=i defined as \rho_j g dz/dx
-          UpwindHelpers::formGravHead( jp,
-                                       stencilSize,
-                                       seri,
-                                       sesri,
-                                       sei,
-                                       stencilWeights,
-                                       gravCoef,
-                                       dCompFrac_dCompDens,
-                                       phaseMassDens,
-                                       dPhaseMassDens_dPres,
-                                       dPhaseMassDens_dComp,
-                                       gravHeadOther,
-                                       dGravHeadOther_dP,
-                                       dGravHeadOther_dC,
-                                       dPropOther_dC );
-
-
-
-
-          //Eventually get the mobility of the second phase
-          real64 mobOther{};
-          real64 dMobOther_dP{};
-          real64 dMobOther_dC[NC]{};
-
-          // and the other mobility for gravitational part as \lambda_j^{up} with up decided upon
-          // the Upwind strategy - Note that it should be the same as the gravitational fractional flow
-
-          UpwindHelpers::upwindMob< NC, NUM_ELEMS, MAX_STENCIL,
-            CompositionalMultiphaseFlowUpwindHelperKernels::term::Gravity,
-            UpwindSchemeType >( NP,
-                                                                           jp,
-                                                                           stencilSize,
-                                                                           seri,
-                                                                           sesri,
-                                                                           sei,
-                                                                           stencilWeights,
-                                                                           totFlux_unw,
-                                                                           pres,
-                                                                           dPres,
-                                                                           gravCoef,
-                                                                           dCompFrac_dCompDens,
-                                                                           phaseMassDens,
-                                                                           dPhaseMassDens_dPres,
-                                                                           dPhaseMassDens_dComp,
-                                                                           phaseMob,
-                                                                           dPhaseMob_dPres,
-                                                                           dPhaseMob_dComp,
-                                                                           dPhaseVolFrac_dPres,
-                                                                           dPhaseVolFrac_dComp,
-                                                                           phaseCapPressure,
-                                                                           dPhaseCapPressure_dPhaseVolFrac,
-                                                                           capPressureFlag,
-                                                                           k_up_og,
-                                                                           mobOther,
-                                                                           dMobOther_dP,
-                                                                           dMobOther_dC );
-
-
-
-          // Assembling gravitational flux phase-wise as \phi_{i,g} = \sum_{k\nei} \lambda_k^{up,g} f_k^{up,g} (G_i - G_k)
-          phaseFluxG -= fflow * mobOther * ( gravHead - gravHeadOther );
-          dPhaseFluxG_dP[k_up_og] -= fflow * dMobOther_dP * ( gravHead - gravHeadOther );
-          for( localIndex jc = 0; jc < NC; ++jc )
-            dPhaseFluxG_dC[k_up_og][jc] -= fflow * dMobOther_dC[jc] * ( gravHead - gravHeadOther );
-
-          //mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
-          for( localIndex ke = 0; ke < stencilSize; ++ke )
-          {
-            dPhaseFluxG_dP[ke] -= dFflow_dP[ke] * mobOther * ( gravHead - gravHeadOther );
-
-            for( localIndex jc = 0; jc < NC; ++jc )
-            {
-              dPhaseFluxG_dC[ke][jc] -= dFflow_dC[ke][jc] * mobOther * ( gravHead - gravHeadOther );
-            }
-          }
-
-          for( localIndex ke = 0; ke < NUM_ELEMS; ++ke )
-          {
-            dPhaseFluxG_dP[ke] -= fflow * mobOther * ( dGravHead_dP[ke] - dGravHeadOther_dP[ke] );
-            for( localIndex jc = 0; jc < NC; ++jc )
-            {
-              dPhaseFluxG_dC[ke][jc] -= fflow * mobOther * ( dGravHead_dC[ke][jc] - dGravHeadOther_dC[ke][jc] );
-            }
-          }
-        }
-      }
+      UpwindHelpers::formPotFluxes< NC,
+                                    CompositionalMultiphaseFlowUpwindHelperKernels::term::Gravity,
+                                    NUM_ELEMS, MAX_STENCIL, NUM_ELEMS, UpwindSchemeType >(
+        NP,
+        ip,
+        stencilSize,
+        seri,
+        sesri,
+        sei,
+        stencilWeights,
+        totFlux_unw,
+        pres,
+        dPres,
+        gravCoef,
+        phaseMob,
+        dPhaseMob_dPres,
+        dPhaseMob_dComp,
+        dPhaseVolFrac_dPres,
+        dPhaseVolFrac_dComp,
+        dCompFrac_dCompDens,
+        phaseDens,
+        dPhaseDens_dPres,
+        dPhaseDens_dComp,
+        phaseMassDens,
+        dPhaseMassDens_dPres,
+        dPhaseMassDens_dComp,
+        phaseCapPressure,
+        dPhaseCapPressure_dPhaseVolFrac,
+        capPressureFlag,
+        k_up_g,
+        k_up_og,
+        phaseFlux,
+        dPhaseFlux_dP,
+        dPhaseFlux_dC
+        );
 
       // Distributing the gravitational flux of phase i onto component
       UpwindHelpers::formPhaseComp( ip,
@@ -694,179 +563,53 @@ FluxKernel::
       }
 
 
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////Adding capillary contribution
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////Adding capillary
+      /// contribution
       /***           CAPILLARY TERM                ***/
       if( capPressureFlag )
       {
-
-
         localIndex k_up_pc = -1;
         localIndex k_up_opc = -1;
-
-        real64 capHead{};
-        real64 dCapHead_dP[MAX_STENCIL]{};
-        real64 dCapHead_dC[MAX_STENCIL][NC]{};
-        UpwindHelpers::formCapHead( numPhases,
-                                    ip,
-                                    stencilSize,
-                                    seri,
-                                    sesri,
-                                    sei,
-                                    stencilWeights,
-                                    dPhaseVolFrac_dPres,
-                                    dPhaseVolFrac_dComp,
-                                    phaseCapPressure,
-                                    dPhaseCapPressure_dPhaseVolFrac,
-                                    capHead,
-                                    dCapHead_dP,
-                                    dCapHead_dC );
-
-
-        // and the fractional flow for gravitational part as \lambda_i^{up}/\sum_{NP}(\lambda_k^{up}) with up decided upon
-        // the Upwind strategy
-        UpwindHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
-          CompositionalMultiphaseFlowUpwindHelperKernels::term::Capillary,
-          UpwindSchemeType >( NP,
-                                                                         ip,
-                                                                         stencilSize,
-                                                                         seri,
-                                                                         sesri,
-                                                                         sei,
-                                                                         stencilWeights,
-                                                                         totFlux_unw,
-                                                                         pres,
-                                                                         dPres,
-                                                                         gravCoef,
-                                                                         dCompFrac_dCompDens,
-                                                                         phaseMassDens,
-                                                                         dPhaseMassDens_dPres,
-                                                                         dPhaseMassDens_dComp,
-                                                                         phaseMob,
-                                                                         dPhaseMob_dPres,
-                                                                         dPhaseMob_dComp,
-                                                                         dPhaseVolFrac_dPres,
-                                                                         dPhaseVolFrac_dComp,
-                                                                         phaseCapPressure,
-                                                                         dPhaseCapPressure_dPhaseVolFrac,
-                                                                         capPressureFlag,
-                                                                         k_up_pc,
-                                                                         fflow,
-                                                                         dFflow_dP,
-                                                                         dFflow_dC );
-
-        //mdensmultiply
-        UpwindHelpers::mdensMultiply(
-          ip,
-          k_up_pc,
-          stencilSize,
-          seri,
-          sesri,
-          sei,
-          dCompFrac_dCompDens,
-          phaseDens,
-          dPhaseDens_dPres,
-          dPhaseDens_dComp,
-          fflow,
-          dFflow_dP,
-          dFflow_dC
-        );
 
         real64 phaseFluxCap{};
         real64 dPhaseFluxCap_dP[MAX_STENCIL]{};
         real64 dPhaseFluxCap_dC[MAX_STENCIL][NC]{};
 
-        for( localIndex jp = 0; jp < NP; ++jp )
-        {
-          if( ip != jp )
-          {
-
-
-            real64 capHeadOther{};
-            real64 dCapHeadOther_dP[MAX_STENCIL]{};
-            real64 dCapHeadOther_dC[MAX_STENCIL][NC]{};
-            UpwindHelpers::formCapHead( numPhases,
-                                        jp,
-                                        stencilSize,
-                                        seri,
-                                        sesri,
-                                        sei,
-                                        stencilWeights,
-                                        dPhaseVolFrac_dPres,
-                                        dPhaseVolFrac_dComp,
-                                        phaseCapPressure,
-                                        dPhaseCapPressure_dPhaseVolFrac,
-                                        capHeadOther,
-                                        dCapHeadOther_dP,
-                                        dCapHeadOther_dC );
-
-            //Eventually get the mobility of the second phase
-            real64 mobOther{};
-            real64 dMobOther_dP{};
-            real64 dMobOther_dC[NC]{};
-
-            UpwindHelpers::upwindMob< NC, NUM_ELEMS, MAX_STENCIL,
-              CompositionalMultiphaseFlowUpwindHelperKernels::term::Capillary,
-              UpwindSchemeType >( NP,
-                                                                             jp,
-                                                                             stencilSize,
-                                                                             seri,
-                                                                             sesri,
-                                                                             sei,
-                                                                             stencilWeights,
-                                                                             totFlux_unw,
-                                                                             pres,
-                                                                             dPres,
-                                                                             gravCoef,
-                                                                             dCompFrac_dCompDens,
-                                                                             phaseMassDens,
-                                                                             dPhaseMassDens_dPres,
-                                                                             dPhaseMassDens_dComp,
-                                                                             phaseMob,
-                                                                             dPhaseMob_dPres,
-                                                                             dPhaseMob_dComp,
-                                                                             dPhaseVolFrac_dPres,
-                                                                             dPhaseVolFrac_dComp,
-                                                                             phaseCapPressure,
-                                                                             dPhaseCapPressure_dPhaseVolFrac,
-                                                                             capPressureFlag,
-                                                                             k_up_opc,
-                                                                             mobOther,
-                                                                             dMobOther_dP,
-                                                                             dMobOther_dC );
-
-
-
-            // Assembling capillary flux phase-wise as \phi_{i,g} = \sum_{k\nei} \lambda_k^{up,g} f_k^{up,g} (dPc_i - dPc_k)
-            phaseFluxCap -= fflow * mobOther * ( capHead - capHeadOther );
-            dPhaseFluxCap_dP[k_up_opc] -= fflow * dMobOther_dP * ( capHead - capHeadOther );
-            for( localIndex jc = 0; jc < NC; ++jc )
-              dPhaseFluxCap_dC[k_up_opc][jc] -= fflow * dMobOther_dC[jc] * ( capHead - capHeadOther );
-
-            //mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
-            for( localIndex ke = 0; ke < stencilSize; ++ke )
-            {
-              dPhaseFluxCap_dP[ke] -= dFflow_dP[ke] * mobOther * ( capHead - capHeadOther );
-
-              for( localIndex jc = 0; jc < NC; ++jc )
-              {
-                dPhaseFluxCap_dC[ke][jc] -= dFflow_dC[ke][jc] * mobOther * ( capHead - capHeadOther );
-              }
-            }
-
-            for( localIndex ke = 0; ke < stencilSize; ++ke )
-            {
-
-              dPhaseFluxCap_dP[ke] -= fflow * mobOther * ( dCapHead_dP[ke] - dCapHeadOther_dP[ke] );
-              for( localIndex jc = 0; jc < NC; ++jc )
-              {
-                dPhaseFluxCap_dC[ke][jc] -= fflow * mobOther * ( dCapHead_dC[ke][jc] - dCapHeadOther_dC[ke][jc] );
-              }
-            }
-
-
-          }
-        }
-
+        UpwindHelpers::formPotFluxes< NC,
+                                      CompositionalMultiphaseFlowUpwindHelperKernels::term::Capillary,
+                                      NUM_ELEMS, MAX_STENCIL, MAX_STENCIL, UpwindSchemeType >(
+          NP,
+          ip,
+          stencilSize,
+          seri,
+          sesri,
+          sei,
+          stencilWeights,
+          totFlux_unw,
+          pres,
+          dPres,
+          gravCoef,
+          phaseMob,
+          dPhaseMob_dPres,
+          dPhaseMob_dComp,
+          dPhaseVolFrac_dPres,
+          dPhaseVolFrac_dComp,
+          dCompFrac_dCompDens,
+          phaseDens,
+          dPhaseDens_dPres,
+          dPhaseDens_dComp,
+          phaseMassDens,
+          dPhaseMassDens_dPres,
+          dPhaseMassDens_dComp,
+          phaseCapPressure,
+          dPhaseCapPressure_dPhaseVolFrac,
+          capPressureFlag,
+          k_up_pc,
+          k_up_opc,
+          phaseFluxCap,
+          dPhaseFluxCap_dP,
+          dPhaseFluxCap_dC
+          );
 
         // Distributing the gravitational flux of phase i onto component
         UpwindHelpers::formPhaseComp( ip,
@@ -897,7 +640,7 @@ FluxKernel::
 
       }//end if capPressureFlag
 
-
+//      std::cout << " \n ------ \n";
 
     }
   }//end if UT_FORM
