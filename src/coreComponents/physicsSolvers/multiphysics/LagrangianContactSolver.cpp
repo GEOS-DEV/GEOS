@@ -119,7 +119,7 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
           setRegisteringObjects( this->getName()).
           setDescription( "An array that holds the tractions on the fracture." );
 
-        auto & rwtDeltaTraction = subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
+        auto & rwDeltaTraction = subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
         rwtDeltaTraction.reference().resizeDimension< 1 >( 3 );
         rwtDeltaTraction.setApplyDefaultValue( 0.0 ).
           setPlotLevel( PlotLevel::NOPLOT ).
