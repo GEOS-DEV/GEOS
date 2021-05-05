@@ -53,7 +53,7 @@ public:
   static real64 getGradN( localIndex const q,
                           real64 ( & gradN )[LEAF::maxSupportPoints][3] )
   {
-    return LEAF::calcGradN( q, gradN );
+    return LEAF::calcGradN( q, LEAF::BasisData, gradN );
   }
 
   /**
@@ -68,7 +68,7 @@ public:
   static real64 getStabilizationValue( localIndex const iBasisFunction,
                                        localIndex const jBasisFunction
                                        )
-  { return LEAF::calcStabilizationValues( iBasisFunction, jBasisFunction ); }
+  { return LEAF::calcStabilizationValues( iBasisFunction, jBasisFunction, LEAF::BasisData ); }
 
   /**
    * @brief Get the shape function projections at a given quadrature point.
@@ -82,7 +82,7 @@ public:
   void getN( localIndex const q,
              real64 ( & N )[LEAF::maxSupportPoints] )
   {
-    return LEAF::calcN( q, N );
+    return LEAF::calcN( q, LEAF::BasisData, N );
   }
 
   /**
@@ -95,7 +95,7 @@ public:
   GEOSX_HOST_DEVICE
   real64 getTransformedQuadratureWeight( localIndex const q ) const
   {
-    return LEAF::getTransformedQuadratureWeight( q );
+    return LEAF::transformedQuadratureWeight( q, LEAF::BasisData );
   }
 
   /**
@@ -117,7 +117,7 @@ public:
   template< typename LEAF >
   localIndex getNumSupportPoints() const
   {
-    return LEAF::getNumSupportPoints();
+    return LEAF::getNumSupportPoints( LEAF::BasisData );
   }
 };
 }

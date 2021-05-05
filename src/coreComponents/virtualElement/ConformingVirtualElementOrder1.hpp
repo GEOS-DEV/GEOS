@@ -13,7 +13,7 @@
  */
 
 /**
- * @file ConformingVirtualElement_1.hpp
+ * @file ConformingVirtualElementOrder1.hpp
  */
 
 #ifndef GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
@@ -31,6 +31,14 @@ class ConformingVirtualElementOrder1 final : public VirtualElementBase
 public:
   static constexpr localIndex maxSupportPoints = MAXCELLNODES;
   static constexpr localIndex numQuadraturePoints = 1;
+  struct BasisData
+  {
+    localIndex numSupportPoints;
+    real64 quadratureWeight;
+    real64 basisFunctionsIntegralMean[maxSupportPoints];
+    real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints];
+    real64 basisDerivativesIntegralMean[maxSupportPoints][3];
+  };
 
 private:
   // GEOSX_HOST_DEVICE
@@ -46,12 +54,6 @@ private:
                         arraySlice1d< real64 const > const & cellCenter,
                         real64 basisIntegrals[MAXFACENODES],
                         real64 threeDMonomialIntegrals[3] );
-
-  static localIndex m_numSupportPoints;
-  static real64 m_quadratureWeight;
-  static real64 m_basisFunctionsIntegralMean[maxSupportPoints];
-  static real64 m_stabilizationMatrix[maxSupportPoints][maxSupportPoints];
-  static real64 m_basisDerivativesIntegralMean[maxSupportPoints][3];
 
 public:
   virtual ~ConformingVirtualElementOrder1() override
@@ -70,8 +72,14 @@ public:
                      arrayView2d< real64 const > const faceNormals,
                      arrayView1d< real64 const > const faceAreas,
                      arraySlice1d< real64 const > const & cellCenter,
-                     real64 const & cellVolume
+                     real64 const & cellVolume,
+                     BasisData & basisData
                      );
+
+  static localIndex getMaxSupportPoints()
+  {
+    return maxSupportPoints;
+  }
 
   // GEOSX_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
@@ -80,46 +88,49 @@ public:
   }
 
   // GEOSX_HOST_DEVICE
-  static localIndex getNumSupportPoints()
+  static localIndex getNumSupportPoints( BasisData const & basisData )
   {
-    return m_numSupportPoints;
+    return basisData.numSupportPoints;
   }
 
   // GEOSX_HOST_DEVICE
   static real64 calcStabilizationValue( localIndex const iBasisFunction,
-                                        localIndex const jBasisFunction
-                                        )
-  { return m_stabilizationMatrix[iBasisFunction][jBasisFunction]; }
+                                        localIndex const jBasisFunction,
+                                        BasisData const & basisData )
+  { return basisData.stabilizationMatrix[iBasisFunction][jBasisFunction]; }
 
   // GEOSX_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
+                           BasisData const & basisData,
                            real64 ( & gradN )[maxSupportPoints][3] )
   {
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       for( localIndex j = 0; j < 3; ++j )
       {
-        gradN[i][j] = m_basisDerivativesIntegralMean[i][j];
+        gradN[i][j] = basisData.basisDerivativesIntegralMean[i][j];
       }
     }
-    return transformedQuadratureWeight( q );
+    return transformedQuadratureWeight( q, basisData );
   }
 
   // GEOSX_HOST_DEVICE
   static void calcN( localIndex const q,
+                     BasisData const & basisData,
                      real64 ( & N )[maxSupportPoints] )
   {
     GEOSX_UNUSED_VAR( q );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
-      N[i] = m_basisFunctionsIntegralMean[i];
+      N[i] = basisData.basisFunctionsIntegralMean[i];
     }
   }
 
   // GEOSX_HOST_DEVICE
-  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ) )
+  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
+                                             BasisData const & basisData )
   {
-    return m_quadratureWeight;
+    return basisData.quadratureWeight;
   }
 
 

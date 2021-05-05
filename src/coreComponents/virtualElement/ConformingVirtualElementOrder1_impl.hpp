@@ -20,25 +20,6 @@ namespace geosx
 namespace virtualElement
 {
 template< localIndex MCN, localIndex MFN >
-localIndex ConformingVirtualElementOrder1< MCN, MFN >::m_numSupportPoints;
-
-template< localIndex MCN, localIndex MFN >
-real64 ConformingVirtualElementOrder1< MCN, MFN >::m_quadratureWeight;
-
-template< localIndex MCN, localIndex MFN >
-real64 ConformingVirtualElementOrder1< MCN, MFN >::
-m_basisFunctionsIntegralMean[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints];
-
-template< localIndex MCN, localIndex MFN >
-real64 ConformingVirtualElementOrder1< MCN, MFN >::
-m_stabilizationMatrix[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints]
-[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints];
-
-template< localIndex MCN, localIndex MFN >
-real64 ConformingVirtualElementOrder1< MCN, MFN >::
-m_basisDerivativesIntegralMean[ConformingVirtualElementOrder1< MCN, MFN >::maxSupportPoints][3];
-
-template< localIndex MCN, localIndex MFN >
 // GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeProjectors( localIndex const & cellIndex,
@@ -52,13 +33,14 @@ computeProjectors( localIndex const & cellIndex,
                    arrayView2d< real64 const > const faceNormals,
                    arrayView1d< real64 const > const faceAreas,
                    arraySlice1d< real64 const > const & cellCenter,
-                   real64 const & cellVolume
+                   real64 const & cellVolume,
+                   BasisData & basisData
                    )
 {
   localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
   localIndex const numCellPoints = cellToNodeMap[cellIndex].size();
-  m_numSupportPoints = numCellPoints;
-  m_quadratureWeight = cellVolume;
+  basisData.numSupportPoints = numCellPoints;
+  basisData.quadratureWeight = cellVolume;
 
   // Compute cell diameter.
   real64 cellDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
@@ -189,7 +171,7 @@ computeProjectors( localIndex const & cellIndex,
 
   // Compute integral mean of basis functions and of derivatives of basis functions.
   // Compute VEM degrees of freedom of the piNabla projection minus the identity (used for
-  // m_stabilizationMatrix).
+  // basisData.stabilizationMatrix).
   real64 const invCellVolume = 1.0/cellVolume;
   real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
   array2d< real64 > piNablaVemDofsMinusIdentity( numCellPoints, numCellPoints );
@@ -216,12 +198,12 @@ computeProjectors( localIndex const & cellIndex,
                       piNablaDofs[2]*monomBoundaryIntegrals[2] -
                       piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
     // - integrate piNabla proj and compute integral means
-    m_basisFunctionsIntegralMean[numBasisFunction] = piNablaDofs[0] + invCellVolume *
-                                                     (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
-                                                      + piNablaDofs[3] * monomInternalIntegrals[2]);
+    basisData.basisFunctionsIntegralMean[numBasisFunction] = piNablaDofs[0] + invCellVolume *
+                                                             (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
+                                                              + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
     for( localIndex i = 0; i < 3; ++i )
-      m_basisDerivativesIntegralMean[numBasisFunction][i] =
+      basisData.basisDerivativesIntegralMean[numBasisFunction][i] =
         -invCellVolume *basisTimesNormalBoundaryInt[numBasisFunction][i];
     // - compute VEM dofs of piNabla projection
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
@@ -243,7 +225,7 @@ computeProjectors( localIndex const & cellIndex,
       real64 rowColProd = 0;
       for( localIndex k = 0; k < numCellPoints; ++k )
         rowColProd += piNablaVemDofsMinusIdentity( k, i )*piNablaVemDofsMinusIdentity( k, j );
-      m_stabilizationMatrix[i][j] = cellDiameter*rowColProd;
+      basisData.stabilizationMatrix[i][j] = cellDiameter*rowColProd;
     }
   }
 }

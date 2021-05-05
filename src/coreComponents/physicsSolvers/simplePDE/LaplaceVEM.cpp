@@ -180,6 +180,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       localIndex const numCells = elemSubRegion.size();
       forAll< serialPolicy >( numCells, [=] ( localIndex const cellIndex )
       {
+        VEM::BasisData basisData;
         real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
         globalIndex elemDofIndex[VEM::maxSupportPoints];
         real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints];
@@ -189,25 +190,25 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
           VEM::computeProjectors( cellIndex, nodesCoords, elemToNodeMap, elementToFaceMap,
                                   faceToNodeMap, faceToEdgeMap, edgeToNodeMap,
                                   faceCenters, faceNormals, faceAreas,
-                                  elemCenters[cellIndex], elemVolumes[cellIndex] );
-          localIndex const numSupportPoints = VEM::getNumSupportPoints();
+                                  elemCenters[cellIndex], elemVolumes[cellIndex], basisData );
+          localIndex const numSupportPoints = VEM::getNumSupportPoints( basisData );
           for( localIndex a = 0; a < numSupportPoints; ++a )
           {
             elemDofIndex[a] = dofIndex[ elemToNodeMap( cellIndex, a ) ];
             for( localIndex b = 0; b < numSupportPoints; ++b )
             {
-              element_matrix[a][b] = VEM::calcStabilizationValue( a, b );
+              element_matrix[a][b] = VEM::calcStabilizationValue( a, b, basisData );
             }
             localRhs[a] = 0.0;
           }
           for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
           {
-            VEM::calcGradN( q, basisDerivativesIntegralMean );
+            VEM::calcGradN( q, basisData, basisDerivativesIntegralMean );
             for( localIndex a = 0; a < numSupportPoints; ++a )
             {
               for( localIndex b = 0; b < numSupportPoints; ++b )
               {
-                element_matrix[a][b] += diffusion * VEM::transformedQuadratureWeight( q ) *
+                element_matrix[a][b] += diffusion * VEM::transformedQuadratureWeight( q, basisData ) *
                                         (basisDerivativesIntegralMean[a][0] * basisDerivativesIntegralMean[b][0] +
                                          basisDerivativesIntegralMean[a][1] * basisDerivativesIntegralMean[b][1] +
                                          basisDerivativesIntegralMean[a][2] * basisDerivativesIntegralMean[b][2] );
