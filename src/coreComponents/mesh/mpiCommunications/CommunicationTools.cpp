@@ -138,7 +138,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & object,
     }
   }
 
-  MPI_iCommData commData( getInstance().getCommID(), getInstance().getCommID() );
+  MPI_iCommData commData( getCommID(), getCommID() );
   commData.resize( neighbors.size() );
 
   array1d< int >  receiveBufferSizes( neighbors.size());
@@ -407,8 +407,7 @@ CommunicationTools::
   {
     array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
 
-    MPI_iCommData commData( this->getCommID(),
-                            this->getCommID() );
+    MPI_iCommData commData( getCommID(), getCommID() );
     int const commID = commData.commID;
     std::size_t const numNeighbors = allNeighbors.size();
     commData.resize( numNeighbors );
