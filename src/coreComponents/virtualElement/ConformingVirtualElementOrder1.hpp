@@ -41,7 +41,7 @@ public:
   };
 
 private:
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static void
   computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                         arraySlice1d< localIndex const > const & faceToNodes,
@@ -59,7 +59,7 @@ public:
   virtual ~ConformingVirtualElementOrder1() override
   {}
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static void
   computeProjectors( localIndex const & cellIndex,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
@@ -76,30 +76,31 @@ public:
                      BasisData & basisData
                      );
 
+  GEOSX_HOST_DEVICE
   static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static localIndex getNumSupportPoints( BasisData const & basisData )
   {
     return basisData.numSupportPoints;
   }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static real64 calcStabilizationValue( localIndex const iBasisFunction,
                                         localIndex const jBasisFunction,
                                         BasisData const & basisData )
   { return basisData.stabilizationMatrix[iBasisFunction][jBasisFunction]; }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
                            BasisData const & basisData,
                            real64 ( & gradN )[maxSupportPoints][3] )
@@ -114,7 +115,7 @@ public:
     return transformedQuadratureWeight( q, basisData );
   }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static void calcN( localIndex const q,
                      BasisData const & basisData,
                      real64 ( & N )[maxSupportPoints] )
@@ -126,7 +127,7 @@ public:
     }
   }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
                                              BasisData const & basisData )
   {
@@ -137,7 +138,7 @@ public:
 public:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
@@ -153,7 +154,7 @@ public:
   }
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  POINT_SELECTION_TYPE selectedPoints,
                                  localIndex const & numSelectedPoints )

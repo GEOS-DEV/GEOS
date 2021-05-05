@@ -20,7 +20,7 @@ namespace geosx
 namespace virtualElement
 {
 template< localIndex MCN, localIndex MFN >
-// GEOSX_HOST_DEVICE
+GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeProjectors( localIndex const & cellIndex,
                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
@@ -231,7 +231,7 @@ computeProjectors( localIndex const & cellIndex,
 }
 
 template< localIndex MCN, localIndex MFN >
-// GEOSX_HOST_DEVICE
+GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                       arraySlice1d< localIndex const > const & faceToNodes,
