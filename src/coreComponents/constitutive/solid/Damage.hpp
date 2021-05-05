@@ -86,6 +86,7 @@ public:
   using UPDATE_BASE::hypoUpdate_StressOnly;
   using UPDATE_BASE::hyperUpdate;
   using UPDATE_BASE::hyperUpdate_StressOnly;
+  using UPDATE_BASE::saveConvergedState;
 
   //Standard quadratic degradation functions
 

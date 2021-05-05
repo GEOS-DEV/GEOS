@@ -105,6 +105,15 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const override final
+  {
+    ElasticIsotropicUpdates::saveConvergedState( k, q );
+    m_oldCohesion[k][q] = m_newCohesion[k][q];
+  }
+
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
   arrayView1d< real64 const > const m_friction;
