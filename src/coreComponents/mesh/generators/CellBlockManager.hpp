@@ -34,18 +34,6 @@ class CellBlockManager : public CellBlockManagerABC
 public:
 
   /**
-   * @brief The function is to return the name of the CellBlockManager in the object catalog
-   * @return string that contains the catalog name used to register/lookup this class in the object catalog
-   */
-  static string catalogName()
-  {
-    return "CellBlockManager";
-  }
-
-  const string getCatalogName() const final
-  { return CellBlockManager::catalogName(); }
-
-  /**
    * @brief Constructor for CellBlockManager object.
    * @param name name of this instantiation of CellBlockManager
    * @param parent pointer to the parent Group of this instantiation of CellBlockManager

@@ -698,5 +698,4 @@ CellBlock & CellBlockManager::registerCellBlock( string name )
   return this->getCellBlocks().registerGroup< CellBlock >( name );
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlockManager, string const &, Group * const )
 }

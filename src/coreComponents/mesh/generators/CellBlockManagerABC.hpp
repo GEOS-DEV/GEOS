@@ -15,16 +15,16 @@
 #ifndef GEOSX_CELLBLOCKMANAGERABC_HPP
 #define GEOSX_CELLBLOCKMANAGERABC_HPP
 
-#include "mesh/ObjectManagerBase.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
 
-class CellBlockManagerABC : public ObjectManagerBase
+class CellBlockManagerABC : public dataRepository::Group
 {
 public:
   CellBlockManagerABC( string const & name, Group * const parent ):
-    ObjectManagerBase( name, parent )
+    Group( name, parent )
   {
     // Left blank
   }
