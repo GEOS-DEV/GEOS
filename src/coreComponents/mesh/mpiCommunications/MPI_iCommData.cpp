@@ -19,15 +19,15 @@ namespace geosx
 
 MPI_iCommData::MPI_iCommData( int const commIdForBuffer,
                               int const commIdForSize ):
-        size( 0 ),
-        commID( commIdForBuffer ),// CommunicationTools::getInstance().getCommID() ),
-        sizeCommID( commIdForSize ),//CommunicationTools::getInstance().getCommID() ),
-        fieldNames(),
-        mpiSendBufferRequest(),
-        mpiRecvBufferRequest(),
-        mpiSendBufferStatus(),
-        mpiRecvBufferStatus()
-      {}
+  size( 0 ),
+  commID( commIdForBuffer ),      // CommunicationTools::getInstance().getCommID() ),
+  sizeCommID( commIdForSize ),      //CommunicationTools::getInstance().getCommID() ),
+  fieldNames(),
+  mpiSendBufferRequest(),
+  mpiRecvBufferRequest(),
+  mpiSendBufferStatus(),
+  mpiRecvBufferStatus()
+{}
 
 void MPI_iCommData::resize( localIndex numMessages )
 {

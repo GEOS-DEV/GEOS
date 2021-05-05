@@ -675,8 +675,8 @@ void waitOrderedOrWaitAll( int const n, std::vector< std::function< MPI_Request 
 }
 
 void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
-                                     std::vector< NeighborCommunicator > & neighbors,
-                                     bool const unorderedComms )
+                                      std::vector< NeighborCommunicator > & neighbors,
+                                      bool const unorderedComms )
 {
   GEOSX_MARK_FUNCTION;
   MPI_iCommData commData( getCommID(), getCommID() );

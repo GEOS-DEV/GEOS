@@ -60,8 +60,8 @@ public:
                                std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
   void setupGhosts( MeshLevel & meshLevel,
-                   std::vector< NeighborCommunicator > & neighbors,
-                   bool use_nonblocking );
+                    std::vector< NeighborCommunicator > & neighbors,
+                    bool use_nonblocking );
 
   CommID getCommID()
   { return CommID( m_freeCommIDs ); }

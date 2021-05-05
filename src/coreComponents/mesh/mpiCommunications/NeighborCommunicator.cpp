@@ -34,11 +34,7 @@ NeighborCommunicator::NeighborCommunicator( int rank ):
   m_sendBufferSize(),
   m_receiveBufferSize(),
   m_sendBuffer{ maxComm },
-  m_receiveBuffer{ maxComm }//,
-//  m_mpiSendBufferRequest(),
-//  m_mpiRecvBufferRequest(),
-//  m_mpiSendBufferStatus(),
-//  m_mpiRecvBufferStatus()
+  m_receiveBuffer{ maxComm }
 { }
 
 void NeighborCommunicator::mpiISendReceive( buffer_unit_type const * const sendBuffer,
@@ -83,15 +79,6 @@ void NeighborCommunicator::mpiISendReceiveBufferSizes( int const commID,
                    mpiComm );
 }
 
-//void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
-//                                                   MPI_Comm mpiComm )
-//{
-//  mpiISendReceiveBuffers( commID,
-//                          m_mpiSendBufferRequest[commID],
-//                          m_mpiRecvBufferRequest[commID],
-//                          mpiComm );
-//}
-
 void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
                                                    MPI_Request & mpiSendRequest,
                                                    MPI_Request & mpiRecvRequest,
@@ -121,12 +108,6 @@ void NeighborCommunicator::mpiWaitAll( int const GEOSX_UNUSED_PARAM( commID ),
   MpiWrapper::waitAll( 1, &mpiRecvRequest, &mpiReceiveStatus );
   MpiWrapper::waitAll( 1, &mpiSendRequest, &mpiSendStatus );
 }
-
-//void NeighborCommunicator::mpiWaitAll( int const commID )
-//{
-//  MpiWrapper::waitAll( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-//  MpiWrapper::waitAll( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
-//}
 
 void NeighborCommunicator::clear()
 {
@@ -161,11 +142,6 @@ int NeighborCommunicator::postSizeRecv( int const commID,
                             &mpiRecvSizeRequest );
 }
 
-//MPI_Request NeighborCommunicator::getSizeRecvRequest( int const commID )
-//{
-//  return m_mpiRecvSizeRequest[commID];
-//}
-
 int NeighborCommunicator::postSizeSend( int const commID,
                                         MPI_Request & mpiSendSizeRequest )
 {
@@ -190,11 +166,6 @@ int NeighborCommunicator::postRecv( int const commID,
                             MPI_COMM_GEOSX,
                             &mpRecvRequest );
 }
-
-//MPI_Request NeighborCommunicator::getRecvRequest( int const commID )
-//{
-//  return m_mpiRecvBufferRequest[commID];
-//}
 
 int NeighborCommunicator::postSend( int const commID,
                                     MPI_Request & mpiSendRequest )
@@ -603,12 +574,6 @@ void NeighborCommunicator::packCommBufferForSync( std::map< string, string_array
 
   GEOSX_ERROR_IF_NE( bufferSize, packedSize );
 }
-
-
-//void NeighborCommunicator::sendRecvBuffers( int const commID )
-//{
-//  this->mpiISendReceive( commID, MPI_COMM_GEOSX );
-//}
 
 
 void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array > const & fieldNames,

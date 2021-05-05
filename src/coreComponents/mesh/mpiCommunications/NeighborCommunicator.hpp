@@ -61,8 +61,6 @@ public:
                                    MPI_Request & mpiRecvRequest,
                                    MPI_Comm mpiComm );
 
-//  void mpiISendReceiveBuffers( int const commID,
-//                               MPI_Comm mpiComm );
 
   void mpiISendReceiveBuffers( int const commID,
                                MPI_Request & mpiSendRequest,
@@ -105,33 +103,6 @@ public:
                             int const commID,
                             MPI_Comm mpiComm );
 
-
-
-//  template< typename T >
-//  void mpiISendReceive( array1d< T > const & sendBuffer,
-//                        array1d< T > & recvBuffer,
-//                        int const commID,
-//                        MPI_Comm mpiComm )
-//  {
-//    mpiISendReceive( sendBuffer,
-//                     m_mpiSendBufferRequest[commID],
-//                     recvBuffer,
-//                     m_mpiRecvBufferRequest[commID],
-//                     commID,
-//                     mpiComm );
-//  }
-
-//  template< typename T >
-//  void mpiISendReceiveWait( array1d< T > const & sendBuffer,
-//                            array1d< T > & recvBuffer,
-//                            int const commID,
-//                            MPI_Comm mpiComm )
-//  {
-//    MPI_iSendReceive( sendBuffer, recvBuffer, commID, mpiComm );
-//    mpiWaitAll( commID );
-//  }
-
-
   void mpiWaitAll( int const commID,
                    MPI_Request & mpiSendRequest,
                    MPI_Status & mpiSendStatus,
@@ -152,15 +123,6 @@ public:
    */
   int postSizeRecv( int const commID,
                     MPI_Request & mpiSizeRecvRequest );
-
-  /**
-   * @brief Get the MPI_Request associated with the last
-   *        size-recieve request.
-   * @param commID The identifier for the pseudo-comm
-   *               the communication is taking place in.
-   * @return The MPI_Request for the size receive
-   */
-//  MPI_Request getSizeRecvRequest( int const commID );
 
   /**
    * @brief Post a non-blocking send for the buffer
@@ -191,15 +153,6 @@ public:
    */
   int postRecv( int const commID,
                 MPI_Request & mpRecvRequest );
-
-  /**
-   * @brief Get the MPI_Request associated with the last
-   *        recieve request posted.
-   * @param commID The identifier for the pseudo-comm
-   *               the communication is taking place in.
-   * @return The MPI_Request for the receive.
-   */
-//  MPI_Request getRecvRequest( int const commID );
 
   /**
    * @brief Post a non-blocking send for the actual information
@@ -278,8 +231,6 @@ public:
                            bool onDevice,
                            parallelDeviceEvents & events );
 
-//  void sendRecvBuffers( int const commID );
-
   void unpackBufferForSync( std::map< string, string_array > const & fieldNames,
                             MeshLevel & meshLevel,
                             int const commID,
@@ -343,14 +294,6 @@ private:
   std::vector< buffer_type > m_sendBuffer;
   std::vector< buffer_type > m_receiveBuffer;
 
-//  MPI_Request m_mpiSendBufferRequest[maxComm];
-//  MPI_Request m_mpiRecvBufferRequest[maxComm];
-//
-//  MPI_Request m_mpiSendSizeRequest[maxComm];
-//  MPI_Request m_mpiRecvSizeRequest[maxComm];
-//
-//  MPI_Status m_mpiSendBufferStatus[maxComm];
-//  MPI_Status m_mpiRecvBufferStatus[maxComm];
 };
 
 
