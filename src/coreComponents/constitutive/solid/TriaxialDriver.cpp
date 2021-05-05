@@ -300,9 +300,16 @@ bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
 void TriaxialDriver::outputResults()
 {
-  string const outputDir = OutputBase::getOutputDirectory();
-  string const outputPath = joinPath( outputDir, m_outputFile );
-  FILE * fp = fopen( outputPath.c_str(), "w" );
+  // TODO: improve file path output to grab command line -o directory
+  //       for the moment, we just use the specified m_outputFile directly
+
+  FILE * fp = fopen( m_outputFile.c_str(), "w" );
+
+  /*
+     string const outputDir = OutputBase::getOutputDirectory();
+     string const outputPath = joinPath( outputDir, m_outputFile );
+     FILE * fp = fopen( outputPath.c_str(), "w" );
+   */
 
   fprintf( fp, "# column 1 = time\n" );
   fprintf( fp, "# column 2 = axial_strain\n" );
