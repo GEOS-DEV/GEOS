@@ -36,9 +36,11 @@ std::string getAbsolutePath( std::string const & path )
     char const * ret = getcwd( absFilePath, PATH_MAX + 1 );
     if( ret != nullptr )
     {
-      GEOSX_THROW( "Could not get the absolute path for " << path << " from " << absFilePath, InputError );
+      GEOSX_THROW( "Could not get the absolute path for " << path << " from working directory " << absFilePath
+                                                          << ". Common causes include the path/file doesn't exist, spelling errors, or incorrect permissions.", InputError );
     }
-    GEOSX_THROW( "Could not get the absolute path for " << path, InputError );
+    GEOSX_THROW( "Could not get the absolute path for " << path
+                                                        << ". Common causes include the path/file doesn't exist, spelling errors, or incorrect permissions.", InputError );
   }
 }
 
