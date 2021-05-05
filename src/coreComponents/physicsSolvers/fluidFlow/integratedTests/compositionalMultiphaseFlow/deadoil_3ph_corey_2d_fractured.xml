@@ -116,17 +116,13 @@
       name="rock"
       referencePressure="0.0"
       defaultReferencePorosity ="0.2"
-      compressibility="1e-9"
-      defaultGrainDensity="1"
-      grainBulkModulus="1.0e9"/>
+      compressibility="1e-9"/>
       
     <CompressibleRock
       name="fractureFilling"
       referencePressure="0.0"
       defaultReferencePorosity ="1.0"
-      compressibility="0.0"
-      defaultGrainDensity="1"
-      grainBulkModulus="1.0e9"/>
+      compressibility="0.0"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"
