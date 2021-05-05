@@ -43,10 +43,10 @@ public:
   array1d< MPI_Status >  mpiSendBufferStatus;
   array1d< MPI_Status >  mpiRecvBufferStatus;
 
-  array1d< MPI_Request > mpiSizeSendBufferRequest;
-  array1d< MPI_Request > mpiSizeRecvBufferRequest;
-  array1d< MPI_Status >  mpiSizeSendBufferStatus;
-  array1d< MPI_Status >  mpiSizeRecvBufferStatus;
+  array1d< MPI_Request > mpiSendBufferSizeRequest;
+  array1d< MPI_Request > mpiRecvBufferSizeRequest;
+  array1d< MPI_Status >  mpiSendBufferSizeStatus;
+  array1d< MPI_Status >  mpiRecvBufferSizeStatus;
 };
 } /* namespace geosx */
 

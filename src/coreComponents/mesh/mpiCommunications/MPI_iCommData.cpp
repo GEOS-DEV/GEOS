@@ -35,10 +35,10 @@ void MPI_iCommData::resize( localIndex numMessages )
   mpiRecvBufferRequest.resize( numMessages );
   mpiSendBufferStatus.resize( numMessages );
   mpiRecvBufferStatus.resize( numMessages );
-  mpiSizeSendBufferRequest.resize( numMessages );
-  mpiSizeRecvBufferRequest.resize( numMessages );
-  mpiSizeSendBufferStatus.resize( numMessages );
-  mpiSizeRecvBufferStatus.resize( numMessages );
+  mpiSendBufferSizeRequest.resize( numMessages );
+  mpiRecvBufferSizeRequest.resize( numMessages );
+  mpiSendBufferSizeStatus.resize( numMessages );
+  mpiRecvBufferSizeStatus.resize( numMessages );
   size = static_cast< int >(numMessages);
 }
 

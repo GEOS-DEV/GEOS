@@ -221,11 +221,14 @@ public:
    *  must be completed before PostRecv is called in order
    *  to correctly resize the receive buffer.
    */
-  void prepareAndSendGhosts( bool const contactActive,
-                             int const depth,
-                             MeshLevel & meshLevel,
-                             MPI_iCommData const & commData,
-                             int const index );
+  void prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( contactActive ),
+                             integer const depth,
+                             MeshLevel & mesh,
+                             int const sizeCommID,
+                             int const commID,
+                             MPI_Request & mpiSizeRecvRequest,
+                             MPI_Request & mpiSizeSendRequest,
+                             MPI_Request & mpiSendRequest );
 
   /**
    * Unpack the receive buffer and process ghosting
