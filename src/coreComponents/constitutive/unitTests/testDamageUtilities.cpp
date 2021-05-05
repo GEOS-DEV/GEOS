@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <ctime>
 #include "common/DataTypes.hpp"
-#include "mainInterface/initialization.hpp"
 #include "common/TimingMacros.hpp"
 #include "../solid/DamageSpectralUtilities.hpp"
 #include "LvArray/src/tensorOps.hpp"
