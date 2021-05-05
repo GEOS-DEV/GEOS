@@ -174,13 +174,12 @@ public:
    *  must be completed before PostRecv is called in order
    *  to correctly resize the receive buffer.
    */
-  void prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( contactActive ),
+  void prepareAndSendGhosts( bool const contactActive,
                              integer const depth,
                              MeshLevel & mesh,
-                             int const sizeCommID,
                              int const commID,
-                             MPI_Request & mpiSizeRecvRequest,
-                             MPI_Request & mpiSizeSendRequest,
+                             MPI_Request & mpiRecvSizeRequest,
+                             MPI_Request & mpiSendSizeRequest,
                              MPI_Request & mpiSendRequest );
 
   /**
@@ -203,7 +202,6 @@ public:
    *  to correctly resize the receive buffer.
    */
   void prepareAndSendSyncLists( MeshLevel const & mesh,
-                                int const sizeCommID,
                                 int const commID,
                                 MPI_Request & mpiSizeRecvRequest,
                                 MPI_Request & mpiSizeSendRequest,

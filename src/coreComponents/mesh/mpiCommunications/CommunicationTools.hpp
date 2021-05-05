@@ -124,8 +124,6 @@ private:
 
 
 
-
-
 } /* namespace geosx */
 
 #endif /* GEOSX_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_ */

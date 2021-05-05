@@ -24,25 +24,49 @@
 namespace geosx
 {
 
-
+/**
+ * This class provides management of a set of integers which can be used to
+ *
+ *
+ */
 class CommID
 {
 public:
+  /**
+   * Constructor
+   * @param freeIDs
+   */
   CommID( std::set< int > & freeIDs );
 
-  CommID( CommID && src );
-
+  /**
+   * Destructor
+   */
   ~CommID();
 
-  CommID( CommID const & ) = delete;
+  /// default copy constructor
+  CommID( CommID const & ) = default;
+
+  /**
+   * Move constructor
+   * @param src The source to move data from.
+   */
+  CommID( CommID && src );
+
+  /// deleted copy assignment operator
   CommID & operator=( CommID const & ) = delete;
+
+  /// deleted move assignment operator
   CommID & operator=( CommID && ) = delete;
 
+  /// user defined conversion operator to int
   constexpr operator int()
   { return m_id; }
 
 private:
+  /// Reference to the set of free ID's
   std::set< int > & m_freeIDs;
+
+  /// current ID
   int m_id = -1;
 };
 

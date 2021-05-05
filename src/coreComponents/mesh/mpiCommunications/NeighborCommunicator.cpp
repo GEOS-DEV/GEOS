@@ -233,7 +233,6 @@ inline int PackGhosts( buffer_unit_type * sendBufferPtr,
 void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( contactActive ),
                                                  integer const depth,
                                                  MeshLevel & mesh,
-                                                 int const sizeCommID,
                                                  int const commID,
                                                  MPI_Request & mpiRecvSizeRequest,
                                                  MPI_Request & mpiSendSizeRequest,
@@ -241,7 +240,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
 {
   GEOSX_MARK_FUNCTION;
 
-  this->postSizeRecv( sizeCommID,
+  this->postSizeRecv( commID,
                       mpiRecvSizeRequest ); // post recv for buffer size from neighbor.
 
   NodeManager & nodeManager = mesh.getNodeManager();
@@ -277,7 +276,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
 
   this->resizeSendBuffer( commID, bufferSize );
   this->postSizeSend( commID,
-                      mpiSendRequest );
+                      mpiSendSizeRequest );
 
   buffer_type & sendBuff = sendBuffer( commID );
   buffer_unit_type * sendBufferPtr = sendBuff.data();
@@ -341,7 +340,6 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
 }
 
 void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
-                                                    int const sizeCommID,
                                                     int const commID,
                                                     MPI_Request & mpiRecvSizeRequest,
                                                     MPI_Request & mpiSendSizeRequest,
@@ -350,7 +348,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-  this->postSizeRecv( sizeCommID,
+  this->postSizeRecv( commID,
                       mpiRecvSizeRequest );
 
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -400,7 +398,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
   } );
 
   this->resizeSendBuffer( commID, bufferSize );
-  this->postSizeSend( sizeCommID, mpiSendSizeRequest );
+  this->postSizeSend( commID, mpiSendSizeRequest );
 
   int packedSize = 0;
   packedSize += bufferOps::Pack< true >( sendBufferPtr,
