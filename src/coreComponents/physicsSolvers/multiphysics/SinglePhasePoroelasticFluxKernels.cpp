@@ -308,6 +308,7 @@ void FaceElementFluxKernel::
                                            CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   GEOSX_UNUSED_VAR( dPerm_dAper );
+  GEOSX_UNUSED_VAR( dR_dAper );
 
   SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
@@ -353,6 +354,7 @@ void FaceElementFluxKernel::
                                              CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   GEOSX_UNUSED_VAR( dPerm_dAper );
+  GEOSX_UNUSED_VAR( dR_dAper );
 
   SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
@@ -527,6 +529,8 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice2d< real64 > const & fluxJacobian,
                                 arraySlice2d< real64 > const & dFlux_dAperture )
 {
+
+  GEOSX_UNUSED_VAR( numFluxElems );
   real64 fluxVal = 0.0;
   real64 dFlux_dTrans[2] = {0.0, 0.0};
   real64 dFlux_dP[2] = {0.0, 0.0};

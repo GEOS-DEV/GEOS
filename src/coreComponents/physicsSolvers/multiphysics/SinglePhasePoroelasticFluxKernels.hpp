@@ -49,7 +49,7 @@ struct PermeabilityKernel
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeLocation,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const displacement,
           arrayView2d< localIndex const > const & elemsToNodes,
-          arrayView3d< real64 > const & dPerm_dDisplacement )
+          arrayView3d< real64 > const & GEOSX_UNUSED_PARAM ( dPerm_dDisplacement ) )
   {
 
     GEOSX_UNUSED_VAR( dPorosity_dVolStrain );

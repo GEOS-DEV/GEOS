@@ -276,7 +276,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const time_n,
+void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition & domain,
                                                            DofManager const & dofManager,

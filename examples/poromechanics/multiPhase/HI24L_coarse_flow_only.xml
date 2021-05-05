@@ -1,0 +1,311 @@
+<?xml version="1.0" ?>
+
+<Problem>
+     <!-- SPHINX_TUT_POROELASTIC_HI24L_SOLVERS -->
+    <Solvers gravityVector="{0.0, 0.0, 0.0}">
+
+    <CompositionalMultiphaseFVM
+      name="twoPhaseFlowSolver"
+      discretization="fluidTPFA"  
+      logLevel="1"
+      targetRegions="{ Reservoir, Burden }"
+      fluidNames="{ fluid }"
+      solidNames="{ rock, rockB }"
+      relPermNames="{ relperm }"
+      temperature="368.15"
+      initialDt="1e3"
+      useMass="1">
+      <NonlinearSolverParameters
+        newtonMaxIter="10"
+        newtonTol="1.0e-5"
+        maxTimeStepCuts="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="0"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-6"
+        krylovMaxIter="1000"
+        logLevel="1"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_SOLVERS_END -->
+  
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_MESH -->
+  <Mesh>
+    
+    <PAMELAMeshGenerator
+      name="CubeTetra"
+      file="../hi24l/mesh/HI24L_ult_adapt_py.msh"/>
+
+  </Mesh>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_MESH_END -->
+  
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_GEOM -->
+  <Geometry>
+    
+    <Box
+      name="sourceWell"
+      xMin="390295,  3266630, -2404"
+      xMax="390615,  3266808, -2120"/>
+
+  </Geometry>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_GEOM_END -->
+  
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_EVENTS -->
+  <Events
+    maxTime="9.5e7">
+
+    <PeriodicEvent
+      name="outMonth"
+      timeFrequency="9.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput" />
+
+    <PeriodicEvent
+      name="SolverPoro"
+      target="/Solvers/twoPhaseFlowSolver" />
+    
+  </Events>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_EVENTS_END -->
+  
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_NUM_METHODS -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"
+        mechanicalStabCoefficient="0"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_NUM_METHODS_END -->
+    
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_ELEMENT_REGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Reservoir"
+      cellBlocks="{ Reservoir_TETRA }"
+      materialList="{ fluid, rock, relperm }"/>
+
+    <CellElementRegion
+      name="Burden"
+      cellBlocks="{ Ovbd1_TETRA, Ovbd2_TETRA, Unbd1_TETRA, Unbd2_TETRA }"
+      materialList="{ fluid, rockB, relperm }"/>
+     
+   <CellElementRegion
+      name="Sea"
+      cellBlocks="{ Sea_TETRA }"
+      materialList="{}"/>
+ 
+  </ElementRegions>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_ELEMENT_REGIONS_END -->
+  
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_CONSTITUTIVE -->
+  <Constitutive>
+
+    <PoreVolumeCompressibleSolid
+      name="rock"
+      referencePressure="2e7"
+      compressibility="4.5e-10"/>
+
+    <PoreVolumeCompressibleSolid
+      name="rockB"
+      referencePressure="2e7"
+      compressibility="4.5e-10"/>
+  
+    <CO2BrineFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvt_tables/pvtgas.txt, pvt_tables/pvtliquid.txt }"
+      flashModelParaFile="pvt_tables/co2flash.txt"/>
+    
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{0.05, 0.30}"
+      phaseRelPermExponent="{2.0, 2.0}"
+      phaseRelPermMaxValue="{1, 1}"/>
+  </Constitutive>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_CONSTITUTIVE_END -->
+  
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_FIELD_SPECS -->
+  <FieldSpecifications>
+
+    <FieldSpecification
+      name="initialPressureReservoir"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="pressure"
+      scale="2e7"/>
+    <FieldSpecification
+      name="initialCompositionReservoir_co2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.0001"/>
+    <FieldSpecification
+      name="initialCompositionReservoir_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.9999"/>
+    
+    <FieldSpecification
+      name="permxReservoir"
+      component="0"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="permeability"
+      scale="1"
+      functionName="permXYFunction"/>
+    <FieldSpecification
+      name="permyReservoir"
+      component="1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="permeability"
+      scale="1"
+      functionName="permXYFunction"/>
+    <FieldSpecification
+      name="permzReservoir"
+      component="2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="permeability"
+      scale="1"
+      functionName="permZFunction"/>
+    <FieldSpecification
+      name="referencePorosityReservoir"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="referencePorosity"
+      scale="1"
+      functionName="porosityFunction"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Reservoir"
+      scale="-30.0"
+      component="0"
+      functionName="sourceWellFunction"
+      setNames="{ sourceWell }"/>
+
+    <FieldSpecification
+      name="initialPressureBurden"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Burden"
+      fieldName="pressure"
+      scale="2e7"/>
+    <FieldSpecification
+      name="initialCompositionBurden_co2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Burden"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.0001"/>
+    <FieldSpecification
+      name="initialCompositionBurden_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Burden"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.9999"/>
+    
+    <FieldSpecification
+      name="permxBurden"
+      component="0"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Burden"
+      fieldName="permeability"
+      scale="1e-13"/>
+    <FieldSpecification
+      name="permyBurden"
+      component="1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Burden"
+      fieldName="permeability"
+      scale="1e-13"/>
+    <FieldSpecification
+      name="permzBurden"
+      component="2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Burden"
+      fieldName="permeability"
+      scale="1e-13"/>
+    <FieldSpecification
+      name="referencePorosityBurden"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Burden"
+      fieldName="referencePorosity"
+      scale="0.05"/>
+    
+    <FieldSpecification
+      name="barrierTransMult"
+      objectPath="faceManager"      
+      fieldName="permeabilityTransMultiplier"
+      scale="0"
+      initialCondition="1"
+      setNames="{ f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32 }"/>
+      
+  </FieldSpecifications>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_FIELD_SPECS_END -->
+  
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_FUNCTIONS -->
+  <Functions>
+                   
+    <TableFunction
+      name="sourceWellFunction"
+      inputVarNames="{time}"
+      coordinates="{0, 3.1536e8 }"
+      values="{1, 1}" />
+
+    <TableFunction
+      name="porosityFunction"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{functions_iso/xLinPoro.geos,functions_iso/yLinPoro.geos,functions_iso/zLinPoro.geos}"
+      voxelFile="functions_iso/poro.geos"
+      interpolation="nearest" />
+  
+    <TableFunction
+      name="permXYFunction"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{functions_iso/xLinPerm.geos,functions_iso/yLinPerm.geos,functions_iso/zLinPerm.geos}"
+      voxelFile="functions_iso/permXY.geos"
+      interpolation="nearest" />
+
+    <TableFunction
+      name="permZFunction"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{functions_iso/xLinPerm.geos,functions_iso/yLinPerm.geos,functions_iso/zLinPerm.geos}"
+      voxelFile="functions_iso/permXY.geos"
+      interpolation="nearest" />
+ 
+  </Functions>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_FUNCTIONS_END -->
+  
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_OUTPUTS -->
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+  <!-- SPHINX_TUT_POROELASTIC_HI24L_END -->
+</Problem>

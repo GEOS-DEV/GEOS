@@ -307,7 +307,6 @@ void CompositionalMultiphaseBase::updateComponentFraction( Group & dataGroup ) c
     dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
   // inputs
-
   arrayView2d< real64 const > const compDens =
     dataGroup.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString() );
 

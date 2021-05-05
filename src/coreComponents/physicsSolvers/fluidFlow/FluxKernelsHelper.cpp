@@ -53,7 +53,6 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
   // compute potential difference
   real64 potDif = 0.0;
   real64 dPotDif_dTrans[2] = {0.0, 0.0};
-  real64 dPotDif_dP[2] = {0.0, 0.0};
   real64 sumWeightGrav = 0.0;
   real64 potScale = 0.0;
 
@@ -68,9 +67,8 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
     real64 const pot = transmissibility[ke] * ( pressure - densMean * gravD );
 
     potDif += pot;
-    dPotDif_dP[ke] = transmissibility[ke] * ( 1 - densMean * gravD );
     dPotDif_dTrans[ke] = ( pressure - densMean * gravD );
-    sumWeightGrav += gravD;
+    sumWeightGrav += transmissibility[ke] * gravD;
     potScale = fmax( potScale, fabs( pot ) );
   }
 
@@ -108,8 +106,8 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
   {
     dFlux_dTrans[ke] = mobility * dPotDif_dTrans[ke];
 
-    dFlux_dP[ke] = mobility * dPotDif_dP[ke] + dMobility_dP[ke] * potDif +
-                   dFlux_dTrans[ke] * dTrans_dPres[ke];
+    dFlux_dP[ke] = mobility * ( transmissibility[ke] - dDensMean_dP[ke] * sumWeightGrav )
+        + dMobility_dP[ke] * potDif + dFlux_dTrans[ke] * dTrans_dPres[ke];
   }
 }
 

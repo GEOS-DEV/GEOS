@@ -5,7 +5,7 @@
     gravityVector="{0.0, 0.0, -9.81}">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
+      logLevel="1"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
       solidNames="{rock}"
@@ -95,19 +95,19 @@
       defaultViscosity="0.001"
       referencePressure="0.0"
       referenceDensity="1000"
-      compressibility="5e-10"
+      compressibility="5.0e-10"
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <CompressibleRock
       name="rock"
       referencePressure="0.0"
-      defaultReferencePorosity ="0.2"
-      compressibility="1e-9"/>
+      defaultReferencePorosity ="0.05"
+      compressibility="1.0e-9"/>
       
     <ConstantPermeability
       name="permeabilityModel"
-      permeabilityComponents="1e-12, 1e-12, 1e-12"/>
+      permeabilityComponents="2e-16, 2e-16, 2e-16"/>
   </Constitutive>
 
   <FieldSpecifications>

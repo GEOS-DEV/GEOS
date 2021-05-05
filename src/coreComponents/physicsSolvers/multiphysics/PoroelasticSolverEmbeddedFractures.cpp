@@ -392,15 +392,15 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
   MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
   NodeManager const & nodeManager = mesh.getNodeManager();
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
-  EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+  //ElementRegionManager const & elemManager = mesh.getElemManager();
+  //SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
+  //EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-  arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
+  // arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
 
@@ -755,7 +755,7 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
   /// 2. update the fractures
 
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = meshLevel.getElemManager();
+  //ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
 

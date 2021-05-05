@@ -4,7 +4,7 @@
   <Solvers>
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
+      logLevel="1"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
       permeabilityNames="{ rock_permeability }"
@@ -51,7 +51,7 @@
       name="outputs"
       timeFrequency="1.0"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
@@ -128,8 +128,8 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>

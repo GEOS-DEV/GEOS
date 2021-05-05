@@ -70,6 +70,7 @@ FluxKernel::compute( localIndex const numFluxElems,
   flux[0] =  dt * fluxVal;
   flux[1] = -dt * fluxVal;
 
+
   for( localIndex ke = 0; ke < 2; ++ke )
   {
     fluxJacobian[0][ke] =  dt * dFlux_dP[ke];

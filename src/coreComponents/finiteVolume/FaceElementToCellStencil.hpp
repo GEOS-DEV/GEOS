@@ -236,6 +236,9 @@ void FaceElementToCellStencilWrapper::computeTransmissibility( localIndex iconn,
 
   transmissibility[0] = halfTrans;
   transmissibility[1] = -halfTrans;
+
+  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
+  dTrans_dPressure[1] = 0.0;
 }
 
 template< typename PERMTYPE >

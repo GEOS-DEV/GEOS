@@ -1,0 +1,9 @@
+#!/bin/csh
+#SBATCH -N 256
+#SBATCH -t 24:00:00
+#SBATCH -p pbatch
+#SBATCH -A geosecp
+
+# Run info and srun job launch
+srun -n 256 ~/geosx/GEOSX/build-quartz-clang@10.0.0-release/bin/geosx --input HI24L_fine.xml  
+echo 'Done'

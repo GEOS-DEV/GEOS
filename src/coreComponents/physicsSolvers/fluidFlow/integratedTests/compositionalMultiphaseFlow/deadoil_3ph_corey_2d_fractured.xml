@@ -59,14 +59,14 @@
     <BoundedPlane
       name="FracturePlane"
       normal="0, 1, 0"
-      origin="10.5, 3.5, 0.5"
+      origin="18.5, 3.5, 0.5"
       lengthVector="1, 0, 0"
       widthVector="0, 0, 1"
-      dimensions="{ 15, 1 }"/>  
+      dimensions="{ 25, 1 }"/>  
   </Geometry>
 
   <Events
-    maxTime="2e7">
+    maxTime="3e7">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
@@ -81,12 +81,6 @@
       name="solverApplications1"
       beginTime="0"
       target="/Solvers/compflow"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1e7"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -146,7 +140,7 @@
     
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="1.0e-14, 1.0e-14, 1.0e-14"/>
+      permeabilityComponents="1.0e-16, 1.0e-16, 1.0e-16"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -291,9 +285,8 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
-
-    <Restart
-      name="restartOutput"/>
+      name="vtkOutput"
+      plotFileRoot="deadoil_fractured2dReservoir"
+      plotLevel="1"/>
   </Outputs>
 </Problem>

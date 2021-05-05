@@ -231,6 +231,9 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
 
   transmissibility[0] = value;
   transmissibility[1] = -value;
+
+  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
+  dTrans_dPressure[1] = 0.0;
 }
 
 template< typename PERMTYPE >

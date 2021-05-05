@@ -398,6 +398,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
                                                        dofManager,
                                                        localMatrix,
                                                        localRhs );
+
   assembleFluxTerms( time_n,
                      dt,
                      domain,

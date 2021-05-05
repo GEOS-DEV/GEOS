@@ -89,11 +89,11 @@
       beginTime="1e5"
       target="/Solvers/compflow"/>
 
-    <PeriodicEvent
+    <!--  <PeriodicEvent
       name="restarts"
       timeFrequency="1e7"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/>-->
   </Events>
 
   <NumericalMethods>

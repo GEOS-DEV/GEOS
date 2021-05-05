@@ -313,6 +313,8 @@ void MultiphasePoroelasticSolver::updatePermeability( CellElementSubRegion & sub
                                                       localIndex const targetIndex ) const
 {
   //TODO stress-dependent permeability update.
+  GEOSX_UNUSED_VAR( subRegion );
+  GEOSX_UNUSED_VAR( targetIndex );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoroelasticSolver, string const &, Group * const )
