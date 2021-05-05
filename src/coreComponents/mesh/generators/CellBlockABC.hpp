@@ -65,10 +65,10 @@ public:
   virtual localIndex numFacesPerElement() const = 0;
 
   /**
-   * @brief Get the number of cells.
-   * @return number of cells in the cell block
+   * @brief Get the number of elements.
+   * @return number of elements in the cell block
    */
-  virtual localIndex numCells() const = 0;
+  virtual localIndex numElements() const = 0;
 
   /**
    * @brief Get the element-to-node map.

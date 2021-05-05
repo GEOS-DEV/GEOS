@@ -59,7 +59,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
   {
     const CellBlockABC & cb = this->getCellBlock( iCellBlock );
     array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elemToNode = cb.getElemToNode();
-    forAll< parallelHostPolicy >( cb.numCells(), [&elemsPerNode, totalNodeElems, &elemToNode, &cb] ( localIndex const k )
+    forAll< parallelHostPolicy >( cb.numElements(), [&elemsPerNode, totalNodeElems, &elemToNode, &cb] ( localIndex const k )
     {
       localIndex const numNodesPerElement = cb.numNodesPerElement();
       totalNodeElems += numNodesPerElement;
@@ -93,7 +93,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
   {
     const CellBlockABC & cb = this->getCellBlock( iCellBlock );
     array2d< localIndex, cells::NODE_MAP_PERMUTATION > const elemToNode = cb.getElemToNode();
-    for( localIndex iElem = 0; iElem < cb.numCells(); ++iElem )
+    for( localIndex iElem = 0; iElem < cb.numElements(); ++iElem )
     {
       for( localIndex iNode = 0; iNode < cb.numNodesPerElement(); ++iNode )
       {
@@ -385,7 +385,7 @@ ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNo
   {
     const CellBlock & cb = cellBlocks.getGroup< CellBlock >( iCellBlock );
     localIndex const numFacesPerElement = cb.numFacesPerElement();
-    localIndex const numElements = cb.numCells();
+    localIndex const numElements = cb.numElements();
 
     for( localIndex iElement = 0; iElement < numElements; ++iElement )
     {

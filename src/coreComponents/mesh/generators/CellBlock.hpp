@@ -77,7 +77,7 @@ public:
   localIndex numFacesPerElement() const override
   { return m_numFacesPerElement; }
 
-  localIndex numCells() const override
+  localIndex numElements() const override
   { return size(); }
 
   /**
@@ -167,10 +167,10 @@ public:
   { return m_localToGlobalMap; }
 
   /**
-   * @brief Resize the cell block to hold @p numCells
-   * @param numCells The new number of cells.
+   * @brief Resize the cell block to hold @p numElements
+   * @param numElements The new number of elements.
    */
-  void resize( dataRepository::indexType const numCells ) final;
+  void resize( dataRepository::indexType const numElements ) final;
 
   ///@}
 

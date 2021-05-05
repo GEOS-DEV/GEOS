@@ -63,21 +63,21 @@ void CellBlock::setElementType( string const & elementType )
 
   // If `setElementType` is called after the resize, the first dimension would be removed.
   // We do not want that so we try to keep it.
-  m_elementsToNodes.resize( this->numCells(), m_numNodesPerElement );
-  m_elementsToEdges.resize( this->numCells(), m_numEdgesPerElement );
-  m_elementsToFaces.resize( this->numCells(), m_numFacesPerElement );
+  m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement );
+  m_elementsToEdges.resize( this->numElements(), m_numEdgesPerElement );
+  m_elementsToFaces.resize( this->numElements(), m_numFacesPerElement );
 }
 
-void CellBlock::resize( dataRepository::indexType const numCells )
+void CellBlock::resize( dataRepository::indexType const numElements )
 {
-  Group::resize( numCells );
+  Group::resize( numElements );
 
   // Those members are not registered as wrappers because I do not want them
   // to be exposed though the `Group` public interface.
-  m_localToGlobalMap.resize( numCells );
-  m_elementsToNodes.resize( numCells );
-  m_elementsToEdges.resize( numCells );
-  m_elementsToFaces.resize( numCells );
+  m_localToGlobalMap.resize( numElements );
+  m_elementsToNodes.resize( numElements );
+  m_elementsToEdges.resize( numElements );
+  m_elementsToFaces.resize( numElements );
 }
 
 void CellBlock::getFaceNodes( localIndex iElement,
