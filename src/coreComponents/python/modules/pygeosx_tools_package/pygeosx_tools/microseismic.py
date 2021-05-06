@@ -53,7 +53,7 @@ class JointSet():
         self.dip = []
         self.mu = []
         self.cohesion = []
-        self.element_id = []
+        self.cell_id = []
         self.location = []
         self.sigma_sdn_offset = []
         self.fail_count = []
@@ -113,8 +113,12 @@ class JointSet():
         self.fail_count = np.zeros(self.N, dtype=int)
         self.sigma_key = wrapper.get_matching_wrapper_path(problem, [self.region_name, self.solid_name, 'stress'])
 
+        self.sigma_n = np.zeros(self.N)
+        self.tau = np.zeros(self.N)
+        self.pressure = np.zeros(self.N)
+
         if self.fluid_name:
-            self.pressure_key = wrapper.get_matching_wrapper_path(problem, [self.region_name, self.fluid_name, 'pressure'])
+            self.pressure_key = wrapper.get_matching_wrapper_path(problem, [self.region_name, 'pressure'])
 
     def choose_random_locations(self, problem, density):
         """
@@ -125,15 +129,15 @@ class JointSet():
             density (float): Joint density (#/m3)
         """
         # Find key values
-        ghost_key = wrapper.get_matching_wrapper_path(problem, ['nodeManager', 'ghostRank'])
+        ghost_key_node = wrapper.get_matching_wrapper_path(problem, ['nodeManager', 'ghostRank'])
         node_position_key = wrapper.get_matching_wrapper_path(problem, ['nodeManager', 'ReferencePosition'])
         node_element_key = wrapper.get_matching_wrapper_path(problem, ['nodeManager', 'elemList'])
-        element_node_key = wrapper.get_matching_wrapper_path(problem, [self.region_name, 'nodeList'])
+        element_node_key = wrapper.get_matching_wrapper_path(problem, ['ElementRegions', self.region_name, 'nodeList'])
 
         # Find the region extents
-        g = wrapper.get_wrapper(problem, ghost_key)
+        ghost_rank = wrapper.get_wrapper(problem, ghost_key_node)
         x = wrapper.get_wrapper(problem, node_position_key)
-        xb = x[g < 0, :]
+        xb = x[ghost_rank < 0, :]
         xmin = np.amin(xb, axis=0)
         xmax = np.amax(xb, axis=0)
 
@@ -150,6 +154,7 @@ class JointSet():
         node_element_map = wrapper.get_wrapper(problem, node_element_key)
         element_node_map = wrapper.get_wrapper(problem, element_node_key)
         self.N = 0
+        print('Attempting to add %i microseismic elements' % (Ntest), flush=True)
         for ii in range(Ntest):
             # Find the closest node
             R2 = (x[:, 0] - test_locations[ii, 0])**2 + (x[:, 1] - test_locations[ii, 1])**2 + (x[:, 2] - test_locations[ii, 2])**2
@@ -182,6 +187,62 @@ class JointSet():
         hull = Delaunay(vertices)
         return hull.find_simplex(point) >= 0
 
+    def get_joint_stress_sdn(self, sigma, index):
+        """
+        Check the critical stress
+
+        Args:
+            sigma (np.array): Stress values
+            index (int): Joint index
+        """
+        s = np.zeros((3, 3))
+        jj = self.element_id[index]
+        s[0, 0] = sigma[jj, 0, 0]
+        s[1, 1] = sigma[jj, 0, 1]
+        s[2, 2] = sigma[jj, 0, 2]
+        s[0, 1] = sigma[jj, 0, 3]
+        s[0, 2] = sigma[jj, 0, 4]
+        s[1, 2] = sigma[jj, 0, 5]
+        s[1, 0] = s[0, 1]
+        s[2, 0] = s[0, 2]
+        s[2, 1] = s[1, 2]
+        R = self.rotation[index]
+        s_sdn = np.dot(np.dot(R, s), np.transpose(R))
+        return s_sdn
+
+    def check_critical_stress(self, problem):
+        """
+        Check the critical stress on each joint
+
+        Args:
+            problem (pygeosx.group): GEOSX problem handle
+        """
+        sigma = wrapper.get_wrapper(problem, self.sigma_key)
+        pressure = []
+        if self.pressure_key:
+            pressure = wrapper.get_wrapper(problem, self.pressure_key)
+
+        for ii in range(self.N):
+            jj = self.element_id[ii]
+            s_sdn = self.get_joint_stress_sdn(sigma, ii)
+
+            # Store the current stress values
+            self.tau[ii] = np.sqrt(s_sdn[0, 2]**2 + s_sdn[1, 2]**2)
+            self.sigma_n[ii] = -s_sdn[2, 2]
+            if self.pressure_key:
+                self.pressure[ii] = pressure[jj]
+
+            # Check failure criteria
+            dT = self.tau[ii] - (self.cohesion[ii] + self.mu[ii] * (self.sigma_n[ii] - self.pressure[ii]))
+
+            # If the failure criteria are met, then set the sdn_offset
+            # to match a state between 0 and 1 events to the next failure
+            if (dT > 0.0):
+                dT += np.random.uniform() * 0.001 * self.shear_modulus
+                rake = np.arctan2(s_sdn[1, 2], s_sdn[0, 2])
+                self.sigma_sdn_offset[ii, 0, 2] = dT * np.cos(rake)
+                self.sigma_sdn_offset[ii, 1, 2] = dT * np.sin(rake)
+
     def check_failure_criteria(self, problem):
         """
         Check the failure criteria on each joint
@@ -194,31 +255,23 @@ class JointSet():
         pressure = []
         if self.pressure_key:
             pressure = wrapper.get_wrapper(problem, self.pressure_key)
+
         for ii in range(self.N):
-            s = np.zeros((3, 3))
             if ((self.fail_count[ii] == 0) | self.allow_repeating):
-                # Rotate to the sdn frame
                 jj = self.element_id[ii]
-                s[0, 0] = sigma[jj, 0, 0]
-                s[1, 1] = sigma[jj, 0, 1]
-                s[2, 2] = sigma[jj, 0, 2]
-                s[0, 1] = sigma[jj, 0, 3]
-                s[0, 2] = sigma[jj, 0, 4]
-                s[1, 2] = sigma[jj, 0, 5]
-                s[1, 0] = s[0, 1]
-                s[2, 0] = s[0, 2]
-                s[2, 1] = s[1, 2]
-                R = self.rotation[ii]
-                s_sdn = np.dot(np.dot(R, s), np.transpose(R))
+                s_sdn = self.get_joint_stress_sdn(sigma, ii)
                 s_sdn -= self.sigma_sdn_offset[ii, ...]
 
-                # Check failure criteria
-                tau = np.sqrt(s_sdn[0, 2]**2 + s_sdn[1, 2]**2)
-                sigma_effective = s_sdn[2, 2]
-                if pressure:
-                    sigma_effective -= pressure[ii]
+                # Store the current stress values
+                self.tau[ii] = np.sqrt(s_sdn[0, 2]**2 + s_sdn[1, 2]**2)
+                self.sigma_n[ii] = -s_sdn[2, 2]
+                if self.pressure_key:
+                    self.pressure[ii] = pressure[jj]
 
-                if (tau > (self.cohesion[ii] - self.mu[ii] * sigma_effective)):
+                # Check failure criteria
+                fail_criteria = self.tau[ii] - (self.cohesion[ii] + self.mu[ii] * (self.sigma_n[ii] - self.pressure[ii]))
+
+                if (fail_criteria > 0):
                     self.fail_count[ii] += 1
                     rake = np.arctan2(s_sdn[1, 2], s_sdn[0, 2])
                     dT = 0.001 * self.shear_modulus
@@ -266,10 +319,10 @@ class JointSet():
         Returns:
             np.array: Rotation matrix
         """
-        stheta = np.sin(strike * np.pi / 180.0)
-        ctheta = np.cos(strike * np.pi / 180.0)
-        sdelta = np.sin(dip * np.pi / 180.0)
-        cdelta = np.cos(dip * np.pi / 180.0)
+        stheta = np.sin(strike)
+        ctheta = np.cos(strike)
+        sdelta = np.sin(dip)
+        cdelta = np.cos(dip)
 
         rotation_matrix = np.zeros((3, 3))
         rotation_matrix[0, 0] = ctheta
@@ -320,6 +373,17 @@ class MicroseismicAnalysis():
         self.joint_sets.append(JointSet(**joint_xargs))
         self.set_names.append(set_name)
         self.joint_sets[-1].build_joint_set(problem, **build_xargs)
+
+    def check_critical_stress(self, problem):
+        """
+        Check critical stress for each joint set, updating
+        the stress offset values
+
+        Args:
+            problem (pygeosx.group): GEOSX problem handle
+        """
+        for joint_set in self.joint_sets:
+            joint_set.check_critical_stress(problem)
 
     def check_microseismic_activity(self, problem):
         """
@@ -384,5 +448,56 @@ class MicroseismicAnalysis():
                         self.catalog_all['y'],
                         self.catalog_all['z'],
                         data=self.catalog_all)
+
+    def save_all_joints(self, fname):
+        """
+        Save the catalog to a vtk format file
+
+        Args:
+            fname (str): Name of the file (with no extension)
+        """
+        targets = ['strike', 'dip', 'mu', 'cohesion',
+                   'location', 'fail_count', 'sigma_sdn_offset',
+                   'sigma_n', 'pressure', 'tau']
+
+        # Grab all local values
+        local_values = {k: [] for k in targets}
+        for j in self.joint_sets:
+            for k in targets:
+                local_values[k].append(getattr(j, k))
+
+        # Format local_values
+        for k in targets:
+            local_values[k] = np.concatenate(local_values[k], axis=0)
+        local_values['strike'] *= 180.0 / np.pi
+        local_values['dip'] *= 180.0 / np.pi
+        local_values['rank'] = np.zeros(len(local_values['strike'])) + parallel_io.rank
+
+        # Handle parallelism, non-scalar values
+        all_values = {}
+        for k, v in local_values.items():
+            if (parallel_io.comm.size > 1):
+                v = parallel_io.gather_array(v)
+
+            N = np.shape(v)
+            if (len(N) == 1):
+                all_values[k] = np.ascontiguousarray(v)
+            elif (len(N) == 2):
+                for ii in range(N[1]):
+                    all_values['%s_%i' % (k, ii)] = np.ascontiguousarray(np.squeeze(v[:, ii]))
+            elif (len(N) == 3):
+                for ii in range(N[1]):
+                    for jj in range(N[2]):
+                        all_values['%s_%i_%i' % (k, ii, jj)] = np.ascontiguousarray(np.squeeze(v[:, ii, jj]))
+            else:
+                print('Unrecognized shape!')
+
+        # Write the vtk file
+        if (parallel_io.rank == 0):
+            pointsToVTK(fname,
+                        all_values['location_0'],
+                        all_values['location_1'],
+                        all_values['location_2'],
+                        data=all_values)
 
 
