@@ -38,6 +38,11 @@ class CellBlockABC : public dataRepository::Group
 {
 public:
 
+  /**
+   * @brief Constructor
+   * @param name The name of this Group.
+   * @param parent The parent Group.
+   */
   CellBlockABC( string const & name,
                 Group * const parent )
     :

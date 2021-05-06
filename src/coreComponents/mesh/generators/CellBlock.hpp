@@ -66,6 +66,10 @@ public:
    */
   ///@{
 
+  /**
+   * @brief Defines the underlying element type (hex, tet...)
+   * @param elementType The element type (C3D8...)
+   */
   void setElementType( string const & elementType );
 
   string getElementTypeString() const override
@@ -83,7 +87,7 @@ public:
   /**
    * @brief Puts the nodes of face @p iFace of element @p iElement inside vector @p nodesInFaces.
    * @param iElement The element index.
-   * @parm iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
+   * @param iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
    * @param nodesInFaces The result vector gets resized to the appropriate dimensions before getting filled.
    *
    * @p nodesInFaces is sorted from lower to larger node indices values.

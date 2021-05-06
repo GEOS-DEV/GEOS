@@ -147,14 +147,15 @@ public:
   ///@}
 
   /**
-   * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
-   * @param [in] edgeManager the edgeManager to assign this NodeManager
+   * @brief Link the EdgeManager @p edgeManager to the NodeManager, and copies the the node-to-edge mapping from @p cellBlockManager.
+   * @param [in] cellBlockManager the cell block manager providing the node to edges mapping.
+   * @param [in] edgeManager the edgeManager to assign this NodeManager.
    */
   void setEdgeMaps( CellBlockManagerABC const & cellBlockManager, EdgeManager const & edgeManager );
 
   /**
-   * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
-   * @param [in] cellBlockManager the cell block manager that will proved the node to faces mapping.
+   * @brief Link the FaceManager @p faceManager to the NodeManager, and copies the node-to-face mapping from @p cellBlockManager.
+   * @param [in] cellBlockManager the cell block manager providing the node to faces mapping.
    * @param [in] faceManager the face manager for inter-object relations.
    */
   void setFaceMaps( CellBlockManagerABC const & cellBlockManager, FaceManager const & faceManager );

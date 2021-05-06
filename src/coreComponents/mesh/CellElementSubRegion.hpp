@@ -38,7 +38,6 @@ class CellElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-
   /// Alias for the type of the element-to-node map
   using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
   /// Alias for the type of the element-to-edge map
@@ -60,8 +59,6 @@ public:
    */
   virtual const string getCatalogName() const override final
   { return CellElementSubRegion::catalogName(); }
-
-  ///@}
 
   /**
    * @name Constructor / Destructor

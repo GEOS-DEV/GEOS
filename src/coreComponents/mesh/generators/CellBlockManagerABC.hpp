@@ -20,6 +20,9 @@
 namespace geosx
 {
 
+/**
+ * @brief Abstract base class for CellBlockManager.
+ */
 class CellBlockManagerABC : public dataRepository::Group
 {
 public:
