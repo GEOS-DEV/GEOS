@@ -75,8 +75,8 @@ void compareValues( arrayView1d< real64 > const & x,
                     OP_Y const op_y = ops::identity )
 {
   EXPECT_EQ( x.size(), y.size() );
-  x.move( LvArray::MemorySpace::CPU, false );
-  y.move( LvArray::MemorySpace::CPU, false );
+  x.move( LvArray::MemorySpace::host, false );
+  y.move( LvArray::MemorySpace::host, false );
   for( localIndex i = 0; i < x.size(); ++i )
   {
     if( exact )
@@ -380,7 +380,7 @@ TYPED_TEST_P( VectorTest, setAllValues )
 
   array1d< real64 > const valuesExtracted( localSize );
   x.extract( valuesExtracted );
-  valuesExtracted.move( LvArray::MemorySpace::CPU, false );
+  valuesExtracted.move( LvArray::MemorySpace::host, false );
 
   for( localIndex i = 0; i < localSize; ++i )
   {
@@ -400,7 +400,7 @@ TYPED_TEST_P( VectorTest, zeroAllValues )
 
   array1d< real64 > const valuesExtracted( localSize );
   x.extract( valuesExtracted );
-  valuesExtracted.move( LvArray::MemorySpace::CPU, false );
+  valuesExtracted.move( LvArray::MemorySpace::host, false );
 
   for( localIndex i = 0; i < localSize; ++i )
   {

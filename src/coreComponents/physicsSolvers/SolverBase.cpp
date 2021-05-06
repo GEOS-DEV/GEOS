@@ -234,8 +234,8 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   implicitStepSetup( time_n, dt, domain );
 
   // zero out matrix/rhs before assembly
-  m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-  m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_localMatrix.zero();
+  m_localRhs.zero();
 
   // call assemble to fill the matrix and the rhs
   assembleSystem( time_n,
@@ -335,8 +335,8 @@ bool SolverBase::lineSearch( real64 const & time_n,
     applySystemSolution( dofManager, localSolution, localScaleFactor, domain );
 
     // re-assemble system
-    localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-    localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+    localMatrix.zero();
+    localRhs.zero();
     assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
     // apply boundary conditions to system
@@ -467,8 +467,8 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       }
 
       // zero out matrix/rhs before assembly
-      m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-      m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+      m_localMatrix.zero();
+      m_localRhs.zero();
 
       // call assemble to fill the matrix and the rhs
       assembleSystem( time_n,

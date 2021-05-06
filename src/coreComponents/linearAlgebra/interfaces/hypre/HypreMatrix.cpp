@@ -190,10 +190,10 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
     offsets[row] = pOffsets[row];
   }
 
-  localMatrix.move( LvArray::MemorySpace::GPU, false );
-  rows.move( LvArray::MemorySpace::GPU, false );
-  sizes.move( LvArray::MemorySpace::GPU, false );
-  offsets.move( LvArray::MemorySpace::GPU, false );
+  localMatrix.move( LvArray::MemorySpace::cuda, false );
+  rows.move( LvArray::MemorySpace::cuda, false );
+  sizes.move( LvArray::MemorySpace::cuda, false );
+  offsets.move( LvArray::MemorySpace::cuda, false );
 
   open();
 
@@ -408,8 +408,8 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   rowIndexDevice[0] = rowIndex0;
   ncolsDevice[0] = LvArray::integerConversion< HYPRE_Int >( size );
 
-  rowIndexDevice.move( LvArray::MemorySpace::GPU, false );
-  ncolsDevice.move( LvArray::MemorySpace::GPU, false );
+  rowIndexDevice.move( LvArray::MemorySpace::cuda, false );
+  ncolsDevice.move( LvArray::MemorySpace::cuda, false );
 
   globalIndex const * const rowIndex = rowIndexDevice.data();
   HYPRE_Int * const ncols = ncolsDevice.data();

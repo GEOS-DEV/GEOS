@@ -107,7 +107,7 @@ void PetscVector::create( arrayView1d< real64 const > const & localValues, MPI_C
 
   // set vector values
   PetscScalar * values;
-  localValues.move( LvArray::MemorySpace::CPU, false );
+  localValues.move( LvArray::MemorySpace::host, false );
   GEOSX_LAI_CHECK_ERROR( VecGetArray( m_vec, &values ) );
   std::copy( localValues.begin(), localValues.end(), values );
   GEOSX_LAI_CHECK_ERROR( VecRestoreArray( m_vec, &values ) );

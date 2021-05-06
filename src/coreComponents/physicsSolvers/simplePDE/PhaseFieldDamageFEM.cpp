@@ -225,8 +225,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
 
   // Initialize all entries to zero
 #if 1 // Andre...this is the new code
-  localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
-  localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
+  localMatrix.zero();
+  localRhs.zero();
 
   finiteElement::
     regionBasedKernelApplication< parallelDevicePolicy<>,

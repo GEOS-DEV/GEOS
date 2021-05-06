@@ -521,11 +521,11 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
-    elemSubRegion.moveSets( LvArray::MemorySpace::CPU );
+    elemSubRegion.moveSets( LvArray::MemorySpace::host );
   } );
-  faceManager.moveSets( LvArray::MemorySpace::CPU );
-  edgeManager.moveSets( LvArray::MemorySpace::CPU );
-  nodeManager.moveSets( LvArray::MemorySpace::CPU );
+  faceManager.moveSets( LvArray::MemorySpace::host );
+  edgeManager.moveSets( LvArray::MemorySpace::host );
+  nodeManager.moveSets( LvArray::MemorySpace::host );
 
   if( !prefrac )
   {
@@ -685,25 +685,25 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
     {
-      elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::CPU );
-      elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::CPU );
-      elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::CPU );
+      elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::host );
+      elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::host );
+      elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::host );
     } );
 
 
-    faceManager.nodeList().toView().registerTouch( LvArray::MemorySpace::CPU );
-//    faceManager.edgeList().registerTouch( LvArray::MemorySpace::CPU );
-    faceManager.elementList().registerTouch( LvArray::MemorySpace::CPU );
-    faceManager.elementRegionList().registerTouch( LvArray::MemorySpace::CPU );
-    faceManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::CPU );
+    faceManager.nodeList().toView().registerTouch( LvArray::MemorySpace::host );
+//    faceManager.edgeList().registerTouch( LvArray::MemorySpace::host );
+    faceManager.elementList().registerTouch( LvArray::MemorySpace::host );
+    faceManager.elementRegionList().registerTouch( LvArray::MemorySpace::host );
+    faceManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::host );
 
-    edgeManager.nodeList().registerTouch( LvArray::MemorySpace::CPU );
+    edgeManager.nodeList().registerTouch( LvArray::MemorySpace::host );
 
-//    nodeManager.edgeList().registerTouch( LvArray::MemorySpace::CPU );
-//    nodeManager.faceList()().registerTouch( LvArray::MemorySpace::CPU );
-//    nodeManager.elementList().registerTouch( LvArray::MemorySpace::CPU );
-//    nodeManager.elementRegionList().registerTouch( LvArray::MemorySpace::CPU );
-//    nodeManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::CPU );
+//    nodeManager.edgeList().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.faceList()().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.elementList().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.elementRegionList().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::host );
 
   }
 
@@ -2771,8 +2771,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
   SIFOnEdge.resize( edgeManager.size() );
 
 
-  SIFNode.setValues< parallelHostPolicy >( 0 );
-  SIFonFace.setValues< parallelHostPolicy >( 0 );
+  SIFNode.zero();
+  SIFonFace.zero();
 
   arrayView2d< real64 const > const &
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
@@ -2824,17 +2824,17 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
 
 
-  nodeManager.totalDisplacement().move( LvArray::MemorySpace::CPU, false );
+  nodeManager.totalDisplacement().move( LvArray::MemorySpace::host, false );
   elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
   {
     for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {
       subRegion.getConstitutiveModel( m_solidMaterialNames[mat] ).
-        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::CPU,
+        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::host,
                                                                                                                        false );
     }
   } );
-  displacement.move( LvArray::MemorySpace::CPU, false );
+  displacement.move( LvArray::MemorySpace::host, false );
 
 
   for( localIndex const trailingFaceIndex : m_trailingFaces )

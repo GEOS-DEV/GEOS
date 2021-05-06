@@ -236,7 +236,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 
@@ -847,7 +847,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 
