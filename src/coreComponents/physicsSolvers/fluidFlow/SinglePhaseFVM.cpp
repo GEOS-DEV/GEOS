@@ -185,7 +185,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
       std::make_unique< CRSMatrix< real64, localIndex > >( localMatrix.numRows(), localMatrix.numColumns() );
     m_derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
   }
-  m_derivativeFluxResidual_dAperture->template setValues< serialPolicy >( 0.0 );
+  m_derivativeFluxResidual_dAperture->zero();
 #endif
 
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );

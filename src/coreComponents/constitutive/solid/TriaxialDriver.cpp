@@ -282,7 +282,7 @@ bool TriaxialDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   } );
 
   // move table back to host for output
-  m_table.move( LvArray::MemorySpace::CPU );
+  m_table.move( LvArray::MemorySpace::host );
 
   if( m_outputFile != "none" )
   {
