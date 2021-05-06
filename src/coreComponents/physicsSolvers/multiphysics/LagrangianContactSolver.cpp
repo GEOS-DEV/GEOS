@@ -619,8 +619,8 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
         }
 
         // zero out matrix/rhs before assembly
-        m_localMatrix.setValues< parallelHostPolicy >( 0.0 );
-        m_localRhs.setValues< parallelHostPolicy >( 0.0 );
+        m_localMatrix.zero();
+        m_localRhs.zero();
 
         // call assemble to fill the matrix and the rhs
         assembleSystem( time_n,
@@ -858,8 +858,8 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
   applySystemSolution( dofManager, localSolution, scaleFactor, domain );
 
   // re-assemble system
-  localMatrix.setValues< parallelHostPolicy >( 0.0 );
-  localRhs.setValues< parallelHostPolicy >( 0.0 );
+  localMatrix.zero();
+  localRhs.zero();
   assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
   // apply boundary conditions to system
@@ -903,8 +903,8 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
     // Keep the books on the function norms
     // re-assemble system
     // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
-    localMatrix.setValues< parallelHostPolicy >( 0.0 );
-    localRhs.setValues< parallelHostPolicy >( 0.0 );
+    localMatrix.zero();
+    localRhs.zero();
     assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
     // apply boundary conditions to system
@@ -1063,7 +1063,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
   array1d< real64 > globalR2( 2 * size );
-  globalR2.setValues< serialPolicy >( 0 );
+  globalR2.zero();
 
   // Everything is done on rank 0
   MpiWrapper::gather( localR2,
@@ -2000,7 +2000,6 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
         // Compute rhs
         stackArray1d< real64, 3 > rhs0( 3 );
-        rhs0.setValues< serialPolicy >( 0.0 );
         if( nDof[0] > 0 )
         {
           for( localIndex j = 0; j < nDof[0]; ++j )
@@ -2025,7 +2024,6 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
         }
 
         stackArray1d< real64, 3 > rhs1( 3 );
-        rhs1.setValues< serialPolicy >( 0.0 );
         if( nDof[1] > 0 )
         {
           for( localIndex j = 0; j < nDof[0]; ++j )

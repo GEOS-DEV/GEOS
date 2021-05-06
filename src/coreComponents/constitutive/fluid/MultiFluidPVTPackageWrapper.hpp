@@ -474,7 +474,7 @@ void MultiFluidPVTPackageWrapperUpdate::compute( real64 pressure,
   if( m_useMass )
   {
     dCompMoleFrac_dCompMassFrac.resize( NC, NC );
-    dCompMoleFrac_dCompMassFrac.setValues< serialPolicy >( 0.0 );
+    dCompMoleFrac_dCompMassFrac.zero();
 
     real64 totalMolality = 0.0;
     for( localIndex ic = 0; ic < NC; ++ic )

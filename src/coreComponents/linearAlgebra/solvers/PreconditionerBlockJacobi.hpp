@@ -73,7 +73,7 @@ public:
     array1d< real64 > vals;
     for( globalIndex i = mat.ilower(); i < mat.iupper(); i += m_blockSize )
     {
-      values.setValues< serialPolicy >( 0.0 );
+      values.zero();
       for( localIndex j = 0; j < m_blockSize; ++j )
       {
         globalIndex const iRow = i + LvArray::integerConversion< globalIndex >( j );
