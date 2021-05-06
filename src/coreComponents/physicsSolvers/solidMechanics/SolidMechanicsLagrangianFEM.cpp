@@ -263,30 +263,44 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 
 
 template< typename ... PARAMS >
-real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( PARAMS && ... params )
+real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
+                                                            arrayView1d< string const > const & targetRegions,
+                                                            string const & finiteElementName,
+                                                            arrayView1d< string const > const & constitutiveNames,
+                                                            real64 const dt,
+                                                            std::string const & elementListName )
 {
   GEOSX_MARK_FUNCTION;
   real64 rval = 0;
   if( m_strainTheory==0 )
   {
+    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
-                                           CellElementSubRegion,
-                                           SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain >( std::forward< PARAMS >( params )... );
+                                           CellElementSubRegion >( mesh,
+                                                                   targetRegions,
+                                                                   finiteElementName,
+                                                                   constitutiveNames,
+                                                                   kernelFactory );
   }
   else if( m_strainTheory==1 )
   {
+    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
-                                           CellElementSubRegion,
-                                           SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain >( std::forward< PARAMS >( params )... );
+                                           CellElementSubRegion >( mesh,
+                                                                   targetRegions,
+                                                                   finiteElementName,
+                                                                   constitutiveNames,
+                                                                   kernelFactory );
   }
   else
   {
     GEOSX_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
   }
+
   return rval;
 }
 
@@ -985,11 +999,10 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   {
     GEOSX_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::PoroElasticBase,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
-                                                                                  dofManager,
-                                                                                  localMatrix,
-                                                                                  localRhs );
-
+                    SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElasticFactory >( domain,
+                                                                                         dofManager,
+                                                                                         localMatrix,
+                                                                                         localRhs );
   }
   else
   {
@@ -997,23 +1010,23 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
     {
       GEOSX_UNUSED_VAR( dt );
       assemblyLaunch< constitutive::SolidBase,
-                      SolidMechanicsLagrangianFEMKernels::QuasiStatic >( domain,
-                                                                         dofManager,
-                                                                         localMatrix,
-                                                                         localRhs );
+                      SolidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                                                                                dofManager,
+                                                                                localMatrix,
+                                                                                localRhs );
     }
     else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
       assemblyLaunch< constitutive::SolidBase,
-                      SolidMechanicsLagrangianFEMKernels::ImplicitNewmark >( domain,
-                                                                             dofManager,
-                                                                             localMatrix,
-                                                                             localRhs,
-                                                                             m_newmarkGamma,
-                                                                             m_newmarkBeta,
-                                                                             m_massDamping,
-                                                                             m_stiffnessDamping,
-                                                                             dt );
+                      SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
+                                                                                    dofManager,
+                                                                                    localMatrix,
+                                                                                    localRhs,
+                                                                                    m_newmarkGamma,
+                                                                                    m_newmarkBeta,
+                                                                                    m_massDamping,
+                                                                                    m_stiffnessDamping,
+                                                                                    dt );
     }
   }
 
