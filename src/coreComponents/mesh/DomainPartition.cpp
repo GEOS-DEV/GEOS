@@ -245,7 +245,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
                                                                          m_neighbors );
 
-  CommunicationTools::getInstance().findGhosts( meshLevel, m_neighbors, use_nonblocking );
+  CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
 
   faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
   faceManager.computeGeometry( nodeManager );

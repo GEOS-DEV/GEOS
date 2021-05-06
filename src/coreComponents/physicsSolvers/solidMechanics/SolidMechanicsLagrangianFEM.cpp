@@ -65,7 +65,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_sendOrReceiveNodes(),
   m_nonSendOrReceiveNodes(),
   m_targetNodes(),
-  m_iComm(),
+  m_iComm( CommunicationTools::getInstance().getCommID() ),
   m_effectiveStress( 0 )
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
@@ -590,6 +590,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   fieldNames["node"].emplace_back( keys::Velocity );
   fieldNames["node"].emplace_back( keys::Acceleration );
 
+  m_iComm.resize( domain.getNeighbors().size() );
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
 
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
