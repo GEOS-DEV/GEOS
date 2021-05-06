@@ -109,7 +109,7 @@ void LaplaceVEM::setupSystem( DomainPartition & domain,
 
   SparsityPattern< globalIndex > pattern;
   dofManager.setSparsityPattern( pattern );
-  localMatrix.assimilate< serialPolicy >( std::move( pattern ) );
+  localMatrix.assimilate< parallelDevicePolicy< 32 > >( std::move( pattern ) );
 
   localRhs.resize( numLocalRows );
   localSolution.resize( numLocalRows );
@@ -178,10 +178,10 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       arrayView1d< real64 const > elemVolumes = elemSubRegion.getElementVolume();
       arrayView1d< integer const > const & elemGhostRank = elemSubRegion.ghostRank();
       localIndex const numCells = elemSubRegion.size();
-      forAll< serialPolicy >( numCells, [=] ( localIndex const cellIndex )
+      forAll< parallelDevicePolicy< 32 > >( numCells, [=] ( localIndex const cellIndex )
       {
         VEM::BasisData basisData;
-        real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
+        real64 derivativesIntMean[VEM::maxSupportPoints][3];
         globalIndex elemDofIndex[VEM::maxSupportPoints];
         real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints];
 
@@ -203,15 +203,15 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
           }
           for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
           {
-            VEM::calcGradN( q, basisData, basisDerivativesIntegralMean );
+            VEM::calcGradN( q, basisData, derivativesIntMean );
             for( localIndex a = 0; a < numSupportPoints; ++a )
             {
               for( localIndex b = 0; b < numSupportPoints; ++b )
               {
-                element_matrix[a][b] += diffusion * VEM::transformedQuadratureWeight( q, basisData ) *
-                                        (basisDerivativesIntegralMean[a][0] * basisDerivativesIntegralMean[b][0] +
-                                         basisDerivativesIntegralMean[a][1] * basisDerivativesIntegralMean[b][1] +
-                                         basisDerivativesIntegralMean[a][2] * basisDerivativesIntegralMean[b][2] );
+                element_matrix[a][b] += diffusion*VEM::transformedQuadratureWeight( q, basisData ) *
+                                        (derivativesIntMean[a][0] * derivativesIntMean[b][0] +
+                                         derivativesIntMean[a][1] * derivativesIntMean[b][1] +
+                                         derivativesIntMean[a][2] * derivativesIntMean[b][2] );
               }
             }
           }
@@ -236,11 +236,12 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
    This is the boundary condition method applied for this particular solver.
    It is called by the more generic "applyBoundaryConditions" method.
  */
-void LaplaceVEM::applyDirichletBCImplicit( real64 const time,
-                                           DofManager const & dofManager,
-                                           DomainPartition & domain,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs )
+void LaplaceVEM::
+  applyDirichletBCImplicit( real64 const time,
+                            DofManager const & dofManager,
+                            DomainPartition & domain,
+                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                            arrayView1d< real64 > const & localRhs )
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
@@ -254,14 +255,9 @@ void LaplaceVEM::applyDirichletBCImplicit( real64 const time,
                         Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, serialPolicy >( targetSet,
-                                                                                time,
-                                                                                targetGroup,
-                                                                                m_fieldName,
-                                                                                dofManager.getKey( m_fieldName ),
-                                                                                dofManager.rankOffset(),
-                                                                                localMatrix,
-                                                                                localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >
+      ( targetSet, time, targetGroup, m_fieldName, dofManager.getKey( m_fieldName ),
+      dofManager.rankOffset(), localMatrix, localRhs );
   } );
 }
 
