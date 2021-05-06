@@ -1,5 +1,6 @@
 import ast
 
+import argparse
 from shot import *
 from source import *
 from receiver import *
@@ -62,6 +63,15 @@ def readInitVariable():
     f.close()
     os.remove(os.path.join(rootPath, "init_variable.txt"))
     return maxT, dt
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--xml", help = "input xml file", required = True)
+    parser.add_argument("--geosx", help = "GEOSX folder location", required = True)
+    args = parser.parse_args()
+
+    return args
 
 
 def remove_shots_files():

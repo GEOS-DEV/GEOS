@@ -1,7 +1,5 @@
 from fileManager import *
 import multiprocessing as mp
-from mesh import *
-import sys
 from dask.distributed import Client, as_completed
 from dask_jobqueue import SLURMCluster
 

@@ -107,20 +107,20 @@ def moving_acquisition(boundaries,
     zmin = boundaries[2][0]
     zmax = boundaries[2][1]
 
-    movex=(xmax-xmin)/(number_of_sources_x + 1) + 1
-    movey=(ymax-ymin)/(number_of_sources_y + 1) + 1
+    movex = (xmax-xmin)/(number_of_sources_x + 1) + 1
+    movey = (ymax-ymin)/(number_of_sources_y + 1) + 1
 
-    srcpos=[xmin, ymin, source_depth]
+    srcpos = [xmin, ymin, source_depth]
 
-    xposleft = np.linspace(xmin + 0.3*movex, xmin + 0.3*movex + zone_receiver_x, number_of_receivers_x)
+    xposleft  = np.linspace(xmin + 0.3*movex, xmin + 0.3*movex + zone_receiver_x, number_of_receivers_x)
     xposright = np.linspace(xmax - 0.3*movex, xmax - 0.3*movex - zone_receiver_x, number_of_receivers_x)
 
     ypos = np.linspace(ymin - zone_receiver_y/2, ymin + zone_receiver_y/2, number_of_receivers_y)
 
-    receiversbaseleft = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xposleft for y in ypos])
+    receiversbaseleft  = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xposleft for y in ypos])
     receiversbaseright = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xposright for y in ypos])
 
-    shots=[]
+    shots = []
 
     for i in range(number_of_sources_y):
         if i%2==0:
@@ -230,38 +230,34 @@ def random_acquisition(boundaries,
 
 
 def equispaced_acquisition(boundaries,
-                      wavelet,
-                      dt,
-                      start_source_pos,
-                      end_source_pos,
-                      start_receivers_pos,
-                      end_receivers_pos,
-                      number_of_sources = 2,
-                      number_of_receivers = [2],
-                      source_depth = 1,
-                      receivers_depth = 1,
-                      export = 0
-                      ):
+                           wavelet,
+                           dt,
+                           start_source_pos,
+                           end_source_pos,
+                           start_receivers_pos,
+                           end_receivers_pos,
+                           number_of_sources = 2,
+                           number_of_receivers = [2],
+                           source_depth = 1,
+                           receivers_depth = 1,
+                           export = 0):
 
-
-    xr = []
-    yr = []
     receivers = ReceiverSet()
 
     for i in range(len(start_receivers_pos)):
         if len(number_of_receivers) == 1:
-            xr.append( np.linspace(start_receivers_pos[i][0], end_receivers_pos[i][0], number_of_receivers[0]) )
-            yr.append( np.linspace(start_receivers_pos[i][1], end_receivers_pos[i][1], number_of_receivers[0]) )
+            xr = np.linspace(start_receivers_pos[i][0], end_receivers_pos[i][0], number_of_receivers[0]).tolist()
+            yr = np.linspace(start_receivers_pos[i][1], end_receivers_pos[i][1], number_of_receivers[0]).tolist()
         else:
-            xr.append( np.linspace(start_receivers_pos[i][0], end_receivers_pos[i][0], number_of_receivers[i]) )
-            yr.append( np.linspace(start_receivers_pos[i][1], end_receivers_pos[i][1], number_of_receivers[i]) )
+            xr = np.linspace(start_receivers_pos[i][0], end_receivers_pos[i][0], number_of_receivers[i]).tolist()
+            yr = np.linspace(start_receivers_pos[i][1], end_receivers_pos[i][1], number_of_receivers[i]).tolist()
 
-        receivers_temp = ReceiverSet([Receiver([x, y, receivers_depth]) for x, y in zip(xr[i], yr[i])])
+        receivers_temp = ReceiverSet([Receiver([x, y, receivers_depth]) for x, y in list(zip(xr, yr))])
+        #print(receivers_temp)
         receivers.append(copy.deepcopy(receivers_temp))
 
-
-    xs = np.linspace(start_source_pos[0], end_source_pos[1], number_of_sources)
-    ys = np.linspace(start_source_pos[0], end_source_pos[1], number_of_sources)
+    xs = np.linspace(start_source_pos[0], end_source_pos[0], number_of_sources)
+    ys = np.linspace(start_source_pos[1], end_source_pos[1], number_of_sources)
 
    # receivers = receivers.getInsideDomain(box)
     shots = []
