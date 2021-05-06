@@ -33,11 +33,13 @@ public:
   static constexpr localIndex numQuadraturePoints = 1;
   struct BasisData
   {
+    localIndex maxSupportPoints = MAXCELLNODES;
+    localIndex numQuadraturePoints = 1;
     localIndex numSupportPoints;
     real64 quadratureWeight;
-    real64 basisFunctionsIntegralMean[maxSupportPoints];
-    real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints];
-    real64 basisDerivativesIntegralMean[maxSupportPoints][3];
+    real64 basisFunctionsIntegralMean[MAXCELLNODES];
+    real64 stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
+    real64 basisDerivativesIntegralMean[MAXCELLNODES][3];
   };
 
 private:
@@ -77,15 +79,15 @@ public:
                      );
 
   GEOSX_HOST_DEVICE
-  static localIndex getMaxSupportPoints()
+  static localIndex getMaxSupportPoints( BasisData const & basisData )
   {
-    return maxSupportPoints;
+    return basisData.maxSupportPoints;
   }
 
   GEOSX_HOST_DEVICE
-  static localIndex getNumQuadraturePoints()
+  static localIndex getNumQuadraturePoints( BasisData const & basisData )
   {
-    return numQuadraturePoints;
+    return basisData.numQuadraturePoints;
   }
 
   GEOSX_HOST_DEVICE

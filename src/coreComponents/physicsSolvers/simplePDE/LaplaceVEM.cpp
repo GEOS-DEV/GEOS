@@ -201,7 +201,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
             }
             localRhs[a] = 0.0;
           }
-          for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
+          for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
           {
             VEM::calcGradN( q, basisData, derivativesIntMean );
             for( localIndex a = 0; a < numSupportPoints; ++a )
@@ -221,7 +221,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                      ( elemDofIndex[a] - rankOffset );
             if( dof < 0 || dof >= localMatrix.numRows() )
               continue;
-            localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >
+            localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
               ( dof, elemDofIndex, element_matrix[ a ], numSupportPoints );
           }
         }

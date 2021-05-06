@@ -49,7 +49,7 @@ template< typename VEM, typename BASISDATATYPE >
 static void
 checkIntegralMeanDerivativesConsistency( BASISDATATYPE const & basisData )
 {
-  for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
+  for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
     VEM::calcGradN( q, basisData, basisDerivativesIntegralMean );
@@ -148,7 +148,7 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume,
                                          BASISDATATYPE const & basisData )
 {
   real64 sum = 0.0;
-  for( localIndex q = 0; q < VEM::getNumQuadraturePoints( ); ++q )
+  for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 weight =
       VEM::transformedQuadratureWeight( q, basisData );

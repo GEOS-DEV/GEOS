@@ -48,12 +48,13 @@ public:
    * @param gradN Return array of the shape function projected derivatives. Size will be @ref
    * getNumSupportPoints() x 3.
    */
-  template< typename LEAF >
+  template< typename LEAF, typename LEAFBASISDATA >
   GEOSX_HOST_DEVICE
   static real64 getGradN( localIndex const q,
+                          LEAFBASISDATA const & basisData,
                           real64 ( & gradN )[LEAF::maxSupportPoints][3] )
   {
-    return LEAF::calcGradN( q, LEAF::BasisData, gradN );
+    return LEAF::calcGradN( q, basisData, gradN );
   }
 
   /**
@@ -63,12 +64,13 @@ public:
    * @param jBasisFunction The column index.
    * @return The requested value.
    */
-  template< typename LEAF >
+  template< typename LEAF, typename LEAFBASISDATA >
   GEOSX_HOST_DEVICE
   static real64 getStabilizationValue( localIndex const iBasisFunction,
-                                       localIndex const jBasisFunction
+                                       localIndex const jBasisFunction,
+                                       LEAFBASISDATA const & basisData
                                        )
-  { return LEAF::calcStabilizationValues( iBasisFunction, jBasisFunction, LEAF::BasisData ); }
+  { return LEAF::calcStabilizationValues( iBasisFunction, jBasisFunction, basisData ); }
 
   /**
    * @brief Get the shape function projections at a given quadrature point.
@@ -77,12 +79,13 @@ public:
    * @param q The quadrature point index.
    * @param gradN Return array of the shape function projections. Size will be @ref getNumSupportPoints().
    */
-  template< typename LEAF >
+  template< typename LEAF, typename LEAFBASISDATA >
   GEOSX_HOST_DEVICE
   void getN( localIndex const q,
+             LEAFBASISDATA const & basisData,
              real64 ( & N )[LEAF::maxSupportPoints] )
   {
-    return LEAF::calcN( q, LEAF::BasisData, N );
+    return LEAF::calcN( q, basisData, N );
   }
 
   /**
@@ -91,11 +94,11 @@ public:
    * @param q Index of the quadrature point.
    * @return The weight.
    */
-  template< typename LEAF >
+  template< typename LEAF, typename LEAFBASISDATA >
   GEOSX_HOST_DEVICE
-  real64 getTransformedQuadratureWeight( localIndex const q ) const
+  real64 getTransformedQuadratureWeight( localIndex const q, LEAFBASISDATA const & basisData ) const
   {
-    return LEAF::transformedQuadratureWeight( q, LEAF::BasisData );
+    return LEAF::transformedQuadratureWeight( q, basisData );
   }
 
   /**
@@ -103,10 +106,10 @@ public:
    * @tparam LEAF Type of the derived virtual element implementation.
    * @return The number of quadrature points per element.
    */
-  template< typename LEAF >
-  localIndex getNumQuadraturePoints() const
+  template< typename LEAF, typename LEAFBASISDATA >
+  localIndex getNumQuadraturePoints( LEAFBASISDATA const & basisData ) const
   {
-    return LEAF::getNumQuadraturePoints();
+    return LEAF::getNumQuadraturePoints( basisData );
   }
 
   /**
@@ -114,10 +117,10 @@ public:
    * @tparam LEAF Type of the derived virtual element implementation.
    * @return The number of support points per element.
    */
-  template< typename LEAF >
-  localIndex getNumSupportPoints() const
+  template< typename LEAF, typename LEAFBASISDATA >
+  localIndex getNumSupportPoints( LEAFBASISDATA const & basisData ) const
   {
-    return LEAF::getNumSupportPoints( LEAF::BasisData );
+    return LEAF::getNumSupportPoints( basisData );
   }
 };
 }
