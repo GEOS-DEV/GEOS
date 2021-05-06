@@ -17,14 +17,17 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
     Parameters
     ----------
+    rank : int
+        MPI rank
+
     problem :
         The pygeosx ProblemManager
 
     shot_list : list
         A list containing sets of Source and ReceiverSet objects
 
-    dt : float
-        Time step for the solver
+    tracePath : string
+        Directory where to output .sgy files
 
     Notes
     -----

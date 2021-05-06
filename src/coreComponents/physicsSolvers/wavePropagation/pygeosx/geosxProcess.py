@@ -48,12 +48,17 @@ def shot_simul(rank, xml, shot_list, tracePath):
     """
     Parameters
     ----------
+    rank : int
+        MPI rank
+
+    xml : string
+        XML file
 
     shot_list : list
         A list containing sets of Source and ReceiverSet objects
 
-    dt : float
-        Time step for the solver
+    tracePath : string
+        Directory for .sgy files output
     """
 
     problem = initialize(rank, xml)
@@ -64,15 +69,18 @@ def shot_simul(rank, xml, shot_list, tracePath):
 def initialize(rank, xml):
     """ Grouping of pygeox initializations
 
+    Parameters
+    ----------
+    rank : int
+        MPI rank
+
+    xml : string
+        XML file
+
     Return
     ------
     problem :
         The pygeosx ProblemManager
-
-    Notes
-    -----
-    Need to give MPI rank at this point for initialization.
-    Conflict with first initialization to get the list of shots
     """
 
     problem = pygeosx.initialize(rank, xml)

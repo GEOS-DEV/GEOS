@@ -17,6 +17,25 @@ from segyManager import export_for_acquisition
 
 def segy_acquisition(segyPath, wavelet, dt):
 
+    """Acquisition from .sgy files
+
+    Parameters
+    ----------
+    segyPath : string
+        Directory with segy files to read
+
+    wavelet : list
+        Source function (Ricker)
+
+    dt : float
+        Time step
+
+    Return
+    ------
+    shots : list of Shot object
+        List of shots configuration
+    """
+
     shot_list = []
 
     for filename in glob.glob(os.path.join(folder_path, '*.sgy')):
@@ -67,34 +86,47 @@ def moving_acquisition(boundaries,
 
     Parameters
     ----------
-    box :
+    boundaries : list
         List containing min/max boundary coordinates of the domain [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
 
-    wavelet :
+    wavelet : list
         Source function (Ricker)
 
-    number_of_sources_x :
+    dt : float
+        Time Step
+
+    number_of_sources_x : int
         Number of sources along x axis (this is the number of configuration, 1 position for each configuration)
 
-    number_of_sources_y :
+    number_of_sources_y : int
         Number of sources along y axis
 
-    number_of_receivers_x :
+    number_of_receivers_x : int
         Number of sources along x axis
 
-    number_of_receivers_y :
+    number_of_receivers_y : int
         Number of sources along y axis
 
-    zone_receiver_x :
+    source_depth : float
+        z source position
+
+    receivers_depth : float
+        z receivers position
+
+    zone_receiver_x : float
         Lenght of the area for receivers along x axis (distance from the receivers coordinate)
 
-    zone_receiver_y :
+    zone_receiver_y : float
         Lenght of the area for receivers along y axis
+
+    export : bool
+        Flag if you want to output this acquisition to segy file
+
 
     Return
     ------
-    shots :
-        A list of Shot objects
+    shots : list of Shot object
+        List of shots configuration
     """
 
 
@@ -164,7 +196,7 @@ def random_acquisition(boundaries,
                        dt,
                        number_of_sources = 1,
                        source_depth = 1,
-                       number_of_receivers_= 1,
+                       number_of_receivers_x = 1,
                        number_of_receivers_y = 1,
                        receivers_depth = 1,
                        export = 0):
@@ -173,25 +205,38 @@ def random_acquisition(boundaries,
 
     Parameters
     ----------
-    box :
+    boundaries : list
         List containing min/max boundary coordinates of the domain [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
 
-    wavelet :
+    wavelet : list
         Source function (Ricker)
 
-    nbsources :
+    dt : float
+        Time Step
+
+    number_of_sources : int
         Number of sources
 
-    nbreceiversx :
+    source_depth : float
+        z source position
+
+    number_of_receivers_x : int
         Number of sources along x axis
 
-    nbreceiversy :
+    number_of_receivers_y : int
         Number of sources along y axis
+
+    receivers_depth : float
+        z receivers position
+
+    export : bool
+        Flag if you want to output this acquisition to segy file
+
 
     Return
     ------
-    shots :
-        A list of Shot objects
+    shots : list of Shot object
+        List of shots configurations
     """
 
     xmin = boundaries[0][0]
@@ -241,6 +286,54 @@ def equispaced_acquisition(boundaries,
                            source_depth = 1,
                            receivers_depth = 1,
                            export = 0):
+
+    """This acquisition is for linears and crosses acquisitions (possibility to define
+       multiple lines of receivers)
+
+    Parameters
+    ----------
+    boundaries : list
+        List containing min/max boundary coordinates of the domain [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
+
+    wavelet : list
+        Source function (Ricker)
+
+    dt : float
+        Time Step
+
+    start_source_pos : list
+        Starting coordinate for source line
+
+    end_source_pos : list
+        Ending coordinate for source line
+
+    start_receivers_pos : list of list
+        Starting coordinate for receivers line
+
+    end_receivers_pos : list of list
+        Ending coordinate for receivers line
+
+    number_of_sources : int
+        Number of sources
+
+    number_of_receivers : list
+        Number of receivers for the corresponding line (if only one given, number applied to all lines of receivers)
+
+    source_depth : float
+        z source position
+
+    receivers_depth : float
+        z receivers position
+
+    export : bool
+        Flag if you want to output this acquisition to segy file
+
+
+    Return
+    ------
+    shots : list of Shot object
+        list of shots configurations
+    """
 
     receivers = ReceiverSet()
 

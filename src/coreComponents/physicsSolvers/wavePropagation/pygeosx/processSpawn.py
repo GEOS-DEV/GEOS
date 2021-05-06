@@ -8,6 +8,38 @@ def multiProcessing(shot_list, GEOSX, xml,
                     processes = 1,
                     mpiranks = None,
                     x = 1, y = 1, z = 1):
+
+    """Cut shot list into desired amount of processes and run each process in parrallel
+       using the Multiprocessing library
+
+    Parameters
+    ----------
+    shot_list : list of Shot object
+        list of shot configuration
+
+    GEOSX : path
+        location of GEOSX directory
+
+    xml : xml file
+        Time step
+
+    processes : int
+        Number of processes
+
+    mpirank : int
+        Number of MPI processes for parrallel solving
+
+    x : int
+        Number of MPI partition along x axe (domain partition)
+
+    y : int
+        Number of MPI partition along x axe (domain partition)
+
+    z : int
+        Number of MPI partition along x axe (domain partition)
+    """
+
+
     p = []
     nb_shot_m1 = len(shot_list)
     ind = 0
@@ -33,6 +65,33 @@ def multiProcessing(shot_list, GEOSX, xml,
 
     remove_shots_files()
 def callProcess(shot_file, GEOSX, xml, mpiranks, x, y, z):
+
+     """Sub function of multriProcessing(). Call of different processes
+
+    Parameters
+    ----------
+    shot_list : list of Shot object
+        list of shot configuration
+
+    GEOSX : path
+        location of GEOSX directory
+
+    xml : xml file
+        Time step
+
+    mpirank : int
+        Number of MPI processes for parrallel solving
+
+    x : int
+        Number of MPI partition along x axe (domain partition)
+
+    y : int
+        Number of MPI partition along x axe (domain partition)
+
+    z : int
+        Number of MPI partition along x axe (domain partition)
+    """
+
 
     wavePropagationPath = os.path.join(GEOSX, "GEOSX/src/coreComponents/physicsSolvers/wavePropagation/")
     pygeosxPath = os.path.join(wavePropagationPath, "pygeosx/")
@@ -64,6 +123,46 @@ def daskProcessing(shot_list, GEOSX, xml,
                    nodes = 1,
                    x = 1, y = 1, z = 1,
                    cluster_type = "local"):
+
+    """Cut shot list into desired amount of processes and run each process in parrallel
+       each on a single node on a cluster using the Dask library
+
+    Parameters
+    ----------
+    shot_list : list of Shot object
+        list of shot configuration
+
+    GEOSX : string
+        location of GEOSX directory
+
+    xml : string
+        Time step
+
+    processes : int
+        Number of processes
+
+    cores : int
+        Number of cores for parrallel solving
+
+    processes : int
+        Number of processes per node
+
+    nodes : int
+        Number of nodes to use
+
+    x : int
+        Number of MPI partition along x axe (domain partition)
+
+    y : int
+        Number of MPI partition along x axe (domain partition)
+
+    z : int
+        Number of MPI partition along x axe (domain partition)
+
+    cluster_type : sting
+        Type of cluster (SLURM)
+    """
+
     futures = []
     nb_shot_m1 = len(shot_list)
     ind = 0
@@ -127,6 +226,41 @@ def daskProcessing(shot_list, GEOSX, xml,
 def firstInit(GEOSX, xml,
               mpiranks = None,
               x = 1, y = 1, z = 1):
+
+    """Function to initialize GEOSX and get optimal time step dt calculate for mesh, and also
+       the max time of simulation in XML
+
+    Parameters
+    ----------
+
+    GEOSX : string
+        location of GEOSX directory
+
+    xml : string
+        xml file
+
+    mpiranks : int
+        Number of MPI processes for parrallel solving
+
+    x : int
+        Number of MPI partition along x axe (domain partition)
+
+    y : int
+        Number of MPI partition along x axe (domain partition)
+
+    z : int
+        Number of MPI partition along x axe (domain partition)
+
+
+    Return
+    ------
+    maxT : float
+        Max time for GEOSX simulation
+
+    dt : float
+        Time step
+    """
+
     wavePropagationPath = os.path.join(GEOSX, "GEOSX/src/coreComponents/physicsSolvers/wavePropagation/")
     pygeosxPath = os.path.join(wavePropagationPath, "pygeosx/")
 
