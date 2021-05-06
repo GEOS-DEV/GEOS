@@ -48,6 +48,7 @@ public:
   using DiscretizationOps = typename DamageUpdates< UPDATE_BASE >::DiscretizationOps;
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
+  using DamageUpdates< UPDATE_BASE >::saveConvergedState;
 
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;

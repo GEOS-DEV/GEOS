@@ -743,6 +743,13 @@ Element: Traction
 .. include:: ../../coreComponents/schema/docs/Traction.rst
 
 
+.. _XML_TriaxialDriver:
+
+Element: TriaxialDriver
+=======================
+.. include:: ../../coreComponents/schema/docs/TriaxialDriver.rst
+
+
 .. _XML_TwoPointFluxApproximation:
 
 Element: TwoPointFluxApproximation
@@ -1564,6 +1571,13 @@ Datastructure: TimeHistory
 Datastructure: Traction
 =======================
 .. include:: ../../coreComponents/schema/docs/Traction_other.rst
+
+
+.. _DATASTRUCTURE_TriaxialDriver:
+
+Datastructure: TriaxialDriver
+=============================
+.. include:: ../../coreComponents/schema/docs/TriaxialDriver_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:

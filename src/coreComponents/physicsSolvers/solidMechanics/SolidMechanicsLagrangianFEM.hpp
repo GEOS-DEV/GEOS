@@ -23,6 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
