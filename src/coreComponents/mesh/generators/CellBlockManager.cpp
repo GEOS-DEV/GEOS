@@ -89,7 +89,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
   }
 
   // Third, filling the result.
-  for( localIndex iCellBlock = 0; iCellBlock < numCellBlocks(); ++iCellBlock)// Do not need index
+  for( localIndex iCellBlock = 0; iCellBlock < numCellBlocks(); ++iCellBlock )// Do not need index
   {
     const CellBlockABC & cb = this->getCellBlock( iCellBlock );
     array2d< localIndex, cells::NODE_MAP_PERMUTATION > const elemToNode = cb.getElemToNode();
@@ -209,7 +209,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< NodesAndElementOfFace
     for( localIndex j = 0; j < numFaces; ++j )
     {
       ++numUniqueFaces;
-      if ( j < numFaces - 1 )
+      if( j < numFaces - 1 )
       {
         if( lowestNodeToFaces( nodeID, j ) == lowestNodeToFaces( nodeID, j + 1 ) )
         {
@@ -271,7 +271,7 @@ void populateFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & 
   {
     localIndex const numFaces = lowestNodeToFaces.sizeOfArray( nodeID );
     // loop over all the `NodesAndElementOfFace` associated with the node.
-    for( localIndex j = 0, curFaceID = uniqueFaceOffsets[nodeID]; j < numFaces ; ++j, ++curFaceID )
+    for( localIndex j = 0, curFaceID = uniqueFaceOffsets[nodeID]; j < numFaces; ++j, ++curFaceID )
     {
       // If two subsequent `NodesAndElementOfFace` compare equal then they describe an interior face.
       // It must therefore be considered "twice".
@@ -328,7 +328,9 @@ void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lo
       totalFaceNodes += numNodesPerFace[curFaceID];
 
       if( ( j < numFaces - 1 ) and ( f0 == lowestNodeToFaces( nodeID, j + 1 ) ) )
-      { ++j; }
+      {
+        ++j;
+      }
     }
   } );
 
@@ -351,7 +353,6 @@ void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lo
     faceToNodeMap.appendArray( numNodesPerFace[ faceID ] );
     faceToNodeMap.setCapacityOfArray( faceToNodeMap.size() - 1,
                                       numNodesPerFace[ faceID ] + CellBlockManager::nodeMapExtraSpacePerFace() );
-                                      //TODO THIS LINE IS DAMN STRANGE
   }
 
   // Each face may belong to _maximum_ 2 elements.
@@ -422,7 +423,7 @@ ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNo
  * @note @p lowestNodeToFaces and @p uniqueFaceOffsets are better described in the documentations of the functions that build them.
  */
 void fillElementToFacesOfCellBlocks( ArrayOfArrays< NodesAndElementOfFace > const & lowestNodeToFaces,
-                                     array1d <localIndex> const & uniqueFaceOffsets,
+                                     array1d< localIndex > const & uniqueFaceOffsets,
                                      Group & cellBlocks )
 {
   localIndex const numNodes = lowestNodeToFaces.size();

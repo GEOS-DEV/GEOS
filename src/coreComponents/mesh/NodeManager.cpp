@@ -120,29 +120,25 @@ void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager, 
     toElementRegionList.appendArray( 0 );
     toElementSubRegionList.appendArray( 0 );
 
-    const localIndex numElementsPerNode = toElementList[ nodeID ].size() + getElemMapOverAllocation() ;
+    const localIndex numElementsPerNode = toElementList[ nodeID ].size() + getElemMapOverAllocation();
     toElementRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
     toElementSubRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
   }
 
   elementRegionManager.forElementSubRegionsComplete< CellElementSubRegion >(
-    [&toElementRegionList, &toElementSubRegionList]
-      ( localIndex const er,
-        localIndex const esr,
-        ElementRegionBase const &,
-        CellElementSubRegion const & subRegion )
+    [&toElementRegionList, &toElementSubRegionList] ( localIndex const er, localIndex const esr, ElementRegionBase const &, CellElementSubRegion const & subRegion )
+  {
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
+    for( localIndex k = 0; k < subRegion.size(); ++k )
     {
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-      for( localIndex k = 0; k < subRegion.size(); ++k )
+      for( localIndex a = 0; a < subRegion.numNodesPerElement(); ++a )
       {
-        for( localIndex a = 0; a < subRegion.numNodesPerElement(); ++a )
-        {
-          localIndex const nodeIndex = elemToNodeMap( k, a );
-          toElementRegionList.emplaceBack( nodeIndex, er );
-          toElementSubRegionList.emplaceBack( nodeIndex, esr );
-        }
+        localIndex const nodeIndex = elemToNodeMap( k, a );
+        toElementRegionList.emplaceBack( nodeIndex, er );
+        toElementSubRegionList.emplaceBack( nodeIndex, esr );
       }
-    } );
+    }
+  } );
 
   this->m_toElements.setElementRegionManager( elementRegionManager );
 }

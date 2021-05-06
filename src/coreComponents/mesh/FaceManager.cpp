@@ -93,7 +93,7 @@ void populateRegions( ElementRegionManager const & elementManager,
 
     // loop over all the subregions
     elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
-    [&]( localIndex const esr, CellElementSubRegion const & subRegion )
+      [&]( localIndex const esr, CellElementSubRegion const & subRegion )
     {
       FixedOneToManyRelation const & elementToFaces = subRegion.faceList();
       for( localIndex iElement = 0; iElement < subRegion.size(); ++iElement )

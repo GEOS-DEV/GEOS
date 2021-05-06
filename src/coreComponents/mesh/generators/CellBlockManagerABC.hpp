@@ -1,15 +1,15 @@
-/*	
- * ------------------------------------------------------------------------------------------------------------	
- * SPDX-License-Identifier: LGPL-2.1-only	
- *	
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC	
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University	
- * Copyright (c) 2018-2020 Total, S.A	
- * Copyright (c) 2020-     GEOSX Contributors	
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2020-     GEOSX Contributors
  * All right reservepd
- *	
- * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.	
- * ------------------------------------------------------------------------------------------------------------	
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef GEOSX_CELLBLOCKMANAGERABC_HPP
@@ -59,11 +59,11 @@ public:
   virtual void buildMaps() = 0;
 
   /**
- * @brief Returns a group containing the cell blocks as CellBlockABC instances
- * @return Mutable reference to the cell blocks group.
- *
- * @note It should probably be better not to expose a non-const accessor here.
- */
+   * @brief Returns a group containing the cell blocks as CellBlockABC instances
+   * @return Mutable reference to the cell blocks group.
+   *
+   * @note It should probably be better not to expose a non-const accessor here.
+   */
   virtual Group & getCellBlocks() = 0;
 
   /**

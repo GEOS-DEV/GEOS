@@ -94,11 +94,12 @@ public:
                      array1d< localIndex > & nodesInFaces ) const;
 
   /**
-  * @brief Get the element to nodes mapping, non-const version.
-  * @return The mapping relationship as a array.
-  *
-  * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute... Use a real setter instead.
-  */
+   * @brief Get the element to nodes mapping, non-const version.
+   * @return The mapping relationship as a array.
+   *
+   * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute...
+   * Use a real setter instead.
+   */
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > & getElemToNode()
   { return m_elementsToNodes; }
 
@@ -158,7 +159,8 @@ public:
    * @brief Get local to global map, non-const version.
    * @return The mapping relationship as a array.
    *
-   * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute... Use a real setter instead.
+   * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute...
+   * Use a real setter instead.
    */
   arrayView1d< globalIndex > localToGlobalMap()
   { return m_localToGlobalMap; }

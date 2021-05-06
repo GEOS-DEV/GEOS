@@ -102,7 +102,7 @@ public:
   template< typename LAMBDA >
   void forExternalProperties( LAMBDA && lambda )
   {
-    for ( auto * wrapperBase: this->getExternalProperties() )
+    for( auto * wrapperBase: this->getExternalProperties() )
     {
       lambda( *wrapperBase );
     }

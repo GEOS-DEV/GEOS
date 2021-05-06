@@ -1,15 +1,15 @@
-/*	
- * ------------------------------------------------------------------------------------------------------------	
- * SPDX-License-Identifier: LGPL-2.1-only	
- *	
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC	
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University	
- * Copyright (c) 2018-2020 Total, S.A	
- * Copyright (c) 2020-     GEOSX Contributors	
- * All right reserved	
- *	
- * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.	
- * ------------------------------------------------------------------------------------------------------------	
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2020-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include "CellBlockUtilities.hpp"
@@ -26,7 +26,7 @@ void getFaceNodes( string const & elementType,
                    localIndex const iElement,
                    localIndex const iFace,
                    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elementToNodes,
-                   array1d <localIndex> & nodeIndices )
+                   array1d< localIndex > & nodeIndices )
 {
   if( elementType == "C3D8" )
   {
@@ -221,7 +221,7 @@ struct EdgeBuilder
    * @param [in] rhs the EdgeBuilder to compare against.
    */
   bool operator!=( EdgeBuilder const & rhs ) const
-  { return  !this->operator==( rhs ); }
+  { return !this->operator==( rhs ); }
 
   /// The larger of the two node indices that comprise the edge.
   int32_t n1;
@@ -309,8 +309,14 @@ ArrayOfArrays< EdgeBuilder > createEdgesByLowestNode( localIndex numNodes,
   // This comparator is not attached to EdgeBuilder because of potential inconsistencies with operator==
   auto const comp = []( EdgeBuilder const & e0, EdgeBuilder const & e1 ) -> bool
   {
-    if( e0.n1 < e1.n1 ) { return true; }
-    if( e0.n1 > e1.n1 ) { return false; }
+    if( e0.n1 < e1.n1 )
+    {
+      return true;
+    }
+    if( e0.n1 > e1.n1 )
+    {
+      return false;
+    }
     return e0.faceID < e1.faceID;
   };
 

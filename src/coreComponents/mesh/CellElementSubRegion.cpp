@@ -333,7 +333,7 @@ void CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                     FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
+                                                                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
