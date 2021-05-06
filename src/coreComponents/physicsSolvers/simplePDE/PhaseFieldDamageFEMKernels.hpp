@@ -287,6 +287,13 @@ protected:
 
 };
 
+using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
+                                                                    arrayView1d< globalIndex const > const &,
+                                                                    globalIndex,
+                                                                    CRSMatrixView< real64, globalIndex const > const &,
+                                                                    arrayView1d< real64 > const &,
+                                                                    string const &,
+                                                                    int >;
 
 } // namespace geosx
 
