@@ -147,6 +147,14 @@ public:
   ///@}
 
   /**
+   * @brief Copies the node information from @p cellBlockManager.
+   * @param [in] cellBlockManager the cell block manager providing the node information.
+   *
+   * Copies the nodes coordinates, the node sets (with their names) and the local to global mapping for nodes.
+   */
+  void setNodesInformation( CellBlockManagerABC const & cellBlockManager );
+
+  /**
    * @brief Link the EdgeManager @p edgeManager to the NodeManager, and copies the the node-to-edge mapping from @p cellBlockManager.
    * @param [in] cellBlockManager the cell block manager providing the node to edges mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager.

@@ -261,19 +261,16 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
+  Group & meshBodies = domain.getGroup( string( "MeshBodies" ) );
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
+  meshBody.registerGroup< MeshLevel >( string( "Level0" ) );
 
   // Make sure that the node manager fields are initialized
 
   CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
-  Group & nodeSets = nodeManager.sets();
+  auto & nodeSets = cellBlockManager.getNodeSets();
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
-
-//  bool isRadialWithOneThetaPartition = false;
 
   // This should probably handled elsewhere:
   int aa = 0;
@@ -284,13 +281,13 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     cellBlock.setElementType( elementType );
   }
 
-  SortedArray< localIndex > & xnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xneg" ) ).reference();
-  SortedArray< localIndex > & xposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xpos" ) ).reference();
-  SortedArray< localIndex > & ynegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "yneg" ) ).reference();
-  SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "ypos" ) ).reference();
-  SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zneg" ) ).reference();
-  SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) ).reference();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+  SortedArray< localIndex > & xnegNodes = nodeSets["xneg"];
+  SortedArray< localIndex > & xposNodes = nodeSets["xpos"];
+  SortedArray< localIndex > & ynegNodes = nodeSets["yneg"];
+  SortedArray< localIndex > & yposNodes = nodeSets["ypos"];
+  SortedArray< localIndex > & znegNodes = nodeSets["zneg"];
+  SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
+  SortedArray< localIndex > & allNodes = nodeSets["all"];
 
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
@@ -452,12 +449,11 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   reduceNumNodesForPeriodicBoundary( partition, numNodesInDir );
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
-  nodeManager.resize( numNodes );
   cellBlockManager.setNumNodes( numNodes );
 
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  array2d< real64 > & X = cellBlockManager.getNodesPositions();
 
-  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
+  array1d< globalIndex > & nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
   {
     localIndex localNodeIndex = 0;
@@ -652,7 +648,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   if( m_fPerturb > 0 )
   {
 
-    for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
+    for( localIndex iN = 0; iN != numNodes; ++iN )
     {
 
       for( int i = 0; i < m_dim; ++i )
@@ -670,14 +666,13 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   if( std::fabs( m_skewAngle ) > 0.0 )
   {
-    for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
+    for( localIndex iN = 0; iN != numNodes; ++iN )
     {
       X[iN][0] -= ( X[iN][1] - m_skewCenter[1] ) * std::tan( m_skewAngle );
     }
   }
 
-  coordinateTransformation( nodeManager );
-
+  coordinateTransformation( X, nodeSets );
 }
 
 /**

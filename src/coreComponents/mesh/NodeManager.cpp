@@ -65,6 +65,21 @@ void NodeManager::resize( localIndex const newSize )
 }
 
 
+void NodeManager::setNodesInformation( CellBlockManagerABC const & cellBlockManager )
+{
+  this->resize( cellBlockManager.numNodes() );
+
+  m_referencePosition = cellBlockManager.getNodesPositions();
+
+  m_localToGlobalMap = cellBlockManager.getNodeLocalToGlobal();
+
+  for( const auto & nameArray: cellBlockManager.getNodeSets() )
+  {
+    auto & array = m_sets.registerWrapper< SortedArray< localIndex > >( nameArray.first ).reference();
+    array = nameArray.second;
+  }
+}
+
 void NodeManager::setEdgeMaps( CellBlockManagerABC const & cellBlockManager, EdgeManager const & edgeManager )
 {
   GEOSX_MARK_FUNCTION;

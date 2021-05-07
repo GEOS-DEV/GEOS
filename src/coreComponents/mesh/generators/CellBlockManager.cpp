@@ -23,7 +23,8 @@ namespace geosx
 using namespace dataRepository;
 
 CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
-  CellBlockManagerABC( name, parent )
+  CellBlockManagerABC( name, parent ),
+  m_nodesPositions( 0, 3 )
 {
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
 }
@@ -697,6 +698,44 @@ localIndex CellBlockManager::numEdges() const
 CellBlock & CellBlockManager::registerCellBlock( string name )
 {
   return this->getCellBlocks().registerGroup< CellBlock >( name );
+}
+
+array2d< real64 > const & CellBlockManager::getNodesPositions() const
+{
+  return m_nodesPositions;
+}
+
+array2d< real64 > & CellBlockManager::getNodesPositions()
+{
+  return m_nodesPositions;
+}
+
+void CellBlockManager::setNumNodes( localIndex numNodes )
+{
+  m_numNodes = numNodes;
+  m_nodesPositions.resize( m_numNodes );
+  m_nodeLocalToGlobal.resize( m_numNodes );
+  m_nodeLocalToGlobal.setValues< serialPolicy >( -1 );
+}
+
+array1d< globalIndex > CellBlockManager::getNodeLocalToGlobal() const
+{
+  return m_nodeLocalToGlobal;
+}
+
+array1d< globalIndex > & CellBlockManager::getNodeLocalToGlobal()
+{
+  return m_nodeLocalToGlobal;
+}
+
+std::map< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
+{
+  return m_nodeSets;
+}
+
+std::map< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
+{
+  return m_nodeSets;
 }
 
 }

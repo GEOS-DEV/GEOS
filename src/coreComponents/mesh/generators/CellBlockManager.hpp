@@ -54,6 +54,16 @@ public:
   static constexpr localIndex getFaceMapOverallocation()
   { return 8; }
 
+  array2d< real64 > const & getNodesPositions() const override;
+
+  /**
+   * @brief Returns a mutable reference to vector holding the nodes coordinates
+   * @return The reference
+   *
+   * @note This is meant to be used as a setter. Do not resize the vector yourself.
+   */
+  array2d< real64 > & getNodesPositions();
+
   ArrayOfSets< localIndex > getNodeToEdges() const override;
 
   ArrayOfSets< localIndex > getNodeToFaces() const override;
@@ -70,15 +80,29 @@ public:
 
   array2d< localIndex > getFaceToElements() const override;
 
+  array1d< globalIndex > getNodeLocalToGlobal() const override;
+
+  array1d< globalIndex > & getNodeLocalToGlobal();
+
+  const std::map< string, SortedArray< localIndex > > & getNodeSets() const override;
+
   /**
-   * @brief Defines the number of nodes.
-   * @param numNodes The number of nodes.
+   * @brief Returns a mutable reference to the node sets.
+   * @return A reference to the mapping.
    *
-   * @note This has to be defined consistent w.r.t. the points positions defined in the node manager.
-   * @deprecated To be more consistent, define the points positions instead and fill the node manager with it.
+   * The key of the map is the name of the set.
+   * While the values are sorted arrays which sizes are meant to be managed by the client code.
+   * This member function is meant to be used like a setter.
    */
-  void setNumNodes( localIndex numNodes ) // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
-  { m_numNodes = numNodes; }
+  std::map< string, SortedArray< localIndex > > & getNodeSets();
+
+  /**
+   * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
+   * @param[in] numNodes The number of nodes.
+   *
+   * The nodes coordinates and nodes local to global mappings get resized to @p numNodes.
+   */
+  void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
 
   localIndex numNodes() const override;
 
@@ -169,12 +193,18 @@ private:
    */
   void buildFaceMaps();
 
+  array2d< real64 > m_nodesPositions;
+
   ArrayOfSets< localIndex > m_nodeToEdges;
   ArrayOfSets< localIndex > m_edgeToFaces;
   array2d< localIndex > m_edgeToNodes;
   ArrayOfArrays< localIndex >  m_faceToNodes;
   ArrayOfArrays< localIndex > m_faceToEdges;
   array2d< localIndex >  m_faceToElements;
+
+  array1d< globalIndex >  m_nodeLocalToGlobal;
+
+  std::map< string, SortedArray< localIndex > > m_nodeSets;
 
   localIndex m_numNodes;
   localIndex m_numFaces;

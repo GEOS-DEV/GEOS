@@ -86,28 +86,25 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
 {
   GEOSX_LOG_RANK_0( "Writing into the GEOSX mesh data structure" );
   domain.getMetisNeighborList() = m_pamelaMesh->getNeighborList();
-  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
+  Group & meshBodies = domain.getGroup( string( "MeshBodies" ) );
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
+  meshBody.registerGroup< MeshLevel >( string( "Level0" ) );
   CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
-
 
   // Use the PartMap of PAMELA to get the mesh
   auto const polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ));
 
   // Vertices are written first
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  array2d< real64 > & X = cellBlockManager.getNodesPositions();
   localIndex const numNodes = m_pamelaMesh->get_PointCollection()->size_all();
-  nodeManager.resize( numNodes );
   cellBlockManager.setNumNodes( numNodes );
 
-  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
+  array1d< globalIndex > & nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
-  Group & nodeSets = nodeManager.sets();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+  auto & nodeSets = cellBlockManager.getNodeSets();
+  SortedArray< localIndex > & allNodes = nodeSets["all"];
 
   real64 xMax[3] = { std::numeric_limits< real64 >::min() };
   real64 xMin[3] = { std::numeric_limits< real64 >::max() };
@@ -349,7 +346,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
     auto const surfacePtr = polygonPart.second;
 
     string surfaceName = DecodePAMELALabels::retrieveSurfaceOrRegionName( surfacePtr->Label );
-    SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( surfaceName ) ).reference();
+    SortedArray< localIndex > & curNodeSet = nodeSets[surfaceName];
     for( auto const & subPart : surfacePtr->SubParts )
     {
       auto const cellBlockPAMELA = subPart.second;

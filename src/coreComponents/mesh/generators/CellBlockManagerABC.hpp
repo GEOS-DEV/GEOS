@@ -17,6 +17,8 @@
 
 #include "dataRepository/Group.hpp"
 
+#include <map>
+
 namespace geosx
 {
 
@@ -90,6 +92,12 @@ public:
   virtual localIndex numFaces() const = 0; // TODO Improve doc
 
   /**
+   * @brief Returns the node coordinates in a (numNodes, 3) 2d array.
+   * @return A const view to the array.
+   */
+  virtual array2d< real64 > const & getNodesPositions() const = 0;
+
+  /**
    * @brief Returns the node to edges mapping.
    * @return The one to many relationship.
    */
@@ -140,6 +148,18 @@ public:
    * In case the face only belongs to one single element, the second value of the table is -1.
    */
   virtual array2d< localIndex > getFaceToElements() const = 0;
+
+  /**
+   * @brief The node to global mapping for nodes.
+   * @return The mapping as an array of size numNodes.
+   */
+  virtual array1d< globalIndex > getNodeLocalToGlobal() const = 0;
+
+  /**
+   * @brief Returns the node sets. Key of the map is the name of the set.
+   * @return A reference to constant map.
+   */
+  virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
 };
 
 }

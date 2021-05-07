@@ -511,6 +511,8 @@ void ProblemManager::generateMesh()
 
       GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
 
+      nodeManager.setNodesInformation( cellBlockManager );
+
       MeshUtilities::generateNodesets( geometricObjects, nodeManager );
       nodeManager.constructGlobalToLocalMap();
 
