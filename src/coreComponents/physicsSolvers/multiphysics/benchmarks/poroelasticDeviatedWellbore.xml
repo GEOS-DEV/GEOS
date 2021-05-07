@@ -33,9 +33,9 @@
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
+        newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
+        solverType="gmres"
         directParallel="0"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -59,19 +59,19 @@
     </SinglePhaseFVM>
   </Solvers>
 
-  <!-- SPHINX_WellboreMesh-->
+  <!-- SPHINX_WellboreMesh -->
   <Mesh>
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="{ 0.1, 1 }"
+      radius="{ 0.1, 2 }"
       theta="{ 0, 180 }"
-      zCoords="{ 0, 0.1 }"
+      zCoords="{ -0.05, 0.05 }"
       nr="{ 30 }"
       nt="{ 80 }"
       nz="{ 1 }"
-      trajectory="{ { -0.137374, 0.0, 0.0 },
-                    {  0.137374, 0.0, 0.1 } }"
+      trajectory="{ { -0.137374, 0.0, -0.05 },
+                    {  0.137374, 0.0,  0.05 } }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
@@ -160,7 +160,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="permeability"
-      scale="1e-19"/>
+      scale="1e-17"/>
 
     <FieldSpecification 
       name="permy"
@@ -169,7 +169,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="permeability"
-      scale="1e-19"/>
+      scale="1e-17"/>
 
     <FieldSpecification 
       name="permz"
@@ -178,7 +178,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="permeability"
-      scale="1e-19"/>
+      scale="1e-17"/>
 
     <FieldSpecification 
       name="referencePorosity"
@@ -194,7 +194,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="yConstraint"
@@ -202,7 +202,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ tneg, tpos, ypos }"/>
+      setNames="{ tneg, tpos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -210,43 +210,50 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ zneg, zpos }"/>
+      setNames="{ zneg }"/>
 
-    <Traction
+    <!--Traction
       name="Sx"
       objectPath="faceManager"
       tractionType="1"
       scale="-29.0e6"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ xpos }"/>
 
     <Traction
       name="Sy"
       objectPath="faceManager"
       tractionType="1"
       scale="-20.0e6"
-      setNames="{ tneg, tpos, ypos }"/>
+      setNames="{ ypos }"/>
 
     <Traction
       name="Sz"
       objectPath="faceManager"
       tractionType="1"
       scale="-25.0e6"
-      setNames="{ zneg, zpos }"/>
+      setNames="{ zpos }"/!-->
       
     <FieldSpecification 
       name="innerPorePressure"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="0"
+      scale="10e6"
       setNames="{ rneg }"/>
 
-    <FieldSpecification 
+    <!--FieldSpecification 
       name="initialPorePressure"
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="pressure"
-      scale="10e6"/>
+      scale="10e6"/-->
+
+    <FieldSpecification 
+      name="topBottomPressure"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0e6"
+      setNames="{ zneg, zpos }"/>
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
