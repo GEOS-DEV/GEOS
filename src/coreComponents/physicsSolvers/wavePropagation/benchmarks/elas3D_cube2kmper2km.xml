@@ -12,8 +12,8 @@
       discretization="FE1"
       targetRegions="{ Region }"
       sourceCoordinates="{ { 1050.0, 1050.0, 1050.0 } }"
-      timeSourceFrequency="5"
-      receiverCoordinates="{ { 1150,1050, 1050 } }"
+      timeSourceFrequency="10"
+      receiverCoordinates="{ { 1105,1005, 1005 } }"
       rickerOrder="2"
       outputSismoTrace="1"/>
   </Solvers>
@@ -36,13 +36,40 @@
     <Box
       name="zpos"
       xMin="-0.01, -0.01, 1999.99"
-      xMax=" 2000.01, 0.11, 2000.01"/>
+      xMax=" 2000.01, 2000.01, 2000.01"/>
+
+    <Box
+
+      name="zneg"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 2000.01, 2000.01, 0.01"/>
+
+    <Box
+
+      name="xpos"
+      xMin="1999.99, -0.01, -0.01"
+      xMax=" 2000.01, 2000.01, 2000.01"/>
+
+    <Box
+      name="xneg"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 0.01,  2000.01, 2000.01"/>
+
+    <Box
+      name="ypos"
+      xMin="-0.01, 1999.99, -0.01"
+      xMax=" 2000.01, 2000.01, 2000.01"/>
+
+    <Box
+      name="yneg"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 2000.01, 0.01, 2000.01"/>
 
   </Geometry>
 
 
   <Events
-    maxTime="0.8">
+    maxTime="1.0">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
@@ -173,7 +200,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Region/elementSubRegions/cb"
       fieldName="mediumVelocityVp"
-      scale="2000"
+      scale="3000"
       setNames="{ all }"/>
 
     <FieldSpecification
@@ -216,6 +243,12 @@
       scale="0.0"
       setNames="{ zpos }"/>
 
+    <FieldSpecification
+      name="xABC"
+      objectPath="faceManager"
+      fieldName="ABC"
+      scale="0.0"
+      setNames="{ xneg,xpos,yneg,ypos,zneg }"/>
 
   </FieldSpecifications>
 
