@@ -113,6 +113,24 @@ protected:
 
 private:
 
+   /**
+   * @brief Convert a mesh element point coordinate into a coorinate on the reference element
+   * @param coords coordinate of the point
+   * @param coordsOnRefElem to contain the coordinate computed in the reference element
+   * @param indexElement index of the element containing the coords
+   * @param faceNodes array of face of the element
+   * @param elemsToNodes map to obtaint global nodes from element index
+   * @param X array of mesh nodes coordinates
+   * @return true if coords is inside the element num index
+   */
+  template< typename FE_TYPE >
+  bool computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+                                             real64 ( &coordsOnRefElem )[3],
+                                             localIndex const & indexElement,
+                                             array1d< array1d< localIndex > > const & faceNodes,
+                                             arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                             arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X );
+
   /// Locates the source term and precomputes the constant part of the source term
   /// And locate receivers and pre_evaluate the basis functions at each receiver coordinate
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
@@ -122,6 +140,9 @@ private:
 
   /// Apply free surface condition to the face define in the geometry box from the xml
   void applyFreeSurfaceBC( real64 const time, DomainPartition & domain );
+
+  /// Apply absorbing boundary condition to the face define in the geometry box from the xml
+  void applyABC( real64 const time, DomainPartition & domain );
 
   /// Compute the pressure at each receiver coordinate in one time step
   void computeSismoTrace( localIndex const num_timestep, arrayView1d< real64 > const displacementx_np1, arrayView1d< real64 > const displacementy_np1, arrayView1d< real64 > const displacementz_np1 );
@@ -175,6 +196,55 @@ private:
   localIndex m_outputSismoTrace;
 
 };
+
+template< typename FE_TYPE >
+bool ElasticWaveEquationSEM::computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+                                                                    real64 (& coordsOnRefElem)[3],
+                                                                    localIndex const & indexElement,
+                                                                    array1d< array1d< localIndex > > const & faceNodes,
+                                                                    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
+{
+  if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
+  {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+    real64 xLocal[numNodesPerElem][3];
+    for( localIndex a=0; a< numNodesPerElem; ++a )
+    {
+      for( localIndex i=0; i<3; ++i )
+      {
+        xLocal[a][i] = X( elemsToNodes( indexElement, a ), i );
+      }
+    }
+
+    /// coordsOnRefElem = invJ*(coords-coordsNode_0)
+    localIndex q=0;
+
+    real64 invJ[3][3]={{0}};
+    FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
+
+    real64 coordsRef[3]={0};
+    for( localIndex i=0; i<3; ++i )
+    {
+      coordsRef[i] = coords[i] - xLocal[q][i];
+    }
+
+    for( localIndex i=0; i<3; ++i )
+    {
+      // Init at (-1,-1,-1) as the origin of the referential elem
+      coordsOnRefElem[i] =-1.0;
+      for( localIndex j=0; j<3; ++j )
+      {
+        coordsOnRefElem[i] += invJ[i][j]*coordsRef[j];
+      }
+    }
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
 
 namespace extrinsicMeshData
 {
@@ -284,13 +354,29 @@ EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            WRITE_AND_READ,
                            "Diagonal Mass Matrix." );
 
-EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
-                           "dampingVector",
+EXTRINSIC_MESH_DATA_TRAIT( DampingVector_x,
+                           "dampingVector_x",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Diagonal Damping Matrix." );
+                           "Diagonal Damping Matrix in x-direction." );
+
+EXTRINSIC_MESH_DATA_TRAIT( DampingVector_y,
+                           "dampingVector_y",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Diagonal Damping Matrix in y-direction." );
+
+EXTRINSIC_MESH_DATA_TRAIT( DampingVector_z,
+                           "dampingVector_z",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Diagonal Damping Matrix in z-direction." );
 
 EXTRINSIC_MESH_DATA_TRAIT( MediumVelocityVp,
                            "mediumVelocityVp",

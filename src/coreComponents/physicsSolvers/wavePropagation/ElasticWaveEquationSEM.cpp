@@ -167,7 +167,9 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::ForcingRHS_y,
                                        extrinsicMeshData::ForcingRHS_z,
                                        extrinsicMeshData::MassVector,
-                                       extrinsicMeshData::DampingVector,
+                                       extrinsicMeshData::DampingVector_x,
+                                       extrinsicMeshData::DampingVector_y,
+                                       extrinsicMeshData::DampingVector_z,
                                        extrinsicMeshData::StiffnessVector_x,
                                        extrinsicMeshData::StiffnessVector_y,
                                        extrinsicMeshData::StiffnessVector_z,
@@ -226,6 +228,10 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                                                                        CellElementSubRegion & elementSubRegion )
     {
 
+      GEOSX_THROW_IF( elementSubRegion.getElementTypeString() != "C3D8",
+                      "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
+                      InputError );
+
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
       finiteElement::FiniteElementBase const &
@@ -240,7 +246,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
 
-        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+        forAll< serialPolicy >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
         {
 
           for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
@@ -249,7 +255,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
           }
 
           /// loop over all the source that haven't been found yet
-          for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
+          forAll< serialPolicy >( sourceCoordinates.size( 0 ), [=] ( localIndex const isrc )
           {
             if( sourceIsLocal[isrc] == 0 )
             {
@@ -257,42 +263,21 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                                          sourceCoordinates[isrc][1],
                                          sourceCoordinates[isrc][2] };
 
-              if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
+              real64 xLocal[numNodesPerElem][3];
+
+              for( localIndex a=0; a< numNodesPerElem; ++a )
               {
+                for( localIndex i=0; i<3; ++i )
+                {
+                  xLocal[a][i] = X( elemsToNodes( k, a ), i );
+                }
+              }
 
+              real64 coordsOnRefElem[3]{};
+              bool const sourceFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords, coordsOnRefElem, k, faceNodes, elemsToNodes, X );
+              if( sourceFound )
+              {
                 sourceIsLocal[isrc] = 1;
-
-                real64 xLocal[numNodesPerElem][3];
-                for( localIndex a=0; a< numNodesPerElem; ++a )
-                {
-                  for( localIndex i=0; i<3; ++i )
-                  {
-                    xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                  }
-                }
-
-                /// coordsOnRefElem = invJ*(coords-coordsNode_0)
-                real64 coordsOnRefElem[3];
-                localIndex q=0;
-                //real64 gradN[ numNodesPerElem ][ 3 ];
-                real64 invJ[3][3]={{0}};
-                FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-
-                real64 coordsRef[3]={0};
-                for( localIndex i=0; i<3; ++i )
-                {
-                  coordsRef[i] = coords[i] - xLocal[q][i];
-                }
-
-                for( localIndex i=0; i<3; ++i )
-                {
-                  // Init at (-1,-1,-1) as the origin of the referential elem
-                  coordsOnRefElem[i] =-1.0;
-                  for( localIndex j=0; j<3; ++j )
-                  {
-                    coordsOnRefElem[i] += invJ[i][j]*coordsRef[j];
-                  }
-                }
 
                 for( localIndex c=0; c<2; ++c )
                 {
@@ -310,26 +295,28 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                                     finiteElement::LagrangeBasis1::value( b, coordsOnRefElem[1])*
                                     finiteElement::LagrangeBasis1::gradient( c, coordsOnRefElem[2])};
 
-                    localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+                     localIndex const nodeIndex = finiteElement::LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
-                    // real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, nodeIndex, xLocal, gradN );
+                     // real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, nodeIndex, xLocal, gradN );
 
-                     //FE_TYPE::invJacobianTransformation( nodeIndex, xLocal, invJ );
+                     real64 invJ[3][3]={{0}};
+                     FE_TYPE::invJacobianTransformation( nodeIndex, xLocal, invJ );
                      sourceNodeIds[isrc][nodeIndex] = elemsToNodes[k][nodeIndex];
                      sourceConstants_x[isrc][nodeIndex] = Grad[0] * invJ[0][0] + Grad[1] * invJ[0][1] + Grad[2] * invJ[0][2];
                      sourceConstants_y[isrc][nodeIndex] = Grad[0] * invJ[1][0] + Grad[1] * invJ[1][1] + Grad[2] * invJ[1][2];
                      sourceConstants_z[isrc][nodeIndex] = Grad[0] * invJ[2][0] + Grad[1] * invJ[2][1] + Grad[2] * invJ[2][2];
 
-                   }
-                 }
-               }
+                    }
+                  }
+                }
               }
             }
-          } // End loop over all source
+          } ); // End loop over all source
 
 
           /// loop over all the receiver that haven't been found yet
-          for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
+          // 
+          forAll< serialPolicy >( receiverCoordinates.size( 0 ), [=] ( localIndex const ircv )
           {
             if( receiverIsLocal[ircv] == 0 )
             {
@@ -337,41 +324,12 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                                          receiverCoordinates[ircv][1],
                                          receiverCoordinates[ircv][2] };
 
-              if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
+              real64 coordsOnRefElem[3]{};
+              bool const receiverFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords, coordsOnRefElem, k, faceNodes, elemsToNodes, X );
+              if( receiverFound )
               {
                 receiverIsLocal[ircv] = 1;
-
-                real64 xLocal[numNodesPerElem][3];
-                for( localIndex a=0; a< numNodesPerElem; ++a )
-                {
-                  for( localIndex i=0; i<3; ++i )
-                  {
-                    xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                  }
-                }
-
-                real64 coordsOnRefElem[3];
-                localIndex q=0;
-
-                real64 invJ[3][3]={{0}};
-                FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-
-                real64 coordsRef[3]={0};
-                for( localIndex i=0; i<3; ++i )
-                {
-                  coordsRef[i] = coords[i] - xLocal[q][i];
-                }
-
-                for( localIndex i=0; i<3; ++i )
-                {
-                  /// Init at (-1,-1,-1) as the origin of the referential elem
-                  coordsOnRefElem[i] =-1.0;
-                  for( localIndex j=0; j<3; ++j )
-                  {
-                    coordsOnRefElem[i] += invJ[i][j]*coordsRef[j];
-                  }
-                }
-
+              
                 real64 Ntest[8];
                 finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
@@ -382,9 +340,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
                 }
               }
             }
-          } // End loop over reciever
+          } ); // End loop over reciever
 
-        } // End loop over elements
+        } );// End loop over elements
       } );
     } );
   } );
@@ -402,7 +360,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, ar
   real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
 
   
-  for( localIndex isrc = 0; isrc < m_sourceConstants_x.size( 0 ); ++isrc )
+  forAll< serialPolicy >( m_sourceConstants_x.size( 0 ), [=] ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
     {
@@ -413,7 +371,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, ar
         rhs_z[sourceNodeIds[isrc][inode]] = sourceConstants_z[isrc][inode] * fi;
       }
     }
-  }
+  } );
 }
 
 
@@ -425,11 +383,9 @@ void ElasticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayVi
 
   arrayView2d< real64 > const u_rcvs   = m_displacementNp1AtReceivers.toView();
 
-
-  char filename[50];
-
-  for( localIndex ircv = 0; ircv < receiverConstants.size( 0 ); ++ircv )
-  {
+  // for( localIndex ircv = 0; ircv < receiverConstants.size( 0 ); ++ircv )
+  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+  { 
     if( receiverIsLocal[ircv] == 1 )
     {
       u_rcvs[ircv][0] = 0.0;
@@ -442,15 +398,29 @@ void ElasticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayVi
         u_rcvs[ircv][1] += uy_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
         u_rcvs[ircv][2] += uz_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
       }
-
-      sprintf( filename, "sismoTraceUxReceiver%0ld.txt", ircv );
-      this->saveSismo( isismo, u_rcvs[ircv][0], filename );
-      sprintf( filename, "sismoTraceUyReceiver%0ld.txt", ircv );
-      this->saveSismo( isismo, u_rcvs[ircv][1], filename );
-      sprintf( filename, "sismoTraceUzReceiver%0ld.txt", ircv );
-      this->saveSismo( isismo, u_rcvs[ircv][2], filename );
     }
-  }
+  } );
+
+  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+  {
+    if( this->m_outputSismoTrace == 1 )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        // Note: this "manual" output to file is temporary
+        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+        // TODO: remove the (sprintf+saveSismo) and replace with TimeHistory
+        char filename[50];
+        sprintf( filename, "sismoTraceUxReceiver%0ld.txt", ircv );
+        this->saveSismo( isismo, u_rcvs[ircv][0], filename );
+        sprintf( filename, "sismoTraceUyReceiver%0ld.txt", ircv );
+        this->saveSismo( isismo, u_rcvs[ircv][1], filename );
+        sprintf( filename, "sismoTraceUzReceiver%0ld.txt", ircv );
+        this->saveSismo( isismo, u_rcvs[ircv][2], filename );
+
+      }
+    }
+  } );
 }
 
 
@@ -488,25 +458,17 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
+  applyABC( time, domain );
   precomputeSourceAndReceiverTerm( mesh );
 
   NodeManager & nodeManager = mesh.getNodeManager();
   FaceManager & faceManager = mesh.getFaceManager();
 
-  /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-  arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
   /// Get table containing all the face normals
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
   arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-
-  /// damping matrix to be computed for each dof in the boundary of the mesh
-  arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
-
-  damping.setValues< serialPolicy >( 0.0 );
 
   /// get array of indicators: 1 if face is on the free surface; 0 otherwise
   arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
@@ -522,11 +484,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-
       arrayView1d< real64 > const rho = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity>();
-      arrayView1d< real64 > const vp = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVp >();
-      arrayView1d< real64 > const vs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -536,17 +494,13 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        localIndex const numNodesPerFace = 4;
-
-        real64 N[numNodesPerElem];
-        real64 gradN[ numNodesPerElem ][ 3 ];
-
         /// Loop over elements
-        for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
+        forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
+
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
           real64 xLocal[numNodesPerElem][3];
           for( localIndex a=0; a< numNodesPerElem; ++a )
           {
@@ -555,6 +509,10 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
               xLocal[a][i] = X( elemsToNodes( k, a ), i );
             }
           }
+
+          real64 N[numNodesPerElem];
+          real64 gradN[ numNodesPerElem ][ 3 ];
+
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
@@ -566,47 +524,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
               mass[elemsToNodes[k][a]] += rho[k] * detJ * N[a];
             }
           }
-
-
-          real64 const alpha = 0.0;//1.0/(vs[k]);
-
-          for( localIndex kfe=0; kfe< numFacesPerElem; ++kfe )
-          {
-            localIndex const numFaceGl = elemsToFaces[k][kfe];
-
-            /// Face on the domain boundary and not on free surface
-            if( facesDomainBoundaryIndicator[numFaceGl]==1 && freeSurfaceFaceIndicator[numFaceGl]!=1 )
-            {
-              for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-              {
-                FE_TYPE::calcN( q, N );
-                real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
-                real64 invJ[3][3]={{0}};
-                FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
-
-                for( localIndex a=0; a < numNodesPerFace; ++a )
-                {
-                  /// compute ds=||detJ*invJ*normalFace_{kfe}||
-                  real64 tmp[3]={0};
-                  real64 ds = 0.0;
-                  for( localIndex i=0; i<3; ++i )
-                  {
-                    for( localIndex j = 0; j < 3; ++j )
-                    {
-                      tmp[i] += invJ[j][i]*faceNormal[numFaceGl][j];
-                    }
-                    ds +=tmp[i]*tmp[i];
-                  }
-                  ds = std::sqrt( ds );
-
-                  localIndex numNodeGl = facesToNodes[numFaceGl][a];
-                  damping[numNodeGl] += alpha*detJ*ds*N[a];
-                }
-              }
-            }
-          } // end loop over element
-        }
+         
+        } ); // end loop over element
       } );
     } );
   } );
@@ -666,7 +585,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
 
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
         for( localIndex a=0; a < numNodes; ++a )
-        {
+        {      
           localIndex const dof = faceToNodeMap( kf, a );
           freeSurfaceNodeIndicator[dof] = 1;
 
@@ -689,6 +608,172 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   } );
 }
 
+void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & domain )
+{
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NodeManager & nodeManager = mesh.getNodeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
+
+  /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+  
+  /// Get table containing all the face normals
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+
+  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+
+
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+
+  /// damping matrix to be computed for each dof in the boundary of the mesh
+  arrayView1d< real64 > const damping_x = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x >();
+  arrayView1d< real64 > const damping_y = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y >();
+  arrayView1d< real64 > const damping_z = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z >();
+
+  damping_x.setValues< serialPolicy >( 0.0 );
+  damping_y.setValues< serialPolicy >( 0.0 );
+  damping_z.setValues< serialPolicy >( 0.0 );
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
+
+  fsManager.apply( time,
+                   domain,
+                   "faceManager",
+                   string( "ABC" ),
+                   [&]( FieldSpecificationBase const & bc,
+                        string const &,
+                        SortedArrayView< localIndex const > const & targetSet,
+                        Group &,
+                        string const & )
+  {
+    string const & functionName = bc.getFunctionName();
+
+    if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
+    {
+
+      forTargetRegionsComplete( mesh, [&]( localIndex const,
+                                       localIndex const,
+                                       ElementRegionBase & elemRegion )
+      {
+
+        elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
+                                                                       CellElementSubRegion & elementSubRegion )
+        {
+
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+
+          arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+
+          arrayView1d< real64 > const rho = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity>();
+          arrayView1d< real64 > const vp = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVp >();
+          arrayView1d< real64 > const vs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
+         
+
+          finiteElement::FiniteElementBase const &
+          fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+          finiteElement::dispatch3D( fe,
+                                     [&]
+                                     ( auto const finiteElement )
+          {
+            using FE_TYPE = TYPEOFREF( finiteElement );
+
+            //localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
+            localIndex const numNodesPerFace = 4;
+
+            constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+            constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+            
+            for( localIndex i = 0; i < targetSet.size(); ++i )
+            {
+
+              localIndex const kf = targetSet[ i ];
+
+              localIndex const k = faceToElemIndex[kf][0];
+    
+              real64 xLocal[numNodesPerElem][3];
+              for( localIndex a=0; a< numNodesPerElem; ++a )
+              {
+                for( localIndex b=0; b<3; ++b )
+                {
+                  xLocal[a][b] = X( elemsToNodes( k, a ), b );
+                }
+              }
+
+              real64 N[numNodesPerElem];
+              real64 gradN[ numNodesPerElem ][ 3 ];
+
+              for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+              {
+                FE_TYPE::calcN( q, N );
+                real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+
+                real64 invJ[3][3]={{0}};
+                FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
+
+                for( localIndex a=0; a < numNodesPerFace; ++a )
+                {
+                  /// compute ds=||detJ*invJ*normalFace_{kfe}||
+                  real64 tmp[3]={0};
+                  real64 ds = 0.0;
+                  for( localIndex b=0; b<3; ++b )
+                  {
+                    for( localIndex j = 0; j < 3; ++j )
+                    {
+                      tmp[b] += invJ[j][b]*faceNormal[kf][j];
+                    }
+                    ds +=tmp[b]*tmp[b];
+                  }
+                  ds = std::sqrt( ds );
+  
+                  localIndex numNodeGl = facesToNodes[kf][a];
+      
+                  // Damping in x direction
+                  if ( faceNormal[kf][0] > 0.0 )
+                  {
+                    real64 const alpha_x = rho[k] * vp[k];
+                    real64 const alpha_y = rho[k] * vs[k];
+                    real64 const alpha_z = rho[k] * vs[k];
+                    damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                    damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                    damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+
+                  }
+                  // //Damping in y direction
+                  if ( faceNormal[kf][1] > 0.0 )
+                  {
+                    real64 const alpha_x = rho[k] * vs[k];
+                    real64 const alpha_y = rho[k] * vp[k];
+                    real64 const alpha_z = rho[k] * vs[k];
+                    damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                    damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                    damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+     
+                  }
+                  if ( faceNormal[kf][2] > 0.0 )
+                  {
+                    real64 const alpha_x = rho[k] * vs[k];
+                    real64 const alpha_y = rho[k] * vs[k];
+                    real64 const alpha_z = rho[k] * vp[k];
+                    damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                    damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                    damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+
+                  }     
+                }
+              }
+            }  
+          } );
+        } );
+      } );  
+    }
+  } );
+}
 
 
 real64 ElasticWaveEquationSEM::solverStep( real64 const & time_n,
@@ -750,7 +835,9 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-  arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+  arrayView1d< real64 const > const damping_x = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x >();
+  arrayView1d< real64 const > const damping_y = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y >();
+  arrayView1d< real64 const > const damping_z = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z >();
 
   arrayView1d< real64 > const ux_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_nm1 >();
   arrayView1d< real64 > const uy_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementy_nm1 >();
@@ -799,26 +886,11 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-        real64 gradN[ numNodesPerElem ][ 3 ];
-
-        // Declaration of the stiffness matrix coefficient
-        real64 Rxx_ij = 0.0;
-        real64 Ryy_ij = 0.0;
-        real64 Rzz_ij = 0.0;
-        real64 Rxy_ij = 0.0;
-        real64 Ryx_ij = 0.0;
-        real64 Ryz_ij = 0.0;
-        real64 Rzy_ij = 0.0;
-        real64 Rxz_ij = 0.0;
-        real64 Rzx_ij = 0.0;
-
-        
-
-        for( localIndex k=0; k<elemsToNodes.size( 0 ); ++k )
+        forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
         {
+
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
           // Computation of the Lamé coefficients lambda and mu
           mu[k] = rho[k] * vs[k] * vs[k];
@@ -835,6 +907,8 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
           }
 
+          real64 gradN[ numNodesPerElem ][ 3 ];
+
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
@@ -842,28 +916,28 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 	          for( localIndex i=0; i<numNodesPerElem; ++i )
 	          {
 		          for(localIndex j=0; j<numNodesPerElem; ++j)
-		            {
+		          {
 
-                  Rxx_ij = detJ* ((lambda[k]+2.0*mu[k])*gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][2]*gradN[i][2]);
-                  Ryy_ij = detJ* ((lambda[k]+2.0*mu[k])*gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][2]*gradN[i][2]);
-                  Rzz_ij = detJ*((lambda[k]+2.0*mu[k])*gradN[j][2]*gradN[i][2] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0]);
-                  Rxy_ij =  detJ*(mu[k] * gradN[j][1]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][1]);
-                  Ryx_ij =  detJ*(mu[k] * gradN[j][0]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][0]);
-                  Rxz_ij =  detJ*(mu[k] * gradN[j][2]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][2]);
-                  Rzx_ij =  detJ*(mu[k] * gradN[j][0]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][0]);
-                  Ryz_ij =  detJ* (mu[k] * gradN[j][2]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][2]);
-                  Rzy_ij =  detJ*(mu[k] * gradN[j][1]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][1]);
+                real64 const Rxx_ij = detJ* ((lambda[k]+2.0*mu[k])*gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][2]*gradN[i][2]);
+                real64 const Ryy_ij = detJ* ((lambda[k]+2.0*mu[k])*gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0] + mu[k] * gradN[j][2]*gradN[i][2]);
+                real64 const Rzz_ij = detJ*((lambda[k]+2.0*mu[k])*gradN[j][2]*gradN[i][2] + mu[k] * gradN[j][1]*gradN[i][1] + mu[k] * gradN[j][0]*gradN[i][0]);
+                real64 const Rxy_ij =  detJ*(mu[k] * gradN[j][1]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][1]);
+                real64 const Ryx_ij =  detJ*(mu[k] * gradN[j][0]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][0]);
+                real64 const Rxz_ij =  detJ*(mu[k] * gradN[j][2]*gradN[i][0] + lambda[k] * gradN[j][0]*gradN[i][2]);
+                real64 const Rzx_ij =  detJ*(mu[k] * gradN[j][0]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][0]);
+                real64 const Ryz_ij =  detJ* (mu[k] * gradN[j][2]*gradN[i][1] + lambda[k] * gradN[j][1]*gradN[i][2]);
+                real64 const Rzy_ij =  detJ*(mu[k] * gradN[j][1]*gradN[i][2] + lambda[k] * gradN[j][2]*gradN[i][1]);
 
 
-                  stiffnessVector_x[elemsToNodes[k][i]] +=  (Rxx_ij * ux_n[elemsToNodes[k][j]] + Rxy_ij*uy_n[elemsToNodes[k][j]] + Rxz_ij*uz_n[elemsToNodes[k][j]]);
-                  stiffnessVector_y[elemsToNodes[k][i]] += (Ryx_ij * ux_n[elemsToNodes[k][j]] + Ryy_ij*uy_n[elemsToNodes[k][j]] + Ryz_ij*uz_n[elemsToNodes[k][j]]);
-                  stiffnessVector_z[elemsToNodes[k][i]] += ( Rzx_ij * ux_n[elemsToNodes[k][j]] + Rzy_ij*uy_n[elemsToNodes[k][j]] + Rzz_ij*uz_n[elemsToNodes[k][j]]);
+                stiffnessVector_x[elemsToNodes[k][i]] +=  (Rxx_ij * ux_n[elemsToNodes[k][j]] + Rxy_ij*uy_n[elemsToNodes[k][j]] + Rxz_ij*uz_n[elemsToNodes[k][j]]);
+                stiffnessVector_y[elemsToNodes[k][i]] += (Ryx_ij * ux_n[elemsToNodes[k][j]] + Ryy_ij*uy_n[elemsToNodes[k][j]] + Ryz_ij*uz_n[elemsToNodes[k][j]]);
+                stiffnessVector_z[elemsToNodes[k][i]] += ( Rzx_ij * ux_n[elemsToNodes[k][j]] + Rzy_ij*uy_n[elemsToNodes[k][j]] + Rzz_ij*uz_n[elemsToNodes[k][j]]);
 
-		            }
+		          }
 	          }
           }
 
-        }
+        } );
 
       } );
     } );
@@ -873,15 +947,28 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
-  for( localIndex a=0; a<nodeManager.size(); ++a )
+  forAll< serialPolicy >( nodeManager.size(), [=] ( localIndex const a )
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
-       ux_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2.0*mass[a]*ux_n[a] - dt2*stiffnessVector_x[a] - (mass[a]-0.5*dt*damping[a])*ux_nm1[a] + dt2*rhs_x[a] );
-       uy_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2.0*mass[a]*uy_n[a] - dt2*stiffnessVector_y[a] - (mass[a]-0.5*dt*damping[a])*uy_nm1[a] + dt2*rhs_y[a] );
-       uz_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2.0*mass[a]*uz_n[a] - dt2*stiffnessVector_z[a] - (mass[a]-0.5*dt*damping[a])*uz_nm1[a] + dt2*rhs_z[a] );
+   
+       ux_np1[a] = ux_n[a];
+       ux_np1[a] *= 2.0*mass[a];
+       ux_np1[a] -= (mass[a]-0.5*dt*damping_x[a])*ux_nm1[a];
+       ux_np1[a] += dt2*(rhs_x[a]-stiffnessVector_x[a]);
+       ux_np1[a] /= mass[a]+0.5*dt*damping_x[a];
+       uy_np1[a] = uy_n[a];
+       uy_np1[a] *= 2.0*mass[a];
+       uy_np1[a] -= (mass[a]-0.5*dt*damping_y[a])*uy_nm1[a];
+       uy_np1[a] += dt2*(rhs_y[a]-stiffnessVector_y[a]);
+       uy_np1[a] /= mass[a]+0.5*dt*damping_y[a];
+       uz_np1[a] = uz_n[a];
+       uz_np1[a] *= 2.0*mass[a];
+       uz_np1[a] -= (mass[a]-0.5*dt*damping_z[a])*uz_nm1[a];
+       uz_np1[a] += dt2*(rhs_z[a]-stiffnessVector_z[a]);
+       uz_np1[a] /= mass[a]+0.5*dt*damping_z[a];
     }
-  }
+  } );
 
   /// Synchronize pressure fields
   std::map< string, string_array > fieldNames;
@@ -897,7 +984,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   for( localIndex a=0; a<nodeManager.size(); ++a )
   {
-
     ux_nm1[a] = ux_n[a];
     uy_nm1[a] = uy_n[a];
     uz_nm1[a] = uz_n[a];
@@ -911,8 +997,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     rhs_x[a] = 0.0;
     rhs_y[a] = 0.0;
     rhs_z[a] = 0.0;
-
-
   }
 
   computeSismoTrace( cycleNumber, ux_np1, uy_np1, uz_np1 );
