@@ -4,6 +4,7 @@ import numpy as np
 from pygeosx_tools import wrapper, parallel_io, plot_tools
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from pyevtk.hl import gridToVTK
 
 
 class InSAR_Analysis():
@@ -20,13 +21,16 @@ class InSAR_Analysis():
         self.node_ghost_key = ''
 
         self.satellite_vector = [0.0, 0.0, 1.0]
-        self.satellite_wavelength = 1.0
+        self.wavelength = 1.0
 
         self.x_grid = []
         self.y_grid = []
+        self.elevation = 0.0
         self.times = []
+        self.mask = []
         self.displacement = []
         self.range_change = []
+        self.phase = []
 
     def setup_grid(self, problem, set_names=[], x_range=[], y_range=[], dx=1.0, dy=1.0):
         """
@@ -69,7 +73,35 @@ class InSAR_Analysis():
         self.x_grid = np.linspace(x_range[0], x_range[1], Nx + 1)
         self.y_grid = np.linspace(y_range[0], y_range[1], Ny + 1)
 
+        # Save the average elevation for vtk outputs
+        self.elevation = np.mean(xc[:, 2])
+
+        # Trigger the map build
+        self.build_map(problem)
+
+    def build_map(self, problem):
+        """
+        Build the map between the mesh, InSAR image.
+        Note: this method can be used to update the map after
+              significant changes to the mesh.
+
+        Args:
+            problem (pygeosx.group): GEOSX problem handle
+        """
+        # Load the data
+        ghost_rank = wrapper.get_wrapper(problem, self.node_ghost_key)
+        x = wrapper.get_wrapper(problem, self.node_position_key)
+        set_ids = np.concatenate([wrapper.get_wrapper(problem, k) for k in self.set_keys], axis=0)
+
+        # Choose non-ghost set members
+        xb = x[set_ids, :]
+        gb = ghost_rank[set_ids]
+        xc = xb[gb < 0, :]
+
         # Setup the node to insar map
+        self.local_insar_map = []
+        dx = self.x_grid[1] - self.x_grid[0]
+        dy = self.y_grid[1] - self.y_grid[0]
         x_bins = np.concatenate([[self.x_grid[0] - 0.5 * dx],
                                  0.5*(self.x_grid[1:] + self.x_grid[:-1]),
                                  [self.x_grid[-1] + 0.5 * dx]])
@@ -78,8 +110,8 @@ class InSAR_Analysis():
                                  [self.y_grid[-1] + 0.5 * dy]])
         Ix = np.digitize(np.squeeze(xc[:, 0]), x_bins) - 1
         Iy = np.digitize(np.squeeze(xc[:, 1]), y_bins) - 1
-        for ii in range(Nx):
-            for jj in range(Ny):
+        for ii in range(len(self.x_grid)):
+            for jj in range(len(self.y_grid)):
                 tmp = np.where((Ix == ii) & (Iy == jj))[0]
                 if len(tmp):
                     self.local_insar_map.append([ii, jj, tmp])
@@ -125,31 +157,62 @@ class InSAR_Analysis():
 
             self.displacement.append(global_displacement_sum)
             self.range_change.append(range_change)
+            self.phase.append(np.angle(np.exp(2j * np.pi * range_change / self.wavelength)))
+            self.mask.append(global_N > 0)
             self.times.append(time)
 
-    def save_csv(self, header='insar_', output_root='./results'):
+    def save_csv(self, header='insar', output_root='./results'):
         os.makedirs(output_root, exist_ok=True)
+        np.savetxt('%s/%s_x_grid.csv' % (output_root, header),
+                   self.x_grid,
+                   delimiter=', ')
+        np.savetxt('%s/%s_y_grid.csv' % (output_root, header),
+                   self.y_grid,
+                   delimiter=', ')
+        for ii, t in enumerate(self.times):
+            comments = 'T (days), %1.4e' % (t / (60 * 60 * 24))
+            np.savetxt('%s/%s_range_change_%03d.csv' % (output_root, header, ii),
+                       self.range_change[ii],
+                       delimiter=', ',
+                       header=comments)
+            np.savetxt('%s/%s_phase_%03d.csv' % (output_root, header, ii),
+                       self.phase[ii],
+                       delimiter=', ',
+                       header=comments)
 
-    def save_vtk(self, header='insar_', output_root='./results'):
+    def save_vtk(self, header='insar', output_root='./results'):
         os.makedirs(output_root, exist_ok=True)
-        print(self.times)
-        print(self.displacement)
-        print(self.range_change)
+        x = np.ascontiguousarray(self.x_grid)
+        y = np.ascontiguousarray(self.y_grid)
+        z = np.array([self.elevation])
 
-    def save_image(self, header='insar_', output_root='./results'):
+        for ii, t in enumerate(self.times):
+            data = {'range_change': np.ascontiguousarray(np.expand_dims(self.range_change[ii], -1)),
+                    'phase': np.ascontiguousarray(np.expand_dims(self.phase[ii], -1)),
+                    'dx': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 0], -1)),
+                    'dy': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 1], -1)),
+                    'dz': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 2], -1))}
+
+            gridToVTK('%s/%s_%03d' % (output_root, header, ii),
+                      x,
+                      y,
+                      z,
+                      pointData=data)
+
+    def save_image(self, header='insar', output_root='./results', interp_method='quadric'):
         os.makedirs(output_root, exist_ok=True)
         fig = plot_tools.HighResPlot()
-        for ii in range(len(self.times)):
+
+        for ii, t in enumerate(self.times):
             # Range change
             fig.reset()
-            values = np.transpose(np.flipud(self.range_change[ii]))
             extents = [self.x_grid[0], self.x_grid[-1], self.y_grid[0], self.y_grid[-1]]
-            ca = plt.imshow(values,
+            ca = plt.imshow(np.transpose(np.flipud(self.range_change[ii])),
                             extent=extents,
                             cmap=cm.jet,
                             aspect='auto',
-                            interpolation='quadric')
-            plt.title('T = %1.4e (days)' % (self.times[ii] / (60 * 60 * 24)))
+                            interpolation=interp_method)
+            plt.title('T = %1.4e (days)' % (t / (60 * 60 * 24)))
             plt.xlabel('X (m)')
             plt.ylabel('Y (m)')
             cb = plt.colorbar(ca)
@@ -158,16 +221,13 @@ class InSAR_Analysis():
 
             # Wrapped phase
             fig.reset()
-            phase = 2.0 * np.pi * values / self.satellite_wavelength
-            wrapped_phase = np.angle(np.exp(1j * phase))
-
             extents = [self.x_grid[0], self.x_grid[-1], self.y_grid[0], self.y_grid[-1]]
-            ca = plt.imshow(wrapped_phase,
+            ca = plt.imshow(np.transpose(np.flipud(self.phase[ii])),
                             extent=extents,
                             cmap=cm.jet,
                             aspect='auto',
-                            interpolation='quadric')
-            plt.title('T = %1.4e (days)' % (self.times[ii] / (60 * 60 * 24)))
+                            interpolation=interp_method)
+            plt.title('T = %1.4e (days)' % (t / (60 * 60 * 24)))
             plt.xlabel('X (m)')
             plt.ylabel('Y (m)')
             cb = plt.colorbar(ca)
