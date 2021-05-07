@@ -178,12 +178,17 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       arrayView1d< real64 const > elemVolumes = elemSubRegion.getElementVolume();
       arrayView1d< integer const > const & elemGhostRank = elemSubRegion.ghostRank();
       localIndex const numCells = elemSubRegion.size();
-      forAll< parallelDevicePolicy< 32 > >( numCells, [=] ( localIndex const cellIndex )
+      real64 derivativesIntMean[VEM::maxSupportPoints][3];
+      globalIndex elemDofIndex[VEM::maxSupportPoints];
+      real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints];
+      // declare the above as unused even though they are used is needed to avoid compilation
+      // errors (from the compiler point of view, numCells could be 0).
+      GEOSX_UNUSED_VAR(derivativesIntMean);
+      GEOSX_UNUSED_VAR(elemDofIndex);
+      GEOSX_UNUSED_VAR(element_matrix);
+      forAll< parallelDevicePolicy< 32 > >( numCells, [=] ( localIndex const cellIndex ) mutable
       {
         VEM::BasisData basisData;
-        real64 derivativesIntMean[VEM::maxSupportPoints][3];
-        globalIndex elemDofIndex[VEM::maxSupportPoints];
-        real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints];
 
         if( elemGhostRank[cellIndex] < 0 )
         {
